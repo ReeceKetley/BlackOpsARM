@@ -215,7 +215,7 @@ void __cdecl process_cpi(contact_point_info *cpi)
 void __cdecl process_list_do_gjk_collide_and_contact_manifold(phys_link_list<phys_collision_pair> *list_pcd)
 {
     phys_transient_allocator *cpi_allocator; // eax
-    unsigned int *v2; // eax
+    void **v2;
 
     if ( list_pcd->m_alloc_count > 0 )
     {
@@ -223,10 +223,10 @@ void __cdecl process_list_do_gjk_collide_and_contact_manifold(phys_link_list<phy
         g_list_output_cpi = 0;
         cpi_allocator = contact_point_info::get_cpi_allocator();
         //v2 = phys_transient_allocator::allocate(cpi_allocator, 12, 4, 0, "phys_transient_allocator out of memory.");
-        v2 = (unsigned int*)cpi_allocator->allocate(12, 4, 0, "phys_transient_allocator out of memory.");
-        v2[2] = (unsigned int)&g_list_pcp_iterator;
-        v2[1] = (unsigned int)g_physics_system->m_search_tree_rbc_contact.m_tree_root;
-        *v2 = (unsigned int)&g_list_output_cpi;
+        v2 = (void **)cpi_allocator->allocate(sizeof(void *) * 3, alignof(void *), 0, "phys_transient_allocator out of memory.");
+        v2[2] = &g_list_pcp_iterator;
+        v2[1] = g_physics_system->m_search_tree_rbc_contact.m_tree_root;
+        *v2 = &g_list_output_cpi;
         phys_task_manager_process(&phys_gjk_collide_jqModule, v2, list_pcd->m_alloc_count);
         phys_task_manager_flush();
         process_cpi(g_list_output_cpi);
@@ -236,10 +236,10 @@ void __cdecl process_list_do_gjk_collide_and_contact_manifold(phys_link_list<phy
 int    phys_gjk_collide_jq_batch_function(jqBatch *pBatch)
 {
     void *v2; // esp
-    volatile unsigned __int32 **Input; // esi
+    void **Input;
     phys_transient_allocator *cpi_allocator; // eax
     rigid_body_constraint_contact *v5; // ecx
-    volatile unsigned __int32 *v6; // eax
+    phys_collision_pair *volatile *v6;
     phys_collision_pair *i; // ecx
     contact_point_info *v8; // edi
     phys_gjk_info v10; // [esp-4540h] [ebp-454Ch] BYREF
@@ -251,25 +251,25 @@ int    phys_gjk_collide_jq_batch_function(jqBatch *pBatch)
     //v13[0] = a1;
     //v13[1] = retaddr;
     //v2 = alloca(17736);
-    Input = (volatile unsigned __int32 **)pBatch->Input;
+    Input = (void **)pBatch->Input;
     //phys_contact_manifold_process::phys_contact_manifold_process(&v12);
     cpi_allocator = contact_point_info::get_cpi_allocator();
     v5 = (rigid_body_constraint_contact *)Input[1];
     v12.m_cpi_allocator = cpi_allocator;
     v12.m_rbc_contact_search_tree_root = v5;
-    v6 = Input[2];
-    for ( i = (phys_collision_pair *)*v6; *v6; i = (phys_collision_pair *)*v6 )
+    v6 = (phys_collision_pair *volatile *)Input[2];
+    for ( i = *v6; *v6; i = *v6 )
     {
-        if ( (phys_collision_pair *)_InterlockedCompareExchange(v6, (signed __int32)i->m_next_link, (signed __int32)i) == i )
+        if ( (phys_collision_pair *)_InterlockedCompareExchangePointer((void *volatile *)v6, i->m_next_link, i) == i )
             phys_collide_do_gjk_collide_and_contact_manifold(i, &v10, &v12);
-        v6 = Input[2];
+        v6 = (phys_collision_pair *volatile *)Input[2];
     }
     m_first = v12.m_list_cpi.m_first;
     if ( v12.m_list_cpi.m_first )
     {
         do
-            v8 = (contact_point_info *)**Input;
-        while ( (contact_point_info *)_InterlockedCompareExchange(*Input, (signed __int32)m_first, (signed __int32)v8) != v8 );
+            v8 = *(contact_point_info *volatile *)Input[0];
+        while ( (contact_point_info *)_InterlockedCompareExchangePointer((void *volatile *)Input[0], m_first, v8) != v8 );
         if ( !v12.m_list_cpi.m_last_next_ptr
             && _tlAssert(
                      "C:\\projects_pc\\cod\\codsrc\\tl\\physics\\include\\phys_mem.h",

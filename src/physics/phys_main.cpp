@@ -539,7 +539,7 @@ broad_phase_info *__cdecl create_broad_phase_info()
     phys_free_list<broad_phase_info>::T_internal *v2; // esi
 
     p_g_list_broad_phase_info = &G_BPM->g_list_broad_phase_info;
-    v1 = (phys_free_list<broad_phase_info>::T_internal *)PMM_ALLOC(0x90u, 0x10u);
+    v1 = (phys_free_list<broad_phase_info>::T_internal *)PMM_ALLOC(sizeof(*v1), sizeof(*v1) % 16 == 0 ? 16 : alignof(phys_free_list<broad_phase_info>::T_internal));
     v2 = v1;
     if (v1)
     {
@@ -3010,15 +3010,12 @@ int __cdecl SortSModelsByDist(float *a, float *b)
 
 int __cdecl buoyancy_worker()
 {
-    phys_free_list<PhysObjUserData>::T_internal_base *i; // [esp+14h] [ebp-4h]
-
-    for ( i = g_pop_iter.m_ptr; g_pop_iter_end.m_ptr != i; i = g_pop_iter.m_ptr )
+    using List = phys_free_list<PhysObjUserData>;
+    for (List::T_internal_base *i = g_pop_iter.m_ptr; g_pop_iter_end.m_ptr != i; i = g_pop_iter.m_ptr)
     {
-        if ( (phys_free_list<PhysObjUserData>::T_internal_base *)_InterlockedCompareExchange(
-                                                                                                                             (volatile unsigned __int32 *)&g_pop_iter,
-                                                                                                                             (signed __int32)i->m_next_T_internal,
-                                                                                                                             (signed __int32)i) == i )
-            Phys_BodyGrabSnapshotNitrous((PhysObjUserData *)&i[2], g_delta_t);
+        if (_InterlockedCompareExchangePointer((void *volatile *)&g_pop_iter.m_ptr,
+                i->m_next_T_internal, i) == i)
+            Phys_BodyGrabSnapshotNitrous(&static_cast<List::T_internal *>(i)->m_data, g_delta_t);
     }
     return 0;
 }
@@ -3054,14 +3051,11 @@ void __cdecl Phys_BodyGrabSnapshotNitrous(PhysObjUserData *userData, float delta
 //void __cdecl Nitrous_ForEachBody<void(__cdecl *)(PhysObjUserData &, float)>(void(__cdecl *func)(PhysObjUserData *, float), float t)
 void __cdecl Nitrous_ForEachBody(void(__cdecl *func)(PhysObjUserData *, float), float t)
 {
-    PhysGlob *i; // [esp+Ch] [ebp-4h]
-
-    for (i = (PhysGlob *)physGlob.objects.m_dummy_head.m_next_T_internal;
-        &physGlob != i;
-        i = (PhysGlob *)i->objects.m_dummy_head.m_next_T_internal)
-    {
-        ((void(__cdecl *)(PhysObjUserData **, _DWORD))func)(i->objects.m_ptr_list, LODWORD(t));
-    }
+    using List = phys_free_list<PhysObjUserData>;
+    for (List::T_internal_base *node = physGlob.objects.m_dummy_head.m_next_T_internal;
+        node != &physGlob.objects.m_dummy_head;
+        node = node->m_next_T_internal)
+        func(&static_cast<List::T_internal *>(node)->m_data, t);
 }
 
 int num_destructible_hits;
@@ -3502,23 +3496,19 @@ jqModule wheelCollisionModule =
 void __cdecl prop_system_collision_process()
 {
     g_wpop_iter.m_ptr = physGlob.objects.m_dummy_head.m_next_T_internal;
-    //g_wpop_iter_end.m_ptr = (phys_free_list<PhysObjUserData>::T_internal_base *)&physGlob;
-    g_wpop_iter_end.m_ptr = (phys_free_list<PhysObjUserData>::T_internal_base *)&physGlob;
+    g_wpop_iter_end.m_ptr = &physGlob.objects.m_dummy_head;
     phys_task_manager_process(&wheelCollisionModule, 0, physGlob.objects.m_list_count);
     phys_task_manager_flush();
 }
 
 int __cdecl wheel_collision_worker(jqBatch *__)
 {
-    phys_free_list<PhysObjUserData>::T_internal_base *i; // [esp+10h] [ebp-4h]
-
-    for (i = g_wpop_iter.m_ptr; g_wpop_iter_end.m_ptr != i; i = g_wpop_iter.m_ptr)
+    using List = phys_free_list<PhysObjUserData>;
+    for (List::T_internal_base *i = g_wpop_iter.m_ptr; g_wpop_iter_end.m_ptr != i; i = g_wpop_iter.m_ptr)
     {
-        if ((phys_free_list<PhysObjUserData>::T_internal_base *)_InterlockedCompareExchange(
-            (volatile unsigned __int32 *)&g_wpop_iter,
-            (signed __int32)i->m_next_T_internal,
-            (signed __int32)i) == i)
-            collide_vehicle_wheels((PhysObjUserData *)&i[2]);
+        if (_InterlockedCompareExchangePointer((void *volatile *)&g_wpop_iter.m_ptr,
+                i->m_next_T_internal, i) == i)
+            collide_vehicle_wheels(&static_cast<List::T_internal *>(i)->m_data);
     }
     return 0;
 }

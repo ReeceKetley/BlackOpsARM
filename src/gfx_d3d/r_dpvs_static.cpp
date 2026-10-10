@@ -1,3 +1,6 @@
+#if defined(BO1_PORT_X64)
+#include <database/db_stream.h>
+#endif
 #include "r_dpvs_static.h"
 #include "r_dvars.h"
 #include "r_debug.h"
@@ -1038,6 +1041,12 @@ void __cdecl R_AddCellStaticSurfacesInFrustumCmd(DpvsStaticCellCmd *data)
     viewIndex = data->viewIndex;
     g_smodelVisData = g_worldDpvs->smodelVisData[viewIndex];
     g_surfaceVisData = g_worldDpvs->surfaceVisData[viewIndex];
+#if defined(BO1_PORT_X64)
+    if (!g_surfaceVisData)
+        Bo1_Diag("DPVS static cell: view %u surfaceVisData null; worldDpvs=%p surfCount=%u staticSurfaceCount=%u vd0=%p vd1=%p vd2=%p smodelVis0=%p", viewIndex,
+                 (void *)g_worldDpvs, g_worldDpvs->surfaceVisDataCount, g_worldDpvs->staticSurfaceCount, (void *)g_worldDpvs->surfaceVisData[0],
+                 (void *)g_worldDpvs->surfaceVisData[1], (void *)g_worldDpvs->surfaceVisData[2], (void *)g_worldDpvs->smodelVisData[0]);
+#endif
     R_AddCellStaticSurfacesInFrustum(data);
     if ( rg.drawWorld )
         R_AddCellCullGroupsInFrustum(data);

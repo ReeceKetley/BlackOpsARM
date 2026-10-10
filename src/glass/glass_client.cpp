@@ -1,4 +1,5 @@
 #include "glass_client.h"
+#include <cstdlib>
 #include "glass_renderer.h"
 #include <universal/com_memory.h>
 
@@ -823,6 +824,12 @@ void __cdecl GlassCl_AllocateMemory()
     GlassesClient *v1; // [esp+4h] [ebp-8h]
     Glasses *glasses; // [esp+8h] [ebp-4h]
 
+#if defined(BO1_PORT_X64)
+    // TODO(x64): the client glass renderer (std::list on a 12-byte-node SmallAllocator, Allocator::Memory headers with 4-byte
+    // pointers, ...) is not ported yet; breakable glass stays inert on the client until it is.
+    if ( !getenv("BO1_X64_GLASS") )
+        return;
+#endif
     if ( !clGlasses )
     {
         glasses = GetGlasses();

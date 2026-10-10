@@ -496,6 +496,20 @@ void __cdecl DB_LoadXFileInternal()
     }
     DB_PopStreamPos();
     Load_DelayStream();
+#if defined(BO1_PORT_X64)
+    {
+        char line[400];
+        int len = snprintf(line, sizeof(line), "zone %s native/win32 block use:", g_load.filename);
+        for (unsigned int bi = 0; bi < 7; ++bi)
+            if (g_load.blocks[bi].data && file.blockSize[bi])
+            {
+                const unsigned __int8 *pos = (bi == g_streamPosIndex) ? g_streamPos : g_streamPosArray[bi];
+                len += snprintf(line + len, sizeof(line) - len, " b%u %u/%u (%.2f)", bi, (unsigned)(pos - g_load.blocks[bi].data),
+                                file.blockSize[bi], (double)(pos - g_load.blocks[bi].data) / file.blockSize[bi]);
+            }
+        Bo1_Diag("%s", line);
+    }
+#endif
     --g_loadingAssets;
     DB_MarkAssetTypeUsageDirty();
     DB_LoadDelayedImages();

@@ -306,9 +306,9 @@ contact_point_info *__cdecl contact_point_info::create_cpi(
     {
         __debugbreak();
     }
-    v3 = (32 * point_pair_count + 95) & 0xFFFFFFF0;
+    v3 = (sizeof(contact_point_info) + 2 * sizeof(phys_vec3) * point_pair_count + 15) & ~15u;
     //result = (contact_point_info *)phys_transient_allocator::mt_allocate(
-    result = (contact_point_info *)allocator->mt_allocate(v3 + ((12 * point_pair_count + 15) & 0xFFFFFFF0), 16, 1, "contact_point_info buffer overflow");
+    result = (contact_point_info *)allocator->mt_allocate(v3 + ((sizeof(contact_point_info::pulse_sum_cache_info) * point_pair_count + 15) & ~15u), 16, 1, "contact_point_info buffer overflow");
     if ( result )
     {
         result->m_fric_coef = -1.0;
@@ -512,6 +512,9 @@ void __cdecl set_cpi_params(contact_point_info *cpi, phys_collision_pair *pcp)
     bpi2 = pcp->m_bpi2;
     userData1 = (const PhysObjUserData *)bpi1->m_rb->m_userdata;
     userData2 = (const PhysObjUserData *)bpi2->m_rb->m_userdata;
+    if (!userData1)
+        Com_Printf(0, "bo1_physics: missing userdata pair %p bpi %p/%p flags %x/%x bodies %p/%p userdata %p/%p\n",
+            pcp, bpi1, bpi2, bpi1->m_flags, bpi2->m_flags, bpi1->m_rb, bpi2->m_rb, userData1, userData2);
     if (!userData1
         && !Assert_MyHandler("C:\\projects_pc\\cod\\codsrc\\src\\physics\\phys_collision.cpp", 59, 0, "%s", "userData1"))
     {
@@ -1559,30 +1562,20 @@ int __cdecl get_physics_contents_mask(char phys_env_collision_flags)
 
 broad_phase_info *__cdecl allocate_bpi_env()
 {
-    signed __int32 v1; // [esp+0h] [ebp-4Ch]
-    void *v2; // [esp+40h] [ebp-Ch]
-    broad_phase_info *first; // [esp+44h] [ebp-8h]
-
     _InterlockedExchangeAdd(&G_BPM->m_bpi_env_count, 1u);
-    //v2 = phys_transient_allocator::mt_allocate(
-    v2 = G_BPM->g_collision_memory_buffer.mt_allocate(
-        112,
-        16,
-        0,
+    broad_phase_info *bpi = (broad_phase_info *)G_BPM->g_collision_memory_buffer.mt_allocate(
+        sizeof(broad_phase_info), alignof(broad_phase_info), 0,
         "broad phase collision out of memory.");
-    if (v2)
-        v1 = (signed __int32)v2;
-    else
-        v1 = 0;
+    iassert(bpi);
+
+    broad_phase_info *first;
     do
     {
         first = G_BPM->m_list_bpi_env;
-        *(_DWORD *)(v1 + 56) = (DWORD)first;
-    } while ((broad_phase_info *)_InterlockedCompareExchange(
-        (volatile unsigned __int32 *)&G_BPM->m_list_bpi_env,
-        v1,
-        (signed __int32)first) != first);
-    return (broad_phase_info *)v1;
+        bpi->m_list_bpb_next = first;
+    } while ((broad_phase_info *)_InterlockedCompareExchangePointer(
+        (void *volatile *)&G_BPM->m_list_bpi_env, bpi, first) != first);
+    return bpi;
 }
 
 char are_intersecting(

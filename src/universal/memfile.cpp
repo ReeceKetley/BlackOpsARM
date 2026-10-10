@@ -17,7 +17,7 @@ void __cdecl MemFile_CommonInit(
     if ( !s_isLzoInitialized )
     {
         //__lzopro_lzo_init_v2(0x2020u, 2, 4, 4, 4, 4, 4, 4, 4, 24);
-        lzo_init(0x2020u, 2, 4, 4, 4, 4, 4, 4, 4, 24);
+        lzo_init(); // sizeof-based: the Win32 literal arguments fail the size check on x64
         s_isLzoInitialized = 1;
     }
     if ( !memFile
@@ -182,13 +182,16 @@ void __cdecl MemFile_EndSegment(MemoryFile *memFile)
                 workmem = workmem_large_local.GetBuf(); // LargeLocal::GetBuf(&workmem_large_local);
                 out_len = (unsigned int *)&memFile->buffer[memFile->bytesUsed];
                 memFile->bytesUsed += 4;
+                // lzo_uint is size_t (8 bytes on x64); the 4-byte length slot must not be passed directly.
+                lzo_uint compressedLen = 0;
                 //lzopro_lzo1x_1_11_compress(
                 lzo1x_1_compress(
                     memFile->cacheBuffer,
                     memFile->cacheBufferUsed,
                     &memFile->buffer[memFile->bytesUsed],
-                    (lzo_uint*)out_len,
+                    &compressedLen,
                     workmem);
+                *out_len = (unsigned int)compressedLen;
                 memFile->cacheBufferUsed = 0;
                 memFile->bytesUsed += *out_len;
                 //LargeLocal::~LargeLocal(&workmem_large_local);
@@ -357,13 +360,15 @@ LABEL_14:
         workmem = workmem_large_local.GetBuf(); // LargeLocal::GetBuf(&workmem_large_local);
         len = (unsigned int *)&memFile->buffer[memFile->bytesUsed];
         memFile->bytesUsed += 4;
+        lzo_uint compressedLen = 0; // lzo_uint is size_t: keep the 4-byte slot out of the call
         //lzopro_lzo1x_1_11_compress(
         lzo1x_1_compress(
             memFile->cacheBuffer,
             memFile->cacheBufferUsed,
             &memFile->buffer[memFile->bytesUsed],
-            (lzo_uint*)len,
+            &compressedLen,
             workmem);
+        *len = (unsigned int)compressedLen;
         memFile->cacheBufferUsed = 0;
         memFile->bytesUsed += *len;
         //LargeLocal::~LargeLocal(&workmem_large_local);
@@ -516,7 +521,9 @@ void __cdecl MemFile_ReadData(MemoryFile *memFile, int byteCount, unsigned __int
                     in_len = *(unsigned int *)&memFile->buffer[memFile->bytesUsed];
                     memFile->bytesUsed += 4;
                     //lzopro_lzo1x_decompress(&memFile->buffer[memFile->bytesUsed], 0, memFile->cacheBuffer, &len);
-                    lzo1x_decompress(&memFile->buffer[memFile->bytesUsed], 0, memFile->cacheBuffer, (lzo_uint*)&len, NULL);
+                    lzo_uint decompressedLen = 0; // lzo_uint is size_t (8 bytes on x64)
+                    lzo1x_decompress(&memFile->buffer[memFile->bytesUsed], 0, memFile->cacheBuffer, &decompressedLen, NULL);
+                    len = (int)decompressedLen;
                     memFile->cacheBufferAvail = len;
                     memFile->cacheBufferUsed = 0;
                     memFile->bytesUsed += in_len;
