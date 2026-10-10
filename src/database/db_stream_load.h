@@ -10,7 +10,19 @@ struct StreamDelayInfo // sizeof=0x8
 
 void __cdecl Load_Stream(bool atStreamStart, unsigned __int8 *ptr, int size);
 void __cdecl Load_DelayStream();
-void __cdecl DB_ConvertOffsetToAlias(unsigned int *data);
-void __cdecl DB_ConvertOffsetToPointer(unsigned int *data);
+// FastFile offset → host pointer. Implementations write pointer-width values.
+// Win32 call sites still pass (unsigned int *); both overloads share one body.
+void __cdecl DB_ConvertOffsetToAlias(void *field);
+void __cdecl DB_ConvertOffsetToPointer(void *field);
+inline void __cdecl DB_ConvertOffsetToAlias(unsigned int *data)
+{
+    DB_ConvertOffsetToAlias(static_cast<void *>(data));
+}
+inline void __cdecl DB_ConvertOffsetToPointer(unsigned int *data)
+{
+    DB_ConvertOffsetToPointer(static_cast<void *>(data));
+}
 void __cdecl Load_XStringCustom(const char **str);
 void __cdecl Load_TempStringCustom(const char **str);
+#if defined(BO1_PORT_X64)
+#endif

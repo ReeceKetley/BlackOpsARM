@@ -28,12 +28,20 @@ static const SPEntitySaveField s_clientFields[] = {
 static const SPEntitySaveField s_clientExtFields[] = {
     { offsetof(SPClientSaveExt, ext.lookatent), sizeof(EntHandle), 3 }
 };
+#if !defined(BO1_PORT_X64)
 static_assert(sizeof(gclient_s) == 0x29E0, "DERIVED client image");
+#endif
+#if !defined(BO1_PORT_X64)
 static_assert(sizeof(gclientSpExt) == 0x10 && sizeof(SPPlayerX1State) == 0xC
     && sizeof(SPPlayerBuiltinState) == 0x10 && sizeof(SPClientSaveExt) == 0x30, "DERIVED client extension image");
+#endif
+#if !defined(BO1_PORT_X64)
 static_assert(sizeof(((usercmd_s *)0)->button_bits) == 8, "SP writes 8 button bytes");
+#endif
+#if !defined(BO1_PORT_X64)
 static_assert(sizeof(ActionSlotParam) == 4 && ARRAY_COUNT(((playerState_s *)0)->actionSlotType) == 4,
     "SP action slot pairs");
+#endif
 
 static int G_LoadWeaponIndex(MemoryFile *memFile)
 {

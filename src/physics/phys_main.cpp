@@ -2424,7 +2424,7 @@ void    Phys_FindAndRenderEntityBrushes(const float *pos, int contentmask)
                 ClientDObj = Com_GetClientDObj(v43[j], v32);
                 if ( ClientDObj )
                 {
-                    if ( ((*((unsigned int *)Entity + 201) >> 15) & 1) != 0 )
+                    if ( ((CENT_FLAGS(Entity) >> 15) & 1) != 0 )
                         v26 = (const float *)v44;
                     else
                         v26 = (const float *)v45;
@@ -2434,7 +2434,7 @@ void    Phys_FindAndRenderEntityBrushes(const float *pos, int contentmask)
                 }
                 else if (Entity->nextState.solid == 0xFFFFFF)
                 {
-                    if ( ((*((unsigned int *)Entity + 201) >> 15) & 1) != 0 )
+                    if ( ((CENT_FLAGS(Entity) >> 15) & 1) != 0 )
                         v25 = (const float *)v44;
                     else
                         v25 = (const float *)v45;
@@ -2910,7 +2910,7 @@ void __cdecl print_static_models_stats()
     num = numStaticModels;
     for ( i = 0; i < (int)num; ++i )
         base[i] = (unsigned int) & cm.staticModelList[i];
-    qsort(base, num, 4u, SortModelsFunc);
+    qsort(base, num, sizeof(*(base)), SortModelsFunc);
     refcount = 1;
     smodel = (cStaticModel_s *)base[0];
     dims = *(float *)(base[0] + 68) - *(float *)(base[0] + 56);
@@ -2981,7 +2981,7 @@ void __cdecl draw_static_models_bounds()
         smodel_debug_infos[j].smodel = smodel;
         smodel_debug_infos[j].dist2 = len2;
     }
-    qsort(smodel_debug_infos, nmodels, 8u, (int(__cdecl *)(const void *, const void *))SortSModelsByDist);
+    qsort(smodel_debug_infos, nmodels, sizeof(*(smodel_debug_infos)), (int(__cdecl *)(const void *, const void *))SortSModelsByDist);
     for (i = 0; ; ++i)
     {
         v0 = nmodels >= nboxes ? nboxes : nmodels;

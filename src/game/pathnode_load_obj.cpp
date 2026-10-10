@@ -410,8 +410,7 @@ void __cdecl Path_BuildChains()
     }
     qsort(
         gameWorldCurrent->path.nodeForChainNode,
-        gameWorldCurrent->path.nodeCount,
-        2u,
+        gameWorldCurrent->path.nodeCount, sizeof(*(gameWorldCurrent->path.nodeForChainNode)),
         (int (__cdecl *)(const void *, const void *))compare_pathnodes);
     for ( id = 0; id < gameWorldCurrent->path.nodeCount; ++id )
         gameWorldCurrent->path.chainNodeForNode[gameWorldCurrent->path.nodeForChainNode[id]] = id;

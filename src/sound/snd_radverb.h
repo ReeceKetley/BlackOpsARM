@@ -20,7 +20,9 @@ struct snd_radverb // sizeof=0x60
     float lateSize;
     float diffusion;
 };
+#if !defined(BO1_PORT_X64)
 static_assert(sizeof(snd_radverb) == 96);
+#endif
 
 struct snd_rv_params
 {

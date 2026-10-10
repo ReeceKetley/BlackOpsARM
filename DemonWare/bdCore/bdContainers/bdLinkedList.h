@@ -161,4 +161,6 @@ struct bdLinkedList
     }
 };
 
+#if !defined(BO1_PORT_X64)
 static_assert(sizeof(bdLinkedList<void *>) == 0x0C, "bdLinkedList size mismatch");
+#endif

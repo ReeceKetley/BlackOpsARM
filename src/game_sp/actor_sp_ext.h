@@ -88,7 +88,9 @@ struct scripted_anim_sp_t
     int startTime;
     unsigned char deathplantData[16];
 };
+#if !defined(BO1_PORT_X64)
 static_assert(sizeof(scripted_anim_sp_t) == 100, "SP scripted animation record");
+#endif
 scripted_anim_sp_t *G_SP_GetScriptedAnim(const gentity_s *ent);
 scripted_anim_sp_t *G_SP_AllocScriptedAnim(const gentity_s *ent);
 void G_SP_ClearScriptedAnim(const gentity_s *ent);

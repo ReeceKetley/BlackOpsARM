@@ -612,7 +612,7 @@ int __cdecl Live_GetControllerFromXUID(unsigned __int64 player)
 
 void __cdecl Live_GiveAchievement(int localControllerIndex, const char *achievementName)
 {
-    if ( !fs_gameDirVar || !*(_BYTE *)fs_gameDirVar->current.integer )
+    if ( !fs_gameDirVar || !*(_BYTE *)fs_gameDirVar->current.string )
         LiveSteam_GiveAchievement(achievementName);
 }
 
@@ -1191,7 +1191,7 @@ void __cdecl PC_InitSigninState()
         __debugbreak();
     }
     bdCore::init(1);
-    v4 = (bdLogSubscriber *)operator new(0x24u);
+    v4 = (bdLogSubscriber *)operator new(sizeof(bdLogSubscriber));
     if ( v4 )
         v2 = bdLogSubscriber::bdLogSubscriber(v4);
     else
@@ -1753,7 +1753,7 @@ void __cdecl Live_AddRecentServer(unsigned __int64 serveruid)
         s_recentServers[29].joinTime = currentTime;
         s_recentServers[29].serverID = serveruid;
     }
-    qsort(s_recentServers, 0x1Eu, 0x10u, (int (__cdecl *)(const void *, const void *))compareRecentServers);
+    qsort(s_recentServers, 0x1Eu, sizeof(*(s_recentServers)), (int (__cdecl *)(const void *, const void *))compareRecentServers);
     Live_SaveRecentServers();
 }
 

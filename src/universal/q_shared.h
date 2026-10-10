@@ -220,7 +220,21 @@ typedef ull                         uint64;
 #define RAD2DEG( a ) ( ( (a) * INV_PI_DIV_180 ) )
 
 // Some convenience macros to make partial accesses nicer
+#if defined(BO1_PORT_X64) && defined(__cplusplus)
+#include <type_traits>
+// IDA's HIWORD/HIBYTE/... pick the top part of sizeof(x). Decompiled code applies them to values that were 4 bytes on Win32
+// but are pointers (8 bytes) here, which moved "bits 16..31" to "bits 48..63". Pointers keep their Win32 width (the x64 port runs
+// below 4 GB, see BO1_X64_LOW_VA); every other type keeps its real size.
+template <class T>
+struct Bo1WinSizeof
+{
+    static constexpr size_t value =
+        std::is_pointer_v<std::remove_cv_t<std::remove_reference_t<T>>> ? 4 : sizeof(std::remove_reference_t<T>);
+};
+#define LAST_IND(x,part_type)        (Bo1WinSizeof<decltype(x)>::value/sizeof(part_type) - 1)
+#else
 #define LAST_IND(x,part_type)        (sizeof(x)/sizeof(part_type) - 1)
+#endif
 #if defined(__BYTE_ORDER) && __BYTE_ORDER == __BIG_ENDIAN
 #    define LOW_IND(x,part_type)     LAST_IND(x,part_type)
 #    define HIGH_IND(x,part_type)    0

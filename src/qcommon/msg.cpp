@@ -4,13 +4,15 @@
 #include "sv_msg_write.h"
 
 #include <cstring>
+#include <xmmintrin.h>
 
 // zombies: snapshot float quantization (SP 0x00536E90). The decompiler turned
 // FISTP into a truncating cast, shifting negative integer origins by one unit.
-// Keep the exe's x87 rounding and double bias for both MP and zombie snapshots.
+// Prefer x87 when available; otherwise SSE cvtss2si with the same double bias.
 int __cdecl MSG_RoundFloatToInt(float value)
 {
     const double bias = 9.313225746154785e-10;
+#if defined(_M_IX86)
     int result;
     __asm
     {
@@ -19,6 +21,10 @@ int __cdecl MSG_RoundFloatToInt(float value)
         fistp result
     }
     return result;
+#else
+    const float biased = (float)((double)value + bias);
+    return _mm_cvtss_si32(_mm_set_ss(biased));
+#endif
 }
 
 int __cdecl MSG_ReadValueNoXor(msg_t *msg, int bits)

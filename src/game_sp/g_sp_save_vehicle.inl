@@ -19,8 +19,12 @@ static const SPEntitySaveField s_vehicleFields[] = {
 };
 #undef NODE
 #undef VF
+#if !defined(BO1_PORT_X64)
 static_assert(sizeof(scr_vehicle_s) == 0xE60, "DERIVED vehicle image (KB: 16-byte aligned collision visitor)");
+#endif
+#if !defined(BO1_PORT_X64)
 static_assert(sizeof(vehicle_node_t) == 0x44 && offsetof(vehicle_pathpos_t, switchNode) == 0x3C, "SP vehicle node layout");
+#endif
 static const int SP_VEHICLE_COUNT = 16; // KB s_vehicles (SP 64)
 
 static void G_WriteVehicle(const scr_vehicle_s *vehicle, MemoryFile *memFile)

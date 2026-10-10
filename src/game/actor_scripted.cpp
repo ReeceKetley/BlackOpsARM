@@ -301,7 +301,9 @@ struct ScriptedDeathPlantData
     float roll;
     float fraction;
 };
+#if !defined(BO1_PORT_X64)
 static_assert(sizeof(ScriptedDeathPlantData) == 16, "SP deathplant tail");
+#endif
 static_assert(offsetof(scripted_anim_sp_t, deathplantData) == 0x54, "SP deathplant offset");
 
 // zombies: deathplant update (SP 0x007d5230). EDI supplies origin, stack arg 3 angles.

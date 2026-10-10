@@ -328,7 +328,8 @@ dsound_sample_t *__cdecl DSound_NewSample()
     if ( CreateBasicBuffer(lpds, &sample->DSB, sample->frequency, sample->channels, g_sound_playBufferSize) >= 0 )
         return sample;
     Com_Printf(9, "Error: Failed to create DirectSound play buffer\n");
-    sample->DSB->Release();
+    if ( sample->DSB )
+        sample->DSB->Release();
     sample->DSB = 0;
     return 0;
 }
@@ -353,7 +354,7 @@ HRESULT __cdecl CreateBasicBuffer(
     wfx.nAvgBytesPerSec = sampleRate * wfx.nBlockAlign;
     dsbdesc.dwReserved = 0;
     memset((void *)&dsbdesc.guid3DAlgorithm, 0, sizeof(dsbdesc.guid3DAlgorithm));
-    dsbdesc.dwSize = 36;
+    dsbdesc.dwSize = sizeof(dsbdesc);
     dsbdesc.dwFlags = 33000;
     dsbdesc.dwBufferBytes = bufferSize;
     dsbdesc.lpwfxFormat = &wfx;

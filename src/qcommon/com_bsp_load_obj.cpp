@@ -782,8 +782,7 @@ void __cdecl Com_LoadBurnableData()
             }
             qsort(
                 comWorld.burnableCells,
-                comWorld.numBurnableCells,
-                0xCu,
+                comWorld.numBurnableCells, sizeof(*(comWorld.burnableCells)),
                 (int (__cdecl *)(const void *, const void *))Com_BurnableCellSort);
         }
         else

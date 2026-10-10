@@ -107,7 +107,7 @@ void __cdecl CG_UpdateBolt(int localClientNum)
         if ( bolt
             && bolt->nextState.lerp.u.player.meleeWeapon != 1022
             && bolt->linkInfo
-            && ((*((unsigned int *)CG_GetEntity(localClientNum, bolt->linkInfo->linkEnt) + 201) >> 1) & 1) == 0 )
+            && ((CENT_FLAGS(CG_GetEntity(localClientNum, bolt->linkInfo->linkEnt)) >> 1) & 1) == 0 )
         {
             bolt->nextState.lerp.u.player.meleeWeapon = 1023;
             bolt->nextState.lerp.eFlags |= 0x20u;

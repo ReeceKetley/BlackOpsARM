@@ -45,6 +45,17 @@ const dvar_t *sv_clientside;
 
 unsigned int __cdecl VM_Execute_0(scriptInstance_t inst);
 
+
+// The code stream and archived VM stacks store codepos values as 4 bytes (Win32 layout); host pointers are wider on x64.
+static inline char *Bo1_LoadCodePos(const void *p)
+{
+    return (char *)(uintptr_t) * (const unsigned int *)p;
+}
+static inline const void *Bo1_Addr32(int v)
+{
+    return (const void *)(uintptr_t)(unsigned int)v;
+}
+
 void __cdecl Scr_ClearErrorMessage(scriptInstance_t inst)
 {
     gScrVarPub[inst].error_message = 0;
@@ -272,7 +283,7 @@ char *__cdecl Scr_GetNextCodepos(
                 if (gScrVmPub[inst].function_count >= 32)
                     goto LABEL_23;
                 *localId = 0;
-                result = *(char **)pos;
+                result = Bo1_LoadCodePos(pos);
                 break;
             case 'S':
             case 'W':
@@ -543,7 +554,7 @@ char *__cdecl Scr_GetNextCodepos(
             {
                 v12 = *(_DWORD *)posa;
                 posc = posa + 4;
-                v11 = *(const char **)posc;
+                v11 = Bo1_LoadCodePos(posc);
                 posa = posc + 4;
                 if (v12 == caseValue)
                 {
@@ -1131,7 +1142,7 @@ void __cdecl VM_Notify(
                     stackValue.intValue = tempValue->intValue;
                     if (*(_BYTE *)(*(_DWORD *)tempValue->intValue - 1) == 119)
                     {
-                        size = **(char **)stackValue.intValue;
+                        size = *Bo1_LoadCodePos(Bo1_Addr32(stackValue.intValue));
                         if (size < 0
                             && !Assert_MyHandler(
                                 "C:\\projects_pc\\cod\\codsrc\\src\\clientscript\\cscr_vm.cpp",
@@ -1197,8 +1208,8 @@ void __cdecl VM_Notify(
                             {
                                 RuntimeError(
                                     inst,
-                                    *(char **)stackValue.intValue,
-                                    **(char **)stackValue.intValue - size + 3,
+                                    Bo1_LoadCodePos(Bo1_Addr32(stackValue.intValue)),
+                                    *Bo1_LoadCodePos(Bo1_Addr32(stackValue.intValue)) - size + 3,
                                     gScrVarPub[inst].error_message,
                                     gScrVmGlob[inst].dialog_error_message);
                                 Scr_ClearErrorMessage(inst);
@@ -1314,7 +1325,7 @@ void __cdecl VM_Notify(
                         {
                             newStackValue = (VariableStackBuffer *)MT_Alloc(bufLen, 1, inst);
                             newStackValue->bufLen = bufLen;
-                            newStackValue->pos = *(const char **)stackValue.intValue;
+                            newStackValue->pos = Bo1_LoadCodePos(Bo1_Addr32(stackValue.intValue));
                             newStackValue->localId = *(_DWORD *)(stackValue.intValue + 8);
                             memcpy((unsigned __int8 *)newStackValue->buf, (unsigned __int8 *)(stackValue.intValue + 13), len);
                             MT_Free((uint8*)stackValue.intValue, *(unsigned __int16 *)(stackValue.intValue + 6), inst);
@@ -1515,12 +1526,12 @@ void __cdecl VM_TerminateStack(
     int size = stackValue->size;
     unsigned int localId = stackValue->localId;
     const char *buf = stackValue->buf;
-    buf += (sizeof(const char *) + sizeof(unsigned char)) * size;
+    buf += (sizeof(unsigned int) + sizeof(unsigned char)) * size;
 
     while (size)
     {
-        buf -= sizeof(const char *);
-        u.codePosValue = *(const char **)buf;
+        buf -= sizeof(unsigned int);
+        u.codePosValue = Bo1_LoadCodePos(buf);
         buf -= sizeof(unsigned char);
         unsigned char type = buf[0];
         size--;
@@ -3313,7 +3324,7 @@ void __cdecl Scr_AddAnim(scr_anim_s value, scriptInstance_t inst)
 {
     IncInParam(inst);
     gScrVmPub[inst].top->type = 11;
-    gScrVmPub[inst].top->u.intValue = (int)value.linkPointer;
+    gScrVmPub[inst].top->u.intValue = (int)(unsigned int)(uintptr_t)(const char *)value.linkPointer;
 }
 
 void __cdecl Scr_AddUndefined(scriptInstance_t inst)
@@ -4119,7 +4130,7 @@ void __cdecl VM_UnarchiveStack(scriptInstance_t inst, unsigned int startLocalId,
 {
     VariableValue *top; // [esp+8h] [ebp-14h]
     char *buf; // [esp+Ch] [ebp-10h]
-    const char **bufa; // [esp+Ch] [ebp-10h]
+    const unsigned int *bufa; // [esp+Ch] [ebp-10h]
     unsigned int localId; // [esp+10h] [ebp-Ch]
     int function_count; // [esp+14h] [ebp-8h]
     int size; // [esp+18h] [ebp-4h]
@@ -4166,7 +4177,7 @@ void __cdecl VM_UnarchiveStack(scriptInstance_t inst, unsigned int startLocalId,
         --size;
         top[1].type = (unsigned __int8)*buf;
         ++top;
-        bufa = (const char **)(buf + 1);
+        bufa = (const unsigned int *)(buf + 1);
         if (top->type == 7)
         {
             if (gScrVmPub[inst].function_count >= 32
@@ -4179,7 +4190,7 @@ void __cdecl VM_UnarchiveStack(scriptInstance_t inst, unsigned int startLocalId,
             {
                 __debugbreak();
             }
-            gScrVmPub[inst].function_frame->fs.pos = *bufa;
+            gScrVmPub[inst].function_frame->fs.pos = Bo1_LoadCodePos(bufa);
             ++gScrVmPub[inst].function_count;
             ++gScrVmPub[inst].function_frame;
         }
@@ -5645,7 +5656,7 @@ $LN205_0:
                 localFs.localId = AllocChildThread(inst, selfId, localFs.localId);
                 gScrVmPub[inst].function_frame->fs.pos = localFs.pos;
                 function_frame = gScrVmPub[inst].function_frame;
-                v68 = *(const char **)function_frame->fs.pos;
+                v68 = Bo1_LoadCodePos(function_frame->fs.pos);
                 function_frame->fs.pos += 4;
                 localFs.pos = v68;
                 goto function_call;

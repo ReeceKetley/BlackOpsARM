@@ -56,4 +56,6 @@ struct bdQueue
     }
 };
 
+#if !defined(BO1_PORT_X64)
 static_assert(sizeof(bdQueue<void *>) == 0x0C, "bdQueue size mismatch");
+#endif

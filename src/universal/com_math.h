@@ -86,7 +86,9 @@ struct alignas(16) hybrid_vector // sizeof=0x10
 {                                                                             // XREF: colgeom_visitor_t/r
         float4 vec;                                                 // XREF: AimTarget_IsTargetVisible+1B/w
 };
+#if !defined(BO1_PORT_X64)
 static_assert(sizeof(hybrid_vector) == 16);
+#endif
 
 struct orientation_t // sizeof=0x30
 {                                                                             // XREF: .rdata:orientation_t const orIdentity/r

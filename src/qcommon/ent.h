@@ -367,5 +367,7 @@ struct __declspec(align(4)) entityState_s // sizeof=0xE0
         unsigned __int8 animtreeIndex;
         // padding byte
 };
+#if !defined(BO1_PORT_X64)
 static_assert(sizeof(entityState_s) == 0xE0, "entityState_s size");
+#endif
 static_assert(offsetof(entityState_s, animtreeIndex) == 0xDE, "animtreeIndex in the padding");

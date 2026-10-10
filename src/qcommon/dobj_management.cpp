@@ -4,7 +4,7 @@
 int objFreeCount;
 __int16 clientObjMap[MAX_CL_ENTNUM]; // mod (L43): client DObj handles = entity numbers; 1536 view model, 1537..2046 bo1_mod_netents (retail 1537)
 __int16 serverObjMap[MAX_GENTITIES_SV]; // mod (L25): server-only entity numbers 1024+
-unsigned int objBuf[3072][31];
+alignas(16) unsigned int objBuf[3072][DOBJ_BUF_UINTS];
 bool objAlloced[3072];
 
 int com_lastDObjIndex;

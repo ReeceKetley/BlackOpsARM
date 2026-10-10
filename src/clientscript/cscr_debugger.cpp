@@ -950,8 +950,7 @@ void __thiscall Scr_ScriptList::Init(scriptInstance_t inst)
     }
     qsort(
         &scriptWindowsNames[1],
-        this->numLines - 1,
-        4u,
+        this->numLines - 1, sizeof(*(&scriptWindowsNames[1])),
         (int (__cdecl *)(const void *, const void *))ConDrawInput_CompareStrings);
     this->scriptWindows = (Scr_ScriptWindow **)Scr_AllocDebugMem(inst, 4 * this->numLines, "Scr_ScriptList::Init2");
     memset(&info, 0, sizeof(info));
@@ -1645,7 +1644,7 @@ void __thiscall Scr_ScriptWatch::EvaluateWatchChildren(
                 compare = v12;
             }
             gDebuggerInstance = inst;
-            qsort(&names[hardcodedCount], count - hardcodedCount, 4u, compare);
+            qsort(&names[hardcodedCount], count - hardcodedCount, sizeof(*(&names[hardcodedCount])), compare);
             oldElements = parentElement->childArrayHead;
             oldChildCount = parentElement->childCount;
             newElements = (Scr_WatchElement_s *)Scr_AllocDebugMem(
@@ -2339,7 +2338,7 @@ void __cdecl Scr_SortElementChildren(scriptInstance_t inst, Scr_WatchElement_s *
         elementList[newIndex] = (unsigned int)&newElements[newIndex];
     Sys_EnterCriticalSection(CRITSECT_SCRIPT_DEBUGGER_SORT);
     sortInst = inst;
-    qsort(elementList, count, 4u, (int (__cdecl *)(const void *, const void *))CompareThreadElements);
+    qsort(elementList, count, sizeof(*(elementList)), (int (__cdecl *)(const void *, const void *))CompareThreadElements);
     Sys_LeaveCriticalSection(CRITSECT_SCRIPT_DEBUGGER_SORT);
     for ( newIndexa = 0; newIndexa < count; ++newIndexa )
     {
@@ -3423,19 +3422,19 @@ void __cdecl Scr_InitDebuggerMain(scriptInstance_t inst)
         if ( g_scrVarChildSize[inst] != 0x3FFFE )
         {
             gScrDebuggerGlob[inst].variableBreakpoints = (Scr_WatchElementDoubleNode_t **)Z_VirtualAlloc(
-                4 * VARIABLELIST_SIZE(inst), "gScrDebuggerGlob[inst].variableBreakpoints", 0);
+                (int)sizeof(Scr_WatchElementDoubleNode_t *) * VARIABLELIST_SIZE(inst), "gScrDebuggerGlob[inst].variableBreakpoints", 0);
             if ( !gScrDebuggerGlob[inst].variableBreakpoints )
-                Com_Error(ERR_FATAL, "mod: out of memory for the script debugger breakpoints (%u bytes)", 4 * VARIABLELIST_SIZE(inst));
-            memset((unsigned __int8 *)gScrDebuggerGlob[inst].variableBreakpoints, 0, 4 * VARIABLELIST_SIZE(inst));
+                Com_Error(ERR_FATAL, "mod: out of memory for the script debugger breakpoints (%u bytes)", (int)sizeof(Scr_WatchElementDoubleNode_t *) * VARIABLELIST_SIZE(inst));
+            memset((unsigned __int8 *)gScrDebuggerGlob[inst].variableBreakpoints, 0, (int)sizeof(Scr_WatchElementDoubleNode_t *) * VARIABLELIST_SIZE(inst));
         }
         else
         {
             gScrDebuggerGlob[inst].variableBreakpoints = (Scr_WatchElementDoubleNode_t **)Hunk_UserAlloc(
                                                                                                                                                                             g_DebugHunkUser,
-                                                                                                                                                                            4 * VARIABLELIST_SIZE(inst) /* retail 1179640 */,
+                                                                                                                                                                            (int)sizeof(Scr_WatchElementDoubleNode_t *) * VARIABLELIST_SIZE(inst) /* retail 1179640 */,
                                                                                                                                                                             4,
                                                                                                                                                                             "gScrDebuggerGlob[inst].variableBreakpoints");
-            memset((unsigned __int8 *)gScrDebuggerGlob[inst].variableBreakpoints, 0, 4 * VARIABLELIST_SIZE(inst));
+            memset((unsigned __int8 *)gScrDebuggerGlob[inst].variableBreakpoints, 0, (int)sizeof(Scr_WatchElementDoubleNode_t *) * VARIABLELIST_SIZE(inst));
         }
         gScrDebuggerGlob[inst].assignHead = 0;
         gScrDebuggerGlob[inst].assignHeadCodePos = 0;
@@ -3485,8 +3484,27 @@ void __cdecl Scr_ShutdownDebuggerMain(scriptInstance_t inst)
     }
 }
 
+#if defined(BO1_PORT_X64)
+// The script debugger UI (script lists, watch windows, remote socket) is dev-only tooling full of Win32 pointer-in-int
+// layouts. It stays inert on x64 until ported (opt in with BO1_SCRDEBUGGER=1); breakpoints are only ever planted by it.
+static bool Bo1_ScrDebuggerUiEnabled()
+{
+    static int s_enabled = -1;
+    if (s_enabled < 0)
+    {
+        char v[8];
+        s_enabled = GetEnvironmentVariableA("BO1_SCRDEBUGGER", v, sizeof(v)) ? 1 : 0;
+    }
+    return s_enabled != 0;
+}
+#endif
+
 void __cdecl Scr_InitDebugger(scriptInstance_t inst)
 {
+#if defined(BO1_PORT_X64)
+    if (!Bo1_ScrDebuggerUiEnabled())
+        return;
+#endif
     if (gScrVarPub[inst].developer && gScrCompilePub[inst].script_loading)
     {
         if ( gScrDebuggerGlob[inst].debugger_inited
@@ -3529,6 +3547,10 @@ void __cdecl Scr_ShutdownDebugger(scriptInstance_t inst)
 
 void __cdecl Scr_InitDebuggerSystem(scriptInstance_t inst)
 {
+#if defined(BO1_PORT_X64)
+    if (!Bo1_ScrDebuggerUiEnabled())
+        return;
+#endif
     if (gScrVarPub[inst].developer)
     {
         if (gScrDebuggerGlob[inst].debugger_inited_system
@@ -3672,7 +3694,7 @@ void __cdecl Scr_AddAssignmentPos(scriptInstance_t inst, char *codePos)
     if (gScrCompilePub[inst].developer_statement != 2 && gScrDebuggerGlob[inst].assignHeadCodePos != codePos)
     {
         gScrDebuggerGlob[inst].assignHeadCodePos = codePos;
-        opcodeElement = (Scr_OpcodeList_s *)Hunk_UserAlloc(g_DebugHunkUser, 8, 4, "Scr_AddAssignmentPos");
+        opcodeElement = (Scr_OpcodeList_s *)Hunk_UserAlloc(g_DebugHunkUser, sizeof(Scr_OpcodeList_s), 4, "Scr_AddAssignmentPos");
         opcodeElement->codePos = codePos;
         opcodeElement->next = gScrDebuggerGlob[inst].assignHead;
         gScrDebuggerGlob[inst].assignHead = opcodeElement;
@@ -4420,6 +4442,11 @@ void __cdecl Scr_DebugKillThread(scriptInstance_t inst, unsigned int threadId, c
 
 void __cdecl Scr_DebugTerminateThread(scriptInstance_t inst, int topThread)
 {
+#if defined(BO1_PORT_X64)
+    // The breakpoint machinery below needs Scr_InitDebuggerSystem, which is inert on x64 (see Bo1_ScrDebuggerUiEnabled).
+    if (!gScrDebuggerGlob[inst].debugger_inited_system)
+        return;
+#endif
     Scr_DebugKillThread(
         inst,
         gScrVmPub[inst].function_frame_start[topThread].fs.localId,

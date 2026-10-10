@@ -1,3 +1,4 @@
+#include <database/db_stream.h>
 #include "cm_load.h"
 #include "cm_mapkit.h"
 #include "common.h"
@@ -219,7 +220,7 @@ void __cdecl CM_Hunk_CheckTempMemoryHighClear()
     Hunk_CheckTempMemoryHighClear();
 }
 
-unsigned int __cdecl CM_Hunk_AllocateTempMemoryHigh(int size, const char *name)
+void *__cdecl CM_Hunk_AllocateTempMemoryHigh(int size, const char *name)
 {
     return Hunk_AllocateTempMemoryHigh(size, name);
 }

@@ -2,13 +2,32 @@
 #include "db_stream.h"
 #include <universal/assertive.h>
 #include <string.h>
+#include <cstdint>
+#include <cstdio>
 #include "db_file_load.h"
 #include <clientscript/cscr_stringlist.h>
+
+#if defined(BO1_PORT_X64)
+extern int g_dbTopAssetType;
+#endif
 
 StreamDelayInfo g_streamDelayArray[4096];
 
 void __cdecl Load_Stream(bool atStreamStart, unsigned __int8 *ptr, int size)
 {
+#if defined(BO1_PORT_X64)
+    // Expand follow-ups can see ptr==pos on Load_Stream(0, ...); Win32 never does (asserts).
+    // Do not promote to a read — that overwrites already-expanded pointer fields with file bytes.
+    if (!atStreamStart && ptr == DB_GetStreamPos())
+    {
+        static int s_logged;
+        if (s_logged < 8)
+        {
+            ++s_logged;
+        }
+    }
+    else
+#endif
     if (atStreamStart != (ptr == DB_GetStreamPos())
         && !Assert_MyHandler(
             "C:\\projects_pc\\cod\\codsrc\\src\\database\\db_stream_load.cpp",
@@ -60,12 +79,14 @@ void __cdecl Load_DelayStream()
         DB_LoadXFileData((unsigned __int8 *)g_streamDelayArray[index].ptr, g_streamDelayArray[index].size);
 }
 
-void __cdecl DB_ConvertOffsetToAlias(unsigned int *data)
+void __cdecl DB_ConvertOffsetToAlias(void *field)
 {
-    unsigned int offset; // [esp+0h] [ebp-8h]
+    // FastFiles store 32-bit offsets in pointer slots. Read the low 32 bits, then
+    // write a host pointer (32-bit on Win32, 64-bit on x64/ARM64).
+    auto *data = reinterpret_cast<uintptr_t *>(field);
+    const unsigned int offset = static_cast<unsigned int>(*data);
 
-    offset = *data;
-    if ( (!*data || offset >= 0xFFFFFFFE)
+    if ( (!offset || offset >= 0xFFFFFFFE)
         && !Assert_MyHandler(
                     "C:\\projects_pc\\cod\\codsrc\\src\\database\\db_stream_load.cpp",
                     67,
@@ -76,12 +97,61 @@ void __cdecl DB_ConvertOffsetToAlias(unsigned int *data)
     {
         __debugbreak();
     }
-    *data = *(unsigned int *)&g_streamBlocks[(offset - 1) >> 29].data[(offset - 1) & 0x1FFFFFFF];
+#if defined(BO1_PORT_X64)
+    {
+        const unsigned int blockIndex = (offset - 1) >> 29;
+        const unsigned int within = (offset - 1) & 0x1FFFFFFFu;
+        unsigned __int8 *mapped = reinterpret_cast<unsigned __int8 *>(DB_StreamAliasSlotLookup(blockIndex, within));
+        if (!mapped)
+            mapped = DB_StreamExactLookup(blockIndex, within);
+        if (!mapped)
+        {
+            mapped = DB_StreamMapLookup(blockIndex, within);
+            static int s_logged;
+            if (s_logged < 64)
+            {
+                ++s_logged;
+            }
+        }
+        if (!mapped || blockIndex >= 7 || !g_streamBlocks[blockIndex].data || mapped < g_streamBlocks[blockIndex].data ||
+            mapped + sizeof(uintptr_t) > g_streamBlocks[blockIndex].data + g_streamBlocks[blockIndex].size)
+        {
+            Bo1_Diag("Alias OUT OF BLOCK off=%08X block=%u within=%08X mapped=%p topType=%d segs=%s",
+                     offset, blockIndex, within, (void *)mapped, g_dbTopAssetType, DB_StreamDescribe(blockIndex, within));
+            *data = 0;
+            return;
+        }
+        *data = *reinterpret_cast<uintptr_t *>(mapped);
+        {
+            static int s_aliasDiag;
+            const unsigned int hi = static_cast<unsigned int>(*data >> 32);
+            const unsigned int baseHi = static_cast<unsigned int>(reinterpret_cast<uintptr_t>(g_streamBlocks[blockIndex].data) >> 32);
+            if (hi != baseHi && s_aliasDiag++ < 40)
+                Bo1_Diag("Alias suspicious off=%08X block=%u within=%08X mapped=%p value=%p segs=%s",
+                         offset, blockIndex, within, (void *)mapped, (void *)*data, DB_StreamDescribe(blockIndex, within));
+        }
+    }
+#else
+    *data = *reinterpret_cast<uintptr_t *>(
+        &g_streamBlocks[(offset - 1) >> 29].data[(offset - 1) & 0x1FFFFFFF]);
+#endif
 }
 
-void __cdecl DB_ConvertOffsetToPointer(unsigned int *data)
+void __cdecl DB_ConvertOffsetToPointer(void *field)
 {
-    *data = (unsigned int)&g_streamBlocks[(unsigned int)(*data - 1) >> 29].data[(*data - 1) & 0x1FFFFFFF];
+    auto *data = reinterpret_cast<uintptr_t *>(field);
+    const unsigned int offset = static_cast<unsigned int>(*data);
+#if defined(BO1_PORT_X64)
+    {
+        const unsigned int blockIndex = (offset - 1) >> 29;
+        const unsigned int within = (offset - 1) & 0x1FFFFFFFu;
+        unsigned __int8 *mapped = DB_StreamMapLookup(blockIndex, within);
+        *data = reinterpret_cast<uintptr_t>(mapped);
+    }
+#else
+    *data = reinterpret_cast<uintptr_t>(
+        &g_streamBlocks[(offset - 1) >> 29].data[(offset - 1) & 0x1FFFFFFF]);
+#endif
 }
 
 void __cdecl Load_XStringCustom(const char **str)

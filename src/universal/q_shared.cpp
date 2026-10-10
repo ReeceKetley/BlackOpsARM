@@ -12,6 +12,7 @@
 #include <clientscript/cscr_stringlist.h>
 #include "com_math_anglevectors.h"
 #include <EffectsCore/fx_load_obj.h>
+#include <csetjmp>
 
 #define BIG_INFO_STRING 0x4000
 
@@ -23,7 +24,8 @@ struct va_info_t
 
 va_info_t va_info[15];
 TraceThreadInfo g_traceThreadInfo[15];
-int g_com_error[15][16];
+// Was int[15][16] matching 32-bit MSVC jmp_buf. Use real jmp_buf for x64.
+jmp_buf g_com_error[15];
 int valueindex;
 
 // *WARNING* One or more selections were skipped as they could not be interpreted as c data

@@ -20,6 +20,8 @@ void    Sys_Error(char *error, ...);
 void __cdecl    Sys_Quit();
 void Sys_SpawnQuitProcess();
 void __cdecl Sys_Print(char *msg);
+// Raw Win32 print used by the platform Windows backend (avoids recursion through IPlatform).
+void __cdecl Sys_Print_Win32(char *msg);
 char *__cdecl Sys_GetClipboardData();
 void __cdecl Sys_QueEvent(unsigned int time, sysEventType_t type, int value, int value2, int ptrLength, void *ptr);
 void Sys_ShutdownEvents();

@@ -53,8 +53,8 @@ void __cdecl R_AddDebugPolygonInternal(
                 {
                     __debugbreak();
                 }
-                R_DebugAlloc((void **)&polySet->polys, 48 * polySet->polyLimit, "(debugGlobalsEntry->polys)");
-                R_DebugAlloc((void **)&polySet->verts, 12 * polySet->vertLimit, "(debugGlobalsEntry->verts)");
+                R_DebugAlloc((void **)&polySet->polys, (int)sizeof(*polySet->polys) * polySet->polyLimit, "(debugGlobalsEntry->polys)");
+                R_DebugAlloc((void **)&polySet->verts, (int)sizeof(*polySet->verts) * polySet->vertLimit, "(debugGlobalsEntry->verts)");
             }
             if ( polySet->polys && polySet->verts )
             {
@@ -155,7 +155,7 @@ void __cdecl R_AddDebugLine(
     if ( debugGlobalsEntry->lineCount + 1 <= debugGlobalsEntry->lineLimit )
     {
         if ( debugGlobalsEntry->lines
-            || (R_DebugAlloc((void **)&debugGlobalsEntry->lines, 44 * debugGlobalsEntry->lineLimit, "R_AddDebugLine"),
+            || (R_DebugAlloc((void **)&debugGlobalsEntry->lines, (int)sizeof(*debugGlobalsEntry->lines) * debugGlobalsEntry->lineLimit, "R_AddDebugLine"),
                     debugGlobalsEntry->lines) )
         {
             pDebugLine = &debugGlobalsEntry->lines[debugGlobalsEntry->lineCount];
@@ -323,7 +323,7 @@ void __cdecl R_TransferDebugGlobals(DebugGlobals *debugGlobalsEntry)
     {
         if ( !debugGlobalsEntry->plumes )
         {
-            R_DebugAlloc((void **)&debugGlobalsEntry->plumes, 40 * debugGlobals.plumeLimit, "(debugGlobalsEntry->plumes)");
+            R_DebugAlloc((void **)&debugGlobalsEntry->plumes, (int)sizeof(*debugGlobalsEntry->plumes) * debugGlobals.plumeLimit, "(debugGlobalsEntry->plumes)");
             if ( !debugGlobalsEntry->plumes )
                 return;
         }
@@ -400,7 +400,7 @@ void __cdecl R_CopyDebugLines(
     dg = &frontEndDataOut->debugGlobals;
     if ( !clLines && !svLines
         || frontEndDataOut->debugGlobals.externLines
-        || (R_DebugAlloc((void **)&frontEndDataOut->debugGlobals.externLines, 44 * maxLineCount, "R_CopyDebugLines"),
+        || (R_DebugAlloc((void **)&frontEndDataOut->debugGlobals.externLines, (int)sizeof(*frontEndDataOut->debugGlobals.externLines) * maxLineCount, "R_CopyDebugLines"),
                 dg->externLines) )
     {
         dest = (unsigned __int8 *)dg->externLines;
@@ -428,7 +428,7 @@ void __cdecl R_CopyDebugSpheres(
     dg = &frontEndDataOut->debugGlobals;
     if ( !clSpheres && !svSpheres
         || frontEndDataOut->debugGlobals.externSpheres
-        || (R_DebugAlloc((void **)&frontEndDataOut->debugGlobals.externSpheres, 40 * maxSphereCount, "R_CopyDebugSpheres"),
+        || (R_DebugAlloc((void **)&frontEndDataOut->debugGlobals.externSpheres, (int)sizeof(*frontEndDataOut->debugGlobals.externSpheres) * maxSphereCount, "R_CopyDebugSpheres"),
                 dg->externSpheres) )
     {
         dest = (unsigned __int8 *)dg->externSpheres;

@@ -16,7 +16,7 @@
 scrEvaluateGlob_t gScrEvaluateGlob[2];
 
 int g_script_error_level[2];
-int g_script_error[2][33][16];
+jmp_buf g_script_error[2][33];
 
 int __cdecl Scr_CompareCanonicalStrings(unsigned int *arg1, unsigned int *arg2)
 {
@@ -52,7 +52,7 @@ void __cdecl Scr_ArchiveCanonicalStrings(scriptInstance_t inst)
         "Scr_ArchiveCanonicalStrings1");
     gScrEvaluateGlob[inst].archivedCanonicalStrings = (ArchivedCanonicalStringInfo *)Hunk_UserAlloc(
         g_DebugHunkUser,
-        8
+        (int)sizeof(ArchivedCanonicalStringInfo)
         * gScrVarPub[inst].canonicalStrCount,
         4,
         "Scr_ArchiveCanonicalStrings2");
@@ -105,8 +105,7 @@ void __cdecl Scr_ArchiveCanonicalStrings(scriptInstance_t inst)
     }
     qsort(
         gScrEvaluateGlob[inst].archivedCanonicalStrings,
-        gScrVarPub[inst].canonicalStrCount,
-        8u,
+        gScrVarPub[inst].canonicalStrCount, sizeof(*(gScrEvaluateGlob[inst].archivedCanonicalStrings)),
         (int(__cdecl *)(const void *, const void *))CompareCanonicalStrings);
     for (ia = 0; ia < (int)gScrVarPub[inst].canonicalStrCount; ++ia)
     {
@@ -715,14 +714,14 @@ void __cdecl Scr_CompilePrimitiveExpressionList(scriptInstance_t inst, sval_u *e
     expr_count = GetExpressionCount(*exprlist);
     if ( expr_count == 1 )
     {
-        nodea = *(sval_u **)exprlist->stringValue;
+        nodea = SVAL_PTR_AT(sval_u, exprlist->stringValue);
         Scr_CompileExpression(inst, nodea->node);
         *exprlist = *nodea->node;
     }
     else if ( expr_count == 3 )
     {
         i = 0;
-        for ( node = *(sval_u **)exprlist->stringValue; node; node = node[1].node )
+        for ( node = SVAL_PTR_AT(sval_u, exprlist->stringValue); node; node = node[1].node )
         {
             Scr_CompileExpression(inst, node->node);
             expr[i++] = *node->node;
@@ -789,7 +788,7 @@ void __cdecl Scr_CompileCallExpressionList(scriptInstance_t inst, sval_u *exprli
     sval_u expr; // [esp+Ch] [ebp-4h]
 
     expr = debugger_node0(inst, ENUM_NOP);
-    for ( node = *(sval_u **)exprlist->stringValue; node; node = node[1].node )
+    for ( node = SVAL_PTR_AT(sval_u, exprlist->stringValue); node; node = node[1].node )
     {
         Scr_CompileExpression(inst, node->node);
         expr = debugger_prepend_node(inst, *node->node, expr);
@@ -1074,11 +1073,11 @@ void __cdecl Scr_EvalPrimitiveExpression(
         break;
     case 0xD:
         value->type = 2;
-        value->u.intValue = SL_GetString_(inst, *(char **)(expr.stringValue + 4), 0, 20);
+        value->u.intValue = SL_GetString_(inst, SVAL_PTR_AT(char, expr.stringValue + 4), 0, 20);
         break;
     case 0xE:
         value->type = 3;
-        value->u.intValue = SL_GetString_(inst, *(char **)(expr.stringValue + 4), 0, 20);
+        value->u.intValue = SL_GetString_(inst, SVAL_PTR_AT(char, expr.stringValue + 4), 0, 20);
         break;
     case 0x13:
         Scr_EvalVariableExpression(inst, *(sval_u *)(expr.stringValue + 4), localId, value);
@@ -1634,7 +1633,7 @@ void __cdecl Scr_PreEvalBuiltin(scriptInstance_t inst, sval_u params, unsigned i
         __debugbreak();
     }
     index = 0;
-    for (node = *(sval_u **)params.stringValue; node; node = node[1].node)
+    for (node = SVAL_PTR_AT(sval_u, params.stringValue); node; node = node[1].node)
         Scr_EvalExpression(inst, *node, localId, &gScrVmPub[inst].top[-index++]);
     gScrVmPub[inst].outparamcount = expr_count;
     if (!gScrVarPub[inst].evaluate
@@ -2114,7 +2113,7 @@ bool __cdecl Scr_RefCall(scriptInstance_t inst, sval_u params)
     bool exprRemoved; // [esp+7h] [ebp-1h]
 
     exprRemoved = 0;
-    for ( node = *(sval_u **)params.stringValue; node; node = node[1].node )
+    for ( node = SVAL_PTR_AT(sval_u, params.stringValue); node; node = node[1].node )
     {
         if ( Scr_RefExpression(inst, *node) )
             exprRemoved = 1;

@@ -201,7 +201,7 @@ void __cdecl IN_Activate(int active)
         IN_DeactivateMouse();
 }
 
-void __cdecl IN_Frame()
+void __cdecl IN_Frame_Win32()
 {
     if ( Dvar_GetBool("ClickToContinue") )
         PostMessageA(g_wv.hWnd, 0x201u, 1u, 0);
@@ -224,6 +224,11 @@ void __cdecl IN_Frame()
             IN_DeactivateMouse();
         }
     }
+}
+
+void __cdecl IN_Frame()
+{
+    IN_Frame_Win32();
 }
 
 void IN_GamepadsMove()

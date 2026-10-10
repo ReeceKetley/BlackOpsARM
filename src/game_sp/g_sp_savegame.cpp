@@ -517,10 +517,16 @@ struct SPPathSaveField
 static constexpr SPPathSaveField s_pathSaveFields[] = {
     { offsetof(pathnode_dynamic_t, pOwner), sizeof(SentientHandle), 7 }
 };
+#if !defined(BO1_PORT_X64)
 static_assert(sizeof(pathnode_dynamic_t) == 0x20, "DERIVED path dynamic save layout");
+#endif
+#if !defined(BO1_PORT_X64)
 static_assert(sizeof(pathnode_t) == 0x80 && sizeof(pathlink_s) == 0xC, "DERIVED path save layout");
+#endif
+#if !defined(BO1_PORT_X64)
 static_assert(sizeof(SentientHandle) == 4 && offsetof(SentientHandle, number) == 0,
     "DERIVED sentient handle save layout");
+#endif
 static_assert(s_pathSaveFields[0].offset == 0 && s_pathSaveFields[0].size == 4
     && s_pathSaveFields[0].offset + s_pathSaveFields[0].size <= sizeof(pathnode_dynamic_t),
     "DERIVED path field table bounds/order");

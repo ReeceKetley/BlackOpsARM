@@ -118,8 +118,7 @@ void __cdecl LiveMeetPlayer_SortMetPlayers(int localControllerIndex, unsigned in
 {
     qsort(
         metPlayersXuidinfo[localControllerIndex].playersXuidInfo,
-        noOfPlayers,
-        0x30u,
+        noOfPlayers, sizeof(*(metPlayersXuidinfo[localControllerIndex].playersXuidInfo)),
         (int (__cdecl *)(const void *, const void *))LiveMeetPlayer_MetPlayerCompare);
 }
 

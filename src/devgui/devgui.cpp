@@ -77,7 +77,7 @@ devguiGlob_t *__cdecl DevGui_GetMenu(unsigned __int16 handle)
     {
         __debugbreak();
     }
-    return (devguiGlob_t *)((char *)&devguiGlob + 40 * handle - 40);
+    return (devguiGlob_t *)((char *)&devguiGlob + sizeof(DevMenuItem) * handle - sizeof(DevMenuItem));
 }
 
 unsigned __int16 __cdecl DevGui_ConstructPath_r(unsigned __int16 parent, const char *path)
@@ -182,8 +182,8 @@ unsigned __int16 __cdecl DevGui_GetMenuHandle(DevMenuItem *menu)
 {
     unsigned __int16 handle; // [esp+0h] [ebp-4h]
 
-    handle = ((char *)menu - (char *)&devguiGlob) / 40 + 1;
-    if ( ((unsigned __int16)(((char *)menu - (char *)&devguiGlob) / 40) == 0xFFFF || handle > 0x800u)
+    handle = ((char *)menu - (char *)&devguiGlob) / (int)sizeof(DevMenuItem) + 1;
+    if ( ((unsigned __int16)(((char *)menu - (char *)&devguiGlob) / (int)sizeof(DevMenuItem)) == 0xFFFF || handle > 0x800u)
         && !Assert_MyHandler(
                     "C:\\projects_pc\\cod\\codsrc\\src\\devgui\\devgui.cpp",
                     233,
@@ -195,7 +195,7 @@ unsigned __int16 __cdecl DevGui_GetMenuHandle(DevMenuItem *menu)
     {
         __debugbreak();
     }
-    return ((char *)menu - (char *)&devguiGlob) / 40 + 1;
+    return ((char *)menu - (char *)&devguiGlob) / (int)sizeof(DevMenuItem) + 1;
 }
 
 int __cdecl DevGui_CompareMenus(const DevMenuItem *menu0, const DevMenuItem *menu1)
@@ -556,7 +556,7 @@ void __cdecl DevGui_FreeMenu_r(unsigned __int16 handle)
             DevGui_FreeMenu_r(menu->menus[0].child.menu);
         }
         DevGui_FreeMenu_r(menu->menus[0].nextSibling);
-        *(unsigned int *)menu->menus[0].label = (unsigned int)devguiGlob.nextFreeMenu;
+        *(DevMenuItem **)menu->menus[0].label = devguiGlob.nextFreeMenu;
         devguiGlob.nextFreeMenu = (DevMenuItem *)menu;
     }
 }
@@ -1564,8 +1564,8 @@ void __cdecl DevGui_Init()
     screen_xPad = RETURN_ZERO32();
     screen_yPad = RETURN_ZERO32();
     for ( menuIndex = 0; menuIndex < 0x7FF; ++menuIndex )
-        *(unsigned int *)devguiGlob.menus[menuIndex].label = (unsigned int)&devguiGlob.menus[menuIndex + 1];
-    *(unsigned int *)devguiGlob.menus[menuIndex].label = 0;
+        *(DevMenuItem **)devguiGlob.menus[menuIndex].label = &devguiGlob.menus[menuIndex + 1];
+    *(DevMenuItem **)devguiGlob.menus[menuIndex].label = 0;
     devguiGlob.nextFreeMenu = (DevMenuItem *)&devguiGlob;
     devguiGlob.topmostMenu.childType = 0;
     devguiGlob.topmostMenu.childMenuMemory = 0;

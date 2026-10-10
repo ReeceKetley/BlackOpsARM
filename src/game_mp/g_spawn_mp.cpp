@@ -1,3 +1,4 @@
+#include <vehicle/nitrous_vehicle.h>
 #include "g_spawn_mp.h"
 #include <game/g_load_utils.h>
 #include <clientscript/cscr_vm.h>
@@ -70,21 +71,21 @@ static void __cdecl Scr_SetSpVehicleTeam(gentity_s *ent, int offset);
 
 const ent_field_t fields_1[] =
 {
-  { "classname", 356, { 2 }, F_STRING, Scr_ReadOnlyField },
-  { "origin", 292, { 12 }, F_VECTOR, Scr_SetOrigin },
-  { "model", 348, { 2 }, F_MODEL, Scr_ReadOnlyField },
-  { "spawnflags", 368, { 4 }, F_INT, Scr_ReadOnlyField },
-  { "target", 358, { 2 }, F_STRING, NULL },
-  { "targetname", 360, { 2 }, F_STRING, NULL },
-  { "script_noteworthy", 362, { 2 }, F_STRING, NULL },
-  { "count", 532, { 4 }, F_INT, NULL },
-  { "health", 404, { 4 }, F_INT, Scr_SetHealth },
-  { "dmg", 412, { 4 }, F_INT, NULL },
-  { "angles", 304, { 12 }, F_VECTOR, Scr_SetAngles },
-  { "birthtime", 748, { 4 }, F_INT, Scr_ReadOnlyField },
-  { "index", 560, { 4 }, F_INT, Scr_SetExposureIndex },
-  { "lerp_to_lighter", 564, { 4 }, F_FLOAT, Scr_SetExposureLerpToLighter },
-  { "lerp_to_darker", 568, { 4 }, F_FLOAT, Scr_SetExposureLerpToDarker },
+  { "classname", offsetof(gentity_s, classname), { 2 }, F_STRING, Scr_ReadOnlyField },
+  { "origin", offsetof(gentity_s, r.currentOrigin), { 12 }, F_VECTOR, Scr_SetOrigin },
+  { "model", offsetof(gentity_s, model), { 2 }, F_MODEL, Scr_ReadOnlyField },
+  { "spawnflags", offsetof(gentity_s, spawnflags), { 4 }, F_INT, Scr_ReadOnlyField },
+  { "target", offsetof(gentity_s, target), { 2 }, F_STRING, NULL },
+  { "targetname", offsetof(gentity_s, targetname), { 2 }, F_STRING, NULL },
+  { "script_noteworthy", offsetof(gentity_s, script_noteworthy), { 2 }, F_STRING, NULL },
+  { "count", offsetof(gentity_s, count), { 4 }, F_INT, NULL },
+  { "health", offsetof(gentity_s, health), { 4 }, F_INT, Scr_SetHealth },
+  { "dmg", offsetof(gentity_s, damage), { 4 }, F_INT, NULL },
+  { "angles", offsetof(gentity_s, r.currentAngles), { 12 }, F_VECTOR, Scr_SetAngles },
+  { "birthtime", offsetof(gentity_s, birthTime), { 4 }, F_INT, Scr_ReadOnlyField },
+  { "index", offsetof(gentity_s, item) + 20, { 4 }, F_INT, Scr_SetExposureIndex },
+  { "lerp_to_lighter", offsetof(gentity_s, item) + 24, { 4 }, F_FLOAT, Scr_SetExposureLerpToLighter },
+  { "lerp_to_darker", offsetof(gentity_s, item) + 28, { 4 }, F_FLOAT, Scr_SetExposureLerpToDarker },
   // zombies: SP +0x188 -> gentity_s::maxHealth (SP 0x00a5576c).
   { "maxhealth", offsetof(gentity_s, maxHealth), { 4 }, F_INT, NULL },
   // zombies: SP +0x157 -> gentity_s::takedamage (SP 0x00a557a8).
@@ -108,7 +109,7 @@ const ent_field_t fields_1[] =
   { "healthmax", 7184, { 4 }, F_INT, Scr_ReadOnlyField },
   { "vteam", 0, { 4 }, F_INT, Scr_SetSpVehicleTeam },
   // zombies: SP row 53 isphysicsvehicle = the def's isNitrous (SP def +0x1c90, KB +7328: MP has 4 more button keys).
-  { "isphysicsvehicle", 7328, { 4 }, F_INT, Scr_ReadOnlyField },
+  { "isphysicsvehicle", offsetof(vehicle_info_t, isNitrous), { 4 }, F_INT, Scr_ReadOnlyField },
   { NULL, 0, { 0 }, F_INT, NULL }
 };
 
@@ -1567,7 +1568,7 @@ void __cdecl SP_worldspawn(SpawnVar *spawnVar)
     }
     G_SpawnString(spawnVar, "message", "", &s);
     SV_SetConfigstring(4, (char *)s);
-    SV_SetConfigstring(11, (char *)g_motd->current.integer);
+    SV_SetConfigstring(11, (char *)g_motd->current.string);
     G_SpawnString(spawnVar, "gravity", "800", &s);
     if ( !bg_gravity
         && !Assert_MyHandler("C:\\projects_pc\\cod\\codsrc\\src\\game_mp\\g_spawn_mp.cpp", 1381, 0, "%s", "bg_gravity") )

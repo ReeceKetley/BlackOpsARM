@@ -8,6 +8,7 @@
 #include <ui/ui_shared.h>
 #include <qcommon/com_clients.h>
 #include <win32/win_shared.h>
+#include <platform/platform.hpp>
 #include <universal/com_files.h>
 #include <client/cl_main.h>
 #include <qcommon/files.h>
@@ -1763,7 +1764,7 @@ void __cdecl CL_DownloadsComplete(int localClientNum)
     else
     {
         Com_SyncThreads();
-        if ( fs_gameDirVar && *(_BYTE *)fs_gameDirVar->current.integer )
+        if ( fs_gameDirVar && *fs_gameDirVar->current.string )
         {
             v1 = va("%s/%s", fs_homepath->current.string, fs_gameDirVar->current.string);
             Sys_Mkdir(v1);
@@ -2685,6 +2686,13 @@ unsigned __int8 *perLocalClientMemBuffer;
 HunkUser *perLocalClientMemHunk;
 int cl_allocatedClients = 32;
 unsigned int cl_lastAllocFlags;
+#if defined(BO1_PORT_X64)
+#include <EffectsCore/fx_system.h>
+#include <EffectsCore/fx_marks.h>
+#include <cgame/cg_local.h>
+#include <database/db_stream.h>
+#endif
+
 void __cdecl AllocatePerLocalClientMemory(int maxLocalClients, int maxClients, unsigned int flags)
 {
     int mem_needed; // [esp+0h] [ebp-4h]
@@ -2692,7 +2700,10 @@ void __cdecl AllocatePerLocalClientMemory(int maxLocalClients, int maxClients, u
     int mem_neededb; // [esp+0h] [ebp-4h]
 
     CL_FreePerLocalClientMemory();
-    mem_needed = (2449480 + CL_PARSE_ENTITIES_EXTRA_BYTES) * maxLocalClients; // mod (L43): + the larger parseEntities ring
+    // clientActive_t / clientConnection_t: Win32 sizeof 1728768 / 720712 (larger on x64)
+    const int clientActiveBytes = (int)Bo1_MaxSize(sizeof(clientActive_t), 1728768);
+    const int clientConnBytes = (int)Bo1_MaxSize(sizeof(clientConnection_t), 720712);
+    mem_needed = (clientActiveBytes + clientConnBytes + CL_PARSE_ENTITIES_EXTRA_BYTES) * maxLocalClients; // mod (L43): + the larger parseEntities ring
     if ( (flags & 1) == 0 )
         mem_needed += (int)SV_AllocateClientMemory_SizeRequired(maxLocalClients, maxClients);
     mem_neededa = mem_needed + CG_AllocateClientMemory_SizeRequired(maxLocalClients);
@@ -2709,14 +2720,14 @@ void __cdecl AllocatePerLocalClientMemory(int maxLocalClients, int maxClients, u
                                                         0,
                                                         "PerLocalClient Memory",
                                                         42);
-    clients = (clientActive_t *)Hunk_UserAlloc(perLocalClientMemHunk, (1728768 + CL_PARSE_ENTITIES_EXTRA_BYTES) * maxLocalClients, 4, "clients");
+    clients = (clientActive_t *)Hunk_UserAlloc(perLocalClientMemHunk, (clientActiveBytes + CL_PARSE_ENTITIES_EXTRA_BYTES) * maxLocalClients, 4, "clients");
     clientConnections = (clientConnection_t *)Hunk_UserAlloc(
                                                                                             perLocalClientMemHunk,
-                                                                                            720712 * maxLocalClients,
+                                                                                            clientConnBytes * maxLocalClients,
                                                                                             4,
                                                                                             "clientConnections");
-    memset((unsigned __int8 *)clients, 0, 1728768 * maxLocalClients);
-    memset((unsigned __int8 *)clientConnections, 0, 720712 * maxLocalClients);
+    memset((unsigned __int8 *)clients, 0, clientActiveBytes * maxLocalClients);
+    memset((unsigned __int8 *)clientConnections, 0, clientConnBytes * maxLocalClients);
     memset((unsigned __int8 *)&cls.gameState, 0, sizeof(cls.gameState));
     cls.serverId = 0;
     if ( (flags & 1) == 0 )
@@ -3149,7 +3160,7 @@ void __cdecl CL_RunOncePerClientFrame(int localClientNum, int msec)
     CL_RunNetworkFrame(localClientNum);
     if ( UI_IsFullscreen(localClientNum) )
         CL_SyncGpu();
-    IN_Frame();
+    Platform_InputFrame();
     if ( cl_avidemo->current.integer && msec )
     {
         if ( CL_GetLocalClientConnectionState(0) == 10 || cl_forceavidemo->current.enabled )

@@ -1,4 +1,5 @@
 #pragma once
+#include <universal/narrow32.h>
 
 #include "cscr_main.h"
 #include <universal/mem_userhunk.h>
@@ -74,7 +75,7 @@ struct ObjectInfo // sizeof=0x8
 
 struct __declspec(align(4)) VariableStackBuffer // sizeof=0x10
 {
-        const char *pos;
+        BO1_NARROW(const char) pos;
         unsigned __int16 size;
         unsigned __int16 bufLen;
         unsigned int localId;
@@ -114,12 +115,15 @@ union VariableUnion // sizeof=0x4
     int intValue;
     float floatValue;
     unsigned int stringValue;
-    const float *vectorValue;
-    const char *codePosValue;
+    BO1_NARROW(const float) vectorValue;
+    BO1_NARROW(const char) codePosValue;
     unsigned int pointerValue;
-    VariableStackBuffer *stackValue;
+    BO1_NARROW(VariableStackBuffer) stackValue;
     unsigned int entityOffset;
 };
+#if defined(BO1_PORT_X64)
+static_assert(sizeof(VariableUnion) == 4, "VariableUnion must stay 4 bytes");
+#endif
 
 union VariableValueInternal_u // sizeof=0x8
 {                                                                             // XREF: VariableValueInternal/r

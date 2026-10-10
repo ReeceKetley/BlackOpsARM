@@ -3754,7 +3754,7 @@ void __cdecl CG_DrawPlayerTargetHighlights(int localClientNum, const rectDef_s *
         for ( i = 0; i < 32; ++i )
         {
             cent = CG_GetEntity(localClientNum, i);
-            if ( ((*((unsigned int *)cent + 201) >> 1) & 1) != 0
+            if ( ((CENT_FLAGS(cent) >> 1) & 1) != 0
                 && cent->nextState.number != cgameGlob->clientNum
                 && cent->nextState.eType == 1
                 && (cent->nextState.lerp.eFlags & 0x40000) == 0 )
@@ -3850,7 +3850,7 @@ void __cdecl CG_DrawPlayerTargetHighlightsFriendly(
     if ( ShouldDrawPlayerTargetHighlights(localClientNum, cgameGlob) )
     {
         cent = CG_GetEntity(localClientNum, cgameGlob->clientNum);
-        if ( ((*((unsigned int *)cent + 201) >> 1) & 1) != 0
+        if ( ((CENT_FLAGS(cent) >> 1) & 1) != 0
             && cent->nextState.eType == 1
             && (cent->nextState.lerp.eFlags & 0x40000) == 0 )
         {
@@ -5704,7 +5704,7 @@ double __cdecl CG_GetClosestTargetToGuidedMissile(int localClientNum)
     for ( i = 0; i < 32; ++i )
     {
         cent = CG_GetEntity(localClientNum, i);
-        if ( ((*((unsigned int *)cent + 201) >> 1) & 1) != 0
+        if ( ((CENT_FLAGS(cent) >> 1) & 1) != 0
             && cent->nextState.number != cgameGlob->clientNum
             && cent->nextState.eType == 1
             && (cent->nextState.lerp.eFlags & 0x40000) == 0 )

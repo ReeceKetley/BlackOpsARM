@@ -207,7 +207,7 @@ int __cdecl SV_AP_PlaylistFromDistribution()
             playlists[j].diff = (int)((double)totalservers * ((double)s_probabilities[j] / 100.0)) - dword_979CF90[3 * j];
             playlists[j].playlist = j;
         }
-        qsort(playlists, 0x40u, 8u, (int (__cdecl *)(const void *, const void *))comparePlaylists);
+        qsort(playlists, 0x40u, sizeof(*(playlists)), (int (__cdecl *)(const void *, const void *))comparePlaylists);
         for ( k = 0; k < 64; ++k )
         {
             if ( playlists[k].diff > 0 )
@@ -346,7 +346,7 @@ void __cdecl SV_AP_GetControlFileName(char *buf, int buflen)
 #ifdef BO1_LIVE
     char *filename; // [esp+0h] [ebp-4h]
 
-    if ( (!sv_geolocation || !*(_BYTE *)sv_geolocation->current.integer)
+    if ( (!sv_geolocation || !*(_BYTE *)sv_geolocation->current.string)
         && !Assert_MyHandler(
                     "C:\\projects_pc\\cod\\codsrc\\src\\server_mp\\sv_autoplaylist.cpp",
                     299,
@@ -356,7 +356,7 @@ void __cdecl SV_AP_GetControlFileName(char *buf, int buflen)
     {
         __debugbreak();
     }
-    if ( sv_geolocation && *(_BYTE *)sv_geolocation->current.integer )
+    if ( sv_geolocation && *(_BYTE *)sv_geolocation->current.string )
     {
         filename = va("%s%s", sv_geolocation->current.string, ".csv");
         I_strncpyz(buf, filename, buflen);
@@ -547,7 +547,7 @@ void __cdecl SV_Groups_ParseGeos(const char *geoblob)
     {
         __debugbreak();
     }
-    if ( sv_geolocation && *(_BYTE *)sv_geolocation->current.integer )
+    if ( sv_geolocation && *(_BYTE *)sv_geolocation->current.string )
     {
         Com_Printf(15, "Setting location to %s\n", sv_geolocation->current.string);
     }

@@ -545,8 +545,7 @@ void __cdecl LiveCombatRecord_BuildSortedItemListByStats(
                     }
                     qsort(
                         sortedItemList,
-                        index,
-                        0x14u,
+                        index, sizeof(*(sortedItemList)),
                         (int (__cdecl *)(const void *, const void *))LiveCombatRecord_CompareItemsByStats);
                     sortedItemsBuffer[currLoadout] = *sortedItemList;
                 }
@@ -618,13 +617,11 @@ void __cdecl LiveCombatRecord_BuildSortedItemListByStats(
                 sharedUiInfo.clanTagFeature = index;
                 qsort(
                     s_sortedItemList,
-                    index,
-                    0x14u,
+                    index, sizeof(*(s_sortedItemList)),
                     (int (__cdecl *)(const void *, const void *))LiveCombatRecord_CompareItemsByStats);
                 qsort(
                     s_otherPlayerSortedItemList,
-                    sharedUiInfo.clanTagFeature,
-                    0x14u,
+                    sharedUiInfo.clanTagFeature, sizeof(*(s_otherPlayerSortedItemList)),
                     (int (__cdecl *)(const void *, const void *))LiveCombatRecord_CompareItemsByStats);
                 break;
             case WEAPON_HITLOCATION_HEATMAP:
@@ -650,8 +647,7 @@ void __cdecl LiveCombatRecord_BuildSortedItemListByStats(
                         divisionParam);
                 qsort(
                     sortedItemList,
-                    index,
-                    0x14u,
+                    index, sizeof(*(sortedItemList)),
                     (int (__cdecl *)(const void *, const void *))LiveCombatRecord_CompareMatchCount);
                 for ( index = 0; index < 3; ++index )
                 {
@@ -676,8 +672,7 @@ void __cdecl LiveCombatRecord_BuildSortedItemListByStats(
                         divisionParam);
                 qsort(
                     sortedItemList,
-                    index,
-                    0x14u,
+                    index, sizeof(*(sortedItemList)),
                     (int (__cdecl *)(const void *, const void *))LiveCombatRecord_CompareMatchCount);
                 for ( index = 0; index < 3; ++index )
                 {

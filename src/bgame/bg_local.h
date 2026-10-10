@@ -1,4 +1,5 @@
 #pragma once
+#include <cstddef>
 
 #include <qcommon/ent.h>
 #include <game/teams.h>
@@ -342,7 +343,12 @@ struct centity_s // sizeof=0x328
         // padding bit
         // padding bit
 };
+#if !defined(BO1_PORT_X64)
 static_assert(sizeof(centity_s) == 0x328);
+#endif
+// The decompiler addressed centity_s's flag bits as dword #201 (offset 804). The bit-field word follows updateDelayedNext
+// in the native layout too, so it is found from there.
+#define CENT_FLAGS(X) (*(unsigned int *)((unsigned char *)(X) + offsetof(centity_s, updateDelayedNext) + sizeof(void *)))
 
 struct fake_centity_s // sizeof=0x32C
 {                                                                             // XREF: fake_centity_t/r
@@ -732,7 +738,9 @@ struct playerState_s // sizeof=0x26A4
                 hudelem_s archival[31];
         } hud;
 };
+#if !defined(BO1_PORT_X64)
 static_assert(sizeof(playerState_s) == 9892);
+#endif
 
 struct lerpFrame_t // sizeof=0x34
 {                                                                             // XREF: clientInfo_t/r

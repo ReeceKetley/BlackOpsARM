@@ -14,7 +14,9 @@ struct StringTable // sizeof=0x14
     StringTableCell *values;
     __int16 *cellIndex;
 };
+#if !defined(BO1_PORT_X64)
 static_assert(sizeof(StringTable) == 20);
+#endif
 
 union XAssetHeader;
 

@@ -1,4 +1,10 @@
 #include "r_model_skin.h"
+#if defined(BO1_PORT_X64) || defined(_M_X64) || defined(_WIN64)
+#  define BO1_MMX_EMPTY() ((void)0)
+#else
+#  include <mmintrin.h>
+#  define BO1_MMX_EMPTY() _m_empty()
+#endif
 #include "r_dvars.h"
 #include <win32/win_common.h>
 #include "r_dobj_skin.h"
@@ -492,6 +498,10 @@ void R_SkinXModelCmd(SkinXModelCmd *data)
     PROF_SCOPED("R_SkinXModelCmd");
 
     useSSE = sys_SSE->current.enabled && r_sse_skinning->current.enabled;
+#if defined(BO1_PORT_X64) || defined(_M_X64) || defined(_WIN64)
+    // MMX skin path is x86-only; force scalar skinning on x64.
+    useSSE = 0;
+#endif
     useSSE_ = useSSE;
     sseStateUsed = 0;
     fastSkin = gfxBuf.fastSkin;
@@ -526,7 +536,7 @@ void R_SkinXModelCmd(SkinXModelCmd *data)
                 if (sseStateUsed)
                 {
                     sseStateUsed = 0;
-                    _m_empty();
+                    BO1_MMX_EMPTY();
                 }
 
                 DObjSkelMat mat0, mat1;
@@ -575,7 +585,7 @@ void R_SkinXModelCmd(SkinXModelCmd *data)
             if (!sseStateUsed)
             {
                 sseStateUsed = 1;
-                _m_empty();
+                BO1_MMX_EMPTY();
             }
             normalIn = 0;
             normalOut = 0;
@@ -595,7 +605,7 @@ void R_SkinXModelCmd(SkinXModelCmd *data)
     }
 
     if (sseStateUsed)
-        _m_empty();
+        BO1_MMX_EMPTY();
 }
 
 void __cdecl R_MultiplySkelMat(const DObjSkelMat *mat0, const DObjSkelMat *mat1, DObjSkelMat *out)

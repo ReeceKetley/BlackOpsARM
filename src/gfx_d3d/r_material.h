@@ -232,7 +232,9 @@ struct MaterialTechniqueSet // sizeof=0x210
         unsigned __int16 techsetFlags;
         MaterialTechnique *techniques[130];
 };
+#if !defined(BO1_PORT_X64)
 static_assert(sizeof(MaterialTechniqueSet) == 528);
+#endif
 
 struct __declspec(align(4)) GfxImageLoadDef // sizeof=0x10
 {
@@ -394,7 +396,9 @@ struct Material // sizeof=0xC0
         };
         GfxStateBits *stateBitsTable;
 };
+#if !defined(BO1_PORT_X64)
 static_assert(sizeof(Material) == 192);
+#endif
 
 
 struct stream_source_info_t // sizeof=0x3

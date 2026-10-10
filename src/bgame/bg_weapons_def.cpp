@@ -232,8 +232,7 @@ int __cdecl BG_FindWeaponIndexForName(const char *name)
     {
         qsort(
             bg_weaponVariantNameHashTable,
-            bg_lastParsedWeaponIndex + 1,
-            8u,
+            bg_lastParsedWeaponIndex + 1, sizeof(*(bg_weaponVariantNameHashTable)),
             (int (__cdecl *)(const void *, const void *))BG_WeaponVariantNameHashCompare);
         bg_weaponVariantNameHashTableSorted = 1;
     }

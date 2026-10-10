@@ -1,4 +1,5 @@
 #include "win_main.h"
+#include <platform/bo1_arch.hpp>
 #include "win_net.h"
 #include <game_mp/g_main_mp.h>
 #include <sound/snd_driver_xaudio2.h>
@@ -43,6 +44,7 @@
 #include <ui/keycodes.h>
 #include <cgame_mp/cg_newDraw_mp.h>
 #include <ui_mp/ui_main_mp.h>
+#include <platform/platform.hpp>
 
 const dvar_t *sys_configureGHz;
 const dvar_t *sys_sysMB;
@@ -262,7 +264,7 @@ static LONG __stdcall Sys_HeadlessExceptionFilter(_EXCEPTION_POINTERS *info)
         const IMAGE_NT_HEADERS *nt = (const IMAGE_NT_HEADERS *)((const char *)module + ((const IMAGE_DOS_HEADER *)module)->e_lfanew);
         unsigned int base = (unsigned int)module;
         unsigned int end = base + nt->OptionalHeader.SizeOfImage;
-        const unsigned int *sp = (const unsigned int *)info->ContextRecord->Esp;
+        const unsigned int *sp = (const unsigned int *)BO1_CTX_SP(*info->ContextRecord);
         char line[1024];
         int len = _snprintf(line, sizeof(line), "BO1_HEADLESS STACK:");
         int found = 0;
@@ -281,11 +283,11 @@ static LONG __stdcall Sys_HeadlessExceptionFilter(_EXCEPTION_POINTERS *info)
         Sys_HeadlessEmergencyLog("%s\n", line);
         // the same stack by its EBP chain (the exe keeps frame pointers): the caller of each frame, innermost
         // first, no stale words. A frame that omits EBP is skipped over, not listed.
-        const unsigned int *fp = (const unsigned int *)info->ContextRecord->Ebp;
+        const unsigned int *fp = (const unsigned int *)BO1_CTX_BP(*info->ContextRecord);
         len = _snprintf(line, sizeof(line), "BO1_HEADLESS FRAMES:");
         for (int i = 0; i < 40 && len < (int)sizeof(line) - 16; ++i)
         {
-            if ((unsigned int)fp < info->ContextRecord->Esp || ((unsigned int)fp & 3) || IsBadReadPtr(fp, 8))
+            if ((unsigned int)fp < BO1_CTX_SP(*info->ContextRecord) || ((unsigned int)fp & 3) || IsBadReadPtr(fp, 8))
                 break;
             const unsigned int ret = fp[1];
             if (ret > base + 0x1000 && ret < end)
@@ -430,13 +432,13 @@ static void Sys_HeadlessDumpThreads(int pass)
                 got = true;
                 MEMORY_BASIC_INFORMATION mbi;
                 SIZE_T want = sizeof(stack);
-                if (VirtualQuery((const void *)ctx.Esp, &mbi, sizeof(mbi)))
+                if (VirtualQuery((const void *)BO1_CTX_SP(ctx), &mbi, sizeof(mbi)))
                 {
-                    SIZE_T left = (SIZE_T)mbi.BaseAddress + mbi.RegionSize - ctx.Esp;
+                    SIZE_T left = (SIZE_T)mbi.BaseAddress + mbi.RegionSize - BO1_CTX_SP(ctx);
                     if (left < want)
                         want = left;
                 }
-                ReadProcessMemory(GetCurrentProcess(), (const void *)ctx.Esp, stack, want, &copied);
+                ReadProcessMemory(GetCurrentProcess(), (const void *)BO1_CTX_SP(ctx), stack, want, &copied);
             }
             ResumeThread(th);
         }
@@ -445,8 +447,8 @@ static void Sys_HeadlessDumpThreads(int pass)
             continue;
         int len = _snprintf(line, sizeof(line), "BO1_HEADLESS THREAD %u: eip %s0x%X stack",
             (unsigned int)te.th32ThreadID,
-            ctx.Eip >= base && ctx.Eip < end ? "+" : "abs ",
-            ctx.Eip >= base && ctx.Eip < end ? (unsigned int)(ctx.Eip - base) : (unsigned int)ctx.Eip);
+            BO1_CTX_IP(ctx) >= base && BO1_CTX_IP(ctx) < end ? "+" : "abs ",
+            BO1_CTX_IP(ctx) >= base && BO1_CTX_IP(ctx) < end ? (unsigned int)(BO1_CTX_IP(ctx) - base) : (unsigned int)BO1_CTX_IP(ctx));
         int found = 0;
         for (unsigned int i = 0; i < copied / 4 && found < 48 && len < (int)sizeof(line) - 16; ++i)
         {
@@ -460,12 +462,12 @@ static void Sys_HeadlessDumpThreads(int pass)
         // x6 c32: the same stack by its EBP chain, read from the copy (as the crash FRAMES line): no stale words;
         // frames that omit EBP are skipped over, not listed.
         len = _snprintf(line, sizeof(line), "BO1_HEADLESS THREADFRAMES %u: ebp", (unsigned int)te.th32ThreadID);
-        unsigned int fp = ctx.Ebp;
+        unsigned int fp = BO1_CTX_BP(ctx);
         for (int i = 0; i < 48 && len < (int)sizeof(line) - 16; ++i)
         {
-            if (fp < ctx.Esp || (fp & 3) || fp - ctx.Esp + 8 > copied)
+            if (fp < BO1_CTX_SP(ctx) || (fp & 3) || fp - BO1_CTX_SP(ctx) + 8 > copied)
                 break;
-            const unsigned int *frame = &stack[(fp - ctx.Esp) / 4];
+            const unsigned int *frame = &stack[(fp - BO1_CTX_SP(ctx)) / 4];
             if (frame[1] > base + 0x1000 && frame[1] < end)
                 len += _snprintf(line + len, sizeof(line) - len, " +0x%X", frame[1] - base);
             if (frame[0] <= fp)
@@ -478,20 +480,20 @@ static void Sys_HeadlessDumpThreads(int pass)
             // every frame's return address, this exe's as +offsets (for llvm-symbolizer), others as abs
             len = _snprintf(line, sizeof(line), "BO1_HEADLESS THREADWALK %u: walk", (unsigned int)te.th32ThreadID);
             s_walkStack = stack;
-            s_walkEsp = ctx.Esp;
+            s_walkEsp = BO1_CTX_SP(ctx);
             s_walkCopied = (unsigned int)copied;
             CONTEXT walkCtx = ctx;
             STACKFRAME64 sf;
             memset(&sf, 0, sizeof(sf));
-            sf.AddrPC.Offset = ctx.Eip;
+            sf.AddrPC.Offset = BO1_CTX_IP(ctx);
             sf.AddrPC.Mode = AddrModeFlat;
-            sf.AddrFrame.Offset = ctx.Ebp;
+            sf.AddrFrame.Offset = BO1_CTX_BP(ctx);
             sf.AddrFrame.Mode = AddrModeFlat;
-            sf.AddrStack.Offset = ctx.Esp;
+            sf.AddrStack.Offset = BO1_CTX_SP(ctx);
             sf.AddrStack.Mode = AddrModeFlat;
             for (int i = 0; i < 64 && len < (int)sizeof(line) - 20; ++i)
             {
-                if (!s_stackWalk64(IMAGE_FILE_MACHINE_I386, GetCurrentProcess(), NULL, &sf, &walkCtx, Sys_HeadlessWalkRead,
+                if (!s_stackWalk64((BO1_ARCH_64 ? IMAGE_FILE_MACHINE_AMD64 : IMAGE_FILE_MACHINE_I386), GetCurrentProcess(), NULL, &sf, &walkCtx, Sys_HeadlessWalkRead,
                         s_symFunctionTableAccess64, s_symGetModuleBase64, NULL))
                     break;
                 const unsigned int pc = (unsigned int)sf.AddrPC.Offset;
@@ -1494,11 +1496,16 @@ void Sys_SpawnQuitProcess()
 
 int enable_OutputDebugString = 1;
 
-void __cdecl Sys_Print(char *msg)
+void __cdecl Sys_Print_Win32(char *msg)
 {
     if ( enable_OutputDebugString )
         OutputDebugStringA(msg);
     Conbuf_AppendTextInMainThread(msg);
+}
+
+void __cdecl Sys_Print(char *msg)
+{
+    Sys_Print_Win32(msg);
 }
 
 char *__cdecl Sys_GetClipboardData()
@@ -1945,6 +1952,9 @@ void __cdecl Sys_Init()
         Com_Printf(16, "Streaming SIMD Extensions (SSE) %ssupported\n", "not ");
     Com_Printf(16, "\n");
     IN_Init();
+    // Port layer: register Windows backends that forward to existing Sys_/FS_/IN_* code.
+    // Gameplay call sites are unchanged; Godot/Android will swap these implementations later.
+    Platform_BootstrapWindows();
 }
 
 void __cdecl Sys_In_Restart_f()
@@ -2055,7 +2065,7 @@ int __cdecl Sys_IsGameProcess(unsigned int id)
     if ( snapshot == (void *)-1 )
         return 0;
     isGame = 0;
-    me.dwSize = 548;
+    me.dwSize = sizeof(me);
     if ( Module32First(snapshot, &me) )
     {
         GetModuleFileNameA(0, modulePath, 0x104u);
@@ -2180,10 +2190,10 @@ int __cdecl PrivateUnhandledExceptionFilter(_EXCEPTION_POINTERS *ExceptionInfo)
         sprintf(
             &g_ExceptionStr[strlen(g_ExceptionStr)],
             "EBP: %08x\tEIP: %08x\tSEGCS: %08x\tESP: %08x\tSEGSS: %08x\tEFLAGS: %08x\n\n",
-            ExceptionInfo->ContextRecord->Ebp,
-            ExceptionInfo->ContextRecord->Eip,
+            BO1_CTX_BP(*ExceptionInfo->ContextRecord),
+            BO1_CTX_IP(*ExceptionInfo->ContextRecord),
             ExceptionInfo->ContextRecord->SegCs,
-            ExceptionInfo->ContextRecord->Esp,
+            BO1_CTX_SP(*ExceptionInfo->ContextRecord),
             ExceptionInfo->ContextRecord->SegSs,
             ExceptionInfo->ContextRecord->EFlags);
     if ((ExceptionInfo->ContextRecord->ContextFlags & 0x10004) != 0)
@@ -2198,12 +2208,12 @@ int __cdecl PrivateUnhandledExceptionFilter(_EXCEPTION_POINTERS *ExceptionInfo)
         sprintf(
             &g_ExceptionStr[strlen(g_ExceptionStr)],
             "EDI: %08x\tESI: %08x\nEAX: %08x\tEBX: %08x\nECX: %08x\tEDX: %08x\n\n",
-            ExceptionInfo->ContextRecord->Edi,
-            ExceptionInfo->ContextRecord->Esi,
-            ExceptionInfo->ContextRecord->Eax,
-            ExceptionInfo->ContextRecord->Ebx,
-            ExceptionInfo->ContextRecord->Ecx,
-            ExceptionInfo->ContextRecord->Edx);
+            BO1_CTX_DI(*ExceptionInfo->ContextRecord),
+            BO1_CTX_SI(*ExceptionInfo->ContextRecord),
+            BO1_CTX_AX(*ExceptionInfo->ContextRecord),
+            BO1_CTX_BX(*ExceptionInfo->ContextRecord),
+            BO1_CTX_CX(*ExceptionInfo->ContextRecord),
+            BO1_CTX_DX(*ExceptionInfo->ContextRecord));
     if ((ExceptionInfo->ContextRecord->ContextFlags & 0x10001) != 0)
     {
         strcat(g_ExceptionStr, "Stack Bytes: \n");
@@ -2214,17 +2224,17 @@ int __cdecl PrivateUnhandledExceptionFilter(_EXCEPTION_POINTERS *ExceptionInfo)
                 sprintf(
                     &g_ExceptionStr[strlen(g_ExceptionStr)],
                     "%02x",
-                    *(unsigned __int8 *)(ExceptionInfo->ContextRecord->Esp + j + 8 * i));
+                    *(unsigned __int8 *)(BO1_CTX_SP(*ExceptionInfo->ContextRecord) + j + 8 * i));
                 strcat(g_ExceptionStr, " ");
             }
             strcat(g_ExceptionStr, "\t[");
             for (ja = 0; ja < 8; ++ja)
             {
-                if (*(unsigned __int8 *)(ExceptionInfo->ContextRecord->Esp + ja + 8 * i) >= 0x21u)
+                if (*(unsigned __int8 *)(BO1_CTX_SP(*ExceptionInfo->ContextRecord) + ja + 8 * i) >= 0x21u)
                     sprintf(
                         &g_ExceptionStr[strlen(g_ExceptionStr)],
                         "%c",
-                        *(unsigned __int8 *)(ExceptionInfo->ContextRecord->Esp + ja + 8 * i));
+                        *(unsigned __int8 *)(BO1_CTX_SP(*ExceptionInfo->ContextRecord) + ja + 8 * i));
                 else
                     sprintf(&g_ExceptionStr[strlen(g_ExceptionStr)], ".");
             }
@@ -2239,8 +2249,111 @@ int __cdecl PrivateUnhandledExceptionFilter(_EXCEPTION_POINTERS *ExceptionInfo)
 
 char sys_cmdline[1024];
 char g_open_automate_benchmark[260];
+#include <tlhelp32.h>
+#if defined(BO1_PORT_X64)
+static const char *s_lastHeapOk = "(none)";
+void Bo1_Diag(const char *fmt, ...);
+void Bo1_DiagStack(const char *tag);
+// x64 bring-up: heap-corruption fail-fast (0xC0000374) / stack-cookie (0xC0000409) bypass the unhandled-exception filter;
+// a vectored handler still sees them, so log where they were raised.
+static LONG CALLBACK Bo1_FatalVeh(PEXCEPTION_POINTERS ep)
+{
+    const DWORD code = ep->ExceptionRecord->ExceptionCode;
+    if ( code == 0xC0000374 || code == 0xC0000409 )
+    {
+        Bo1_Diag("VEH fatal exception %08X at %p params=%lu; last passing HeapValidate checkpoint: %s", (unsigned)code,
+                 ep->ExceptionRecord->ExceptionAddress, (unsigned long)ep->ExceptionRecord->NumberParameters, s_lastHeapOk);
+        for ( DWORD pi = 0; pi < ep->ExceptionRecord->NumberParameters && pi < 6; ++pi )
+        {
+            const ULONG_PTR pv = ep->ExceptionRecord->ExceptionInformation[pi];
+            Bo1_Diag("  param[%lu] = %p", (unsigned long)pi, (void *)pv);
+            // a HEAP_FAILURE_INFO-like record, or a heap address: show the first 96 bytes if readable
+            if ( pv > 0x10000 && !IsBadReadPtr((const void *)pv, 96) )
+            {
+                const unsigned char *b = (const unsigned char *)pv;
+                char hex[400];
+                int hl = 0;
+                for ( int bi = 0; bi < 96; ++bi )
+                    hl += snprintf(hex + hl, sizeof(hex) - hl, "%02X%s", b[bi], (bi % 16 == 15) ? "|" : " ");
+                Bo1_Diag("    bytes: %s", hex);
+                char asc[100];
+                for ( int bi = 0; bi < 96; ++bi )
+                    asc[bi] = (b[bi] >= 32 && b[bi] < 127) ? (char)b[bi] : '.';
+                asc[96] = 0;
+                Bo1_Diag("    ascii: %s", asc);
+            }
+        }
+        {
+            // who else is running? (heap corruption that moves around between runs suggests another thread)
+            typedef LONG(NTAPI * NtQueryInformationThread_t)(HANDLE, ULONG, PVOID, ULONG, PULONG);
+            NtQueryInformationThread_t ntqit = (NtQueryInformationThread_t)GetProcAddress(GetModuleHandleA("ntdll.dll"), "NtQueryInformationThread");
+            HANDLE snap = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);
+            if ( snap != INVALID_HANDLE_VALUE )
+            {
+                THREADENTRY32 te = {};
+                te.dwSize = sizeof(te);
+                int count = 0;
+                for ( BOOL ok = Thread32First(snap, &te); ok; ok = Thread32Next(snap, &te) )
+                {
+                    if ( te.th32OwnerProcessID != GetCurrentProcessId() )
+                        continue;
+                    ++count;
+                    PVOID start = NULL;
+                    HANDLE th = OpenThread(THREAD_QUERY_INFORMATION, FALSE, te.th32ThreadID);
+                    if ( th && ntqit )
+                        ntqit(th, 9, &start, sizeof(start), NULL); // ThreadQuerySetWin32StartAddress
+                    char modname[260] = {};
+                    HMODULE hm = NULL;
+                    if ( start && GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, (LPCSTR)start, &hm) && hm )
+                        GetModuleFileNameA(hm, modname, sizeof(modname));
+                    const char *base = strrchr(modname, '\\');
+                    Bo1_Diag("  thread %lu start=%p (%s+%llx)%s", (unsigned long)te.th32ThreadID, start, base ? base + 1 : "?",
+                             (unsigned long long)((const unsigned char *)start - (const unsigned char *)hm),
+                             te.th32ThreadID == GetCurrentThreadId() ? " <- crashing thread" : "");
+                    if ( th )
+                        CloseHandle(th);
+                }
+                Bo1_Diag("  total threads: %d", count);
+                CloseHandle(snap);
+            }
+        }
+        Bo1_DiagStack("FATALVEH");
+    }
+    return EXCEPTION_CONTINUE_SEARCH;
+}
+#endif
+
+#if defined(BO1_PORT_X64)
+// Heap checkpoints during startup: log the first one after which the process heap fails HeapValidate.
+static void Bo1_HeapCheck(const char *where)
+{
+    static bool s_failed;
+    static int s_enabled = -1;
+    if ( s_enabled < 0 )
+    {
+        char v[4];
+        s_enabled = GetEnvironmentVariableA("BO1_HEAPCHECK", v, sizeof(v)) ? 1 : 0; // opt-in: HeapValidate is slow
+    }
+    if ( s_failed || !s_enabled )
+        return;
+    if ( !HeapValidate(GetProcessHeap(), 0, NULL) )
+    {
+        s_failed = true;
+        Bo1_Diag("HEAPCHECK FAILED after: %s (last good: %s)", where, s_lastHeapOk);
+    }
+    else
+        s_lastHeapOk = where;
+}
+#define BO1_HEAPCHECK(x) Bo1_HeapCheck(x)
+#else
+#define BO1_HEAPCHECK(x) ((void)0)
+#endif
+
 int __stdcall WinMain(HINSTANCE__ *hInstance, HINSTANCE__ *hPrevInstance, char *lpCmdLine, int nCmdShow)
 {
+#if defined(BO1_PORT_X64)
+    AddVectoredExceptionHandler(1, Bo1_FatalVeh);
+#endif
     char *v5; // eax
     //jpeg_decompress_struct *SCRIPT_DEBUGGER_SMOKE_TEST_SUCCESS_EXIT_CODE; // [esp+0h] [ebp-4h]
 
@@ -2300,10 +2413,15 @@ int __stdcall WinMain(HINSTANCE__ *hInstance, HINSTANCE__ *hPrevInstance, char *
         CloseHandle(CreateThread(NULL, 0, Sys_HitchWatchThread, NULL, 0, NULL));
     }
     Sys_InitializeCriticalSections();
+            BO1_HEAPCHECK("after Sys_InitializeCriticalSections");
     Sys_InitMainThread();
+            BO1_HEAPCHECK("after Sys_InitMainThread");
     PMem_Init();
+            BO1_HEAPCHECK("after PMem_Init");
     track_init();
+            BO1_HEAPCHECK("after track_init");
     Win_InitLocalization();
+            BO1_HEAPCHECK("after Win_InitLocalization");
     if ( !I_strnicmp(lpCmdLine, "allowdupe", 9) && lpCmdLine[9] <= 32
         || (v5 = strstr(lpCmdLine, "g_connectpaths 3"), v5)
         || (Sys_GetSemaphoreFileName(), Sys_CheckCrashOrRerun()) )
@@ -2317,9 +2435,13 @@ int __stdcall WinMain(HINSTANCE__ *hInstance, HINSTANCE__ *hPrevInstance, char *
         if ( !hPrevInstance )
         {
             Com_InitParse();
+            BO1_HEAPCHECK("after Com_InitParse");
             Dvar_Init();
+            BO1_HEAPCHECK("after Dvar_Init");
             InitTiming();
+            BO1_HEAPCHECK("after InitTiming");
             Sys_FindInfo();
+            BO1_HEAPCHECK("after Sys_FindInfo");
             g_wv.hInstance = hInstance;
             I_strncpyz(sys_cmdline, lpCmdLine, 1024);
             // x6: the headless settings below must always fit (a cut '+set dedicated 1' or '+set r_aaSamples 1' changes
@@ -2370,12 +2492,14 @@ int __stdcall WinMain(HINSTANCE__ *hInstance, HINSTANCE__ *hPrevInstance, char *
                 I_strncat(sys_cmdline, 1024, g_open_automate_benchmark);
             }
             Win_RegisterClass();
+            BO1_HEAPCHECK("after Win_RegisterClass");
             if ( !s_headless ) // zombies: headless keeps its error mode (set above)
                 SetErrorMode(1u);
             Sys_Milliseconds();
             //BLOPS_NULLSUB(SCRIPT_DEBUGGER_SMOKE_TEST_SUCCESS_EXIT_CODE);
             tlPrintf("Hello from the wonderful world of TL\n"); // fuck you
             Sys_SetupTLCallbacks(0x900000);
+            BO1_HEAPCHECK("after Sys_SetupTLCallbacks");
             if ( !Sys_IsMainThread()
                 && !Assert_MyHandler(
                             "C:\\projects_pc\\cod\\codsrc\\src\\win32\\win_main.cpp",
@@ -2388,7 +2512,9 @@ int __stdcall WinMain(HINSTANCE__ *hInstance, HINSTANCE__ *hPrevInstance, char *
             }
 
             // ADD: Steam Init
+            BO1_HEAPCHECK("before Steam_Init");
             Steam_Init();
+            BO1_HEAPCHECK("after Steam_Init");
             // END
 
             Com_Init(sys_cmdline);
@@ -2474,7 +2600,7 @@ void Win_RegisterClass()
     tagWNDCLASSEXA wce; // [esp+0h] [ebp-30h] BYREF
 
     memset((unsigned __int8 *)&wce, 0, sizeof(wce));
-    wce.cbSize = 48;
+    wce.cbSize = sizeof(wce); // Win32=48, x64=80; hardcoding 48 fails RegisterClassExA on x64
     wce.lpfnWndProc = (WNDPROC)MainWndProc;
     wce.hInstance = g_wv.hInstance;
     wce.hIcon = LoadIconA(g_wv.hInstance, (LPCSTR)1);

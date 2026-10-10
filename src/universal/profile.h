@@ -20,6 +20,9 @@
 // command line sets bo1_frameperf (win_main.cpp). Per zone: inclusive time of the current frame on the main thread
 // (outermost entry only) and on all other threads, read and cleared once per frame by G_SP_FramePerfEnd.
 #include <intrin.h>
+#if defined(_M_X64) || defined(_WIN64) || defined(BO1_PORT_X64)
+#include <Windows.h>
+#endif
 
 struct BO1ProfZone
 {
@@ -109,7 +112,11 @@ struct BO1ProfScope
         if (!z->registered)
             BO1_ProfRegister(z);
         zone = z;
+#if defined(_M_X64) || defined(_WIN64) || defined(BO1_PORT_X64)
+        main = GetCurrentThreadId() == g_bo1ProfMainThread;
+#else
         main = __readfsdword(0x24) == g_bo1ProfMainThread;
+#endif
         if (!main || !z->mainDepth++)
             start = __rdtsc();
     }
@@ -184,7 +191,11 @@ struct SvProfScope
     bool on;
     explicit SvProfScope(int cat)
     {
+#if defined(_M_X64) || defined(_WIN64) || defined(BO1_PORT_X64)
+        on = g_svProfOn && GetCurrentThreadId() == g_svProfThread && g_svProfDepth < 63;
+#else
         on = g_svProfOn && __readfsdword(0x24) == g_svProfThread && g_svProfDepth < 63;
+#endif
         if (!on)
             return;
         const unsigned long long now = __rdtsc();

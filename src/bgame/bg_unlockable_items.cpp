@@ -684,7 +684,7 @@ void BG_UnlockablesBuildDefaultClasses()
     }
     if ( defaultGlobalItemNum )
     {
-        qsort(killStreakItems, defaultGlobalItemNum, 4u, BG_UnlockablesCompareItemsBySortKey);
+        qsort(killStreakItems, defaultGlobalItemNum, sizeof(itemInfo_t *), BG_UnlockablesCompareItemsBySortKey);
         for ( killStreakCount = 0; killStreakCount < defaultGlobalItemNum; ++killStreakCount )
             s_unlockableItems.defaultGlobalItems[killStreakCount] = killStreakItems[killStreakCount]->index;
     }
@@ -720,11 +720,12 @@ const char *__cdecl BG_UnlockablesGetLoadoutName(loadoutSlot_t loadoutSlot)
 
 int __cdecl BG_UnlockablesCompareItemsBySortKey(const void *arg0, const void *arg1)
 {
-    int returnValue; // [esp+0h] [ebp-Ch]
-
-    returnValue = *(unsigned int *)(*(unsigned int *)arg0 + 264) - *(unsigned int *)(*(unsigned int *)arg1 + 264);
+    // Win32 loaded itemInfo_t* via *(unsigned int *); that truncates on x64.
+    const itemInfo_t *a = *static_cast<const itemInfo_t *const *>(arg0);
+    const itemInfo_t *b = *static_cast<const itemInfo_t *const *>(arg1);
+    const int returnValue = a->sortKey - b->sortKey;
     if ( !returnValue )
-        return **(unsigned int **)arg0 - **(unsigned int **)arg1;
+        return a->index - b->index;
     return returnValue;
 }
 
@@ -3026,7 +3027,7 @@ int __cdecl BG_UnlockablesBuildItemListForGroup(itemGroup_t group)
             }
         }
     }
-    qsort(s_unlockableItems.itemsInSlot, s_unlockableItems.numItemsInSlot, 4u, BG_UnlockablesCompareItemsBySortKey);
+    qsort(s_unlockableItems.itemsInSlot, s_unlockableItems.numItemsInSlot, sizeof(itemInfo_t *), BG_UnlockablesCompareItemsBySortKey);
     return s_unlockableItems.numItemsInSlot;
 }
 
@@ -3056,7 +3057,7 @@ int __cdecl BG_UnlockablesBuildItemListForGroupForWeaponTable(itemGroup_t group)
             }
         }
     }
-    qsort(s_unlockableItems.itemsInSlot, s_unlockableItems.numItemsInSlot, 4u, BG_UnlockablesCompareItemsBySortKey);
+    qsort(s_unlockableItems.itemsInSlot, s_unlockableItems.numItemsInSlot, sizeof(itemInfo_t *), BG_UnlockablesCompareItemsBySortKey);
     return s_unlockableItems.numItemsInSlot;
 }
 
@@ -4937,7 +4938,7 @@ int __cdecl BG_UnlockablesBuildItemListForSlotName(int controllerIndex, const ch
         }
     }
     s_unlockableItems.numPurchasedItemsInSlot = BG_UnlockablesGetNumPurchasedItemsInCurrentList(controllerIndex);
-    qsort(s_unlockableItems.itemsInSlot, s_unlockableItems.numItemsInSlot, 4u, BG_UnlockablesCompareItemsBySortKey);
+    qsort(s_unlockableItems.itemsInSlot, s_unlockableItems.numItemsInSlot, sizeof(itemInfo_t *), BG_UnlockablesCompareItemsBySortKey);
     return s_unlockableItems.numItemsInSlot;
 }
 
@@ -5017,7 +5018,7 @@ int __cdecl BG_UnlockablesBuildItemListForChallengesPerks(int controllerIndex, c
         }
     }
     s_unlockableItems.numPurchasedItemsInSlot = BG_UnlockablesGetNumPurchasedItemsInCurrentList(controllerIndex);
-    qsort(s_unlockableItems.itemsInSlot, s_unlockableItems.numItemsInSlot, 4u, BG_UnlockablesCompareItemsBySortKey);
+    qsort(s_unlockableItems.itemsInSlot, s_unlockableItems.numItemsInSlot, sizeof(itemInfo_t *), BG_UnlockablesCompareItemsBySortKey);
     return s_unlockableItems.numItemsInSlot;
 }
 
@@ -5105,7 +5106,7 @@ int __cdecl BG_UnlockablesBuildItemListForGroupName(int controllerIndex, const c
             s_unlockableItems.numItemsInSlot = BG_UnlockablesBuildItemListForGroup(group);
     }
     s_unlockableItems.numPurchasedItemsInSlot = BG_UnlockablesGetNumPurchasedItemsInCurrentList(controllerIndex);
-    qsort(s_unlockableItems.itemsInSlot, s_unlockableItems.numItemsInSlot, 4u, BG_UnlockablesCompareItemsBySortKey);
+    qsort(s_unlockableItems.itemsInSlot, s_unlockableItems.numItemsInSlot, sizeof(itemInfo_t *), BG_UnlockablesCompareItemsBySortKey);
     return s_unlockableItems.numItemsInSlot;
 }
 
@@ -5198,7 +5199,7 @@ int __cdecl BG_UnlockablesBuildItemListForSlotNameAndGroup(
         }
     }
     s_unlockableItems.numPurchasedItemsInSlot = BG_UnlockablesGetNumPurchasedItemsInCurrentList(controllerIndex);
-    qsort(s_unlockableItems.itemsInSlot, s_unlockableItems.numItemsInSlot, 4u, BG_UnlockablesCompareItemsBySortKey);
+    qsort(s_unlockableItems.itemsInSlot, s_unlockableItems.numItemsInSlot, sizeof(itemInfo_t *), BG_UnlockablesCompareItemsBySortKey);
     return s_unlockableItems.numItemsInSlot;
 }
 

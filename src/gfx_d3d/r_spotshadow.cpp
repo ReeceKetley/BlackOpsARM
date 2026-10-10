@@ -1,4 +1,4 @@
-#include "r_spotshadow.h"
+﻿#include "r_spotshadow.h"
 #include "r_model_pose.h"
 #include <cgame/cg_pose_utils.h>
 #include "r_dobj_skin.h"
@@ -382,7 +382,7 @@ void __cdecl R_AddSpotShadowModelEntities(int localClientNum, unsigned int prima
             if ( entnuma != gfxCfg.entnumNone )
             {
                 if ( R_IsEntityVisibleToPrimaryLight(localClientNum, entnuma, primaryLightIndex) )
-                    *(_BYTE *)(scene.dynSModelVisBitsCamera[light->spotShadowIndex - 10] + entnuma) = 1;
+                    scene.dpvs.entVisData[light->spotShadowIndex + 3][entnuma] = 1;
             }
         }
     }

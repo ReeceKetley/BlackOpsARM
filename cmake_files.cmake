@@ -617,6 +617,8 @@ set(SRC_DATABASE
 	"${SRC_DIR}/database/db_assetnames.h"
 	"${SRC_DIR}/database/db_auth.cpp"
 	"${SRC_DIR}/database/db_auth.h"
+	"${SRC_DIR}/database/db_expand.cpp"
+	"${SRC_DIR}/database/db_expand.hpp"
 	"${SRC_DIR}/database/db_file_load.cpp"
 	"${SRC_DIR}/database/db_file_load.h"
 	"${SRC_DIR}/database/db_load.cpp"
@@ -2797,6 +2799,26 @@ set(VPX_FILES
 	${SRC_VPX}
 )
 
+# ----- src/platform -----
+set(SRC_PLATFORM
+	"${SRC_DIR}/platform/IAudioBackend.hpp"
+	"${SRC_DIR}/platform/IFileSystem.hpp"
+	"${SRC_DIR}/platform/IInputBackend.hpp"
+	"${SRC_DIR}/platform/IPlatform.hpp"
+	"${SRC_DIR}/platform/IPlatformServices.hpp"
+	"${SRC_DIR}/platform/IRenderBackend.hpp"
+	"${SRC_DIR}/platform/IVideoBackend.hpp"
+	"${SRC_DIR}/platform/platform.cpp"
+	"${SRC_DIR}/platform/platform.hpp"
+	"${SRC_DIR}/platform/windows/win_platform.cpp"
+	"${SRC_DIR}/platform/windows/win_platform.hpp"
+)
+source_group("platform" FILES ${SRC_PLATFORM})
+
+set(PLATFORM_FILES
+	${SRC_PLATFORM}
+)
+
 # ----- src/win32 -----
 set(SRC_WIN32
 	"${SRC_DIR}/win32/win_common.cpp"
@@ -3019,6 +3041,7 @@ add_executable(${BIN_NAME}
 	${UNIVERSAL_FILES}
 	${VEHICLE_FILES}
 	${VPX_FILES}
+	${PLATFORM_FILES}
 	${WIN32_FILES}
 	${XANIM_FILES}
 	${ZLIB_FILES}

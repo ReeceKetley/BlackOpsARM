@@ -82,3 +82,7 @@ char __cdecl DB_LoadXFile(
 extern XAssetList *varXAssetList;
 
 extern volatile unsigned int g_loadingAssets;
+
+// Trace/debug: bytes consumed from the decompressed FastFile stream since the zone's streams were initialised.
+unsigned long long DB_XFileBytesLoaded();
+void DB_XFileBytesReset();

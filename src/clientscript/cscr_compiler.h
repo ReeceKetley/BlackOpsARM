@@ -90,10 +90,10 @@ struct scrCompileGlob_t
     BreakStatementInfo *currentBreakStatement;
     bool bCanContinue;
     ContinueStatementInfo *currentContinueStatement;
-    scr_block_s **breakChildBlocks;
+    ScrBlockPtr *breakChildBlocks;
     int *breakChildCount;
     scr_block_s *breakBlock;
-    scr_block_s **continueChildBlocks;
+    ScrBlockPtr *continueChildBlocks;
     int *continueChildCount;
     bool forceNotCreate;
     PrecacheEntry *precachescriptList;
@@ -239,8 +239,8 @@ void __cdecl Scr_CalcLocalVarsArrayVariableRef(sval_u expr, scr_block_s *block);
 void __cdecl Scr_CalcLocalVarsArrayPrimitiveExpressionRef(sval_u expr, scr_block_s *block);
 void __cdecl Scr_CalcLocalVarsAssignmentStatement(sval_u lhs, sval_u rhs, scr_block_s *block);
 void __cdecl Scr_CalcLocalVarsIfStatement(scriptInstance_t inst, sval_u stmt, scr_block_s *block, sval_u *ifStatBlock);
-void __cdecl Scr_CopyBlock(scr_block_s *from, scr_block_s **to);
-void __cdecl Scr_MergeChildBlocks(scr_block_s **childBlocks, int childCount, scr_block_s *block);
+void __cdecl Scr_CopyBlock(scr_block_s *from, ScrBlockPtr *to);
+void __cdecl Scr_MergeChildBlocks(ScrBlockPtr *childBlocks, int childCount, scr_block_s *block);
 int __cdecl Scr_FindLocalVar(scr_block_s *block, int startIndex, unsigned int name);
 void __cdecl Scr_CalcLocalVarsIfElseStatement(
                 scriptInstance_t inst,
@@ -249,7 +249,7 @@ void __cdecl Scr_CalcLocalVarsIfElseStatement(
                 scr_block_s *block,
                 sval_u *ifStatBlock,
                 sval_u *elseStatBlock);
-void __cdecl Scr_AppendChildBlocks(scr_block_s **childBlocks, int childCount, scr_block_s *block);
+void __cdecl Scr_AppendChildBlocks(ScrBlockPtr *childBlocks, int childCount, scr_block_s *block);
 void __cdecl Scr_AddBreakBlock(scriptInstance_t inst, scr_block_s *block);
 void __cdecl Scr_CheckMaxSwitchCases(int count);
 void __cdecl Scr_AddContinueBlock(scriptInstance_t inst, scr_block_s *block);
@@ -585,7 +585,7 @@ void __cdecl EmitIfElseStatement(
                 scr_block_s *block,
                 sval_u *ifStatBlock,
                 sval_u *elseStatBlock);
-void __cdecl Scr_InitFromChildBlocks(scr_block_s **childBlocks, int childCount, scr_block_s *block);
+void __cdecl Scr_InitFromChildBlocks(ScrBlockPtr *childBlocks, int childCount, scr_block_s *block);
 void __cdecl EmitWhileStatement(
                 scriptInstance_t inst,
                 sval_u expr,

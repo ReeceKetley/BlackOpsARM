@@ -394,7 +394,7 @@ void __cdecl Demo_TagPlayers(int localClientNum, demoTagPlayers *players)
         for ( i = 0; i < demo.header.maxClients; ++i )
         {
             cent = CG_GetEntity(localClientNum, i);
-            if ( ((*((unsigned int *)cent + 201) >> 1) & 1) != 0 && i != cgameGlob->clientNum )
+            if ( ((CENT_FLAGS(cent) >> 1) & 1) != 0 && i != cgameGlob->clientNum )
             {
                 if ( CG_CanSeeFriendlyHead(localClientNum, cent) )
                 {
@@ -734,7 +734,7 @@ char __cdecl Demo_SwitchPlayer(int localClientNum, bool reverse, int forceClient
             {
                 if ( forceToLivePlayer )
                 {
-                    if ( ((*((unsigned int *)CG_GetEntity(localClientNum, clientNum) + 201) >> 1) & 1) != 0
+                    if ( ((CENT_FLAGS(CG_GetEntity(localClientNum, clientNum)) >> 1) & 1) != 0
                         && Demo_HasClientSpawnedIn(clientNum)
                         && oldClientNum != clientNum )
                     {
@@ -1906,7 +1906,7 @@ void __cdecl Demo_RunFirstFrameEvents(int localClientNum)
             Dvar_SetInt((dvar_s *)r_clipSize, 0);
             Dvar_SetInt((dvar_s *)r_clipCodec, 0);
             Dvar_SetInt((dvar_s *)r_clipFPS, 24);
-            FS_BuildOSPath((char *)fs_homepath->current.integer, (char*)"movies", (char *)"", ospath);
+            FS_BuildOSPath((char *)fs_homepath->current.string, (char*)"movies", (char *)"", ospath);
             FS_CreatePath(ospath);
             v1 = va("movie_start \"%s%s.avi\"\n", ospath, demo.demoName);
             Cbuf_AddText(localClientNum, v1);

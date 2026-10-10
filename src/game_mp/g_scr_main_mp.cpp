@@ -1571,7 +1571,7 @@ void Scr_GetWeaponStowedModel()
     weapDef = BG_GetWeaponDef(iWeaponIndex);
     if ( iWeaponIndex )
     {
-        if ( *((unsigned int *)weapDef->worldModel + 1)
+        if ( weapDef->worldModel[1]
             && weapDef->weapClass != WEAPCLASS_GRENADE
             && weapDef->weapClass != WEAPCLASS_KILLSTREAK_ALT_STORED_WEAPON )
         {
@@ -15544,8 +15544,7 @@ void GScr_QSortScoredSpawnPointArrayAscending()
         if ( element_count > 0 )
             qsort(
                 scored_spawn_points,
-                element_count,
-                0xCu,
+                element_count, sizeof(*(scored_spawn_points)),
                 (int (__cdecl *)(const void *, const void *))sort_scored_spawn_point_vectors_ascending);
         for ( value_index = 0; value_index < element_count; ++value_index )
         {

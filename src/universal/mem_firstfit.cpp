@@ -1,9 +1,12 @@
 #include "mem_firstfit.h"
 #include "assertive.h"
 #include <win32/win_common.h>
+#include <cstdint>
+
+static constexpr uintptr_t kFirstFitBusyTag = static_cast<uintptr_t>(static_cast<intptr_t>(-559038737));
 
 HunkUser *__cdecl Hunk_FirstFitInit(
-                unsigned int *buffer,
+                void *buffer,
                 unsigned int size,
                 HU_ALLOCATION_SCHEME scheme,
                 unsigned int flags,
@@ -11,6 +14,11 @@ HunkUser *__cdecl Hunk_FirstFitInit(
                 const char *name,
                 int type)
 {
+    (void)scheme_specific_data;
+    FirstFitHunkUser *user = reinterpret_cast<FirstFitHunkUser *>(buffer);
+    const unsigned int headerBytes = static_cast<unsigned int>(sizeof(FirstFitHunkUser));
+    const unsigned int nodeBytes = static_cast<unsigned int>(sizeof(_firstfit_heapnode));
+
     if ( (flags & 2) == 0
         && !Assert_MyHandler(
                     "C:\\projects_pc\\cod\\codsrc\\src\\universal\\mem_firstfit.cpp",
@@ -21,7 +29,7 @@ HunkUser *__cdecl Hunk_FirstFitInit(
     {
         __debugbreak();
     }
-    if ( size <= 0x28
+    if ( size <= headerBytes + nodeBytes
         && !Assert_MyHandler(
                     "C:\\projects_pc\\cod\\codsrc\\src\\universal\\mem_firstfit.cpp",
                     50,
@@ -31,44 +39,59 @@ HunkUser *__cdecl Hunk_FirstFitInit(
     {
         __debugbreak();
     }
-    buffer[2] = (unsigned int)name;
-    *buffer = scheme;
-    buffer[1] = flags;
-    buffer[3] = type;
-    buffer[6] = -1;
-    buffer[4] = size;
-    buffer[5] = (unsigned int)(buffer + 8);
-    *(unsigned int *)buffer[5] = 0;
-    *(unsigned int *)(buffer[5] + 4) = buffer[4] - 32;
-    buffer[7] = 32;
-    return (HunkUser *)buffer;
+
+    user->hunkUser.name = name;
+    user->hunkUser.scheme = scheme;
+    user->hunkUser.flags = flags;
+    user->hunkUser.type = type;
+    user->reserved = -1;
+    user->size = size;
+    user->free_blocks = reinterpret_cast<_firstfit_heapnode *>(
+        reinterpret_cast<unsigned char *>(user) + headerBytes);
+    user->free_blocks->next = nullptr;
+    user->free_blocks->size = static_cast<int>(size - headerBytes);
+    user->used = static_cast<int>(headerBytes);
+    return &user->hunkUser;
 }
 
 void __cdecl Hunk_FirstFitReset(HunkUser *_user)
 {
-    _user[1].flags = (unsigned int)&_user[2];
-    *(unsigned int *)_user[1].flags = 0;
-    *(unsigned int *)(_user[1].flags + 4) = _user[1].scheme - 32;
-    _user[1].type = 32;
+    FirstFitHunkUser *user = reinterpret_cast<FirstFitHunkUser *>(_user);
+    const unsigned int headerBytes = static_cast<unsigned int>(sizeof(FirstFitHunkUser));
+    user->free_blocks = reinterpret_cast<_firstfit_heapnode *>(
+        reinterpret_cast<unsigned char *>(user) + headerBytes);
+    user->free_blocks->next = nullptr;
+    user->free_blocks->size = static_cast<int>(user->size - headerBytes);
+    user->used = static_cast<int>(headerBytes);
 }
 
 void __cdecl Hunk_FirstFitDestroy(HunkUser *_user)
 {
-    _user->scheme = HU_SCHEME_DEFAULT;
-    _user->flags = 0;
-    _user->name = 0;
-    _user->type = 0;
-    _user[1].scheme = HU_SCHEME_DEFAULT;
-    _user[1].flags = 0;
-    _user[1].name = 0;
-    _user[1].type = 0;
+    FirstFitHunkUser *user = reinterpret_cast<FirstFitHunkUser *>(_user);
+    user->hunkUser.scheme = HU_SCHEME_DEFAULT;
+    user->hunkUser.flags = 0;
+    user->hunkUser.name = nullptr;
+    user->hunkUser.type = 0;
+    user->size = 0;
+    user->free_blocks = nullptr;
+    user->reserved = 0;
+    user->used = 0;
 }
 
-int __cdecl Hunk_FirstFitAlloc(HunkUser *_user, int size, int alignment)
+static uintptr_t FirstFit_AlignUser(uintptr_t linkAddr, int alignment)
 {
-    unsigned int *free_link; // [esp+10h] [ebp-20h]
-    int adj_size; // [esp+18h] [ebp-18h]
-    _firstfit_heapnode *last; // [esp+2Ch] [ebp-4h]
+    // Heapnode header, then optional pad, then back-pointer, then aligned user payload.
+    const uintptr_t minPayload = linkAddr + sizeof(_firstfit_heapnode) + sizeof(void *);
+    const uintptr_t mask = static_cast<uintptr_t>(alignment) - 1;
+    return (minPayload + mask) & ~mask;
+}
+
+void *__cdecl Hunk_FirstFitAlloc(HunkUser *_user, int size, int alignment)
+{
+    FirstFitHunkUser *user = reinterpret_cast<FirstFitHunkUser *>(_user);
+    _firstfit_heapnode *free_link;
+    _firstfit_heapnode *last;
+    int adj_size;
 
     if ( alignment <= 0
         && !Assert_MyHandler("C:\\projects_pc\\cod\\codsrc\\src\\universal\\mem_firstfit.cpp", 90, 0, "%s", "alignment>0") )
@@ -76,118 +99,133 @@ int __cdecl Hunk_FirstFitAlloc(HunkUser *_user, int size, int alignment)
         __debugbreak();
     }
     Sys_EnterCriticalSection(CRITSECT_MEMFIRSTFIT);
-    free_link = (unsigned int *)_user[1].flags;
-    last = 0;
+    free_link = user->free_blocks;
+    last = nullptr;
     while ( 1 )
     {
         if ( !free_link )
             goto LABEL_16;
-        adj_size = (~(alignment - 1) & ((unsigned int)free_link + alignment + 11)) - (unsigned int)free_link + size;
-        if ( (int)free_link[1] >= adj_size )
+        {
+            const uintptr_t linkAddr = reinterpret_cast<uintptr_t>(free_link);
+            const uintptr_t aligned = FirstFit_AlignUser(linkAddr, alignment);
+            adj_size = static_cast<int>(aligned - linkAddr) + size;
+        }
+        if ( free_link->size >= adj_size )
             break;
-        last = (_firstfit_heapnode *)free_link;
-        free_link = (unsigned int *)*free_link;
+        last = free_link;
+        free_link = free_link->next;
     }
-    if ( !*free_link && (int)(free_link[1] - adj_size) <= 1024 )
+    if ( !free_link->next && (free_link->size - adj_size) <= 1024 )
     {
 LABEL_16:
         Sys_LeaveCriticalSection(CRITSECT_MEMFIRSTFIT);
-        return 0;
+        return nullptr;
     }
-    if ( (int)(free_link[1] - adj_size) > 1024 )
+    if ( (free_link->size - adj_size) > 1024 )
     {
-        *(unsigned int *)((~(alignment - 1) & ((unsigned int)free_link + alignment + 11)) + size) = *free_link;
-        *(unsigned int *)((char *)free_link + adj_size + 4) = free_link[1] - adj_size;
-        *free_link = (~(alignment - 1) & ((unsigned int)free_link + alignment + 11)) + size;
-        free_link[1] = adj_size;
+        const uintptr_t linkAddr = reinterpret_cast<uintptr_t>(free_link);
+        const uintptr_t aligned = FirstFit_AlignUser(linkAddr, alignment);
+        auto *split = reinterpret_cast<_firstfit_heapnode *>(aligned + static_cast<uintptr_t>(size));
+        split->next = free_link->next;
+        split->size = free_link->size - adj_size;
+        free_link->next = split;
+        free_link->size = adj_size;
     }
     if ( last )
-        last->next = (_firstfit_heapnode *)*free_link;
+        last->next = free_link->next;
     else
-        _user[1].flags = *free_link;
-    *free_link = -559038737;
-    *(unsigned int *)((~(alignment - 1) & ((unsigned int)free_link + alignment + 11)) - 12 + 8) = (unsigned int)free_link;
-    _user[1].type += free_link[1];
-    Sys_LeaveCriticalSection(CRITSECT_MEMFIRSTFIT);
-    return ~(alignment - 1) & ((unsigned int)free_link + alignment + 11);
+        user->free_blocks = free_link->next;
+
+    {
+        const uintptr_t linkAddr = reinterpret_cast<uintptr_t>(free_link);
+        const uintptr_t aligned = FirstFit_AlignUser(linkAddr, alignment);
+        free_link->next = reinterpret_cast<_firstfit_heapnode *>(kFirstFitBusyTag);
+        *reinterpret_cast<_firstfit_heapnode **>(aligned - sizeof(void *)) = free_link;
+        user->used += free_link->size;
+        Sys_LeaveCriticalSection(CRITSECT_MEMFIRSTFIT);
+        return reinterpret_cast<void *>(aligned);
+    }
 }
 
-void __cdecl Hunk_FirstFitFree(HunkUser *_user, unsigned int *ptr)
+void __cdecl Hunk_FirstFitFree(HunkUser *_user, void *ptr)
 {
-    _firstfit_heapnode *free_link; // [esp+0h] [ebp-14h]
-    _firstfit_heapnode *scan; // [esp+8h] [ebp-Ch]
-    _firstfit_heapnode *last; // [esp+10h] [ebp-4h]
+    FirstFitHunkUser *user = reinterpret_cast<FirstFitHunkUser *>(_user);
+    _firstfit_heapnode *free_link;
+    _firstfit_heapnode *scan;
+    _firstfit_heapnode *last;
 
-    if ( ptr )
+    if ( !ptr )
+        return;
+
+    Sys_EnterCriticalSection(CRITSECT_MEMFIRSTFIT);
+    last = nullptr;
+    scan = user->free_blocks;
+    free_link = *reinterpret_cast<_firstfit_heapnode **>(static_cast<unsigned char *>(ptr) - sizeof(void *));
+    if ( free_link->next == reinterpret_cast<_firstfit_heapnode *>(kFirstFitBusyTag) )
     {
-        Sys_EnterCriticalSection(CRITSECT_MEMFIRSTFIT);
-        last = 0;
-        scan = (_firstfit_heapnode *)_user[1].flags;
-        free_link = (_firstfit_heapnode *)*(ptr - 1);
-        if ( free_link->next == (_firstfit_heapnode *)-559038737 )
-        {
-            _user[1].type -= free_link->size;
-            if ( !_user[1].flags
-                && !Assert_MyHandler(
-                            "C:\\projects_pc\\cod\\codsrc\\src\\universal\\mem_firstfit.cpp",
-                            178,
-                            0,
-                            "%s",
-                            "hunk->free_blocks!=NULL") )
-            {
-                __debugbreak();
-            }
-            while ( scan )
-            {
-                if ( scan > free_link )
-                {
-                    if ( last )
-                    {
-                        free_link->next = scan;
-                        last->next = free_link;
-                    }
-                    else
-                    {
-                        free_link->next = (_firstfit_heapnode *)_user[1].flags;
-                        _user[1].flags = (unsigned int)free_link;
-                    }
-                    if ( last && (_firstfit_heapnode *)((char *)last + last->size) == free_link )
-                    {
-                        last->size += free_link->size;
-                        last->next = free_link->next;
-                        free_link = last;
-                    }
-                    if ( free_link->next && (_firstfit_heapnode *)((char *)free_link + free_link->size) == free_link->next )
-                    {
-                        free_link->size += free_link->next->size;
-                        free_link->next = free_link->next->next;
-                    }
-                    goto LABEL_24;
-                }
-                last = scan;
-                scan = scan->next;
-            }
-            if ( !Assert_MyHandler(
-                            "C:\\projects_pc\\cod\\codsrc\\src\\universal\\mem_firstfit.cpp",
-                            220,
-                            0,
-                            "%s\n\t%s",
-                            "0",
-                            "invalid pointer passed into first fit free\n") )
-                __debugbreak();
-        }
-        else if ( !Assert_MyHandler(
-                                 "C:\\projects_pc\\cod\\codsrc\\src\\universal\\mem_firstfit.cpp",
-                                 173,
-                                 0,
-                                 "%s\n\t%s",
-                                 "0",
-                                 "buffer overrun or underrun or illegal ptr detected") )
+        user->used -= free_link->size;
+        if ( !user->free_blocks
+            && !Assert_MyHandler(
+                        "C:\\projects_pc\\cod\\codsrc\\src\\universal\\mem_firstfit.cpp",
+                        178,
+                        0,
+                        "%s",
+                        "hunk->free_blocks!=NULL") )
         {
             __debugbreak();
         }
-LABEL_24:
-        Sys_LeaveCriticalSection(CRITSECT_MEMFIRSTFIT);
+        while ( scan )
+        {
+            if ( scan > free_link )
+            {
+                if ( last )
+                {
+                    free_link->next = scan;
+                    last->next = free_link;
+                }
+                else
+                {
+                    free_link->next = user->free_blocks;
+                    user->free_blocks = free_link;
+                }
+                if ( last && reinterpret_cast<_firstfit_heapnode *>(
+                                 reinterpret_cast<char *>(last) + last->size) == free_link )
+                {
+                    last->size += free_link->size;
+                    last->next = free_link->next;
+                    free_link = last;
+                }
+                if ( free_link->next
+                    && reinterpret_cast<_firstfit_heapnode *>(
+                           reinterpret_cast<char *>(free_link) + free_link->size) == free_link->next )
+                {
+                    free_link->size += free_link->next->size;
+                    free_link->next = free_link->next->next;
+                }
+                goto LABEL_24;
+            }
+            last = scan;
+            scan = scan->next;
+        }
+        if ( !Assert_MyHandler(
+                        "C:\\projects_pc\\cod\\codsrc\\src\\universal\\mem_firstfit.cpp",
+                        220,
+                        0,
+                        "%s\n\t%s",
+                        "0",
+                        "invalid pointer passed into first fit free\n") )
+            __debugbreak();
     }
+    else if ( !Assert_MyHandler(
+                             "C:\\projects_pc\\cod\\codsrc\\src\\universal\\mem_firstfit.cpp",
+                             173,
+                             0,
+                             "%s\n\t%s",
+                             "0",
+                             "buffer overrun or underrun or illegal ptr detected") )
+    {
+        __debugbreak();
+    }
+LABEL_24:
+    Sys_LeaveCriticalSection(CRITSECT_MEMFIRSTFIT);
 }
-

@@ -1,4 +1,5 @@
 #include "mem_userhunk.h"
+#include <database/db_stream.h>
 #include "assertive.h"
 #include <qcommon/threads.h>
 #include "mem_firstfit.h"
@@ -35,14 +36,14 @@ ALLOCATION_SCHEME_FUNCTIONS g_HunkUserAllocationSchemeMap[4] =
     Hunk_UserDebugReset,
     Hunk_UserDebugDestroy,
     (void *(*)(HunkUser *, int, int, const char *))Hunk_UserDebugAlloc,
-    (void(__cdecl *)(HunkUser *, void *))Hunk_UserDebugFree
+    Hunk_UserDebugFree
   },
   {
     (HunkUser *(*)(void *, int, HU_ALLOCATION_SCHEME, unsigned int, void *, const char *, int))Hunk_FirstFitInit,
     Hunk_FirstFitReset,
     Hunk_FirstFitDestroy,
     (void *(*)(HunkUser *, int, int, const char *))Hunk_FirstFitAlloc,
-    (void(__cdecl *)(HunkUser *, void *))Hunk_FirstFitFree
+    Hunk_FirstFitFree
   },
   {
     (HunkUser *(*)(void *, int, HU_ALLOCATION_SCHEME, unsigned int, void *, const char *, int))Hunk_FixedInit,
@@ -56,7 +57,7 @@ ALLOCATION_SCHEME_FUNCTIONS g_HunkUserAllocationSchemeMap[4] =
 
 
 HunkUser *__cdecl Hunk_UserDebugInit(
-                unsigned int *buffer,
+                void *buffer,
                 int size,
                 HU_ALLOCATION_SCHEME scheme,
                 unsigned int flags,
@@ -64,6 +65,10 @@ HunkUser *__cdecl Hunk_UserDebugInit(
                 const char *name,
                 int type)
 {
+    (void)scheme_specific_data;
+    HunkUserDebug *user = reinterpret_cast<HunkUserDebug *>(buffer);
+    const int headerBytes = static_cast<int>(sizeof(HunkUserDebug));
+
     if ( scheme != HU_SCHEME_DEBUG
         && !Assert_MyHandler(
                     "C:\\projects_pc\\cod\\codsrc\\src\\universal\\mem_userhunk.cpp",
@@ -84,22 +89,24 @@ HunkUser *__cdecl Hunk_UserDebugInit(
     {
         __debugbreak();
     }
-    *buffer = 0;
-    buffer[1] = 0;
-    buffer[2] = 0;
-    buffer[3] = 0;
-    buffer[4] = 0;
-    buffer[4] = (unsigned int)Hunk_FirstFitInit(buffer + 5, size - 20, HU_SCHEME_FIRSTFIT, flags, 0, name, type);
-    *buffer = scheme;
-    buffer[1] = flags;
-    buffer[2] = (unsigned int)name;
-    buffer[3] = type;
-    return (HunkUser *)buffer;
+    user->hunkUser.scheme = scheme;
+    user->hunkUser.flags = flags;
+    user->hunkUser.name = name;
+    user->hunkUser.type = type;
+    user->firstFit = Hunk_FirstFitInit(
+        static_cast<unsigned char *>(buffer) + headerBytes,
+        static_cast<unsigned int>(size - headerBytes),
+        HU_SCHEME_FIRSTFIT,
+        flags,
+        nullptr,
+        name,
+        type);
+    return &user->hunkUser;
 }
 
 void __cdecl Hunk_UserDebugReset(HunkUser *_user)
 {
-    Hunk_FirstFitReset((HunkUser *)_user[1].scheme);
+    Hunk_FirstFitReset(reinterpret_cast<HunkUserDebug *>(_user)->firstFit);
 }
 
 void __cdecl Hunk_UserDebugDestroy(HunkUser *_user)
@@ -127,7 +134,7 @@ void __cdecl Hunk_UserDebugDestroy(HunkUser *_user)
     Z_VirtualFree(_user, _user->type);
 }
 
-int __cdecl Hunk_UserDebugAlloc(HunkUser *_user, int size, int alignment)
+void *__cdecl Hunk_UserDebugAlloc(HunkUser *_user, int size, int alignment)
 {
     if ( !_user
         && !Assert_MyHandler("C:\\projects_pc\\cod\\codsrc\\src\\universal\\mem_userhunk.cpp", 155, 0, "%s", "user") )
@@ -174,10 +181,10 @@ int __cdecl Hunk_UserDebugAlloc(HunkUser *_user, int size, int alignment)
     {
         __debugbreak();
     }
-    return Hunk_FirstFitAlloc((HunkUser *)_user[1].scheme, size, alignment);
+    return Hunk_FirstFitAlloc(reinterpret_cast<HunkUserDebug *>(_user)->firstFit, size, alignment);
 }
 
-void __cdecl Hunk_UserDebugFree(HunkUser *_user, unsigned int *ptr)
+void __cdecl Hunk_UserDebugFree(HunkUser *_user, void *ptr)
 {
     if ( _user->scheme != HU_SCHEME_DEBUG
         && !Assert_MyHandler(
@@ -199,7 +206,7 @@ void __cdecl Hunk_UserDebugFree(HunkUser *_user, unsigned int *ptr)
     {
         __debugbreak();
     }
-    Hunk_FirstFitFree((HunkUser *)_user[1].scheme, ptr);
+    Hunk_FirstFitFree(reinterpret_cast<HunkUserDebug *>(_user)->firstFit, ptr);
 }
 
 HunkUser *__cdecl Hunk_UserDefaultInit(
@@ -211,7 +218,8 @@ HunkUser *__cdecl Hunk_UserDefaultInit(
                 const char *name,
                 int type)
 {
-    unsigned int v7; // ecx
+    HunkUserDefault *user = (HunkUserDefault *)buffer;
+    const psize_int headerBytes = offsetof(HunkUserDefault, buf);
 
     if ( scheme
         && !Assert_MyHandler(
@@ -223,33 +231,32 @@ HunkUser *__cdecl Hunk_UserDefaultInit(
     {
         __debugbreak();
     }
-    memset(buffer, 0, 0x2Cu);
-    *((unsigned int *)buffer + 7) = (unsigned int) & buffer[size];
-    *((unsigned int *)buffer + 8) = (unsigned int)(buffer + 40);
-    *((unsigned int *)buffer + 8) = (*((unsigned int *)buffer + 8) + 31) & 0xFFFFFFE0;
-    if ( (*((unsigned int *)buffer + 8) & 0x1F) != 0
+    memset(buffer, 0, (size_t)headerBytes);
+    user->end = (psize_int)&buffer[size];
+    user->pos = ((psize_int)(buffer + headerBytes) + 31) & ~(psize_int)31;
+    if ( (user->pos & 0x1F) != 0
         && !Assert_MyHandler(
                     "C:\\projects_pc\\cod\\codsrc\\src\\universal\\mem_userhunk.cpp",
                     187,
                     0,
                     "%s\n\t(user->pos) = %i",
                     "(!(user->pos & 31))",
-                    *((unsigned int *)buffer + 8)) )
+                    (int)user->pos) )
     {
         __debugbreak();
     }
     if ( (flags & 2) != 0 )
-        v7 = size + *((unsigned int *)buffer + 8);
+        user->locked = user->pos + (psize_int)size;
     else
-        v7 = (*((unsigned int *)buffer + 8) + 4095) & 0xFFFFF000;
-    *((unsigned int *)buffer + 9) = v7;
-    *((unsigned int *)buffer + 6) = size;
-    *((unsigned int *)buffer + 4) = (unsigned int)buffer;
-    *(unsigned int *)buffer = scheme;
-    *((unsigned int *)buffer + 1) = flags;
-    *((unsigned int *)buffer + 2) = (unsigned int)name;
-    *((unsigned int *)buffer + 3) = type;
-    if ( *((unsigned int *)buffer + 5)
+        user->locked = (user->pos + 4095) & ~(psize_int)4095;
+    user->maxSize = size;
+    user->current = user;
+    user->next = 0;
+    user->hunkUser.scheme = scheme;
+    user->hunkUser.flags = flags;
+    user->hunkUser.name = name;
+    user->hunkUser.type = type;
+    if ( user->next
         && !Assert_MyHandler("C:\\projects_pc\\cod\\codsrc\\src\\universal\\mem_userhunk.cpp", 200, 0, "%s", "!user->next") )
     {
         __debugbreak();
@@ -260,6 +267,7 @@ HunkUser *__cdecl Hunk_UserDefaultInit(
 void __cdecl Hunk_UserDefaultReset(HunkUserDefault *_user)
 {
     char *pos; // [esp+0h] [ebp-8h]
+    const psize_int headerBytes = offsetof(HunkUserDefault, buf);
 
     if (_user->hunkUser.scheme
         && !Assert_MyHandler(
@@ -280,15 +288,16 @@ void __cdecl Hunk_UserDefaultReset(HunkUserDefault *_user)
     }
     if ((_user->hunkUser.flags & 2) != 0)
     {
-        _user->pos = (int)_user->buf;
-        _user->locked = _user->maxSize + _user->pos;
+        _user->pos = (psize_int)_user->buf;
+        _user->locked = (psize_int)_user->maxSize + _user->pos;
     }
     else
     {
-        pos = (char *)((unsigned int)&_user[93].buf[3] & 0xFFFFF000);
-        if (pos != (char *)((_user->pos + 4095) & 0xFFFFF000))
+        // First page boundary after the hunk base (base is page-aligned from VirtualReserve).
+        pos = (char *)(((psize_int)_user + 4096) & ~(psize_int)4095);
+        if (pos != (char *)((_user->pos + 4095) & ~(psize_int)4095))
         {
-            if (_user->pos - (int)pos <= 0
+            if ((psize_int)(_user->pos - (psize_int)pos) <= 0
                 && !Assert_MyHandler(
                     "C:\\projects_pc\\cod\\codsrc\\src\\universal\\mem_userhunk.cpp",
                     229,
@@ -298,11 +307,11 @@ void __cdecl Hunk_UserDefaultReset(HunkUserDefault *_user)
             {
                 __debugbreak();
             }
-            Z_VirtualDecommit(pos, _user->pos - (_DWORD)pos, _user->hunkUser.type);
+            Z_VirtualDecommit(pos, (int)(_user->pos - (psize_int)pos), _user->hunkUser.type);
         }
-        _user->pos = (int)_user->buf;
-        _user->locked = (_user->pos + 4095) & 0xFFFFF000;
-        memset(_user->buf, 0, 0xFD8u);
+        _user->pos = (psize_int)_user->buf;
+        _user->locked = (_user->pos + 4095) & ~(psize_int)4095;
+        memset(_user->buf, 0, (size_t)(4096 - headerBytes));
     }
 }
 
@@ -334,15 +343,16 @@ void __cdecl Hunk_UserDefaultDestroy(HunkUserDefault *_user)
     }
 }
 
-int __cdecl Hunk_UserDefaultAlloc(HunkUserDefault *user, unsigned int size, int alignment, const char *name)
+void *__cdecl Hunk_UserDefaultAlloc(HunkUserDefault *user, unsigned int size, int alignment, const char *name)
 {
     const char *v4; // eax
-    signed int range; // [esp+4h] [ebp-1Ch]
-    int pos; // [esp+Ch] [ebp-14h]
-    int v8; // [esp+10h] [ebp-10h]
-    HunkUserDefault *current; // [esp+18h] [ebp-8h]
-    HunkUserDefault *newCurrent; // [esp+1Ch] [ebp-4h]
-    int alignmenta; // [esp+30h] [ebp+10h]
+    psize_int range;
+    psize_int pos;
+    psize_int v8;
+    HunkUserDefault *current;
+    HunkUserDefault *newCurrent;
+    psize_int alignmenta;
+    const unsigned int headerBytes = (unsigned int)offsetof(HunkUserDefault, buf);
 
     if (!user
         && !Assert_MyHandler("C:\\projects_pc\\cod\\codsrc\\src\\universal\\mem_userhunk.cpp", 288, 0, "%s", "user"))
@@ -359,9 +369,9 @@ int __cdecl Hunk_UserDefaultAlloc(HunkUserDefault *user, unsigned int size, int 
     {
         __debugbreak();
     }
-    if (size > user->maxSize - 40)
+    if (size > (unsigned int)user->maxSize - headerBytes)
     {
-        v4 = va("size: %d, maxSize: %d", size, user->maxSize - 40);
+        v4 = va("size: %d, maxSize: %d", size, user->maxSize - (int)headerBytes);
         if (!Assert_MyHandler(
             "C:\\projects_pc\\cod\\codsrc\\src\\universal\\mem_userhunk.cpp",
             290,
@@ -391,15 +401,21 @@ int __cdecl Hunk_UserDefaultAlloc(HunkUserDefault *user, unsigned int size, int 
     {
         __debugbreak();
     }
-    alignmenta = alignment - 1;
+    alignmenta = (psize_int)alignment - 1;
     for (current = user->current; ; current = newCurrent)
     {
         pos = current->pos;
-        v8 = pos % (alignmenta + 1) ? ~alignmenta & (alignmenta + pos) : current->pos;
-        if ((signed int)(size + v8) <= current->end)
+        v8 = (pos % (alignmenta + 1)) ? (~alignmenta & (alignmenta + pos)) : current->pos;
+        if ((psize_int)size + v8 <= current->end)
             break;
         if ((user->hunkUser.flags & 4) != 0 || (user->hunkUser.flags & 2) != 0)
+        {
+            Bo1_Diag("Hunk_UserAlloc OOM: name=%s type=%d flags=%u size=%u maxSize=%d pos=%llu end=%llu",
+                     user->hunkUser.name ? user->hunkUser.name : "?", user->hunkUser.type, user->hunkUser.flags, size,
+                     user->maxSize, (unsigned long long)current->pos, (unsigned long long)current->end);
+            Bo1_DiagStack("HunkOOM");
             Com_Error(ERR_FATAL, "Hunk_UserAlloc: out of memory");
+        }
         newCurrent = (HunkUserDefault *)Hunk_UserCreate(
             user->maxSize,
             user->hunkUser.scheme,
@@ -410,10 +426,10 @@ int __cdecl Hunk_UserDefaultAlloc(HunkUserDefault *user, unsigned int size, int 
         user->current = newCurrent;
         current->next = newCurrent;
     }
-    current->pos = size + v8;
+    current->pos = (psize_int)size + v8;
     if (current->pos > current->locked)
     {
-        range = ((current->pos + 4096) & 0xFFFFF000) - current->locked;
+        range = ((current->pos + 4096) & ~(psize_int)4095) - current->locked;
         if (range <= 0
             && !Assert_MyHandler("C:\\projects_pc\\cod\\codsrc\\src\\universal\\mem_userhunk.cpp", 323, 0, "%s", "range > 0"))
         {
@@ -429,17 +445,17 @@ int __cdecl Hunk_UserDefaultAlloc(HunkUserDefault *user, unsigned int size, int 
         {
             __debugbreak();
         }
-        Z_VirtualCommit((char *)current->locked, range, user->hunkUser.type);
+        Z_VirtualCommit((char *)current->locked, (int)range, user->hunkUser.type);
         current->locked += range;
     }
     if ((user->hunkUser.flags & 8) != 0)
     {
         if (name)
-            track_userhunk_alloc(size, v8, name, user->hunkUser.type);
+            track_userhunk_alloc(size, (int)v8, name, user->hunkUser.type);
         else
-            track_userhunk_alloc(size, v8, user->hunkUser.name, user->hunkUser.type);
+            track_userhunk_alloc(size, (int)v8, user->hunkUser.name, user->hunkUser.type);
     }
-    return v8;
+    return (void *)v8;
 }
 
 void __cdecl Hunk_UserDefaultFree(HunkUser *user, void *ptr)
@@ -461,7 +477,13 @@ void __cdecl Hunk_UserDefaultFree(HunkUser *user, void *ptr)
 void __cdecl Hunk_UserStartup()
 {
     iassert(!g_DebugHunkUser);
+    #if defined(BO1_PORT_X64)
+    // Script lookup tables (OpcodeLookup 12 -> 16 bytes, pointers in SourceBufferInfo, ...) outgrow the Win32 24 MB budget when the
+    // client script VM is compiled with developer on as well.
+    g_DebugHunkUser = Hunk_UserCreate(0x3000000, HU_SCHEME_DEBUG, 0, 0, "Hunk_InitDebugMemory", 0);
+#else
     g_DebugHunkUser = Hunk_UserCreate(0x1700000, HU_SCHEME_DEBUG, 0, 0, "Hunk_InitDebugMemory", 0);
+#endif
 }
 
 void __cdecl Hunk_UserShutdown()
@@ -551,7 +573,8 @@ HunkUser *__cdecl Hunk_UserCreate(
     }
     else
     {
-        Z_VirtualCommit(buffer, 44, type);
+        // Commit at least the HunkUserDefault header (Win32 was 44 / 0x2C).
+        Z_VirtualCommit(buffer, (int)((offsetof(HunkUserDefault, buf) + 31) & ~31u), type);
         return g_HunkUserAllocationSchemeMap[scheme].Init(buffer, size, scheme, flags, scheme_specific_data, name, type);
     }
 }
@@ -585,7 +608,7 @@ void __cdecl Hunk_UserSetPos(HunkUser *_user, unsigned char *pos)
     iassert(pos >= user->buf);
     iassert((psize_int)pos <= user->pos);
 
-    user->pos = (int)pos;
+    user->pos = (psize_int)pos;
 }
 
 char *__cdecl Hunk_CopyString(HunkUser *user, const char *in)

@@ -23,7 +23,9 @@ struct SentientGlobals // sizeof=0x28
 } glob;
 
 // DERIVED KB layout corresponding to the pointer-free SP globals at 0x023A5950.
+#if !defined(BO1_PORT_X64)
 static_assert(sizeof(SentientGlobals) == 0x28, "DERIVED sentient globals save layout");
+#endif
 static_assert(offsetof(SentientGlobals, playerTrail) == 8
     && offsetof(SentientGlobals, sampleTime) == 0x20, "DERIVED sentient globals fields");
 

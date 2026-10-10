@@ -1280,7 +1280,7 @@ void __cdecl CL_WWWDownload()
         else if ( ret == DL_DONE)
         {
             cls.download = 0;
-            FS_BuildOSPath((char *)fs_homepath->current.integer, 0, cls.originalDownloadName, to_ospath);
+            FS_BuildOSPath((char *)fs_homepath->current.string, 0, cls.originalDownloadName, to_ospath);
             remove(to_ospath);
             if ( rename(cls.downloadTempName, to_ospath) )
             {
@@ -2233,8 +2233,7 @@ char __cdecl CL_QuickMatch_ChooseSession()
     {
         qsort(
             s_quickmatchCandidates,
-            s_numPingResponses,
-            0x178u,
+            s_numPingResponses, sizeof(*(s_quickmatchCandidates)),
             (int (__cdecl *)(const void *, const void *))CL_QuickMatch_CompareServers);
         Com_DPrintf(14, "Hostname\tPing\t\tClients\tScore\n");
         for ( i = 0; i < s_numPingResponses; ++i )

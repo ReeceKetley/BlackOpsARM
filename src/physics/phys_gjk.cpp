@@ -9,6 +9,7 @@
 // (Honestly it should probably be turned on for the entire project)
 // `mp_array`, I was having endless (endless, and not sometimes!) gjk warnings about max iterations. This seems to have fixed it.
 // Could also be fixed with more iterations, but that's a hack.
+#if defined(_M_IX86)
 #if !defined(_M_IX86_FP) || _M_IX86_FP != 0
 // to turn on x87: Edit the vcxproj 
 // <ClCompile Include="src\physics\phys_gjk.cpp">
@@ -16,6 +17,8 @@
 // < / ClCompile>
 #error "phys_gjk.cpp expects x87 floats"
 #endif
+#endif
+// x64/ARM: no x87 mode; use the portable float path (may need more GJK iterations).
 
 const float SEP_CONV_THRESH = 0.001f;
 const float CONV_THRESH = 0.001f;

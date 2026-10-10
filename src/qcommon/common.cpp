@@ -29,6 +29,7 @@
 #include <universal/com_memory.h>
 #include "dvar_cmds.h"
 #include <win32/win_shared.h>
+#include <platform/platform.hpp>
 #include "com_clients.h"
 #include <client/cl_keys.h>
 #include <win32/win_local.h>
@@ -477,7 +478,7 @@ void __cdecl Com_PrintMessage(int channel, char *msg, int error)
                  || !com_filter_output->current.enabled
                  || Con_IsChannelVisible(CON_DEST_CONSOLE, channel, 3)) )
             {
-                Sys_Print(msg);
+                Platform_Print(msg);
             }
             if ( Monkey_IsRunning() )
             {
@@ -739,7 +740,7 @@ void __cdecl    Com_ErrorAbort()
 void Com_Error(errorParm_t code, const char *fmt, ...)
 {
     _iobuf *v2; // eax
-    int *Value; // eax
+    jmp_buf *Value; // eax
     va_list va; // [esp+18h] [ebp+10h] BYREF
 
     va_start(va, fmt);
@@ -804,8 +805,8 @@ void Com_Error(errorParm_t code, const char *fmt, ...)
             }
             TaskManager2_ComErrorCleanup();
             GlassCl_WaitUpdate();
-            Value = (int *)Sys_GetValue(2);
-            longjmp(Value, -1);
+            Value = (jmp_buf *)Sys_GetValue(2);
+            longjmp(*Value, -1);
         }
         if ( !com_fixedConsolePosition )
         {
@@ -824,7 +825,7 @@ void Com_Error(errorParm_t code, const char *fmt, ...)
 
 void __cdecl Com_CheckError()
 {
-    int *Value; // eax
+    jmp_buf *Value; // eax
     int errorEntered; // [esp+0h] [ebp-4h]
 
     Sys_EnterCriticalSection(CRITSECT_COM_ERROR);
@@ -832,8 +833,8 @@ void __cdecl Com_CheckError()
     Sys_LeaveCriticalSection(CRITSECT_COM_ERROR);
     if ( errorEntered )
     {
-        Value = (int *)Sys_GetValue(2);
-        longjmp(Value, -1);
+        Value = (jmp_buf *)Sys_GetValue(2);
+        longjmp(*Value, -1);
     }
 }
 
@@ -1727,7 +1728,7 @@ static void Com_InitContentPacks_SP()
 
 void __cdecl Com_Init(char *commandLine)
 {
-    if ( _setjmp((int *)Sys_GetValue(2)) )
+    if ( _setjmp(*(jmp_buf *)Sys_GetValue(2)) )
     {
         Sys_Error(va("Error during initialization:\n%s\n", com_errorMessage));
     }
@@ -1736,7 +1737,7 @@ void __cdecl Com_Init(char *commandLine)
 
     Monkey_Start();
 
-    if ( !_setjmp((int*)Sys_GetValue(2)) )
+    if ( !_setjmp(*(jmp_buf *)Sys_GetValue(2)) )
         Com_AddStartupCommands();
 
     if ( !I_strcmp(sv_mapname->current.string, "") )
@@ -1748,7 +1749,7 @@ void __cdecl Com_Init(char *commandLine)
 #ifndef BO1_DEDICATED
     if (!com_sv_running->current.enabled && !IsDedicatedServer())
     {
-        if (_setjmp((int *)Sys_GetValue(2)))
+        if (_setjmp(*(jmp_buf *)Sys_GetValue(2)))
         {
             Sys_Error(va("Error during initialization:\n%s\n", com_errorMessage));
         }
@@ -3276,7 +3277,7 @@ void __cdecl Com_Frame()
     cl_flame_proftimer.reset();
     Value = Sys_GetValue(2);
     //if ( !_setjmp3(Value, 0) )
-    if ( !_setjmp((int*)Value) )
+    if ( !_setjmp(*(jmp_buf *)Value) )
     {
         Com_CheckSyncFrame();
         Com_Frame_Try_Block_Function();
@@ -3619,7 +3620,7 @@ void Com_StartHunkUsers()
 
     Value = Sys_GetValue(2);
     //if ( _setjmp3(Value, 0) )
-    if (_setjmp((int *)Value))
+    if (_setjmp(*(jmp_buf *)Value))
     {
         Sys_Error((char*)"Error during initialization:\n%s\n", com_errorMessage);
 
@@ -3628,7 +3629,7 @@ void Com_StartHunkUsers()
     MenuScreen = (uiMenuCommand_t)UI_GetMenuScreen();
     Primary = Com_LocalClients_GetPrimary();
     UI_SetActiveMenu(Primary, MenuScreen);
-    IN_Frame();
+    Platform_InputFrame();
     Com_EventLoop();
 }
 

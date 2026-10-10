@@ -149,7 +149,9 @@ struct alignas(8) jqBatchGroup // sizeof=0x8
 
     jqBatchGroup();
 };
+#if !defined(BO1_PORT_X64)
 static_assert(alignof(jqBatchGroup) == 8, "jqBatchGroup must be 8-byte aligned for atomic 64-bit reads");
+#endif
 
 struct jqModule // sizeof=0x18
 {                                       // XREF: .data:jqModule bp_env_jq_module1Module/r
@@ -189,7 +191,12 @@ struct __declspec(align(4)) jqBatch // sizeof=0x7C
                                         // jqAddBatch(jqModule const &,void *,void *,jqBatchGroup *,jqQueue *,void *,int)+20/w ...
     unsigned int ConditionalValue;      // XREF: Sys_AddWorkerCmdInternal(jqWorkerCmd *,void *,WorkerCmdConditional *)+57/w
                                         // jqAddBatch(jqModule const &,void *,void *,jqBatchGroup *,jqQueue *,void *,int)+27/w ...
-    unsigned int ParamData[23];         // XREF: Sys_AddWorkerCmdInternal(jqWorkerCmd *,void *,WorkerCmdConditional *)+5D/w
+#if defined(BO1_PORT_X64)
+    // x64: [0..1] holds a jqWorkerCmd * (8 bytes), [2] the fence, inline command data starts at [3]; same 84-byte inline capacity.
+    unsigned int ParamData[24];
+#else
+    unsigned int ParamData[23];
+#endif         // XREF: Sys_AddWorkerCmdInternal(jqWorkerCmd *,void *,WorkerCmdConditional *)+5D/w
                                         // Sys_AddWorkerCmdInternal(jqWorkerCmd *,void *,WorkerCmdConditional *)+6F/w ...
     _jqBatch _Batch;
     // padding byte
@@ -198,7 +205,9 @@ struct __declspec(align(4)) jqBatch // sizeof=0x7C
 
     jqBatch();
 };
+#if !defined(BO1_PORT_X64)
 static_assert(sizeof(jqBatch) == 124);
+#endif
 
 template <typename T, int SIZE>
 struct __declspec(align(8)) jqAtomicQueue//<jqBatch,32> // sizeof=0x50
@@ -410,7 +419,9 @@ struct jqBatchPool // sizeof=0x180
 
     ~jqBatchPool();
 };
+#if !defined(BO1_PORT_X64)
 static_assert(offsetof(jqBatchPool, group) % 8 == 0, "jqPool.group must be 8-byte aligned");
+#endif
 
 
 unsigned int __cdecl tlAtomicAdd(volatile unsigned __int32 *var, unsigned int value);

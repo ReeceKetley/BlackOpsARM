@@ -15,6 +15,14 @@
 #include <cgame_mp/cg_pose_mp.h>
 #include <cgame/cg_drawtools.h>
 #include "dobj_skel.h"
+#include <qcommon/dobj_management.h>
+
+// models[numModels] (XModel *) followed by modelParents[numModels] (bytes); Win32 sized this 5 * numModels.
+static inline int DObjModelsBytes(unsigned int numModels)
+{
+    return (int)((sizeof(XModel *) + 1) * numModels);
+}
+static_assert(sizeof(DObj) <= DOBJ_BUF_UINTS * 4, "DObj slot in objBuf too small");
 
 unsigned int g_empty;
 
@@ -275,23 +283,22 @@ void __cdecl DObjCreate(
     }
     if ( !buf && !Assert_MyHandler("C:\\projects_pc\\cod\\codsrc\\src\\xanim\\dobj.cpp", 756, 0, "%s", "obj") )
         __debugbreak();
-    memset(buf + 20, 0, 0x44u);
-    buf[8] = 0;
-    *((_WORD *)buf + 2) = 0;
-    *((unsigned int *)buf + 3) = 0;
-    *((unsigned int *)buf + 4) = 0;
-    *((_WORD *)buf + 3) = entnum;
-    *((unsigned int *)buf + 23) = 0;
-    *((unsigned int *)buf + 24) = 0;
-    *((unsigned int *)buf + 25) = 0;
-    *((unsigned int *)buf + 26) = 0;
-    *((unsigned int *)buf + 27) = 0;
+    {
+        DObj *o = (DObj *)buf;
+        memset(&o->skel, 0, sizeof(o->skel));
+        o->duplicatePartsSize = 0;
+        o->duplicateParts = 0;
+        o->ignoreCollision = 0;
+        o->locked = 0;
+        o->entnum = entnum;
+        memset(o->hidePartBits, 0, sizeof(o->hidePartBits));
+    }
     DObjCreateDuplicateParts((DObj *)buf, dobjModels, numModels);
     DObjComputeBounds((DObj *)buf);
     DObjSetTree((DObj *)buf, tree);
-    buf[112] = -1;
-    *((unsigned int *)buf + 29) = 0;
-    buf[113] = 0;
+    ((DObj *)buf)->localClientIndex = -1;
+    ((DObj *)buf)->ikState = 0;
+    ((DObj *)buf)->flags = 0;
 }
 
 void __cdecl DObjCreateDuplicateParts(DObj *obj, DObjModel_s *dobjModels, unsigned int numModels)
@@ -419,8 +426,8 @@ void __cdecl DObjCreateDuplicateParts(DObj *obj, DObjModel_s *dobjModels, unsign
     {
         __debugbreak();
     }
-    obj->localModels = (XModel **)MT_Alloc(5 * numModels, 13, SCRIPTINSTANCE_SERVER);
-    memcpy((unsigned __int8 *)obj->localModels, (unsigned __int8 *)models, 4 * numModels);
+    obj->localModels = (XModel **)MT_Alloc(DObjModelsBytes(numModels), 13, SCRIPTINSTANCE_SERVER);
+    memcpy((unsigned __int8 *)obj->localModels, (unsigned __int8 *)models, sizeof(XModel *) * numModels);
     memcpy((unsigned __int8 *)&obj->localModels[numModels], modelParents, numModels);
     if (numModels != (unsigned __int8)numModels
         && !Assert_MyHandler(
@@ -561,10 +568,10 @@ void __cdecl DObjCreateExt(
         DObjSetFlag((DObj *)buf, 1u, 1);
     if ( isLocalPlayer )
         DObjSetFlag((DObj *)buf, 2u, 1);
-    buf[112] = localClientIndex;
+    ((DObj *)buf)->localClientIndex = localClientIndex;
     if ( tree )
         tree->inst = !DObjIsServer((const DObj *)buf);
-    *((unsigned int *)buf + 29) = 0;
+    ((DObj *)buf)->ikState = 0;
 }
 
 void __cdecl DObjFree(DObj *obj)
@@ -578,7 +585,7 @@ void __cdecl DObjFree(DObj *obj)
     models = obj->localModels;
     if ( models )
     {
-        MT_Free((unsigned char*)models, 5 * obj->numModels, SCRIPTINSTANCE_SERVER);
+        MT_Free((unsigned char*)models, DObjModelsBytes(obj->numModels), SCRIPTINSTANCE_SERVER);
         obj->localModels = 0;
     }
     obj->numModels = 0;
@@ -804,7 +811,7 @@ void __cdecl DObjUnarchive(DObj *obj)
         model->model = savedObj.models[modelIndex];
         model->ignoreCollision = (savedObj.ignoreCollision & (1 << modelIndex)) != 0;
     }
-    MT_Free((_BYTE *)savedObj.models, 5 * savedObj.numModels, SCRIPTINSTANCE_SERVER);
+    MT_Free((_BYTE *)savedObj.models, DObjModelsBytes(savedObj.numModels), SCRIPTINSTANCE_SERVER);
     DObjCreateExt(
         dobjModels,
         savedObj.numModels,

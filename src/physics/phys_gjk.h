@@ -237,7 +237,9 @@ struct phys_heap_gjk_cache_system_avl_tree // sizeof=0x10
         phys_inplace_avl_tree_node<phys_heap_gjk_cache_system_avl_tree::phys_gjk_cache_info_internal> m_avl_tree_node;
         phys_heap_gjk_cache_system_avl_tree::phys_gjk_cache_info_internal *m_next_gjk_ci;
     };
+    #if !defined(BO1_PORT_X64)
     static_assert(sizeof(phys_heap_gjk_cache_system_avl_tree::phys_gjk_cache_info_internal) == 0x90);
+    #endif
 
     phys_simple_allocator<phys_heap_gjk_cache_system_avl_tree::phys_gjk_cache_info_internal> m_list_phys_gjk_cache_info_internal;
     phys_inplace_avl_tree<phys_gjk_geom_id_pair_key, phys_heap_gjk_cache_system_avl_tree::phys_gjk_cache_info_internal, phys_heap_gjk_cache_system_avl_tree::phys_gjk_cache_info_internal::avl_tree_accessor> m_search_tree;
@@ -863,7 +865,9 @@ struct __declspec(align(16)) gjk_trace_output_t // sizeof=0x50
     // padding byte
     // padding byte
 };
+#if !defined(BO1_PORT_X64)
 static_assert(sizeof(gjk_trace_output_t) == 80);
+#endif
 
 struct __declspec(align(4)) gjk_slide_move_input_t // sizeof=0x2C
 {                                       // XREF: ai_gjk_slide_move_input_t/r

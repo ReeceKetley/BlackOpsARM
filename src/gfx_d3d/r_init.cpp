@@ -991,10 +991,10 @@ const char *__cdecl R_ClosestRefreshRateForMode(unsigned int width, unsigned int
         comparison = (const char *)(dx.displayModes[mid].Width - width);
         if ( !comparison )
         {
-            comparison = &dx.resolutionNameTable[4 * mid - 1023][-(int)height];
+            comparison = (const char *)(intptr_t)((int)dx.displayModes[mid].Height - (int)height);
             if ( !comparison )
             {
-                comparison = &dx.resolutionNameTable[4 * mid - 1022][-refreshRate];
+                comparison = (const char *)(intptr_t)((int)dx.displayModes[mid].RefreshRate - refreshRate);
                 if ( !comparison )
                     return (const char *)refreshRate;
             }
@@ -1020,18 +1020,18 @@ const char *__cdecl R_ClosestRefreshRateForMode(unsigned int width, unsigned int
     {
         __debugbreak();
     }
-    if ( dx.displayModes[top].Width == width && dx.resolutionNameTable[4 * top - 1023] == (const char *)height )
-        return dx.resolutionNameTable[4 * top - 1022];
-    if ( dx.displayModes[bot].Width != width || dx.resolutionNameTable[4 * bot - 1023] != (const char *)height )
+    if ( dx.displayModes[top].Width == width && dx.displayModes[top].Height == height )
+        return (const char *)(intptr_t)dx.displayModes[top].RefreshRate;
+    if ( dx.displayModes[bot].Width != width || dx.displayModes[bot].Height != height )
     {
         v4 = va(
                      "%i = (%i %i), %i = (%i %i), want (%i %i)",
                      top,
                      dx.displayModes[top].Width,
-                     dx.resolutionNameTable[4 * bot - 1023],
+                     dx.displayModes[bot].Height,
                      bot,
                      dx.displayModes[bot].Width,
-                     dx.resolutionNameTable[4 * bot - 1023],
+                     dx.displayModes[bot].Height,
                      width,
                      height);
         if ( !Assert_MyHandler(
@@ -1043,7 +1043,7 @@ const char *__cdecl R_ClosestRefreshRateForMode(unsigned int width, unsigned int
                         v4) )
             __debugbreak();
     }
-    return dx.resolutionNameTable[4 * bot - 1022];
+    return (const char *)(intptr_t)dx.displayModes[bot].RefreshRate;
 }
 
 bool __cdecl R_SetCustomResolution(GfxWindowParms *wndParms)
@@ -1365,23 +1365,23 @@ void __cdecl R_EnumDisplayModes(unsigned int adapterIndex)
                      &dx.displayModes[dx.displayModeCount]);
         if ( hr >= 0 )
         {
-            if ( !dx.resolutionNameTable[4 * dx.displayModeCount - 1022] )
-                dx.resolutionNameTable[4 * dx.displayModeCount - 1022] = (const char *)60;
+            if ( !dx.displayModes[dx.displayModeCount].RefreshRate )
+                dx.displayModes[dx.displayModeCount].RefreshRate = 60;
             ++dx.displayModeCount;
         }
     }
-    qsort(dx.displayModes, dx.displayModeCount, 0x10u, (int (__cdecl *)(const void *, const void *))R_CompareDisplayModes);
+    qsort(dx.displayModes, dx.displayModeCount, sizeof(*(dx.displayModes)), (int (__cdecl *)(const void *, const void *))R_CompareDisplayModes);
     resolutionCount = 0;
     refreshRateCount = 0;
     for ( modeIndex = 0; modeIndex < dx.displayModeCount; ++modeIndex )
     {
         resolutionCount = R_AddValidResolution(
                                                 dx.displayModes[modeIndex].Width,
-                                                (int)dx.resolutionNameTable[4 * modeIndex - 1023],
+                                                (int)dx.displayModes[modeIndex].Height,
                                                 resolutionCount,
                                                 availableResolutions);
         refreshRateCount = R_AddValidRefreshRate(
-                                                 (int)dx.resolutionNameTable[4 * modeIndex - 1022],
+                                                 (int)dx.displayModes[modeIndex].RefreshRate,
                                                  refreshRateCount,
                                                  availableRefreshRates);
     }
@@ -1407,7 +1407,7 @@ void __cdecl R_EnumDisplayModes(unsigned int adapterIndex)
                          defaultResolutionIndex,
                          0x21u,
                          "Direct X resolution mode");
-    qsort(availableRefreshRates, refreshRateCount, 4u, (int (__cdecl *)(const void *, const void *))R_CompareRefreshRates);
+    qsort(availableRefreshRates, refreshRateCount, sizeof(*(availableRefreshRates)), (int (__cdecl *)(const void *, const void *))R_CompareRefreshRates);
     defaultRefreshRateIndex = 0;
     for ( refreshRateIndex = 0; refreshRateIndex < refreshRateCount; ++refreshRateIndex )
     {

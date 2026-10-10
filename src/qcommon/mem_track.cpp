@@ -1136,7 +1136,7 @@ void __cdecl track_PrintInfo()
     //            }
     //        }
     //    }
-    //    qsort(sorted_mem_track, len, 0x98u, (int (__cdecl *)(const void *, const void *))mem_track_compare);
+    //    qsort(sorted_mem_track, len, sizeof(*(sorted_mem_track)), (int (__cdecl *)(const void *, const void *))mem_track_compare);
     //    info.typeTotal[4][0] = -1;
     //    info.typeTotal[18][0] = -1;
     //    info.typeTotal[25][0] = -1;

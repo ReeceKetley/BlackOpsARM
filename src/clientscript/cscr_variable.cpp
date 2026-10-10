@@ -113,7 +113,7 @@ void __cdecl Scr_DumpScriptThreads(scriptInstance_t inst)
                         pInfo->pos[j] = info.pos[info.posSize - j];
                 }
             }
-            qsort(infoArray, num, 0x8Cu, (int (__cdecl *)(const void *, const void *))ThreadInfoCompare);
+            qsort(infoArray, num, sizeof(*(infoArray)), (int (__cdecl *)(const void *, const void *))ThreadInfoCompare);
             Com_Printf(24, "********************************\n");
             varUsage = 0.0f;
             endonUsage = 0.0f;
@@ -271,17 +271,17 @@ void __cdecl Scr_DumpScriptVariables(
                 if (summary)
                 {
                     VariableInfoCompareCallBack = (int(__cdecl *)(const void *, const void *))VariableInfoFileNameCompare;
-                    qsort(infoArray, num, 0x10u, (int(__cdecl *)(const void *, const void *))VariableInfoFileNameCompare);
+                    qsort(infoArray, num, sizeof(*(infoArray)), (int(__cdecl *)(const void *, const void *))VariableInfoFileNameCompare);
                 }
                 else if (functionSummary)
                 {
                     VariableInfoCompareCallBack = (int(__cdecl *)(const void *, const void *))VariableInfoFunctionCompare;
-                    qsort(infoArray, num, 0x10u, (int(__cdecl *)(const void *, const void *))VariableInfoFunctionCompare);
+                    qsort(infoArray, num, sizeof(*(infoArray)), (int(__cdecl *)(const void *, const void *))VariableInfoFunctionCompare);
                 }
                 else
                 {
                     VariableInfoCompareCallBack = (int(__cdecl *)(const void *, const void *))CompareThreadIndices;
-                    qsort(infoArray, num, 0x10u, (int(__cdecl *)(const void *, const void *))CompareThreadIndices);
+                    qsort(infoArray, num, sizeof(*(infoArray)), (int(__cdecl *)(const void *, const void *))CompareThreadIndices);
                 }
                 i = 0;
                 while (i < num)
@@ -294,9 +294,9 @@ void __cdecl Scr_DumpScriptVariables(
                     } while (i < num && !VariableInfoCompareCallBack(pInfoa, &infoArray[16 * i]));
                 }
                 if (lineSort)
-                    qsort(infoArray, num, 0x10u, (int(__cdecl *)(const void *, const void *))VariableInfoFileLineCompare);
+                    qsort(infoArray, num, sizeof(*(infoArray)), (int(__cdecl *)(const void *, const void *))VariableInfoFileLineCompare);
                 else
-                    qsort(infoArray, num, 0x10u, (int(__cdecl *)(const void *, const void *))VariableInfoCountCompare);
+                    qsort(infoArray, num, sizeof(*(infoArray)), (int(__cdecl *)(const void *, const void *))VariableInfoCountCompare);
                 Com_Printf(24, "********************************\n");
                 if (spreadsheet)
                 {

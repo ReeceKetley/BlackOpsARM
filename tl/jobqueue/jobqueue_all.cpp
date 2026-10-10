@@ -741,10 +741,10 @@ void __cdecl jqAttachQueueToWorkers(jqQueue *Queue, unsigned int ProcessorMask)
                 }
                 break; // L57: do not write Queues[8+] (retail would, over WorkTime); skip this worker
             }
-        } while (_InterlockedCompareExchange(
-            reinterpret_cast<volatile LONG *>(&worker->Queues[queueSlot]),
-            reinterpret_cast<LONG>(Queue),
-            0) != 0);
+        } while (InterlockedCompareExchangePointer(
+            reinterpret_cast<PVOID *>(&worker->Queues[queueSlot]),
+            Queue,
+            nullptr) != nullptr);
         if (queueSlot >= 8)
             continue;
 
@@ -826,18 +826,13 @@ int __cdecl jqGetExecutingBatchCount(jqBatchGroup *GroupID)
 
 jqWorker *__cdecl jqFindWorkerForProcessor(jqProcessor Processor)
 {
-  unsigned int v1; // eax
-  int *i; // ecx
-
-  v1 = 0;
-  if ( jqNWorkers <= 0 )
-    return 0;
-  for ( i = &jqWorkers->Processor; *i != Processor; i += 42 )
+  // Win32 walked workers as int[42] (sizeof(jqWorker)==0xA8); use native indexing on all ports.
+  for (unsigned int i = 0; i < jqNWorkers; ++i)
   {
-    if ( ++v1 >= jqNWorkers )
-      return 0;
+    if (jqWorkers[i].Processor == static_cast<int>(Processor))
+      return &jqWorkers[i];
   }
-  return &jqWorkers[v1];
+  return nullptr;
 }
 
 bool __cdecl jqPoll(jqBatchGroup *GroupID)
@@ -1336,7 +1331,7 @@ void __cdecl jqAddBatch(
   if ( ParamData && ParamSize )
     memcpy((unsigned __int8 *)Batch.ParamData, ParamData, ParamSize);
 
-  memset((unsigned __int8 *)Batch.ParamData + ParamSize, 0xCDu, 92 - ParamSize);
+  memset((unsigned __int8 *)Batch.ParamData + ParamSize, 0xCDu, sizeof(Batch.ParamData) - ParamSize);
   jqAddBatch(&Batch, Queue);
 }
 
@@ -1585,7 +1580,9 @@ void __cdecl jqWorkerLoop(jqWorker *Worker, jqBatchGroup *GroupID, bool BreakWhe
                     if (!freeList)
                     {
                         block = (jqAtomicQueue<jqBatch,32>::NodeType *)tlMemAlloc(sizeof(jqAtomicQueue<jqBatch, 32>::NodeType) * 32 + 8, 4, 0);
+                        #if !defined(BO1_PORT_X64)
                         static_assert(sizeof(jqAtomicQueue<jqBatch, 32>::NodeType) * 32 + 8 == 0x1008);
+                        #endif
 
                         //v17 = block;
                         //v18 = 31;
@@ -1748,7 +1745,9 @@ void __cdecl jqTempWorkerLoop(jqWorker *Worker, jqBatchGroup *GroupID, bool (__c
         {
 
           block = (jqAtomicQueue<jqBatch, 32>::NodeType *)tlMemAlloc(sizeof(jqAtomicQueue<jqBatch, 32>::NodeType) * 32 + 8, 4u, 0);
+          #if !defined(BO1_PORT_X64)
           static_assert(sizeof(jqAtomicQueue<jqBatch, 32>::NodeType) * 32 + 8 == 0x1008);
+          #endif
 
           //v12 = block;
           //v13 = 31;
@@ -2401,33 +2400,19 @@ void jqAtomicHeap::Init(
         unsigned int _HeapSize,
         unsigned int _BlockSize)
 {
-  unsigned int BlockSize; // edx
-  unsigned int HeapSize; // edi
-  unsigned int v7; // eax
-  int v8; // ebx
-  int *p_NBlocks; // edi
-  int v10; // ecx
-  unsigned __int8 *v11; // eax
-  unsigned __int8 *LevelData; // ebx
-  unsigned __int64 *v13; // edi
-  unsigned __int64 **p_CellAvailable; // ecx
-  signed int v15; // kr04_4
-  unsigned int *v16; // esi
-  int i; // [esp+14h] [ebp+8h]
-  int ia; // [esp+14h] [ebp+8h]
-
+  // Win32 decompile walked LevelInfo as 5 dwords / pointer+=5; native LevelInfo is larger on x64.
   this->HeapBase = _HeapBase;
   this->HeapSize = _HeapSize;
   this->BlockSize = _BlockSize;
-  BlockSize = this->BlockSize;
   this->ThisPtr = this;
   this->TotalUsed = 0;
-  HeapSize = this->HeapSize;
   this->TotalBlocks = 0;
-  v7 = BlockSize;
-  for ( this->NLevels = 1; v7 < HeapSize; v7 *= 2 )
+
+  unsigned int v7 = _BlockSize;
+  for ( this->NLevels = 1; v7 < _HeapSize; v7 *= 2 )
     ++this->NLevels;
-  if ( BlockSize << (LOBYTE(this->NLevels) - 1) != HeapSize
+
+  if ( (_BlockSize << (LOBYTE(this->NLevels) - 1)) != _HeapSize
     && _tlAssert(
          "c:\\projects_pc\\cod\\codsrc\\tl\\jobqueue\\jobqueue_atomic_heap.h",
          167,
@@ -2445,46 +2430,36 @@ void jqAtomicHeap::Init(
   {
     __debugbreak();
   }
-  v8 = 0;
-  i = 0;
-  if ( this->NLevels > 0 )
+
+  int bitmapBytes = 0;
+  for ( int level = 0; level < this->NLevels; ++level )
   {
-    p_NBlocks = &this->Levels[0].NBlocks;
-    do
-    {
-      p_NBlocks += 5;
-      *(p_NBlocks - 6) = this->BlockSize << v8;
-      v10 = this->NLevels - v8++ - 1;
-      *(p_NBlocks - 5) = 1 << v10;
-      *(p_NBlocks - 4) = (unsigned int)((1 << v10) + 63) >> 6;
-      i += (int)((*(p_NBlocks - 5) + 1023) & 0xFFFFFC00) / 8;
-    }
-    while ( v8 < this->NLevels );
+    LevelInfo *info = &this->Levels[level];
+    info->BlockSize = this->BlockSize << level;
+    info->NBlocks = 1 << (this->NLevels - level - 1);
+    info->NCells = (info->NBlocks + 63) >> 6;
+    bitmapBytes += (info->NBlocks + 1023) & 0xFFFFFC00;
   }
-  v11 = (unsigned __int8 *)tlMemAlloc(2 * i, 0x80u, 0);
+  bitmapBytes /= 8;
+
+  unsigned __int8 *v11 = (unsigned __int8 *)tlMemAlloc(2 * bitmapBytes, 0x80u, 0);
   this->LevelData = v11;
-  memset(v11, 0, 2 * i);
-  LevelData = this->LevelData;
-  v13 = (unsigned __int64 *)&LevelData[i];
-  ia = 0;
-  if ( this->NLevels > 0 )
+  memset(v11, 0, 2 * bitmapBytes);
+
+  unsigned __int8 *availData = this->LevelData;
+  unsigned __int8 *allocData = this->LevelData + bitmapBytes;
+  for ( int level = 0; level < this->NLevels; ++level )
   {
-    p_CellAvailable = &this->Levels[0].CellAvailable;
-    do
-    {
-      v15 = ((unsigned int)*(p_CellAvailable - 2) + 1023) & 0xFFFFFC00;
-      *p_CellAvailable = (unsigned __int64 *)LevelData;
-      p_CellAvailable[1] = v13;
-      LevelData += v15 / 8;
-      v13 = (unsigned __int64 *)((char *)v13 + v15 / 8);
-      p_CellAvailable += 5;
-      ++ia;
-    }
-    while ( ia < this->NLevels );
+    LevelInfo *info = &this->Levels[level];
+    const int levelBytes = ((info->NBlocks + 1023) & 0xFFFFFC00) / 8;
+    info->CellAvailable = (unsigned __int64 *)availData;
+    info->CellAllocated = (unsigned __int64 *)allocData;
+    availData += levelBytes;
+    allocData += levelBytes;
   }
-  v16 = (unsigned int *)*((unsigned int *)&this->TotalBlocks + 5 * this->NLevels);
-  *v16 = 1;
-  v16[1] = 0;
+
+  // Mark the single top-level block available (uint64 value 1).
+  this->Levels[this->NLevels - 1].CellAvailable[0] = 1;
 }
 
 //void jqAtomicQueue<jqBatch,32>::Init(jqAtomicQueue<jqBatch,32> *SharedFreeList)

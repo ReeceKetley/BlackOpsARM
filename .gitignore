@@ -426,3 +426,9 @@ FodyWeavers.xsd
 .idea/*
 Debug/*
 __BO1Zombies
+# x64 port bring-up
+build-x64*/
+/_*.exe
+/matsz.obj
+/msz.obj
+x64_diag.log

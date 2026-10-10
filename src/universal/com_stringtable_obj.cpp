@@ -197,7 +197,7 @@ void __cdecl StringTable_ParseFileIntoTable(const char *filename, StringTable *t
             __debugbreak();
         }
         s_sortTable = table;
-        qsort(table->cellIndex, valueCount, 2u, (int (__cdecl *)(const void *, const void *))CellCompare);
+        qsort(table->cellIndex, valueCount, sizeof(*(table->cellIndex)), (int (__cdecl *)(const void *, const void *))CellCompare);
         s_sortTable = 0;
         Com_EndParseSession();
         if ( buffer )

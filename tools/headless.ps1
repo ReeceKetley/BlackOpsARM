@@ -91,18 +91,28 @@ param(
     # when this run folder or every slot is busy, retry for up to this many seconds before refusing (exit 10)
     [int]$WaitSec = 0,
     # CPU priority class of the game process
-    [ValidateSet('BelowNormal', 'Normal', 'Idle')][string]$Priority = 'BelowNormal'
+    [ValidateSet('BelowNormal', 'Normal', 'Idle')][string]$Priority = 'BelowNormal',
+    # directory whose BO1Zombies.exe/.pdb/.dll are used (and copied into -RunDir). Defaults to build\Release.
+    # For BO1_PORT_X64 smoke: -BuildDir build-x64\Release -RunDir build\run\x64smoke (fs_b stays build\Release for assets).
+    [string]$BuildDir = ''
 )
 
 $ErrorActionPreference = 'Stop'
 $repo = Split-Path -Parent $PSScriptRoot
-$R = Join-Path $repo 'build\Release'   # the build: fs_b, and the source of a run folder
+$R = Join-Path $repo 'build\Release'   # fs_b assets (iwds, zone source); also default exe source
+$Build = $R                             # exe/.pdb/.dll source for the run
+if ($BuildDir) {
+    $Build = [IO.Path]::GetFullPath($(if ([IO.Path]::IsPathRooted($BuildDir)) { $BuildDir } else { Join-Path $repo $BuildDir })).TrimEnd('\')
+}
 $H = $R                                 # where the exe runs: cwd, fs_h, logs
 if ($RunDir) {
     $H = [IO.Path]::GetFullPath($(if ([IO.Path]::IsPathRooted($RunDir)) { $RunDir } else { Join-Path $repo $RunDir })).TrimEnd('\')
     if ($H -ieq $R) { $H = $R }
     # build\Play is a player's own folder: never a headless run folder
     if ((Split-Path -Leaf $H) -ieq 'Play') { Write-Output "REFUSED: $H is a play folder, not a run folder"; exit 11 }
+} elseif ($Build -ne $R) {
+    # x64 (etc.): run from the build dir itself when no -RunDir; still pin fs_b to Win32 Release assets
+    $H = $Build
 }
 $exe = Join-Path $H 'BO1Zombies.exe'
 # The filesystem opens console_mp.log under fs_game. Match the last command-line assignment,
@@ -118,7 +128,8 @@ $log = Join-Path (Join-Path $H $logGame) 'console_mp.log'
 $steamGame = 'C:\Program Files (x86)\Steam\steamapps\common\Call of Duty Black Ops'   # READ ONLY: only listed
 $symbolizer = 'C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\bin\Hostx64\x86\llvm-symbolizer.exe'
 
-if (-not (Test-Path (Join-Path $R 'BO1Zombies.exe'))) { throw "not built: $(Join-Path $R 'BO1Zombies.exe')" }
+if (-not (Test-Path (Join-Path $Build 'BO1Zombies.exe'))) { throw "not built: $(Join-Path $Build 'BO1Zombies.exe')" }
+if (-not (Test-Path (Join-Path $R 'BO1Zombies.exe')) -and $Build -eq $R) { throw "not built: $(Join-Path $R 'BO1Zombies.exe')" }
 # One run per run folder (its main\ log and players\ config are shared) and at most -MaxSlots runs machine-wide. Named
 # mutexes are held by this PowerShell process until it exits (the OS releases them if it dies; abandoned = acquired).
 function Get-BO1Mutex([string]$name) {
@@ -156,11 +167,17 @@ if ($H -ne $R) {
         $t = Join-Path $R $j; $l = Join-Path $H $j
         if ((Test-Path $t) -and -not (Test-Path $l)) { New-Item -ItemType Junction -Path $l -Target $t | Out-Null }
     }
-    # the same root files a build\Release run sees (setup.ps1 put them there), the exe and pdb refreshed after a rebuild
-    Get-ChildItem $R -File | Where-Object { $_.Name -in 'BO1Zombies.exe', 'BO1Zombies.pdb' -or $_.Extension -in '.dll', '.txt', '.bmp' } | ForEach-Object {
-        $c = Join-Path $H $_.Name
+    # exe/pdb/dll from -BuildDir (x64) or build\Release; asset sidecars (.txt/.bmp) prefer Build then fall back to $R
+    $rootFiles = @{}
+    foreach ($src in @($R, $Build)) {
+        Get-ChildItem $src -File -ErrorAction SilentlyContinue | Where-Object {
+            $_.Name -in 'BO1Zombies.exe', 'BO1Zombies.pdb' -or $_.Extension -in '.dll', '.txt', '.bmp'
+        } | ForEach-Object { $rootFiles[$_.Name] = $_ }
+    }
+    foreach ($f in $rootFiles.Values) {
+        $c = Join-Path $H $f.Name
         $old = Get-Item $c -ErrorAction SilentlyContinue
-        if (-not $old -or $old.Length -ne $_.Length -or $old.LastWriteTimeUtc -ne $_.LastWriteTimeUtc) { Copy-Item $_.FullName $c -Force }
+        if (-not $old -or $old.Length -ne $f.Length -or $old.LastWriteTimeUtc -ne $f.LastWriteTimeUtc) { Copy-Item $f.FullName $c -Force }
     }
     # the build's config, fresh each run (a run writes its own copy back on quit)
     Get-ChildItem (Join-Path $H 'players') -File -Filter '*.cfg' | Remove-Item -Force
