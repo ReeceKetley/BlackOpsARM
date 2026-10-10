@@ -20,6 +20,18 @@ sval_u __cdecl node1_(scriptInstance_t inst, int val1)
     return (sval_u)val1;
 }
 
+#if defined(BO1_PORT_X64)
+void Bo1_Diag(const char *fmt, ...);
+void Bo1_DiagStack(const char *tag);
+// A parse-tree pointer did not fit the 32-bit slot: the process must stay below 4 GB (BO1_X64_LOW_VA).
+void Bo1_NarrowFail(const void *p)
+{
+    Bo1_Diag("Bo1_NarrowFail: pointer %p does not fit a 32-bit parse-tree slot (link with BO1_X64_LOW_VA=ON)", p);
+    Bo1_DiagStack("NARROW");
+    __debugbreak();
+}
+#endif
+
 void __cdecl Scr_InitAllocNode(scriptInstance_t inst)
 {
     if ( g_allocNodeUser[inst]

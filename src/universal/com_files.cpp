@@ -123,7 +123,7 @@ int __cdecl FS_IwdIsPure(const iwd_t *iwd)
 
 void __cdecl FS_DisablePureCheck(bool disable)
 {
-    if ( fs_gameDirVar && *(_BYTE *)fs_gameDirVar->current.integer )
+    if ( fs_gameDirVar && *(_BYTE *)fs_gameDirVar->current.string )
         g_disablePureCheck = disable;
     if ( disable )
         FS_ShutdownServerIwdNames();
@@ -471,7 +471,7 @@ int __cdecl FS_FileExists(char *file)
     _iobuf *f; // [esp+4h] [ebp-10Ch]
     char testpath[260]; // [esp+8h] [ebp-108h] BYREF
 
-    FS_BuildOSPath((char *)fs_homepath->current.integer, fs_gamedir, file, testpath);
+    FS_BuildOSPath((char *)fs_homepath->current.string, fs_gamedir, file, testpath);
     f = FS_FileOpenReadBinary(testpath);
     if ( !f )
         return 0;
@@ -904,7 +904,7 @@ unsigned int __cdecl FS_FOpenFileReadForThread(const char *filename, int *file, 
                                     if ( fs_copyfiles->current.enabled && !I_stricmp(dir->path, fs_cdpath->current.string) )
                                     {
                                         FS_BuildOSPathForThread(
-                                            (char *)fs_basepath->current.integer,
+                                            (char *)fs_basepath->current.string,
                                             dir->gamedir,
                                             sanitizedName,
                                             copypath,
@@ -1893,22 +1893,23 @@ void __cdecl FS_SortFileList(const char **filelist, int numfiles)
     int k; // [esp+8h] [ebp-10h]
     int numsortedfiles; // [esp+Ch] [ebp-Ch]
     int i; // [esp+10h] [ebp-8h]
-    unsigned int *sortedlist; // [esp+14h] [ebp-4h]
 
-    sortedlist = Z_Malloc(4 * numfiles + 4, "FS_SortFileList", 3);
-    *sortedlist = 0;
-    numsortedfiles = 0;
-    for ( i = 0; i < numfiles; ++i )
     {
-        for ( j = 0; j < numsortedfiles && FS_PathCmp(filelist[i], (const char *)sortedlist[j]) >= 0; ++j )
-            ;
-        for ( k = numsortedfiles; k > j; --k )
-            sortedlist[k] = sortedlist[k - 1];
-        sortedlist[j] = (unsigned int)filelist[i];
-        ++numsortedfiles;
+        const char **sorted = (const char **)Z_Malloc((int)(sizeof(char *) * ((size_t)numfiles + 1)), "FS_SortFileList", 3);
+        sorted[0] = 0;
+        numsortedfiles = 0;
+        for ( i = 0; i < numfiles; ++i )
+        {
+            for ( j = 0; j < numsortedfiles && FS_PathCmp(filelist[i], sorted[j]) >= 0; ++j )
+                ;
+            for ( k = numsortedfiles; k > j; --k )
+                sorted[k] = sorted[k - 1];
+            sorted[j] = filelist[i];
+            ++numsortedfiles;
+        }
+        Com_Memcpy(filelist, sorted, (int)(sizeof(char *) * (size_t)numfiles));
+        Z_Free((char *)sorted, 3);
     }
-    Com_Memcpy(filelist, sortedlist, 4 * numfiles);
-    Z_Free((char *)sortedlist, 3);
 }
 
 void __cdecl FS_DisplayPath(int bLanguageCull)
@@ -1984,7 +1985,7 @@ void __cdecl FS_AddUserMapDirIWDs(char *pszGameFolder)
         if ( i->iwd && !I_stricmp(i->iwd->iwdGamename, pszGameFolder) )
             return;
     }
-    FS_AddIwdFilesForGameDirectory((char *)fs_homepath->current.integer, pszGameFolder);
+    FS_AddIwdFilesForGameDirectory((char *)fs_homepath->current.string, pszGameFolder);
 }
 
 int bLanguagesListed;
@@ -2044,7 +2045,7 @@ void __cdecl FS_AddIwdFilesForGameDirectory(char *path, char *pszGameFolder)
         if (!I_strncmp(s0[i], "localized_", 10))
             memcpy(s0[i], "          ", 10);
     }
-    qsort(s0, numfiles, 4u, (int(__cdecl *)(const void *, const void *))iwdsort);
+    qsort(s0, numfiles, sizeof(char *), (int(__cdecl *)(const void *, const void *))iwdsort);
     for (i = 0; i < numfiles; ++i)
     {
         if (I_strncmp(s0[i], TEN_SPACE, 10))
@@ -2112,7 +2113,7 @@ void __cdecl FS_AddIwdFilesForGameDirectory(char *path, char *pszGameFolder)
                 *iwdGamename++ = *v7++;
                 //} while (HIBYTE(v5));
             } while (v5);
-            search = (searchpath_s *)Z_Malloc(28, "FS_AddIwdFilesForGameDirectory", 3);
+            search = (searchpath_s *)Z_Malloc(sizeof(searchpath_s), "FS_AddIwdFilesForGameDirectory", 3);
             search->iwd = ZipFile;
             search->bLocalized = v14;
             search->language = piLanguageIndex;
@@ -2124,21 +2125,23 @@ void __cdecl FS_AddIwdFilesForGameDirectory(char *path, char *pszGameFolder)
 
 iwd_t *__cdecl FS_LoadZipFile(char *zipfile, const char *basename)
 {
-    char v3; // [esp+17h] [ebp-1DDh]
-    char *name; // [esp+1Ch] [ebp-1D8h]
-    char *v5; // [esp+20h] [ebp-1D4h]
-    unsigned __int8 *uf; // [esp+70h] [ebp-184h]
-    char *namePtr; // [esp+74h] [ebp-180h]
-    int hash; // [esp+7Ch] [ebp-178h]
-    int fs_numHeaderLongs; // [esp+80h] [ebp-174h]
-    int *fs_headerLongs; // [esp+84h] [ebp-170h]
-    unsigned int *iwd; // [esp+88h] [ebp-16Ch]
-    unsigned int len; // [esp+8Ch] [ebp-168h]
-    fileInIwd_s *buildBuffer; // [esp+90h] [ebp-164h]
-    unz_file_info_s file_info; // [esp+94h] [ebp-160h] BYREF
-    char filename_inzip[256]; // [esp+E4h] [ebp-110h] BYREF
-    unsigned int i; // [esp+1E8h] [ebp-Ch]
-    unz_global_info_s gi; // [esp+1ECh] [ebp-8h] BYREF
+    char v3;
+    char *name;
+    char *v5;
+    unsigned __int8 *uf;
+    char *namePtr;
+    int hash;
+    int fs_numHeaderLongs;
+    int *fs_headerLongs;
+    iwd_t *iwd;
+    unsigned int len;
+    fileInIwd_s *buildBuffer;
+    unz_file_info_s file_info;
+    char filename_inzip[256];
+    unsigned int i;
+    unsigned int hashSize;
+    size_t basenameLen;
+    unz_global_info_s gi;
 
     fs_numHeaderLongs = 0;
     uf = (unsigned __int8 *)unzOpen(zipfile);
@@ -2149,36 +2152,33 @@ iwd_t *__cdecl FS_LoadZipFile(char *zipfile, const char *basename)
     unzGoToFirstFile(uf);
     for ( i = 0; i < gi.number_entry && !unzGetCurrentFileInfo(uf, &file_info, filename_inzip, 0x100u, 0, 0, 0, 0); ++i )
     {
-        len += &filename_inzip[strlen(filename_inzip) + 1] - &filename_inzip[1] + 1;
+        len += (unsigned int)(strlen(filename_inzip) + 1);
         unzGoToNextFile(uf);
     }
-    buildBuffer = (fileInIwd_s *)Z_Malloc(len + 12 * gi.number_entry, "FS_LoadZipFile1", 3);
-    namePtr = (char *)&buildBuffer[gi.number_entry];
+    buildBuffer = (fileInIwd_s *)Z_Malloc((int)(len + sizeof(fileInIwd_s) * gi.number_entry), "FS_LoadZipFile1", 3);
+    namePtr = (char *)(buildBuffer + gi.number_entry);
     fs_headerLongs = (int *)Z_Malloc(4 * gi.number_entry, "FS_LoadZipFile2", 3);
-    for ( i = 1; i <= 0x400 && i <= gi.number_entry; i *= 2 )
+    for ( hashSize = 1; hashSize <= 0x400 && hashSize <= gi.number_entry; hashSize *= 2 )
         ;
-    iwd = Z_Malloc(4 * i + 804, "FS_LoadZipFile3", 3);
-    iwd[198] = i;
-    iwd[199] = (unsigned int)(iwd + 201);
-    for ( i = 0; i < iwd[198]; ++i )
-        *(unsigned int *)(iwd[199] + 4 * i) = 0;
-    I_strncpyz((char *)iwd, zipfile, 256);
-    I_strncpyz((char *)iwd + 256, basename, 256);
-    if ( strlen((const char *)iwd + 256) > 4
-        && !I_stricmp((const char *)iwd + strlen((const char *)iwd + 256) + 252, ".iwd") )
-    {
-        *((_BYTE *)iwd + strlen((const char *)iwd + 256) + 252) = 0;
-    }
-    iwd[192] = (unsigned int)uf;
-    iwd[196] = gi.number_entry;
-    iwd[195] = 0;
+    iwd = (iwd_t *)Z_Malloc((int)(sizeof(iwd_t) + sizeof(fileInIwd_s *) * hashSize), "FS_LoadZipFile3", 3);
+    memset(iwd, 0, sizeof(iwd_t) + sizeof(fileInIwd_s *) * hashSize);
+    iwd->hashSize = hashSize;
+    iwd->hashTable = (fileInIwd_s **)(iwd + 1);
+    I_strncpyz(iwd->iwdFilename, zipfile, 256);
+    I_strncpyz(iwd->iwdBasename, basename, 256);
+    basenameLen = strlen(iwd->iwdBasename);
+    if ( basenameLen > 4 && !I_stricmp(iwd->iwdBasename + basenameLen - 4, ".iwd") )
+        iwd->iwdBasename[basenameLen - 4] = 0;
+    iwd->handle = uf;
+    iwd->numFiles = (int)gi.number_entry;
+    iwd->hasOpenFile = 0;
     unzGoToFirstFile(uf);
     for ( i = 0; i < gi.number_entry && !unzGetCurrentFileInfo(uf, &file_info, filename_inzip, 0x100u, 0, 0, 0, 0); ++i )
     {
         if ( file_info.uncompressed_size )
             fs_headerLongs[fs_numHeaderLongs++] = file_info.crc;
         I_strlwr(filename_inzip);
-        hash = FS_HashFileName(filename_inzip, iwd[198]);
+        hash = FS_HashFileName(filename_inzip, iwd->hashSize);
         buildBuffer[i].name = namePtr;
         v5 = filename_inzip;
         name = buildBuffer[i].name;
@@ -2188,32 +2188,30 @@ iwd_t *__cdecl FS_LoadZipFile(char *zipfile, const char *basename)
             *name++ = *v5++;
         }
         while ( v3 );
-        namePtr += &filename_inzip[strlen(filename_inzip) + 1] - &filename_inzip[1] + 1;
+        namePtr += strlen(filename_inzip) + 1;
         unzGetCurrentFileInfoPosition(uf, (unsigned long*)&buildBuffer[i].pos);
-        buildBuffer[i].next = *(fileInIwd_s **)(iwd[199] + 4 * hash);
-        *(unsigned int *)(iwd[199] + 4 * hash) = (unsigned int)&buildBuffer[i];
+        buildBuffer[i].next = iwd->hashTable[hash];
+        iwd->hashTable[hash] = &buildBuffer[i];
         unzGoToNextFile(uf);
     }
-    iwd[193] = Com_BlockChecksumKey32((const unsigned __int8 *)fs_headerLongs, 4 * fs_numHeaderLongs, 0);
+    iwd->checksum = Com_BlockChecksumKey32((const unsigned __int8 *)fs_headerLongs, 4 * fs_numHeaderLongs, 0);
     if ( fs_checksumFeed )
-        iwd[194] = Com_BlockChecksumKey32((const unsigned __int8 *)fs_headerLongs, 4 * fs_numHeaderLongs, fs_checksumFeed);
+        iwd->pure_checksum = Com_BlockChecksumKey32((const unsigned __int8 *)fs_headerLongs, 4 * fs_numHeaderLongs, fs_checksumFeed);
     else
-        iwd[194] = iwd[193];
-    iwd[193] = iwd[193];
-    iwd[194] = iwd[194];
+        iwd->pure_checksum = iwd->checksum;
     Z_Free((char *)fs_headerLongs, 3);
-    iwd[200] = (unsigned int)buildBuffer;
-    return (iwd_t *)iwd;
+    iwd->buildBuffer = buildBuffer;
+    return iwd;
 }
 
 iwd_t *__cdecl FS_LoadFakeIwdFile(char *fakeiwdfile, const char *basename)
 {
-    unsigned int v3; // [esp+0h] [ebp-3Ch]
-    unsigned int len; // [esp+24h] [ebp-18h]
-    int *fs_headerLongs; // [esp+2Ch] [ebp-10h]
-    unsigned int *buf; // [esp+30h] [ebp-Ch]
-    unsigned int *iwd; // [esp+34h] [ebp-8h]
-    _iobuf *f; // [esp+38h] [ebp-4h]
+    size_t basenameLen;
+    unsigned int len;
+    int *fs_headerLongs;
+    unsigned int *buf;
+    iwd_t *iwd;
+    _iobuf *f;
 
     buf = 0;
     f = FS_FileOpenReadBinary(fakeiwdfile);
@@ -2221,34 +2219,28 @@ iwd_t *__cdecl FS_LoadFakeIwdFile(char *fakeiwdfile, const char *basename)
     len = FS_FileGetFileSize(f);
     if ( len >= 8 )
     {
-        buf = Z_Malloc(len, "FS_LoadFakeIwdFile1", 3);
+        buf = (unsigned int *)Z_Malloc(len, "FS_LoadFakeIwdFile1", 3);
         if ( FS_FileRead(buf, len, f) == len && (int)*buf >= (int)buf[1] )
         {
             fs_headerLongs = (int *)(buf + 2);
-            iwd = Z_Malloc(804, "FS_LoadFakeIwdFile2", 3);
-            I_strncpyz((char *)iwd, fakeiwdfile, 256);
-            I_strncpyz((char *)iwd + 256, basename, 256);
-            v3 = strlen(basename);
-            if ( v3 > 4 && !I_stricmp((const char *)iwd + v3 + 252, ".iwd") )
-                *((_BYTE *)iwd + v3 + 252) = 0;
-            iwd[192] = 0;
-            iwd[196] = 0;
-            iwd[195] = 0;
-            *((_BYTE *)iwd + 788) = 0;
-            iwd[198] = 0;
-            iwd[193] = Com_BlockChecksumKey32((const unsigned __int8 *)fs_headerLongs, 4 * buf[1], 0);
+            iwd = (iwd_t *)Z_Malloc(sizeof(iwd_t), "FS_LoadFakeIwdFile2", 3);
+            memset(iwd, 0, sizeof(iwd_t));
+            I_strncpyz(iwd->iwdFilename, fakeiwdfile, 256);
+            I_strncpyz(iwd->iwdBasename, basename, 256);
+            basenameLen = strlen(iwd->iwdBasename);
+            if ( basenameLen > 4 && !I_stricmp(iwd->iwdBasename + basenameLen - 4, ".iwd") )
+                iwd->iwdBasename[basenameLen - 4] = 0;
+            iwd->checksum = Com_BlockChecksumKey32((const unsigned __int8 *)fs_headerLongs, 4 * buf[1], 0);
             if ( fs_checksumFeed )
-                iwd[194] = Com_BlockChecksumKey32((const unsigned __int8 *)fs_headerLongs, 4 * buf[1], fs_checksumFeed);
+                iwd->pure_checksum = Com_BlockChecksumKey32((const unsigned __int8 *)fs_headerLongs, 4 * buf[1], fs_checksumFeed);
             else
-                iwd[194] = iwd[193];
-            iwd[193] = iwd[193];
-            iwd[194] = iwd[194];
+                iwd->pure_checksum = iwd->checksum;
         }
     }
     Z_Free((char *)buf, 3);
     if ( f )
         FS_FileClose(f);
-    return (iwd_t *)iwd;
+    return iwd;
 }
 
 int iString;
@@ -2469,67 +2461,67 @@ void __cdecl FS_Startup(const char *gameName, bool allow_devraw)
     FS_RegisterDvars();
     if ( fs_usedevdir->current.enabled )
     {
-        if ( *(_BYTE *)fs_basepath->current.integer )
-            FS_AddDevGameDirs((char *)fs_basepath->current.integer, allow_devraw);
-        if ( *(_BYTE *)fs_homepath->current.integer && I_stricmp(fs_basepath->current.string, fs_homepath->current.string) )
-            FS_AddDevGameDirs((char *)fs_homepath->current.integer, allow_devraw);
-        if ( *(_BYTE *)fs_cdpath->current.integer && I_stricmp(fs_basepath->current.string, fs_cdpath->current.string) )
-            FS_AddDevGameDirs((char *)fs_cdpath->current.integer, allow_devraw);
+        if ( *(_BYTE *)fs_basepath->current.string )
+            FS_AddDevGameDirs((char *)fs_basepath->current.string, allow_devraw);
+        if ( *(_BYTE *)fs_homepath->current.string && I_stricmp(fs_basepath->current.string, fs_homepath->current.string) )
+            FS_AddDevGameDirs((char *)fs_homepath->current.string, allow_devraw);
+        if ( *(_BYTE *)fs_cdpath->current.string && I_stricmp(fs_basepath->current.string, fs_cdpath->current.string) )
+            FS_AddDevGameDirs((char *)fs_cdpath->current.string, allow_devraw);
     }
-    if ( *(_BYTE *)fs_cdpath->current.integer && I_stricmp(fs_basepath->current.string, fs_cdpath->current.string) )
-        FS_AddLocalizedGameDirectory((char *)fs_cdpath->current.integer, gameName);
-    if ( *(_BYTE *)fs_basepath->current.integer )
-        FS_AddLocalizedGameDirectory((char *)fs_basepath->current.integer, "players");
+    if ( *(_BYTE *)fs_cdpath->current.string && I_stricmp(fs_basepath->current.string, fs_cdpath->current.string) )
+        FS_AddLocalizedGameDirectory((char *)fs_cdpath->current.string, gameName);
+    if ( *(_BYTE *)fs_basepath->current.string )
+        FS_AddLocalizedGameDirectory((char *)fs_basepath->current.string, "players");
     // play-copy: SP FS_Startup adds "players" from fs_basepath only (SP 0x005C8346: push [fs_basepath+0x18],
     // edi = "players" 0x00A29054), same as MP. The shipped game runs with fs_homepath == fs_basepath; our Play
     // launch (fs_h != fs_b) writes the config to fs_homepath\players (Com_WriteConfiguration -> FS_WriteFile),
     // so also search fs_homepath\players, added last so it wins over the fs_basepath\players fallback.
-    if ( *(_BYTE *)fs_basepath->current.integer
-        && *(_BYTE *)fs_homepath->current.integer
+    if ( *(_BYTE *)fs_basepath->current.string
+        && *(_BYTE *)fs_homepath->current.string
         && I_stricmp(fs_homepath->current.string, fs_basepath->current.string) )
     {
-        FS_AddLocalizedGameDirectory((char *)fs_homepath->current.integer, "players");
+        FS_AddLocalizedGameDirectory((char *)fs_homepath->current.string, "players");
     }
-    if ( *(_BYTE *)fs_basepath->current.integer )
+    if ( *(_BYTE *)fs_basepath->current.string )
     {
         v3 = va("%s_shared", gameName);
-        FS_AddLocalizedGameDirectory((char *)fs_basepath->current.integer, v3);
-        FS_AddLocalizedGameDirectory((char *)fs_basepath->current.integer, gameName);
+        FS_AddLocalizedGameDirectory((char *)fs_basepath->current.string, v3);
+        FS_AddLocalizedGameDirectory((char *)fs_basepath->current.string, gameName);
     }
-    if ( *(_BYTE *)fs_basepath->current.integer && I_stricmp(fs_homepath->current.string, fs_basepath->current.string) )
+    if ( *(_BYTE *)fs_basepath->current.string && I_stricmp(fs_homepath->current.string, fs_basepath->current.string) )
     {
         v4 = va("%s_shared", gameName);
-        FS_AddLocalizedGameDirectory((char *)fs_basepath->current.integer, v4);
-        FS_AddLocalizedGameDirectory((char *)fs_homepath->current.integer, gameName);
+        FS_AddLocalizedGameDirectory((char *)fs_basepath->current.string, v4);
+        FS_AddLocalizedGameDirectory((char *)fs_homepath->current.string, gameName);
     }
-    if ( *(_BYTE *)fs_basegame->current.integer
+    if ( *(_BYTE *)fs_basegame->current.string
         && !I_stricmp(gameName, "main")
         && I_stricmp(fs_basegame->current.string, gameName)
-        && *(_BYTE *)fs_basepath->current.integer )
+        && *(_BYTE *)fs_basepath->current.string )
     {
-        FS_AddGameDirectory((char *)fs_basepath->current.integer, fs_basegame->current.string, 0, 0);
+        FS_AddGameDirectory((char *)fs_basepath->current.string, fs_basegame->current.string, 0, 0);
     }
-    if ( *(_BYTE *)fs_gameDirVar->current.integer
+    if ( *(_BYTE *)fs_gameDirVar->current.string
         && !I_stricmp(gameName, "main")
         && I_stricmp(fs_gameDirVar->current.string, gameName)
-        && *(_BYTE *)fs_basepath->current.integer )
+        && *(_BYTE *)fs_basepath->current.string )
     {
-        FS_AddGameDirectory((char *)fs_basepath->current.integer, "usermaps", 0, 0);
-        FS_AddGameDirectory((char *)fs_basepath->current.integer, fs_gameDirVar->current.string, 0, 0);
+        FS_AddGameDirectory((char *)fs_basepath->current.string, "usermaps", 0, 0);
+        FS_AddGameDirectory((char *)fs_basepath->current.string, fs_gameDirVar->current.string, 0, 0);
     }
     // mod: fs_mods "a b c" stacks mods/a, mods/b, mods/c on top of the above (later wins for plain files), then
     // mods/_stack: the hook files every mod may ship (maps/<map>_ffotd.gsc, maps/_zombiemode_ffotd.gsc) chained, so
     // each mod's maps/<name>/_hooks.gsc runs instead of one mod's file shadowing the others' (mods/_stack/README.md).
     // fs_gamedir (where config, logs and saves are written) stays fs_game's. Empty fs_mods = retail.
-    if ( FS_ModStackActive() && !I_stricmp(gameName, "main") && *(_BYTE *)fs_basepath->current.integer )
+    if ( FS_ModStackActive() && !I_stricmp(gameName, "main") && *(_BYTE *)fs_basepath->current.string )
     {
         char gamedir[256];
         char names[16][64];
         I_strncpyz(gamedir, fs_gamedir, 256);
         int count = FS_ModStackNames(names, 16);
         for ( int m = 0; m < count; ++m )
-            FS_AddGameDirectory((char *)fs_basepath->current.integer, va("mods/%s", names[m]), 0, 0);
-        FS_AddGameDirectory((char *)fs_basepath->current.integer, "mods/_stack", 0, 0);
+            FS_AddGameDirectory((char *)fs_basepath->current.string, va("mods/%s", names[m]), 0, 0);
+        FS_AddGameDirectory((char *)fs_basepath->current.string, "mods/_stack", 0, 0);
         I_strncpyz(fs_gamedir, gamedir, 256);
     }
     Com_ReadCDKey();
@@ -2602,7 +2594,7 @@ void __cdecl FS_AddGameDirectory(char *path, const char *dir, int bLanguageDirec
     {
         I_strncpyz(fs_gamedir, szGameFolder, 256);
     }
-    search = (searchpath_s *)Z_Malloc(28, "FS_AddGameDirectory", 3);
+    search = (searchpath_s *)Z_Malloc(sizeof(searchpath_s), "FS_AddGameDirectory", 3);
     v4 = Z_Malloc(512, "FS_AddGameDirectory", 3);
     search->dir = (directory_t *)v4;
     I_strncpyz(search->dir->path, path, 256);
@@ -2674,7 +2666,7 @@ void FS_RegisterDvars()
     fs_ignoreLocalized = _Dvar_RegisterBool("fs_ignoreLocalized", 0, 0xA0u, "Ignore localized files");
     homePath = (char *)RETURN_ZERO32();
     if ( !homePath || !*homePath )
-        homePath = (char *)fs_basepath->reset.integer;
+        homePath = (char *)fs_basepath->reset.string; // Win32 overlaid string onto .integer
     fs_homepath = _Dvar_RegisterString("fs_h", homePath, 0x210u, "Game home path");
     FS_GetOsFolderPath(5, ospathPersonalDocuments);
     fs_userDocuments = _Dvar_RegisterString(
@@ -2749,7 +2741,7 @@ void __cdecl FS_AddIwdPureCheckReference(const searchpath_s *search)
             if ( p->checksum == search->iwd->checksum && !I_stricmp(p->iwdBasename, search->iwd->iwdBasename) )
                 return;
         }
-        pureCheckInfo = (iwd_pure_check_s *)Z_Malloc(520, "FS_AddIwdPureCheckReference", 3);
+        pureCheckInfo = (iwd_pure_check_s *)Z_Malloc((int)sizeof(iwd_pure_check_s), "FS_AddIwdPureCheckReference", 3);
         pureCheckInfo->next = 0;
         pureCheckInfo->checksum = search->iwd->checksum;
         I_strncpyz(pureCheckInfo->iwdBasename, search->iwd->iwdBasename, 256);

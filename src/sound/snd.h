@@ -360,7 +360,9 @@ struct snd_curve // sizeof=0x64
         unsigned int id;
         float points[8][2];
 };
+#if !defined(BO1_PORT_X64)
 static_assert(sizeof(snd_curve) == 100);
+#endif
 
 struct __declspec(align(4)) snd_game_state // sizeof=0x10
 {                                                                             // XREF: snd_local_t/r
@@ -395,7 +397,9 @@ struct snd_group // sizeof=0x50
         unsigned __int16 attenuationSp;
         unsigned __int16 attenuationMp;
 };
+#if !defined(BO1_PORT_X64)
 static_assert(sizeof(snd_group) == 80);
+#endif
 
 struct snd_pan // sizeof=0x3C
 {
@@ -408,13 +412,17 @@ struct snd_pan // sizeof=0x3C
         float left;
         float right;
 };
+#if !defined(BO1_PORT_X64)
 static_assert(sizeof(snd_pan) == 60);
+#endif
 
 struct snd_snapshot_group // sizeof=0x20
 {
         char name[32];
 };
+#if !defined(BO1_PORT_X64)
 static_assert(sizeof(snd_snapshot_group) == 32);
+#endif
 
 struct snd_context // sizeof=0x28
 {
@@ -422,7 +430,9 @@ struct snd_context // sizeof=0x28
         unsigned int valueCount;
         unsigned int values[8];
 };
+#if !defined(BO1_PORT_X64)
 static_assert(sizeof(snd_context) == 40);
+#endif
 
 struct snd_master // sizeof=0xB0
 {
@@ -464,7 +474,9 @@ struct snd_master // sizeof=0xB0
         float limitTA;
         float limitTR;
 };
+#if !defined(BO1_PORT_X64)
 static_assert(sizeof(snd_master) == 176);
+#endif
 
 struct SndDriverGlobals // sizeof=0x34
 {                                                                             // XREF: XAssetPoolEntry<SndDriverGlobals>/r
@@ -482,7 +494,9 @@ struct SndDriverGlobals // sizeof=0x34
     unsigned int masterCount;
     snd_master * masters;
 };
+#if !defined(BO1_PORT_X64)
 static_assert(sizeof(SndDriverGlobals) == 52);
+#endif
 
 struct __declspec(align(4)) snd_enveffect // sizeof=0x20
 {                                                                             // XREF: snd_local_t/r
@@ -549,7 +563,9 @@ struct snd_snapshot // sizeof=0x15C
     unsigned int fadeOutCurve;
     float attenuation[64];
 };
+#if !defined(BO1_PORT_X64)
 static_assert(sizeof(snd_snapshot) == 348);
+#endif
 
 struct snd_snapshot_category // sizeof=0x60C
 {                                                                             // XREF: snd_local_t/r

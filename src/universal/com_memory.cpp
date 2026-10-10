@@ -1,3 +1,4 @@
+#include <cstddef>
 #include "com_memory.h"
 #include "assertive.h"
 
@@ -17,6 +18,13 @@
 #include <gfx_d3d/r_dvars.h>
 
 hunkUsed_t hunk_low;
+
+// Page-floor a hunk pointer without truncating it to 32 bits (x64: s_hunkData is above 4 GB).
+static inline unsigned __int8 *Hunk_PageFloor(const unsigned __int8 *p)
+{
+    return reinterpret_cast<unsigned __int8 *>(reinterpret_cast<uintptr_t>(p) & ~static_cast<uintptr_t>(0xFFF));
+}
+
 unsigned __int8 *s_hunkData;
 int s_hunkTotal;
 hunkUsed_t hunk_high;
@@ -335,7 +343,7 @@ char *__cdecl Hunk_SetDataForFile(int type, const char *name, void *data, void *
     {
         __debugbreak();
     }
-    fileData = (fileData_s *)alloc(strlen(name) + 10);
+    fileData = (fileData_s *)alloc((int)(offsetof(fileData_s, name) + strlen(name) + 1));
     if ( !Hunk_DataOnHunk((unsigned __int8 *)fileData)
         && !Assert_MyHandler(
                     "C:\\projects_pc\\cod\\codsrc\\src\\universal\\com_memory.cpp",
@@ -385,7 +393,7 @@ void __cdecl Hunk_AddData(int type, void *data, void *(__cdecl *alloc)(int))
     {
         __debugbreak();
     }
-    fileData = (fileData_s *)alloc(9);
+    fileData = (fileData_s *)alloc((int)offsetof(fileData_s, name));
     if ( !Hunk_DataOnHunk((unsigned __int8 *)fileData)
         && !Assert_MyHandler(
                     "C:\\projects_pc\\cod\\codsrc\\src\\universal\\com_memory.cpp",
@@ -463,13 +471,13 @@ int __cdecl DB_GetAllXAssetOfType_LoadObj(XAssetType type, XAssetHeader *assets,
     return assetList.assetCount;
 }
 
-void __cdecl Hunk_AddAsset(XAssetHeader header, unsigned int *data)
+void __cdecl Hunk_AddAsset(XAssetHeader header, AssetList *data)
 {
-    if ( !data && !Assert_MyHandler("C:\\projects_pc\\cod\\codsrc\\src\\universal\\com_memory.cpp", 1071, 0, "%s", "data") )
+    if ( !data && !Assert_MyHandler("C:\projects_pc\cod\codsrc\src\universal\com_memory.cpp", 1071, 0, "%s", "data") )
         __debugbreak();
-    if ( *data >= data[1]
+    if ( data->assetCount >= data->maxCount
         && !Assert_MyHandler(
-                    "C:\\projects_pc\\cod\\codsrc\\src\\universal\\com_memory.cpp",
+                    "C:\projects_pc\cod\codsrc\src\universal\com_memory.cpp",
                     1075,
                     0,
                     "%s",
@@ -477,7 +485,7 @@ void __cdecl Hunk_AddAsset(XAssetHeader header, unsigned int *data)
     {
         __debugbreak();
     }
-    *(XAssetHeader *)(data[2] + 4 * (*data)++) = header;
+    data->assets[data->assetCount++] = header;
 }
 
 void __cdecl DB_EnumXAssets(
@@ -566,11 +574,11 @@ void __cdecl Hunk_ClearToMark(int mark)
         __debugbreak();
     }
     Hunk_CheckTempMemoryHighClear();
-    beginBuf = (unsigned __int8 *)((unsigned int)&s_hunkData[s_hunkTotal - hunk_high.temp] & 0xFFFFF000);
+    beginBuf = Hunk_PageFloor(&s_hunkData[s_hunkTotal - hunk_high.temp]);
     hunk_high.temp = mark;
     hunk_high.permanent = mark;
     Hunk_ClearData();
-    commitSize = ((unsigned int)&s_hunkData[s_hunkTotal - hunk_high.temp] & 0xFFFFF000) - (unsigned int)beginBuf;
+    commitSize = (unsigned int)(Hunk_PageFloor(&s_hunkData[s_hunkTotal - hunk_high.temp]) - beginBuf);
     if ( commitSize )
         Z_VirtualDecommit((char *)beginBuf, commitSize, 11);
     track_hunk_ClearToMarkHigh(mark);
@@ -659,11 +667,11 @@ void __cdecl Hunk_ClearToMarkLow(int mark)
         __debugbreak();
     }
     Hunk_CheckTempMemoryClear();
-    endBuf = (unsigned __int8 *)((unsigned int)&s_hunkData[hunk_low.temp + 4095] & 0xFFFFF000);
+    endBuf = Hunk_PageFloor(&s_hunkData[hunk_low.temp + 4095]);
     hunk_low.temp = mark;
     hunk_low.permanent = mark;
     Hunk_ClearData();
-    beginBuf = (unsigned __int8 *)((unsigned int)&s_hunkData[hunk_low.temp + 4095] & 0xFFFFF000);
+    beginBuf = Hunk_PageFloor(&s_hunkData[hunk_low.temp + 4095]);
     if ( endBuf != beginBuf )
         Z_VirtualDecommit((char *)beginBuf, endBuf - beginBuf, 11);
     track_hunk_ClearToMarkLow(mark);
@@ -770,7 +778,7 @@ unsigned __int8 *__cdecl Hunk_AllocAlign(unsigned int size, int alignment, const
     alignmenta = alignment - 1;
     Hunk_CheckTempMemoryHighClear();
     old_permanent = hunk_high.permanent;
-    endBuf = (unsigned __int8 *)((unsigned int)&s_hunkData[s_hunkTotal - hunk_high.permanent] & 0xFFFFF000);
+    endBuf = Hunk_PageFloor(&s_hunkData[s_hunkTotal - hunk_high.permanent]);
     hunk_high.permanent += size;
     hunk_high.permanent = ~alignmenta & (alignmenta + hunk_high.permanent);
     hunk_high.temp = hunk_high.permanent;
@@ -780,7 +788,7 @@ unsigned __int8 *__cdecl Hunk_AllocAlign(unsigned int size, int alignment, const
         Com_Error(ERR_DROP, "Hunk_AllocAlign failed on %i bytes (total %i MB, low %i MB, high %i MB)", size, s_hunkTotal / 0x100000, hunk_low.temp / 0x100000, hunk_high.temp / 0x100000);
     }
     buf = &s_hunkData[s_hunkTotal - hunk_high.permanent];
-    if ( (alignmenta & (unsigned int)buf) != 0
+    if ( (alignmenta & (uintptr_t)buf) != 0
         && !Assert_MyHandler(
                     "C:\\projects_pc\\cod\\codsrc\\src\\universal\\com_memory.cpp",
                     1294,
@@ -790,16 +798,16 @@ unsigned __int8 *__cdecl Hunk_AllocAlign(unsigned int size, int alignment, const
     {
         __debugbreak();
     }
-    if ( endBuf != (unsigned __int8 *)((unsigned int)buf & 0xFFFFF000) )
-        Z_VirtualCommit((char *)((unsigned int)buf & 0xFFFFF000), (int)&endBuf[-(int)((unsigned int)buf & 0xFFFFF000)], 11);
+    if ( endBuf != Hunk_PageFloor(buf) )
+        Z_VirtualCommit((char *)Hunk_PageFloor(buf), (int)(endBuf - Hunk_PageFloor(buf)), 11);
     track_hunk_alloc(hunk_high.permanent - old_permanent, hunk_high.temp, name, type);
     memset(buf, 0, size);
     return buf;
 }
 
-unsigned int __cdecl Hunk_AllocateTempMemoryHigh(int size, const char *name)
+void *__cdecl Hunk_AllocateTempMemoryHigh(int size, const char *name)
 {
-    unsigned int buf; // [esp+0h] [ebp-10h]
+    unsigned __int8 *buf; // [esp+0h] [ebp-10h]
     unsigned __int8 *endBuf; // [esp+4h] [ebp-Ch]
 
     if ( !Sys_IsMainThread()
@@ -817,7 +825,7 @@ unsigned int __cdecl Hunk_AllocateTempMemoryHigh(int size, const char *name)
     {
         __debugbreak();
     }
-    endBuf = (unsigned __int8 *)((unsigned int)&s_hunkData[s_hunkTotal - hunk_high.temp] & 0xFFFFF000);
+    endBuf = Hunk_PageFloor(&s_hunkData[s_hunkTotal - hunk_high.temp]);
     hunk_high.temp += size;
     hunk_high.temp = (hunk_high.temp + 15) & 0xFFFFFFF0;
     if ( hunk_high.temp + hunk_low.temp > s_hunkTotal )
@@ -825,8 +833,8 @@ unsigned int __cdecl Hunk_AllocateTempMemoryHigh(int size, const char *name)
         track_PrintAllInfo();
         Com_Error(ERR_DROP, "Hunk_AllocateTempMemoryHigh: failed on %i bytes (total %i MB, low %i MB, high %i MB)", size, s_hunkTotal / 0x100000, hunk_low.temp / 0x100000, hunk_high.temp / 0x100000);
     }
-    buf = (unsigned int)&s_hunkData[s_hunkTotal - hunk_high.temp];
-    if ( (((_BYTE)s_hunkTotal + (_BYTE)s_hunkData - LOBYTE(hunk_high.temp)) & 0xF) != 0
+    buf = &s_hunkData[s_hunkTotal - hunk_high.temp];
+    if ( (((uintptr_t)buf) & 0xF) != 0
         && !Assert_MyHandler(
                     "C:\\projects_pc\\cod\\codsrc\\src\\universal\\com_memory.cpp",
                     1352,
@@ -836,8 +844,8 @@ unsigned int __cdecl Hunk_AllocateTempMemoryHigh(int size, const char *name)
     {
         __debugbreak();
     }
-    if ( endBuf != (unsigned __int8 *)(buf & 0xFFFFF000) )
-        Z_VirtualCommit((char *)(buf & 0xFFFFF000), (int)&endBuf[-(int)(buf & 0xFFFFF000)], 11);
+    if ( endBuf != Hunk_PageFloor(buf) )
+        Z_VirtualCommit((char *)Hunk_PageFloor(buf), (int)(endBuf - Hunk_PageFloor(buf)), 11);
     track_temp_high_alloc(size, hunk_high.temp + hunk_low.temp, hunk_high.permanent, name);
     return buf;
 }
@@ -857,9 +865,9 @@ void Hunk_ClearTempMemoryHigh()
     {
         __debugbreak();
     }
-    beginBuf = (unsigned __int8 *)((unsigned int)&s_hunkData[s_hunkTotal - hunk_high.temp] & 0xFFFFF000);
+    beginBuf = Hunk_PageFloor(&s_hunkData[s_hunkTotal - hunk_high.temp]);
     hunk_high.temp = hunk_high.permanent;
-    commitSize = ((unsigned int)&s_hunkData[s_hunkTotal - hunk_high.permanent] & 0xFFFFF000) - (unsigned int)beginBuf;
+    commitSize = (unsigned int)(Hunk_PageFloor(&s_hunkData[s_hunkTotal - hunk_high.permanent]) - beginBuf);
     if ( commitSize )
         Z_VirtualDecommit((char *)beginBuf, commitSize, 11);
     track_temp_high_clear(hunk_high.permanent);
@@ -926,10 +934,10 @@ unsigned __int8 *__cdecl Hunk_AllocLowAlign(unsigned int size, int alignment, co
     alignmenta = alignment - 1;
     Hunk_CheckTempMemoryClear();
     old_permanent = hunk_low.permanent;
-    beginBuf = (unsigned __int8 *)((unsigned int)&s_hunkData[hunk_low.permanent + 4095] & 0xFFFFF000);
+    beginBuf = Hunk_PageFloor(&s_hunkData[hunk_low.permanent + 4095]);
     hunk_low.permanent = ~alignmenta & (alignmenta + hunk_low.permanent);
     buf = &s_hunkData[hunk_low.permanent];
-    if ( (alignmenta & (unsigned int)&s_hunkData[hunk_low.permanent]) != 0
+    if ( (alignmenta & (uintptr_t)&s_hunkData[hunk_low.permanent]) != 0
         && !Assert_MyHandler(
                     "C:\\projects_pc\\cod\\codsrc\\src\\universal\\com_memory.cpp",
                     1458,
@@ -946,7 +954,7 @@ unsigned __int8 *__cdecl Hunk_AllocLowAlign(unsigned int size, int alignment, co
         track_PrintAllInfo();
         Com_Error(ERR_DROP, "Hunk_AllocLowAlign failed on %i bytes (total %i MB, low %i MB, high %i MB)", size, s_hunkTotal / 0x100000, hunk_low.temp / 0x100000, hunk_high.temp / 0x100000);
     }
-    commitSize = ((unsigned int)&s_hunkData[hunk_low.permanent + 4095] & 0xFFFFF000) - (unsigned int)beginBuf;
+    commitSize = (unsigned int)(Hunk_PageFloor(&s_hunkData[hunk_low.permanent + 4095]) - beginBuf);
     if ( commitSize )
         Z_VirtualCommit((char *)beginBuf, commitSize, 11);
     track_hunk_allocLow(hunk_low.permanent - old_permanent, hunk_low.permanent, name, type);
@@ -979,7 +987,7 @@ unsigned int *__cdecl Hunk_AllocateTempMemory(int size, const char *name)
         return Z_Malloc(size, name, 11);
     sizea = size + 16;
     prev_temp = hunk_low.temp;
-    beginBuf = (unsigned __int8 *)((unsigned int)&s_hunkData[hunk_low.temp + 4095] & 0xFFFFF000);
+    beginBuf = Hunk_PageFloor(&s_hunkData[hunk_low.temp + 4095]);
     hunk_low.temp = (hunk_low.temp + 15) & 0xFFFFFFF0;
     buf = &s_hunkData[hunk_low.temp];
     hunk_low.temp += sizea;
@@ -997,7 +1005,7 @@ unsigned int *__cdecl Hunk_AllocateTempMemory(int size, const char *name)
     }
     hdr = (hunkHeader_t *)buf;
     bufa = buf + 16;
-    if ( ((unsigned __int8)bufa & 0xF) != 0
+    if ( (reinterpret_cast<uintptr_t>(bufa) & 0xF) != 0
         && !Assert_MyHandler(
                     "C:\\projects_pc\\cod\\codsrc\\src\\universal\\com_memory.cpp",
                     1550,
@@ -1007,7 +1015,7 @@ unsigned int *__cdecl Hunk_AllocateTempMemory(int size, const char *name)
     {
         __debugbreak();
     }
-    commitSize = ((unsigned int)&s_hunkData[hunk_low.temp + 4095] & 0xFFFFF000) - (unsigned int)beginBuf;
+    commitSize = (unsigned int)(Hunk_PageFloor(&s_hunkData[hunk_low.temp + 4095]) - beginBuf);
     if ( commitSize )
         Z_VirtualCommit((char *)beginBuf, commitSize, 11);
     hdr->magic = 0x89537892;
@@ -1052,10 +1060,10 @@ void __cdecl Hunk_FreeTempMemory(char *buf)
         {
             __debugbreak();
         }
-        endBuf = (unsigned __int8 *)((unsigned int)&s_hunkData[hunk_low.temp + 4095] & 0xFFFFF000);
+        endBuf = Hunk_PageFloor(&s_hunkData[hunk_low.temp + 4095]);
         hunk_low.temp -= hdr->size;
         track_temp_free(hdr->size, hunk_low.permanent, hdr->name);
-        beginBuf = (unsigned __int8 *)((unsigned int)&s_hunkData[hunk_low.temp + 4095] & 0xFFFFF000);
+        beginBuf = Hunk_PageFloor(&s_hunkData[hunk_low.temp + 4095]);
         if (endBuf != beginBuf)
             Z_VirtualDecommit((char *)beginBuf, endBuf - beginBuf, 11);
     }
@@ -1085,9 +1093,9 @@ void Hunk_ClearTempMemory()
     {
         __debugbreak();
     }
-    endBuf = (unsigned __int8 *)((unsigned int)&s_hunkData[hunk_low.temp + 4095] & 0xFFFFF000);
+    endBuf = Hunk_PageFloor(&s_hunkData[hunk_low.temp + 4095]);
     hunk_low.temp = hunk_low.permanent;
-    beginBuf = (unsigned __int8 *)((unsigned int)&s_hunkData[hunk_low.permanent + 4095] & 0xFFFFF000);
+    beginBuf = Hunk_PageFloor(&s_hunkData[hunk_low.permanent + 4095]);
     if ( endBuf != beginBuf )
         Z_VirtualDecommit((char *)beginBuf, endBuf - beginBuf, 11);
     track_temp_clear(hunk_low.permanent);

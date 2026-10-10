@@ -2230,8 +2230,7 @@ void __cdecl R_BuildHeroLightTree(
             }
             qsort(
                 &s_world.heroLights[firstLight],
-                lightCount,
-                0x38u,
+                lightCount, sizeof(*(&s_world.heroLights[firstLight])),
                 (int (__cdecl *)(const void *, const void *))R_HeroLightSorter);
             numRight = lightCount >> 1;
             leftIndex = 2 * nodeIndex + 1;

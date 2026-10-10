@@ -258,7 +258,9 @@ struct __declspec(align(16)) GfxLight // sizeof=0x170
         // padding byte
         // padding byte
 };
+#if !defined(BO1_PORT_X64)
 static_assert(sizeof(GfxLight) == 0x170, "GfxLight must match the exe (zone stream, 368-stride copies)");
+#endif
 static_assert(offsetof(GfxLight, origin) == 0x1C && offsetof(GfxLight, radius) == 0x28, "GfxLight origin/radius");
 static_assert(offsetof(GfxLight, viewMatrix) == 0xE0 && offsetof(GfxLight, def) == 0x160, "GfxLight viewMatrix/def");
 

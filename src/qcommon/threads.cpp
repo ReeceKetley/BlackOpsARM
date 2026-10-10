@@ -37,7 +37,7 @@ thread_local void **g_dwTlsIndex;
 thread_local unsigned int g_currentThreadId;
 
 DWORD_PTR s_affinityMaskForProcess;
-unsigned int s_affinityMaskForCpu[8];
+DWORD_PTR s_affinityMaskForCpu[8];
 
 void(__cdecl *threadFunc[15])(unsigned int);
 
@@ -124,18 +124,18 @@ unsigned int __cdecl Sys_GetCurrentThreadId()
 unsigned int Win_InitThreads()
 {
     HANDLE CurrentProcess; // eax
-    DWORD result; // eax
+    DWORD_PTR result; // eax
     DWORD cpuCount; // [esp+0h] [ebp-94h]
-    DWORD systemAffinityMask; // [esp+4h] [ebp-90h] BYREF
-    DWORD threadAffinityMask; // [esp+8h] [ebp-8Ch]
-    DWORD affinityMaskBits[33]; // [esp+Ch] [ebp-88h]
-    DWORD processAffinityMask; // [esp+90h] [ebp-4h] BYREF
+    DWORD_PTR systemAffinityMask; // [esp+4h] [ebp-90h] BYREF
+    DWORD_PTR threadAffinityMask; // [esp+8h] [ebp-8Ch]
+    DWORD_PTR affinityMaskBits[33]; // [esp+Ch] [ebp-88h]
+    DWORD_PTR processAffinityMask; // [esp+90h] [ebp-4h] BYREF
 
     CurrentProcess = GetCurrentProcess();
     result = GetProcessAffinityMask(CurrentProcess, &processAffinityMask, &systemAffinityMask);
     s_affinityMaskForProcess = processAffinityMask;
     cpuCount = 0;
-    for ( threadAffinityMask = 1; (processAffinityMask & -(int)threadAffinityMask) != 0; threadAffinityMask *= 2 )
+    for ( threadAffinityMask = 1; (processAffinityMask & (0 - threadAffinityMask)) != 0; threadAffinityMask *= 2 )
     {
         if ( (processAffinityMask & threadAffinityMask) != 0 )
         {

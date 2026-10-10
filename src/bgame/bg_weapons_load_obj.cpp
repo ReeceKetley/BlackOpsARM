@@ -2069,7 +2069,7 @@ char **__cdecl BG_RegisterSurfaceTypeSounds(const char *surfaceSoundBase)
     }
     if (surfaceTypeSoundListCount == 16)
         Com_Error(ERR_DROP, "Exceeded MAX_SURFACE_TYPE_SOUND_LISTS (%d)", 16);
-    result = (char **)Hunk_AllocLow(0x7Cu, "BG_RegisterSurfaceTypeSounds", 17);
+    result = (char **)Hunk_AllocLow(31 * (unsigned int)sizeof(char *), "BG_RegisterSurfaceTypeSounds", 17);
     for (i = 0; i < 31; ++i)
     {
         v2 = Com_SurfaceTypeToName(i);
@@ -2279,9 +2279,9 @@ bool __cdecl BG_FlameTableUpdateField(const char *flameTableName, char *keyValue
 WeaponVariantDef *__cdecl BG_LoadDefaultWeaponVariantDef()
 {
     if ( useFastFile->current.enabled )
-        return (WeaponVariantDef *)((int (__cdecl *)(WeaponVariantDef *(__cdecl *)()))BG_LoadDefaultWeaponVariantDef_FastFile)(BG_LoadDefaultWeaponVariantDef_FastFile);
+        return (WeaponVariantDef *)BG_LoadDefaultWeaponVariantDef_FastFile();
     else
-        return (WeaponVariantDef *)((int (__cdecl *)(WeaponFullDef *(__cdecl *)()))BG_LoadDefaultWeaponVariantDef_LoadObj)(BG_LoadDefaultWeaponVariantDef_LoadObj);
+        return (WeaponVariantDef *)BG_LoadDefaultWeaponVariantDef_LoadObj();
 }
 
 WeaponFullDef *__cdecl BG_LoadDefaultWeaponVariantDef_LoadObj()

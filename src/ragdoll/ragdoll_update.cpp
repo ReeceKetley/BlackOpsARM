@@ -1023,9 +1023,9 @@ char __cdecl Ragdoll_CreatePhysObj(RagdollBody *body, BoneDef *boneDef, Bone *bo
     if ( bone->rigidBody )
     {
         userData = (PhysObjUserData *)bone->rigidBody;
-        if ( ((*((unsigned int *)cent + 201) >> 19) & 1) != 0 )
+        if ( ((CENT_FLAGS(cent) >> 19) & 1) != 0 )
             userData->m_flags |= 4u;
-        if ( ((*((unsigned int *)cent + 201) >> 20) & 1) != 0 )
+        if ( ((CENT_FLAGS(cent) >> 20) & 1) != 0 )
             userData->m_flags |= 0x10u;
         userData->m_flags |= 0x20u;
         // zombies: SP Ragdoll_CreatePhysObj (SP 0x00832b93, zombiemode) replaces the rigid body's gravity vector

@@ -49,7 +49,8 @@ void __cdecl Hunk_AddData(int type, void *data, void *(__cdecl *alloc)(int));
 void __cdecl Hunk_OverrideDataForFile(int type, const char *name, void *data);
 int __cdecl DB_GetAllXAssetOfType(XAssetType type, XAssetHeader *assets, int maxCount);
 int __cdecl DB_GetAllXAssetOfType_LoadObj(XAssetType type, XAssetHeader *assets, int maxCount);
-void __cdecl Hunk_AddAsset(XAssetHeader header, unsigned int *data);
+struct AssetList;
+void __cdecl Hunk_AddAsset(XAssetHeader header, AssetList *data);
 void __cdecl DB_EnumXAssets(
                 XAssetType type,
                 void (__cdecl *func)(XAssetHeader, void *),
@@ -70,7 +71,11 @@ void Hunk_Clear();
 int __cdecl Hunk_Used();
 unsigned __int8 *__cdecl Hunk_Alloc(unsigned int size, const char *name, int type);
 unsigned __int8 *__cdecl Hunk_AllocAlign(unsigned int size, int alignment, const char *name, int type);
-unsigned int __cdecl Hunk_AllocateTempMemoryHigh(int size, const char *name);
+void *__cdecl Hunk_AllocateTempMemoryHigh(int size, const char *name);
+
+// Allocation sizes in this codebase are Win32 struct sizes baked in as literals. Where a struct holds pointers it is larger
+// on x64: allocate max(sizeof(T) * N, win32Literal) so Win32 is unchanged and x64 gets the real size.
+constexpr size_t Bo1_MaxSize(size_t a, size_t b) { return a > b ? a : b; }
 void Hunk_ClearTempMemoryHigh();
 unsigned __int8 *__cdecl Hunk_AllocLow(unsigned int size, const char *name, int type);
 unsigned __int8 *__cdecl Hunk_AllocLowAlign(unsigned int size, int alignment, const char *name, int type);

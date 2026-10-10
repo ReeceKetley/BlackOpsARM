@@ -377,7 +377,9 @@ void __cdecl phys_sys::destroy(rigid_body *const rb)
     if (rb)
     {
         using TI = phys_free_list<rigid_body>::T_internal;
+        #if !defined(BO1_PORT_X64)
         static_assert(sizeof(TI) == 0x180);
+        #endif
         TI *ti = (TI *)((char *)rb - offsetof(TI, m_data));
         PMM_VALIDATE((char *)ti, sizeof(TI), 0x10u);
 
@@ -385,7 +387,9 @@ void __cdecl phys_sys::destroy(rigid_body *const rb)
     }
 }
 static_assert(offsetof(phys_free_list<rigid_body>::T_internal, m_data) == 0x10, "offset mismatch");
+#if !defined(BO1_PORT_X64)
 static_assert(sizeof(phys_free_list<rigid_body>::T_internal) == 0x180, "size mismatch");
+#endif
 
 void __cdecl phys_sys::destroy(user_rigid_body *const rb)
 {
@@ -394,7 +398,9 @@ void __cdecl phys_sys::destroy(user_rigid_body *const rb)
     if (rb)
     {
         using TI = phys_free_list<user_rigid_body>::T_internal;
+        #if !defined(BO1_PORT_X64)
         static_assert(sizeof(TI) == 0x1D0);
+        #endif
         TI *ti = (TI *)((char *)rb - offsetof(TI, m_data));
         PMM_VALIDATE((char *)ti, sizeof(TI), 0x10u);
 
@@ -402,12 +408,16 @@ void __cdecl phys_sys::destroy(user_rigid_body *const rb)
     }
 }
 static_assert(offsetof(phys_free_list<user_rigid_body>::T_internal, m_data) == 0x10, "offset mismatch");
+#if !defined(BO1_PORT_X64)
 static_assert(sizeof(phys_free_list<user_rigid_body>::T_internal) == 0x1D0, "size mismatch");
+#endif
 
 void __cdecl phys_sys::destroy(rigid_body_constraint_contact *const rbc)
 {
     using TI = phys_free_list<rigid_body_constraint_contact>::T_internal;
+    #if !defined(BO1_PORT_X64)
     static_assert(sizeof(TI) == 0x38);
+    #endif
 
     if (rbc)
     {
@@ -420,7 +430,9 @@ void __cdecl phys_sys::destroy(rigid_body_constraint_contact *const rbc)
 void __cdecl phys_sys::destroy(rigid_body_constraint_point *const rbc)
 {
     using TI = phys_free_list<rigid_body_constraint_point>::T_internal;
+    #if !defined(BO1_PORT_X64)
     static_assert(sizeof(TI) == 0x70);
+    #endif
     if (rbc)
     {
         TI *ti = (TI *)((char *)rbc - offsetof(TI, m_data));
@@ -432,7 +444,9 @@ void __cdecl phys_sys::destroy(rigid_body_constraint_point *const rbc)
 void __cdecl phys_sys::destroy(rigid_body_constraint_hinge *const rbc)
 {
     using TI = phys_free_list<rigid_body_constraint_hinge>::T_internal;
+    #if !defined(BO1_PORT_X64)
     static_assert(sizeof(TI) == 0xF0);
+    #endif
     if (rbc)
     {
         TI *ti = (TI *)((char *)rbc - offsetof(TI, m_data));
@@ -444,7 +458,9 @@ void __cdecl phys_sys::destroy(rigid_body_constraint_hinge *const rbc)
 void __cdecl phys_sys::destroy(rigid_body_constraint_distance *const rbc)
 {
     using TI = phys_free_list<rigid_body_constraint_distance>::T_internal;
+    #if !defined(BO1_PORT_X64)
     static_assert(sizeof(TI) == 0x80);
+    #endif
     if (rbc)
     {
         TI *ti = (TI *)((char *)rbc - offsetof(TI, m_data));
@@ -456,7 +472,9 @@ void __cdecl phys_sys::destroy(rigid_body_constraint_distance *const rbc)
 void __cdecl phys_sys::destroy(rigid_body_constraint_ragdoll *const rbc)
 {
     using TI = phys_free_list<rigid_body_constraint_ragdoll>::T_internal;
+    #if !defined(BO1_PORT_X64)
     static_assert(sizeof(TI) == 0x140);
+    #endif
     if (rbc)
     {
         TI *ti = (TI *)((char *)rbc - offsetof(TI, m_data));
@@ -468,7 +486,9 @@ void __cdecl phys_sys::destroy(rigid_body_constraint_ragdoll *const rbc)
 void __cdecl phys_sys::destroy(rigid_body_constraint_wheel *const rbc)
 {
     using TI = phys_free_list<rigid_body_constraint_wheel>::T_internal;
+    #if !defined(BO1_PORT_X64)
     static_assert(sizeof(TI) == 0xF0);
+    #endif
     if (rbc)
     {
         TI *ti = (TI *)((char *)rbc - offsetof(TI, m_data));
@@ -480,7 +500,9 @@ void __cdecl phys_sys::destroy(rigid_body_constraint_wheel *const rbc)
 void __cdecl phys_sys::destroy(rigid_body_constraint_angular_actuator *const rbc)
 {
     using TI = phys_free_list<rigid_body_constraint_angular_actuator>::T_internal;
+    #if !defined(BO1_PORT_X64)
     static_assert(sizeof(TI) == 0xE0);
+    #endif
     if (rbc)
     {
         TI *ti = (TI *)((char *)rbc - offsetof(TI, m_data));
@@ -492,7 +514,9 @@ void __cdecl phys_sys::destroy(rigid_body_constraint_angular_actuator *const rbc
 void __cdecl phys_sys::destroy(rigid_body_constraint_upright *const rbc)
 {
     using TI = phys_free_list<rigid_body_constraint_upright>::T_internal;
+    #if !defined(BO1_PORT_X64)
     static_assert(sizeof(TI) == 0xD0);
+    #endif
     if (rbc)
     {
         TI *ti = (TI *)((char *)rbc - offsetof(TI, m_data));
@@ -504,7 +528,9 @@ void __cdecl phys_sys::destroy(rigid_body_constraint_upright *const rbc)
 void __cdecl phys_sys::destroy(rigid_body_constraint_custom_orientation *const rbc)
 {
     using TI = phys_free_list<rigid_body_constraint_custom_orientation>::T_internal;
+    #if !defined(BO1_PORT_X64)
     static_assert(sizeof(TI) == 0x3C);
+    #endif
     if (rbc)
     {
         TI *ti = (TI *)((char *)rbc - offsetof(TI, m_data));
@@ -516,7 +542,9 @@ void __cdecl phys_sys::destroy(rigid_body_constraint_custom_orientation *const r
 void __cdecl phys_sys::destroy(rigid_body_constraint_custom_path *const rbc)
 {
     using TI = phys_free_list<rigid_body_constraint_custom_path>::T_internal;
+    #if !defined(BO1_PORT_X64)
     static_assert(sizeof(TI) == 0xA0);
+    #endif
     if (rbc)
     {
         TI *ti = (TI *)((char *)rbc - offsetof(TI, m_data));

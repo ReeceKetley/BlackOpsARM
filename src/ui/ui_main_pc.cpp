@@ -644,7 +644,7 @@ int __cdecl UI_GetServerStatusInfoScoreBoard(char *serverAddress, serverStatusIn
 
 void __cdecl UI_SortServerStatusScoreBoardInfo(serverStatusInfo_s *info)
 {
-    qsort(info->lines[1], info->numLines - 1, 0x20u, (int (__cdecl *)(const void *, const void *))ScoreBar_CompareScores);
+    qsort(info->lines[1], info->numLines - 1, sizeof(info->lines[1]), (int (__cdecl *)(const void *, const void *))ScoreBar_CompareScores);
 }
 
 int __cdecl ScoreBar_CompareScores(const char **sv1, const char **sv2)

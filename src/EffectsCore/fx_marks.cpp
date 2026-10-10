@@ -624,7 +624,7 @@ void __cdecl FX_ImpactMark_Generate_AddEntityBrush(
         // (a bullet or blood FX next to a closed kit door) asserted in R_GetBrushModel: a crash 2026-09-27 "699 not in
         // [0, 690)" (stack R_GetBrushModel <- FX_ImpactMark_Generate_AddEntityBrush, mapkit-fix-4a). Their faces are world
         // verts (R_Mapkit_GenerateVerts); the entity gets no mark.
-        if (((*((_DWORD *)ent + 201) >> 1) & 1) != 0 && ent->nextState.solid == 0xFFFFFF
+        if (((CENT_FLAGS(ent) >> 1) & 1) != 0 && ent->nextState.solid == 0xFFFFFF
             && !CM_Mapkit_IsSubmodel(ent->nextState.index.brushmodel))
         {
             brushModel = R_GetBrushModel(ent->nextState.index.brushmodel);
@@ -747,7 +747,7 @@ void __cdecl FX_ImpactMark_Generate_AddEntityModel(
     if ( entityIndex != 1023 && entityIndex < ENTNUM_CSC_END ) // mod (L49): retail != 1023; no marks on networked 1537+
     {
         ent = CG_GetEntity(localClientNum, entityIndex);
-        if ( ((*((unsigned int *)ent + 201) >> 1) & 1) != 0 )
+        if ( ((CENT_FLAGS(ent) >> 1) & 1) != 0 )
         {
             dObj = Com_GetClientDObj(ent->nextState.number, localClientNum);
             if ( dObj )

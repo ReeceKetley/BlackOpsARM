@@ -1,3 +1,6 @@
+#if defined(BO1_PORT_X64)
+#include <database/db_stream.h>
+#endif
 #include "r_material.h"
 #include <universal/com_memory.h>
 #include "r_dvars.h"
@@ -1108,7 +1111,7 @@ void __cdecl Material_GetHashIndex(const char *name, unsigned __int16 *hashIndex
 Material *__cdecl Material_Register(char *name, int imageTrack)
 {
     if ( useFastFile->current.enabled )
-        return (Material *)((int (__cdecl *)(char *, int))Material_Register_FastFile)(name, imageTrack);
+        return (Material *)Material_Register_FastFile(name);
     else
         return Material_Register_LoadObj(name, imageTrack);
 }

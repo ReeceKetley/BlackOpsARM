@@ -2,6 +2,7 @@
 #include <universal/profile.h>
 #include <algorithm>
 #include <windows.h>
+#include <platform/bo1_arch.hpp>
 #include <dbghelp.h>
 #include <clientscript/cscr_compiler.h>
 #include <clientscript/cscr_parser.h>
@@ -650,9 +651,10 @@ bool __cdecl G_ExitAfterToolComplete()
 
 bool __cdecl G_ExitOnComError(int code)
 {
+    // Com_Error can run before these dvars exist (e.g. Win_RegisterClass failure).
     if ( g_connectpaths && g_connectpaths->current.integer == 3 && !code )
         return 1;
-    if ( g_connectpaths->current.integer >= 2 && code == 1 )
+    if ( g_connectpaths && g_connectpaths->current.integer >= 2 && code == 1 )
         return 1;
     return r_reflectionProbeGenerate && r_reflectionProbeGenerate->current.enabled;
 }
@@ -907,12 +909,12 @@ void __cdecl    G_InitGame(int levelTime, int randomSeed, int restart, int regis
         Com_Printf(15, "loadgame: G_InitGame loaded saved weapons\n");
     }
 
-    if (*(_BYTE *)g_log->current.integer)
+    if (*(_BYTE *)g_log->current.string)
     {
         if (g_logSync->current.enabled)
-            FS_FOpenFileByMode((char *)g_log->current.integer, &level.logFile, FS_APPEND_SYNC);
+            FS_FOpenFileByMode((char *)g_log->current.string, &level.logFile, FS_APPEND_SYNC);
         else
-            FS_FOpenFileByMode((char *)g_log->current.integer, &level.logFile, FS_APPEND);
+            FS_FOpenFileByMode((char *)g_log->current.string, &level.logFile, FS_APPEND);
         if (level.logFile)
         {
             char serverinfo[1024];
@@ -980,7 +982,9 @@ void __cdecl    G_InitGame(int levelTime, int randomSeed, int restart, int regis
     if (!restart)
     {
         memset(&bgs->animData->animScriptData, 0, sizeof(animScriptData_t)/*0x8D388u*/);
+        #if !defined(BO1_PORT_X64)
         static_assert(sizeof(animScriptData_t) == 0x8D388);
+        #endif
 
         bgs->animData->animScriptData.soundAlias = SND_FindAlias;
         bgs->animData->animScriptData.playSoundAlias = G_AnimScriptSound;
@@ -1051,7 +1055,7 @@ void __cdecl    G_InitGame(int levelTime, int randomSeed, int restart, int regis
     level.num_entities = Com_GetFirstFreeEntityNum();
     level.firstFreeEnt = 0;
     level.lastFreeEnt = 0;
-    SV_LocateGameData(level.gentities, level.num_entities, 760, &level.clients->ps, 10720);
+    SV_LocateGameData(level.gentities, level.num_entities, sizeof(gentity_s), &level.clients->ps, sizeof(gclient_s));
 
     G_ParseHitLocDmgTable();
     BG_LoadPenetrationDepthTable();
@@ -2398,7 +2402,7 @@ void G_PrintAllFastFileErrors()
     // zombies: the SP front end loads no common zone (SP 0x004C8940..0x004C8966): nothing to report there.
     if ( !Com_IsSPFrontEndRunning() )
         G_PrintFastFileErrors(G_SP_IsSPLevel() ? (char*)"common_zombie" : (char*)"common_mp");
-    G_PrintFastFileErrors((char *)sv_mapname->current.integer);
+    G_PrintFastFileErrors((char *)sv_mapname->current.string);
 }
 
 void __cdecl G_PrintFastFileErrors(char *fastfile)
@@ -2622,7 +2626,7 @@ void __cdecl CalculateRanks()
                 ++level.numVotingClients;
         }
     }
-    qsort(level.sortedClients, level.numConnectedClients, 4u, (int (__cdecl *)(const void *, const void *))SortRanks);
+    qsort(level.sortedClients, level.numConnectedClients, sizeof(*(level.sortedClients)), (int (__cdecl *)(const void *, const void *))SortRanks);
     for ( ia = 0; ia < level.numConnectedClients; ++ia )
     {
         clientNum = level.sortedClients[ia];
@@ -4039,9 +4043,9 @@ static void G_ModSvProfSamplePc(int cat)
     if (depth >= 0 && depth <= 63)
         cat = g_svProfStack[depth];
     ResumeThread(thread);
-    if (!ok || !ctx.Eip)
+    if (!ok || !BO1_CTX_IP(ctx))
         return;
-    const unsigned int pc = ctx.Eip;
+    const unsigned int pc = (unsigned int)BO1_CTX_IP(ctx);
     unsigned int h = (pc * 2654435761u) >> 20;
     for (int probe = 0; probe < 16; ++probe, h = (h + 1) & (SVPROF_SAMPLE_SLOTS - 1))
     {

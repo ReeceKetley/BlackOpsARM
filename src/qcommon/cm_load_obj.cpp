@@ -124,7 +124,7 @@ MapEnts *__cdecl MapEnts_GetFromString(char *name, const char *entityString, int
     const char *begin; // [esp+A38h] [ebp-4h]
     const char *entityStringa; // [esp+A48h] [ebp+Ch]
 
-    mapEnts = (MapEnts *)CM_Hunk_Alloc(12, "CMod_LoadEntityString", 31);
+    mapEnts = (MapEnts *)CM_Hunk_Alloc((int)sizeof(MapEnts), "CMod_LoadEntityString", 31);
     nameLen = strlen(name);
     mapEnts->name = (const char *)CM_Hunk_Alloc(nameLen + 1, "CMod_LoadEntityString", 31);
     memcpy((unsigned __int8 *)mapEnts->name, (unsigned __int8 *)name, nameLen + 1);

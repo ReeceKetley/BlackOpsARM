@@ -73,14 +73,14 @@ struct fileHandleData_t // sizeof=0x11C
                                         // FS_HandleForFile(char const *,FsThread)+1F7/o ...
 };
 
-struct fileInIwd_s // sizeof=0xC
+struct fileInIwd_s
 {                                       // XREF: fileInIwd_t/r
     unsigned int pos;
     char *name;
     fileInIwd_s *next;
 };
 
-struct iwd_t // sizeof=0x324
+struct iwd_t
 {
     char iwdFilename[256];
     char iwdBasename[256];
@@ -88,13 +88,9 @@ struct iwd_t // sizeof=0x324
     unsigned __int8 *handle;
     int checksum;
     int pure_checksum;
-    //volatile int hasOpenFile;
     volatile unsigned int hasOpenFile;
     int numFiles;
     unsigned __int8 referenced;
-    // padding byte
-    // padding byte
-    // padding byte
     unsigned int hashSize;
     fileInIwd_s **hashTable;
     fileInIwd_s *buildBuffer;

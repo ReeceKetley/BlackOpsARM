@@ -454,7 +454,9 @@ struct __declspec(align(4)) bdAddr
 };
 
 
+#if !defined(BO1_PORT_X64)
 static_assert(sizeof(bdAddr) == 8, "bdAddr size mismatch");
+#endif
 
 //struct __declspec(align(4)) bdCommonAddr : bdReferencable // sizeof=0x28
 //{

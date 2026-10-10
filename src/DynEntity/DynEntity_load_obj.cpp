@@ -478,7 +478,7 @@ void __cdecl DynEnt_LoadEntities()
                 ++num;
         }
     }
-    qsort(base, num, 0x54u, (int (__cdecl *)(const void *, const void *))DynEnt_CompareEntities);
+    qsort(base, num, sizeof(DynEntityDef), (int (__cdecl *)(const void *, const void *))DynEnt_CompareEntities);
     for ( i = 0; i < (int)num; ++i )
     {
         v58 = (char *)base + 84 * i;

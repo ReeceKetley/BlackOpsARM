@@ -8,6 +8,9 @@
 
 #define MAX_XANIMTREE_NUM       0x80 // 128
 
+#include <cstdint>
+#include <universal/narrow32.h>
+
 struct XAnim_s;
 
 struct scr_anim_s // sizeof=0x4
@@ -24,16 +27,16 @@ struct scr_anim_s // sizeof=0x4
             unsigned __int16 index;
             unsigned __int16 tree;
         };
-        const char *linkPointer;
+        BO1_NARROW(const char) linkPointer; // 4 bytes: lives inline in the code stream (see Scr_EmitAnimationInternal)
     };
 
     scr_anim_s()
     {
-        linkPointer = NULL;
+        linkPointer = (const char *)nullptr;
     }
     scr_anim_s(int i)
     {
-        linkPointer = (const char *)i; // BO1HACK
+        linkPointer = (const char *)(uintptr_t)(unsigned int)i; // BO1HACK
     }
 };
 

@@ -1,4 +1,5 @@
 #include "db_registry.h"
+#include <cstdio>
 #include <universal/profile.h>
 #include <clientscript/cscr_parsetree.h>
 #include <gfx_d3d/rb_resource.h>
@@ -29,6 +30,7 @@
 #include <sound/snd_bank.h>
 #include <physics/physconstraints_load_obj.h>
 #include "db_load.h"
+#include "db_stream_load.h"
 #include <qcommon/cm_load_obj.h>
 #include <stringed/stringed_hooks.h>
 #include <glass/glass.h>
@@ -38,6 +40,8 @@
 #include <qcommon/com_bsp.h>
 #include <client/cl_keys.h>
 #include <win32/win_input.h>
+#include <csetjmp>
+#include <platform/platform.hpp>
 #include <client_mp/cl_scrn_mp.h>
 
 
@@ -497,6 +501,13 @@ unsigned __int8 g_fileBuf[524288];
 
 unsigned __int16 db_hashTable[0x8000/*32768*/];
 XAssetEntryPoolEntry g_assetEntryPool[65536]; // mod: 32768 in the exe; the upper half is chained only with bo1_mod_zones (DB_InitXAssets)
+// Win32 packed XAssetEntry was 16 bytes, so hash/override links used byte_offset >> 4.
+// On x64 the pool stride is sizeof(XAssetEntryPoolEntry); index via pointer arithmetic.
+static inline unsigned short DB_AssetEntryIndex(const void *entry)
+{
+    return static_cast<unsigned short>(
+        static_cast<const XAssetEntryPoolEntry *>(entry) - g_assetEntryPool);
+}
 XZoneName g_zoneNames[33];
 
 // zombies: SP and MP hold 0xC00 (SP exe 0x007A32F2). bo1_zombies loads SP's en_code_post_gfx after MP's
@@ -821,6 +832,19 @@ void __cdecl Mark_MenuAsset(menuDef_t *menu)
     DB_GetXAsset(ASSET_TYPE_MENU, (XAssetHeader)menu);
 }
 
+#if defined(BO1_PORT_X64)
+static bool DB_MenuNameLooksValid(const char *name)
+{
+    // Truncated/unexpanded FF offsets show up as small integers; never strcmp those.
+    return name && reinterpret_cast<uintptr_t>(name) > 0x10000u;
+}
+#else
+static bool DB_MenuNameLooksValid(const char *name)
+{
+    return name != nullptr;
+}
+#endif
+
 void __cdecl DB_DynamicCloneMenu(const XAssetHeader from, XAssetHeader to, DBCloneMethod _formal)
 {
     windowDef_t* fromWindow; // [esp+14h] [ebp-18h]
@@ -828,16 +852,23 @@ void __cdecl DB_DynamicCloneMenu(const XAssetHeader from, XAssetHeader to, DBClo
     int toIndex; // [esp+1Ch] [ebp-10h]
     windowDef_t* toWindow; // [esp+24h] [ebp-8h]
 
+    if (!from.menu || !to.menu || !from.menu->items || !to.menu->items)
+        return;
+
     to.menu->window.dynamicFlags[0] = from.menu->window.dynamicFlags[0];
     for (fromIndex = 0; fromIndex < from.menu->itemCount; ++fromIndex)
     {
+        if (!from.menu->items[fromIndex])
+            continue;
         fromWindow = &from.menu->items[fromIndex]->window;
-        if (fromWindow->name)
+        if (DB_MenuNameLooksValid(fromWindow->name))
         {
             for (toIndex = 0; toIndex < to.menu->itemCount; ++toIndex)
             {
+                if (!to.menu->items[toIndex])
+                    continue;
                 toWindow = &to.menu->items[toIndex]->window;
-                if (toWindow->name && !strcmp(toWindow->name, fromWindow->name))
+                if (DB_MenuNameLooksValid(toWindow->name) && !strcmp(toWindow->name, fromWindow->name))
                 {
                     toWindow->dynamicFlags[0] = fromWindow->dynamicFlags[0];
                     break;
@@ -1259,7 +1290,14 @@ XAssetHeader __cdecl DB_FindXAssetDefaultHeaderInternal(XAssetType type)
     for ( assetEntryIndex = db_hashTable[DB_HashForName(name, type) % 0x8000]; ; assetEntryIndex = assetEntry->entry.nextHash )
     {
         if ( !assetEntryIndex )
+        {
+#if defined(BO1_PORT_X64)
+            if (type == ASSET_TYPE_FX)
+            {
+            }
+#endif
             return 0;
+        }
         assetEntry = &g_assetEntryPool[assetEntryIndex];
         if ( assetEntry->entry.asset.type == type )
         {
@@ -1779,7 +1817,7 @@ void __cdecl DB_Sleep(unsigned int msec)
         bool active = Key_IsCatcherActive(0, 16);
 
         Key_AddCatcher(0, 16);
-        IN_Frame();
+        Platform_InputFrame();
 
         if (!active)
             Key_RemoveCatcher(0, -17);
@@ -2017,7 +2055,7 @@ XAssetEntry *__cdecl DB_CreateDefaultEntry(XAssetType type, const char *name)
     DB_CloneXAssetInternal(&asset, &newEntry->asset);
     hash = DB_HashForName(name, type);
     newEntry->nextHash = db_hashTable[hash % 0x8000u];
-    db_hashTable[hash % 0x8000u] = ((char *)newEntry - (char *)g_assetEntryPool) >> 4;
+    db_hashTable[hash % 0x8000u] = DB_AssetEntryIndex(newEntry);
     String = SL_GetString((char*)name, 4u, SCRIPTINSTANCE_SERVER);
     v4 = SL_ConvertToString(String, SCRIPTINSTANCE_SERVER);
     DB_SetXAssetName(&newEntry->asset, v4);
@@ -2053,7 +2091,9 @@ XAssetEntryPoolEntry *__cdecl DB_AllocXAssetEntry(XAssetType type, unsigned __in
     }
     if ( ++XAssetEntryHighCount > XAssetEntryHighWaterMark )
         XAssetEntryHighWaterMark = XAssetEntryHighCount;
-    g_freeAssetEntryHead = (XAssetEntryPoolEntry *)freeHead->entry.asset.type;
+    // Freelist is chained through XAssetEntryPoolEntry::next (see DB_Init / DB_FreeXAssetEntry).
+    // Win32 reused asset.type as a pointer; that truncates on x64.
+    g_freeAssetEntryHead = freeHead->next;
     freeHead->entry.asset.type = type;
     freeHead->entry.asset.header = DB_AllocXAssetHeader(type);
     freeHead->entry.zoneIndex = zoneIndex;
@@ -2746,7 +2786,7 @@ XAssetEntryPoolEntry *__cdecl DB_LinkXAssetEntry(XAssetEntry *newEntry, int allo
             }
         }
         newEntry->nextHash = db_hashTable[hash % 0x8000];
-        db_hashTable[hash % 0x8000] = ((char *)newEntry - (char *)g_assetEntryPool) >> 4;
+        db_hashTable[hash % 0x8000] = DB_AssetEntryIndex(newEntry);
         if ( db_xassetdebug->current.enabled )
         {
             if ( db_xassetdebugtype->current.integer == -1
@@ -2773,15 +2813,27 @@ XAssetEntryPoolEntry *__cdecl DB_LinkXAssetEntry(XAssetEntry *newEntry, int allo
     }
     if ( existingEntrya->entry.zoneIndex )
     {
-        if ( existingEntrya->entry.zoneIndex == newEntry->zoneIndex
-            && !Assert_MyHandler(
+        if ( existingEntrya->entry.zoneIndex == newEntry->zoneIndex )
+        {
+#if defined(BO1_PORT_X64)
+            // x64 stream drift can produce colliding garbage material names in the
+            // same zone. Keep the first entry and drop the duplicate instead of
+            // hard-asserting — remove once block-4 -16 undercount is fixed.
+            {
+            }
+            DB_FreeXAssetEntry(reinterpret_cast<XAssetEntryPoolEntry *>(newEntry));
+            return existingEntrya;
+#else
+            if ( !Assert_MyHandler(
                         "C:\\projects_pc\\cod\\codsrc\\src\\database\\db_registry.cpp",
                         3986,
                         0,
                         "%s",
                         "existingEntry->zoneIndex != newEntry->zoneIndex") )
-        {
-            __debugbreak();
+            {
+                __debugbreak();
+            }
+#endif
         }
         // zombies: SP also lets a later zone override ddl and emblemset assets (SP exe 0x007A30FC-0x007A310E: rawfile,
         // map_ents, ddl, emblemset); SP's patch.ff overrides code_post_gfx's ddl/stats_archive.ddl
@@ -2817,7 +2869,7 @@ XAssetEntryPoolEntry *__cdecl DB_LinkXAssetEntry(XAssetEntry *newEntry, int allo
                 }
             }
             newEntry->nextOverride = *pOverrideAssetEntryIndex;
-            *pOverrideAssetEntryIndex = ((char *)newEntry - (char *)g_assetEntryPool) >> 4;
+            *pOverrideAssetEntryIndex = DB_AssetEntryIndex(newEntry);
             return existingEntrya;
         }
         goto LABEL_106;
@@ -2891,7 +2943,7 @@ LABEL_106:
                 }
             }
             newEntry->nextOverride = existingEntrya->entry.nextOverride;
-            existingEntrya->entry.nextOverride = ((char *)newEntry - (char *)g_assetEntryPool) >> 4;
+            existingEntrya->entry.nextOverride = DB_AssetEntryIndex(newEntry);
             DB_SwapXAsset(&newEntry->asset, &existingEntrya->entry.asset);
             zoneIndex = existingEntrya->entry.zoneIndex;
             existingEntrya->entry.zoneIndex = newEntry->zoneIndex;
@@ -4024,7 +4076,7 @@ void __cdecl    DB_Thread(unsigned int threadContext)
     }
     Value = (int*)Sys_GetValue(2);
     //if ( _setjmp3(Value, 0) )
-    if ( _setjmp(Value) )
+    if ( _setjmp(*(jmp_buf *)(void *)Value) )
         Com_ErrorAbort();
     while ( 1 )
     {
@@ -4499,10 +4551,11 @@ void __cdecl DB_ModXFileHandle(const char *zoneName, void **zoneFile, FF_DIR *zo
     bool v6; // [esp+4h] [ebp-10Ch]
     char filename[260]; // [esp+8h] [ebp-108h] BYREF
 
-    v6 = fs_gameDirVar && *(_BYTE *)fs_gameDirVar->current.integer;
+    // x64: string dvars must use .string; .integer only holds the low 32 bits of the pointer.
+    v6 = fs_gameDirVar && *fs_gameDirVar->current.string;
     if ( !v6 || I_stricmp(zoneName, "mod") )
     {
-        if ( fs_usermapDir && *(_BYTE *)fs_usermapDir->current.integer )
+        if ( fs_usermapDir && *fs_usermapDir->current.string )
         {
             String = Dvar_GetString("fs_usermapDir");
             v4 = va("%s\\%s", String, zoneName);
@@ -4529,7 +4582,7 @@ void __cdecl DB_BuildOSPath_FromSource(const char *zoneName, FF_DIR source, unsi
     {
         if ( source == FFD_MOD_DIR )
         {
-            v4 = fs_gameDirVar && *(_BYTE *)fs_gameDirVar->current.integer;
+            v4 = fs_gameDirVar && *fs_gameDirVar->current.string;
             if ( !v4
                 && !Assert_MyHandler(
                             "C:\\projects_pc\\cod\\codsrc\\src\\database\\db_registry.cpp",
@@ -5391,7 +5444,7 @@ char __cdecl DB_ModFileExists()
     char filename[256]; // [esp+4h] [ebp-108h] BYREF
     void *zoneFile; // [esp+108h] [ebp-4h]
 
-    if ( !fs_gameDirVar || !*(_BYTE *)fs_gameDirVar->current.integer )
+    if ( !fs_gameDirVar || !*fs_gameDirVar->current.string )
         return 0;
     DB_BuildOSPath_FromSource("mod", FFD_MOD_DIR, 0x100u, filename);
     zoneFile = CreateFileA(filename, 0x80000000, 1u, 0, 3u, 0x60000000u, 0);

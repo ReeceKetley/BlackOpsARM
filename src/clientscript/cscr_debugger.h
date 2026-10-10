@@ -1,6 +1,7 @@
 #pragma once
 #include "cscr_main.h"
 #include "cscr_variable.h"
+#include <cstddef>
 
 struct scr_localVar_t // sizeof=0x8
 {                                       // XREF: scr_block_s/r
@@ -22,6 +23,18 @@ struct scr_block_s // sizeof=0x218
 };
 
 enum ParseToken_t : __int32;
+
+#include <universal/narrow32.h>
+
+#if defined(BO1_PORT_X64)
+// The GSC parse tree is built from 4-byte slots (sval_u) addressed with hard-coded +4 strides, and holds pointers in them.
+// On x64 sval_u stays exactly 4 bytes: its pointer members are Narrow32.
+// Read a narrow pointer stored in a parse-tree slot at (32-bit) address `addr`.
+#define SVAL_PTR_AT(T, addr) (reinterpret_cast<T *>(static_cast<uintptr_t>(*reinterpret_cast<const unsigned int *>(static_cast<uintptr_t>(addr)))))
+#else
+#define SVAL_PTR_AT(T, addr) (*(T **)(addr))
+#endif
+
 union sval_u // sizeof=0x4
 {                                       // XREF: GetExpressionCount(sval_u)+D/r
                                         // Scr_GetBuiltin(scriptInstance_t,sval_u)+3/r ...
@@ -43,12 +56,30 @@ union sval_u // sizeof=0x4
     unsigned int idValue;
     float floatValue;
     int intValue;
+#if defined(BO1_PORT_X64)
+    Narrow32<sval_u> node;
+    unsigned int sourcePosValue;
+    Narrow32<const char> codePosValue;
+    Narrow32<const char> debugString;
+    Narrow32<scr_block_s> block;
+#else
     sval_u *node;
     unsigned int sourcePosValue;
     const char *codePosValue;
     const char *debugString;
     scr_block_s *block;
+#endif
 };
+#if defined(BO1_PORT_X64)
+static_assert(sizeof(sval_u) == 4, "sval_u must stay 4 bytes");
+#endif
+
+// Child-block lists in the parse tree are arrays of 4-byte slots holding block pointers.
+#if defined(BO1_PORT_X64)
+typedef Narrow32<scr_block_s> ScrBlockPtr;
+#else
+typedef scr_block_s *ScrBlockPtr;
+#endif
 
 struct debugger_sval_s // sizeof=0x4
 {                                       // XREF: debugger_sval_t/r
@@ -168,9 +199,9 @@ public:
 class Scr_ScriptWindow : public UI_LinesComponent // sizeof=0x20
 {
 public:
-    void *operator new(unsigned int size)
+    void *operator new(std::size_t size)
     {
-        return Hunk_UserAlloc(g_DebugHunkUser, size, 4, "Scr_ScriptWindow");
+        return Hunk_UserAlloc(g_DebugHunkUser, static_cast<int>(size), 4, "Scr_ScriptWindow");
     }
     void operator delete(void *ptr)
     {

@@ -31,6 +31,8 @@ void __cdecl IN_Shutdown();
 void __cdecl IN_Init();
 void __cdecl IN_Activate(int active);
 void __cdecl IN_Frame();
+// Raw Win32 input pump used by the platform Windows backend (avoids recursion through IInputBackend).
+void __cdecl IN_Frame_Win32();
 void IN_GamepadsMove();
 void IN_MouseMove();
 void __cdecl IN_ClampMouseMove(tagPOINT *curPos);

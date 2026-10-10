@@ -448,7 +448,9 @@ struct __declspec(align(4)) server_t // sizeof=0x5C28C
     // padding byte
     // padding byte
 };
+#if !defined(BO1_PORT_X64)
 static_assert(sizeof(server_t) == 377548 + (MAX_GENTITIES_SV - MAX_GENTITIES) * sizeof(svEntity_s)); // mod (L25)
+#endif
 
 struct bdSecurityID;
 

@@ -482,7 +482,9 @@ struct alignas(16) NitrousVehicle // sizeof=0x440
     // padding byte
     // padding byte
 };
+#if !defined(BO1_PORT_X64)
 static_assert(sizeof(NitrousVehicle) == 0x440);
+#endif
 
 struct PhysObjUserData *__cdecl Phys_ObjCreateNitrousVehicle(
                 const float *position,

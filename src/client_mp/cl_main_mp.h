@@ -370,7 +370,9 @@ struct clientActive_t // sizeof=0x1A6100
 };
 // mod (L43): bytes the parseEntities ring adds over retail (sizeof=0x1A6100 with 2048); cl_main_mp.cpp allocates them.
 #define CL_PARSE_ENTITIES_EXTRA_BYTES ((CL_PARSE_ENTITIES_COUNT - 2048) * (int)sizeof(entityState_s))
+#if !defined(BO1_PORT_X64)
 static_assert(sizeof(clientActive_t) <= 0x1A6100 + CL_PARSE_ENTITIES_EXTRA_BYTES, "clientActive_t outgrew its allocation");
+#endif
 
 struct clientLogo_t // sizeof=0x18
 {                                                                             // XREF: clientStatic_t/r
@@ -574,7 +576,9 @@ struct gameState_t // sizeof=0x132F8
         int matchUIVisibilityFlags;                 // XREF: CG_SetupGameInformation+16/r
                                                                                 // CL_WriteUncompressedDemoInfo(int)+83B/r ...
 };
+#if !defined(BO1_PORT_X64)
 static_assert(sizeof(gameState_t) == 78584);
+#endif
 
 struct clientStatic_t // sizeof=0x1CF2800
 {                                                                             // XREF: .data:clientStatic_t cls/r

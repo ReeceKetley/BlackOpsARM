@@ -3350,7 +3350,7 @@ LABEL_56:
         goto LABEL_56;
     }
     if ( level.gentities[iHitEntnum].sentient )
-        LOWORD(v2) = iHitEntnum;
+        *(unsigned __int16 *)&v2 = (unsigned __int16)iHitEntnum; // LOWORD(v2) = ... (windef.h LOWORD is not an lvalue here)
     else
         v2 = self->Physics.iHitEntnum;
     self->Path.wDodgeEntity = v2;

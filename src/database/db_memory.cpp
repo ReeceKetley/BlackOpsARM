@@ -36,6 +36,12 @@ void __cdecl DB_AllocXBlocks(
     for ( blockIndex = 0; blockIndex < 7; ++blockIndex )
     {
         buf.size = blockSize[blockIndex];
+#if defined(BO1_PORT_X64)
+        // FastFile block sizes are Win32 sizes; the expanded 64-bit structs (8-byte pointers, 8-aligned) are larger.
+        // Worst case is ~2x (pointer-dense data), plus slack for the native alignment padding.
+        if ( buf.size )
+            buf.size = buf.size * 2 + 0x10000;
+#endif
         if ( buf.size )
         {
             total_size = (double)buf.size + total_size;

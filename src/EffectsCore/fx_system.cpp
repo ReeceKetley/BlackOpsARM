@@ -1,3 +1,4 @@
+#include <universal/com_memory.h>
 #include "fx_system.h"
 #include "fx_random.h"
 #include "fx_marks.h"
@@ -29,7 +30,9 @@ int fx_serverVisClient;
 int __cdecl FX_AllocateClientMemory_SizeRequired(int maxLocalClients)
 {
     // mod (L43): sizeof(FxSystemBuffers) (retail 402560 + 2976 = 405536), elems[FX_ELEM_POOL_MAX]
-    return (int)(sizeof(FxSystemBuffers) + 2976) * maxLocalClients + 127 + 155688 * maxLocalClients + 254;
+    const int containerBytes = (int)Bo1_MaxSize(sizeof(FxSystemContainer), 2976);
+    const int marksBytes = (int)Bo1_MaxSize(sizeof(FxMarksSystem), 155688);
+    return (int)(sizeof(FxSystemBuffers) + containerBytes) * maxLocalClients + 127 + marksBytes * maxLocalClients + 254;
 }
 
 void __cdecl FX_AllocateClientMemory(HunkUser *hunk, int maxLocalClients)
@@ -37,12 +40,14 @@ void __cdecl FX_AllocateClientMemory(HunkUser *hunk, int maxLocalClients)
     int i; // [esp+0h] [ebp-4h]
 
     fx_maxLocalClients = maxLocalClients;
-    fx_systemPool = (FxSystemContainer *)Hunk_UserAlloc(hunk, 2976 * maxLocalClients, 128, "fx_systemPool");
-    memset((unsigned __int8 *)fx_systemPool, 0, 2976 * maxLocalClients);
+    const int containerBytes = (int)Bo1_MaxSize(sizeof(FxSystemContainer), 2976);
+    const int marksBytes = (int)Bo1_MaxSize(sizeof(FxMarksSystem), 155688);
+    fx_systemPool = (FxSystemContainer *)Hunk_UserAlloc(hunk, containerBytes * maxLocalClients, 128, "fx_systemPool");
+    memset((unsigned __int8 *)fx_systemPool, 0, containerBytes * maxLocalClients);
     fx_systemBufferPool = (FxSystemBuffers *)Hunk_UserAlloc(hunk, sizeof(FxSystemBuffers) * maxLocalClients, 128, "fx_systemBufferPool"); // mod (L43): retail 402560
     memset((unsigned __int8 *)fx_systemBufferPool, 0, sizeof(FxSystemBuffers) * maxLocalClients);
-    fx_marksSystemPool = (FxMarksSystem *)Hunk_UserAlloc(hunk, 155688 * maxLocalClients, 128, "fx_marksSystemPool");
-    memset((unsigned __int8 *)fx_marksSystemPool, 0, 155688 * maxLocalClients);
+    fx_marksSystemPool = (FxMarksSystem *)Hunk_UserAlloc(hunk, marksBytes * maxLocalClients, 128, "fx_marksSystemPool");
+    memset((unsigned __int8 *)fx_marksSystemPool, 0, marksBytes * maxLocalClients);
     for ( i = 0; i < maxLocalClients; ++i )
     {
         fx_systemPool[i].system.shared = &fx_systemPool[i].shared;

@@ -23,4 +23,9 @@ void __cdecl DB_SaveDObjs();
 void __cdecl DB_LoadDObjs();
 DObj *__cdecl Com_GetClientDObj(unsigned int handle, int localClientNum);
 
-extern unsigned int objBuf[3072][31];
+#if defined(BO1_PORT_X64)
+#define DOBJ_BUF_UINTS 40 // 160 bytes per DObj slot (sizeof(DObj) is 0x7C on Win32; checked in dobj.cpp)
+#else
+#define DOBJ_BUF_UINTS 31
+#endif
+extern unsigned int objBuf[3072][DOBJ_BUF_UINTS];

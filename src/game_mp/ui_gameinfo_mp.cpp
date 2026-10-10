@@ -92,11 +92,11 @@ void __cdecl UI_LoadArenas()
     sharedUiInfo.mapCount = 0;
     ui_numArenas = 0;
     ModArenas = 0;
-    if (fs_gameDirVar && *(_BYTE *)fs_gameDirVar->current.integer)
+    if (fs_gameDirVar && *(_BYTE *)fs_gameDirVar->current.string)
         ModArenas = UI_LoadModArenas();
-    if (!ModArenas || (!fs_gameDirVar || !*(_BYTE *)fs_gameDirVar->current.integer ? (v7 = 0) : (v7 = 1), !v7))
+    if (!ModArenas || (!fs_gameDirVar || !*(_BYTE *)fs_gameDirVar->current.string ? (v7 = 0) : (v7 = 1), !v7))
         UI_LoadArenasFromFile();
-    v6 = fs_gameDirVar && *(_BYTE *)fs_gameDirVar->current.integer;
+    v6 = fs_gameDirVar && *(_BYTE *)fs_gameDirVar->current.string;
     if (v6 && !ModArenas)
     {
         UI_LoadModsMap(FFD_MOD_DIR);
@@ -302,9 +302,10 @@ void __cdecl UI_LoadModsMap(FF_DIR source)
 int UI_LoadArenasFromFile()
 {
     if ( useFastFile->current.enabled )
-        return ((int (__cdecl *)(void (*)()))UI_LoadArenasFromFile_FastFile)(UI_LoadArenasFromFile_FastFile);
+        UI_LoadArenasFromFile_FastFile();
     else
-        return ((int (__cdecl *)(const char *(*)()))UI_LoadArenasFromFile_LoadObj)(UI_LoadArenasFromFile_LoadObj);
+        UI_LoadArenasFromFile_LoadObj();
+    return 0;
 }
 
 const char *UI_LoadArenasFromFile_LoadObj()

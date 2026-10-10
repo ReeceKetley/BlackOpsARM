@@ -1229,8 +1229,7 @@ void __cdecl LB_SortXUserStatsByRank(Leaderboard *lb)
 
     qsort(
         lb->userStats.m_leaderBoardEntries,
-        lb->numResults,
-        0x98u,
+        lb->numResults, sizeof(*(lb->userStats.m_leaderBoardEntries)),
         (int (__cdecl *)(const void *, const void *))LB_CompareXUserStatsRowRanks);
     for ( count = 0; count < lb->numResults && lb->userStats.m_leaderBoardEntries[count].m_rank; ++count )
         ;

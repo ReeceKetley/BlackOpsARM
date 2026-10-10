@@ -1,3 +1,19 @@
+#include "r_model_skin.h"
+
+#if defined(BO1_PORT_X64) || defined(_M_X64) || defined(_WIN64)
+// BO1_PORT_X64_SSE_STUB: MMX skinning is x86-only; fall back to scalar.
+void __cdecl R_SkinXSurfaceSkinnedSse(
+    const XSurface *xsurf,
+    const DObjSkelMat *boneMatrix,
+    GfxPackedVertexNormal *skinVertNormalIn,
+    GfxPackedVertexNormal *skinVertNormalOut,
+    GfxPackedVertex *skinVerticesOut)
+{
+    (void)skinVertNormalIn;
+    (void)skinVertNormalOut;
+    R_SkinXSurfaceSkinned(xsurf, boneMatrix, skinVerticesOut);
+}
+#else
 // (Aislop) - (from BO1Cod4)
 // shared between KCOD4 and KBLOPS.
 // (COD4) Before ~(580us) -- After ~(25us).
@@ -473,3 +489,5 @@ void __cdecl R_SkinXSurfaceSkinnedSse(const XSurface *xsurf, const DObjSkelMat *
             R_SkinXSurfaceRigidSse(xsurf, xsurf->vertCount, boneMatrix, skinVerticesOut);
     }
 }
+
+#endif

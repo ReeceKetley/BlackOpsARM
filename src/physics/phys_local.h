@@ -247,7 +247,9 @@ struct chull_t // sizeof=0x20
     int touched;
     chull_t *next_list;
 };
+#if !defined(BO1_PORT_X64)
 static_assert(sizeof(chull_t) == 0x20);
+#endif
 
 struct minspec_mutex // sizeof=0x4
 {                                       // XREF: .data:minspec_mutex g_render_mutex/r

@@ -187,6 +187,12 @@ void Steam_PrintInitStatus()
 
 void Steam_Init()
 {
+#if defined(BO1_PORT_X64)
+	// x64: Steam is stubbed (x64_vendor_stubs.cpp); there is no client to hand an app id to, so do not touch the
+	// environment block or write steam_appid.txt.
+	Com_sprintf(s_steamInitStatus, sizeof(s_steamInitStatus), "disabled on x64 (stubbed)");
+	return;
+#endif
 	CreateAppIdFile();
 	SetEnvironmentVariableA("SteamAppId", APPID_STR);
 	SetEnvironmentVariableA("SteamGameId", APPID_STR);

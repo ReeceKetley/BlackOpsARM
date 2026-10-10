@@ -1,3 +1,4 @@
+#include <cstdint>
 #include "glass_allocator.h"
 #include "glass_client.h"
 #include <universal/assertive.h>
@@ -16,10 +17,10 @@ void __thiscall SmallAllocator::Init(void *buffer, unsigned int bs, unsigned int
     ptr = (char *)this->memory;
     for ( i = 0; i < this->numBlocks - 1; ++i )
     {
-        *(unsigned int *)ptr = (unsigned int)&ptr[this->blockSize];
+        *(void **)ptr = &ptr[this->blockSize];
         ptr += this->blockSize;
     }
-    *(unsigned int *)ptr = 0;
+    *(void **)ptr = 0;
 }
 
 void **__thiscall SmallAllocator::Allocate(unsigned int size)
@@ -82,8 +83,8 @@ void __thiscall SmallAllocator::Free(void **ptr, unsigned int num)
 bool __thiscall SmallAllocator::IsValidPointer(void *ptr)
 {
     return ptr >= this->memory
-            && !(((unsigned int)ptr - (unsigned int)this->memory) % this->blockSize)
-            && (unsigned int)ptr - (unsigned int)this->memory < this->numBlocks * this->blockSize;
+            && !(((uintptr_t)ptr - (uintptr_t)this->memory) % this->blockSize)
+            && (uintptr_t)ptr - (uintptr_t)this->memory < (uintptr_t)this->numBlocks * this->blockSize;
 }
 
 void __thiscall Allocator::Memory::Init()

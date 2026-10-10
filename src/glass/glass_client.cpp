@@ -424,8 +424,7 @@ void __thiscall GlassClient::PlayShatterFX(
     }
     qsort(
         outlineEdges,
-        this->glass->numOutlineVerts,
-        0x18u,
+        this->glass->numOutlineVerts, sizeof(*(outlineEdges)),
         (int (__cdecl *)(const void *, const void *))compareOutlineEdges);
     if ( (float)((float)((float)(*hitDir * *hitDir) + (float)(hitDir[1] * hitDir[1])) + (float)(hitDir[2] * hitDir[2])) == 0.0 )
     {

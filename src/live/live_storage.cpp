@@ -2391,14 +2391,12 @@ void __cdecl LiveStorage_FileShare_LoadBlockSuccessAction(dwFileShareDescriptors
         if ( Live_FileShare_GetSortBy() <= 0 )
             qsort(
                 fsTask->descriptors,
-                *fsTask->descriptorCount,
-                0x838u,
+                *fsTask->descriptorCount, sizeof(*(fsTask->descriptors)),
                 (int (__cdecl *)(const void *, const void *))LiveStorage_FileShareSortComparator_MostRecent);
         else
             qsort(
                 fsTask->descriptors,
-                *fsTask->descriptorCount,
-                0x838u,
+                *fsTask->descriptorCount, sizeof(*(fsTask->descriptors)),
                 (int (__cdecl *)(const void *, const void *))LiveStorage_FileShareSortComparator_MostPopular);
         for ( i = 0; i < *fsTask->descriptorCount; ++i )
             Live_FileShareCache_AddDescriptor(fsTask->descriptors[i].m_fileID, fsTask->location, &fsTask->descriptors[i]);
@@ -3783,8 +3781,7 @@ void __cdecl LiveStorage_FileShare_ReadRatingSuccessAction(dwFileShareGetRatingT
             &ratingTask->outStatsInfo[i]);
     qsort(
         ratingTask->outStatsInfo,
-        *ratingTask->outNumRatingsReceived,
-        0xC8u,
+        *ratingTask->outNumRatingsReceived, sizeof(*(ratingTask->outStatsInfo)),
         (int (__cdecl *)(const void *, const void *))LiveStorage_FileShare_VoteRankComparator);
     if ( ratingTask->successCallback )
         ratingTask->successCallback();

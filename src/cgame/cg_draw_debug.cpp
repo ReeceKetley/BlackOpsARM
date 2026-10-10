@@ -377,7 +377,7 @@ double __cdecl DrawEntityCounts(const ScreenPlacement *scrPlace, float posY)
                 {
                     ++destructibles;
                 }
-                else if (((*((_DWORD *)&cent->cent + 201) >> 15) & 1) != 0)
+                else if (((CENT_FLAGS(&cent->cent) >> 15) & 1) != 0)
                 {
                     ++triggers;
                 }
@@ -876,7 +876,7 @@ void __cdecl CG_DrawSoundOverlay(const ScreenPlacement *scrPlace)
 
     type = (snd_overlay_type)snd_drawInfo->current.integer;
     num = SND_GetSoundOverlay(type, info, 128);
-    qsort(info, num, 0xF0u, CG_SoundCompares[snd_drawSort->current.integer]);
+    qsort(info, num, sizeof(*(info)), CG_SoundCompares[snd_drawSort->current.integer]);
     v6 = 0;
     for ( i = 0; i < (int)num; ++i )
     {
@@ -887,10 +887,10 @@ void __cdecl CG_DrawSoundOverlay(const ScreenPlacement *scrPlace)
     y = 82.0f;
     string = va(
                          "%s sounds    reverb: %s    channels in use %d    sort by %s",
-                         *(const char **)(snd_drawInfo->domain.integer.max + 4 * type),
+                         snd_drawInfo->domain.enumeration.strings[type],
                          "",
                          v6,
-                         *(const char **)(snd_drawSort->domain.integer.max + 4 * type));
+                         snd_drawSort->domain.enumeration.strings[type]);
     CG_DrawStringExt(scrPlace, x, y, string, colorWhite, 0, 1, 14.0);
     y = y + 10.0;
     for ( i = 0; i < (int)num; ++i )
@@ -1428,7 +1428,7 @@ void __cdecl CG_DrawVersion()
         h = (float)UI_TextHeight(font, fontScale);
         UI_DrawText(
             &scrPlaceFullUnsafe,
-            (char *)version->current.integer,
+            (char *)version->current.string,
             0x7FFFFFFF,
             font,
             (float)(-(w) - cg_drawVersionX->current.value) + 1.0,
@@ -1440,7 +1440,7 @@ void __cdecl CG_DrawVersion()
             0);
         UI_DrawText(
             &scrPlaceFullUnsafe,
-            (char *)version->current.integer,
+            (char *)version->current.string,
             0x7FFFFFFF,
             font,
             -(w) - cg_drawVersionX->current.value,

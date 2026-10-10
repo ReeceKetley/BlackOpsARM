@@ -582,6 +582,10 @@ void __cdecl Assert_SetMonkeyCallbackHandler(void (__cdecl *AssertCallbackFunc)(
     MonkeyAssertCallback = AssertCallbackFunc;
 }
 
+#if defined(BO1_PORT_X64)
+void Bo1_Diag(const char *fmt, ...);
+void Bo1_DiagStack(const char *tag);
+#endif
 bool Assert_MyHandler(const char *filename, int line, int type, const char *fmt, ...)
 {
 #if 0
@@ -633,6 +637,10 @@ bool Assert_MyHandler(const char *filename, int line, int type, const char *fmt,
         va_end(va);
         assertText[sizeof(assertText) - 1] = 0;
         Sys_HeadlessLogAssert(filename, line, assertText);
+#if defined(BO1_PORT_X64)
+        Bo1_Diag("ASSERT %s(%d): %s", filename, line, assertText);
+        Bo1_DiagStack("ASSERT");
+#endif
     }
     __debugbreak();
     return 1;

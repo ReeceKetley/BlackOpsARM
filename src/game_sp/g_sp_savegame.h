@@ -46,7 +46,9 @@ struct SPMemorySaveHeader
     int bodySize;               // +0x490, bytes used in the game state file (SP 0x0049C750)
     int pad;                    // +0x494, not written
 };
+#if !defined(BO1_PORT_X64)
 static_assert(sizeof(SPMemorySaveHeader) == 0x498, "SP save header size");
+#endif
 
 // SP SaveGame (0x104F4 bytes; two of them at 0x01D04BA8 / 0x01D1509C, SP 0x008190B0).
 enum SPSaveState
@@ -71,11 +73,15 @@ struct SPSaveGame
     bool suppressPrint;             // +0x104F0: no 'S' server command on commit
     bool callbackNow;               // +0x104F1: 0x0068BE40 calls the callback at once
 };
+#if !defined(BO1_PORT_X64)
 static_assert(sizeof(MemoryFile) == 0x8024, "SP MemoryFile size");
+#endif
+#if !defined(BO1_PORT_X64)
 static_assert(offsetof(SPSaveGame, state) == 0x10048, "SP SaveGame layout");
 static_assert(offsetof(SPSaveGame, header) == 0x1004C, "SP SaveGame layout");
 static_assert(offsetof(SPSaveGame, isUsingGlobalBuffer) == 0x104EC, "SP SaveGame layout");
 static_assert(sizeof(SPSaveGame) == 0x104F4, "SP SaveGame size");
+#endif
 
 // The committed memory save's header ([0x01D04BA0] + 0x1004C, SP 0x00599F10). SP reads it without a
 // state check; an empty filename means nothing was ever committed.

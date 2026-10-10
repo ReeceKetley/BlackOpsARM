@@ -87,6 +87,17 @@ void __cdecl Sys_DetectVideoCard(int descLimit, char *description)
         __debugbreak();
     }
     strcpy(description, "Unknown video card");
+#if defined(BO1_PORT_X64)
+    {
+        // x64 bring-up: the Direct3DCreate9 -> Release probe makes the NVIDIA user-mode driver fail a heap check while it
+        // unloads (RtlFreeHeap in nvldumdx, 0xC0000374) on a plain heap, although it passes under the debug heap / ASan.
+        // The D3D9 renderer is being replaced by the Godot backend, so the probe is opt-in: BO1_VIDEODETECT=1.
+        char detect[8] = {};
+        size_t detectLen = 0;
+        if (getenv_s(&detectLen, detect, sizeof(detect), "BO1_VIDEODETECT") != 0 || detectLen < 2 || detect[0] != '1')
+            return;
+    }
+#endif
     d3d9 = Direct3DCreate9(0x20u);
     if ( d3d9 )
     {

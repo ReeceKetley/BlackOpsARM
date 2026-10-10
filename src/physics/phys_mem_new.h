@@ -2,23 +2,28 @@
 #include "phys_local.h"
 #include <tl/tl_system.h>
 
-struct tagged_void_pointer_t // sizeof=0x8
-{                                       // XREF: phys_slot_pool/r
-    void *m_ptr;
+// Packed tagged pointer for the slot free-list head.
+// Always 8 bytes so InterlockedCompareExchange64 matches Win32 layout:
+//   low 32  = slot link (Win32: absolute ptr; x64: offset from g_phys_memory_buffer, 0 = null)
+//   high 32 = ABA tag
+struct alignas(8) tagged_void_pointer_t // sizeof=0x8
+{
+    unsigned int m_ptr;
     unsigned int m_tag;
 
     tagged_void_pointer_t() noexcept
-        : m_ptr(nullptr), m_tag(0) {
+        : m_ptr(0), m_tag(0) {
     }
 
-    tagged_void_pointer_t(void *ptr, unsigned int tag) noexcept
+    tagged_void_pointer_t(unsigned int ptr, unsigned int tag) noexcept
         : m_ptr(ptr), m_tag(tag) {
     }
 };
+static_assert(sizeof(tagged_void_pointer_t) == 8);
 
-struct alignas(8) phys_slot_pool // sizeof=0x18
+struct alignas(8) phys_slot_pool // sizeof=0x18 (Win32)
 {                                       // XREF: phys_memory_manager/r
-    struct extra_info // sizeof=0x8
+    struct extra_info
     {
         phys_slot_pool *m_slot_pool_owner;
         void *m_allocation_owner;
@@ -46,7 +51,9 @@ struct alignas(8) phys_slot_pool // sizeof=0x18
     void  free_slot(unsigned __int8 *slot);
     char *allocate_slot();
 };
+#if !defined(BO1_PORT_X64)
 static_assert(sizeof(phys_slot_pool) == 0x18);
+#endif
 
 struct phys_memory_manager // sizeof=0x3D0
 {
@@ -70,12 +77,14 @@ struct phys_memory_manager // sizeof=0x3D0
 
     phys_memory_manager(char *memory_buffer, int memory_buffer_size);
 
-    int allocate(unsigned int size, unsigned int alignment);
+    void *allocate(unsigned int size, unsigned int alignment);
     phys_slot_pool *allocate_slot_pool();
     phys_slot_pool *get_slot_pool(unsigned int slot_size, unsigned int slot_alignment);
 };
 
+#if !defined(BO1_PORT_X64)
 static_assert(sizeof(phys_memory_manager) == 0x3D0);
+#endif
 
 void __cdecl phys_memory_manager_term();
 void __cdecl ppu_pmm_get_linear_buffer(char ***linear_buffer_cur, char **linear_buffer_end);

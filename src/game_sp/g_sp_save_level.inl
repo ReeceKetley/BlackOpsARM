@@ -13,13 +13,27 @@ extern TurretInfo turretInfoStore[32];
 extern int g_listenerCount;
 extern AIEventListener g_AIEVlisteners[32];
 
+#if !defined(BO1_PORT_X64)
 static_assert(sizeof(cCurve) == 0xE58, "SP curve record");
+#endif
+#if !defined(BO1_PORT_X64)
 static_assert(sizeof(TurretInfo) == 0xE0 && offsetof(TurretInfo, detachSentient) == 0x68, "SP turret record");
+#endif
+#if !defined(BO1_PORT_X64)
 static_assert(sizeof(threat_bias_t) == 0x424, "SP threat bias record");
+#endif
+#if !defined(BO1_PORT_X64)
 static_assert(sizeof(AIEventListener) == 8, "SP event listener record");
+#endif
+#if !defined(BO1_PORT_X64)
 static_assert(sizeof(trigger_info_t) == 0xC, "SP trigger record");
+#endif
+#if !defined(BO1_PORT_X64)
 static_assert(sizeof(AttractorRepulsor_t) == 0x1C, "SP attractor record");
+#endif
+#if !defined(BO1_PORT_X64)
 static_assert(ARRAY_COUNT(((vehicle_info_t *)0)->sndIndices) == 19, "SP vehicle info sound indices");
+#endif
 
 static void G_SaveCurves(MemoryFile *memFile)
 {
@@ -121,7 +135,9 @@ static const SPEntitySaveField s_threatBiasFields[] = {
     { 0x0C, 2, 1 }, { 0x0E, 2, 1 }, { 0x10, 2, 1 }, { 0x12, 2, 1 }, { 0x14, 2, 1 }, { 0x16, 2, 1 },
     { 0x18, 2, 1 }, { 0x1A, 2, 1 }, { 0x1C, 2, 1 }, { 0x1E, 2, 1 }
 };
+#if !defined(BO1_PORT_X64)
 static_assert(offsetof(threat_bias_t, groupName) == 0 && sizeof(((threat_bias_t *)0)->groupName) == 0x20, "SP threat bias names");
+#endif
 
 static void G_WriteThreatBias(const threat_bias_t *bias, MemoryFile *memFile)
 {

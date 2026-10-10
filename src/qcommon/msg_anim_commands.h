@@ -17,7 +17,9 @@ struct AnimCommand
     float time;
     unsigned int flags;
 };
+#if !defined(BO1_PORT_X64)
 static_assert(sizeof(AnimCommand) == 44);
+#endif
 
 struct AnimCommandMsgState
 {

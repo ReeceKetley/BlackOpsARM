@@ -4,7 +4,11 @@ project(BO1Zombies)
 set(BIN_NAME "BO1Zombies")
 
 set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_GENERATOR_PLATFORM "WIN32")
+# Stock bring-up is Win32. For an experimental x64 tree use: cmake -A x64 -DBO1_PORT_X64=ON
+option(BO1_PORT_X64 "Experimental Windows x64 port (do not force Win32 machine)" OFF)
+if (NOT BO1_PORT_X64 AND NOT CMAKE_GENERATOR_PLATFORM)
+    set(CMAKE_GENERATOR_PLATFORM "WIN32" CACHE STRING "" FORCE)
+endif()
 
 set(SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src")
 set(TL_DIR  "${CMAKE_CURRENT_SOURCE_DIR}/tl")
@@ -12,22 +16,31 @@ set(DW_DIR  "${CMAKE_CURRENT_SOURCE_DIR}/DemonWare")
 
 include(cmake_files.cmake)
 
-# phys_gjk.cpp specific flag (experimental)
-set_source_files_properties(
-    "${SRC_DIR}/physics/phys_gjk.cpp"
-    PROPERTIES
-    COMPILE_OPTIONS "/arch:IA32"
-)
+# phys_gjk.cpp specific flag (experimental) — IA32 only on Win32
+if (NOT BO1_PORT_X64)
+    set_source_files_properties(
+        "${SRC_DIR}/physics/phys_gjk.cpp"
+        PROPERTIES
+        COMPILE_OPTIONS "/arch:IA32"
+    )
+endif()
 
 # ----- Preprocessor Defines -----
 # Common to both Debug and Release
 target_compile_definitions(BO1Zombies PUBLIC
-    WIN32
     _CONSOLE
     BO1_MP
     _CRT_SECURE_NO_WARNINGS
     _WINSOCK_NO_DEPRECATED_NO_WARNINGS
 )
+if (NOT BO1_PORT_X64)
+    target_compile_definitions(BO1Zombies PUBLIC WIN32)
+endif()
+if (BO1_PORT_X64)
+    target_compile_definitions(BO1Zombies PUBLIC BO1_PORT_X64=1)
+    # Soften 32-bit sizeof static_asserts so the tree can compile while layouts are ported.
+    target_compile_options(BO1Zombies PRIVATE "/FI${SRC_DIR}/platform/bo1_x64_relax.hpp")
+endif()
 # Debug-only
 target_compile_definitions(BO1Zombies PUBLIC
     $<$<CONFIG:Debug>:_DEBUG>
@@ -52,7 +65,11 @@ set(DXSDK_DIR "C:/Program Files (x86)/Microsoft DirectX SDK (June 2010)" CACHE P
 target_include_directories(BO1Zombies PUBLIC "${DXSDK_DIR}/Include")
 
 # ----- Library directories -----
-target_link_directories(BO1Zombies PUBLIC "${DXSDK_DIR}/Lib/x86")
+if (BO1_PORT_X64)
+    target_link_directories(BO1Zombies PUBLIC "${DXSDK_DIR}/Lib/x64")
+else()
+    target_link_directories(BO1Zombies PUBLIC "${DXSDK_DIR}/Lib/x86")
+endif()
 target_link_directories(BO1Zombies PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src/libs/libvpx-1.5.0")
 target_link_directories(BO1Zombies PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src/steam/redistributable_bin")
 target_link_directories(BO1Zombies PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src/binklib")
@@ -72,35 +89,78 @@ if (MSVC AND WIN32 AND NOT MSVC_VERSION VERSION_LESS 142)
 endif()
 
 # ----- Links -----
-target_link_libraries(BO1Zombies PUBLIC
-    steam_api.lib
-    binkw32.lib
-    nvapi.lib
-    d3d9.lib
-    ws2_32.lib
-    dxguid.lib
-    dsound.lib
-    winmm.lib
-    xinput.lib
-    xapobase.lib
-    dxerr.lib
-    libvpx.lib
-    # June-2010 DirectX SDK libs (xapobase, dxerr) reference pre-VS2015 CRT
-    # symbols (_vsnprintf, etc.) that the modern UCRT no longer exports.
-    # legacy_stdio_definitions.lib provides shims so those static libs link.
-    legacy_stdio_definitions.lib
-)
+# Win32: real vendor import libs. x64: no Bink/Steam/libvpx x64 libs in-tree;
+# stubs in src/platform/x64_vendor_stubs.cpp + nvapi64.lib.
+if (BO1_PORT_X64)
+    target_sources(BO1Zombies PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/platform/x64_vendor_stubs.cpp")
+    # Debug aid: guard-page heap (every block flush against a no-access page; freed blocks quarantined). Finds the
+    # overflow / use-after-free behind a plain-heap 0xC0000374 at the offending instruction. Off by default.
+    option(BO1_X64_GUARDHEAP "x64: route malloc/new through the guard-page heap (src/platform/bo1_guardheap.cpp)" OFF)
+    if (BO1_X64_GUARDHEAP)
+        target_sources(BO1Zombies PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/platform/bo1_guardheap.cpp")
+        target_compile_definitions(BO1Zombies PUBLIC BO1_X64_GUARDHEAP=1)
+        # the UCRT import library also defines malloc/free/...; prefer ours (LNK4006 warnings are expected)
+        target_link_options(BO1Zombies PRIVATE /FORCE:MULTIPLE)
+    endif()
+    target_compile_definitions(BO1Zombies PUBLIC STEAM_API_NODLL=1 __RADINEXE__=1)
+    target_link_libraries(BO1Zombies PUBLIC
+        nvapi64.lib
+        d3d9.lib
+        ws2_32.lib
+        dxguid.lib
+        dsound.lib
+        winmm.lib
+        xinput.lib
+        xapobase.lib
+        dxerr.lib
+        legacy_stdio_definitions.lib
+    )
+else()
+    target_link_libraries(BO1Zombies PUBLIC
+        steam_api.lib
+        binkw32.lib
+        nvapi.lib
+        d3d9.lib
+        ws2_32.lib
+        dxguid.lib
+        dsound.lib
+        winmm.lib
+        xinput.lib
+        xapobase.lib
+        dxerr.lib
+        libvpx.lib
+        # June-2010 DirectX SDK libs (xapobase, dxerr) reference pre-VS2015 CRT
+        # symbols (_vsnprintf, etc.) that the modern UCRT no longer exports.
+        # legacy_stdio_definitions.lib provides shims so those static libs link.
+        legacy_stdio_definitions.lib
+    )
+endif()
 # ----- Debug Links -----
 target_link_libraries(BO1Zombies PUBLIC $<$<CONFIG:Debug>:d3dx9d.lib>)
 # ----- Release Links -----
 target_link_libraries(BO1Zombies PUBLIC $<$<CONFIG:Release>:d3dx9.lib>)
-target_link_options(BO1Zombies PRIVATE /machine:x86)
+if (NOT BO1_PORT_X64)
+    target_link_options(BO1Zombies PRIVATE /machine:x86)
+endif()
 
 # ----- Linker Options -----
 # /DYNAMICBASE:NO - Turning this off causes directx to crash "directx has encountered an unrecoverable error". 
 # /LARGEADDRESSAWARE - for convenience (4gb)
 # /DEBUG - PDB for both configs 
-target_link_options(BO1Zombies PRIVATE /DYNAMICBASE:NO /LARGEADDRESSAWARE /DEBUG)
+if (NOT BO1_PORT_X64)
+    target_link_options(BO1Zombies PRIVATE /DYNAMICBASE:NO /LARGEADDRESSAWARE /DEBUG)
+else()
+    # x64 bridge: the decompiled engine stores pointers in 32-bit ints in many places (script compiler
+    # parse trees, hunk page math, ...). Keeping the whole process below 4 GB (no LARGEADDRESSAWARE, fixed
+    # low image base; stack, heap, VirtualAlloc and system DLLs then all load low) makes those casts
+    # round-trip. Real truncation bugs should still be fixed; turn this off with -DBO1_X64_LOW_VA=OFF to find them.
+    option(BO1_X64_LOW_VA "x64: keep the process below 4 GB (see comment in CMakeLists.txt)" ON)
+    if (BO1_X64_LOW_VA)
+        target_link_options(BO1Zombies PRIVATE /DEBUG /LARGEADDRESSAWARE:NO /DYNAMICBASE:NO /FIXED /BASE:0x400000)
+    else()
+        target_link_options(BO1Zombies PRIVATE /DEBUG)
+    endif()
+endif()
 
 set_target_properties(BO1Zombies PROPERTIES WIN32_EXECUTABLE TRUE)
 

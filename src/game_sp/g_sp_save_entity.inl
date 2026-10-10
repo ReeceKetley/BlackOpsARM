@@ -36,12 +36,24 @@ static const SPEntitySaveField s_entityExtFields[] = {
 };
 #undef XF
 static const SPEntitySaveField s_tagFields[] = { {0, 4, 2}, {4, 4, 2}, {8, 2, 1} };
+#if !defined(BO1_PORT_X64)
 static_assert(sizeof(gentity_s) == 0x2F8, "DERIVED entity image");
+#endif
+#if !defined(BO1_PORT_X64)
 static_assert(sizeof(gentitySpExt) == 0x20, "DERIVED entity extension image");
+#endif
+#if !defined(BO1_PORT_X64)
 static_assert(sizeof(tagInfo_s) == 0x70 && offsetof(tagInfo_s, name) == 8, "DERIVED tag image");
+#endif
+#if !defined(BO1_PORT_X64)
 static_assert(sizeof(scripted_anim_sp_t) == 0x64, "SP type 16 has no pointer fields");
+#endif
+#if !defined(BO1_PORT_X64)
 static_assert(sizeof(PathLinkInfo) == 8 && offsetof(PathLinkInfo, next) == 6, "DERIVED disconnected link");
+#endif
+#if !defined(BO1_PORT_X64)
 static_assert(ARRAY_COUNT(((gentity_s *)0)->attachModelNames) == 19, "DERIVED attachments");
+#endif
 
 static void SP_CheckEntityFields(const SPEntitySaveField *fields, unsigned count, unsigned size)
 {
@@ -137,7 +149,9 @@ static unsigned short Scr_LoadObjectIndex(unsigned int index)
 // the one-based index of an 8-byte entry in its flat animscript lists (0x01C79B64, at most 0x260), or
 // -1 for the record's own AnimScriptSpecific (SP actor +0xDD0). KB lists are per species.
 static const unsigned SP_ANIMSCRIPTS_PER_LIST = sizeof(AnimScriptList) / sizeof(scr_animscript_t);
+#if !defined(BO1_PORT_X64)
 static_assert(sizeof(AnimScriptList) % sizeof(scr_animscript_t) == 0, "DERIVED animscript index");
+#endif
 
 static int SP_SaveAnimScript(const scr_animscript_t *script, const unsigned char *record)
 {

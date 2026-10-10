@@ -91,7 +91,9 @@ nodetype *__cdecl Huff_initNode(huff_t *huff, int ch, int weight)
 
 int __cdecl nodeCmp(const void *left, const void *right)
 {
-    return *(unsigned int *)(*(unsigned int *)left + 12) - *(unsigned int *)(*(unsigned int *)right + 12);
+    const nodetype *const a = *static_cast<const nodetype *const *>(left);
+    const nodetype *const b = *static_cast<const nodetype *const *>(right);
+    return static_cast<int>(static_cast<unsigned int>(a->weight) - static_cast<unsigned int>(b->weight));
 }
 
 void __cdecl Huff_BuildFromData(huff_t *huff, const int *msg_hData)
@@ -111,7 +113,7 @@ void __cdecl Huff_BuildFromData(huff_t *huff, const int *msg_hData)
         inited = Huff_initNode(huff, i, msg_hData[i]);
         heap[i] = inited;
     }
-    qsort(heap, 0x100u, 4u, nodeCmp);
+    qsort(heap, 0x100u, sizeof(*(heap)), nodeCmp);
     v3 = Huff_initNode(huff, 257, 1);
     v3->left = huff->tree;
     v3->right = heap[0];
@@ -121,7 +123,7 @@ void __cdecl Huff_BuildFromData(huff_t *huff, const int *msg_hData)
     heap[0] = v3;
     while ( numNodes > 1 )
     {
-        qsort(&heap[heapHead], 256 - heapHead, 4u, nodeCmp);
+        qsort(&heap[heapHead], 256 - heapHead, sizeof(*(&heap[heapHead])), nodeCmp);
         v4 = Huff_initNode(huff, 257, 1);
         v4->left = heap[heapHead];
         v4->right = heap[heapHead + 1];

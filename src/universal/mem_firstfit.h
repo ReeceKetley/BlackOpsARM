@@ -1,14 +1,24 @@
 #pragma once
 #include "mem_userhunk.h"
 
-struct _firstfit_heapnode // sizeof=0x8
-{                                       // XREF: FIRSTFIT_HEAPNODE/r
+struct _firstfit_heapnode
+{
     _firstfit_heapnode *next;
     int size;
 };
 
+// Native layout (Win32 packed the same fields into HunkUser[2] via uint32 overlays).
+struct FirstFitHunkUser
+{
+    HunkUser hunkUser;
+    unsigned int size;
+    _firstfit_heapnode *free_blocks;
+    int reserved;
+    int used;
+};
+
 HunkUser *__cdecl Hunk_FirstFitInit(
-                unsigned int *buffer,
+                void *buffer,
                 unsigned int size,
                 HU_ALLOCATION_SCHEME scheme,
                 unsigned int flags,
@@ -17,5 +27,5 @@ HunkUser *__cdecl Hunk_FirstFitInit(
                 int type);
 void __cdecl Hunk_FirstFitReset(HunkUser *_user);
 void __cdecl Hunk_FirstFitDestroy(HunkUser *_user);
-int __cdecl Hunk_FirstFitAlloc(HunkUser *_user, int size, int alignment);
-void __cdecl Hunk_FirstFitFree(HunkUser *_user, unsigned int *ptr);
+void *__cdecl Hunk_FirstFitAlloc(HunkUser *_user, int size, int alignment);
+void __cdecl Hunk_FirstFitFree(HunkUser *_user, void *ptr);

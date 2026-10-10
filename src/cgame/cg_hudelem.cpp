@@ -847,7 +847,7 @@ int __cdecl GetSortedHudElems(int localClientNum, hudelem_s **elems)
     elemCount = 0;
     CopyInUseHudElems(elems, &elemCount, ps->hud.current, 31);
     CopyInUseHudElems(elems, &elemCount, ps->hud.archival, 31);
-    qsort(elems, elemCount, 4u, compare_hudelems);
+    qsort(elems, elemCount, sizeof(*(elems)), compare_hudelems);
     return elemCount;
 }
 
@@ -876,7 +876,7 @@ int __cdecl GetSortedDebugHudElems(hudelem_s **elems)
 
     elemCount = 0;
     CopyInUseDebugHudElems(elems, &elemCount, g_hudelems, 1024);
-    qsort(elems, elemCount, 4u, compare_hudelems);
+    qsort(elems, elemCount, sizeof(*(elems)), compare_hudelems);
     return elemCount;
 }
 
@@ -2088,7 +2088,7 @@ void    DrawOffscreenViewableWaypoint(int localClientNum, const hudelem_s *elem)
                     if (elem->targetEntNum == LocalClientGlobals->predictedPlayerEntity.nextState.number)
                         return;
                     cent = CG_GetEntity(localClientNum, elem->targetEntNum);
-                    if (((*((_DWORD *)cent + 201) >> 1) & 1) == 0)
+                    if (((CENT_FLAGS(cent) >> 1) & 1) == 0)
                     {
                         Com_PrintWarning(
                             1,
@@ -2544,7 +2544,7 @@ void __cdecl RB_AddWaypoint(int localClientNum, const hudelem_s *elem)
                         if ( elem->targetEntNum == cgameGlob->predictedPlayerEntity.nextState.number )
                             return;
                         cent = CG_GetEntity(localClientNum, elem->targetEntNum);
-                        if ( ((*((unsigned int *)cent + 201) >> 1) & 1) == 0 )
+                        if ( ((CENT_FLAGS(cent) >> 1) & 1) == 0 )
                         {
                             Com_PrintWarning(
                                 1,

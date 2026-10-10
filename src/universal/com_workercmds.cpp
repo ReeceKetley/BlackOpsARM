@@ -9,6 +9,15 @@
 #include <Windows.h>
 #include <gfx_d3d/r_workercmds.h>
 
+// ParamData layout: Win32 [0]=jqWorkerCmd*, [1]=fence, inline data from [2]; x64 widens the pointer to two slots.
+#if defined(BO1_PORT_X64)
+#define JQ_PARAM_FENCE 2
+#define JQ_PARAM_INLINE 3
+#else
+#define JQ_PARAM_FENCE 1
+#define JQ_PARAM_INLINE 2
+#endif
+
 bool g_WorkerCmdInit;
 unsigned __int64 gMainWaitWorker;
 
@@ -35,8 +44,8 @@ unsigned __int8 *__cdecl jqCommitMemory(jqBatch *batch, unsigned __int8 *input, 
     }
     else
     {
-        dest = (unsigned __int8 *)&batch->ParamData[2];
-        memcpy((unsigned __int8 *)&batch->ParamData[2], input, dataSize);
+        dest = (unsigned __int8 *)&batch->ParamData[JQ_PARAM_INLINE];
+        memcpy(dest, input, dataSize);
     }
     return dest;
 }
@@ -48,7 +57,9 @@ void __cdecl jqSafeFlush(jqBatchGroup *group, unsigned __int64 batchCount)
 
 jqWorkerCmd *jqGetWorkercmdParam(jqBatch *batch)
 {
-    return *reinterpret_cast<jqWorkerCmd **> (batch->ParamData);
+    jqWorkerCmd *cmd;
+    memcpy(&cmd, batch->ParamData, sizeof(cmd));
+    return cmd;
 }
 
 void *__cdecl jqLockData(jqBatch *batch)
@@ -56,7 +67,7 @@ void *__cdecl jqLockData(jqBatch *batch)
     jqWorkerCmd *workerCmd = jqGetWorkercmdParam(batch);
     if (workerCmd->dataSize <= 84)
     {
-        return &batch->ParamData[2];
+        return &batch->ParamData[JQ_PARAM_INLINE];
     }
     iassert((batch->Input));
     return batch->Input;
@@ -83,8 +94,8 @@ void __cdecl Sys_AddWorkerCmdInternal(jqWorkerCmd *name, unsigned __int8 *data, 
         batch.ConditionalAddress = cond->address;
         batch.ConditionalValue = cond->value;
     }
-    batch.ParamData[0] = (unsigned int)name;
-    batch.ParamData[1] = _InterlockedExchangeAdd(&name->ppu_fence, 1u);
+    memcpy(batch.ParamData, &name, sizeof(name));
+    batch.ParamData[JQ_PARAM_FENCE] = _InterlockedExchangeAdd(&name->ppu_fence, 1u);
     jqAddBatch(&batch, name->queue);
 }
 

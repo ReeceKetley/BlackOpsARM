@@ -145,7 +145,7 @@ void __cdecl CG_mg42_OverheatUpdate(int localClientNum, const DObj *obj, centity
 
     if ( cent->nextState.lerp.u.turret.overheating )
     {
-        if ( ((*((unsigned int *)cent + 201) >> 10) & 1) == 0 )
+        if ( ((CENT_FLAGS(cent) >> 10) & 1) == 0 )
         {
             weapDef = BG_GetWeaponDef(cent->nextState.weapon);
             overheatSoundAlias = (char *)weapDef->overheatSound;
@@ -159,12 +159,12 @@ void __cdecl CG_mg42_OverheatUpdate(int localClientNum, const DObj *obj, centity
             CG_PlaySound(localClientNum, cent->nextState.number, cent->pose.origin, 0, 0, 1.0, AliasId);
             if ( overheatEffect )
                 CG_PlayBoltedEffect(localClientNum, overheatEffect, cent->nextState.number, scr_const.tag_flash);
-            *((unsigned int *)cent + 201) |= 0x400u;
+            CENT_FLAGS(cent) |= 0x400u;
         }
     }
     else
     {
-        *((unsigned int *)cent + 201) &= ~0x400u;
+        CENT_FLAGS(cent) &= ~0x400u;
     }
 }
 
@@ -1040,28 +1040,28 @@ void __cdecl MatrixSwapXYNegateX(const float (*in)[3], float (*out)[3])
 
 void __cdecl CG_DoFootsteps(int localClientNum, centity_s *cent)
 {
-    if ( ((*((unsigned int *)cent + 201) >> 1) & 1) != 0 )
+    if ( ((CENT_FLAGS(cent) >> 1) & 1) != 0 )
     {
         CG_GetLocalClientGlobals(localClientNum);
-        if ( ((*((unsigned int *)cent + 201) >> 11) & 1) != 0 )
+        if ( ((CENT_FLAGS(cent) >> 11) & 1) != 0 )
         {
             CG_DoFootStep(localClientNum, cent, FOOTSTEP_FRONTLEFT);
-            *((unsigned int *)cent + 201) &= ~0x800u;
+            CENT_FLAGS(cent) &= ~0x800u;
         }
-        if ( ((*((unsigned int *)cent + 201) >> 12) & 1) != 0 )
+        if ( ((CENT_FLAGS(cent) >> 12) & 1) != 0 )
         {
             CG_DoFootStep(localClientNum, cent, FOOTSTEP_FRONTRIGHT);
-            *((unsigned int *)cent + 201) &= ~0x1000u;
+            CENT_FLAGS(cent) &= ~0x1000u;
         }
-        if ( ((*((unsigned int *)cent + 201) >> 13) & 1) != 0 )
+        if ( ((CENT_FLAGS(cent) >> 13) & 1) != 0 )
         {
             CG_DoFootStep(localClientNum, cent, FOOTSTEP_REARLEFT);
-            *((unsigned int *)cent + 201) &= ~0x2000u;
+            CENT_FLAGS(cent) &= ~0x2000u;
         }
-        if ( ((*((unsigned int *)cent + 201) >> 14) & 1) != 0 )
+        if ( ((CENT_FLAGS(cent) >> 14) & 1) != 0 )
         {
             CG_DoFootStep(localClientNum, cent, FOOTSTEP_REARRIGHT);
-            *((unsigned int *)cent + 201) &= ~0x4000u;
+            CENT_FLAGS(cent) &= ~0x4000u;
         }
     }
 }
@@ -1224,11 +1224,11 @@ void __cdecl CG_ProcessClientNote(
                     if ( note->GetNotifyStringName()[9] == 70
                         || note->GetNotifyStringName()[9] == 102 )
                     {
-                        *((unsigned int *)cent + 201) |= 0x800u;
+                        CENT_FLAGS(cent) |= 0x800u;
                     }
                     else
                     {
-                        *((unsigned int *)cent + 201) |= 0x2000u;
+                        CENT_FLAGS(cent) |= 0x2000u;
                     }
                 }
                 else if ( note->GetNotifyStringName()[8] == 82
@@ -1237,23 +1237,23 @@ void __cdecl CG_ProcessClientNote(
                     if ( note->GetNotifyStringName()[9] == 70
                         || note->GetNotifyStringName()[9] == 102 )
                     {
-                        *((unsigned int *)cent + 201) |= 0x1000u;
+                        CENT_FLAGS(cent) |= 0x1000u;
                     }
                     else
                     {
-                        *((unsigned int *)cent + 201) |= 0x4000u;
+                        CENT_FLAGS(cent) |= 0x4000u;
                     }
                 }
                 else if ( note->GetNotifyStringName()[8] == 70
                              || note->GetNotifyStringName()[8] == 102 )
                 {
-                    *((unsigned int *)cent + 201) |= 0x800u;
-                    *((unsigned int *)cent + 201) |= 0x1000u;
+                    CENT_FLAGS(cent) |= 0x800u;
+                    CENT_FLAGS(cent) |= 0x1000u;
                 }
                 else
                 {
-                    *((unsigned int *)cent + 201) |= 0x2000u;
-                    *((unsigned int *)cent + 201) |= 0x4000u;
+                    CENT_FLAGS(cent) |= 0x2000u;
+                    CENT_FLAGS(cent) |= 0x4000u;
                 }
             }
         }
@@ -1715,7 +1715,7 @@ void __cdecl CG_ProcessFakeEntity(int localClientNum, fake_centity_s *fakeEnt)
         switch ( cent->nextState.eType )
         {
             case 0:
-                if ( ((*((unsigned int *)cent + 201) >> 15) & 1) != 0 )
+                if ( ((CENT_FLAGS(cent) >> 15) & 1) != 0 )
                 {
                     if ( !cent->pose.player.tag[0] )
                     {
@@ -1728,7 +1728,7 @@ void __cdecl CG_ProcessFakeEntity(int localClientNum, fake_centity_s *fakeEnt)
                         color[1] = 1.0f;
                         color[2] = 0.0f;
                         color[3] = 1.0f;
-                        if ( (*((unsigned int *)cent + 201) & 0x10000) != 0 )
+                        if ( (CENT_FLAGS(cent) & 0x10000) != 0 )
                         {
                             up[0] = 0.0f;
                             up[1] = 0.0f;
@@ -1860,7 +1860,7 @@ $LN21_3:
                 {
                     CG_LinkEntity(localClientNum, cent->nextState.number);
                 }
-                if ( ((*((unsigned int *)cent + 201) >> 18) & 1) != 0 )
+                if ( ((CENT_FLAGS(cent) >> 18) & 1) != 0 )
                     CG_CompassUpdateVehicleInfo(localClientNum, cent->nextState.number);
                 CG_ScriptMover(localClientNum, cent);
                 break;
@@ -1869,7 +1869,7 @@ $LN21_3:
         }
         if ( CG_EntityNeedsScriptThread(localClientNum, cent) )
         {
-            *((unsigned int *)cent + 201) |= 0x100u;
+            CENT_FLAGS(cent) |= 0x100u;
             Scr_AddInt(localClientNum, SCRIPTINSTANCE_CLIENT);
             t = CScr_ExecEntThread(cent, cg_scr_data.entityspawned, 1u);
             Scr_FreeThread(t, SCRIPTINSTANCE_CLIENT);
@@ -2317,12 +2317,12 @@ void __cdecl UpdatePacketEnt(int localClientNum, int entnum, int timeNow, int *p
     eType = cent->nextState.eType;
     if ( eType < 0x15 )
     {
-        *((unsigned int *)cent + 201) |= (unsigned int)0x800000;
+        CENT_FLAGS(cent) |= (unsigned int)0x800000;
         if ( contextKey )
-            v5 = *((_DWORD *)cent + 201) | 0x1000000;
+            v5 = CENT_FLAGS(cent) | 0x1000000;
         else
-            v5 = *((unsigned int *)cent + 201) & 0xFEFFFFFF;
-        *((unsigned int *)cent + 201) = v5;
+            v5 = CENT_FLAGS(cent) & 0xFEFFFFFF;
+        CENT_FLAGS(cent) = v5;
         if ( eType < 8 || eType > 9 )
         {
             if ( CG_ShouldDelayEntityPacketPostPS(localClientNum, cent) )
@@ -2430,8 +2430,8 @@ bool __cdecl EntPacketUpdateNeedsDelayed(int localClientNum, centity_s *cent, bo
     if ( !centParent )
         return 0;
     cgameGlob = CG_GetLocalClientGlobals(localClientNum);
-    v4 = ((*((unsigned int *)centParent + 201) >> 23) & 1) != 0
-        && contextKey == ((*((unsigned int *)centParent + 201) & 0x1000000) != 0);
+    v4 = ((CENT_FLAGS(centParent) >> 23) & 1) != 0
+        && contextKey == ((CENT_FLAGS(centParent) & 0x1000000) != 0);
     return !v4 && centParent->nextState.number != cgameGlob->predictedPlayerState.clientNum;
 }
 
@@ -3308,7 +3308,7 @@ void __cdecl CG_CalcEntityRagdollPositions(int localClientNum, centity_s *cent)
     {
         __debugbreak();
     }
-    if ( ((*((unsigned int *)cent + 201) >> 21) & 1) != 0 )
+    if ( ((CENT_FLAGS(cent) >> 21) & 1) != 0 )
     {
         if ( cent->pose.ragdollHandle )
         {
@@ -4033,7 +4033,7 @@ void __cdecl CG_ProcessEntity(int localClientNum, centity_s *cent)
     if ( !(cent->nextState.eType == ET_MISSILE && zombiemode && zombiemode->current.enabled)
         && CG_EntityNeedsScriptThread(localClientNum, cent) )
     {
-        *((unsigned int *)cent + 201) |= 0x100u;
+        CENT_FLAGS(cent) |= 0x100u;
         Scr_AddInt(localClientNum, SCRIPTINSTANCE_CLIENT);
         t = CScr_ExecEntThread(cent, cg_scr_data.entityspawned, 1u);
         Scr_FreeThread(t, SCRIPTINSTANCE_CLIENT);
@@ -4068,7 +4068,7 @@ void __cdecl CG_Item(int localClientNum, centity_s *cent)
             weapVariantDef = BG_GetWeaponVariantDef(weapIdx);
             weapDef = BG_GetWeaponDef(weapIdx);
             if ( weapDef->bUseDroppedModelAsStowed
-                && *((unsigned int *)weapDef->worldModel + 1)
+                && weapDef->worldModel[1]
                 && weapDef->weapClass != WEAPCLASS_GRENADE
                 && weapDef->weapClass != WEAPCLASS_KILLSTREAK_ALT_STORED_WEAPON )
             {
@@ -4186,7 +4186,7 @@ void __cdecl CG_mg42(int localClientNum, centity_s *cent)
             clTeam = client->team;
             team = (team_t)(cent->nextState.faction.iHeadIconTeam & 3);
             isOwner = cgameGlob->clientNum == (int)cent->nextState.faction.iHeadIconTeam >> 2;
-            if ( !*((unsigned int *)weapDef->worldModel + 1)
+            if ( !weapDef->worldModel[1]
                 || (ps->perks[1] & 0x800) == 0
                 || (cent->nextState.lerp.u.turret.flags & 8) != 0
                 || clTeam == team && (clTeam || isOwner) )
@@ -4289,7 +4289,7 @@ void __cdecl CG_Missile(int localClientNum, centity_s *cent)
             // returned early (the explosive bolt's PlayFXOnTag found no DObj).
             if ( zombiemode && zombiemode->current.enabled && CG_EntityNeedsScriptThread(localClientNum, cent) )
             {
-                *((unsigned int *)cent + 201) |= 0x100u;
+                CENT_FLAGS(cent) |= 0x100u;
                 Scr_AddInt(localClientNum, SCRIPTINSTANCE_CLIENT);
                 const unsigned short thread = CScr_ExecEntThread(cent, cg_scr_data.entityspawned, 1u);
                 Scr_FreeThread(thread, SCRIPTINSTANCE_CLIENT);
@@ -4338,7 +4338,7 @@ void __cdecl CG_Missile(int localClientNum, centity_s *cent)
                                 weapDef->projectileModel,
                                 0);
             cgameGlob = CG_GetLocalClientGlobals(localClientNum);
-            if ( ((*((unsigned int *)cent + 201) >> 4) & 1) != 0 )
+            if ( ((CENT_FLAGS(cent) >> 4) & 1) != 0 )
             {
                 if ( cent->lastTrailTime > cgameGlob->time )
                 {
@@ -4366,7 +4366,7 @@ void __cdecl CG_Missile(int localClientNum, centity_s *cent)
             }
             else
             {
-                *((unsigned int *)cent + 201) |= 0x10u;
+                CENT_FLAGS(cent) |= 0x10u;
                 cent->fxTrailHandle = 0;
                 cent->fxProjExplosion = 0;
                 if ( weapDef->projTrailEffect )
@@ -4461,7 +4461,7 @@ bool __cdecl IsWeaponRetrieveable(
 
     if ( !weapDef->bRetrievable )
         return 0;
-    if ( !*((unsigned int *)weapDef->worldModel + 2) )
+    if ( !weapDef->worldModel[2] )
         return 0;
     cgameGlob = CG_GetLocalClientGlobals(localClientNum);
     ps = CG_GetPredictedPlayerState(localClientNum);
@@ -4632,7 +4632,7 @@ void __cdecl CG_ClientFlagCallback(int localClientNum, centity_s *cent)
                 Scr_FreeThread(t, SCRIPTINSTANCE_CLIENT);
             }
         }
-        *((unsigned int *)cent + 201) &= ~0x400000u;
+        CENT_FLAGS(cent) &= ~0x400000u;
     }
 }
 
@@ -4855,7 +4855,7 @@ void __cdecl CG_ClientFlagSet(centity_s *cent, unsigned int flagNum)
     }
     cent->flagIndex |= 1 << flagNum;
     cent->flagState |= 1 << flagNum;
-    *((unsigned int *)cent + 201) |= 0x400000u;
+    CENT_FLAGS(cent) |= 0x400000u;
 }
 
 void __cdecl CG_ClientFlagClear(centity_s *cent, unsigned int flagNum)
@@ -4884,7 +4884,7 @@ void __cdecl CG_ClientFlagClear(centity_s *cent, unsigned int flagNum)
     }
     cent->flagIndex |= 1 << flagNum;
     cent->flagState &= ~(unsigned __int16)(1 << flagNum);
-    *((unsigned int *)cent + 201) |= 0x400000u;
+    CENT_FLAGS(cent) |= 0x400000u;
 }
 
 bool __cdecl CG_ClientFlagIsActive(const centity_s *cent, unsigned int flagNum)

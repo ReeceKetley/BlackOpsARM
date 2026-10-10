@@ -3,6 +3,7 @@
 #include "db_auth.h"
 #include "db_registry.h"
 
+#include <cstdio>
 #include <Windows.h>
 #include <win32/win_shared.h>
 #include <qcommon/common.h>
@@ -11,6 +12,7 @@
 #include "db_stream.h"
 #include "db_stream_load.h"
 #include "db_load.h"
+#include "db_expand.hpp"
 #include <tl/tl_system.h>
 
 volatile int g_totalSize;
@@ -139,6 +141,10 @@ void __cdecl DB_LoadedExternalData(unsigned int size)
     _InterlockedExchangeAdd(&g_loadedExternalBytes, size);
 }
 
+static unsigned long long g_xfileBytes;
+unsigned long long DB_XFileBytesLoaded() { return g_xfileBytes; }
+void DB_XFileBytesReset() { g_xfileBytes = 0; }
+
 unsigned __int8 *__cdecl DB_LoadXFileDataNullTerminated(unsigned __int8 *pos)
 {
     unsigned __int8 *origPos; // [esp+0h] [ebp-4h]
@@ -149,7 +155,10 @@ unsigned __int8 *__cdecl DB_LoadXFileDataNullTerminated(unsigned __int8 *pos)
         if ( g_load.deflateBufferPos == 0x8000 )
             DB_LoadXFileData(pos, 1);
         else
+        {
             *pos = g_load.deflateBuffer[g_load.deflateBufferPos++];
+            ++g_xfileBytes;
+        }
     }
     while ( *pos++ );
     return (unsigned __int8 *)(pos - origPos);
@@ -172,6 +181,8 @@ void __cdecl DB_LoadXFileSetSize(int size)
 
 void __cdecl DB_LoadXFileData(unsigned __int8 *pos, int size)
 {
+    if ( size > 0 )
+        g_xfileBytes += static_cast<unsigned int>(size);
     const char *v2; // eax
     int lastAvailOutSize; // [esp+4h] [ebp-1Ch]
     signed int deflateRemainingFileSize; // [esp+8h] [ebp-18h]
@@ -473,6 +484,8 @@ void __cdecl DB_LoadXFileInternal()
     tlPrintf("TLPrint: Loading fastfile '%s'\n", g_load.filename);
     DB_AllocXBlocks(file.blockSize, g_load.filename, g_load.blocks, g_load.allocType, g_load.flags);
     DB_InitStreams(g_load.blocks);
+    DB_XFileBytesReset();
+    DB_Trace_Zone(g_load.filename);
     Load_XAssetListCustom();
     DB_PushStreamPos(4u);
     if ( varXAssetList->assets )
@@ -506,7 +519,11 @@ void __cdecl DB_LoadXFileInternal()
 void Load_XAssetListCustom()
 {
     varXAssetList = &g_varXAssetList;
+#if defined(BO1_PORT_X64)
+    DB_ExpandLoad_XAssetList(&g_varXAssetList);
+#else
     DB_LoadXFileData((unsigned __int8 *)&g_varXAssetList, 16);
+#endif
     DB_PushStreamPos(4u);
     varScriptStringList = &varXAssetList->stringList;
     Load_ScriptStringList(0);
@@ -514,19 +531,45 @@ void Load_XAssetListCustom()
 }
 
 extern int g_dbTopAssetType;
+
+static unsigned int DB_DiagBlock4Off()
+{
+#if defined(BO1_PORT_X64)
+    return DB_StreamWin32Pos(4);
+#else
+    if (!g_streamBlocks || !g_streamBlocks[4].data)
+        return 0;
+    unsigned __int8 *p = (g_streamPosIndex == 4) ? g_streamPos : g_streamPosArray[4];
+    return p ? (unsigned int)(p - g_streamBlocks[4].data) : 0;
+#endif
+}
+
 void __cdecl Load_XAssetArrayCustom(int count)
 {
     XAsset *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
+#if defined(BO1_PORT_X64)
+    DB_ExpandLoad_XAssetArray(varXAsset, count);
+#else
     Load_Stream(1, (unsigned __int8 *)varXAsset, 8 * count);
+#endif
     var = varXAsset;
     for ( i = 0; i < count; ++i )
     {
         skipShaderCreationHack = i == skipLoadingMaterialsHack;
         varXAsset = var;
         g_dbTopAssetType = var->type; // mod (L60): DB_ModPromoteWorldMaterial
-        Load_XAsset(0);
+        DB_Trace_AssetBegin(i, (int)var->type);
+        {
+            const unsigned int b4 = DB_DiagBlock4Off();
+            Load_XAsset(0);
+            const unsigned int a4 = DB_DiagBlock4Off();
+            if (b4 >= 0x000B4000u && b4 <= 0x000B9000u)
+            {
+            }
+        }
+        DB_Trace_AssetEnd(i, (int)var->type);
         ++var;
         if ( g_load.abort )
             break;

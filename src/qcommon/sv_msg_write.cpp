@@ -59,7 +59,9 @@ const NetFieldList *__cdecl MSG_GetStateFieldListForEntityType(int eType, bool i
         if (!moverInitialized)
         {
             memcpy(moverFields, scriptMoverStateFields, sizeof(scriptMoverStateFields));
+            #if !defined(BO1_PORT_X64)
             static_assert(sizeof(scriptMoverStateFields) == 72 * sizeof(NetField), "MP script mover table");
+            #endif
             moverFields[72] = { "animtreeIndex", (int)offsetof(entityState_s, animtreeIndex), 1, 7, 0u, "7", "0" };
             MSG_LoopThroughFields(&moverList);
             moverInitialized = true;

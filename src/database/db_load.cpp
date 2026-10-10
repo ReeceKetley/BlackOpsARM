@@ -1,6 +1,7 @@
 #include "db_load.h"
 #include "db_stream_load.h"
 #include "db_stream.h"
+#include "db_expand.hpp"
 #include <xanim/dobj.h>
 #include "db_stringtable_load.h"
 
@@ -33,6 +34,10 @@
 #include <qcommon/cm_load_obj.h>
 #include <game/g_bsp.h>
 #include <qcommon/cm_staticmodel.h>
+
+#if defined(BO1_PORT_X64)
+extern int g_dbTopAssetType;
+#endif
 
 // This seriously has to be one of the most aids parts of the COD codebases
 unsigned __int8 *varbyte;
@@ -549,7 +554,8 @@ void __cdecl Load_TempString(bool atStreamStart)
     Load_Stream(atStreamStart, (unsigned __int8 *)varTempString, 4);
     if ( *varTempString )
     {
-        if ( *varTempString == (const char *)-1 )
+        const unsigned int value = static_cast<unsigned int>(reinterpret_cast<uintptr_t>(*varTempString));
+        if ( *varTempString == (const char *)-1 || value == 0xFFFFFFFF )
         {
             *varTempString = (const char *)AllocLoad_raw_byte();
             varConstChar = *varTempString;
@@ -567,7 +573,14 @@ void __cdecl Load_TempStringArray(bool atStreamStart, int count)
     const char **var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_Ptr32Array(varTempString, count);
+    else
+        Load_Stream(0, (unsigned __int8 *)varTempString, 4 * count);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varTempString, 4 * count);
+#endif
     var = varTempString;
     for ( i = 0; i < count; ++i )
     {
@@ -579,10 +592,16 @@ void __cdecl Load_TempStringArray(bool atStreamStart, int count)
 
 void __cdecl Load_XString(bool atStreamStart)
 {
+    // Keep Load_Stream(4) even on x64: atStart=1 is rare and usually embeds in an
+    // already-positioned slot; ExpandLoad_Ptr32Array would IncStreamPos from the
+    // wrong g_streamPos when iassert is compiled out (Release).
     Load_Stream(atStreamStart, (unsigned __int8 *)varXString, 4);
     if ( *varXString )
     {
-        if ( *varXString == (const char *)-1 )
+        // Low-32 sentinel: Load_Stream(4) zero-extends 0xFFFFFFFF, which is not
+        // equal to (const char *)-1 on LP64 without DB_ExpandPtr32.
+        const unsigned int value = static_cast<unsigned int>(reinterpret_cast<uintptr_t>(*varXString));
+        if ( *varXString == (const char *)-1 || value == 0xFFFFFFFF )
         {
             *varXString = (const char *)AllocLoad_raw_byte();
             varConstChar = *varXString;
@@ -600,7 +619,16 @@ void __cdecl Load_XStringArray(bool atStreamStart, int count)
     const char **var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
+#if defined(BO1_PORT_X64)
+    if ( count < 0 || count > 65536 )
+        count = 0;
+    if ( atStreamStart )
+        DB_ExpandLoad_Ptr32Array(varXString, count);
+    else
+        Load_Stream(0, (unsigned __int8 *)varXString, 4 * count);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varXString, 4 * count);
+#endif
     var = varXString;
     for ( i = 0; i < count; ++i )
     {
@@ -739,7 +767,11 @@ void __cdecl Load_XAnimDeltaPartQuatDataFrames(bool atStreamStart)
     {
         __debugbreak();
     }
+#if defined(BO1_PORT_X64)
+    DB_ExpandLoad_XAnimDeltaPartQuatDataFrames(varXAnimDeltaPartQuatDataFrames);
+#else
     Load_Stream(1, (unsigned __int8 *)varXAnimDeltaPartQuatDataFrames, 4);
+#endif
     if ( DB_GetStreamPos() != (unsigned __int8 *)&varXAnimDeltaPartQuatDataFrames->indices
         && !Assert_MyHandler(
                     "c:\\projects_pc\\cod\\codsrc\\src\\database\\../xanim/xanim_load_db.h",
@@ -789,7 +821,11 @@ void __cdecl Load_XAnimDeltaPartQuat(bool atStreamStart)
     {
         __debugbreak();
     }
+#if defined(BO1_PORT_X64)
+    DB_ExpandLoad_XAnimDeltaPartQuat(varXAnimDeltaPartQuat);
+#else
     Load_Stream(1, (unsigned __int8 *)varXAnimDeltaPartQuat, 4);
+#endif
     if ( DB_GetStreamPos() != (unsigned __int8 *)&varXAnimDeltaPartQuat->u
         && !Assert_MyHandler(
                     "c:\\projects_pc\\cod\\codsrc\\src\\database\\../xanim/xanim_load_db.h",
@@ -806,7 +842,14 @@ void __cdecl Load_XAnimDeltaPartQuat(bool atStreamStart)
 
 void __cdecl Load_XAnimDeltaPart(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_XAnimDeltaPart(varXAnimDeltaPart);
+    else
+        Load_Stream(0, (unsigned __int8 *)varXAnimDeltaPart, 8);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varXAnimDeltaPart, 8);
+#endif
     if ( varXAnimDeltaPart->trans )
     {
         varXAnimDeltaPart->trans = (XAnimPartTrans *)AllocLoad_FxElemVisStateSample();
@@ -924,7 +967,11 @@ void __cdecl Load_XAnimPartTransFrames(bool atStreamStart)
     {
         __debugbreak();
     }
+#if defined(BO1_PORT_X64)
+    DB_ExpandLoad_XAnimPartTransFrames(varXAnimPartTransFrames);
+#else
     Load_Stream(1, (unsigned __int8 *)varXAnimPartTransFrames, 28);
+#endif
     if ( DB_GetStreamPos() != (unsigned __int8 *)&varXAnimPartTransFrames->indices
         && !Assert_MyHandler(
                     "c:\\projects_pc\\cod\\codsrc\\src\\database\\../xanim/xanim_load_db.h",
@@ -967,7 +1014,11 @@ void __cdecl Load_XAnimPartTrans(bool atStreamStart)
     {
         __debugbreak();
     }
+#if defined(BO1_PORT_X64)
+    DB_ExpandLoad_XAnimPartTrans(varXAnimPartTrans);
+#else
     Load_Stream(1, (unsigned __int8 *)varXAnimPartTrans, 4);
+#endif
     if ( DB_GetStreamPos() != (unsigned __int8 *)&varXAnimPartTrans->u
         && !Assert_MyHandler(
                     "c:\\projects_pc\\cod\\codsrc\\src\\database\\../xanim/xanim_load_db.h",
@@ -1006,7 +1057,14 @@ void __cdecl Load_XAnimNotifyInfoArray(bool atStreamStart, int count)
 
 void __cdecl Load_XAnimParts(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_XAnimParts(varXAnimParts);
+    else
+        Load_Stream(0, (unsigned __int8 *)varXAnimParts, 104);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varXAnimParts, 104);
+#endif
     DB_PushStreamPos(4u);
     varXString = &varXAnimParts->name;
     Load_XString(0);
@@ -1191,7 +1249,14 @@ void __cdecl Load_snd_contextArray(bool atStreamStart, int count)
 
 void __cdecl Load_SndDriverGlobals(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_SndDriverGlobals(varSndDriverGlobals);
+    else
+        Load_Stream(0, (unsigned __int8 *)varSndDriverGlobals, 52);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varSndDriverGlobals, 52);
+#endif
     DB_PushStreamPos(4u);
     varXString = &varSndDriverGlobals->name;
     Load_XString(0);
@@ -1272,7 +1337,14 @@ void __cdecl Load_PackIndexEntryArray(bool atStreamStart, int count)
 
 void __cdecl Load_PackIndex(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_PackIndex(varPackIndex);
+    else
+        Load_Stream(0, (unsigned __int8 *)varPackIndex, 28);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varPackIndex, 28);
+#endif
     DB_PushStreamPos(4u);
     varXString = &varPackIndex->name;
     Load_XString(0);
@@ -1346,7 +1418,14 @@ void __cdecl Load_snd_align_charArray(bool atStreamStart, int count)
 
 void __cdecl Load_snd_asset(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_snd_asset(varsnd_asset);
+    else
+        Load_Stream(0, (unsigned __int8 *)varsnd_asset, 56);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varsnd_asset, 56);
+#endif
     if ( varsnd_asset->seek_table )
     {
         varsnd_asset->seek_table = (unsigned int *)AllocLoad_FxElemVisStateSample();
@@ -1367,7 +1446,15 @@ void __cdecl Load_snd_asset(bool atStreamStart)
 
 void __cdecl Load_LoadedSound(bool atStreamStart)
 {
+    #if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_LoadedSound(varLoadedSound);
+    else
+        Load_Stream(0, (unsigned __int8 *)varLoadedSound, 60);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varLoadedSound, 60);
+#endif
+
     varXString = &varLoadedSound->name;
     Load_XString(0);
     varsnd_asset = &varLoadedSound->sound;
@@ -1381,7 +1468,15 @@ void __cdecl Load_char_align_2048Array(bool atStreamStart, int count)
 
 void __cdecl Load_PrimedSound(bool atStreamStart)
 {
+    #if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_PrimedSound(varPrimedSound);
+    else
+        Load_Stream(0, (unsigned __int8 *)varPrimedSound, 12);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varPrimedSound, 12);
+#endif
+
     varXString = &varPrimedSound->name;
     Load_XString(0);
     DB_PushStreamPos(5u);
@@ -1414,7 +1509,15 @@ void __cdecl Load_PrimedSoundPtr(bool atStreamStart)
 
 void __cdecl Load_StreamedSound(bool atStreamStart)
 {
+    #if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_StreamedSound(varStreamedSound);
+    else
+        Load_Stream(0, (unsigned __int8 *)varStreamedSound, 8);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varStreamedSound, 8);
+#endif
+
     varXString = (const char **)&varStreamedSound->filename;
     Load_XString(0);
     varPrimedSoundPtr = &varStreamedSound->primeSnd;
@@ -1456,7 +1559,14 @@ void __cdecl Load_SoundFileRef()
 
 void __cdecl Load_SoundFile(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_SoundFile(varSoundFile);
+    else
+        Load_Stream(0, (unsigned __int8 *)varSoundFile, 8);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varSoundFile, 8);
+#endif
     varSoundFileRef = &varSoundFile->u;
     Load_SoundFileRef();
 }
@@ -1466,7 +1576,15 @@ void __cdecl Load_SoundFileArray(bool atStreamStart, int count)
     SoundFile *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
+    #if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_SoundFileArray(varSoundFile, count);
+    else
+        Load_Stream(0, (unsigned __int8 *)varSoundFile, 8 * count);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varSoundFile, 8 * count);
+#endif
+
     var = varSoundFile;
     for ( i = 0; i < count; ++i )
     {
@@ -1478,7 +1596,14 @@ void __cdecl Load_SoundFileArray(bool atStreamStart, int count)
 
 void __cdecl Load_snd_alias_t(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_snd_alias_t(varsnd_alias_t);
+    else
+        Load_Stream(0, (unsigned __int8 *)varsnd_alias_t, 84);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varsnd_alias_t, 84);
+#endif
     varXString = &varsnd_alias_t->name;
     Load_XString(0);
     varXString = &varsnd_alias_t->subtitle;
@@ -1505,7 +1630,14 @@ void __cdecl Load_snd_alias_tArray(bool atStreamStart, int count)
     snd_alias_t *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_snd_alias_tArray(varsnd_alias_t, count);
+    else
+        Load_Stream(0, (unsigned __int8 *)varsnd_alias_t, 84 * count);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varsnd_alias_t, 84 * count);
+#endif
     var = varsnd_alias_t;
     for ( i = 0; i < count; ++i )
     {
@@ -1517,7 +1649,14 @@ void __cdecl Load_snd_alias_tArray(bool atStreamStart, int count)
 
 void __cdecl Load_snd_alias_list_t(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_snd_alias_list_t(varsnd_alias_list_t);
+    else
+        Load_Stream(0, (unsigned __int8 *)varsnd_alias_list_t, 20);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varsnd_alias_list_t, 20);
+#endif
     varXString = &varsnd_alias_list_t->name;
     Load_XString(0);
     if ( varsnd_alias_list_t->head )
@@ -1540,7 +1679,14 @@ void __cdecl Load_snd_alias_list_tArray(bool atStreamStart, int count)
     snd_alias_list_t *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_snd_alias_list_tArray(varsnd_alias_list_t, count);
+    else
+        Load_Stream(0, (unsigned __int8 *)varsnd_alias_list_t, 20 * count);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varsnd_alias_list_t, 20 * count);
+#endif
     var = varsnd_alias_list_t;
     for ( i = 0; i < count; ++i )
     {
@@ -1557,7 +1703,14 @@ void __cdecl Load_SndIndexEntryArray(bool atStreamStart, int count)
 
 void __cdecl Load_SndBank(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_SndBank(varSndBank);
+    else
+        Load_Stream(0, (unsigned __int8 *)varSndBank, 40);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varSndBank, 40);
+#endif
     DB_PushStreamPos(4u);
     varXString = &varSndBank->name;
     Load_XString(0);
@@ -1621,7 +1774,14 @@ void __cdecl Load_SndBankPtr(bool atStreamStart)
 
 void __cdecl Load_SndPatch(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_SndPatch(varSndPatch);
+    else
+        Load_Stream(0, (unsigned __int8 *)varSndPatch, 20);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varSndPatch, 20);
+#endif
     DB_PushStreamPos(4u);
     varXString = (const char **)&varSndPatch->name;
     Load_XString(0);
@@ -1730,24 +1890,60 @@ void __cdecl Load_XSurfaceCollisionNodeArray(bool atStreamStart, int count)
 
 void __cdecl Load_XSurfaceCollisionTree(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_XSurfaceCollisionTree(varXSurfaceCollisionTree);
+    else
+        Load_Stream(0, (unsigned __int8 *)varXSurfaceCollisionTree, 40);
+    {
+        const unsigned w4 = DB_StreamWin32Pos(4);
+        if (w4 >= 0xB7000u && w4 < 0xB8000u)
+        {
+        }
+    }
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varXSurfaceCollisionTree, 40);
+#endif
     if ( varXSurfaceCollisionTree->nodes )
     {
         varXSurfaceCollisionTree->nodes = (XSurfaceCollisionNode *)AllocLoad_GfxPackedVertex0();
         varXSurfaceCollisionNode = varXSurfaceCollisionTree->nodes;
         Load_XSurfaceCollisionNodeArray(1, varXSurfaceCollisionTree->nodeCount);
     }
+#if defined(BO1_PORT_X64)
+    {
+        const unsigned w4 = DB_StreamWin32Pos(4);
+        if (w4 >= 0xB7000u && w4 < 0xB8000u)
+        {
+        }
+    }
+#endif
     if ( varXSurfaceCollisionTree->leafs )
     {
         varXSurfaceCollisionTree->leafs = (XSurfaceCollisionLeaf *)AllocLoad_XBlendInfo();
         varXSurfaceCollisionLeaf = varXSurfaceCollisionTree->leafs;
         Load_XSurfaceCollisionLeafArray(1, varXSurfaceCollisionTree->leafCount);
     }
+#if defined(BO1_PORT_X64)
+    {
+        const unsigned w4 = DB_StreamWin32Pos(4);
+        if (w4 >= 0xB7000u && w4 < 0xB8000u)
+        {
+        }
+    }
+#endif
 }
 
 void __cdecl Load_XRigidVertList(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_XRigidVertListArray(varXRigidVertList, 1);
+    else
+        Load_Stream(0, (unsigned __int8 *)varXRigidVertList, 12);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varXRigidVertList, 12);
+#endif
     if ( varXRigidVertList->collisionTree )
     {
         if ( varXRigidVertList->collisionTree == (XSurfaceCollisionTree *)-1 )
@@ -1768,7 +1964,14 @@ void __cdecl Load_XRigidVertListArray(bool atStreamStart, int count)
     XRigidVertList *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_XRigidVertListArray(varXRigidVertList, count);
+    else
+        Load_Stream(0, (unsigned __int8 *)varXRigidVertList, 12 * count);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varXRigidVertList, 12 * count);
+#endif
     var = varXRigidVertList;
     for ( i = 0; i < count; ++i )
     {
@@ -1787,6 +1990,15 @@ void __cdecl Load_XBlendInfoArray(bool atStreamStart, int count)
 {
     Load_Stream(atStreamStart, (unsigned __int8 *)varXBlendInfo, 2 * count);
 }
+
+#if defined(BO1_PORT_X64)
+static void DB_XModelTraceCp(const char *tag)
+{
+    const unsigned w4 = DB_StreamWin32Pos(4);
+    if (w4 < 0xB7000u || w4 >= 0xB8000u)
+        return;
+}
+#endif
 
 void __cdecl Load_XSurfaceVertexInfo(bool atStreamStart)
 {
@@ -1842,9 +2054,30 @@ void __cdecl Load_r_index16_tArray(bool atStreamStart, int count)
 
 void __cdecl Load_XSurface(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_XSurfaceArray(varXSurface, 1);
+    else
+        Load_Stream(0, &varXSurface->tileMode, 68);
+    {
+        const unsigned w4 = DB_StreamWin32Pos(4);
+        if (w4 >= 0xB7000u && w4 < 0xB8000u)
+        {
+        }
+    }
+#else
     Load_Stream(atStreamStart, &varXSurface->tileMode, 68);
+#endif
     varXSurfaceVertexInfo = &varXSurface->vertInfo;
     Load_XSurfaceVertexInfo(0);
+#if defined(BO1_PORT_X64)
+    {
+        const unsigned w4 = DB_StreamWin32Pos(4);
+        if (w4 >= 0xB7000u && w4 < 0xB8000u)
+        {
+        }
+    }
+#endif
     if ( varXSurface->verts0 )
     {
         if ( varXSurface->verts0 == (GfxPackedVertex *)-1 )
@@ -1858,6 +2091,14 @@ void __cdecl Load_XSurface(bool atStreamStart)
             DB_ConvertOffsetToPointer((unsigned int *)&varXSurface->verts0);
         }
     }
+#if defined(BO1_PORT_X64)
+    {
+        const unsigned w4 = DB_StreamWin32Pos(4);
+        if (w4 >= 0xB7000u && w4 < 0xB8000u)
+        {
+        }
+    }
+#endif
     if ( varXSurface->vertList )
     {
         if ( varXSurface->vertList == (XRigidVertList *)-1 )
@@ -1871,6 +2112,14 @@ void __cdecl Load_XSurface(bool atStreamStart)
             DB_ConvertOffsetToPointer((unsigned int *)&varXSurface->vertList);
         }
     }
+#if defined(BO1_PORT_X64)
+    {
+        const unsigned w4 = DB_StreamWin32Pos(4);
+        if (w4 >= 0xB7000u && w4 < 0xB8000u)
+        {
+        }
+    }
+#endif
     if ( varXSurface->triIndices )
     {
         if ( varXSurface->triIndices == (unsigned __int16 *)-1 )
@@ -1884,6 +2133,14 @@ void __cdecl Load_XSurface(bool atStreamStart)
             DB_ConvertOffsetToPointer((unsigned int *)&varXSurface->triIndices);
         }
     }
+#if defined(BO1_PORT_X64)
+    {
+        const unsigned w4 = DB_StreamWin32Pos(4);
+        if (w4 >= 0xB7000u && w4 < 0xB8000u)
+        {
+        }
+    }
+#endif
 }
 
 void __cdecl Load_XSurfaceArray(bool atStreamStart, int count)
@@ -1891,7 +2148,14 @@ void __cdecl Load_XSurfaceArray(bool atStreamStart, int count)
     XSurface *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_XSurfaceArray(varXSurface, count);
+    else
+        Load_Stream(0, &varXSurface->tileMode, 68 * count);
+#else
     Load_Stream(atStreamStart, &varXSurface->tileMode, 68 * count);
+#endif
     var = varXSurface;
     for ( i = 0; i < count; ++i )
     {
@@ -1934,7 +2198,14 @@ void __cdecl Load_GfxTextureLoad(bool atStreamStart)
 
 void __cdecl Load_GfxRawTextureArray(bool atStreamStart, int count)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_Ptr32Array(varGfxRawTexture, count);
+    else
+        Load_Stream(0, (unsigned __int8 *)varGfxRawTexture, 4 * count);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varGfxRawTexture, 4 * count);
+#endif
 }
 
 void __cdecl Load_GfxImageLoadDef(bool atStreamStart)
@@ -1966,7 +2237,14 @@ void __cdecl Load_GfxImageLoadDef(bool atStreamStart)
 
 void __cdecl Load_GfxImage(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_GfxImage(varGfxImage);
+    else
+        Load_Stream(0, (unsigned __int8 *)varGfxImage, 52);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varGfxImage, 52);
+#endif
     DB_PushStreamPos(4u);
     varXString = &varGfxImage->name;
     Load_XString(0);
@@ -1984,12 +2262,12 @@ void __cdecl Load_GfxImagePtr(bool atStreamStart)
     DB_PushStreamPos(0);
     if ( *varGfxImagePtr )
     {
-        value = (unsigned int)*varGfxImagePtr;
-        if ( *varGfxImagePtr == (GfxImage *)-1 || value == -2 )
+        value = static_cast<unsigned int>(reinterpret_cast<uintptr_t>(*varGfxImagePtr));
+        if ( *varGfxImagePtr == (GfxImage *)-1 || value == 0xFFFFFFFF || value == 0xFFFFFFFE )
         {
             *varGfxImagePtr = (GfxImage *)AllocLoad_FxElemVisStateSample();
             varGfxImage = *varGfxImagePtr;
-            if ( value == -2 )
+            if ( value == 0xFFFFFFFE )
                 inserted = DB_InsertPointer();
             else
                 inserted = 0;
@@ -2011,7 +2289,14 @@ void __cdecl Load_GfxImagePtrArray(bool atStreamStart, int count)
     GfxImage **var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_Ptr32Array(varGfxImagePtr, count);
+    else
+        Load_Stream(0, (unsigned __int8 *)varGfxImagePtr, 4 * count);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varGfxImagePtr, 4 * count);
+#endif
     var = varGfxImagePtr;
     for ( i = 0; i < count; ++i )
     {
@@ -2046,7 +2331,14 @@ void __cdecl Mark_GfxImagePtrArray(int count)
 
 void __cdecl Load_water_t(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_water_t(varwater_t);
+    else
+        Load_Stream(0, (unsigned __int8 *)varwater_t, 68);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varwater_t, 68);
+#endif
     if ( varwater_t->H0 )
     {
         varwater_t->H0 = (complex_s *)AllocLoad_FxElemVisStateSample();
@@ -2071,7 +2363,13 @@ void __cdecl Mark_water_t()
 
 void __cdecl Load_GfxVertexShaderLoadDef(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    // Embedded; widened by ExpandLoad_MaterialVertexShader.
+    (void)atStreamStart;
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varGfxVertexShaderLoadDef, 8);
+#endif
+    // Retail: any non-null program slot means DWORD[programSize] follows inline.
     if ( varGfxVertexShaderLoadDef->program )
     {
         varGfxVertexShaderLoadDef->program = (DWORD *)AllocLoad_FxElemVisStateSample();
@@ -2082,7 +2380,11 @@ void __cdecl Load_GfxVertexShaderLoadDef(bool atStreamStart)
 
 void __cdecl Load_GfxPixelShaderLoadDef(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    (void)atStreamStart;
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varGfxPixelShaderLoadDef, 8);
+#endif
     if ( varGfxPixelShaderLoadDef->program )
     {
         varGfxPixelShaderLoadDef->program = (DWORD *)AllocLoad_FxElemVisStateSample();
@@ -2093,7 +2395,12 @@ void __cdecl Load_GfxPixelShaderLoadDef(bool atStreamStart)
 
 void __cdecl Load_MaterialVertexShaderProgram(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    // Embedded in MaterialVertexShader; ExpandLoad already widened pointers.
+    (void)atStreamStart;
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varMaterialVertexShaderProgram, 12);
+#endif
     varGfxVertexShaderLoadDef = &varMaterialVertexShaderProgram->loadDef;
     Load_GfxVertexShaderLoadDef(0);
     Load_CreateMaterialVertexShader(&varMaterialVertexShaderProgram->loadDef, varMaterialVertexShader);
@@ -2101,7 +2408,11 @@ void __cdecl Load_MaterialVertexShaderProgram(bool atStreamStart)
 
 void __cdecl Load_MaterialPixelShaderProgram(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    (void)atStreamStart;
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varMaterialPixelShaderProgram, 12);
+#endif
     varGfxPixelShaderLoadDef = &varMaterialPixelShaderProgram->loadDef;
     Load_GfxPixelShaderLoadDef(0);
     Load_CreateMaterialPixelShader(&varMaterialPixelShaderProgram->loadDef, varMaterialPixelShader);
@@ -2109,7 +2420,14 @@ void __cdecl Load_MaterialPixelShaderProgram(bool atStreamStart)
 
 void __cdecl Load_MaterialVertexShader(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_MaterialVertexShader(varMaterialVertexShader);
+    else
+        Load_Stream(0, (unsigned __int8 *)varMaterialVertexShader, 16);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varMaterialVertexShader, 16);
+#endif
     varXString = &varMaterialVertexShader->name;
     Load_XString(0);
     varMaterialVertexShaderProgram = &varMaterialVertexShader->prog;
@@ -2136,7 +2454,14 @@ void __cdecl Load_MaterialVertexShaderPtr(bool atStreamStart)
 
 void __cdecl Load_MaterialPixelShader(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_MaterialPixelShader(varMaterialPixelShader);
+    else
+        Load_Stream(0, (unsigned __int8 *)varMaterialPixelShader, 16);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varMaterialPixelShader, 16);
+#endif
     varXString = &varMaterialPixelShader->name;
     Load_XString(0);
     varMaterialPixelShaderProgram = &varMaterialPixelShader->prog;
@@ -2163,7 +2488,14 @@ void __cdecl Load_MaterialPixelShaderPtr(bool atStreamStart)
 
 void __cdecl Load_MaterialVertexDeclaration(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_MaterialVertexDeclaration(varMaterialVertexDeclaration);
+    else
+        Load_Stream(0, &varMaterialVertexDeclaration->streamCount, 108);
+#else
     Load_Stream(atStreamStart, &varMaterialVertexDeclaration->streamCount, 108);
+#endif
 }
 
 void __cdecl Load_MaterialArgumentCodeConst(bool atStreamStart)
@@ -2177,6 +2509,21 @@ void __cdecl Load_MaterialArgumentDef(bool atStreamStart)
     {
         case 1u:
         case 7u:
+#if defined(BO1_PORT_X64)
+            if ( varMaterialArgumentDef->literalConst )
+            {
+                if ( varMaterialArgumentDef->literalConst == (const float *)-1 )
+                {
+                    varMaterialArgumentDef->literalConst = (const float *)AllocLoad_FxElemVisStateSample();
+                    varfloat = (float *)varMaterialArgumentDef->literalConst;
+                    Load_floatArray(1, 4);
+                }
+                else
+                {
+                    DB_ConvertOffsetToPointer(varMaterialArgumentDef);
+                }
+            }
+#else
             if ( varMaterialArgumentDef->codeSampler )
             {
                 if ( varMaterialArgumentDef->codeSampler == -1 )
@@ -2190,6 +2537,7 @@ void __cdecl Load_MaterialArgumentDef(bool atStreamStart)
                     DB_ConvertOffsetToPointer((unsigned int *)varMaterialArgumentDef);
                 }
             }
+#endif
             break;
         case 3u:
         case 5u:
@@ -2218,7 +2566,14 @@ void __cdecl Load_MaterialArgumentDef(bool atStreamStart)
 
 void __cdecl Load_MaterialShaderArgument(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_MaterialShaderArgumentArray(varMaterialShaderArgument, 1);
+    else
+        Load_Stream(0, (unsigned __int8 *)varMaterialShaderArgument, 8);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varMaterialShaderArgument, 8);
+#endif
     varMaterialArgumentDef = &varMaterialShaderArgument->u;
     Load_MaterialArgumentDef(0);
 }
@@ -2228,7 +2583,14 @@ void __cdecl Load_MaterialShaderArgumentArray(bool atStreamStart, int count)
     MaterialShaderArgument *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_MaterialShaderArgumentArray(varMaterialShaderArgument, count);
+    else
+        Load_Stream(0, (unsigned __int8 *)varMaterialShaderArgument, 8 * count);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varMaterialShaderArgument, 8 * count);
+#endif
     var = varMaterialShaderArgument;
     for ( i = 0; i < count; ++i )
     {
@@ -2245,7 +2607,14 @@ void __cdecl Load_GfxStateBitsArray(bool atStreamStart, int count)
 
 void __cdecl Load_MaterialPass(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_MaterialPassArray(reinterpret_cast<MaterialPass *>(varMaterialPass), 1);
+    else
+        Load_Stream(0, (unsigned __int8 *)varMaterialPass, 20);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varMaterialPass, 20);
+#endif
     if ( *varMaterialPass )
     {
         if ( *varMaterialPass == (MaterialVertexDeclaration *)-1 )
@@ -2264,6 +2633,19 @@ void __cdecl Load_MaterialPass(bool atStreamStart)
     Load_MaterialVertexShaderPtr(0);
     varMaterialPixelShaderPtr = (MaterialPixelShader **)(varMaterialPass + 2);
     Load_MaterialPixelShaderPtr(0);
+#if defined(BO1_PORT_X64)
+    {
+        auto *pass = reinterpret_cast<MaterialPass *>(varMaterialPass);
+        if ( pass->args )
+        {
+            pass->args = (MaterialShaderArgument *)AllocLoad_FxElemVisStateSample();
+            varMaterialShaderArgument = pass->args;
+            Load_MaterialShaderArgumentArray(
+                1,
+                pass->perPrimArgCount + pass->perObjArgCount + pass->stableArgCount);
+        }
+    }
+#else
     if ( varMaterialPass[4] )
     {
         varMaterialPass[4] = (MaterialVertexDeclaration *)AllocLoad_FxElemVisStateSample();
@@ -2274,6 +2656,7 @@ void __cdecl Load_MaterialPass(bool atStreamStart)
         + *((unsigned __int8 *)varMaterialPass + 13)
         + *((unsigned __int8 *)varMaterialPass + 12));
     }
+#endif
 }
 
 void __cdecl Load_MaterialPassArray(bool atStreamStart, int count)
@@ -2281,7 +2664,14 @@ void __cdecl Load_MaterialPassArray(bool atStreamStart, int count)
     MaterialPass *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_MaterialPassArray(reinterpret_cast<MaterialPass *>(varMaterialPass), count);
+    else
+        Load_Stream(0, (unsigned __int8 *)varMaterialPass, 20 * count);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varMaterialPass, 20 * count);
+#endif
     var = (MaterialPass *)varMaterialPass;
     for ( i = 0; i < count; ++i )
     {
@@ -2303,7 +2693,11 @@ void __cdecl Load_MaterialTechnique(bool atStreamStart)
     {
         __debugbreak();
     }
+#if defined(BO1_PORT_X64)
+    DB_ExpandLoad_MaterialTechnique(varMaterialTechnique);
+#else
     Load_Stream(1, (unsigned __int8 *)varMaterialTechnique, 8);
+#endif
     if ( DB_GetStreamPos() != (unsigned __int8 *)varMaterialTechnique->passArray
         && !Assert_MyHandler(
                     "c:\\projects_pc\\cod\\codsrc\\src\\database\\../gfx_d3d/r_material_load_db.h",
@@ -2348,7 +2742,14 @@ void __cdecl Load_MaterialTextureDefInfo(bool atStreamStart)
 
 void __cdecl Load_MaterialTextureDef(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_MaterialTextureDefArray(varMaterialTextureDef, 1);
+    else
+        Load_Stream(0, (unsigned __int8 *)varMaterialTextureDef, 16);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varMaterialTextureDef, 16);
+#endif
     varMaterialTextureDefInfo = (water_t **)&varMaterialTextureDef->u;
     Load_MaterialTextureDefInfo(0);
 }
@@ -2358,7 +2759,14 @@ void __cdecl Load_MaterialTextureDefArray(bool atStreamStart, int count)
     MaterialTextureDef *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_MaterialTextureDefArray(varMaterialTextureDef, count);
+    else
+        Load_Stream(0, (unsigned __int8 *)varMaterialTextureDef, 16 * count);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varMaterialTextureDef, 16 * count);
+#endif
     var = varMaterialTextureDef;
     for ( i = 0; i < count; ++i )
     {
@@ -2378,7 +2786,9 @@ void __cdecl Load_MaterialTechniquePtr(bool atStreamStart)
     Load_Stream(atStreamStart, (unsigned __int8 *)varMaterialTechniquePtr, 4);
     if ( *varMaterialTechniquePtr )
     {
-        if ( *varMaterialTechniquePtr == (MaterialTechnique *)-1 )
+        const unsigned int techValue =
+            static_cast<unsigned int>(reinterpret_cast<uintptr_t>(*varMaterialTechniquePtr));
+        if ( *varMaterialTechniquePtr == (MaterialTechnique *)-1 || techValue == 0xFFFFFFFF )
         {
             *varMaterialTechniquePtr = (MaterialTechnique *)AllocLoad_FxElemVisStateSample();
             varMaterialTechnique = *varMaterialTechniquePtr;
@@ -2396,7 +2806,14 @@ void __cdecl Load_MaterialTechniquePtrArray(bool atStreamStart, int count)
     MaterialTechnique **var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_Ptr32Array(varMaterialTechniquePtr, count);
+    else
+        Load_Stream(0, (unsigned __int8 *)varMaterialTechniquePtr, 4 * count);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varMaterialTechniquePtr, 4 * count);
+#endif
     var = varMaterialTechniquePtr;
     for ( i = 0; i < count; ++i )
     {
@@ -2408,8 +2825,17 @@ void __cdecl Load_MaterialTechniquePtrArray(bool atStreamStart, int count)
 
 void __cdecl Load_MaterialTechniqueSet(bool atStreamStart)
 {
+    #if !defined(BO1_PORT_X64)
     static_assert(sizeof(MaterialTechniqueSet) == 528);
+    #endif
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_MaterialTechniqueSet(varMaterialTechniqueSet);
+    else
+        Load_Stream(0, (unsigned __int8 *)varMaterialTechniqueSet, sizeof(MaterialTechniqueSet));
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varMaterialTechniqueSet, sizeof(MaterialTechniqueSet));
+#endif
     DB_PushStreamPos(4u);
     varXString = &varMaterialTechniqueSet->name;
     Load_XString(0);
@@ -2451,12 +2877,36 @@ void __cdecl Load_MaterialTechniqueSetPtr(bool atStreamStart)
 
 void __cdecl Load_Material(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_Material(varMaterial);
+    else
+        Load_Stream(0, (unsigned __int8 *)varMaterial, sizeof(Material));
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varMaterial, sizeof(Material));
+#endif
     DB_PushStreamPos(4u);
+#if defined(BO1_PORT_X64)
+    const unsigned matW0 = DB_StreamWin32Pos(4);
+    const bool matTrace = (matW0 >= 0xB7000u && matW0 < 0xB8000u);
+    if (matTrace)
+    {
+    }
+#endif
     varMaterialInfo = &varMaterial->info;
     Load_MaterialInfo(0);
+#if defined(BO1_PORT_X64)
+    if (matTrace)
+    {
+    }
+#endif
     varMaterialTechniqueSetPtr = &varMaterial->localTechniqueSet;
     Load_MaterialTechniqueSetPtr(0);
+#if defined(BO1_PORT_X64)
+    if (matTrace)
+    {
+    }
+#endif
     if ( varMaterial->textureTable )
     {
         if ( varMaterial->textureTable == (MaterialTextureDef *)-1 )
@@ -2470,6 +2920,11 @@ void __cdecl Load_Material(bool atStreamStart)
             DB_ConvertOffsetToPointer((unsigned int *)&varMaterial->textureTable);
         }
     }
+#if defined(BO1_PORT_X64)
+    if (matTrace)
+    {
+    }
+#endif
     if ( varMaterial->localConstantTable )
     {
         if ( varMaterial->localConstantTable == (MaterialConstantDef *)-1 )
@@ -2483,6 +2938,11 @@ void __cdecl Load_Material(bool atStreamStart)
             DB_ConvertOffsetToPointer((unsigned int *)&varMaterial->localConstantTable);
         }
     }
+#if defined(BO1_PORT_X64)
+    if (matTrace)
+    {
+    }
+#endif
     if ( varMaterial->stateBitsTable )
     {
         if ( varMaterial->stateBitsTable == (GfxStateBits *)-1 )
@@ -2496,6 +2956,11 @@ void __cdecl Load_Material(bool atStreamStart)
             DB_ConvertOffsetToPointer((unsigned int *)&varMaterial->stateBitsTable);
         }
     }
+#if defined(BO1_PORT_X64)
+    if (matTrace)
+    {
+    }
+#endif
     DB_PopStreamPos();
 }
 
@@ -2509,12 +2974,12 @@ void __cdecl Load_MaterialHandle(bool atStreamStart)
     DB_PushStreamPos(0);
     if ( *varMaterialHandle )
     {
-        value = (unsigned int)*varMaterialHandle;
-        if ( *varMaterialHandle == (Material *)-1 || value == -2 )
+        value = static_cast<unsigned int>(reinterpret_cast<uintptr_t>(*varMaterialHandle));
+        if ( *varMaterialHandle == (Material *)-1 || value == 0xFFFFFFFF || value == 0xFFFFFFFE )
         {
             *varMaterialHandle = (Material *)AllocLoad_FxElemVisStateSample();
             varMaterial = *varMaterialHandle;
-            if ( value == -2 )
+            if ( value == 0xFFFFFFFE )
                 inserted = DB_InsertPointer();
             else
                 inserted = 0;
@@ -2538,7 +3003,14 @@ void __cdecl Load_MaterialHandleArray(bool atStreamStart, int count)
     Material **var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_Ptr32Array(varMaterialHandle, count);
+    else
+        Load_Stream(0, (unsigned __int8 *)varMaterialHandle, 4 * count);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varMaterialHandle, 4 * count);
+#endif
     var = varMaterialHandle;
     for ( i = 0; i < count; ++i )
     {
@@ -2638,7 +3110,14 @@ void __cdecl Load_GfxLightImage(bool atStreamStart)
 
 void __cdecl Load_GfxLightDef(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_GfxLightDef(varGfxLightDef);
+    else
+        Load_Stream(0, (unsigned __int8 *)varGfxLightDef, 16);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varGfxLightDef, 16);
+#endif
     DB_PushStreamPos(4u);
     varXString = &varGfxLightDef->name;
     Load_XString(0);
@@ -2680,7 +3159,14 @@ void __cdecl Load_GfxLightDefPtr(bool atStreamStart)
 
 void __cdecl Load_GfxLight(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_GfxLight(varGfxLight);
+    else
+        Load_Stream(0, &varGfxLight->type, 368);
+#else
     Load_Stream(atStreamStart, &varGfxLight->type, 368);
+#endif
     varGfxLightDefPtr = &varGfxLight->def;
     Load_GfxLightDefPtr(0);
 }
@@ -2715,7 +3201,14 @@ void __cdecl Mark_GfxLight()
 
 void __cdecl Load_GfxSurface(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_GfxSurfaceArray(varGfxSurface, 1);
+    else
+        Load_Stream(0, (unsigned __int8 *)varGfxSurface, 80);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varGfxSurface, 80);
+#endif
     varMaterialHandle = &varGfxSurface->material;
     Load_MaterialHandle(0);
 }
@@ -2725,7 +3218,14 @@ void __cdecl Load_GfxSurfaceArray(bool atStreamStart, int count)
     GfxSurface *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_GfxSurfaceArray(varGfxSurface, count);
+    else
+        Load_Stream(0, (unsigned __int8 *)varGfxSurface, 80 * count);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varGfxSurface, 80 * count);
+#endif
     var = varGfxSurface;
     for ( i = 0; i < count; ++i )
     {
@@ -2737,7 +3237,14 @@ void __cdecl Load_GfxSurfaceArray(bool atStreamStart, int count)
 
 void __cdecl Load_GfxLightmapArray(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_GfxLightmapArrayArray(varGfxLightmapArray, 1);
+    else
+        Load_Stream(0, (unsigned __int8 *)varGfxLightmapArray, 12);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varGfxLightmapArray, 12);
+#endif
     varGfxImagePtr = &varGfxLightmapArray->primary;
     Load_GfxImagePtr(0);
     varGfxImagePtr = &varGfxLightmapArray->secondary;
@@ -2751,7 +3258,14 @@ void __cdecl Load_GfxLightmapArrayArray(bool atStreamStart, int count)
     GfxLightmapArray *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_GfxLightmapArrayArray(varGfxLightmapArray, count);
+    else
+        Load_Stream(0, (unsigned __int8 *)varGfxLightmapArray, 12 * count);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varGfxLightmapArray, 12 * count);
+#endif
     var = varGfxLightmapArray;
     for ( i = 0; i < count; ++i )
     {
@@ -2807,7 +3321,14 @@ void __cdecl Mark_GfxLightmapArrayArray(int count)
 
 void __cdecl Load_PhysPreset(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_PhysPreset(varPhysPreset);
+    else
+        Load_Stream(0, (unsigned __int8 *)varPhysPreset, 84);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varPhysPreset, 84);
+#endif
     DB_PushStreamPos(4u);
     varXString = &varPhysPreset->name;
     Load_XString(0);
@@ -2858,7 +3379,14 @@ void __cdecl Mark_PhysPresetPtr()
 
 void __cdecl Load_PhysConstraint(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_PhysConstraintArray(varPhysConstraint, 1);
+    else
+        Load_Stream(0, (unsigned __int8 *)varPhysConstraint, 168);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varPhysConstraint, 168);
+#endif
     varScriptString = &varPhysConstraint->targetname;
     Load_ScriptString(0);
     varScriptString = &varPhysConstraint->target_ent1;
@@ -2878,7 +3406,14 @@ void __cdecl Load_PhysConstraintArray(bool atStreamStart, int count)
     PhysConstraint *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_PhysConstraintArray(varPhysConstraint, count);
+    else
+        Load_Stream(0, (unsigned __int8 *)varPhysConstraint, 168 * count);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varPhysConstraint, 168 * count);
+#endif
     var = varPhysConstraint;
     for ( i = 0; i < count; ++i )
     {
@@ -2890,7 +3425,14 @@ void __cdecl Load_PhysConstraintArray(bool atStreamStart, int count)
 
 void __cdecl Load_PhysConstraints(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_PhysConstraints(varPhysConstraints);
+    else
+        Load_Stream(0, (unsigned __int8 *)varPhysConstraints, 2696);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varPhysConstraints, 2696);
+#endif
     DB_PushStreamPos(4u);
     varXString = &varPhysConstraints->name;
     Load_XString(0);
@@ -2984,7 +3526,14 @@ void __cdecl Load_cplane_tArray(bool atStreamStart, int count)
 
 void __cdecl Load_cbrushside_t(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_cbrushside_tArray(varcbrushside_t, 1);
+    else
+        Load_Stream(0, (unsigned __int8 *)varcbrushside_t, 12);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varcbrushside_t, 12);
+#endif
     if ( varcbrushside_t->plane )
     {
         if ( varcbrushside_t->plane == (cplane_s *)-1 )
@@ -3005,7 +3554,14 @@ void __cdecl Load_cbrushside_tArray(bool atStreamStart, int count)
     cbrushside_t *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_cbrushside_tArray(varcbrushside_t, count);
+    else
+        Load_Stream(0, (unsigned __int8 *)varcbrushside_t, 12 * count);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varcbrushside_t, 12 * count);
+#endif
     var = varcbrushside_t;
     for ( i = 0; i < count; ++i )
     {
@@ -3022,7 +3578,14 @@ void __cdecl Load_XModelCollTriArray(bool atStreamStart, int count)
 
 void __cdecl Load_XModelCollSurf(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_XModelCollSurfArray(varXModelCollSurf, 1);
+    else
+        Load_Stream(0, (unsigned __int8 *)varXModelCollSurf, 44);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varXModelCollSurf, 44);
+#endif
     if ( varXModelCollSurf->collTris )
     {
         varXModelCollSurf->collTris = (XModelCollTri_s *)AllocLoad_FxElemVisStateSample();
@@ -3036,7 +3599,14 @@ void __cdecl Load_XModelCollSurfArray(bool atStreamStart, int count)
     XModelCollSurf_s *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_XModelCollSurfArray(varXModelCollSurf, count);
+    else
+        Load_Stream(0, (unsigned __int8 *)varXModelCollSurf, 44 * count);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varXModelCollSurf, 44 * count);
+#endif
     var = varXModelCollSurf;
     for ( i = 0; i < count; ++i )
     {
@@ -3053,18 +3623,44 @@ void __cdecl Load_XModelHighMipBoundsArray(bool atStreamStart, int count)
 
 void __cdecl Load_XModelStreamInfo(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    // Embedded in XModel; ExpandLoad_XModel already widened highMipBounds.
+    (void)atStreamStart;
+    {
+        const unsigned w4 = DB_StreamWin32Pos(g_streamPosIndex);
+        if (w4 >= 0xB7000u && w4 < 0xB8000u)
+        {
+        }
+    }
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varXModelStreamInfo, 4);
+#endif
+    // Match other FF pointer slots: -1 = inline array, else alias/offset.
     if ( varXModelStreamInfo->highMipBounds )
     {
-        varXModelStreamInfo->highMipBounds = (XModelHighMipBounds *)AllocLoad_FxElemVisStateSample();
-        varXModelHighMipBounds = varXModelStreamInfo->highMipBounds;
-        Load_XModelHighMipBoundsArray(1, varXModel->numsurfs);
+        if ( varXModelStreamInfo->highMipBounds == (XModelHighMipBounds *)-1 )
+        {
+            varXModelStreamInfo->highMipBounds = (XModelHighMipBounds *)AllocLoad_FxElemVisStateSample();
+            varXModelHighMipBounds = varXModelStreamInfo->highMipBounds;
+            Load_XModelHighMipBoundsArray(1, varXModel->numsurfs);
+        }
+        else
+        {
+            DB_ConvertOffsetToPointer((unsigned int *)&varXModelStreamInfo->highMipBounds);
+        }
     }
 }
 
 void __cdecl Load_BrushWrapper(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_BrushWrapper(varBrushWrapper);
+    else
+        Load_Stream(0, (unsigned __int8 *)varBrushWrapper, 96);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varBrushWrapper, 96);
+#endif
     if ( varBrushWrapper->sides )
     {
         varBrushWrapper->sides = (cbrushside_t *)AllocLoad_FxElemVisStateSample();
@@ -3101,7 +3697,14 @@ void __cdecl Load_BrushWrapper(bool atStreamStart)
 
 void __cdecl Load_PhysGeomInfo(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_PhysGeomInfoArray(varPhysGeomInfo, 1);
+    else
+        Load_Stream(0, (unsigned __int8 *)varPhysGeomInfo, 68);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varPhysGeomInfo, 68);
+#endif
     if ( varPhysGeomInfo->brush )
     {
         if ( varPhysGeomInfo->brush == (BrushWrapper *)-1 )
@@ -3122,7 +3725,14 @@ void __cdecl Load_PhysGeomInfoArray(bool atStreamStart, int count)
     PhysGeomInfo *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_PhysGeomInfoArray(varPhysGeomInfo, count);
+    else
+        Load_Stream(0, (unsigned __int8 *)varPhysGeomInfo, 68 * count);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varPhysGeomInfo, 68 * count);
+#endif
     var = varPhysGeomInfo;
     for ( i = 0; i < count; ++i )
     {
@@ -3134,7 +3744,14 @@ void __cdecl Load_PhysGeomInfoArray(bool atStreamStart, int count)
 
 void __cdecl Load_PhysGeomList(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_PhysGeomList(varPhysGeomList);
+    else
+        Load_Stream(0, (unsigned __int8 *)varPhysGeomList, 12);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varPhysGeomList, 12);
+#endif
     if ( varPhysGeomList->geoms )
     {
         varPhysGeomList->geoms = (PhysGeomInfo *)AllocLoad_GfxPackedVertex0();
@@ -3145,7 +3762,14 @@ void __cdecl Load_PhysGeomList(bool atStreamStart)
 
 void __cdecl Load_Collmap(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_CollmapArray(varCollmap, 1);
+    else
+        Load_Stream(0, (unsigned __int8 *)varCollmap, 4);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varCollmap, 4);
+#endif
     if ( varCollmap->geomList )
     {
         varCollmap->geomList = (PhysGeomList *)AllocLoad_FxElemVisStateSample();
@@ -3159,7 +3783,14 @@ void __cdecl Load_CollmapArray(bool atStreamStart, int count)
     Collmap *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_CollmapArray(varCollmap, count);
+    else
+        Load_Stream(0, (unsigned __int8 *)varCollmap, 4 * count);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varCollmap, 4 * count);
+#endif
     var = varCollmap;
     for ( i = 0; i < count; ++i )
     {
@@ -3171,10 +3802,20 @@ void __cdecl Load_CollmapArray(bool atStreamStart, int count)
 
 void __cdecl Load_XModel(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_XModel(varXModel);
+    else
+        Load_Stream(0, (unsigned char *)varXModel, 252);
+#else
     Load_Stream(atStreamStart, (unsigned char *)varXModel, 252);
+#endif
     DB_PushStreamPos(4u);
     varXString = &varXModel->name;
     Load_XString(0);
+#if defined(BO1_PORT_X64)
+    DB_XModelTraceCp("afterName");
+#endif
     if ( varXModel->localBoneNames )
     {
         if ( varXModel->localBoneNames == (unsigned __int16 *)-1 )
@@ -3259,32 +3900,50 @@ void __cdecl Load_XModel(bool atStreamStart)
             DB_ConvertOffsetToPointer((uint32_t *)&varXModel->baseMat);
         }
     }
+#if defined(BO1_PORT_X64)
+    DB_XModelTraceCp("afterBones");
+#endif
     if ( varXModel->surfs )
     {
         varXModel->surfs = (XSurface *)AllocLoad_FxElemVisStateSample();
         varXSurface = varXModel->surfs;
         Load_XSurfaceArray(1, varXModel->numsurfs);
     }
+#if defined(BO1_PORT_X64)
+    DB_XModelTraceCp("afterSurfs");
+#endif
     if ( varXModel->materialHandles )
     {
         varXModel->materialHandles = (Material **)AllocLoad_FxElemVisStateSample();
         varMaterialHandle = varXModel->materialHandles;
         Load_MaterialHandleArray(1, varXModel->numsurfs);
     }
+#if defined(BO1_PORT_X64)
+    DB_XModelTraceCp("afterMats");
+#endif
     if ( varXModel->collSurfs )
     {
         varXModel->collSurfs = (XModelCollSurf_s *)AllocLoad_FxElemVisStateSample();
         varXModelCollSurf = varXModel->collSurfs;
         Load_XModelCollSurfArray(1, varXModel->numCollSurfs);
     }
+#if defined(BO1_PORT_X64)
+    DB_XModelTraceCp("afterColl");
+#endif
     if ( varXModel->localBoneInfo )
     {
         varXModel->localBoneInfo = (XBoneInfo *)AllocLoad_FxElemVisStateSample();
         varXBoneInfo = varXModel->localBoneInfo;
         Load_XBoneInfoArray(1, varXModel->numBones);
     }
+#if defined(BO1_PORT_X64)
+    DB_XModelTraceCp("afterBoneInfo");
+#endif
     varXModelStreamInfo = &varXModel->streamInfo;
     Load_XModelStreamInfo(0);
+#if defined(BO1_PORT_X64)
+    DB_XModelTraceCp("afterStreamInfo");
+#endif
     varPhysPresetPtr = &varXModel->physPreset;
     Load_PhysPresetPtr(0);
     if ( varXModel->collmaps )
@@ -3295,6 +3954,9 @@ void __cdecl Load_XModel(bool atStreamStart)
     }
     varPhysConstraintsPtr = &varXModel->physConstraints;
     Load_PhysConstraintsPtr(0);
+#if defined(BO1_PORT_X64)
+    DB_XModelTraceCp("done");
+#endif
     DB_PopStreamPos();
 }
 
@@ -3336,7 +3998,14 @@ void __cdecl Load_XModelPtrArray(bool atStreamStart, int count)
     XModel **var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_Ptr32Array(varXModelPtr, count);
+    else
+        Load_Stream(0, (unsigned __int8 *)varXModelPtr, 4 * count);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varXModelPtr, 4 * count);
+#endif
     var = varXModelPtr;
     for ( i = 0; i < count; ++i )
     {
@@ -3507,7 +4176,14 @@ void __cdecl Load_pathnode_constant_t(bool atStreamStart)
 
 void __cdecl Load_pathnode_t(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_pathnode_tArray(varpathnode_t, 1);
+    else
+        Load_Stream(0, (unsigned __int8 *)varpathnode_t, 128);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varpathnode_t, 128);
+#endif
     varpathnode_constant_t = &varpathnode_t->constant;
     Load_pathnode_constant_t(0);
 }
@@ -3517,7 +4193,14 @@ void __cdecl Load_pathnode_tArray(bool atStreamStart, int count)
     pathnode_t *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_pathnode_tArray(varpathnode_t, count);
+    else
+        Load_Stream(0, (unsigned __int8 *)varpathnode_t, count << 7);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varpathnode_t, count << 7);
+#endif
     var = varpathnode_t;
     for ( i = 0; i < count; ++i )
     {
@@ -3534,7 +4217,14 @@ void __cdecl Load_pathbasenode_tArray(bool atStreamStart, int count)
 
 void __cdecl Load_pathnode_tree_nodes_t(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_pathnode_tree_nodes_t(varpathnode_tree_nodes_t);
+    else
+        Load_Stream(0, (unsigned __int8 *)varpathnode_tree_nodes_t, 8);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varpathnode_tree_nodes_t, 8);
+#endif
     if ( varpathnode_tree_nodes_t->nodes )
     {
         varpathnode_tree_nodes_t->nodes = (unsigned __int16 *)AllocLoad_XBlendInfo();
@@ -3545,7 +4235,14 @@ void __cdecl Load_pathnode_tree_nodes_t(bool atStreamStart)
 
 void __cdecl Load_pathnode_tree_ptr(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_Ptr32Array(varpathnode_tree_ptr, 1);
+    else
+        Load_Stream(0, (unsigned __int8 *)varpathnode_tree_ptr, 4);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varpathnode_tree_ptr, 4);
+#endif
     if ( *varpathnode_tree_ptr )
     {
         if ( *varpathnode_tree_ptr == (pathnode_tree_t *)-1 )
@@ -3566,7 +4263,14 @@ void __cdecl Load_pathnode_tree_ptrArray(bool atStreamStart, int count)
     pathnode_tree_t **var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_Ptr32Array(varpathnode_tree_ptr, count);
+    else
+        Load_Stream(0, (unsigned __int8 *)varpathnode_tree_ptr, 4 * count);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varpathnode_tree_ptr, 4 * count);
+#endif
     var = varpathnode_tree_ptr;
     for ( i = 0; i < count; ++i )
     {
@@ -3592,7 +4296,14 @@ void __cdecl Load_pathnode_tree_info_t(bool atStreamStart)
 
 void __cdecl Load_pathnode_tree_t(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_pathnode_tree_tArray(varpathnode_tree_t, 1);
+    else
+        Load_Stream(0, (unsigned __int8 *)varpathnode_tree_t, 16);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varpathnode_tree_t, 16);
+#endif
     varpathnode_tree_info_t = &varpathnode_tree_t->u;
     Load_pathnode_tree_info_t(0);
 }
@@ -3602,7 +4313,14 @@ void __cdecl Load_pathnode_tree_tArray(bool atStreamStart, int count)
     pathnode_tree_t *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_pathnode_tree_tArray(varpathnode_tree_t, count);
+    else
+        Load_Stream(0, (unsigned __int8 *)varpathnode_tree_t, 16 * count);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varpathnode_tree_t, 16 * count);
+#endif
     var = varpathnode_tree_t;
     for ( i = 0; i < count; ++i )
     {
@@ -3691,7 +4409,14 @@ void __cdecl Load_PathData(bool atStreamStart)
 
 void __cdecl Load_GameWorldSp(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_GameWorldSp(varGameWorldSp);
+    else
+        Load_Stream(0, (unsigned __int8 *)varGameWorldSp, 44);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varGameWorldSp, 44);
+#endif
     DB_PushStreamPos(4u);
     varXString = &varGameWorldSp->name;
     Load_XString(0);
@@ -3702,7 +4427,14 @@ void __cdecl Load_GameWorldSp(bool atStreamStart)
 
 void __cdecl Load_GameWorldMp(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_GameWorldMp(varGameWorldMp);
+    else
+        Load_Stream(0, (unsigned __int8 *)varGameWorldMp, 44);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varGameWorldMp, 44);
+#endif
     DB_PushStreamPos(4u);
     varXString = &varGameWorldMp->name;
     Load_XString(0);
@@ -3823,12 +4555,12 @@ void __cdecl Load_FxEffectDefHandle(bool atStreamStart)
     DB_PushStreamPos(0);
     if ( *varFxEffectDefHandle )
     {
-        value = (unsigned int)*varFxEffectDefHandle;
-        if ( *varFxEffectDefHandle == (const FxEffectDef *)-1 || value == -2 )
+        value = static_cast<unsigned int>(reinterpret_cast<uintptr_t>(*varFxEffectDefHandle));
+        if ( *varFxEffectDefHandle == (const FxEffectDef *)-1 || value == 0xFFFFFFFF || value == 0xFFFFFFFE )
         {
             *varFxEffectDefHandle = (const FxEffectDef *)AllocLoad_FxElemVisStateSample();
             varFxEffectDef = *(FxEffectDef**)varFxEffectDefHandle;  //de-const
-            if ( value == -2 )
+            if ( value == 0xFFFFFFFE )
                 inserted = DB_InsertPointer();
             else
                 inserted = 0;
@@ -3850,7 +4582,14 @@ void __cdecl Load_FxEffectDefHandleArray(bool atStreamStart, int count)
     const FxEffectDef **var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_Ptr32Array(varFxEffectDefHandle, count);
+    else
+        Load_Stream(0, (unsigned __int8 *)varFxEffectDefHandle, 4 * count);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varFxEffectDefHandle, 4 * count);
+#endif
     var = varFxEffectDefHandle;
     for ( i = 0; i < count; ++i )
     {
@@ -3869,7 +4608,15 @@ void __cdecl Load_FxEffectDefRef(bool atStreamStart)
 
 void __cdecl Load_FxElemMarkVisuals(bool atStreamStart)
 {
+    #if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_FxElemMarkVisuals(varFxElemMarkVisuals);
+    else
+        Load_Stream(0, (unsigned __int8 *)varFxElemMarkVisuals, 8);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varFxElemMarkVisuals, 8);
+#endif
+
     varMaterialHandle = (Material **)varFxElemMarkVisuals;
     Load_MaterialHandleArray(0, 2);
 }
@@ -3879,7 +4626,15 @@ void __cdecl Load_FxElemMarkVisualsArray(bool atStreamStart, int count)
     FxElemMarkVisuals *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
+    #if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_FxElemMarkVisualsArray(varFxElemMarkVisuals, count);
+    else
+        Load_Stream(0, (unsigned __int8 *)varFxElemMarkVisuals, 8 * count);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varFxElemMarkVisuals, 8 * count);
+#endif
+
     var = varFxElemMarkVisuals;
     for ( i = 0; i < count; ++i )
     {
@@ -3920,7 +4675,15 @@ void __cdecl Load_FxElemVisualsArray(bool atStreamStart, int count)
     FxElemVisuals *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
+    #if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_Ptr32Array(varFxElemVisuals, count);
+    else
+        Load_Stream(0, (unsigned __int8 *)varFxElemVisuals, 4 * count);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varFxElemVisuals, 4 * count);
+#endif
+
     var = varFxElemVisuals;
     for ( i = 0; i < count; ++i )
     {
@@ -3932,7 +4695,15 @@ void __cdecl Load_FxElemVisualsArray(bool atStreamStart, int count)
 
 void __cdecl Load_FxElemSpawnSound(bool atStreamStart)
 {
+    #if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_Ptr32Array(varFxElemSpawnSound, 1);
+    else
+        Load_Stream(atStreamStart, (unsigned __int8 *)varFxElemSpawnSound, 4);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varFxElemSpawnSound, 4);
+#endif
+
     varXString = &varFxElemSpawnSound->spawnSound;
     Load_XString(0);
 }
@@ -3981,7 +4752,14 @@ void __cdecl Load_FxTrailVertexArray(bool atStreamStart, int count)
 
 void __cdecl Load_FxTrailDef(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_FxTrailDef(varFxTrailDef);
+    else
+        Load_Stream(0, (unsigned __int8 *)varFxTrailDef, 28);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varFxTrailDef, 28);
+#endif
     if ( varFxTrailDef->vertsEA )
     {
         varFxTrailDef->vertsEA = (FxTrailVertex *)AllocLoad_FxElemVisStateSample();
@@ -3998,7 +4776,14 @@ void __cdecl Load_FxTrailDef(bool atStreamStart)
 
 void __cdecl Load_FxElemDef(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_FxElemDef(varFxElemDef);
+    else
+        Load_Stream(0, (unsigned __int8 *)varFxElemDef, 292);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varFxElemDef, 292);
+#endif
     if ( varFxElemDef->velSamples )
     {
         varFxElemDef->velSamples = (const FxElemVelStateSample *)AllocLoad_FxElemVisStateSample();
@@ -4036,7 +4821,14 @@ void __cdecl Load_FxElemDefArray(bool atStreamStart, int count)
     FxElemDef *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_FxElemDefArray(varFxElemDef, count);
+    else
+        Load_Stream(0, (unsigned __int8 *)varFxElemDef, 292 * count);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varFxElemDef, 292 * count);
+#endif
     var = varFxElemDef;
     for ( i = 0; i < count; ++i )
     {
@@ -4048,10 +4840,26 @@ void __cdecl Load_FxElemDefArray(bool atStreamStart, int count)
 
 void __cdecl Load_FxEffectDef(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_FxEffectDef(varFxEffectDef);
+    else
+        Load_Stream(0, (unsigned __int8 *)varFxEffectDef, 60);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varFxEffectDef, 60);
+#endif
     DB_PushStreamPos(4u);
     varXString = &varFxEffectDef->name;
     Load_XString(0);
+#if defined(BO1_PORT_X64)
+    {
+        static int s_fxNames;
+        if (s_fxNames < 24)
+        {
+            ++s_fxNames;
+        }
+    }
+#endif
     if ( varFxEffectDef->elemDefsEA )
     {
         varFxEffectDef->elemDefsEA = (const FxElemDef *)AllocLoad_FxElemVisStateSample();
@@ -4107,8 +4915,28 @@ void __cdecl Mark_FxElemMarkVisualsArray(int count)
     }
 }
 
+extern FxEffectDef *varFxEffectDef;
 void __cdecl Mark_FxElemVisuals()
 {
+#if defined(BO1_PORT_X64)
+    if ( varFxElemDef->elemType == 7 )
+    {
+        static int s_diag;
+        const uintptr_t pv = *reinterpret_cast<const uintptr_t *>(varFxElemVisuals);
+        if ( pv && s_diag++ < 400 )
+        {
+            FILE *df = nullptr;
+            if ( fopen_s(&df, "D:\\Desktop\\Black Ops 2 Android\\docs\\port\\x64_mark_diag.log", "a") == 0 && df )
+            {
+                fprintf(df, "MarkFxVisuals fx='%s' elemType=%u visualCount=%u ptr=%p slot=%p elemDef=%p\n",
+                        (varFxEffectDef && varFxEffectDef->name) ? varFxEffectDef->name : "?",
+                        (unsigned)varFxElemDef->elemType, (unsigned)varFxElemDef->visualCount,
+                        (void *)pv, (void *)varFxElemVisuals, (void *)varFxElemDef);
+                fclose(df);
+            }
+        }
+    }
+#endif
     if ( varFxElemDef->elemType == 7 )
     {
         varXModelPtr = (XModel **)varFxElemVisuals;
@@ -4195,7 +5023,14 @@ void __cdecl Mark_FxEffectDef()
 
 void __cdecl Load_DynEntityDef(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_DynEntityDefArray(const_cast<DynEntityDef *>(varDynEntityDef), 1);
+    else
+        Load_Stream(0, (unsigned __int8 *)varDynEntityDef, 84);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varDynEntityDef, 84);
+#endif
     varXModelPtr = &varDynEntityDef->xModel;
     Load_XModelPtr(0);
     varXModelPtr = &varDynEntityDef->destroyedxModel;
@@ -4217,8 +5052,15 @@ void __cdecl Load_DynEntityDefArray(bool atStreamStart, int count)
     DynEntityDef *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_DynEntityDefArray(const_cast<DynEntityDef *>(varDynEntityDef), count);
+    else
+        Load_Stream(0, (unsigned __int8 *)varDynEntityDef, 84 * count);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varDynEntityDef, 84 * count);
-    var = varDynEntityDef;
+#endif
+    var = const_cast<DynEntityDef *>(varDynEntityDef);
     for ( i = 0; i < count; ++i )
     {
         varDynEntityDef = var;
@@ -4281,7 +5123,14 @@ void __cdecl Mark_DynEntityDefArray(int count)
 
 void __cdecl Load_MapEnts(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_MapEnts(varMapEnts);
+    else
+        Load_Stream(0, (unsigned __int8 *)varMapEnts, 12);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varMapEnts, 12);
+#endif
     DB_PushStreamPos(4u);
     varXString = &varMapEnts->name;
     Load_XString(0);
@@ -4336,7 +5185,14 @@ void __cdecl Mark_MapEntsPtr()
 
 void __cdecl Load_cStaticModel_t(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_cStaticModel_tArray(varcStaticModel_t, 1);
+    else
+        Load_Stream(0, (unsigned __int8 *)varcStaticModel_t, 80);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varcStaticModel_t, 80);
+#endif
     varXModelPtr = &varcStaticModel_t->xmodel;
     Load_XModelPtr(0);
 }
@@ -4346,7 +5202,14 @@ void __cdecl Load_cStaticModel_tArray(bool atStreamStart, int count)
     cStaticModel_s *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_cStaticModel_tArray(varcStaticModel_t, count);
+    else
+        Load_Stream(0, (unsigned __int8 *)varcStaticModel_t, 80 * count);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varcStaticModel_t, 80 * count);
+#endif
     var = varcStaticModel_t;
     for ( i = 0; i < count; ++i )
     {
@@ -4358,7 +5221,14 @@ void __cdecl Load_cStaticModel_tArray(bool atStreamStart, int count)
 
 void __cdecl Load_cNode_t(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_cNode_tArray(varcNode_t, 1);
+    else
+        Load_Stream(0, (unsigned __int8 *)varcNode_t, 8);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varcNode_t, 8);
+#endif
     if ( varcNode_t->plane )
     {
         if ( varcNode_t->plane == (cplane_s *)-1 )
@@ -4379,7 +5249,14 @@ void __cdecl Load_cNode_tArray(bool atStreamStart, int count)
     cNode_t *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_cNode_tArray(varcNode_t, count);
+    else
+        Load_Stream(0, (unsigned __int8 *)varcNode_t, 8 * count);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varcNode_t, 8 * count);
+#endif
     var = varcNode_t;
     for ( i = 0; i < count; ++i )
     {
@@ -4436,7 +5313,14 @@ void __cdecl Load_cLeafBrushNodeData_t(bool atStreamStart)
 
 void __cdecl Load_cLeafBrushNode_t(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_cLeafBrushNode_tArray(varcLeafBrushNode_t, 1);
+    else
+        Load_Stream(0, &varcLeafBrushNode_t->axis, 20);
+#else
     Load_Stream(atStreamStart, &varcLeafBrushNode_t->axis, 20);
+#endif
     varcLeafBrushNodeData_t = &varcLeafBrushNode_t->data;
     Load_cLeafBrushNodeData_t(0);
 }
@@ -4446,7 +5330,14 @@ void __cdecl Load_cLeafBrushNode_tArray(bool atStreamStart, int count)
     cLeafBrushNode_s *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_cLeafBrushNode_tArray(varcLeafBrushNode_t, count);
+    else
+        Load_Stream(0, &varcLeafBrushNode_t->axis, 20 * count);
+#else
     Load_Stream(atStreamStart, &varcLeafBrushNode_t->axis, 20 * count);
+#endif
     var = varcLeafBrushNode_t;
     for ( i = 0; i < count; ++i )
     {
@@ -4468,7 +5359,14 @@ void __cdecl Load_CollisionBorderArray(bool atStreamStart, int count)
 
 void __cdecl Load_CollisionPartition(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_CollisionPartitionArray(const_cast<CollisionPartition *>(varCollisionPartition), 1);
+    else
+        Load_Stream(0, &varCollisionPartition->triCount, 20);
+#else
     Load_Stream(atStreamStart, &varCollisionPartition->triCount, 20);
+#endif
     if ( varCollisionPartition->borders )
     {
         if ( varCollisionPartition->borders == (CollisionBorder *)-1 )
@@ -4489,8 +5387,15 @@ void __cdecl Load_CollisionPartitionArray(bool atStreamStart, int count)
     CollisionPartition *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_CollisionPartitionArray(const_cast<CollisionPartition *>(varCollisionPartition), count);
+    else
+        Load_Stream(0, &varCollisionPartition->triCount, 20 * count);
+#else
     Load_Stream(atStreamStart, &varCollisionPartition->triCount, 20 * count);
-    var = varCollisionPartition;
+#endif
+    var = const_cast<CollisionPartition *>(varCollisionPartition);
     for ( i = 0; i < count; ++i )
     {
         varCollisionPartition = var;
@@ -4516,7 +5421,14 @@ void __cdecl Load_cmodel_tArray(bool atStreamStart, int count)
 
 void __cdecl Load_cbrush_t(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_cbrush_tArray(const_cast<cbrush_t *>(varcbrush_t), 1);
+    else
+        Load_Stream(0, (unsigned __int8 *)varcbrush_t, 96);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varcbrush_t, 96);
+#endif
     if ( varcbrush_t->sides )
     {
         if ( varcbrush_t->sides == (cbrushside_t *)-1 )
@@ -4550,8 +5462,15 @@ void __cdecl Load_cbrush_tArray(bool atStreamStart, int count)
     cbrush_t *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_cbrush_tArray(const_cast<cbrush_t *>(varcbrush_t), count);
+    else
+        Load_Stream(0, (unsigned __int8 *)varcbrush_t, 96 * count);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varcbrush_t, 96 * count);
-    var = varcbrush_t;
+#endif
+    var = const_cast<cbrush_t *>(varcbrush_t);
     for ( i = 0; i < count; ++i )
     {
         varcbrush_t = var;
@@ -4567,12 +5486,26 @@ void __cdecl Load_LeafBrushArray(bool atStreamStart, int count)
 
 void __cdecl Load_rope_tArray(bool atStreamStart, int count)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_rope_tArray(varrope_t, count);
+    else
+        Load_Stream(0, (unsigned __int8 *)varrope_t, 3188 * count);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varrope_t, 3188 * count);
+#endif
 }
 
 void __cdecl Load_clipMap_t(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_clipMap_t(varclipMap_t);
+    else
+        Load_Stream(0, (unsigned __int8 *)varclipMap_t, 332);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varclipMap_t, 332);
+#endif
     DB_PushStreamPos(4u);
     varXString = &varclipMap_t->name;
     Load_XString(0);
@@ -4916,7 +5849,14 @@ void __cdecl Mark_clipMap_ptr()
 
 void __cdecl Load_ComPrimaryLight(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_ComPrimaryLightArray(varComPrimaryLight, 1);
+    else
+        Load_Stream(0, &varComPrimaryLight->type, 220);
+#else
     Load_Stream(atStreamStart, &varComPrimaryLight->type, 220);
+#endif
     varXString = &varComPrimaryLight->defName;
     Load_XString(0);
 }
@@ -4926,7 +5866,14 @@ void __cdecl Load_ComPrimaryLightArray(bool atStreamStart, int count)
     ComPrimaryLight *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_ComPrimaryLightArray(varComPrimaryLight, count);
+    else
+        Load_Stream(0, &varComPrimaryLight->type, 220 * count);
+#else
     Load_Stream(atStreamStart, &varComPrimaryLight->type, 220 * count);
+#endif
     var = varComPrimaryLight;
     for ( i = 0; i < count; ++i )
     {
@@ -4948,7 +5895,14 @@ void __cdecl Load_ComBurnableSampleArray(bool atStreamStart, int count)
 
 void __cdecl Load_ComBurnableCell(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_ComBurnableCellArray(varComBurnableCell, 1);
+    else
+        Load_Stream(0, (unsigned __int8 *)varComBurnableCell, 12);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varComBurnableCell, 12);
+#endif
     if ( varComBurnableCell->data )
     {
         varComBurnableCell->data = (ComBurnableSample*)AllocLoad_raw_byte();
@@ -4962,7 +5916,14 @@ void __cdecl Load_ComBurnableCellArray(bool atStreamStart, int count)
     ComBurnableCell *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_ComBurnableCellArray(varComBurnableCell, count);
+    else
+        Load_Stream(0, (unsigned __int8 *)varComBurnableCell, 12 * count);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varComBurnableCell, 12 * count);
+#endif
     var = varComBurnableCell;
     for ( i = 0; i < count; ++i )
     {
@@ -4974,7 +5935,14 @@ void __cdecl Load_ComBurnableCellArray(bool atStreamStart, int count)
 
 void __cdecl Load_ComWorld(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_ComWorld(varComWorld);
+    else
+        Load_Stream(0, (unsigned __int8 *)varComWorld, 64);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varComWorld, 64);
+#endif
     DB_PushStreamPos(4u);
     varXString = &varComWorld->name;
     Load_XString(0);
@@ -5090,7 +6058,15 @@ void __cdecl Load_expressionRpnDataUnion(bool atStreamStart)
 
 void __cdecl Load_expressionRpn(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    // Native expressionRpn is 24 bytes; Win32 disk is 12. Expand at array start.
+    if ( atStreamStart )
+        DB_ExpandLoad_expressionRpnArray(varexpressionRpn, 1);
+    else
+        (void)atStreamStart;
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varexpressionRpn, 12);
+#endif
     varexpressionRpnDataUnion = &varexpressionRpn->data;
     Load_expressionRpnDataUnion(0);
 }
@@ -5100,7 +6076,17 @@ void __cdecl Load_expressionRpnArray(bool atStreamStart, int count)
     expressionRpn *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
+#if defined(BO1_PORT_X64)
+    // Keep follow-up walk in lockstep with Expand's clamp (neg / >65536 → 0).
+    if ( count < 0 || count > 65536 )
+        count = 0;
+    if ( atStreamStart )
+        DB_ExpandLoad_expressionRpnArray(varexpressionRpn, count);
+    else
+        (void)atStreamStart;
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varexpressionRpn, 12 * count);
+#endif
     var = varexpressionRpn;
     for ( i = 0; i < count; ++i )
     {
@@ -5112,7 +6098,14 @@ void __cdecl Load_expressionRpnArray(bool atStreamStart, int count)
 
 void __cdecl Load_ExpressionStatement(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_ExpressionStatement(varExpressionStatement);
+    else
+        Load_Stream(0, (unsigned __int8 *)varExpressionStatement, 16);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varExpressionStatement, 16);
+#endif
     varXString = (const char **)&varExpressionStatement->filename;
     Load_XString(0);
     if ( varExpressionStatement->rpn )
@@ -5132,7 +6125,14 @@ void __cdecl Load_ExpressionStatement(bool atStreamStart)
 
 void __cdecl Load_ScriptCondition(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_ScriptCondition(varScriptCondition);
+    else
+        (void)atStreamStart;
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varScriptCondition, 16);
+#endif
     if ( varScriptCondition->next )
     {
         varScriptCondition->next = (ScriptCondition *)AllocLoad_FxElemVisStateSample();
@@ -5143,14 +6143,29 @@ void __cdecl Load_ScriptCondition(bool atStreamStart)
 
 void __cdecl Load_ScriptConditionNext(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_ScriptCondition(varScriptConditionNext);
+    else
+        (void)atStreamStart;
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varScriptConditionNext, 16);
+#endif
     varScriptCondition = varScriptConditionNext;
     Load_ScriptCondition(0);
 }
 
 void __cdecl Load_GenericEventScript(bool atStreamStart)
 {
+    #if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_GenericEventScript(varGenericEventScript);
+    else
+        Load_Stream(atStreamStart, (unsigned __int8 *)varGenericEventScript, 44);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varGenericEventScript, 44);
+#endif
+
     if ( varGenericEventScript->prerequisites )
     {
         varGenericEventScript->prerequisites = (ScriptCondition *)AllocLoad_FxElemVisStateSample();
@@ -5171,14 +6186,28 @@ void __cdecl Load_GenericEventScript(bool atStreamStart)
 
 void __cdecl Load_GenericEventScriptNext(bool atStreamStart)
 {
-    Load_Stream(atStreamStart, (unsigned __int8 *)varGenericEventScriptNext, 44);
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_GenericEventScript(varGenericEventScriptNext);
+    else
+            Load_Stream(atStreamStart, (unsigned __int8 *)varGenericEventScriptNext, 44);
+#else
+        Load_Stream(atStreamStart, (unsigned __int8 *)varGenericEventScriptNext, 44);
+#endif
     varGenericEventScript = varGenericEventScriptNext;
     Load_GenericEventScript(0);
 }
 
 void __cdecl Load_GenericEventHandler(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_GenericEventHandler(varGenericEventHandler);
+    else
+        Load_Stream(0, (unsigned __int8 *)varGenericEventHandler, 12);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varGenericEventHandler, 12);
+#endif
     varXString = &varGenericEventHandler->name;
     Load_XString(0);
     if ( varGenericEventHandler->eventScript )
@@ -5197,14 +6226,29 @@ void __cdecl Load_GenericEventHandler(bool atStreamStart)
 
 void __cdecl Load_GenericEventHandlerNext(bool atStreamStart)
 {
+    #if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_GenericEventHandler(varGenericEventHandlerNext);
+    else
+        Load_Stream(atStreamStart, (unsigned __int8 *)varGenericEventHandlerNext, 12);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varGenericEventHandlerNext, 12);
+#endif
+
     varGenericEventHandler = varGenericEventHandlerNext;
     Load_GenericEventHandler(0);
 }
 
 void __cdecl Load_ItemKeyHandler(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_ItemKeyHandler(varItemKeyHandler);
+    else
+        Load_Stream(0, (unsigned __int8 *)varItemKeyHandler, 12);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varItemKeyHandler, 12);
+#endif
     if ( varItemKeyHandler->keyScript )
     {
         varItemKeyHandler->keyScript = (GenericEventScript *)AllocLoad_FxElemVisStateSample();
@@ -5221,7 +6265,15 @@ void __cdecl Load_ItemKeyHandler(bool atStreamStart)
 
 void __cdecl Load_ItemKeyHandlerNext(bool atStreamStart)
 {
+    #if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_ItemKeyHandler(varItemKeyHandlerNext);
+    else
+        Load_Stream(atStreamStart, (unsigned __int8 *)varItemKeyHandlerNext, 12);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varItemKeyHandlerNext, 12);
+#endif
+
     varItemKeyHandler = varItemKeyHandlerNext;
     Load_ItemKeyHandler(0);
 }
@@ -5244,7 +6296,14 @@ void __cdecl Load_editFieldDef_ptr(bool atStreamStart)
 
 void __cdecl Load_multiDef_t(bool atStreamStart)
 {
-    Load_Stream(atStreamStart, (unsigned __int8 *)varmultiDef_t, 396);
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_multiDef_t(varmultiDef_t);
+    else
+            Load_Stream(atStreamStart, (unsigned __int8 *)varmultiDef_t, 396);
+#else
+        Load_Stream(atStreamStart, (unsigned __int8 *)varmultiDef_t, 396);
+#endif
     varXString = (const char **)varmultiDef_t;
     Load_XStringArray(0, 32);
     varXString = varmultiDef_t->dvarStr;
@@ -5264,7 +6323,14 @@ void __cdecl Load_multiDef_ptr(bool atStreamStart)
 
 void __cdecl Load_enumDvarDef_t(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_enumDvarDef_t(varenumDvarDef_t);
+    else
+        (void)atStreamStart;
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varenumDvarDef_t, 4);
+#endif
     varXString = &varenumDvarDef_t->enumDvarName;
     Load_XString(0);
 }
@@ -5282,7 +6348,15 @@ void __cdecl Load_enumDvarDef_ptr(bool atStreamStart)
 
 void __cdecl Load_MenuCell(bool atStreamStart)
 {
+    #if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_MenuCell(varMenuCell);
+    else
+        Load_Stream(atStreamStart, (unsigned __int8 *)varMenuCell, 12);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varMenuCell, 12);
+#endif
+
     if ( varMenuCell->stringValue )
     {
         varMenuCell->stringValue = (char *)AllocLoad_raw_byte();
@@ -5296,7 +6370,15 @@ void __cdecl Load_MenuCellArray(bool atStreamStart, int count)
     MenuCell *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
+    #if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_MenuCellArray(varMenuCell, count);
+    else
+        Load_Stream(atStreamStart, (unsigned __int8 *)varMenuCell, 12 * count);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varMenuCell, 12 * count);
+#endif
+
     var = varMenuCell;
     for ( i = 0; i < count; ++i )
     {
@@ -5308,7 +6390,15 @@ void __cdecl Load_MenuCellArray(bool atStreamStart, int count)
 
 void __cdecl Load_MenuRow(bool atStreamStart)
 {
+    #if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_MenuRow(varMenuRow);
+    else
+        Load_Stream(atStreamStart, (unsigned __int8 *)varMenuRow, 24);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varMenuRow, 24);
+#endif
+
     if ( varMenuRow->cells )
     {
         varMenuRow->cells = (MenuCell *)AllocLoad_FxElemVisStateSample();
@@ -5334,7 +6424,15 @@ void __cdecl Load_MenuRowArray(bool atStreamStart, int count)
     MenuRow *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
+    #if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_MenuRowArray(varMenuRow, count);
+    else
+        Load_Stream(atStreamStart, (unsigned __int8 *)varMenuRow, 24 * count);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varMenuRow, 24 * count);
+#endif
+
     var = varMenuRow;
     for ( i = 0; i < count; ++i )
     {
@@ -5346,7 +6444,14 @@ void __cdecl Load_MenuRowArray(bool atStreamStart, int count)
 
 void __cdecl Load_animParamsDef_t(bool atStreamStart)
 {
-    Load_Stream(atStreamStart, (unsigned __int8 *)varanimParamsDef_t, 108);
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_animParamsDef_t(varanimParamsDef_t);
+    else
+            Load_Stream(atStreamStart, (unsigned __int8 *)varanimParamsDef_t, 108);
+#else
+        Load_Stream(atStreamStart, (unsigned __int8 *)varanimParamsDef_t, 108);
+#endif
     varXString = &varanimParamsDef_t->name;
     Load_XString(0);
     if ( varanimParamsDef_t->onEvent )
@@ -5359,7 +6464,14 @@ void __cdecl Load_animParamsDef_t(bool atStreamStart)
 
 void __cdecl Load_windowDef_t(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_windowDef_t(varwindowDef_t);
+    else
+        Load_Stream(0, (unsigned __int8 *)varwindowDef_t, 164);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varwindowDef_t, 164);
+#endif
     varXString = &varwindowDef_t->name;
     Load_XString(0);
     varXString = &varwindowDef_t->group;
@@ -5370,7 +6482,14 @@ void __cdecl Load_windowDef_t(bool atStreamStart)
 
 void __cdecl Load_Window(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_windowDef_t(varWindow);
+    else
+        Load_Stream(0, (unsigned __int8 *)varWindow, 164);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varWindow, 164);
+#endif
     varwindowDef_t = varWindow;
     Load_windowDef_t(0);
 }
@@ -5391,7 +6510,19 @@ void __cdecl Load_animParamsDef_ptrArray(bool atStreamStart, int count)
     animParamsDef_t **var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
+    #if defined(BO1_PORT_X64)
+    if ( count < 0 || count > 4096 )
+    {
+        count = 0;
+    }
+    if ( atStreamStart )
+        DB_ExpandLoad_Ptr32Array(varanimParamsDef_ptr, count);
+    else
+        Load_Stream(atStreamStart, (unsigned __int8 *)varanimParamsDef_ptr, 4 * count);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varanimParamsDef_ptr, 4 * count);
+#endif
+
     var = varanimParamsDef_ptr;
     for ( i = 0; i < count; ++i )
     {
@@ -5403,7 +6534,14 @@ void __cdecl Load_animParamsDef_ptrArray(bool atStreamStart, int count)
 
 void __cdecl Load_imageDef_t(bool atStreamStart)
 {
-    Load_Stream(atStreamStart, (unsigned __int8 *)varimageDef_t, 16);
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_imageDef_t(varimageDef_t);
+    else
+            Load_Stream(atStreamStart, (unsigned __int8 *)varimageDef_t, 16);
+#else
+        Load_Stream(atStreamStart, (unsigned __int8 *)varimageDef_t, 16);
+#endif
     varExpressionStatement = &varimageDef_t->materialExp;
     Load_ExpressionStatement(0);
 }
@@ -5421,7 +6559,14 @@ void __cdecl Load_imageDef_ptr(bool atStreamStart)
 
 void __cdecl Load_ownerDrawDef_t(bool atStreamStart)
 {
-    Load_Stream(atStreamStart, (unsigned __int8 *)varownerDrawDef_t, 16);
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_ownerDrawDef_t(varownerDrawDef_t);
+    else
+            Load_Stream(atStreamStart, (unsigned __int8 *)varownerDrawDef_t, 16);
+#else
+        Load_Stream(atStreamStart, (unsigned __int8 *)varownerDrawDef_t, 16);
+#endif
     varExpressionStatement = &varownerDrawDef_t->dataExp;
     Load_ExpressionStatement(0);
 }
@@ -5439,7 +6584,14 @@ void __cdecl Load_ownerDrawDef_ptr(bool atStreamStart)
 
 void __cdecl Load_listBoxDef_t(bool atStreamStart)
 {
-    Load_Stream(atStreamStart, (unsigned __int8 *)varlistBoxDef_t, 668);
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_listBoxDef_t(varlistBoxDef_t);
+    else
+            Load_Stream(atStreamStart, (unsigned __int8 *)varlistBoxDef_t, 668);
+#else
+        Load_Stream(atStreamStart, (unsigned __int8 *)varlistBoxDef_t, 668);
+#endif
     varMaterialHandle = &varlistBoxDef_t->selectIcon;
     Load_MaterialHandle(0);
     varMaterialHandle = &varlistBoxDef_t->backgroundItemListbox;
@@ -5499,7 +6651,14 @@ void __cdecl Load_focusDefData_t(bool atStreamStart)
 
 void __cdecl Load_focusItemDef_t(bool atStreamStart)
 {
-    Load_Stream(atStreamStart, (unsigned __int8 *)varfocusItemDef_t, 24);
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_focusItemDef_t(varfocusItemDef_t);
+    else
+            Load_Stream(atStreamStart, (unsigned __int8 *)varfocusItemDef_t, 24);
+#else
+        Load_Stream(atStreamStart, (unsigned __int8 *)varfocusItemDef_t, 24);
+#endif
     varXString = &varfocusItemDef_t->mouseEnterText;
     Load_XString(0);
     varXString = &varfocusItemDef_t->mouseExitText;
@@ -5576,14 +6735,29 @@ void __cdecl Load_textDefData_t(bool atStreamStart)
 
 void __cdecl Load_textExp_t(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    // Win32 textExp is a 16-byte ExpressionStatement; native is 24. Never Load_Stream(16).
+    if ( atStreamStart )
+        DB_ExpandLoad_ExpressionStatement(&vartextExp_t->textExp);
+    else
+        (void)atStreamStart;
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)vartextExp_t, 16);
+#endif
     varExpressionStatement = &vartextExp_t->textExp;
     Load_ExpressionStatement(0);
 }
 
 void __cdecl Load_textDef_t(bool atStreamStart)
 {
-    Load_Stream(atStreamStart, (unsigned __int8 *)vartextDef_t, 68);
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_textDef_t(vartextDef_t);
+    else
+            Load_Stream(atStreamStart, (unsigned __int8 *)vartextDef_t, 68);
+#else
+        Load_Stream(atStreamStart, (unsigned __int8 *)vartextDef_t, 68);
+#endif
     varXString = &vartextDef_t->text;
     Load_XString(0);
     if ( vartextDef_t->textExpData )
@@ -5609,7 +6783,14 @@ void __cdecl Load_textDef_ptr(bool atStreamStart)
 
 void __cdecl Load_rectData_t(bool atStreamStart)
 {
-    Load_Stream(atStreamStart, (unsigned __int8 *)varrectData_t, 64);
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_rectData_t(varrectData_t);
+    else
+            Load_Stream(atStreamStart, (unsigned __int8 *)varrectData_t, 64);
+#else
+        Load_Stream(atStreamStart, (unsigned __int8 *)varrectData_t, 64);
+#endif
     varExpressionStatement = &varrectData_t->rectXExp;
     Load_ExpressionStatement(0);
     varExpressionStatement = &varrectData_t->rectYExp;
@@ -5662,7 +6843,14 @@ void __cdecl Load_itemDefData_t(bool atStreamStart)
 
 void __cdecl Load_UIAnimInfo(bool atStreamStart)
 {
-    Load_Stream(atStreamStart, (unsigned __int8 *)varUIAnimInfo, 236);
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_UIAnimInfo(varUIAnimInfo);
+    else
+            Load_Stream(atStreamStart, (unsigned __int8 *)varUIAnimInfo, 236);
+#else
+        Load_Stream(atStreamStart, (unsigned __int8 *)varUIAnimInfo, 236);
+#endif
     if ( varUIAnimInfo->animStates )
     {
         varUIAnimInfo->animStates = (animParamsDef_t **)AllocLoad_FxElemVisStateSample();
@@ -5673,7 +6861,14 @@ void __cdecl Load_UIAnimInfo(bool atStreamStart)
 
 void __cdecl Load_itemDef_t(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_itemDef_t(varitemDef_t);
+    else
+        Load_Stream(0, (unsigned __int8 *)varitemDef_t, 272);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varitemDef_t, 272);
+#endif
     varWindow = &varitemDef_t->window;
     Load_Window(0);
     varXString = &varitemDef_t->dvar;
@@ -5729,10 +6924,26 @@ void __cdecl Load_itemDef_ptrArray(bool atStreamStart, int count)
     itemDef_s **var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
+    #if defined(BO1_PORT_X64)
+    // Keep walk in lockstep with Expand clamp (corrupt itemCount → 0xE06D7363 / AV).
+    if ( count < 0 || count > 4096 )
+        count = 0;
+    if ( atStreamStart )
+        DB_ExpandLoad_Ptr32Array(varitemDef_ptr, count);
+    else
+        Load_Stream(atStreamStart, (unsigned __int8 *)varitemDef_ptr, 4 * count);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varitemDef_ptr, 4 * count);
+#endif
+
     var = varitemDef_ptr;
     for ( i = 0; i < count; ++i )
     {
+#if defined(BO1_PORT_X64)
+        if ( g_dbTopAssetType == 21 && i < 8 )
+        {
+        }
+#endif
         varitemDef_ptr = var;
         Load_itemDef_ptr(0);
         ++var;
@@ -5741,7 +6952,14 @@ void __cdecl Load_itemDef_ptrArray(bool atStreamStart, int count)
 
 void __cdecl Load_menuDef_t(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_menuDef_t(varmenuDef_t);
+    else
+        Load_Stream(0, (unsigned __int8 *)varmenuDef_t, 400);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varmenuDef_t, 400);
+#endif
     DB_PushStreamPos(4u);
     varWindow = &varmenuDef_t->window;
     Load_Window(0);
@@ -5814,7 +7032,17 @@ void __cdecl Load_menuDef_ptrArray(bool atStreamStart, int count)
     menuDef_t **var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
+    #if defined(BO1_PORT_X64)
+    if ( count < 0 || count > 4096 )
+        count = 0;
+    if ( atStreamStart )
+        DB_ExpandLoad_Ptr32Array(varmenuDef_ptr, count);
+    else
+        Load_Stream(atStreamStart, (unsigned __int8 *)varmenuDef_ptr, 4 * count);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varmenuDef_ptr, 4 * count);
+#endif
+
     var = varmenuDef_ptr;
     for ( i = 0; i < count; ++i )
     {
@@ -5826,15 +7054,32 @@ void __cdecl Load_menuDef_ptrArray(bool atStreamStart, int count)
 
 void __cdecl Load_MenuList(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_MenuList(varMenuList);
+    else
+        Load_Stream(0, (unsigned __int8 *)varMenuList, 12);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varMenuList, 12);
+#endif
     DB_PushStreamPos(4u);
     varXString = &varMenuList->name;
     Load_XString(0);
+#if defined(BO1_PORT_X64)
+    // Capture before nested loads; stream stomps have corrupted menuCount mid-load.
+    const int menuCountLocal = varMenuList->menuCount;
+    {
+    }
+#endif
     if ( varMenuList->menus )
     {
         varMenuList->menus = (menuDef_t **)AllocLoad_FxElemVisStateSample();
         varmenuDef_ptr = varMenuList->menus;
+#if defined(BO1_PORT_X64)
+        Load_menuDef_ptrArray(1, menuCountLocal);
+#else
         Load_menuDef_ptrArray(1, varMenuList->menuCount);
+#endif
     }
     DB_PopStreamPos();
 }
@@ -6081,7 +7326,14 @@ void __cdecl Mark_MenuListPtr()
 
 void __cdecl Load_LocalizeEntry(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_LocalizeEntry(varLocalizeEntry);
+    else
+        Load_Stream(0, (unsigned __int8 *)varLocalizeEntry, 8);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varLocalizeEntry, 8);
+#endif
     DB_PushStreamPos(4u);
     varXString = &varLocalizeEntry->value;
     Load_XString(0);
@@ -6132,7 +7384,15 @@ void __cdecl Mark_LocalizeEntryPtr()
 
 void __cdecl Load_FxImpactEntry(bool atStreamStart)
 {
+    #if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_FxImpactEntry(varFxImpactEntry);
+    else
+        Load_Stream(atStreamStart, (unsigned __int8 *)varFxImpactEntry, 140);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varFxImpactEntry, 140);
+#endif
+
     varFxEffectDefHandle = (const FxEffectDef **)varFxImpactEntry;
     Load_FxEffectDefHandleArray(0, 31);
     varFxEffectDefHandle = varFxImpactEntry->flesh;
@@ -6144,7 +7404,15 @@ void __cdecl Load_FxImpactEntryArray(bool atStreamStart, int count)
     FxImpactEntry *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
+    #if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_FxImpactEntryArray(varFxImpactEntry, count);
+    else
+        Load_Stream(atStreamStart, (unsigned __int8 *)varFxImpactEntry, 140 * count);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varFxImpactEntry, 140 * count);
+#endif
+
     var = varFxImpactEntry;
     for ( i = 0; i < count; ++i )
     {
@@ -6156,7 +7424,14 @@ void __cdecl Load_FxImpactEntryArray(bool atStreamStart, int count)
 
 void __cdecl Load_FxImpactTable(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_FxImpactTable(varFxImpactTable);
+    else
+        Load_Stream(0, (unsigned __int8 *)varFxImpactTable, 8);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varFxImpactTable, 8);
+#endif
     DB_PushStreamPos(4u);
     varXString = &varFxImpactTable->name;
     Load_XString(0);
@@ -6243,7 +7518,15 @@ void __cdecl Mark_FxImpactTablePtr()
 
 void __cdecl Load_DestructibleStage(bool atStreamStart)
 {
+    #if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_DestructibleStageArray(varDestructibleStage, 1);
+    else
+        Load_Stream(atStreamStart, (unsigned __int8 *)varDestructibleStage, 48);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varDestructibleStage, 48);
+#endif
+
     varScriptString = &varDestructibleStage->showBone;
     Load_ScriptString(0);
     varFxEffectDefHandle = &varDestructibleStage->breakEffect;
@@ -6265,7 +7548,15 @@ void __cdecl Load_DestructibleStageArray(bool atStreamStart, int count)
     DestructibleStage *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
+    #if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_DestructibleStageArray(varDestructibleStage, count);
+    else
+        Load_Stream(atStreamStart, (unsigned __int8 *)varDestructibleStage, 48 * count);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varDestructibleStage, 48 * count);
+#endif
+
     var = varDestructibleStage;
     for ( i = 0; i < count; ++i )
     {
@@ -6277,7 +7568,15 @@ void __cdecl Load_DestructibleStageArray(bool atStreamStart, int count)
 
 void __cdecl Load_DestructiblePiece(bool atStreamStart)
 {
+    #if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_DestructiblePieceArray(varDestructiblePiece, 1);
+    else
+        Load_Stream(atStreamStart, (unsigned __int8 *)varDestructiblePiece, 312);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varDestructiblePiece, 312);
+#endif
+
     varDestructibleStage = (DestructibleStage *)varDestructiblePiece;
     Load_DestructibleStageArray(0, 5);
     varPhysConstraintsPtr = &varDestructiblePiece->physConstraints;
@@ -6297,7 +7596,15 @@ void __cdecl Load_DestructiblePieceArray(bool atStreamStart, int count)
     DestructiblePiece *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
+    #if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_DestructiblePieceArray(varDestructiblePiece, count);
+    else
+        Load_Stream(atStreamStart, (unsigned __int8 *)varDestructiblePiece, 312 * count);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varDestructiblePiece, 312 * count);
+#endif
+
     var = varDestructiblePiece;
     for ( i = 0; i < count; ++i )
     {
@@ -6309,7 +7616,14 @@ void __cdecl Load_DestructiblePieceArray(bool atStreamStart, int count)
 
 void __cdecl Load_DestructibleDef(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_DestructibleDef(varDestructibleDef);
+    else
+        Load_Stream(0, (unsigned __int8 *)varDestructibleDef, 24);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varDestructibleDef, 24);
+#endif
     DB_PushStreamPos(4u);
     varXString = &varDestructibleDef->name;
     Load_XString(0);
@@ -6470,7 +7784,14 @@ XAsset *__cdecl AllocLoad_FxElemVisStateSample()
 
 void __cdecl Load_WeaponDef(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_WeaponDef(varWeaponDef);
+    else
+        Load_Stream(0, (unsigned __int8 *)varWeaponDef, 2056);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varWeaponDef, 2056);
+#endif
     varXString = &varWeaponDef->szOverlayName;
     Load_XString(0);
     if ( varWeaponDef->gunXModel )
@@ -6901,7 +8222,14 @@ void __cdecl Load_WeaponDef(bool atStreamStart)
 
 void __cdecl Load_WeaponVariantDef(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_WeaponVariantDef(varWeaponVariantDef);
+    else
+        Load_Stream(0, (unsigned __int8 *)varWeaponVariantDef, 228);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varWeaponVariantDef, 228);
+#endif
     DB_PushStreamPos(4u);
     varXString = &varWeaponVariantDef->szInternalName;
     Load_XString(0);
@@ -7136,7 +8464,15 @@ void __cdecl Mark_WeaponVariantDefPtr()
 
 void __cdecl Load_EmblemIcon(bool atStreamStart)
 {
+    #if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_EmblemIcon(varEmblemIcon);
+    else
+        Load_Stream(atStreamStart, (unsigned __int8 *)varEmblemIcon, 40);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varEmblemIcon, 40);
+#endif
+
     varGfxImagePtr = &varEmblemIcon->image;
     Load_GfxImagePtr(0);
     varXString = &varEmblemIcon->description;
@@ -7148,7 +8484,15 @@ void __cdecl Load_EmblemIconArray(bool atStreamStart, int count)
     EmblemIcon *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
+    #if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_EmblemIconArray(varEmblemIcon, count);
+    else
+        Load_Stream(atStreamStart, (unsigned __int8 *)varEmblemIcon, 40 * count);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varEmblemIcon, 40 * count);
+#endif
+
     var = varEmblemIcon;
     for ( i = 0; i < count; ++i )
     {
@@ -7160,7 +8504,15 @@ void __cdecl Load_EmblemIconArray(bool atStreamStart, int count)
 
 void __cdecl Load_EmblemBackground(bool atStreamStart)
 {
+    #if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_EmblemBackground(varEmblemBackground);
+    else
+        Load_Stream(atStreamStart, (unsigned __int8 *)varEmblemBackground, 24);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varEmblemBackground, 24);
+#endif
+
     varMaterialHandle = &varEmblemBackground->material;
     Load_MaterialHandle(0);
     varXString = &varEmblemBackground->description;
@@ -7172,7 +8524,15 @@ void __cdecl Load_EmblemBackgroundArray(bool atStreamStart, int count)
     EmblemBackground *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
+    #if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_EmblemBackgroundArray(varEmblemBackground, count);
+    else
+        Load_Stream(atStreamStart, (unsigned __int8 *)varEmblemBackground, 24 * count);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varEmblemBackground, 24 * count);
+#endif
+
     var = varEmblemBackground;
     for ( i = 0; i < count; ++i )
     {
@@ -7189,7 +8549,15 @@ void __cdecl Load_EmblemLayerArray(bool atStreamStart, int count)
 
 void __cdecl Load_EmblemCategory(bool atStreamStart)
 {
+    #if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_EmblemCategory(varEmblemCategory);
+    else
+        Load_Stream(atStreamStart, (unsigned __int8 *)varEmblemCategory, 8);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varEmblemCategory, 8);
+#endif
+
     varXString = &varEmblemCategory->name;
     Load_XString(0);
     varXString = &varEmblemCategory->description;
@@ -7201,7 +8569,15 @@ void __cdecl Load_EmblemCategoryArray(bool atStreamStart, int count)
     EmblemCategory *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
+    #if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_EmblemCategoryArray(varEmblemCategory, count);
+    else
+        Load_Stream(atStreamStart, (unsigned __int8 *)varEmblemCategory, 8 * count);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varEmblemCategory, 8 * count);
+#endif
+
     var = varEmblemCategory;
     for ( i = 0; i < count; ++i )
     {
@@ -7213,7 +8589,14 @@ void __cdecl Load_EmblemCategoryArray(bool atStreamStart, int count)
 
 void __cdecl Load_EmblemSet(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_EmblemSet(varEmblemSet);
+    else
+        Load_Stream(0, (unsigned __int8 *)varEmblemSet, 44);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varEmblemSet, 44);
+#endif
     DB_PushStreamPos(4u);
     if ( varEmblemSet->layers )
     {
@@ -7345,7 +8728,14 @@ void __cdecl Mark_EmblemSetPtr()
 
 void __cdecl Load_RawFile(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_RawFile(varRawFile);
+    else
+        Load_Stream(0, (unsigned __int8 *)varRawFile, 12);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varRawFile, 12);
+#endif
     DB_PushStreamPos(4u);
     varXString = &varRawFile->name;
     Load_XString(0);
@@ -7400,7 +8790,14 @@ void __cdecl Mark_RawFilePtr()
 
 void __cdecl Load_XGlobals(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_XGlobals(varXGlobals);
+    else
+        Load_Stream(0, (unsigned __int8 *)varXGlobals, 40);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varXGlobals, 40);
+#endif
     DB_PushStreamPos(4u);
     varXString = &varXGlobals->name;
     Load_XString(0);
@@ -7449,7 +8846,15 @@ void __cdecl Mark_XGlobalsPtr()
 
 void __cdecl Load_StringTableCell(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    // Cells are expanded as an array; single-cell atStreamStart loads are unused.
+    if ( atStreamStart )
+        DB_ExpandLoad_StringTableCellArray(varStringTableCell, 1);
+    else
+        Load_Stream(0, (unsigned __int8 *)varStringTableCell, 8);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varStringTableCell, 8);
+#endif
     varXString = &varStringTableCell->string;
     Load_XString(0);
 }
@@ -7459,7 +8864,14 @@ void __cdecl Load_StringTableCellArray(bool atStreamStart, int count)
     StringTableCell *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_StringTableCellArray(varStringTableCell, count);
+    else
+        Load_Stream(0, (unsigned __int8 *)varStringTableCell, 8 * count);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varStringTableCell, 8 * count);
+#endif
     var = varStringTableCell;
     for ( i = 0; i < count; ++i )
     {
@@ -7471,10 +8883,22 @@ void __cdecl Load_StringTableCellArray(bool atStreamStart, int count)
 
 void __cdecl Load_StringTable(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_StringTable(varStringTable);
+    else
+        Load_Stream(0, (unsigned __int8 *)varStringTable, 20);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varStringTable, sizeof(StringTable));
+#endif
     DB_PushStreamPos(4u);
     varXString = &varStringTable->name;
     Load_XString(0);
+#if defined(BO1_PORT_X64)
+    if (!varStringTable->name)
+    {
+    }
+#endif
     if ( varStringTable->values )
     {
         varStringTable->values = (StringTableCell *)AllocLoad_FxElemVisStateSample();
@@ -7495,7 +8919,14 @@ void __cdecl Load_StringTablePtr(bool atStreamStart)
     const void **inserted; // [esp+0h] [ebp-Ch]
     unsigned int value; // [esp+4h] [ebp-8h]
 
+#if defined(BO1_PORT_X64)
+    if (atStreamStart)
+        DB_ExpandLoad_Ptr32Array(varStringTablePtr, 1);
+    else
+        Load_Stream(0, (unsigned __int8 *)varStringTablePtr, 4);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varStringTablePtr, 4);
+#endif
     DB_PushStreamPos(0);
     if ( *varStringTablePtr )
     {
@@ -7532,7 +8963,15 @@ void __cdecl Mark_StringTablePtr()
 
 void __cdecl Load_ddlMemberDef_t(bool atStreamStart)
 {
+    #if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_ddlMemberDef_tArray(varddlMemberDef_t, 1);
+    else
+        Load_Stream(atStreamStart, (unsigned __int8 *)varddlMemberDef_t, 48);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varddlMemberDef_t, 48);
+#endif
+
     varXString = &varddlMemberDef_t->name;
     Load_XString(0);
 }
@@ -7542,7 +8981,15 @@ void __cdecl Load_ddlMemberDef_tArray(bool atStreamStart, int count)
     ddlMemberDef_t *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
+    #if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_ddlMemberDef_tArray(varddlMemberDef_t, count);
+    else
+        Load_Stream(atStreamStart, (unsigned __int8 *)varddlMemberDef_t, 48 * count);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varddlMemberDef_t, 48 * count);
+#endif
+
     var = varddlMemberDef_t;
     for ( i = 0; i < count; ++i )
     {
@@ -7554,7 +9001,15 @@ void __cdecl Load_ddlMemberDef_tArray(bool atStreamStart, int count)
 
 void __cdecl Load_ddlStructDef_t(bool atStreamStart)
 {
+    #if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_ddlStructDef_t(varddlStructDef_t);
+    else
+        Load_Stream(atStreamStart, (unsigned __int8 *)varddlStructDef_t, 16);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varddlStructDef_t, 16);
+#endif
+
     varXString = &varddlStructDef_t->name;
     Load_XString(0);
     if ( varddlStructDef_t->members )
@@ -7570,7 +9025,15 @@ void __cdecl Load_ddlStructDef_tArray(bool atStreamStart, int count)
     ddlStructDef_t *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
+    #if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_ddlStructDef_tArray(varddlStructDef_t, count);
+    else
+        Load_Stream(atStreamStart, (unsigned __int8 *)varddlStructDef_t, 16 * count);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varddlStructDef_t, 16 * count);
+#endif
+
     var = varddlStructDef_t;
     for ( i = 0; i < count; ++i )
     {
@@ -7582,7 +9045,15 @@ void __cdecl Load_ddlStructDef_tArray(bool atStreamStart, int count)
 
 void __cdecl Load_ddlEnumDef_t(bool atStreamStart)
 {
+    #if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_ddlEnumDef_t(varddlEnumDef_t);
+    else
+        Load_Stream(atStreamStart, (unsigned __int8 *)varddlEnumDef_t, 12);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varddlEnumDef_t, 12);
+#endif
+
     varXString = &varddlEnumDef_t->name;
     Load_XString(0);
     if ( varddlEnumDef_t->members )
@@ -7598,7 +9069,15 @@ void __cdecl Load_ddlEnumDef_tArray(bool atStreamStart, int count)
     ddlEnumDef_t *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
+    #if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_ddlEnumDef_tArray(varddlEnumDef_t, count);
+    else
+        Load_Stream(atStreamStart, (unsigned __int8 *)varddlEnumDef_t, 12 * count);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varddlEnumDef_t, 12 * count);
+#endif
+
     var = varddlEnumDef_t;
     for ( i = 0; i < count; ++i )
     {
@@ -7610,7 +9089,15 @@ void __cdecl Load_ddlEnumDef_tArray(bool atStreamStart, int count)
 
 void __cdecl Load_ddlDef_t(bool atStreamStart)
 {
+    #if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_ddlDef_t(varddlDef_t);
+    else
+        Load_Stream(atStreamStart, (unsigned __int8 *)varddlDef_t, 28);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varddlDef_t, 28);
+#endif
+
     if ( varddlDef_t->structList )
     {
         varddlDef_t->structList = (ddlStructDef_t *)AllocLoad_FxElemVisStateSample();
@@ -7633,14 +9120,29 @@ void __cdecl Load_ddlDef_t(bool atStreamStart)
 
 void __cdecl Load_ddlDefNext(bool atStreamStart)
 {
+    #if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_ddlDef_t(varddlDefNext);
+    else
+        Load_Stream(atStreamStart, (unsigned __int8 *)varddlDefNext, 28);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varddlDefNext, 28);
+#endif
+
     varddlDef_t = varddlDefNext;
     Load_ddlDef_t(0);
 }
 
 void __cdecl Load_ddlRoot_t(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_ddlRoot_t(varddlRoot_t);
+    else
+        Load_Stream(0, (unsigned __int8 *)varddlRoot_t, 8);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varddlRoot_t, 8);
+#endif
     DB_PushStreamPos(4u);
     varXString = &varddlRoot_t->name;
     Load_XString(0);
@@ -7695,7 +9197,14 @@ void __cdecl Mark_ddlRoot_ptr()
 
 void __cdecl Load_GfxStaticModelDrawInst(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_GfxStaticModelDrawInstArray(varGfxStaticModelDrawInst, 1);
+    else
+        Load_Stream(0, (unsigned __int8 *)varGfxStaticModelDrawInst, 76);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varGfxStaticModelDrawInst, 76);
+#endif
     varXModelPtr = &varGfxStaticModelDrawInst->model;
     Load_XModelPtr(0);
 }
@@ -7705,7 +9214,14 @@ void __cdecl Load_GfxStaticModelDrawInstArray(bool atStreamStart, int count)
     GfxStaticModelDrawInst *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_GfxStaticModelDrawInstArray(varGfxStaticModelDrawInst, count);
+    else
+        Load_Stream(0, (unsigned __int8 *)varGfxStaticModelDrawInst, 76 * count);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varGfxStaticModelDrawInst, 76 * count);
+#endif
     var = varGfxStaticModelDrawInst;
     for ( i = 0; i < count; ++i )
     {
@@ -7742,7 +9258,14 @@ void __cdecl Mark_GfxStaticModelDrawInstArray(int count)
 
 void __cdecl Load_sunflare_t(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_sunflare_t(varsunflare_t);
+    else
+        Load_Stream(0, (unsigned __int8 *)varsunflare_t, 96);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varsunflare_t, 96);
+#endif
     varMaterialHandle = &varsunflare_t->spriteMaterial;
     Load_MaterialHandle(0);
     varMaterialHandle = &varsunflare_t->flareMaterial;
@@ -7764,7 +9287,14 @@ void __cdecl Load_GfxReflectionProbeVolumeDataArray(bool atStreamStart, int coun
 
 void __cdecl Load_GfxReflectionProbe(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_GfxReflectionProbeArray(varGfxReflectionProbe, 1);
+    else
+        Load_Stream(0, (unsigned __int8 *)varGfxReflectionProbe, 24);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varGfxReflectionProbe, 24);
+#endif
     varGfxImagePtr = &varGfxReflectionProbe->reflectionImage;
     Load_GfxImagePtr(0);
     if ( varGfxReflectionProbe->probeVolumes )
@@ -7780,7 +9310,14 @@ void __cdecl Load_GfxReflectionProbeArray(bool atStreamStart, int count)
     GfxReflectionProbe *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_GfxReflectionProbeArray(varGfxReflectionProbe, count);
+    else
+        Load_Stream(0, (unsigned __int8 *)varGfxReflectionProbe, 24 * count);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varGfxReflectionProbe, 24 * count);
+#endif
     var = varGfxReflectionProbe;
     for ( i = 0; i < count; ++i )
     {
@@ -7822,7 +9359,14 @@ void __cdecl Load_StaticModelIndexArray(bool atStreamStart, int count)
 
 void __cdecl Load_GfxAabbTree(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_GfxAabbTreeArray(varGfxAabbTree, 1);
+    else
+        Load_Stream(0, (unsigned __int8 *)varGfxAabbTree, 40);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varGfxAabbTree, 40);
+#endif
     if ( varGfxAabbTree->smodelIndexes )
     {
         if ( varGfxAabbTree->smodelIndexes == (unsigned __int16 *)-1 )
@@ -7843,7 +9387,14 @@ void __cdecl Load_GfxAabbTreeArray(bool atStreamStart, int count)
     GfxAabbTree *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_GfxAabbTreeArray(varGfxAabbTree, count);
+    else
+        Load_Stream(0, (unsigned __int8 *)varGfxAabbTree, 40 * count);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varGfxAabbTree, 40 * count);
+#endif
     var = varGfxAabbTree;
     for ( i = 0; i < count; ++i )
     {
@@ -7855,7 +9406,14 @@ void __cdecl Load_GfxAabbTreeArray(bool atStreamStart, int count)
 
 void __cdecl Load_GfxCell(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_GfxCellArray(varGfxCell, 1);
+    else
+        Load_Stream(0, (unsigned __int8 *)varGfxCell, 56);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varGfxCell, 56);
+#endif
     if ( varGfxCell->aabbTree )
     {
         varGfxCell->aabbTree = (GfxAabbTree *)AllocLoad_FxElemVisStateSample();
@@ -7887,7 +9445,14 @@ void __cdecl Load_GfxCellArray(bool atStreamStart, int count)
     GfxCell *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_GfxCellArray(varGfxCell, count);
+    else
+        Load_Stream(0, (unsigned __int8 *)varGfxCell, 56 * count);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varGfxCell, 56 * count);
+#endif
     var = varGfxCell;
     for ( i = 0; i < count; ++i )
     {
@@ -7899,7 +9464,14 @@ void __cdecl Load_GfxCellArray(bool atStreamStart, int count)
 
 void __cdecl Load_GfxPortal(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_GfxPortalArray(varGfxPortal, 1);
+    else
+        Load_Stream(0, (unsigned __int8 *)varGfxPortal, 68);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varGfxPortal, 68);
+#endif
     if ( varGfxPortal->cell )
     {
         if ( varGfxPortal->cell == (GfxCell *)-1 )
@@ -7926,7 +9498,14 @@ void __cdecl Load_GfxPortalArray(bool atStreamStart, int count)
     GfxPortal *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_GfxPortalArray(varGfxPortal, count);
+    else
+        Load_Stream(0, (unsigned __int8 *)varGfxPortal, 68 * count);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varGfxPortal, 68 * count);
+#endif
     var = varGfxPortal;
     for ( i = 0; i < count; ++i )
     {
@@ -7953,7 +9532,14 @@ void __cdecl Load_GfxCompressedLightGridColorsArray(bool atStreamStart, int coun
 
 void __cdecl Load_MaterialMemory(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_MaterialMemoryArray(varMaterialMemory, 1);
+    else
+        Load_Stream(0, (unsigned __int8 *)varMaterialMemory, 8);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varMaterialMemory, 8);
+#endif
     varMaterialHandle = &varMaterialMemory->material;
     Load_MaterialHandle(0);
 }
@@ -7963,7 +9549,14 @@ void __cdecl Load_MaterialMemoryArray(bool atStreamStart, int count)
     MaterialMemory *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_MaterialMemoryArray(varMaterialMemory, count);
+    else
+        Load_Stream(0, (unsigned __int8 *)varMaterialMemory, 8 * count);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varMaterialMemory, 8 * count);
+#endif
     var = varMaterialMemory;
     for ( i = 0; i < count; ++i )
     {
@@ -8082,7 +9675,14 @@ void __cdecl Load_GfxDrawSurfArray(bool atStreamStart, int count)
 
 void __cdecl Load_GfxShadowGeometry(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_GfxShadowGeometryArray(varGfxShadowGeometry, 1);
+    else
+        Load_Stream(0, (unsigned __int8 *)varGfxShadowGeometry, 12);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varGfxShadowGeometry, 12);
+#endif
     if ( varGfxShadowGeometry->sortedSurfIndex )
     {
         varGfxShadowGeometry->sortedSurfIndex = (unsigned __int16 *)AllocLoad_XBlendInfo();
@@ -8102,7 +9702,14 @@ void __cdecl Load_GfxShadowGeometryArray(bool atStreamStart, int count)
     GfxShadowGeometry *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_GfxShadowGeometryArray(varGfxShadowGeometry, count);
+    else
+        Load_Stream(0, (unsigned __int8 *)varGfxShadowGeometry, 12 * count);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varGfxShadowGeometry, 12 * count);
+#endif
     var = varGfxShadowGeometry;
     for ( i = 0; i < count; ++i )
     {
@@ -8175,7 +9782,14 @@ void __cdecl Load_GfxLightRegionAxisArray(bool atStreamStart, int count)
 
 void __cdecl Load_GfxLightRegionHull(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_GfxLightRegionHullArray(varGfxLightRegionHull, 1);
+    else
+        Load_Stream(0, (unsigned __int8 *)varGfxLightRegionHull, 80);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varGfxLightRegionHull, 80);
+#endif
     if ( varGfxLightRegionHull->axis )
     {
         varGfxLightRegionHull->axis = (GfxLightRegionAxis *)AllocLoad_FxElemVisStateSample();
@@ -8189,7 +9803,14 @@ void __cdecl Load_GfxLightRegionHullArray(bool atStreamStart, int count)
     GfxLightRegionHull *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_GfxLightRegionHullArray(varGfxLightRegionHull, count);
+    else
+        Load_Stream(0, (unsigned __int8 *)varGfxLightRegionHull, 80 * count);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varGfxLightRegionHull, 80 * count);
+#endif
     var = varGfxLightRegionHull;
     for ( i = 0; i < count; ++i )
     {
@@ -8201,7 +9822,14 @@ void __cdecl Load_GfxLightRegionHullArray(bool atStreamStart, int count)
 
 void __cdecl Load_GfxLightRegion(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_GfxLightRegionArray(varGfxLightRegion, 1);
+    else
+        Load_Stream(0, (unsigned __int8 *)varGfxLightRegion, 8);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varGfxLightRegion, 8);
+#endif
     if ( varGfxLightRegion->hulls )
     {
         varGfxLightRegion->hulls = (GfxLightRegionHull *)AllocLoad_FxElemVisStateSample();
@@ -8215,7 +9843,14 @@ void __cdecl Load_GfxLightRegionArray(bool atStreamStart, int count)
     GfxLightRegion *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_GfxLightRegionArray(varGfxLightRegion, count);
+    else
+        Load_Stream(0, (unsigned __int8 *)varGfxLightRegion, 8 * count);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varGfxLightRegion, 8 * count);
+#endif
     var = varGfxLightRegion;
     for ( i = 0; i < count; ++i )
     {
@@ -8527,7 +10162,14 @@ void __cdecl Load_GfxWorldDraw(bool atStreamStart)
 
 void __cdecl Load_GfxWorld(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_GfxWorld(varGfxWorld);
+    else
+        Load_Stream(0, (unsigned __int8 *)varGfxWorld, 1084);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varGfxWorld, 1084);
+#endif
     DB_PushStreamPos(4u);
     varXString = &varGfxWorld->name;
     Load_XString(0);
@@ -8875,7 +10517,14 @@ void __cdecl Load_GlyphArray(bool atStreamStart, int count)
 
 void __cdecl Load_Font(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_Font(varFont);
+    else
+        Load_Stream(0, (unsigned __int8 *)varFont, 24);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varFont, sizeof(Font_s));
+#endif
     DB_PushStreamPos(4u);
     varXString = &varFont->fontName;
     Load_XString(0);
@@ -8950,7 +10599,14 @@ void __cdecl Mark_FontHandle()
 
 void __cdecl Load_GlassDef(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_GlassDef(varGlassDef);
+    else
+        Load_Stream(0, (unsigned __int8 *)varGlassDef, 60);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varGlassDef, 60);
+#endif
     varXString = &varGlassDef->name;
     Load_XString(0);
     varMaterialHandle = &varGlassDef->pristineMaterial;
@@ -8973,7 +10629,14 @@ void __cdecl Load_GlassDef(bool atStreamStart)
 
 void __cdecl Load_Glass(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_GlassArray(varGlass, 1);
+    else
+        Load_Stream(0, (unsigned __int8 *)varGlass, 124);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varGlass, 124);
+#endif
     if ( varGlass->glassDef )
     {
         if ( varGlass->glassDef == (GlassDef *)-1 )
@@ -9000,7 +10663,14 @@ void __cdecl Load_GlassArray(bool atStreamStart, int count)
     Glass *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_GlassArray(varGlass, count);
+    else
+        Load_Stream(0, (unsigned __int8 *)varGlass, 124 * count);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varGlass, 124 * count);
+#endif
     var = varGlass;
     for ( i = 0; i < count; ++i )
     {
@@ -9012,7 +10682,14 @@ void __cdecl Load_GlassArray(bool atStreamStart, int count)
 
 void __cdecl Load_Glasses(bool atStreamStart)
 {
+#if defined(BO1_PORT_X64)
+    if ( atStreamStart )
+        DB_ExpandLoad_Glasses(varGlasses);
+    else
+        Load_Stream(0, (unsigned __int8 *)varGlasses, 56);
+#else
     Load_Stream(atStreamStart, (unsigned __int8 *)varGlasses, 56);
+#endif
     DB_PushStreamPos(4u);
     varXString = &varGlasses->name;
     Load_XString(0);

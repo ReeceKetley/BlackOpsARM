@@ -1,4 +1,4 @@
-#include "r_dpvs_sceneent.h"
+﻿#include "r_dpvs_sceneent.h"
 #include <universal/com_workercmds.h>
 #include "r_dpvs_entity.h"
 #include "r_scene.h"
@@ -73,7 +73,8 @@ void    R_AddCellSceneEntSurfacesInFrustumCmd(GfxWorldDpvsPlanes *data)
     {
         __debugbreak();
     }
-    viewIndex = scene.dynSModelVisBitsCamera[(unsigned int)entInfo - 4];
+    // Win32: dynSModelVisBitsCamera[localClientNum-4] held entInfo[] base (uint32).
+    viewIndex = static_cast<unsigned int>(reinterpret_cast<uintptr_t>(scene.dpvs.entInfo[localClientNum]));
     cellIndex = (unsigned int)scene.dpvs.sceneXModelIndex;
     planesEA = (const DpvsPlane *)scene.dpvs.sceneDObjIndex;
     planeCount = LOWORD(worldDpvsPlanes->nodes);
@@ -334,7 +335,7 @@ void R_AddCellSceneEntSurfacesInFrustumCmd(GfxWorldDpvsPlanes *data)
     {
         __debugbreak();
     }
-    entInfo = (GfxEntCellRefInfo *)scene.dynSModelVisBitsCamera[localClientNum - 4];
+    entInfo = scene.dpvs.entInfo[localClientNum];
     sceneXModelIndex = scene.dpvs.sceneXModelIndex;
     sceneDObjIndex = scene.dpvs.sceneDObjIndex;
     viewIndex = dpvsCell->viewIndex;

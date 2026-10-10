@@ -1478,7 +1478,7 @@ char __cdecl Material_LoadPass(
         {
             if ( !Material_LoadPassPixelShader((const char **)text, techFlags, &v10, pass, 0x80u, &argCount, args) )
                 goto LABEL_8;
-            qsort(args, argCount, 8u, (int (__cdecl *)(const void *, const void *))Material_CompareShaderArgumentsForRuntime);
+            qsort(args, argCount, sizeof(*(args)), (int (__cdecl *)(const void *, const void *))Material_CompareShaderArgumentsForRuntime);
             firstArg = 0;
             pass->perPrimArgCount = Material_CountArgsWithUpdateFrequency(MTL_UPDATE_PER_PRIM, args, argCount, &firstArg);
             pass->perObjArgCount = Material_CountArgsWithUpdateFrequency(MTL_UPDATE_PER_OBJECT, args, argCount, &firstArg);
@@ -4615,8 +4615,7 @@ char __cdecl Material_SetShaderArguments(
     {
         qsort(
             localArgs,
-            usedCount,
-            8u,
+            usedCount, sizeof(*(localArgs)),
             (int (__cdecl *)(const void *, const void *))Material_CompareShaderArgumentsForCombining);
         usedCounta = Material_CombineShaderArguments(usedCount, localArgs);
         memcpy((unsigned __int8 *)&args[*argCount], (unsigned __int8 *)localArgs, 8 * usedCounta);
@@ -6031,13 +6030,11 @@ Material *__cdecl Material_CreateLayered(
     }
     qsort(
         newMtl->textureTable,
-        newMtl->textureCount,
-        0x10u,
+        newMtl->textureCount, sizeof(*(newMtl->textureTable)),
         (int (__cdecl *)(const void *, const void *))CompareHashedMaterialTextures);
     qsort(
         newMtl->localConstantTable,
-        newMtl->constantCount,
-        0x20u,
+        newMtl->constantCount, sizeof(*(newMtl->localConstantTable)),
         (int (__cdecl *)(const void *, const void *))CompareHashedMaterialTextures);
     Material_SetMaterialDrawRegion(newMtl);
     if ( Material_Validate(newMtl) )
@@ -7295,8 +7292,7 @@ bool __cdecl Material_FinishLoadingInstance(
     mtlLoadGlob.sortMtlRaw = mtlRaw;
     qsort(
         textureTable,
-        mtlRaw->textureCount,
-        0xCu,
+        mtlRaw->textureCount, sizeof(*(textureTable)),
         (int (__cdecl *)(const void *, const void *))CompareRawMaterialTextures);
     mtlLoadGlob.sortMtlRaw = 0;
     constantTable = (MaterialConstantDefRaw *)((char *)mtlRaw + mtlRaw->constantTableOffset);
@@ -7308,8 +7304,7 @@ bool __cdecl Material_FinishLoadingInstance(
     mtlLoadGlob.sortMtlRaw = mtlRaw;
     qsort(
         constantTable,
-        mtlRaw->constantCount,
-        0x14u,
+        mtlRaw->constantCount, sizeof(*(constantTable)),
         (int (__cdecl *)(const void *, const void *))CompareRawMaterialTextures);
     mtlLoadGlob.sortMtlRaw = 0;
     Com_sprintf(

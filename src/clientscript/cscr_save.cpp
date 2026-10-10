@@ -15,9 +15,15 @@
 // mod: follows bo1_mod_scriptvars (server instance; saves are server-script only)
 #define SAVE_OBJECT_LIMIT VARIABLELIST_PARENT_SIZE(SCRIPTINSTANCE_SERVER)
 #define SAVE_CHILD_BEGIN VARIABLELIST_CHILD_BEGIN(SCRIPTINSTANCE_SERVER)
+#if !defined(BO1_PORT_X64)
 static_assert(sizeof(VariableValueInternal) == 0x1C, "review save traversal for changed VM layout");
+#endif
+#if !defined(BO1_PORT_X64)
 static_assert(sizeof(VariableUnion) == 4, "save stacks contain four-byte values");
+#endif
+#if !defined(BO1_PORT_X64)
 static_assert(offsetof(VariableStackBuffer, buf) == 13, "KB save stack payload offset (SP 11)");
+#endif
 
 static void Scr_SaveId(scriptInstance_t inst, unsigned int id)
 {

@@ -684,7 +684,7 @@ int __cdecl dwPlatformInit(bdNetStartParams *params)
     if ( ip && I_strcmp(ip->current.string, "localhost") )
     {
         params->m_useAnyIP = 0;
-        //bdInetAddr::bdInetAddr(&forceAddr, (char *)ip->current.integer);
+        //bdInetAddr::bdInetAddr(&forceAddr, (char *)ip->current.string);
         bindAddr = forceAddr;
         //bdInetAddr::~bdInetAddr(&forceAddr);
     }

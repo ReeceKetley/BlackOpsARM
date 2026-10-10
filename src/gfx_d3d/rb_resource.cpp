@@ -7,6 +7,9 @@
 #include "r_image_load_obj.h"
 #include "r_init.h"
 #include "r_buffers.h"
+#if defined(BO1_PORT_X64)
+#include <database/db_stream.h>
+#endif
 
 FastCriticalSection resourceLock;
 r_resource_action resourceActions[16384];
@@ -354,9 +357,18 @@ void RB_Resource_Update_Internal()
                     (IDirect3DVertexDeclaration9 **)action->resource);
                 goto LABEL_2;
             case ACTION_CREATEVERTEXSHADER:
-                dx.device->CreateVertexShader(
-                    (const DWORD *)action->data,
-                    (IDirect3DVertexShader9 **)action->resource);
+                {
+                    const HRESULT shaderHr = dx.device->CreateVertexShader(
+                        (const DWORD *)action->data,
+                        (IDirect3DVertexShader9 **)action->resource);
+#if defined(BO1_PORT_X64)
+                    if (shaderHr < 0)
+                        Bo1_Diag("CreateVertexShader failed hr=%08X data=%p dword0=%08X", (unsigned)shaderHr, action->data,
+                                 action->data ? *(const unsigned *)action->data : 0u);
+#else
+                    (void)shaderHr;
+#endif
+                }
                 goto LABEL_2;
             case ACTION_CREATEPIXELSHADER:
                 //((void (__thiscall *)(IDirect3DDevice9 *, IDirect3DDevice9 *, void *, void *))dx.device->CreatePixelShader)(

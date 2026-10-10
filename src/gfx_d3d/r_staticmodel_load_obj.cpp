@@ -50,8 +50,7 @@ void __cdecl R_SortGfxAabbTree(GfxWorld *world, GfxAabbTree *tree)
 
     qsort(
         tree->smodelIndexes,
-        tree->smodelIndexCount,
-        2u,
+        tree->smodelIndexCount, sizeof(*(tree->smodelIndexes)),
         (int (__cdecl *)(const void *, const void *))CompareStaticModels);
     if ( tree->childCount )
     {

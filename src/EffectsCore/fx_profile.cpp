@@ -35,7 +35,7 @@ void __cdecl FX_DrawProfile(int clientIndex, void (__cdecl *drawFunc)(char *), f
         }
         if ( !_InterlockedDecrement(&system->shared->iteratorCount) )
             FX_RunGarbageCollectionAndPrioritySort(system);
-        qsort(entryPool, entryCount, 0x1Cu, (int (__cdecl *)(const void *, const void *))FX_CompareProfileEntries);
+        qsort(entryPool, entryCount, sizeof(*(entryPool)), (int (__cdecl *)(const void *, const void *))FX_CompareProfileEntries);
         v11 = system->shared->firstNewEffect - system->shared->firstActiveEffect;
         v3 = va(
                      "%4i of %4i effect objects in use (%.0f%%; %i free)",
@@ -273,7 +273,7 @@ void __cdecl FX_DrawPriorityDebug(int clientIndex, void (__cdecl *drawFunc)(char
     }
     if ( !_InterlockedDecrement(&system->system.shared->iteratorCount) )
         FX_RunGarbageCollectionAndPrioritySort(&system->system);
-    qsort(base, num, 8u, (int (__cdecl *)(const void *, const void *))FX_ComparePriorityDebugEntries);
+    qsort(base, num, 2 * sizeof(unsigned int), (int (__cdecl *)(const void *, const void *))FX_ComparePriorityDebugEntries); // {effect def, count} pairs
     v18 = system->system.priorityInfo.warningHigh[system->system.priorityInfo.readIndex];
     v13 = system->system.shared->firstNewEffect - system->system.shared->firstActiveEffect;
     v3 = va("%4i of %4i effect objects in use (%.0f%%; %i free)", v13, 1024, (float)((float)v13 * 0.09765625), 1024 - v13);

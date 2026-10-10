@@ -45,6 +45,11 @@ void __cdecl PMem_Init()
             }
             size += zoneWords > 2 ? (unsigned int)zoneWords * 0x8000000u : 0x10000000u;
         }
+#if defined(BO1_PORT_X64)
+        // FastFile zones are expanded 32 -> 64 bit as they stream in (db_expand), and DB_AllocXBlocks allocates up to 2x
+        // the Win32 block sizes, so the pool that held retail's Win32 zones needs to be doubled.
+        size *= 2;
+#endif
         memory = (unsigned __int8 *)VirtualAlloc(0, size, 0x1000u, 4u);
         PMem_InitPhysicalMemory(&g_mem, "main", memory, size);
     }

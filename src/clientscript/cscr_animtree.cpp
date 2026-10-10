@@ -1246,7 +1246,7 @@ void __cdecl ConnectScriptToAnim(
         anim.tree = treeIndex;
         for ( codePos = (char *)value->next; codePos; codePos = (char *)nextCodePos )
         {
-            nextCodePos = *(const char **)codePos;
+            nextCodePos = (const char *)(uintptr_t) * (unsigned int *)codePos; // 4-byte link stored in the code stream (Scr_EmitAnimationInternal)
             *(scr_anim_s *)codePos = anim;
         }
         value->next = 0;
