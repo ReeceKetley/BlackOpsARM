@@ -36,7 +36,7 @@ struct scr_anim_s // sizeof=0x4
     }
     scr_anim_s(int i)
     {
-        linkPointer = (const char *)(uintptr_t)(unsigned int)i; // BO1HACK
+        Bo1_NarrowSetBits(linkPointer, (unsigned int)i); // BO1HACK: raw slot bits
     }
 };
 
@@ -48,7 +48,7 @@ struct scr_animtree_t // sizeof=0x4
     }
     scr_animtree_t(int val)
     {
-        anims = (XAnim_s *)val;
+        anims = BO1_NARROW_DECODE(XAnim_s, (unsigned int)val);
     }
     scr_animtree_t()
     {

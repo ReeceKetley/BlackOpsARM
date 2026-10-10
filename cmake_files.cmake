@@ -2742,6 +2742,7 @@ set(SRC_UNIVERSAL
 	"${SRC_DIR}/universal/fft.h"
 	"${SRC_DIR}/universal/mem_firstfit.cpp"
 	"${SRC_DIR}/universal/mem_firstfit.h"
+	"${SRC_DIR}/universal/narrow32.cpp"
 	"${SRC_DIR}/universal/mem_fixed.cpp"
 	"${SRC_DIR}/universal/mem_fixed.h"
 	"${SRC_DIR}/universal/mem_largelocal.cpp"

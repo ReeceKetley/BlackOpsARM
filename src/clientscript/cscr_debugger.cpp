@@ -2638,8 +2638,8 @@ void __thiscall Scr_ScriptWatch::AddElement(
     {
         scriptExpr.exprHead = 0;
         Scr_CompileText(inst, text, &scriptExpr);
-        v4 = *(_BYTE *)scriptExpr.parseData.stringValue;
-        if (*(_BYTE *)scriptExpr.parseData.stringValue == 85)
+        v4 = (unsigned __int8)scriptExpr.parseData.node[0].type;
+        if ((unsigned __int8)scriptExpr.parseData.node[0].type == 85)
         {
             if (!gScrVarPub[inst].evaluate
                 && !Assert_MyHandler(
@@ -2652,7 +2652,7 @@ void __thiscall Scr_ScriptWatch::AddElement(
                 __debugbreak();
             }
             gScrVarPub[inst].evaluate = 0;
-            Scr_ExecCode(inst, *(char **)(scriptExpr.parseData.stringValue + 4), this->localId);
+            Scr_ExecCode(inst, (char *)scriptExpr.parseData.node[1].codePosValue, this->localId);
             gScrVarPub[inst].evaluate = 1;
             SL_ShutdownSystem(inst, 2u);
             Scr_FreeDebugExpr(inst, &scriptExpr);
