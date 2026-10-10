@@ -116,7 +116,7 @@ int __cdecl Scr_GetFunctionHandle(scriptInstance_t inst, const char *filename, c
     }
     if ( !Scr_IsInOpcodeMemory(inst, pos.u.codePosValue) )
         return 0;
-    result = pos.u.intValue - (unsigned int)gScrVarPub[inst].programBuffer;
+    result = (unsigned int)((const char *)pos.u.codePosValue - (const char *)gScrVarPub[inst].programBuffer);
     if ( !result
         && !Assert_MyHandler("C:\\projects_pc\\cod\\codsrc\\src\\clientscript\\cscr_main.cpp", 105, 0, "%s", "result") )
     {
@@ -242,14 +242,14 @@ void __cdecl Scr_BeginLoadScripts(scriptInstance_t inst, int user)
     gScrVarPub[inst].programHunkUser = Hunk_UserCreate(0x100000, HU_SCHEME_DEFAULT, 4u, 0, "Scr_BeginLoadScripts", 7);
     TempMemoryReset(gScrVarPub[inst].programHunkUser);
     gScrVarPub[inst].programBuffer = TempMallocAlignStrict(0);
-    if ( ((int)gScrVarPub[inst].programBuffer & 0x1F) != 0
+    if ( (((uintptr_t)gScrVarPub[inst].programBuffer) & 0x1F) != 0
         && !Assert_MyHandler(
                     "C:\\projects_pc\\cod\\codsrc\\src\\clientscript\\cscr_main.cpp",
                     242,
                     0,
                     "%s\n\t((int)gScrVarPub[inst].programBuffer) = %i",
                     "(!((int)gScrVarPub[inst].programBuffer & 31))",
-                    gScrVarPub[inst].programBuffer) )
+                    (int)(uintptr_t)gScrVarPub[inst].programBuffer) )
     {
         __debugbreak();
     }
