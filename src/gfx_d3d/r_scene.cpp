@@ -1208,7 +1208,7 @@ void __cdecl R_AddBModelSurfacesCamera(
         ++count;
         ++surfIndex;
         ++modelSurf;
-        surfId += 5;
+        surfId += sizeof(BModelSurface) / 4; // Win32: 20-byte BModelSurface (5 words); 3 pointers on x64
     }
 }
 
@@ -1271,7 +1271,7 @@ GfxDrawSurf *__cdecl R_AddBModelSurfaces(
         ++count;
         ++surfIndex;
         ++modelSurf;
-        surfId += 5;
+        surfId += sizeof(BModelSurface) / 4; // Win32: 20-byte BModelSurface (5 words); 3 pointers on x64
     }
     return drawSurf;
 }
@@ -1401,7 +1401,7 @@ void R_AddXModelSurfacesCamera(
             region = (*material)->cameraRegion;
             if (region == 3)
             {
-                surfId += 14;
+                surfId += sizeof(GfxModelRigidSurface) / 4; // Win32: 14 words (56 bytes)
                 ++modelSurf;
             }
             else
@@ -1487,7 +1487,7 @@ void R_AddXModelSurfacesCamera(
                     XSurface = R_GetXSurface((unsigned int *)modelSurf, surfType);
                     totalVertCount += XSurfaceGetNumVerts(XSurface);
                 }
-                surfId += 14;
+                surfId += sizeof(GfxModelRigidSurface) / 4; // Win32: 14 words (56 bytes)
                 ++modelSurf;
             }
         }
@@ -1626,12 +1626,12 @@ GfxDrawSurf *__cdecl R_AddXModelSurfaces(
                 LODWORD(newDrawSurf) = (unsigned __int16)surfId | *(unsigned int *)&(*material)->info.drawSurf.fields & 0xFFFF0000;
                 drawSurf->packed = newDrawSurf;
                 ++drawSurf;
-                surfId += 14;
+                surfId += sizeof(GfxModelRigidSurface) / 4; // Win32: 14 words (56 bytes)
                 ++modelSurf;
             }
             else
             {
-                surfId += 14;
+                surfId += sizeof(GfxModelRigidSurface) / 4; // Win32: 14 words (56 bytes)
                 ++modelSurf;
             }
         }
@@ -1783,7 +1783,7 @@ void __cdecl R_AddDObjSurfacesCamera(
                     if ( skinnedCachedOffset == -2 )
                     {
                         surfType = SF_BEGIN_XMODEL;
-                        surfSize = 56;
+                        surfSize = sizeof(GfxModelRigidSurface); // Win32: 56
                     }
                     else
                     {
@@ -1793,7 +1793,7 @@ void __cdecl R_AddDObjSurfacesCamera(
                             goto LABEL_34;
                         }
                         surfType = SF_XMODEL_SKINNED;
-                        surfSize = 24;
+                        surfSize = sizeof(GfxModelSkinnedSurface); // Win32: 24
                     }
                     if ( !*material
                         && !Assert_MyHandler("C:\\projects_pc\\cod\\codsrc\\src\\gfx_d3d\\r_scene.cpp", 1547, 0, "%s", "*material") )
@@ -1986,7 +1986,7 @@ LABEL_25:
             if ( skinnedCachedOffset == -2 )
             {
                 surfType = SF_BEGIN_XMODEL;
-                surfSize = 56;
+                surfSize = sizeof(GfxModelRigidSurface); // Win32: 56
             }
             else
             {
@@ -2000,7 +2000,7 @@ LABEL_24:
                     goto LABEL_25;
                 }
                 surfType = SF_XMODEL_SKINNED;
-                surfSize = 24;
+                surfSize = sizeof(GfxModelSkinnedSurface); // Win32: 24
             }
             if ( !*material
                 && !Assert_MyHandler("C:\\projects_pc\\cod\\codsrc\\src\\gfx_d3d\\r_scene.cpp", 1749, 0, "%s", "*material") )
@@ -2816,10 +2816,12 @@ void __cdecl R_ClearScene(int localClientNum)
         __debugbreak();
     }
     scene.dpvs.localClientNum = localClientNum;
-    Com_Memset((unsigned int *)scene.sceneDObj, 0, 132 * scene.sceneDObjCount);
-    Com_Memset((unsigned int *)&scene.sceneModel[0].info, 0, 76 * scene.sceneModelCount);
-    Com_Memset((unsigned int *)&scene.sceneBrush[0].info.surfId, 0, 44 * scene.sceneBrushCount);
-    Com_Memset((unsigned int *)scene.glassBrush, 0, 40 * scene.glassBrushCount);
+    // Win32 used literal element sizes (132/76/44/40) and started the model and brush clears at an inner member; clear
+    // whole native elements instead (every field is rewritten when an entry is allocated).
+    Com_Memset((unsigned int *)scene.sceneDObj, 0, sizeof(scene.sceneDObj[0]) * scene.sceneDObjCount);
+    Com_Memset((unsigned int *)scene.sceneModel, 0, sizeof(scene.sceneModel[0]) * scene.sceneModelCount);
+    Com_Memset((unsigned int *)scene.sceneBrush, 0, sizeof(scene.sceneBrush[0]) * scene.sceneBrushCount);
+    Com_Memset((unsigned int *)scene.glassBrush, 0, sizeof(scene.glassBrush[0]) * scene.glassBrushCount);
     scene.addedLightCount = 0;
     memset((unsigned __int8 *)scene.drawSurfCount, 0, sizeof(scene.drawSurfCount));
     for ( viewIndex = 0; viewIndex < 7; ++viewIndex )

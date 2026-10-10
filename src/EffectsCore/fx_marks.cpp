@@ -29,7 +29,7 @@ jqModule fx_add_markModule =
     .Type = JQ_WORKER_GENERIC,
     .Code = fx_add_markCallback
 };
-jqWorkerCmd fx_add_markWorkerCmd = { &fx_add_markModule, 44u, 0, 0, &fx_add_markLimit, NULL, 0u };
+jqWorkerCmd fx_add_markWorkerCmd = { &fx_add_markModule, JQ_CMD_SIZE(FxAddMarkCmd, 44u), 0, 0, &fx_add_markLimit, NULL, 0u };
 
 FxMarkPoint g_fxMarkPoints[3060];
 FxMarksSystem *fx_marksSystemPool;
@@ -284,14 +284,14 @@ void __cdecl FX_FreeMarkTriGroups(FxMarksSystem *marksSystem, FxMark *mark)
 
 FxTriGroupPool *__cdecl FX_TriGroupFromHandle(FxMarksSystem *marksSystem, unsigned int handle)
 {
-    if ( handle >= 0x6000
+    if ( handle >= 1024 * sizeof(FxTriGroupPool)
         && !Assert_MyHandler(
                     "c:\\projects_pc\\cod\\codsrc\\src\\effectscore\\fx_marks.h",
                     212,
                     0,
                     "handle doesn't index FX_TRI_GROUP_LIMIT * sizeof( FxTriGroup )\n\t%i not in [0, %i)",
                     handle,
-                    24576) )
+                    (int)(1024 * sizeof(FxTriGroupPool))) )
     {
         __debugbreak();
     }
@@ -321,14 +321,14 @@ void __cdecl FX_FreeMarkPointGroups(FxMarksSystem *marksSystem, FxMark *mark)
 
 FxPointGroupPool *__cdecl FX_PointGroupFromHandle(FxMarksSystem *marksSystem, unsigned int handle)
 {
-    if ( handle >= 0x19800
+    if ( handle >= 1536 * sizeof(FxPointGroupPool)
         && !Assert_MyHandler(
                     "c:\\projects_pc\\cod\\codsrc\\src\\effectscore\\fx_marks.h",
                     237,
                     0,
                     "handle doesn't index FX_POINT_GROUP_LIMIT * sizeof( FxPointGroup )\n\t%i not in [0, %i)",
                     handle,
-                    104448) )
+                    (int)(1536 * sizeof(FxPointGroupPool))) )
     {
         __debugbreak();
     }
@@ -506,6 +506,16 @@ void __cdecl FX_ImpactMark(
     }
 }
 
+// Win32 packed these into unsigned int[5] (pointers as 32-bit ints); a typed struct keeps the pointers intact on x64.
+struct FxImpactMarkCallbackContext
+{
+    unsigned int localClientNum;
+    Material *material;
+    float radius;
+    const unsigned __int8 *nativeColor;
+    const FxMarkAlphaFade *markAlpha;
+};
+
 void __cdecl FX_ImpactMark_Generate(
                 int localClientNum,
                 MarkFragmentsAgainstEnum markAgainst,
@@ -523,7 +533,7 @@ void __cdecl FX_ImpactMark_Generate(
     FxMarkTri tris[256]; // [esp+230h] [ebp-10C8h] BYREF
     MarkInfo markInfo; // [esp+E28h] [ebp-4D0h] BYREF
     float *viewOffset; // [esp+12E0h] [ebp-18h]
-    unsigned int callbackContext[5]; // [esp+12E4h] [ebp-14h] BYREF
+    FxImpactMarkCallbackContext callbackContext;
 
     PROF_SCOPED("FX_ImpactMark_Generate");
 
@@ -534,11 +544,11 @@ void __cdecl FX_ImpactMark_Generate(
     }
     else
     {
-        callbackContext[0] = localClientNum;
-        callbackContext[1] = (unsigned int)material;
-        *(float *)&callbackContext[2] = radius;
-        callbackContext[3] = (unsigned int)nativeColor;
-        callbackContext[4] = (unsigned int)markAlpha;
+        callbackContext.localClientNum = localClientNum;
+        callbackContext.material = material;
+        callbackContext.radius = radius;
+        callbackContext.nativeColor = nativeColor;
+        callbackContext.markAlpha = markAlpha;
         markInfo.isSeeThruDecal = isSeeThruDecal;
         if ( fx_marks->current.enabled
             && (markAgainst != MARK_FRAGMENTS_AGAINST_MODELS
@@ -568,7 +578,7 @@ void __cdecl FX_ImpactMark_Generate(
             R_MarkFragments_Go(
                 &markInfo,
                 FX_ImpactMark_Generate_Callback,
-                callbackContext,
+                &callbackContext,
                 255,
                 tris,
                 765,
@@ -785,19 +795,20 @@ void __cdecl FX_ImpactMark_Generate_Callback(
                 const float *markHitNormal,
                 bool isSeeThruDecal)
 {
+    const FxImpactMarkCallbackContext *ctx = (const FxImpactMarkCallbackContext *)context;
     FX_AllocAndConstructMark(
-        *(unsigned int *)context,
+        ctx->localClientNum,
         triCount,
         pointCount,
-        *((Material **)context + 1),
+        ctx->material,
         tris,
         points,
         markOrigin,
         markHitNormal,
-        *((float *)context + 2),
+        ctx->radius,
         markTexCoordAxis,
-        *((const unsigned __int8 **)context + 3),
-        *((const FxMarkAlphaFade **)context + 4),
+        ctx->nativeColor,
+        ctx->markAlpha,
         isSeeThruDecal);
 }
 
@@ -1121,14 +1132,14 @@ int __cdecl FX_TriGroupToHandle(FxMarksSystem *marksSystem, FxTriGroup *group)
     if ( !group && !Assert_MyHandler("c:\\projects_pc\\cod\\codsrc\\src\\effectscore\\fx_marks.h", 200, 0, "%s", "group") )
         __debugbreak();
     handle = (char *)group - (char *)marksSystem->triGroups;
-    if ( handle >= 0x6000
+    if ( handle >= 1024 * sizeof(FxTriGroupPool)
         && !Assert_MyHandler(
                     "c:\\projects_pc\\cod\\codsrc\\src\\effectscore\\fx_marks.h",
                     203,
                     0,
                     "handle doesn't index FX_TRI_GROUP_LIMIT * sizeof( FxTriGroup )\n\t%i not in [0, %i)",
                     handle,
-                    24576) )
+                    (int)(1024 * sizeof(FxTriGroupPool))) )
     {
         __debugbreak();
     }
@@ -1192,14 +1203,14 @@ int __cdecl FX_PointGroupToHandle(FxMarksSystem *marksSystem, FxPointGroup *grou
     if ( !group && !Assert_MyHandler("c:\\projects_pc\\cod\\codsrc\\src\\effectscore\\fx_marks.h", 225, 0, "%s", "group") )
         __debugbreak();
     handle = (char *)group - (char *)marksSystem->pointGroups;
-    if ( handle >= 0x19800
+    if ( handle >= 1536 * sizeof(FxPointGroupPool)
         && !Assert_MyHandler(
                     "c:\\projects_pc\\cod\\codsrc\\src\\effectscore\\fx_marks.h",
                     228,
                     0,
                     "handle doesn't index FX_POINT_GROUP_LIMIT * sizeof( FxPointGroup )\n\t%i not in [0, %i)",
                     handle,
-                    104448) )
+                    (int)(1536 * sizeof(FxPointGroupPool))) )
     {
         __debugbreak();
     }

@@ -81,3 +81,17 @@ Final builds of Win32, plain x64, and guard x64 Release succeeded. After the fin
 The extended plain x64 run also exposed a separate script lifecycle bug: `cleanup_unoccupied_floor` kept executing after `self Delete()` sent the death notification, then called `RandomIntRange(0, 0)` on its initial empty destination array. All three hidden elevator struct tables contain six entries on both architectures. `Scr_TerminateRunningThread` delegates to `Scr_DebugTerminateThread` in developer mode; the x64 debugger guard returned immediately when the UI was not initialized, skipping termination. The fallback now sets the frame's native `fs.pos` to `g_EndPos`, matching normal VM termination. Temporary struct-table diagnostics were removed. Final replay results follow.
 
 Final termination-fix verification: guard x64 passed all 12 steps, completed at 83350, quit at 88350, exit 0. Plain x64 passed all 12 steps, completed at 84200 and continued fighting for 120 seconds: round one ended at 165400, round two began at 177900, quit at 204200, exit 0. Both logs have zero headless assertions, crashes, failed plan steps, or script runtime errors. Win32 also passed a 120-second post-route soak with exit 0 before the x64-only termination fix; final Win32 Release rebuild and a 15-second startup smoke passed. Preserved full-route logs are `build/run/{x64guard_route,x64_physics_route,w32_physics_route}/feature_route_verified.log`. No renderer or Android changes were made.
+
+## Windowed x64 bring-up (2026-10-10)
+
+Root causes found between "stuck on the loading screen" and a playable first-person view, all Win32 layout assumptions:
+
+- **Client gamestate/snapshot desync**: with the client glass renderer skipped on x64, `GlassCl_ReadGameState`/`GlassCl_ParseSnapshot` left the glass bytes unread, so the next field (`customGameMode`) read garbage. A skip reader now consumes the section (`glass_client.cpp`).
+- **Worker command sizes**: every `jqWorkerCmd` carried a Win32 `dataSize` literal; now `JQ_CMD_SIZE(Type, win32)` (`com_workercmds.h`). `jqBatch` is 16-byte aligned on x64 (inline command data at byte 64) because command structs with SSE members use aligned loads.
+- **FastFile**: `GfxAabbTree::childrenOffset` is in file-node units (40 bytes); rescaled to the native node size (`db_expand.cpp`).
+- **Raw-offset consumers**: `DpvsStaticCellCmd`/`DpvsDynamicCellCmd`/`DpvsEntityCmd` readers, model surface records (`GfxModelRigidSurface` writer in `r_model.cpp`, `+14` gfxEntIndex reads, `surfId += 5/14`, `surfSize = 56/24`), `BModelSurface` stride, `client_spawn_fields` offsets, `g_animRateOffsets`, `XAnimClientNotifyList` 24-byte strides, the impact-mark callback context (pointers packed in `unsigned int[5]`), `oldSkinnedCachedOffset = (int)ptr`.
+- **Call convention**: `rb_tessTable` entries were called with the by-value `GfxCmdBufContext` flattened into two pointer arguments.
+- **Sorting a 4-byte index list as `void **`** (texture streaming) corrupted memory on x64.
+- **Command buffer sizes**: `R_GetCommandBuffer` literals (stretch pic 48, text 96, ...) overran their slot on x64, which truncated UI strings ("You Surv...") and filled the HUD with junk glyphs. Now `R_CMD_BYTES(Type, win32)`.
+- **FX marks**: point-group handle limit used the Win32 pool stride; now `sizeof(FxPointGroupPool)`.
+- **Physics solver nodes** (`pulse_sum_normal/point/angular`) were allocated with Win32 literals (160/272/144).

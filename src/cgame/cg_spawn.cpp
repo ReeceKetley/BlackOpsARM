@@ -14,13 +14,14 @@
 #include <qcommon/cm_load.h>
 #include <qcommon/cm_mapkit.h> // mod: noperks
 #include <client/splitscreen.h>
+#include <cstddef>
 
 const cent_field_t client_spawn_fields[5] =
 {
-  { "origin", 48, F_VECTOR },
-  { "angles", 60, F_VECTOR },
-  { "model", 682, F_MODEL },
-  { "targetname", 694, F_STRING },
+  { "origin", offsetof(centity_s, pose.origin), F_VECTOR },
+  { "angles", offsetof(centity_s, pose.angles), F_VECTOR },
+  { "model", offsetof(centity_s, nextState.index), F_MODEL },
+  { "targetname", offsetof(centity_s, nextState.targetname), F_STRING },
   { NULL, 0, F_INT }
 };
 
@@ -774,9 +775,14 @@ void __cdecl CG_ParseEntityField(int localClientNum, const char *key, char *valu
         case F_VECTOR:
             memset(vec, 0, sizeof(vec));
             sscanf(value, "%f %f %f", vec, &vec[1], &vec[2]);
-            *(float *)((char *)&ent->pose.lightingHandle + f->ofs) = vec[0];
-            *(float *)(&ent->pose.localClientNum + f->ofs) = vec[1];
-            *(float *)((char *)&ent->pose.cullIn + f->ofs) = vec[2];
+            {
+                // Win32 wrote the three floats through byte pointers at +0/+4/+8 from different pose members;
+                // the field offset is native now, so write the vector in one place.
+                float *dst = (float *)((char *)&ent->pose.lightingHandle + f->ofs);
+                dst[0] = vec[0];
+                dst[1] = vec[1];
+                dst[2] = vec[2];
+            }
             break;
         case F_MODEL:
             if ( !ignoreModel )

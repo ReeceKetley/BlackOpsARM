@@ -1709,10 +1709,12 @@ unsigned int __cdecl R_RenderDrawSurfListMaterial(const GfxDrawSurfListArgs *lis
                 R_SetupPass(prepassContext, 0);
                 passPrepassContext_4 = prepassContext.state;
             }
-            subListCount = ((int (__cdecl *)(const GfxDrawSurfListArgs *, GfxCmdBufSourceState *, GfxCmdBufState *))rb_tessTable[(drawSurf.packed >> 51) & 0xF])(
-                                             listArgs,
-                                             passPrepassContext,
-                                             passPrepassContext_4);
+            // The table entries take the prepass GfxCmdBufContext by value; calling them with the two members flattened
+            // into separate arguments only works on Win32 (x64 passes the 16-byte struct by hidden pointer).
+            GfxCmdBufContext passPrepass;
+            passPrepass.source = passPrepassContext;
+            passPrepass.state = passPrepassContext_4;
+            subListCount = rb_tessTable[(drawSurf.packed >> 51) & 0xF](listArgs, passPrepass);
         }
 
         if ( isPixelCostEnabled )

@@ -174,7 +174,14 @@ struct _jqBatch // sizeof=0x0
 {                                       // XREF: jqBatch/r
 };
 
-struct __declspec(align(4)) jqBatch // sizeof=0x7C
+#if defined(BO1_PORT_X64)
+// x64: the inline command data sits at byte 64 of the batch (ParamData[3]); command structs with SSE members are compiled
+// with aligned vector loads, so the whole batch must be 16-byte aligned wherever it is copied to.
+#define JQ_BATCH_ALIGN 16
+#else
+#define JQ_BATCH_ALIGN 4
+#endif
+struct __declspec(align(JQ_BATCH_ALIGN)) jqBatch // sizeof=0x7C
 {                                       // XREF: .data:jqBatch g_phys_task_manager_batch/r
                                         // jqAtomicQueue<jqBatch,32>::NodeType/r ...
     void *p3x_info;                     // XREF: jqAddBatch(jqModule const &,void *,void *,jqBatchGroup *,jqQueue *,void *,int)+19/w

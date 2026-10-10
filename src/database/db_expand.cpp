@@ -2225,7 +2225,11 @@ void DB_ExpandLoad_GfxAabbTreeArray(GfxAabbTree *dst, int count)
         dst[i].startSurfIndex = s.startSurfIndex;
         dst[i].smodelIndexCount = s.smodelIndexCount;
         DB_ExpandPtrStore(reinterpret_cast<uintptr_t *>(&dst[i].smodelIndexes), s.smodelIndexes);
-        dst[i].childrenOffset = s.childrenOffset;
+        // The offset is in bytes from this node to its first child within the same node array, so it counts Win32
+        // nodes (40 bytes); rescale it to the native node size.
+        iassert(s.childrenOffset % static_cast<int>(sizeof(GfxAabbTree_32)) == 0);
+        dst[i].childrenOffset = s.childrenOffset / static_cast<int>(sizeof(GfxAabbTree_32))
+            * static_cast<int>(sizeof(GfxAabbTree));
     }
     DB_Expand_Commit(static_cast<int>(sizeof(GfxAabbTree) * static_cast<size_t>(count)), count);
 }
