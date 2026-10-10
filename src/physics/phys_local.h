@@ -981,7 +981,7 @@ public:
 
     T *add(int no_error, const char *error_msg)
     {
-        T_internal *ptr = (T_internal *)PMM_ALLOC(sizeof(T_internal), sizeof(T_internal) % 16 == 0 ? 16 : 4);
+        T_internal *ptr = (T_internal *)PMM_ALLOC(sizeof(T_internal), sizeof(T_internal) % 16 == 0 ? 16 : alignof(T_internal));
 
         if (ptr)
         {
@@ -1031,7 +1031,7 @@ public:
         prev->m_next_T_internal = next;
         next->m_prev_T_internal = prev;
         //data->m_data.~T();
-        PMM_FREE((unsigned __int8 *)data, sizeof(T_internal), sizeof(T_internal) % 16 == 0 ? 16 : 4);
+        PMM_FREE((unsigned __int8 *)data, sizeof(T_internal), sizeof(T_internal) % 16 == 0 ? 16 : alignof(T_internal));
     }
 
     void remove(T *data_)
@@ -1039,7 +1039,7 @@ public:
         if (data_)
         {
             T_internal *ti = (T_internal *)((char *)data_ - offsetof(T_internal, m_data));
-            PMM_VALIDATE((char *)ti, sizeof(T_internal), sizeof(T_internal) % 16 == 0 ? 16 : 4);
+            PMM_VALIDATE((char *)ti, sizeof(T_internal), sizeof(T_internal) % 16 == 0 ? 16 : alignof(T_internal));
             remove(ti);
         }
     }

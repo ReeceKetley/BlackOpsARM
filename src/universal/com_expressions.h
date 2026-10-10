@@ -45,16 +45,21 @@ union operandInternalDataUnion // sizeof=0x4
     float floatVal;
     const char *string;
 
+    // The decompiled evaluator stores string pointers through `.intVal = (int)ptr`; on x64 the union is 8 bytes, so every
+    // constructor clears the whole union first (pointers stay below 4 GB, see BO1_X64_LOW_VA, so the low half is the pointer).
     operandInternalDataUnion()
     {
+        string = nullptr;
         intVal = 0;
     }
     operandInternalDataUnion(int i)
     {
+        string = nullptr;
         intVal = i;
     }
     operandInternalDataUnion(float f)
     {
+        string = nullptr;
         floatVal = f;
     }
     operandInternalDataUnion(const char *str)
@@ -83,6 +88,7 @@ struct Operand // sizeof=0x8
     Operand()
     {
         dataType = VAL_INT;
+        internals.string = nullptr;
         internals.intVal = 0;
     }
 };

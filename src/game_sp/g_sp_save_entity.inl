@@ -35,7 +35,11 @@ static const SPEntitySaveField s_entityExtFields[] = {
     XF(script_linkname, 1), XF(activator, 3), XF(soundNotify, 1)
 };
 #undef XF
-static const SPEntitySaveField s_tagFields[] = { {0, 4, 2}, {4, 4, 2}, {8, 2, 1} };
+static const SPEntitySaveField s_tagFields[] = {
+    { offsetof(tagInfo_s, parent), sizeof(((tagInfo_s *)0)->parent), 2 },
+    { offsetof(tagInfo_s, next), sizeof(((tagInfo_s *)0)->next), 2 },
+    { offsetof(tagInfo_s, name), sizeof(((tagInfo_s *)0)->name), 1 }
+};
 #if !defined(BO1_PORT_X64)
 static_assert(sizeof(gentity_s) == 0x2F8, "DERIVED entity image");
 #endif
@@ -60,7 +64,12 @@ static void SP_CheckEntityFields(const SPEntitySaveField *fields, unsigned count
     // The EXE table is not sorted. Validate bounds and pairwise non-overlap without reordering it.
     for (unsigned i = 0; i < count; ++i)
     {
-        iassert(fields[i].size == (fields[i].type == 1 || fields[i].type == 11 || fields[i].type == 17 ? 2 : 4));
+        const unsigned expectedSize = fields[i].type == 1 || fields[i].type == 11 || fields[i].type == 17
+            ? 2 : (fields[i].type == 2 || fields[i].type == 4 || fields[i].type == 5
+                || fields[i].type == 6 || fields[i].type == 8 || fields[i].type == 9
+                || fields[i].type == 10 || (fields[i].type >= 12 && fields[i].type <= 15)
+                ? sizeof(void *) : 4);
+        iassert(fields[i].size == expectedSize);
         iassert(fields[i].type != 18 || fields[i].size == 4);
         iassert(fields[i].offset + fields[i].size <= size);
         for (unsigned j = 0; j < i; ++j)
@@ -87,15 +96,16 @@ static void *SP_EntityFieldBase(int type, unsigned *stride, unsigned *count)
     return nullptr;
 }
 
-static int SP_EntityReferenceIndex(int type, const void *pointer)
+static int SP_EntityReferenceIndex(int type, const void *pointer, unsigned fieldOffset)
 {
     if (!pointer)
         return 0;
     unsigned stride, count;
     const unsigned char *base = (const unsigned char *)SP_EntityFieldBase(type, &stride, &count);
-    const unsigned delta = (unsigned)pointer - (unsigned)base;
+    const uintptr_t delta = (uintptr_t)pointer - (uintptr_t)base;
     if (!base || delta % stride || delta / stride >= count)
-        Com_Error(ERR_DROP, "WriteField1: reference type %i out of range", type);
+        Com_Error(ERR_DROP, "WriteField1: reference type %i out of range (field %u, ptr %p, base %p, stride %u, count %u)",
+            type, fieldOffset, pointer, base, stride, count);
     return delta / stride + 1;
 }
 
@@ -226,7 +236,7 @@ static void SP_WriteStruct(const SPEntitySaveField *fields, unsigned count,
         else if (field.type == 13)
             *(int *)at = Path_SaveNode(*(pathnode_t **)at);
         else
-            *(int *)at = SP_EntityReferenceIndex(field.type, *(void **)at);
+            *(int *)at = SP_EntityReferenceIndex(field.type, *(void **)at, field.offset);
     }
     MemFile_WriteData(memFile, size, image);
     for (unsigned i = 0; i < count; ++i)

@@ -4443,9 +4443,13 @@ void __cdecl Scr_DebugKillThread(scriptInstance_t inst, unsigned int threadId, c
 void __cdecl Scr_DebugTerminateThread(scriptInstance_t inst, int topThread)
 {
 #if defined(BO1_PORT_X64)
-    // The breakpoint machinery below needs Scr_InitDebuggerSystem, which is inert on x64 (see Bo1_ScrDebuggerUiEnabled).
+    // Thread cancellation is required even when the debugger UI is unavailable.
+    // Use the normal VM end position instead of debugger breakpoints in that case.
     if (!gScrDebuggerGlob[inst].debugger_inited_system)
+    {
+        gScrVmPub[inst].function_frame_start[topThread].fs.pos = &g_EndPos;
         return;
+    }
 #endif
     Scr_DebugKillThread(
         inst,
