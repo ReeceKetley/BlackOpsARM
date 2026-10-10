@@ -873,16 +873,67 @@ void __cdecl GlassCl_Update(int localClientNum)
         clGlasses->Update(localClientNum);
 }
 
+#if defined(BO1_PORT_X64)
+// With the client glass renderer disabled on x64 the glass section of the gamestate and of every snapshot must still be
+// consumed, or the rest of the message (custom game mode, entities, ...) is read from the wrong bit position and the
+// local client never reaches CA_ACTIVE. Same wire format as GlassesClient::ParseSnapshot, without applying any state.
+static void GlassCl_SkipSnapshot(msg_t *msg)
+{
+    if ( MSG_ReadBit(msg) == 1 )
+    {
+        if ( MSG_ReadBit(msg) == 1 )
+        {
+            const unsigned int num = MSG_ReadShort(msg);
+            for ( unsigned int i = 0; i < num; ++i )
+            {
+                if ( MSG_ReadBits(msg, 2u) == 2 )
+                {
+                    for ( int k = 0; k < 6; ++k )
+                        MSG_ReadFloat(msg);
+                }
+            }
+        }
+        else
+        {
+            const unsigned int numChanges = MSG_ReadShort(msg);
+            for ( unsigned int j = 0; j < numChanges; ++j )
+            {
+                MSG_ReadBits(msg, 0xAu);
+                if ( MSG_ReadBits(msg, 2u) == GlassState::State::SHATTERED )
+                {
+                    for ( int k = 0; k < 6; ++k )
+                        MSG_ReadFloat(msg);
+                }
+            }
+        }
+    }
+    const unsigned int check = MSG_ReadShort(msg);
+    if ( check != 30154 )
+    {
+        Com_PrintError(14, "GlassCl_SkipSnapshot - unexpected end of message: %x\n", check);
+        MSG_Discard(msg);
+    }
+}
+#endif
+
 void __cdecl GlassCl_ReadGameState(int localClientNum, msg_t *msg)
 {
     if ( clGlasses )
         clGlasses->ParseSnapshot(localClientNum, msg, 1);
+#if defined(BO1_PORT_X64)
+    else
+        GlassCl_SkipSnapshot(msg);
+#endif
 }
 
 void __cdecl GlassCl_ParseSnapshot(int localClientNum, msg_t *msg)
 {
     if ( clGlasses )
         clGlasses->ParseSnapshot(localClientNum, msg, 0);
+#if defined(BO1_PORT_X64)
+    else
+        GlassCl_SkipSnapshot(msg);
+#endif
 }
 
 void __cdecl GlassCl_WriteDemoSnapshot(msg_t *msg)

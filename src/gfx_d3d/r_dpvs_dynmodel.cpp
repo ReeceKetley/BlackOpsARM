@@ -17,23 +17,24 @@ void __cdecl R_AddCellDynModelSurfacesInFrustumCmd(const DpvsPlane **data)
 
     if ( r_drawDynEnts->current.enabled )
     {
+        const DpvsDynamicCellCmd *cmd = (const DpvsDynamicCellCmd *)data; // typed: Win32 byte offsets are wrong on x64
         worldDpvsDyn = &rgp.world->dpvsDyn;
-        if ( (unsigned int)data[1] >= rgp.world->dpvsPlanes.cellCount
+        if ( cmd->cellIndex >= rgp.world->dpvsPlanes.cellCount
             && !Assert_MyHandler(
                         "C:\\projects_pc\\cod\\codsrc\\src\\gfx_d3d\\r_dpvs_dynmodel.cpp",
                         183,
                         0,
                         "dpvsCell->cellIndex doesn't index rgp.world->dpvsPlanes.cellCount\n\t%i not in [0, %i)",
-                        data[1],
+                        cmd->cellIndex,
                         rgp.world->dpvsPlanes.cellCount) )
         {
             __debugbreak();
         }
         dynEntClientWordCount = worldDpvsDyn->dynEntClientWordCount[0];
-        planeCount = *((unsigned __int8 *)data + 10);
-        dynEntCellBits = &worldDpvsDyn->dynEntCellBits[0][worldDpvsDyn->dynEntClientWordCount[0] * (unsigned int)data[1]];
-        dynEntVisData = worldDpvsDyn->dynEntVisData[0][*((unsigned __int16 *)data + 4)];
-        planes = *data;
+        planeCount = cmd->planeCount;
+        dynEntCellBits = &worldDpvsDyn->dynEntCellBits[0][worldDpvsDyn->dynEntClientWordCount[0] * cmd->cellIndex];
+        dynEntVisData = worldDpvsDyn->dynEntVisData[0][cmd->viewIndex];
+        planes = cmd->planes;
         dynModelList = DynEnt_GetClientModelPoseList();
         R_CullDynModelInCell(dynEntCellBits, dynEntClientWordCount, dynModelList, planes, planeCount, dynEntVisData);
     }

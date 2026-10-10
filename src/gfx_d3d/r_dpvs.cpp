@@ -1669,9 +1669,10 @@ int __cdecl R_DrawBModel(
     {
         __debugbreak();
     }
-    size = 20 * surfaceCount + 32;
+    // Win32: 20-byte BModelSurface, 32-byte placement, 120-byte constant set (0x78); BModelSurface holds 3 pointers.
+    size = sizeof(BModelSurface) * surfaceCount + sizeof(GfxScaledPlacement);
     if ( constSet )
-        size = 20 * surfaceCount + 152;
+        size = sizeof(BModelSurface) * surfaceCount + sizeof(GfxScaledPlacement) + sizeof(ShaderConstantSet);
     newConstantSet = 0;
     startSurfPos = _InterlockedExchangeAdd(&frontEndDataOut->surfPos, size);
     if ( size + startSurfPos <= 0x40000 )
@@ -1689,8 +1690,8 @@ int __cdecl R_DrawBModel(
         if ( constSet )
         {
             newConstantSet = (ShaderConstantSet *)&frontEndDataOut->surfsBuffer[startSurfPos];
-            memcpy(&frontEndDataOut->surfsBuffer[startSurfPos], constSet, 0x78u);
-            startSurfPos += 120;
+            memcpy(&frontEndDataOut->surfsBuffer[startSurfPos], constSet, sizeof(ShaderConstantSet));
+            startSurfPos += sizeof(ShaderConstantSet);
         }
         newPlacement = (GfxScaledPlacement *)&frontEndDataOut->surfsBuffer[startSurfPos];
         memcpy(&frontEndDataOut->surfsBuffer[startSurfPos], placement, 0x1Cu);
@@ -2719,9 +2720,10 @@ void __cdecl R_AddCellDynBrushSurfacesInFrustumCmd(DpvsPlane **data)
 {
     unsigned int oldViewIndex; // [esp+0h] [ebp-8h]
 
-    oldViewIndex = R_SetVisData(*((unsigned __int16 *)data + 4));
+    const DpvsDynamicCellCmd *cmd = (const DpvsDynamicCellCmd *)data; // typed: Win32 byte offsets are wrong on x64
+    oldViewIndex = R_SetVisData(cmd->viewIndex);
     if ( r_drawDynEnts->current.enabled )
-        R_CullDynBrushInCell((unsigned int)data[1], *data, *((unsigned __int8 *)data + 10));
+        R_CullDynBrushInCell(cmd->cellIndex, (DpvsPlane *)cmd->planes, cmd->planeCount);
     R_SetVisData(oldViewIndex);
 }
 

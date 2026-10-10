@@ -33,7 +33,7 @@ jqModule r_stream_sortModule =
     .Type = JQ_WORKER_GENERIC,
     .Code = (int(__cdecl *)(jqBatch *))r_stream_sortCallback,
 };
-jqWorkerCmd r_stream_sortWorkerCmd = { &r_stream_sortModule, 8u, 0, 0, &r_stream_sortLimit, NULL, 0u };
+jqWorkerCmd r_stream_sortWorkerCmd = { &r_stream_sortModule, JQ_CMD_SIZE(StreamSortCmd, 8u), 0, 0, &r_stream_sortLimit, NULL, 0u };
 
 
 volatile unsigned int r_stream_updateLimit = 1;
@@ -43,7 +43,7 @@ jqModule r_stream_updateModule =
     .Type = JQ_WORKER_GENERIC,
     .Code = (int(__cdecl *)(jqBatch *))r_stream_updateCallback,
 };
-jqWorkerCmd r_stream_updateWorkerCmd = { &r_stream_updateModule, 28u, 0, 0, &r_stream_updateLimit, NULL, 0u };
+jqWorkerCmd r_stream_updateWorkerCmd = { &r_stream_updateModule, JQ_CMD_SIZE(StreamUpdateCmd, 28u), 0, 0, &r_stream_updateLimit, NULL, 0u };
 
 
 volatile unsigned int r_stream_combineLimit = 1;
@@ -53,7 +53,7 @@ jqModule r_stream_combineModule =
     .Type = JQ_WORKER_GENERIC,
     .Code = (int(__cdecl *)(jqBatch *))r_stream_combineCallback,
 };
-jqWorkerCmd r_stream_combineWorkerCmd = { &r_stream_combineModule, 4u, 0, 0, &r_stream_combineLimit, NULL, 0u };
+jqWorkerCmd r_stream_combineWorkerCmd = { &r_stream_combineModule, JQ_CMD_SIZE(StreamCombineCmd, 4u), 0, 0, &r_stream_combineLimit, NULL, 0u };
 
 
 volatile unsigned int r_stream_update_staticmodelsLimit = 1;
@@ -1076,28 +1076,29 @@ void __cdecl R_Stream_AddImagePartImportance(int imagePartIndex, float importanc
     }
 }
 
-void __cdecl importance_swap_func(void **a, void **b)
+// The sorted list holds 4-byte image part indices, not pointers: sorting it as void ** corrupts memory on x64.
+void __cdecl importance_swap_func(int *a, int *b)
 {
-    void *temp; // [esp+0h] [ebp-4h]
+    int temp; // [esp+0h] [ebp-4h]
 
     temp = *a;
     *a = *b;
     *b = temp;
 }
 
-bool __cdecl importance_compare_func(void *a, void *b)
+bool __cdecl importance_compare_func(int a, int b)
 {
     return *(const int *)&s_streamImages.importance[(unsigned int)a] > *(const int *)&s_streamImages.importance[(unsigned int)b];
 }
 
-void *aux_buffer[2113];
-void __cdecl importance_merge_sort(void **list, int list_count)
+int aux_buffer[2113];
+void __cdecl importance_merge_sort(int *list, int list_count)
 {
-    void **t; // [esp+0h] [ebp-14h]
-    void **b; // [esp+8h] [ebp-Ch]
-    void **ba; // [esp+8h] [ebp-Ch]
-    void **a; // [esp+10h] [ebp-4h]
-    void **aa; // [esp+10h] [ebp-4h]
+    int *t; // [esp+0h] [ebp-14h]
+    int *b; // [esp+8h] [ebp-Ch]
+    int *ba; // [esp+8h] [ebp-Ch]
+    int *a; // [esp+10h] [ebp-4h]
+    int *aa; // [esp+10h] [ebp-4h]
 
     if ( list_count >= 3 )
     {
@@ -2028,7 +2029,7 @@ void __cdecl R_StreamUpdateForBModel(
         ++count;
         ++surfIndex;
         ++modelSurf;
-        surfId += 5;
+        surfId += sizeof(BModelSurface) / 4; // Win32: 20-byte BModelSurface (5 words); 3 pointers on x64
     }
 }
 
@@ -2131,7 +2132,7 @@ void __cdecl R_Stream_UpdateStaticModelsCmd(char *data)
 
     StreamUpdateCmd *cmd = (StreamUpdateCmd *)data;
 
-    s_viewPos = *(float4 *)cmd->viewPos;
+    memcpy(&s_viewPos, cmd->viewPos, sizeof(s_viewPos)); // unaligned source: no aligned vector load
     for (unsigned int instId = 0; instId < g_worldDpvs->smodelCount; ++instId)
     {
         R_StreamUpdateStaticModel(instId, cmd->viewPos, cmd->maxDistSq, cmd->distanceScale);
@@ -2143,7 +2144,7 @@ void __cdecl R_Stream_UpdateStaticSurfacesCmd(char *data)
     PROF_SCOPED("R_Stream_UpdateStaticSurfacesCmd");
 
     StreamUpdateCmd *cmd = (StreamUpdateCmd *)data;
-    s_viewPos = *(float4 *)cmd->viewPos;
+    memcpy(&s_viewPos, cmd->viewPos, sizeof(s_viewPos)); // unaligned source: no aligned vector load
 
     for (unsigned int surfId = 0; surfId < g_worldDpvs->staticSurfaceCount; ++surfId)
     {
@@ -2253,6 +2254,7 @@ void __cdecl MultiplePointDistSqFromBounds(
     {
         __debugbreak();
     }
+#if !defined(BO1_PORT_X64) // x64: surface bounds are only 4-byte aligned here and are read with 64-bit loads below
     if ( ((unsigned __int8)mip0mins & 0xF) != 0
         && !Assert_MyHandler(
                     "C:\\projects_pc\\cod\\codsrc\\src\\gfx_d3d\\r_stream.cpp",
@@ -2273,6 +2275,7 @@ void __cdecl MultiplePointDistSqFromBounds(
     {
         __debugbreak();
     }
+#endif
     *(_QWORD *)v7.v = *(_QWORD *)mip0maxs;
     *(_QWORD *)&v7.unitVec[2].packed = *((_QWORD *)mip0maxs + 1);
     *(_QWORD *)v6.v = *(_QWORD *)mip0mins;
@@ -2385,7 +2388,7 @@ void __cdecl R_StreamUpdate_EndQuerySort(bool diskOrder)
     }
     else
     {
-        importance_merge_sort((void **)s_streamImages.sorted, streamFrontendGlob.totalBytesWanted);
+        importance_merge_sort(s_streamImages.sorted, streamFrontendGlob.totalBytesWanted);
     }
 }
 
@@ -2587,7 +2590,7 @@ int __cdecl r_stream_updateCallback(jqBatch *batch)
     if (batch->Module->Group.ExecutingBatchCount > 1)
         return 1;
     cmd = (StreamUpdateCmd *)jqLockData(batch);
-    s_viewPos = *(float4 *)cmd->viewPos;
+    memcpy(&s_viewPos, cmd->viewPos, sizeof(s_viewPos)); // unaligned source: no aligned vector load
     R_StreamUpdateStatic(cmd->viewPos, cmd->maxDistSq, cmd->distanceScale);
     jqUnlockData(batch);
     return 0;
@@ -2645,7 +2648,7 @@ void __cdecl R_StreamUpdateStatic(const float *viewPos, float maxDistSq, float *
 
     PROF_SCOPED("R_Stream update static");
 
-    s_viewPos = *(float4 *)viewPos;
+    memcpy(&s_viewPos, viewPos, sizeof(s_viewPos)); // unaligned source: no aligned vector load
 
     if (rgp.world->streamInfo.aabbTreeCount > 0)
     {

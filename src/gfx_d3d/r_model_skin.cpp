@@ -558,7 +558,7 @@ void R_SkinXModelCmd(SkinXModelCmd *data)
 
         if (skinnedSurf->skinnedCachedOffset == -2)
         {
-            surfPos = (GfxModelSkinnedSurface *)((char *)surfPos + 56);
+            surfPos = (GfxModelSkinnedSurface *)((char *)surfPos + sizeof(GfxModelRigidSurface)); // Win32: 56
             continue;
         }
 
