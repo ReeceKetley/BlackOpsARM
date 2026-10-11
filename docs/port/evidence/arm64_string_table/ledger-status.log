@@ -1,0 +1,158 @@
+Project: BlackOpsARM
+
+Goal
+----
+Native Android ARM64 port of the original T5 Zombies engine. Windows x64 is the
+functional reference implementation; the original Win32 path remains a behavior
+and serialization oracle. This Git worktree shares BlackOps64 history and sources.
+
+Current Milestone
+-----------------
+
+
+Current State
+-------------
+# Current active overnight progress — 2026-10-12
+
+Read updated user objective file referenced by DEC-0029; autonomous bounded
+progress toward actual native engine/assets/game-owned graphics, no deadline or
+fake success. Game root D:/Games/Call of Duty - Black Ops; Windows/DXVK/root
+remain protected. Explicit earlier local verified commit approval persists;
+no push. Goal remains active after each gate.
+
+TASK-0014 complete: actual DB_AllocStreamPos/DB_ExpandLoad_Ptr32Array on HONOR and
+Windows x86/x64,26 fixtures/12 genuine cycles each, zombie860 tags3440disk/6880
+native. Every slot/alias/stride/interior/endpoint, source/cursor and cleanup pass.
+Original-game raw/full decoded/prefix SHA+Adler match. No strings/interning/assets
+or graphics executed. See arm64_string_table.md, FACT-0040/0041, FAIL-0008/0009,
+WARN-0014. Final0errors2859warnings,114 AArch64 artifacts/20 exes. Old16 HONOR,
+Windows zone/Narrow32/483 guards and full normal Windows expander pass.
+
+Checkpoint ffc4241 already protects TASK-0011/0012/0013 (FACT-0039); TASK-0014
+checkpoint follows final preservation. Current exact HEAD is git log. Ignore
+historical HEAD/uncommitted wording in older frozen reports.
+
+Next3: TASK-0015 actual bounded raw string bytes; verified asset-directory
+expansion before dispatch; real production SL/MT intern/user4 release with actual
+recursive locks/fixed32 ARM64 atomics. Core raw strings remain explicitly distinct
+from interned IDs. Then continue critical-path engine/app/assets/graphics work.
+No fabricated menus/synthetic frames or unsupported-operation success.
+
+TASK-0014 known limits: finite reader is fixture, not async/refill/APC; post-read
+bad_alloc/private accumulator and fatal/init recovery unvalidated. Native helper
+1<<20 domain guarded,4096 only diagnostic. Encoded string tags absent genuinely;
+next gate rejects invalid -2/validates offsets instead of silently nulling.
+Legacy multi-owner PMem stride/freeTot diagnostic, full VM/Z/backend,16KB/S25 and
+actual game-owned rendered output remain unvalidated. Scratch/originals retained.
+
+Active follow-on steering DEC-0028: after structural core, continue minimal
+validated Android execution/asset/graphics milestones. BO1_GAME_DIR is
+D:/Games/Call of Duty - Black Ops. Menu/loading-screen aspirations are optional;
+no forced shortcuts, fabricated services or broad rewrites. Separate DXVK checkout
+stays protected dependency. Commit verified local gates; never push.
+
+# Active overnight goal
+
+User approved docs/port/overnight_frontend.md: native FastFile structural front end
+for both genuine files/HONOR/x86/x64 through pointer tables, bounded raw strings
+and37/1045 asset-directory records, before asset dispatch. Real string interning
+is conditional stretch with actual memory-tree/locks/fixed32 ARM64 atomics.
+Local verified milestone checkpoint commits are authorized; no push. Earlier
+uncommitted/HEAD statements below describe the completed gate's historical state.
+Checkpoint ffc4241 preserves completed TASK-0011/0012/0013 (FACT-0039); exact
+current branch HEAD is given by git log and local checkpoint verification. Lead owns edits/
+tests/Ledger with3 read-only agents. TASK-0014 next; no pointer-table code yet.
+
+# Current State
+
+Updated 2026-10-11: TASK-0013 complete. Current report/reproduction:
+docs/port/arm64_assetlist.md; handoff assetlist_handoff.md. DEC-0024/0025,
+FACT-0037/0038, FAIL-0007, WARN-0013. TASK-0014 implementation is next under approved overnight goal DEC-0026.
+
+## Completed boundaries
+
+- Android android-arm64 at6f0787ab; Windows main76edfd5 shares history with own
+  working directory/index; DXVK independent master0e271c6. Root Ledger owns shared
+  Windows history. All TASK-0011/0012/0013 changes remain uncommitted.
+- Earlier native-width/four-byte ABI, script/thread/profile/RNG, parse/debug Hunk,
+  first-fit/Z, expression, raw FastFile/fixture zone and full decode gates intact.
+  TASK-0011 checked genuine production allocation/timing/memory baseline and
+  TASK-0012 genuine Init/cursor/reset/release complete; original archives frozen.
+- TASK-0013 reads exact16-byte envelope at decoded offset36. Actual native64
+  production helper/body bytes unchanged;3 production declarations moved once
+  into lightweight width/offset-asserted header. Normal Windows behavior retained.
+- code_pre:0 strings/null,37 assets/-1; zombie:860 strings/-1,1045 assets/-1.
+  Signed fields/tag widths, persistent destination aliases4/12, all unchanged
+  cursors/shadow positions and repeated detach/free/release pass on3 ABIs.
+- Additional checked planner revalidates genuine zone metadata, nonnegative
+  counts and uint64 present-array disk/native minimum footprints vs decoded
+  remaining/block4. No arbitrary limits, expansion or clamping; null-positive
+  counts preserve absence semantics. No arrays read/allocated or tags dereferenced.
+- Independent Python streaming full decoded SHA/Adler/prefix oracle and native
+  full codec decode match raw/device/executable/prefix digests. Each separate
+  decoder process releases one vector before header-only zone allocation starts.
+  No duplicate decompressed buffers or original game/prefix files in Git/APK.
+-72 fixtures/12 alternating genuine low/high cycles each ABI. Preflight and short
+  read failure snapshots aliases/cursors/output/read/owners before reset. Actual
+  read adapter is finite checked16-byte fixture, not engine async/refill loader.
+
+## Verification
+
+- Final assetlist_pass3 NDK30/Clang21/API28 Debug C99/C++20:0 compiler/link errors,
+  2495 retained warnings,102 AArch64 artifacts/19 exes.12 selected full T5 units+
+  actual bounded expander subset+6 unchanged custom codec C units compile.
+  New ELF has real envelope/init/alloc/free and finite reader, no later asset/
+  pointer-table/string/fixup/zone-init functions. No UBSan on passing paths.
+- MSVC x86/x64 genuine gate; actual full registry x86/x64 and light legacy-off
+  header layouts; full normal x64 expander TU compile pass. Earlier16 HONOR probes,
+  67/66 allocator fixtures,12-cycle/61-Init genuine stream gate, Windows zone and
+  four-byte Narrow32/actual declarations/483 guards pass. All tests completed.
+- Three passing builds/runs retained; final strengthens pre-reset failure checks
+  and exact trailing extent. Optional header1 NetField link failure, header2
+  heavy legacy-off graphics layout assertions and LF/CRLF source-proof correction
+  retained under FAIL-0007; no graphics guard disabled. Two read-only agents
+  confirmed final code and reviews; lead owns edits/tests/Ledger.
+- Windows2528 files/index/status/HEAD, DXVK2552, root Ledger15 and Android index/
+  HEAD preserved;997 prior archive/report/handoff files unchanged. Scaffold APK
+  SHA remainsDFA4C3BD6C8FDDF121CF87EE9B5847367FB6C29CDB5EAD8FC164F3A31F1135B5.
+  Exact delta/cumulative status/ignored artifacts: arm64_assetlist_changes.md and
+  evidence file_inventory.json. No deletion/reset/APK install/commit/push.
+
+## Active limits — WARN-0013
+
+Finite reader does not certify engine async/refill/APC/authentication. Android
+expander TU selected envelope subset only; full normal Windows TU passes. No
+script-string table/bytes/interning, asset array/dispatch/fixups/registry/zone init/
+rendering. Side-buffer alias registration is correct but production conversion
+may reject outside-XBlock slots; fixup resolution unvalidated. Post-read vector
+bad_alloc, Init/fatal OOM recovery not certified. Inactive vector/stack/diagnostic
+storage may remain. Legacy native64 multi-owner PMem stride/freeTot remains gap;
+reference one owner with fixture diagnostic reset. Heavy legacy-off x64 graphics
+assertions unchanged. Full Windows Z heap, VM/string/callable/vendor/profiler/math
+consumers,16KB/S25 and engine/backend deferred. Original timing/RSS comparison
+remains different allocator work, not CPU/gameplay ratio.
+
+## Recommended TASK-0014
+
+Actual block4 script-string pointer-table reservation and packed tag expansion
+before Load_TempStringArray string loop. Both files/3 ABIs, validated table bytes
+at decoded offset52; absent zero-string case, zombie860 entries3440 disk/6880
+native. Actual alignment/width/cursor/stride/alias bounds, truncation/count/capacity
+failures and repeat detach/release. Audit existing count policies. No string bytes/
+interning/assets/fixups/registry/zone init/async/rendering. Await next continuation.
+
+Recent Progress
+---------------
+- FACT-0041 Pointer-table gate protection and reproducible evidence
+- TASK-0015 TASK-0015 bounded actual raw string-byte loading
+- WARN-0014 Remaining string bytes, pool and loader boundaries
+- FACT-0040 Genuine script-string table expansion verified
+- FAIL-0009 Pointer-table runner status contract mismatch
+
+Current Warnings
+----------------
+- WARN-0014 Remaining string bytes, pool and loader boundaries
+
+Open Tasks
+----------
+- TASK-0015 TASK-0015 bounded actual raw string-byte loading

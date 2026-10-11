@@ -226,3 +226,13 @@ untracked files, their branch/HEAD/status/index, and the existing root Ledger.
 Git administrative worktree registration inside the shared `.git` is expected;
 the Windows index, branch, working files and scratch files must remain unchanged.
 See `android_setup_changes.md` here for the concise authored-file inventory.
+
+## Overnight TASK-0014 continuation
+
+Actual genuine script-string pointertable gate passes HONOR/x86/x64,26 fixtures/
+12cycles each,114 AArch64 artifacts/20exes. See arm64_string_table.md for exact
+fresh commands, real production leaves/finite-reader boundary, raw provenance,
+failures and next3 milestones. Original game root D:/Games/Call of Duty - Black Ops.
+Autonomous updated objective and explicit local verified checkpoint approval
+supersede historical no-commit/no-continuation wording; no push. No strings or
+engine-owned graphics claimed at this gate. Next actual bounded raw-string leaf.

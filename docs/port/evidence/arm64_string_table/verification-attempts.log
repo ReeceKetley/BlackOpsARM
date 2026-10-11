@@ -1,0 +1,10 @@
+Retained TASK-0014 attempts
+string_table_pass1 NDK passed0errors2859warnings; initial host pass1 x86 failed
+Windows RPC macro small expanding fixture variable. Renamed smallFrame/largeFrame;
+no engine-body change. Exact compiler errors/log retained (FAIL-0008).
+Final string_table_pass2/host_pass2 builds pass. First runner run1 saw probe
+success26fixtures12cycles/exit0 but expected CamelCase enum labels versus actual
+lower_snake API status names. Corrected exact expected contract, retained
+failure.json/stdout/stderr/invocations (FAIL-0009). Final run2 all3ABIs passes.
+Full normal Windows x64 expander TU and original3 declaration/helper proof pass.
+No graphics/VM dispatch/strings called; finite reader remains fixture boundary.

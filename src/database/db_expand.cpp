@@ -175,7 +175,7 @@ void DB_ExpandLoad_XAssetList(XAssetList *dst)
     DB_ExpandPtrStore(reinterpret_cast<uintptr_t *>(&dst->assets), disk.assets);
 }
 
-#if !defined(BO1_ASSETLIST_GATE)
+#if !defined(BO1_ASSETLIST_GATE) || defined(BO1_FRONTEND_TABLES_GATE)
 void DB_ExpandLoad_XAssetArray(XAsset *dst, int count)
 {
     iassert(dst == reinterpret_cast<XAsset *>(DB_GetStreamPos()));
@@ -215,6 +215,9 @@ void DB_ExpandLoad_Ptr32Array(void *nativeDst, int count)
     DB_Expand_Commit(static_cast<int>(sizeof(uintptr_t) * static_cast<size_t>(count)), count);
 }
 
+#endif // normal engine or bounded frontend tables
+
+#if !defined(BO1_ASSETLIST_GATE)
 void DB_ExpandLoad_StringTable(StringTable *dst)
 {
     iassert(dst == reinterpret_cast<StringTable *>(DB_GetStreamPos()));

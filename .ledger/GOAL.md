@@ -20,7 +20,14 @@ tables, bounded raw strings and typed asset directory, before dispatch. Real
 production interning is conditional stretch. DEC-0026 authorizes local verified
 checkpoint commits, never push. See docs/port/overnight_frontend.md.
 
-## Last completed gate
+## Latest completed gate
+
+TASK-0014 actual genuine script-string pointer table,26 fixtures/12cycles perABI.
+Next: bounded raw strings -> asset directory -> real SL/MT pool, before dispatch.
+See arm64_string_table.md/WARN-0014. Autonomous updated objective continues toward
+actual game-owned execution/assets/graphics; no simulated progress or deadline.
+
+## Historical completed gate
 
 TASK-0013 genuine16-byte XAssetList envelope read/expansion is complete on HONOR
 ARM64 and Windows x86/x64,72 fixtures/12 cycles each. Counts/tags, persistent

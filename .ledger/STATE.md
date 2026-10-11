@@ -1,3 +1,42 @@
+# Current active overnight progress — 2026-10-12
+
+Read updated user objective file referenced by DEC-0029; autonomous bounded
+progress toward actual native engine/assets/game-owned graphics, no deadline or
+fake success. Game root D:/Games/Call of Duty - Black Ops; Windows/DXVK/root
+remain protected. Explicit earlier local verified commit approval persists;
+no push. Goal remains active after each gate.
+
+TASK-0014 complete: actual DB_AllocStreamPos/DB_ExpandLoad_Ptr32Array on HONOR and
+Windows x86/x64,26 fixtures/12 genuine cycles each, zombie860 tags3440disk/6880
+native. Every slot/alias/stride/interior/endpoint, source/cursor and cleanup pass.
+Original-game raw/full decoded/prefix SHA+Adler match. No strings/interning/assets
+or graphics executed. See arm64_string_table.md, FACT-0040/0041, FAIL-0008/0009,
+WARN-0014. Final0errors2859warnings,114 AArch64 artifacts/20 exes. Old16 HONOR,
+Windows zone/Narrow32/483 guards and full normal Windows expander pass.
+
+Checkpoint ffc4241 already protects TASK-0011/0012/0013 (FACT-0039); TASK-0014
+checkpoint follows final preservation. Current exact HEAD is git log. Ignore
+historical HEAD/uncommitted wording in older frozen reports.
+
+Next3: TASK-0015 actual bounded raw string bytes; verified asset-directory
+expansion before dispatch; real production SL/MT intern/user4 release with actual
+recursive locks/fixed32 ARM64 atomics. Core raw strings remain explicitly distinct
+from interned IDs. Then continue critical-path engine/app/assets/graphics work.
+No fabricated menus/synthetic frames or unsupported-operation success.
+
+TASK-0014 known limits: finite reader is fixture, not async/refill/APC; post-read
+bad_alloc/private accumulator and fatal/init recovery unvalidated. Native helper
+1<<20 domain guarded,4096 only diagnostic. Encoded string tags absent genuinely;
+next gate rejects invalid -2/validates offsets instead of silently nulling.
+Legacy multi-owner PMem stride/freeTot diagnostic, full VM/Z/backend,16KB/S25 and
+actual game-owned rendered output remain unvalidated. Scratch/originals retained.
+
+Active follow-on steering DEC-0028: after structural core, continue minimal
+validated Android execution/asset/graphics milestones. BO1_GAME_DIR is
+D:/Games/Call of Duty - Black Ops. Menu/loading-screen aspirations are optional;
+no forced shortcuts, fabricated services or broad rewrites. Separate DXVK checkout
+stays protected dependency. Commit verified local gates; never push.
+
 # Active overnight goal
 
 User approved docs/port/overnight_frontend.md: native FastFile structural front end
@@ -6,8 +45,8 @@ and37/1045 asset-directory records, before asset dispatch. Real string interning
 is conditional stretch with actual memory-tree/locks/fixed32 ARM64 atomics.
 Local verified milestone checkpoint commits are authorized; no push. Earlier
 uncommitted/HEAD statements below describe the completed gate's historical state.
-First checkpoint preserves completed TASK-0011/0012/0013; exact current branch
-HEAD is given by git log and the local checkpoint verification. Lead owns edits/
+Checkpoint ffc4241 preserves completed TASK-0011/0012/0013 (FACT-0039); exact
+current branch HEAD is given by git log and local checkpoint verification. Lead owns edits/
 tests/Ledger with3 read-only agents. TASK-0014 next; no pointer-table code yet.
 
 # Current State

@@ -1,0 +1,20 @@
+{
+  "schema": "BlackOpsARM.TASK-0013.source-preservation.v1",
+  "git_blob_checkout_eol": "LF -> CRLF verified against baseline SHA",
+  "production_helper_envelope_bytes_unchanged": true,
+  "helper_body_sha256": "fda0d1115015b86fdae8d6b21eaeebbc67f17b86bd038d895cc8c00ed566ebc5",
+  "declarations": {
+    "XAsset": {
+      "exact_bytes_unchanged": true,
+      "sha256": "45ad55f7560e5f3c2d55cf7a7a31e2fcc9c082837f6b2fc91b2f316e29a0f271"
+    },
+    "ScriptStringList": {
+      "exact_bytes_unchanged": true,
+      "sha256": "97e2a808f53e4dbd63efd2fb3b7c6a4dfaa7d56b89ed84b4601baff15373489e"
+    },
+    "XAssetList": {
+      "exact_bytes_unchanged": true,
+      "sha256": "5fdc73356b1c591b131c11e315bfb1d68de9e74b8b332b840fd712812daf2de0"
+    }
+  }
+}

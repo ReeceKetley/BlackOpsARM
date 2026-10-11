@@ -55,3 +55,21 @@ do not invent unrelated overnight work.
 Keep PC awake/Codex running and HONOR USB/debugging authorised for local work.
 An active goal tracks continuation; no standalone recurring job was requested.
 Current sources/Ledger/handoff identify the next bounded step after every gate.
+
+## Follow-on goal steering — DEC-0028
+
+The active user-controlled goal asks continued validated ARM64 Android progress
+after this core, with D:/Games/Call of Duty - Black Ops as BO1_GAME_DIR. Real
+native game-code/asset execution and graphics/menu/loading screen are aspirations,
+not required overnight claims or permission to fake behavior. Finish core gates
+first; then choose the next minimal production boundary and validate it before
+expanding further. Treat existing DXVK-Native as the separate dependency/reference
+and preserve its checkout unless explicit authorized dependency work is needed.
+Transfer only justified bounded original assets, avoiding duplicate buffers/RAM
+pressure. Local verified commits remain allowed; never push.
+
+The pre-overnight checkpoint is ffc4241c05fe9f6621977f264143d0db83039006
+(FACT-0039). All557 durable paths/1278 frozen files and protected state verified;
+ignored post-commit evidence lives in build-android-audit/overnight-checkpoint-pass2.
+Canonical current Ledger records subsequent progress; historical reports retain
+pre-commit wording and hashes. No TASK-0014 code has been implemented yet.
