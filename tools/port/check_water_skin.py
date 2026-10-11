@@ -1,10 +1,12 @@
 """Generate a focused executable using the real production water skinner."""
 from pathlib import Path
 import argparse
+import subprocess
 
 root = Path(__file__).resolve().parents[2]
 parser = argparse.ArgumentParser()
 parser.add_argument('--before', action='store_true')
+parser.add_argument('--baseline', action='store_true')
 args = parser.parse_args()
 source = (root / 'src/gfx_d3d/r_water_sim.cpp').read_bytes().decode('latin1')
 
@@ -32,17 +34,22 @@ fixtures, body = rest.split('// PRODUCTION_FUNCTIONS', 1)
 functions = [extract(source, 'static float4 WaterSwizzle('),
              source[source.index('float4 g_swizzleXZYW'):source.index('unsigned __int16 tessTable_0000')].strip(),
              extract(source, 'float4 *__cdecl ReadValue(')]
-if args.before:
+if args.before or args.baseline:
     functions += ['constexpr float4 g_zero = {{0.0f, 0.0f, 0.0f, 0.0f}};\n'
                   'float4 g_255 = {{255.0f, 255.0f, 255.0f, 255.0f}};\nusing vec3r = float *;',
                   extract((root / 'src/universal/com_math.cpp').read_bytes().decode('latin1'),
                           'float __cdecl Vec3NormalizeTo('),
-                  extract(source, 'void __cdecl Float4LoadFloats('),
-                  (root / 'build/run/water_skin_before49.cpp').read_bytes().decode('latin1')]
+                  extract(source, 'void __cdecl Float4LoadFloats(')]
+    if args.before:
+        functions.append((root / 'build/run/water_skin_before49.cpp').read_bytes().decode('latin1'))
+    else:
+        baseline = subprocess.check_output(['git', 'show', '17003a7:src/gfx_d3d/r_water_sim.cpp'], cwd=root).decode('latin1')
+        functions.append(extract(baseline, 'void    R_WaterSimulationSkinMesh('))
 else:
     functions += [extract(source, sig) for sig in ['static unsigned char WaterSkinPackByte(',
                                                   'static void WaterSkinNormalize(',
                                                   'void R_WaterSimulationSkinMesh(']]
-out = root / ('build/run/test_water_skin_before.cpp' if args.before else 'build/run/test_water_skin.cpp')
+suffix = '_baseline' if args.baseline else '_before' if args.before else ''
+out = root / f'build/run/test_water_skin{suffix}.cpp'
 out.write_text('\n\n'.join([prelude, *parts, fixtures, *functions, body]).replace('\r\n', '\n'))
 print(out)

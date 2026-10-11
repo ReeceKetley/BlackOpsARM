@@ -4,7 +4,7 @@ Introduced 2026-10-09 on top of the playable stock Win32 build.
 
 ## Goal
 
-Register narrow host interfaces while the original Windows backends still run. Gameplay call sites stay on `Sys_*` / `FS_*` / `IN_*` for now. Godot and Android replace the implementations later, one subsystem at a time.
+Register host interfaces while the original Windows backends still run. Gameplay call sites stay on `Sys_*` / `FS_*` / `IN_*` for now. Native Android adapters replace Windows implementations later, one subsystem at a time. Current rendering preserves the D3D9 renderer through DXVK/Vulkan (DEC0013).
 
 ## Interfaces
 
@@ -49,5 +49,6 @@ Windows backends call `*_Win32` raw implementations to avoid recursion.
 
 ## Next
 
-1. Grow `IRenderBackend` / `IAudioBackend` as Godot bridges appear.
-2. Continue Windows x64 work (`docs/port/x64_attempt.md`).
+1. Continue the Windows Vulkan stability and native layout checks in `vulkan_windows.md` and `64bit_clean_progress.md`.
+2. Later implement native Android host/window/WSI, audio, input, files and lifecycle adapters. `IRenderBackend` currently identifies the renderer; it does not abstract its D3D9 device calls. The Windows DXVK DLL supplies that translation transparently.
+3. Keep packaged shader bytecode and native material records portable. The repaired Windows D3DX compiler wrapper is still a Windows dependency; Android needs precompiled bytecode or a native compiler replacement. See `material_native.md` and `android_dxvk_notes.md`.

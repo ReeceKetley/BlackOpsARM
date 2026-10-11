@@ -206,3 +206,183 @@ intentionally stopped; that is retained as failed, not a crash or a pass. See
 [portal recovery and evidence](pack_rearm.md), `water47_results.json` and
 `pack48_results.json` under the ignored build/run folder. All test games have
 ended. Source follow-ups remain uncommitted; Android remains deferred.
+
+## Batch49 water vertex reference and runtime regression
+
+The water skinner matches6,358 retail packed vertices on Win32/high x64,
+including wrapping seams, saturation, all16slots and zero derivatives.
+The same production function matches through real systemD3D9 and patchedDXVK
+dynamic vertex buffers. The DXVK helper confirms the local DLL, Vulkan/NVIDIA
+driver and Khronos layer, and exits0 without validation errors. It checks
+buffer mapping/lifetime; it does not submit a water material shader.
+See [water reference tests](water_native.md).
+
+`x64hi_dxvk49_pane2_final` completes26PASS/0FAIL/exit0 with actual
+`mp5k_upgraded_zm`, shattered pane2 and30seconds after completion. SoundON/god
+automation, actual presented-frame captures and clean Vulkan teardown are
+verified. Original native routes complete32/25/27/24PASS on Win32/high/low/guard,
+all0FAIL/exit0/all four SaveGame checks. The earlier49 run's unknown
+`glass_client` step caused an intentional stop; it remains a rejected attempt.
+Results: `build/run/water49_results.json`, `water49_focused_results.json`.
+
+Full water simulation/cache/scheduling remains open; these tests do not certify
+every map's water rendering or Android GPU support.
+
+## Final batch50/51 gameplay verification
+
+Fresh corrected original routes Win32/high/low/guard finish24/25/25/25PASS,
+all0FAIL/exit0 with all four SaveGame checks. These executables contain the
+complete cache/wave/wind fixes and corrected ammo-test targets.
+`x64hi_dxvk51_pane2_final` finishes33PASS/0FAIL/exit0, actual
+glass2 shattering and Pack-a-Punch upgrade, then30seconds further play.
+Sound is enabled; automation uses god mode. Pinned patched local DXVK,
+system Vulkan/NVIDIA and explicit validation layers are recorded in the
+module manifests. Presented-frame captures are retained. There are zero
+Vulkan errors through teardown. All these test processes have ended.
+
+The earlier Win32 water50 run remains31PASS/1FAIL/exit0, rejected for its
+ammo-target measurement failure. `water50_results.json` retains all six
+batch50 observations. `ammo51_results.json` retains both focused game runs
+and all five corrected final gates; `water50_focused_results.json` retains
+the retail wave/cache/skin and old-code control evidence. Focused ammo
+measurement cases and their pinned controls are in `test_ammo_target*.log`.
+These normal gameplay routes still do not certify full water-cell rendering.
+WARN0010 remains open for scheduler/TrackView/material integration.
+
+## Batch52: wrapping halo adjacency follow-up
+
+Original short/char cache instructions store the left wrap value at row-2
+and row-1 (retail0x6db500,0x6db5ad/0x6db649). Batch50 aligned the row but
+left its scalar halo at the start of the prefix, separated by padding.
+Earlier tests checked the scalar field rather than the actual boundary.
+The prefix now occupies16bytes and stores the wrap value in its final
+T element. The complete cache sizes/data/metadata offsets are unchanged.
+
+The strengthened boundary test rejects the pre52 placement on both hosts.
+Corrected float4/short/char/Color caches pass4000 dirty operations/type/host,
+including guarded high allocations, flush and wrapped boundaries. Exact
+retail wave comparison still passes36864 cells on both hosts using the game's
+/fp:precise setting. Reproduce the isolated negative control with
+`tools/port/check_water_cache.ps1 -NegativeHalo`.
+
+All five current builds compile0errors. Header recompilation re-exposes
+existing BSP pointer warnings (1Win32/4x64); full count remains144.
+`water52_focused_results.json` records current source hashes/build-log hashes
+and focused results. The successful final51 native/Vulkan gameplay runs
+predate this isolated halo follow-up; no full route for final52 is claimed.
+WARN0010 remains open for render scheduling/TrackView/water material
+integration. The14-case local scheduler oracle is preparation for that work,
+not proof that the native scheduler passes.
+
+## Water scheduler and view tracking (batches53/54)
+
+The complete production scheduler now matches the installed original at
+0x6dd640 in14 cases/83 commands on Win32 and guarded high-address x64.
+Corrections cover row start indices, update-row timestamps, mesh FIFO
+occupancy and copying the tile coordinates into new meshes. Tests compare
+all256 tile states, the full expiry/free queues, call order and normalized
+worker payloads. The pinned old scheduler fails on both hosts.
+
+TrackView now matches original0x6dc640 in17 cases/935 tile-fill callbacks.
+This includes smoothing, wrapped relocation, expiry and teleport boundaries,
+with exact float bits and complete tile/expiry state. Retail uses exponent
+0.5 for movement easing, sums squared X/Z/Y, retains double precision across
+sqrt/divide until the float store, and multiplies by reciprocal tile size.
+The previous easing fails small_motion; reverting only the distance math
+fails precise_distance on both hosts. Original sqrt/pow/expiry/teleport
+instructions execute in the reference. Base-height and FillTile are mocked
+in this comparison, so actual samplers are a separate remaining check.
+
+All five current54 build variants compile with0errors and no pointer-width
+warnings in recompiled files. Final53 native original routes complete
+25/25/25/25PASS (Win32/high/low/guard), all0FAIL/exit0/all4Savechecks.
+Vulkan53 completes26PASS/0FAIL/exit0, pane2 shattering and real upgradedPM63,
+then30seconds continued play. SoundON/god automation; actual presented frames
+and loaded module manifests retained; zero validation errors through teardown.
+These runtime snapshots predate Track54; current54 regression runs are pending.
+
+Use check_water_scheduler.ps1 and check_water_track.ps1. Reference generators
+read only the SHA-pinned local original executable; original assets/bytes stay
+out of Git. water53_results.json and water54_focused_results.json under the
+ignored build/run directory preserve logs, hashes, fixtures and scope.
+Remaining water scope (WARN0012): actual FillTile/base-height sampling, debug
+drawing and real water material/shader submission. Ordinary Pentagon passes
+and real mapped vertex-buffer comparisons do not certify that submission.
+
+## Tile and height samplers (batch55)
+
+The independent reference executes original FillTile0x6da4f0, FindCells0x6da420,
+BaseHeight0x6dfba0, ConvertWorldToGrid0x6ddf90 and global height0x6e0280 without
+intercepting any engine/math calls. Both native hosts match nine tile fills
+(2304 interpolated cells), all six complete65536-cell channel banks, exact
+tile bounds/validity and22 float-bit height queries. Source state, input cells
+and output banks use guarded native allocations above4GB on x64. Cases cover
+interior/right/bottom/corner lookups, negative headers, missing/outside cells,
+last source rows, signed floor offsets and disabled/enabled local sampling.
+
+Original coordinate conversion uses float reciprocal multiplication. The old
+global-height expression chooses no water (-131072) at query
+(-12.500001,-.0001), where original lookup returns173. Restoring the original
+operation order fixes this on both hosts; pinned1fca samplers fail that same
+query on both. ConvertWorldToGrid also preserves original reciprocal math.
+All five current55 builds compile0errors/no recompiled pointer warnings.
+Use water_sampling_oracle.py, then check_water_sampling.ps1; add
+-NegativeControl for the pinned old behavior. Original executable bytes/assets
+stay out of Git. Fixtures, logs and hashes live in water55_focused_results.json.
+
+Final54 native25/26/26/24PASS and Vulkan5426PASS, all0FAIL/exit0/all4Savechecks,
+are accepted; Vulkan has zero errors through teardown and continues30seconds
+after actual PaP and pane2 shattering. These snapshots predate sampler55.
+Win32 final55 completes26PASS/0FAIL/exit0/all4Savechecks; x64/Vulkan55 pending.
+
+Noninvasive live CDB inspection of Vulkan54 confirms Pentagon has zero
+simulation water cells. The optional weapons.ps1 -Catalog -Debugger -WaterCells
+records actual COMWORLD asset names, counts, headers and native pointers at
+Load_ComWorldAsset; it requires x64 and checks the native field offset in the
+production sampler fixture. Initial metadata attempts55a/b had unresolved
+debugger module names and produced no water counts; retain them as unverified.
+The corrected wildcard symbol lookup55c records Shangri-La count0/null cells.
+This inventory is in progress. Ordinary routes are gameplay regressions, not
+proof of real water material/shader submission. WARN0013 remains open for that
+integration and debug drawing; full dynamic height/info/particle behavior is
+outside the base-height sampler comparison. Wider native audit is unfinished.
+
+## Final55 native/Vulkan and installed-map inventory verification
+
+Fresh original Win32/high/low/guard routes complete26/25/28/24PASS, all0FAIL,
+exit0 and all four SaveGame checks. These snapshots include the final55 sampler
+fixes. Vulkan55 completes26PASS/0FAIL/exit0, actual pane2 shattering
+and real pm63_upgraded_zm, then30000ms continued play (273850 to303850).
+SoundON/god automation. Module manifests confirm patched local DXVK, system
+Vulkan/NVIDIA and explicit validation/screenshot layers. There are zero Vulkan
+errors through teardown. The actual3000 presented frame shows rendered gameplay
+and the broken pane. All test processes have ended. Logs/hashes are preserved
+in water55_results.json and water55_focused_results.json.
+
+All10 installed round-based Zombies maps have zero simulation water cells in
+their loaded COMWORLD assets. The asset inventory records exact names, counts,
+headers and null cell pointers; it does not certify visible water effects or
+full gameplay on those maps. Nacht's CDB string display wraps into32-character
+quoted lines; joining adjacent string/address lines recovers the full name.
+Independent Win32 raw bytes and repeated high captures confirm the name/count.
+The initial parser rejections are retained in water55_map_cells_initial_results.json;
+final observations in water55_map_cells_results.json. Initial55a/b unresolved
+breakpoints remain unverified. weapons.ps1 -WaterCells supports both architectures
+with native COMWORLD offsets checked by the production sampler test.
+
+The water simulation's cache/wave/skin/scheduler/tracking/base-sampling paths
+have focused original-reference coverage; actual material draw, debug drawing,
+dynamic height/info/particle paths still need separate evidence (WARN0013).
+An actual simulation-water draw cannot be inferred from these installed map
+routes. Windows Vulkan remains the current target. Android is deferred.
+Latest full audit remains144 pointer-truncation sites from47; these incremental
+builds do not establish a new full count. LOW_VA default remainsON and the
+actual unrestricted build-x64-hi isOFF. Follow-ups49 through55 remain uncommitted.
+
+## Native material storage (batch56)
+
+- Batch56 (FACT0098/0099): native loose-material technique-set/state-map/pass/trailing-pointer/name storage and shader-argument allocation/copies/literal/compaction fixed. Scratch512arguments and130*4state pairs restored. Seven focused production cases pass on each host with guarded x64 pointers above4GB; pinned1fca062 fails all7x64 and Win32parse/state, other5Win32 cases pass. File/parser/reflection/linkage inputs controlled; full pipeline is not certified. All5builds0errors;6remaining material truncation sites on x64 versus10before, no full recount. Final56 original Win32/high/low/guard routes 25/25/32/26PASS, all0FAIL/exit0/all4Savechecks. Windows Vulkan56 26PASS/0FAIL/exit0/all4Savechecks with pane2, actual upgraded weapon, 30000ms continued play and zero validation errors through teardown. All test games ended. WARN0014 tracks remaining loose shader COM/copy/header/raw material pipeline. WARN0013 water material/debug integration stays open. Followups49-56 uncommitted. See material_native.md and ignored material56_results.json/ material56_focused_results.json.
+
+## Native shader compiler and ownership (batch57)
+
+- Batch57 (FACT0100/0101/0102/0103): typed D3DX diagnostics/constants and COM ownership, native shader headers, proper vertex bytecode copy and CreateShader failure buffer releases fixed. Real D3DX guarded tests15cases per host pass, x64 COM/objects above4GB; pinned controls fail12Win32/13x64 cases. Controlled generation/cache/device/failure helpers; warning is a controlled real COM buffer, invalid HLSL yields real diagnostics. All5builds0errors/no material truncation warnings. Full high426s/0errors/134sites (132src/tl+2DemonWare), down144; gfx_d3d21 remain. Final57 Win32/high/low/guard 24/32/25/25PASS, all0FAIL/exit0/all4Savechecks. Actual GPU shader checks pass Win32D3D9/x64D3D9/x64DXVK with expected pixels and clean Vulkan teardown; final57 Vulkan 28/0/exit0/30seconds continued/clean teardown. Frozen56 Vulkan soak passes 1800000game ms after actual PaP, max round16/520spawned,0FAIL/exit0/clean teardown. All test games ended. WARN0016 replacesWARN0015 for remaining full loose-file/raw-material/reflection/cache integration. WARN0013 water material/debug remains. Windows platform docs remove old Godot bridges and preserve current native DXVK direction. Followups49-57 form the verified checkpoint; publication SHA is recorded in ledger. Reports shader57_results.json/shader57_focused_results.json/vulkan56_soak_results.json;56 soak executable predates57. Initial DEVICELOST helper attempts remain preserved; the same device setup later passed, transient cause unconfirmed. GPU manifests hash actual loaded modules, including system x64 D3DX (which differs from the staged DLL) and WOW64 system paths.

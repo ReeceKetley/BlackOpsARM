@@ -1,10 +1,11 @@
 param([string]$VcVars = 'C:\BuildTools\VC\Auxiliary\Build\vcvarsall.bat',
-      [string]$Fixture = 'build\run\water_retail49.bin', [switch]$Before, [switch]$BuildGpu)
+      [string]$Fixture = 'build\run\water_retail49.bin', [switch]$Before, [switch]$BuildGpu, [switch]$NegativeControl)
 $ErrorActionPreference = 'Stop'
 $root = (Resolve-Path "$PSScriptRoot\..\..").Path
 Set-Location -LiteralPath $root
-$suffix = if ($Before) { '_before' } else { '' }
-if ($Before) { python "$PSScriptRoot\check_water_skin.py" --before }
+$suffix = if ($NegativeControl) { '_baseline' } elseif ($Before) { '_before' } else { '' }
+if ($NegativeControl) { python "$PSScriptRoot\check_water_skin.py" --baseline }
+elseif ($Before) { python "$PSScriptRoot\check_water_skin.py" --before }
 else { python "$PSScriptRoot\check_water_skin.py" }
 if ($LASTEXITCODE -ne 0) { throw 'Skin fixture generation failed' }
 foreach ($arch in 'x86','x64') {
@@ -17,7 +18,7 @@ foreach ($arch in 'x86','x64') {
     & ".\$exe" $Fixture | Tee-Object -FilePath $log -Append
     $result = $LASTEXITCODE
     "Exit: $result" | Tee-Object -FilePath $log -Append
-    if ($Before) { if ($result -eq 0) { throw 'Old skin unexpectedly matched retail' } }
+    if ($Before -or $NegativeControl) { if ($result -eq 0) { throw 'Old skin unexpectedly matched retail' } }
     elseif ($result -ne 0) { throw "$arch skin failed" }
 }
 if ($BuildGpu) {
