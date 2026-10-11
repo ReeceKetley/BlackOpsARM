@@ -155,3 +155,14 @@ production interning is conditional stretch. Local checkpoint commits after
 verified milestones are explicitly authorized; no push. Earlier no-commit
 statements are historical. Lead owns code/tests/Ledger; three read-only audits.
 Preserve all prior evidence/protected checkouts and record each boundary/decision.
+
+DEC-0028 records active user-controlled follow-on goal: after core, continue
+validated Android port boundaries toward real game-code/assets/graphics; game
+root D:/Games/Call of Duty - Black Ops, separate DXVK dependency. Aspirations are
+loose, never force/fake success. Checkpoint ffc4241 verified (FACT-0039), no push.
+
+Current TASK-0014 completed per DEC-0029/FACT-0040/0041/WARN-0014; failures8/9
+retained and corrected.26 fixtures/12cycles eachABI, actual pointertable source,
+114 AArch64 artifacts/20exes. Next raw bytes -> directory -> real SL/MT, then
+critical engine/app/game-owned graphics dependencies, no deadline/fake progress.
+Updated objective file read; preserve1280 prior archives/protected state.

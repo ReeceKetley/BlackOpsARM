@@ -209,3 +209,15 @@ Pointer tables -> bounded raw strings -> actual asset directory, all3 ABIs/both
 files, before dispatch. Local verified checkpoint commits now authorized, no
 push. Preserve archives/protected state. Lead integration plus3 read-only audits.
 Exact acceptance/stop conditions in docs/port/overnight_frontend.md.
+
+## TASK-0014 — actual script-string pointer tables
+
+DEC-0029 updated overnight objective: autonomous bounded native engine/assets
+progress, genuine game-owned graphics optional; no fixture-as-gameplay claims.
+Lead source/CMake/native tests; runner delegated distinct files, independent
+review and Windows tests. Null root skips; present-zero needs real block/alignment.
+Actual helper-domain1<<20 guarded,4096 diagnostic retained. Disk/native/source
+positions separate. All860 aliases/tags and element mappings checked. Fixture
+pre-copy failure bytes/state compared before reset; post-read bad_alloc notclaimed.
+FACT-0040/0041 verify result/preservation; FAIL-0008/0009 retain RPC macro and
+runner spelling failures. WARN-0014 supersedes WARN-0013. Next3milestones above.

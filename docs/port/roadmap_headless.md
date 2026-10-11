@@ -71,13 +71,20 @@ bytes unchanged. Finite reader does not certify async/refill loader. Full normal
 Windows expander passes; bounded Android subset only. See arm64_assetlist.md,
 FACT-0037/0038, FAIL-0007, WARN-0013 and exact inventory.
 
-### TASK-0014 — Script-string pointer table (recommended)
+### TASK-0014 — Actual script-string pointer table (complete)
 
-Block4 reservation/actual packed tag expansion only, before string loops/bytes/
-interning. Both genuine files/3 ABIs; absent0-string case plus zombie860 entries,
-3440 disk/6880 native bytes at decoded offset52. Actual alignment/capacity, tags,
-cursor/stride maps and alias destinations, invalid bounds and repeated release.
-No asset arrays/dispatch/fixups/registry/zone init/async/rendering. Not started.
+Both genuine files/HONOR/x86/x64,26 fixtures/12cycles, exact3440 disk/6880 native
+zombie860slot tags, allaliases/elements/cursors and cleanup verified. No strings.
+See arm64_string_table.md/FACT-0040/0041/WARN-0014; failures retained.
+
+### Next3 under active autonomous objective
+
+- TASK-0015 actual Load_XStringCustom raw bytes, bounded terminators/offsets/
+  capacity,859 genuine inline strings, empty versus null, exact file/memory cursors.
+- Actual37/1045 asset directory at proven next file offset, before dispatch.
+- Real SL/MT intern/user4release with recursive locks/fixed32 ARM64 atomics,
+  then integration. No fabricated IDs/VM callbacks. Game-owned graphics follow
+  real engine/app/backend dependencies; no synthetic-frame success claims.
 
 ## Beyond
 

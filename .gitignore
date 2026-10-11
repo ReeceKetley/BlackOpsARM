@@ -465,3 +465,4 @@ x64_diag.log
 !/docs/port/evidence/arm64_checked_zone/*.log
 !/docs/port/evidence/arm64_stream_init/*.log
 !/docs/port/evidence/arm64_assetlist/*.log
+!/docs/port/evidence/arm64_string_table/*.log

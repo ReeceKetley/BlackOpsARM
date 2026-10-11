@@ -91,3 +91,18 @@ three read-only reviews run independently. Local checkpoint commits after verifi
 milestones are now explicitly authorized; no push. This overrides historical
 no-commit statements above. Preserve protected checkouts and all prior evidence.
 TASK-0014 is the first implementation boundary. Stop at the approved finish line.
+
+DEC-0028 broadens follow-on work after core through further validated Android
+execution/asset/graphics milestones, with D:/Games/Call of Duty - Black Ops game
+root and separate DXVK dependency. Aspirations are optional; never fake success.
+Continue one production boundary at a time; current checkpoint ffc4241 verified.
+
+Current gate TASK-0014 complete: read arm64_string_table.md, FACT-0040/0041,
+FAIL-0008/0009, WARN-0014.26fixtures/12genuine cycles, original-game full hash
+provenance, actual pointertable all slot/alias/stride and release checks pass.
+Next actual Load_XStringCustom raw-only boundary; whole Load_TempStringCustom
+also interns and must not masquerade as raw validation. Full objective file
+read per DEC-0029 supersedes previous loose planning; no fake gameplay/frames.
+Record next3 milestones and distinguish actual production leaves/fixture readers.
+Local verified checkpoint approval DEC-0026 persists; no push. Preserve1280 prior
+archive/report/handoff files for this gate. Goal continues autonomously after gates.

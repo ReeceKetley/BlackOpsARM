@@ -1,0 +1,5 @@
+{
+  "error_type": "RuntimeError",
+  "error": "Preflight status/identity or no-mutation verification failed",
+  "traceback": "Traceback (most recent call last):\n  File \"D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\tools\\port\\run_string_table_gate.py\", line 166, in main\n    raise RuntimeError('Preflight status/identity or no-mutation verification failed')\nRuntimeError: Preflight status/identity or no-mutation verification failed\n"
+}

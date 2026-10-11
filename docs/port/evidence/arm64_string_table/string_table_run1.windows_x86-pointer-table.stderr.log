@@ -1,0 +1,39 @@
+PMem_Free( frontend-genuine-zone, Low )
+freed -0.05
+PMem_Free( frontend-genuine-zone, High )
+PMem_Free( frontend-genuine-zone, Low )
+freed -0.05
+PMem_Free( frontend-genuine-zone, High )
+PMem_Free( frontend-genuine-zone, Low )
+freed -103.08
+PMem_Free( frontend-genuine-zone, High )
+PMem_Free( frontend-genuine-zone, Low )
+PMem_Free( frontend-genuine-zone, High )
+freed 0.05
+PMem_Free( frontend-genuine-zone, Low )
+PMem_Free( frontend-genuine-zone, High )
+freed 103.08
+PMem_Free( frontend-genuine-zone, Low )
+freed -0.05
+PMem_Free( frontend-genuine-zone, High )
+PMem_Free( frontend-genuine-zone, Low )
+freed -103.08
+PMem_Free( frontend-genuine-zone, High )
+PMem_Free( frontend-genuine-zone, Low )
+PMem_Free( frontend-genuine-zone, High )
+freed 0.05
+PMem_Free( frontend-genuine-zone, Low )
+PMem_Free( frontend-genuine-zone, High )
+freed 103.08
+PMem_Free( frontend-genuine-zone, Low )
+freed -0.05
+PMem_Free( frontend-genuine-zone, High )
+PMem_Free( frontend-genuine-zone, Low )
+freed -103.08
+PMem_Free( frontend-genuine-zone, High )
+PMem_Free( frontend-genuine-zone, Low )
+PMem_Free( frontend-genuine-zone, High )
+freed 0.05
+PMem_Free( frontend-genuine-zone, Low )
+PMem_Free( frontend-genuine-zone, High )
+freed 103.08
