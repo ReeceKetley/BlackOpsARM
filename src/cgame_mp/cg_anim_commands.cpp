@@ -86,8 +86,8 @@ namespace
         int elapsed = (std::max)(0, cg->time - command.startTime);
         centity_s *cent = CG_GetEntity(localClientNum, command.entnum);
         // KB stores a RagdollBody pointer in the handle; SP 0x004A98D0 resolves an index.
-        if (cent->pose.isRagdoll && cent->pose.ragdollHandle > 0
-            && ((RagdollBody *)cent->pose.ragdollHandle)->state >= BS_RUNNING)
+        if (cent->pose.isRagdoll && cent->pose.ragdollHandle != 0
+            && Ragdoll_HandleBody(cent->pose.ragdollHandle)->state >= BS_RUNNING)
             return;
         XAnimClientNotifyList notifies;
         DObjSetClientNotifies(&notifies);

@@ -1,5 +1,6 @@
 #include "physconstraints_load_obj.h"
 #include <cstring>
+#include <cstddef>
 #include <universal/q_shared.h>
 #include <universal/com_files.h>
 #include <qcommon/common.h>
@@ -22,64 +23,64 @@ const char *s_constraintTypeNames[10] =
 
 cspField_t physConstraintsFields[58] =
 {
-  { "c1_type", 12, 15 },
-  { "c1_bone1_name", 28, 0 },
-  { "c1_bone2_name", 44, 0 },
-  { "c1_offsetX", 48, 7 },
-  { "c1_offsetY", 52, 7 },
-  { "c1_offsetZ", 56, 7 },
-  { "c1_timeout", 100, 4 },
-  { "c1_min_health", 104, 4 },
-  { "c1_max_health", 108, 4 },
-  { "c1_damp", 116, 7 },
-  { "c1_power", 120, 7 },
-  { "c1_spin_scale", 136, 7 },
-  { "c1_shakescalex", 124, 7 },
-  { "c1_shakescaley", 128, 7 },
-  { "c1_shakescalez", 132, 7 },
-  { "c1_min_angle", 140, 7 },
-  { "c1_max_angle", 144, 7 },
-  { "c1_yaw", 128, 7 },
-  { "c1_pitch", 124, 7 },
-  { "c2_type", 180, 15 },
-  { "c2_bone1_name", 196, 0 },
-  { "c2_bone2_name", 212, 0 },
-  { "c2_offsetX", 216, 7 },
-  { "c2_offsetY", 220, 7 },
-  { "c2_offsetZ", 224, 7 },
-  { "c2_timeout", 268, 4 },
-  { "c2_min_health", 272, 4 },
-  { "c2_max_health", 276, 4 },
-  { "c2_damp", 284, 7 },
-  { "c2_power", 288, 7 },
-  { "c2_min_angle", 308, 7 },
-  { "c2_max_angle", 312, 7 },
-  { "c3_type", 348, 15 },
-  { "c3_bone1_name", 364, 0 },
-  { "c3_bone2_name", 380, 0 },
-  { "c3_offsetX", 384, 7 },
-  { "c3_offsetY", 388, 7 },
-  { "c3_offsetZ", 392, 7 },
-  { "c3_timeout", 436, 4 },
-  { "c3_min_health", 440, 4 },
-  { "c3_max_health", 444, 4 },
-  { "c3_damp", 452, 7 },
-  { "c3_power", 456, 7 },
-  { "c3_min_angle", 476, 7 },
-  { "c3_max_angle", 480, 7 },
-  { "c4_type", 516, 15 },
-  { "c4_bone1_name", 532, 0 },
-  { "c4_bone2_name", 548, 0 },
-  { "c4_offsetX", 552, 7 },
-  { "c4_offsetY", 556, 7 },
-  { "c4_offsetZ", 560, 7 },
-  { "c4_timeout", 604, 4 },
-  { "c4_min_health", 608, 4 },
-  { "c4_max_health", 612, 4 },
-  { "c4_damp", 620, 7 },
-  { "c4_power", 624, 7 },
-  { "c4_min_angle", 644, 7 },
-  { "c4_max_angle", 648, 7 }
+  { "c1_type", offsetof(PhysConstraints, data[0].type), 15 },
+  { "c1_bone1_name", offsetof(PhysConstraints, data[0].target_bone1), 0 },
+  { "c1_bone2_name", offsetof(PhysConstraints, data[0].target_bone2), 0 },
+  { "c1_offsetX", offsetof(PhysConstraints, data[0].offset[0]), 7 },
+  { "c1_offsetY", offsetof(PhysConstraints, data[0].offset[1]), 7 },
+  { "c1_offsetZ", offsetof(PhysConstraints, data[0].offset[2]), 7 },
+  { "c1_timeout", offsetof(PhysConstraints, data[0].timeout), 4 },
+  { "c1_min_health", offsetof(PhysConstraints, data[0].min_health), 4 },
+  { "c1_max_health", offsetof(PhysConstraints, data[0].max_health), 4 },
+  { "c1_damp", offsetof(PhysConstraints, data[0].damp), 7 },
+  { "c1_power", offsetof(PhysConstraints, data[0].power), 7 },
+  { "c1_spin_scale", offsetof(PhysConstraints, data[0].spin_scale), 7 },
+  { "c1_shakescalex", offsetof(PhysConstraints, data[0].scale[0]), 7 },
+  { "c1_shakescaley", offsetof(PhysConstraints, data[0].scale[1]), 7 },
+  { "c1_shakescalez", offsetof(PhysConstraints, data[0].scale[2]), 7 },
+  { "c1_min_angle", offsetof(PhysConstraints, data[0].minAngle), 7 },
+  { "c1_max_angle", offsetof(PhysConstraints, data[0].maxAngle), 7 },
+  { "c1_yaw", offsetof(PhysConstraints, data[0].scale[1]), 7 },
+  { "c1_pitch", offsetof(PhysConstraints, data[0].scale[0]), 7 },
+  { "c2_type", offsetof(PhysConstraints, data[1].type), 15 },
+  { "c2_bone1_name", offsetof(PhysConstraints, data[1].target_bone1), 0 },
+  { "c2_bone2_name", offsetof(PhysConstraints, data[1].target_bone2), 0 },
+  { "c2_offsetX", offsetof(PhysConstraints, data[1].offset[0]), 7 },
+  { "c2_offsetY", offsetof(PhysConstraints, data[1].offset[1]), 7 },
+  { "c2_offsetZ", offsetof(PhysConstraints, data[1].offset[2]), 7 },
+  { "c2_timeout", offsetof(PhysConstraints, data[1].timeout), 4 },
+  { "c2_min_health", offsetof(PhysConstraints, data[1].min_health), 4 },
+  { "c2_max_health", offsetof(PhysConstraints, data[1].max_health), 4 },
+  { "c2_damp", offsetof(PhysConstraints, data[1].damp), 7 },
+  { "c2_power", offsetof(PhysConstraints, data[1].power), 7 },
+  { "c2_min_angle", offsetof(PhysConstraints, data[1].minAngle), 7 },
+  { "c2_max_angle", offsetof(PhysConstraints, data[1].maxAngle), 7 },
+  { "c3_type", offsetof(PhysConstraints, data[2].type), 15 },
+  { "c3_bone1_name", offsetof(PhysConstraints, data[2].target_bone1), 0 },
+  { "c3_bone2_name", offsetof(PhysConstraints, data[2].target_bone2), 0 },
+  { "c3_offsetX", offsetof(PhysConstraints, data[2].offset[0]), 7 },
+  { "c3_offsetY", offsetof(PhysConstraints, data[2].offset[1]), 7 },
+  { "c3_offsetZ", offsetof(PhysConstraints, data[2].offset[2]), 7 },
+  { "c3_timeout", offsetof(PhysConstraints, data[2].timeout), 4 },
+  { "c3_min_health", offsetof(PhysConstraints, data[2].min_health), 4 },
+  { "c3_max_health", offsetof(PhysConstraints, data[2].max_health), 4 },
+  { "c3_damp", offsetof(PhysConstraints, data[2].damp), 7 },
+  { "c3_power", offsetof(PhysConstraints, data[2].power), 7 },
+  { "c3_min_angle", offsetof(PhysConstraints, data[2].minAngle), 7 },
+  { "c3_max_angle", offsetof(PhysConstraints, data[2].maxAngle), 7 },
+  { "c4_type", offsetof(PhysConstraints, data[3].type), 15 },
+  { "c4_bone1_name", offsetof(PhysConstraints, data[3].target_bone1), 0 },
+  { "c4_bone2_name", offsetof(PhysConstraints, data[3].target_bone2), 0 },
+  { "c4_offsetX", offsetof(PhysConstraints, data[3].offset[0]), 7 },
+  { "c4_offsetY", offsetof(PhysConstraints, data[3].offset[1]), 7 },
+  { "c4_offsetZ", offsetof(PhysConstraints, data[3].offset[2]), 7 },
+  { "c4_timeout", offsetof(PhysConstraints, data[3].timeout), 4 },
+  { "c4_min_health", offsetof(PhysConstraints, data[3].min_health), 4 },
+  { "c4_max_health", offsetof(PhysConstraints, data[3].max_health), 4 },
+  { "c4_damp", offsetof(PhysConstraints, data[3].damp), 7 },
+  { "c4_power", offsetof(PhysConstraints, data[3].power), 7 },
+  { "c4_min_angle", offsetof(PhysConstraints, data[3].minAngle), 7 },
+  { "c4_max_angle", offsetof(PhysConstraints, data[3].maxAngle), 7 }
 };
 
 
@@ -115,7 +116,7 @@ PhysConstraints *__cdecl PhysConstraintsLoadFile(const char *name, void *(__cdec
                     FS_FCloseFile(f);
                     if ( Info_Validate(buffer) )
                     {
-                        dst = (unsigned __int8 *)Alloc(2696);
+                        dst = (unsigned __int8 *)Alloc(sizeof(PhysConstraints));
                         if ( !dst
                             && !Assert_MyHandler(
                                         "C:\\projects_pc\\cod\\codsrc\\src\\physics\\physconstraints_load_obj.cpp",
@@ -126,13 +127,14 @@ PhysConstraints *__cdecl PhysConstraintsLoadFile(const char *name, void *(__cdec
                         {
                             __debugbreak();
                         }
-                        memset(dst, 0, 0xA88u);
+                        memset(dst, 0, sizeof(PhysConstraints));
                         for ( i = 0; i < 16; ++i )
                         {
-                            *(unsigned int *)&dst[168 * i + 28] = (unsigned int)"";
-                            *(unsigned int *)&dst[168 * i + 16] = 3;
-                            *(unsigned int *)&dst[168 * i + 44] = (unsigned int)"";
-                            *(unsigned int *)&dst[168 * i + 32] = 3;
+                            auto &constraint = reinterpret_cast<PhysConstraints *>(dst)->data[i];
+                            constraint.target_bone1 = "";
+                            constraint.attach_point_type1 = ATTACH_POINT_BONE;
+                            constraint.target_bone2 = "";
+                            constraint.attach_point_type2 = ATTACH_POINT_BONE;
                         }
                         if ( ParseConfigStringToStruct(
                                      dst,
@@ -202,11 +204,11 @@ void __cdecl PhysConstraints_Strcpy(unsigned __int8 *member, const char *keyValu
             *v3++ = *v4++;
         }
         while ( v2 );
-        *(unsigned int *)member = (unsigned int)buf;
+        *(const char **)member = (const char *)buf;
     }
     else
     {
-        *(unsigned int *)member = (unsigned int)"";
+        *(const char **)member = "";
     }
 }
 
@@ -216,7 +218,8 @@ int __cdecl CON_ParseSpecificField(unsigned __int8 *pStruct, const char *pValue,
     PhysConstraint *constraint; // [esp+4h] [ebp-Ch]
     int i; // [esp+Ch] [ebp-4h]
 
-    constraint = (PhysConstraint *)&pStruct[168 * *((unsigned int *)pStruct + 1) + 8];
+    auto constraints = reinterpret_cast<PhysConstraints *>(pStruct);
+    constraint = &constraints->data[constraints->count];
     if ( fieldType == 15 )
     {
         for ( i = 0; i < 10; ++i )
@@ -225,10 +228,10 @@ int __cdecl CON_ParseSpecificField(unsigned __int8 *pStruct, const char *pValue,
             {
                 if ( i )
                 {
+                    if (constraints->count >= 16)
+                        Com_Error(ERR_DROP, "Constraints array overflow");
                     constraint->type = (ConstraintType)i;
-                    if ( *((unsigned int *)pStruct + 1) >= 0x10u )
-                        Com_Error(ERR_DROP, "Cosntraints array overflow");
-                    ++*((unsigned int *)pStruct + 1);
+                    ++constraints->count;
                 }
                 break;
             }

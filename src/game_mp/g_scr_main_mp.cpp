@@ -1128,7 +1128,7 @@ int __cdecl Scr_GetArrayValues_Vector(
                 return 0;
             }
             v8 = &(*vector_array)[3 * vector_array_index];
-            next = (float *)entry_value->u.next;
+            next = (float *)(const float *)entry_value->u.u.vectorValue;
             *v8 = *next;
             v8[1] = next[1];
             v8[2] = next[2];
@@ -1732,29 +1732,19 @@ void GScr_GetAnimLength()
 
 void GScr_AnimHasNotetrack()
 {
-    const XAnim_s *Anims; // eax
-    unsigned __int8 v1; // al
-    unsigned __int16 name; // [esp+4h] [ebp-8h]
-    const char *anim; // [esp+8h] [ebp-4h]
-
-    anim = Scr_GetAnim(0, 0, SCRIPTINSTANCE_SERVER).linkPointer;
-    name = (unsigned __int16)Scr_GetConstString(1u, SCRIPTINSTANCE_SERVER);
-    Anims = Scr_GetAnims(HIWORD(anim), SCRIPTINSTANCE_SERVER);
-    v1 = XAnimNotetrackExists(Anims, (unsigned __int16)anim, name);
-    Scr_AddBool(v1, SCRIPTINSTANCE_SERVER);
+    const scr_anim_s anim = Scr_GetAnim(0, 0, SCRIPTINSTANCE_SERVER);
+    const unsigned __int16 name = Scr_GetConstString(1u, SCRIPTINSTANCE_SERVER);
+    const XAnim_s *anims = Scr_GetAnims(anim.tree, SCRIPTINSTANCE_SERVER);
+    Scr_AddBool(XAnimNotetrackExists(anims, anim.index, name), SCRIPTINSTANCE_SERVER);
 }
 
 void GScr_GetNotetrackTimes()
 {
-    const XAnim_s *Anims; // eax
-    VariableUnion name; // [esp+4h] [ebp-8h]
-    const char *anim; // [esp+8h] [ebp-4h]
-
-    anim = Scr_GetAnim(0, 0, SCRIPTINSTANCE_SERVER).linkPointer;
-    name.intValue = Scr_GetConstString(1u, SCRIPTINSTANCE_SERVER);
+    const scr_anim_s anim = Scr_GetAnim(0, 0, SCRIPTINSTANCE_SERVER);
+    const unsigned int name = Scr_GetConstString(1u, SCRIPTINSTANCE_SERVER);
     Scr_MakeArray(SCRIPTINSTANCE_SERVER);
-    Anims = Scr_GetAnims(HIWORD(anim), SCRIPTINSTANCE_SERVER);
-    XAnimAddNotetrackTimesToScriptArray(Anims, (unsigned __int16)anim, name.stringValue);
+    const XAnim_s *anims = Scr_GetAnims(anim.tree, SCRIPTINSTANCE_SERVER);
+    XAnimAddNotetrackTimesToScriptArray(anims, anim.index, name);
 }
 
 void GScr_GetBrushModelCenter()
@@ -16223,22 +16213,11 @@ void GScr_PregameStartGame()
 
 void print_0()
 {
-    const dvar_s *result; // eax
-    char *DebugString; // eax
-    int num; // [esp+0h] [ebp-8h]
-    const dvar_s *i; // [esp+4h] [ebp-4h]
-
     if (!g_NoScriptSpam->current.enabled)
     {
-        num = Scr_GetNumParam(SCRIPTINSTANCE_SERVER);
-        for (i = 0; ; i = (const dvar_s *)((char *)i + 1))
-        {
-            result = i;
-            if ((int)i >= num)
-                break;
-            DebugString = Scr_GetDebugString((unsigned int)i, SCRIPTINSTANCE_SERVER);
-            Com_Printf(level.scriptPrintChannel, "%s", DebugString);
-        }
+        const unsigned int count = Scr_GetNumParam(SCRIPTINSTANCE_SERVER);
+        for (unsigned int i = 0; i < count; ++i)
+            Com_Printf(level.scriptPrintChannel, "%s", Scr_GetDebugString(i, SCRIPTINSTANCE_SERVER));
     }
 }
 

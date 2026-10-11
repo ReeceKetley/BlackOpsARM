@@ -110,10 +110,10 @@ token_s *__cdecl PC_CopyToken(token_s *token)
 {
     unsigned int *t; // [esp+8h] [ebp-4h]
 
-    t = GetMemory(0x430u);
+    t = GetMemory(sizeof(token_s));
     if ( t )
     {
-        memcpy(t, token, 0x430u);
+        memcpy(t, token, sizeof(token_s));
         t[266] = 0;
         ++numtokens;
         return (token_s *)t;
@@ -852,7 +852,7 @@ int __cdecl PC_Directive_define(source_s *source)
             return 0;
         PC_FindHashedDefine(source->definehash, token.string);
     }
-    definea = (define_s *)GetMemory(&token.string[strlen(token.string) + 1] - &token.string[1] + 33);
+    definea = (define_s *)GetMemory(sizeof(define_s) + strlen(token.string) + 1);
     definea->name = 0;
     definea->flags = 0;
     definea->builtin = 0;
@@ -963,7 +963,7 @@ define_s *__cdecl PC_DefineFromString(char *string)
     memset((unsigned __int8 *)&src, 0, sizeof(src));
     strncpy((char *)&src, "*extern", 0x40u);
     src.scriptstack = script;
-    src.definehash = (define_s **)GetClearedMemory(0x1000u);
+    src.definehash = (define_s **)GetClearedMemory(1024 * sizeof(define_s *));
     res = PC_Directive_define(&src);
     for ( t = src.tokens; t; t = src.tokens )
     {
@@ -1004,7 +1004,7 @@ define_s *__cdecl PC_CopyDefine(source_s *source, define_s *define)
     char v2; // dl
     _BYTE *v4; // [esp+8h] [ebp-28h]
     char *name; // [esp+Ch] [ebp-24h]
-    unsigned int *newdefine; // [esp+20h] [ebp-10h]
+    define_s *newdefine; // [esp+20h] [ebp-10h]
     token_s *newtoken; // [esp+24h] [ebp-Ch]
     token_s *newtokena; // [esp+24h] [ebp-Ch]
     token_s *token; // [esp+28h] [ebp-8h]
@@ -1012,22 +1012,22 @@ define_s *__cdecl PC_CopyDefine(source_s *source, define_s *define)
     token_s *lasttoken; // [esp+2Ch] [ebp-4h]
     token_s *lasttokena; // [esp+2Ch] [ebp-4h]
 
-    newdefine = GetMemory(strlen(define->name) + 33);
-    *newdefine = (unsigned int)(newdefine + 8);
+    newdefine = reinterpret_cast<define_s *>(GetMemory(sizeof(define_s) + strlen(define->name) + 1));
+    newdefine->name = reinterpret_cast<char *>(newdefine + 1);
     name = define->name;
-    v4 = (_BYTE *)*newdefine;
+    v4 = reinterpret_cast<_BYTE *>(newdefine->name);
     do
     {
         v2 = *name;
         *v4++ = *name++;
     }
     while ( v2 );
-    newdefine[1] = define->flags;
-    newdefine[2] = define->builtin;
-    newdefine[3] = define->numparms;
-    newdefine[6] = 0;
-    newdefine[7] = 0;
-    newdefine[5] = 0;
+    newdefine->flags = define->flags;
+    newdefine->builtin = define->builtin;
+    newdefine->numparms = define->numparms;
+    newdefine->next = 0;
+    newdefine->hashnext = 0;
+    newdefine->tokens = 0;
     lasttoken = 0;
     for ( token = define->tokens; token; token = token->next )
     {
@@ -1036,10 +1036,10 @@ define_s *__cdecl PC_CopyDefine(source_s *source, define_s *define)
         if ( lasttoken )
             lasttoken->next = newtoken;
         else
-            newdefine[5] = (unsigned int)newtoken;
+            newdefine->tokens = newtoken;
         lasttoken = newtoken;
     }
-    newdefine[4] = 0;
+    newdefine->parms = 0;
     lasttokena = 0;
     for ( tokena = define->parms; tokena; tokena = tokena->next )
     {
@@ -1048,7 +1048,7 @@ define_s *__cdecl PC_CopyDefine(source_s *source, define_s *define)
         if ( lasttokena )
             lasttokena->next = newtokena;
         else
-            newdefine[4] = (unsigned int)newtokena;
+            newdefine->parms = newtokena;
         lasttokena = newtokena;
     }
     return (define_s *)newdefine;
@@ -1098,7 +1098,7 @@ void __cdecl PC_PushIndent(source_s *source, int type, parseSkip_t skip)
 {
     indent_s *indent; // [esp+0h] [ebp-4h]
 
-    indent = (indent_s *)GetMemory(0x10u);
+    indent = (indent_s *)GetMemory(sizeof(indent_s));
     indent->type = type;
     indent->script = source->scriptstack;
     indent->skip = skip;
@@ -2245,7 +2245,7 @@ source_s *__cdecl LoadSourceFile(char *filename)
     if ( !script )
         return 0;
     script->next = 0;
-    source = (source_s *)GetMemory(0x4D0u);
+    source = (source_s *)GetMemory(sizeof(source_s));
     memset(source, 0, sizeof(source_s));
     strncpy((char*)source, filename, 0x40u);
     source->scriptstack = script;
@@ -2253,7 +2253,7 @@ source_s *__cdecl LoadSourceFile(char *filename)
     source->defines = 0;
     source->indentstack = 0;
     source->skip = 0;
-    source->definehash = (define_s **)GetClearedMemory(0x1000u);
+    source->definehash = (define_s **)GetClearedMemory(1024 * sizeof(define_s *));
     PC_AddGlobalDefinesToSource(source);
     return source;
 }

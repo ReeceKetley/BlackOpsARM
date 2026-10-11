@@ -314,7 +314,7 @@ itemDef_s *__cdecl Menu_GetMatchingItemByNumber(menuDef_t *menu, int index, char
     wildcard = -1;
     v3 = strstr(name, "*");
     if ( v3 )
-        wildcard = (unsigned int)v3 - (unsigned int)name;
+        wildcard = static_cast<int>(v3 - name);
     for ( i = 0; i < menu->itemCount; ++i )
     {
         if ( wildcard == -1 )
@@ -785,7 +785,7 @@ void __cdecl Item_LerpAnimationParameters(int localClientNum, int contextIndex, 
     float v6; // [esp+Ch] [ebp-14h]
     float v7; // [esp+10h] [ebp-10h]
     listBoxDef_s *listPtr; // [esp+18h] [ebp-8h]
-    const char *maxScroll; // [esp+1Ch] [ebp-4h]
+    int maxScroll; // [esp+1Ch] [ebp-4h]
 
     if ( item->animInfo )
     {
@@ -988,7 +988,7 @@ int __cdecl Menu_ItemsMatchingGroup(menuDef_t *menu, char *name)
     wildcard = -1;
     v2 = strstr(name, "*");
     if ( v2 )
-        wildcard = (unsigned int)v2 - (unsigned int)name;
+        wildcard = static_cast<int>(v2 - name);
     for ( i = 0; i < menu->itemCount; ++i )
     {
         if ( wildcard == -1 )
@@ -2673,8 +2673,8 @@ void __cdecl Script_FeederTop(int localClientNum, UiContext *dc, itemDef_s *item
 void __cdecl Script_FeederBottom(int localClientNum, UiContext *dc, itemDef_s *item, const char **args)
 {
     int v3; // [esp+8h] [ebp-18h]
-    const char *v4; // [esp+Ch] [ebp-14h]
-    const char *max; // [esp+10h] [ebp-10h]
+    int v4; // [esp+Ch] [ebp-14h]
+    int max; // [esp+10h] [ebp-10h]
     listBoxDef_s *listPtr; // [esp+14h] [ebp-Ch]
     int viewmax; // [esp+18h] [ebp-8h]
 
@@ -2689,7 +2689,7 @@ void __cdecl Script_FeederBottom(int localClientNum, UiContext *dc, itemDef_s *i
         {
             max = Item_ListBox_MaxScroll(localClientNum, dc->contextIndex, item);
             viewmax = Item_ListBox_Viewmax(localClientNum, dc->contextIndex, item);
-            v4 = (const char *)UI_FeederCount(localClientNum, dc->contextIndex, listPtr->special, listPtr) - 1;
+            v4 = UI_FeederCount(localClientNum, dc->contextIndex, listPtr->special, listPtr) - 1;
             if ( (int)v4 > 0 )
                 v3 = (int)v4;
             else
@@ -3033,9 +3033,7 @@ void __cdecl Item_RunScript(int localClientNum, UiContext *dc, itemDef_s *item, 
                 }
                 if ( !bRan )
                 {
-                    HIDWORD(v4) = (DWORD)s;
-                    LODWORD(v4) = (DWORD)&p;
-                    UI_RunMenuScript(localClientNum, dc->contextIndex, v4);
+                    UI_RunMenuScript(localClientNum, dc->contextIndex, &p, s);
                 }
             }
         }
@@ -3577,7 +3575,7 @@ void __cdecl UI_MoveFeeder_f()
     int v10; // [esp+10h] [ebp-78h]
     int v11; // [esp+24h] [ebp-64h]
     int v12; // [esp+38h] [ebp-50h]
-    const char *max; // [esp+68h] [ebp-20h]
+    int max; // [esp+68h] [ebp-20h]
     itemDef_s *feederItem; // [esp+6Ch] [ebp-1Ch]
     listBoxDef_s *listPtr; // [esp+74h] [ebp-14h]
     int viewmax; // [esp+78h] [ebp-10h]
@@ -4059,7 +4057,7 @@ textDef_s *__cdecl Item_GetTextRect(int contextIndex, const itemDef_s *item)
         return 0;
 }
 
-const char *__cdecl Item_ListBox_MaxScroll(int localClientNum, int contextIndex, itemDef_s *item)
+int __cdecl Item_ListBox_MaxScroll(int localClientNum, int contextIndex, itemDef_s *item)
 {
     int v3; // esi
     int v6; // [esp+10h] [ebp-8h]
@@ -4069,7 +4067,7 @@ const char *__cdecl Item_ListBox_MaxScroll(int localClientNum, int contextIndex,
     v3 = Item_ListBox_Viewmax(localClientNum, contextIndex, item);
     v6 = UI_FeederCount(localClientNum, contextIndex, listPtr->special, listPtr) - v3;
     if (v6 > 0)
-        return (const char *)v6;
+        return v6;
     else
         return 0;
 }
@@ -6198,7 +6196,7 @@ double __cdecl Item_ListBox_ScrollHeight(int localClientNum, int contextIndex, i
 
 double __cdecl Item_ListBox_ThumbPosition(int localClientNum, int contextIndex, itemDef_s *item)
 {
-    const char *max; // [esp+4h] [ebp-18h]
+    int max; // [esp+4h] [ebp-18h]
     float pos; // [esp+8h] [ebp-14h]
     float posa; // [esp+8h] [ebp-14h]
     listBoxDef_s *listPtr; // [esp+Ch] [ebp-10h]
@@ -6248,8 +6246,8 @@ void __cdecl Scroll_ListBox_ThumbFunc(int localClientNum, UiContext *dc, scrollI
 {
     int pos; // [esp+Ch] [ebp-34h]
     int posa; // [esp+Ch] [ebp-34h]
-    const char *max; // [esp+10h] [ebp-30h]
-    const char *maxa; // [esp+10h] [ebp-30h]
+    int max; // [esp+10h] [ebp-30h]
+    int maxa; // [esp+10h] [ebp-30h]
     rectDef_s r; // [esp+14h] [ebp-2Ch] BYREF
     scrollInfo_s *v8; // [esp+2Ch] [ebp-14h]
     listBoxDef_s *listPtr; // [esp+30h] [ebp-10h]
@@ -7706,7 +7704,7 @@ int __cdecl Item_ListBox_GetIndexForMouse(int contextIndex, itemDef_s *item, flo
 void __cdecl Item_ListBox_ModalSelection(int localClientNum, int contextIndex, itemDef_s *item, int x, int y)
 {
     uiInfo_s *uiInfo; // [esp+8h] [ebp-14h]
-    const char *max; // [esp+Ch] [ebp-10h]
+    int max; // [esp+Ch] [ebp-10h]
     int newPos; // [esp+10h] [ebp-Ch]
     listBoxDef_s *listPtr; // [esp+14h] [ebp-8h]
     int viewmax; // [esp+18h] [ebp-4h]
@@ -8084,7 +8082,7 @@ char    Menu_Paint(
                 UiContext *dc,
                 ScreenPlacementStack *scrPlaceViewStack,
                 menuDef_t *menu,
-                const ScreenPlacement *UI3DOverrideId)
+                int UI3DOverrideId)
 {
     const char *v7; // eax
     float alpha; // [esp+3Ch] [ebp-1B0h]
@@ -10777,7 +10775,7 @@ void __cdecl Menu_PaintAll(int localClientNum, UiContext *dc)
                         dc,
                         scrPlaceStackPtr,
                         menu,
-                        (const ScreenPlacement *)0xFFFFFFFF);
+                        -1);
                 }
 
                 if (drew)
@@ -10814,7 +10812,7 @@ void __cdecl Menu_PaintAll(int localClientNum, UiContext *dc)
                 dc,
                 scrPlaceStackPtr,
                 blurMenu,
-                (const ScreenPlacement *)0xFFFFFFFF);
+                -1);
         }
     }
 
@@ -10861,7 +10859,7 @@ void __cdecl Menu_PaintAll(int localClientNum, UiContext *dc)
                 dc,
                 scrPlaceStackPtr,
                 menuc,
-                (const ScreenPlacement *)UI3DOverrideId);
+                UI3DOverrideId);
             if (drewa && showVisibleList)
                 Menu_PaintAll_AppendToVisibleList(visibleList, 0x400u, menuc->window.name);
             if (drewa && g_debugMode && menuIndexc == dc->openMenuCount - 1)

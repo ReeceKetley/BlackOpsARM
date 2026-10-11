@@ -1,5 +1,6 @@
 #pragma once
 #include <universal/dvar.h>
+#include <universal/narrow32.h>
 
 #include "rigid_body.h"
 #include "phys_colgeom.h"
@@ -185,6 +186,11 @@ struct cdl_proftimer // sizeof=0x60
 };
 
 struct broad_phase_base;
+// Engine physics IDs remain 32-bit opaque slots; their pointers can live at any address.
+inline int Phys_GetObjId(const PhysObjUserData *p)
+{
+    return static_cast<int>(BO1_NARROW_ENCODE(p));
+}
 struct rigid_body;
 struct cbrush_t;
 struct CollisionAabbTree;

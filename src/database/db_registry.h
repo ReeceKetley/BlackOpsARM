@@ -344,7 +344,7 @@ void __cdecl DB_SyncExternalAssetsInternal();
 void DB_SyncExternalAssets();
 void DB_ArchiveAssets();
 void DB_FreeUnusedResources();
-void __cdecl DB_EnableInUseCache(unsigned __int16 *data);
+void __cdecl DB_EnableInUseCache(uintptr_t *data);
 bool DB_DisableInUseCache();
 void DB_ExternalInitAssets();
 void DB_StreamCompletePreload();

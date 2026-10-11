@@ -379,7 +379,7 @@ void __cdecl render_debug_brushes()
 {
     float *v0; // [esp+4h] [ebp-B8h]
     float *v1; // [esp+Ch] [ebp-B0h]
-    int v2; // [esp+10h] [ebp-ACh]
+    const float *v2; // first winding vertex
     unsigned __int16 i; // [esp+14h] [ebp-A8h]
     int ii; // [esp+1Ch] [ebp-A0h]
     unsigned __int16 ibase; // [esp+20h] [ebp-9Ch]
@@ -428,9 +428,9 @@ void __cdecl render_debug_brushes()
                 if ( num_indices >= 3 )
                 {
                     RB_CheckTessOverflow(num_indices, 3 * (num_indices - 2));
-                    v2 = (int)brush->verts[debug_brush_info->indices[first_vertex_index]];
+                    v2 = brush->verts[debug_brush_info->indices[first_vertex_index]];
                     *(_QWORD *)&verts[0][0] = *(_QWORD *)v2;
-                    verts[0][2] = *(float *)(v2 + 8);
+                    verts[0][2] = v2[2];
                     v1 = brush->verts[debug_brush_info->indices[first_vertex_index + 1]];
                     verts[1][0] = *v1;
                     verts[1][1] = v1[1];
@@ -543,10 +543,10 @@ void __cdecl render_debug_patches_full()
         {
             debug_patch = &debug_patch_info->patches[i];
             tree = debug_patch->tree;
-            faceColor[0] = (float)(0.5 * (float)((float)((((unsigned int)debug_patch->tree >> 4) & 0xF00) >> 4) / 256.0))
+            faceColor[0] = (float)(0.5 * (float)((float)((((uintptr_t)debug_patch->tree >> 4) & 0xF00) >> 4) / 256.0))
                                      + 0.5;
-            faceColor[1] = (float)(0.5 * (float)((float)(((unsigned int)tree >> 4) & 0xF0) / 256.0)) + 0.5;
-            faceColor[2] = (float)(0.5 * (float)((float)(unsigned __int8)(16 * (((unsigned int)tree >> 4) & 0xF)) / 256.0))
+            faceColor[1] = (float)(0.5 * (float)((float)(((uintptr_t)tree >> 4) & 0xF0) / 256.0)) + 0.5;
+            faceColor[2] = (float)(0.5 * (float)((float)(unsigned __int8)(16 * (((uintptr_t)tree >> 4) & 0xF)) / 256.0))
                                      + 0.5;
             if ( tree->u.firstChildIndex == g_debug_partition )
             {
@@ -736,7 +736,7 @@ void    render_brush(
     }
 }
 
-void __cdecl calc_color(unsigned int id, float alpha, float *color)
+void __cdecl calc_color(uintptr_t id, float alpha, float *color)
 {
     *color = 0.1f;
     color[1] = 0.85f;
@@ -756,7 +756,7 @@ void __cdecl render_convex_partition(const CollisionAabbTree *tree)
     float polygonVerts[3][3]; // [esp+20h] [ebp-34h] BYREF
     float faceColor[4]; // [esp+44h] [ebp-10h] BYREF
 
-    calc_color((unsigned int)tree, alpha, faceColor);
+    calc_color((uintptr_t)tree, alpha, faceColor);
     memset(edgeColor, 0, 12);
     edgeColor[3] = 1.0f;
     chull = get_partition_chull(tree);
@@ -824,7 +824,7 @@ void    render_chull(const chull_t *first, const phys_mat44 *xform, const float 
     }
 }
 
-void __cdecl render_xmodel_chull(const XModel *model, unsigned int key, const phys_mat44 *xform, const float *color)
+void __cdecl render_xmodel_chull(const XModel *model, uintptr_t key, const phys_mat44 *xform, const float *color)
 {
     chull_t *chull; // [esp+0h] [ebp-8h]
     PhysGeomList *geomList; // [esp+4h] [ebp-4h]
@@ -843,7 +843,7 @@ void __cdecl render_xmodel_chull(const XModel *model, unsigned int key, const ph
 
 void __cdecl render_brushmodel_chull(
                 unsigned int brushmodel,
-                unsigned int key,
+                uintptr_t key,
                 const phys_mat44 *xform,
                 const float *color)
 {
@@ -974,7 +974,7 @@ void    render_gjk_geom(gjk_base_t *geom, const phys_mat44 *cg2w)
 
     if (geom->get_brush())
     {
-        calc_color((unsigned int)geom->get_brush(), alpha_1, faceColor);
+        calc_color((uintptr_t)geom->get_brush(), alpha_1, faceColor);
         render_brush(geom->get_brush(), cg2w, faceColor, 0, 0, 0, 1, edgeColor);
     }
     else
@@ -987,7 +987,7 @@ void    render_gjk_geom(gjk_base_t *geom, const phys_mat44 *cg2w)
             render_box(geom->get_aabb_mn(), geom->get_aabb_mx(), cg2w, colorMdRed, 0);
             break;
         case GJK_BRUSH:
-            calc_color((unsigned int)geom->get_brush(), alpha_0, &color);
+            calc_color((uintptr_t)geom->get_brush(), alpha_0, &color);
             memset(edgeColor, 0, 12);
             edgeColor[3] = 1.0f;
             render_brush(geom->get_brush(), cg2w, &color, 0, 0, 0, 1, edgeColor);

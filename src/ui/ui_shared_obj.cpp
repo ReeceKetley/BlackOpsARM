@@ -1753,7 +1753,7 @@ int    MenuParse_blurWorld(menuDef_t *menu, int handle)
 
 int __cdecl MenuParse_legacySplitScreenScale(menuDef_t *menu, int handle)
 {
-    return SetItemStaticFlag(menu, handle, (int)&objBuf[1758][2]);
+    return SetItemStaticFlag(menu, handle, 0x04000000);
 }
 
 int __cdecl SetItemStaticFlag(menuDef_t *menu, int handle, int flag)
@@ -3556,14 +3556,14 @@ int __cdecl ItemParse_state(itemDef_s *item, int handle)
 
     if ( !item->animInfo )
     {
-        item->animInfo = (UIAnimInfo *)UI_Alloc(0xECu, 4);
+        item->animInfo = (UIAnimInfo *)UI_Alloc(sizeof(UIAnimInfo), alignof(UIAnimInfo));
         item->animInfo->animStates = g_load_0.animStates;
-        *item->animInfo->animStates = (animParamsDef_t *)UI_Alloc(0x6Cu, 4);
+        *item->animInfo->animStates = (animParamsDef_t *)UI_Alloc(sizeof(animParamsDef_t), alignof(animParamsDef_t));
         Item_PropertiesToAnimState(item, *item->animInfo->animStates);
-        **(unsigned int **)item->animInfo->animStates = (unsigned int)String_Alloc("Default");
+        item->animInfo->animStates[0]->name = String_Alloc("Default");
         ++item->animInfo->animStateCount;
     }
-    animParams = (animParamsDef_t *)UI_Alloc(0x6Cu, 4);
+    animParams = (animParamsDef_t *)UI_Alloc(sizeof(animParamsDef_t), alignof(animParamsDef_t));
     item->animInfo->animStates[item->animInfo->animStateCount] = animParams;
     Item_PropertiesToAnimState(item, item->animInfo->animStates[item->animInfo->animStateCount]);
     success = Item_Parse(handle, item);

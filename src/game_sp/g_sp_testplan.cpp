@@ -1,4 +1,5 @@
 #include "g_sp_testplan.h"
+#include "g_sp_client.h"
 #include "g_sp_levelstart.h"
 #include "g_sp_player_state.h"
 
@@ -595,7 +596,7 @@ int s_prevWeaponTime, s_prevWeaponState = -1, s_prevTime;
 
 bool Enabled()
 {
-    return Sys_IsHeadless() && G_SP_IsZombieMode() && s_planDvar && s_planDvar->current.string
+    return (Sys_IsHeadless() || G_SP_TestClientRealWindow()) && G_SP_IsZombieMode() && s_planDvar && s_planDvar->current.string
         && s_planDvar->current.string[0] && Dvar_GetBool("bo1_testclient") && Dvar_GetBool("bo1_testclient_fight");
 }
 
@@ -2638,7 +2639,7 @@ static void PapThiefObserve(gentity_s *player)
 
 void G_SP_TestPlanRegister()
 {
-    if (!Sys_IsHeadless())
+    if (!Sys_IsHeadless() && !G_SP_TestClientRealWindow())
         return;
     s_planDvar = _Dvar_RegisterString("bo1_testclient_plan", "", 0,
         "Headless test client feature plan: step names or 'all' (needs bo1_testclient_fight)");
@@ -2716,7 +2717,7 @@ void G_SP_TestPlanReset()
 
 void G_SP_TestPlanFields(scriptInstance_t inst)
 {
-    if (inst != SCRIPTINSTANCE_SERVER || !Sys_IsHeadless())
+    if (inst != SCRIPTINSTANCE_SERVER || (!Sys_IsHeadless() && !G_SP_TestClientRealWindow()))
         return;
     for (int i = 0; i < F_COUNT; ++i)
     {
@@ -4525,6 +4526,29 @@ bool G_SP_TestPlanCommand(gentity_s *player, client_t *client, usercmd_s *cmd, g
         const int score = player->client->sess.cs.score.score;
         if (s_phase == 0)
         {
+            // Pentagon's floors have no walk links between them. Ride to the box
+            // before walking toward it, including after a thief-round teleport.
+            if (box && s_isFive && s_floorRequeues < 3)
+            {
+                float center[3];
+                Center(ent, center);
+                const int want = Floor(center[2]);
+                const int floor = Floor(player->r.currentOrigin[2]);
+                if (want != floor)
+                {
+                    char name[16], why[128];
+                    sprintf_s(name, "floor%d", want);
+                    sprintf_s(why, "box ent %d is on floor %d, player is on floor %d; ride before buying", ent->s.number, want, floor);
+                    for (int i = 0; i < (int)ARRAY_COUNT(s_steps); ++i)
+                        if (!strcmp(s_steps[i].name, name))
+                        {
+                            ++s_floorRequeues;
+                            s_stepStart = 0;
+                            InsertStep(i, 0, why);
+                            return false;
+                        }
+                }
+            }
             // Pay: the script charges (its own self.cost: a fire sale / bonfire sale lowers the box and
             // Pack-a-Punch prices) and switches the trigger off while it works. Kill points earned
             // while walking to the trigger raise the baseline, so they cannot hide the charge.

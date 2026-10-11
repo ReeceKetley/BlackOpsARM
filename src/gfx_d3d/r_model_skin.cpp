@@ -422,7 +422,7 @@ void __cdecl R_SkinXSurfaceRigid(
     {
         __debugbreak();
     }
-    if ( ((unsigned __int8)vertices & 0xF) != 0
+    if ( (reinterpret_cast<uintptr_t>(vertices) & 0xF) != 0
         && !Assert_MyHandler(
                     "C:\\projects_pc\\cod\\codsrc\\src\\gfx_d3d\\r_model_skin.cpp",
                     3907,
@@ -432,7 +432,7 @@ void __cdecl R_SkinXSurfaceRigid(
     {
         __debugbreak();
     }
-    if ( ((unsigned __int8)boneMatrix & 0xF) != 0
+    if ( (reinterpret_cast<uintptr_t>(boneMatrix) & 0xF) != 0
         && !Assert_MyHandler(
                     "C:\\projects_pc\\cod\\codsrc\\src\\gfx_d3d\\r_model_skin.cpp",
                     3908,

@@ -94,10 +94,10 @@ const float nodeColorTable[21][4] =
 pathlocal_t g_path;
 path_t *debugPath;
 path_t debugPathBuf;
-phys_inplace_avl_tree<unsigned int, generic_avl_map_node_t, generic_avl_map_node_t> g_pathnode_resized_links_map;
+phys_inplace_avl_tree<uintptr_t, generic_avl_map_node_t, generic_avl_map_node_t> g_pathnode_resized_links_map;
 phys_simple_allocator<pathnode_parent_t> g_pathnode_parent_allocator;
-phys_inplace_avl_tree<unsigned int, generic_avl_map_node_t, generic_avl_map_node_t> g_parented_pathnode_list_map;
-phys_inplace_avl_tree<unsigned int, generic_avl_map_node_t, generic_avl_map_node_t> g_pathnode_parent_map;
+phys_inplace_avl_tree<uintptr_t, generic_avl_map_node_t, generic_avl_map_node_t> g_parented_pathnode_list_map;
+phys_inplace_avl_tree<uintptr_t, generic_avl_map_node_t, generic_avl_map_node_t> g_pathnode_parent_map;
 
 pathnode_parent_t node_parent_world;
 
@@ -285,7 +285,7 @@ const pathnode_parent_t *__cdecl get_pathnode_parent(const pathnode_t *node)
     m_tree_root = g_pathnode_parent_map.m_tree_root;
     while ( m_tree_root && node != (const pathnode_t *)m_tree_root->m_avl_key )
     {
-        if ( (unsigned int)node >= m_tree_root->m_avl_key )
+        if ( (uintptr_t)node >= m_tree_root->m_avl_key )
             m_tree_root = m_tree_root->m_avl_tree_node.m_right;
         else
             m_tree_root = m_tree_root->m_avl_tree_node.m_left;
@@ -474,7 +474,7 @@ void __cdecl setup_pathnode_parent(pathnode_t *node, int entnum, const float *or
     node_parent->entnum = entnum;
     node_parent->m_node = node;
     node_parent->m_next = 0;
-    generic_avl_map_add(&g_pathnode_parent_map, node_parent, (unsigned int)node);
+    generic_avl_map_add(&g_pathnode_parent_map, node_parent, (uintptr_t)node);
 }
 
 bool __cdecl is_moving_entity(gentity_s *gent)
@@ -593,7 +593,7 @@ void __cdecl G_SpawnPathnodeDynamic(SpawnVar *spawnVar)
                         {
                             animscript = SL_ConvertToString(loadNode->constant.animscript, SCRIPTINSTANCE_SERVER);
                             DataForFile = Hunk_FindDataForFile(1, animscript);
-                            loadNode->constant.animscriptfunc = (int)DataForFile;
+                            loadNode->constant.animscriptfunc = static_cast<int>(reinterpret_cast<uintptr_t>(DataForFile));
                             if ( !loadNode->constant.animscriptfunc )
                             {
                                 printf(
@@ -1112,8 +1112,8 @@ void __cdecl Path_MovingNodesInCylinder()
             }
             if (m_tree_root)
             {
-                for (j = m_tree_root->m_data; j; j = (void *)*((_DWORD *)j + 5))
-                    Path_NodesInCylinder_process(*((pathnode_t **)j + 4));
+                for (pathnode_parent_t *parent = static_cast<pathnode_parent_t *>(m_tree_root->m_data); parent; parent = parent->m_next)
+                    Path_NodesInCylinder_process(parent->m_node);
             }
         }
     }

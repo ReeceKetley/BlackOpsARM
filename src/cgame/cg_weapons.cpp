@@ -617,7 +617,7 @@ void __cdecl CG_FreeWeapons(int localClientNum)
             XAnimFreeTree(viewModelInfo->tree, 0, SCRIPTINSTANCE_SERVER);
         viewModelInfo->tree = 0;
     }
-    memset((unsigned __int8 *)cg_weaponsArray[localClientNum], 0, 0x12000u);
+    memset(cg_weaponsArray[localClientNum], 0, 2048 * sizeof(*cg_weaponsArray[localClientNum]));
 }
 
 // zombies: SP builds the view-weapon anim tree with 0x0063E450 = Hunk_AllocLowAlign(size, 4) (push at SP 0x00796C6B,
@@ -4933,7 +4933,7 @@ void __cdecl CG_VehicleJolt(centity_s *cent, float *origin, float *dir)
         {
             __debugbreak();
         }
-        Phys_ObjAddForce((int)cent->nitrousVeh->m_phys_user_data, origin, dir, 0);
+        Phys_ObjAddForce(Phys_GetObjId(cent->nitrousVeh->m_phys_user_data), origin, dir, 0);
     }
 }
 
@@ -5174,7 +5174,7 @@ void __cdecl CG_FireWeapon(
             AnglesToAxis(cent->pose.angles, entMatrix);
             R_FoliageNofityWeaponFiring(
                 (int)localClientNum,
-                (unsigned int)cent,
+                BO1_NARROW_ENCODE(cent),
                 fireOrigin,
                 entMatrix[0],
                 weaponDef->weapClass == WEAPCLASS_GAS);

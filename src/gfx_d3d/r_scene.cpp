@@ -456,7 +456,7 @@ void __cdecl R_AddDObjToScene(
                 sceneModel->entnum = entnum;
                 scene.dpvs.sceneXModelIndex[entnum] = sceneEntIndex;
                 //sceneModel->cachedLightingHandle = (unsigned __int16 *)Ragdoll_HandleBody((int)pose);
-                sceneModel->cachedLightingHandle = (unsigned __int16 *)((int)pose);
+                sceneModel->cachedLightingHandle = const_cast<unsigned __int16 *>(&pose->lightingHandle);
                 sceneModel->lightingOriginToleranceSq = lightingOriginToleranceSq;
                 radius = XModelGetRadius(model);
                 CG_GetPoseOrigin(pose, sceneModel->placement.base.origin);
@@ -1528,7 +1528,7 @@ const XSurface *__cdecl R_GetXSurface(unsigned int *modelSurf, surfaceType_t sur
     {
         __debugbreak();
     }
-    return (const XSurface *)modelSurf[1];
+    return reinterpret_cast<const GfxModelSkinnedSurface *>(modelSurf)->xsurf;
 }
 
 GfxDrawSurf *__cdecl R_AddXModelSurfaces(
@@ -1822,7 +1822,7 @@ void __cdecl R_AddDObjSurfacesCamera(
                         skinnedSurf->info.lightingHandle = lightingHandle;
                         skinnedSurf->info.dobjModelIndex = modelIndex;
                         surfId = (_BYTE *)modelSurf - (_BYTE *)frontEndDataOut;
-                        if ( (((_BYTE)modelSurf - (_BYTE)frontEndDataOut) & 3) != 0
+                        if ( ((reinterpret_cast<uintptr_t>(modelSurf) - reinterpret_cast<uintptr_t>(frontEndDataOut)) & 3) != 0
                             && !Assert_MyHandler(
                                         "C:\\projects_pc\\cod\\codsrc\\src\\gfx_d3d\\r_scene.cpp",
                                         1588,
@@ -2036,7 +2036,7 @@ LABEL_24:
                     HIDWORD(newDrawSurf.packed) = HIDWORD(newDrawSurf.packed) & 0xFE7FFFFF | 0x1000000;
                 }
                 surfId = (_BYTE *)modelSurf - (_BYTE *)frontEndDataOut;
-                if ( (((_BYTE)modelSurf - (_BYTE)frontEndDataOut) & 3) != 0
+                if ( ((reinterpret_cast<uintptr_t>(modelSurf) - reinterpret_cast<uintptr_t>(frontEndDataOut)) & 3) != 0
                     && !Assert_MyHandler(
                                 "C:\\projects_pc\\cod\\codsrc\\src\\gfx_d3d\\r_scene.cpp",
                                 1779,

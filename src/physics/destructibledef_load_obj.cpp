@@ -1,4 +1,5 @@
 #include "destructibledef_load_obj.h"
+#include <cstddef>
 #include <xanim/xmodel.h>
 #include <universal/com_files.h>
 #include <qcommon/common.h>
@@ -11,83 +12,83 @@
 
 cspField_t destructiblePieceFields[70] =
 {
-  { "showBone", 0, 14 },
-  { "breakHealth", 4, 7 },
-  { "maxTime", 8, 7 },
-  { "explosiveDamageOnly", 12, 15 },
-  { "meleeDamage", 12, 20 },
-  { "parentDamage", 12, 25 },
-  { "physicsParent", 12, 30 },
-  { "breakEffect", 16, 9 },
-  { "breakSound", 20, 0 },
-  { "loopSound", 28, 0 },
-  { "breakNotify", 24, 0 },
-  { "spawnModel1", 32, 10 },
-  { "spawnModel2", 36, 10 },
-  { "physPreset", 44, 13 },
-  { "showBoneD1", 48, 14 },
-  { "breakHealthD1", 52, 7 },
-  { "maxTimeD1", 56, 7 },
-  { "explosiveDamageOnlyD1", 60, 16 },
-  { "meleeDamageD1", 60, 21 },
-  { "parentDamageD1", 60, 26 },
-  { "physicsParentD1", 60, 31 },
-  { "breakEffectD1", 64, 9 },
-  { "breakSoundD1", 68, 0 },
-  { "loopSoundD1", 76, 0 },
-  { "breakNotifyD1", 72, 0 },
-  { "spawnModel1D1", 80, 10 },
-  { "spawnModel2D1", 84, 10 },
-  { "physPresetD1", 92, 13 },
-  { "showBoneD2", 96, 14 },
-  { "breakHealthD2", 100, 7 },
-  { "maxTimeD2", 104, 7 },
-  { "explosiveDamageOnlyD2", 108, 17 },
-  { "meleeDamageD2", 108, 22 },
-  { "parentDamageD2", 108, 27 },
-  { "physicsParentD2", 108, 32 },
-  { "breakEffectD2", 112, 9 },
-  { "breakSoundD2", 116, 0 },
-  { "loopSoundD2", 124, 0 },
-  { "breakNotifyD2", 120, 0 },
-  { "spawnModel1D2", 128, 10 },
-  { "spawnModel2D2", 132, 10 },
-  { "physPresetD2", 140, 13 },
-  { "showBoneD3", 144, 14 },
-  { "breakHealthD3", 148, 7 },
-  { "maxTimeD3", 152, 7 },
-  { "explosiveDamageOnlyD3", 156, 18 },
-  { "meleeDamageD3", 156, 23 },
-  { "parentDamageD3", 156, 28 },
-  { "physicsParentD3", 156, 33 },
-  { "breakEffectD3", 160, 9 },
-  { "breakSoundD3", 164, 0 },
-  { "loopSoundD3", 172, 0 },
-  { "breakNotifyD3", 168, 0 },
-  { "spawnModel1D3", 176, 10 },
-  { "spawnModel2D3", 180, 10 },
-  { "physPresetD3", 188, 13 },
-  { "showBoneD4", 192, 14 },
-  { "breakHealthD4", 196, 7 },
-  { "maxTimeD4", 200, 7 },
-  { "explosiveDamageOnlyD4", 204, 19 },
-  { "meleeDamageD4", 204, 24 },
-  { "parentDamageD4", 204, 29 },
-  { "physicsParentD4", 204, 34 },
-  { "breakEffectD4", 208, 9 },
-  { "breakSoundD4", 212, 0 },
-  { "loopSoundD4", 220, 0 },
-  { "breakNotifyD4", 216, 0 },
-  { "spawnModel1D4", 224, 10 },
-  { "spawnModel2D4", 228, 10 },
-  { "physPresetD4", 236, 13 }
+  { "showBone", offsetof(DestructiblePiece, stages[0].showBone), 14 },
+  { "breakHealth", offsetof(DestructiblePiece, stages[0].breakHealth), 7 },
+  { "maxTime", offsetof(DestructiblePiece, stages[0].maxTime), 7 },
+  { "explosiveDamageOnly", offsetof(DestructiblePiece, stages[0].flags), 15 },
+  { "meleeDamage", offsetof(DestructiblePiece, stages[0].flags), 20 },
+  { "parentDamage", offsetof(DestructiblePiece, stages[0].flags), 25 },
+  { "physicsParent", offsetof(DestructiblePiece, stages[0].flags), 30 },
+  { "breakEffect", offsetof(DestructiblePiece, stages[0].breakEffect), 9 },
+  { "breakSound", offsetof(DestructiblePiece, stages[0].breakSound), 0 },
+  { "loopSound", offsetof(DestructiblePiece, stages[0].loopSound), 0 },
+  { "breakNotify", offsetof(DestructiblePiece, stages[0].breakNotify), 0 },
+  { "spawnModel1", offsetof(DestructiblePiece, stages[0].spawnModel[0]), 10 },
+  { "spawnModel2", offsetof(DestructiblePiece, stages[0].spawnModel[1]), 10 },
+  { "physPreset", offsetof(DestructiblePiece, stages[0].physPreset), 13 },
+  { "showBoneD1", offsetof(DestructiblePiece, stages[1].showBone), 14 },
+  { "breakHealthD1", offsetof(DestructiblePiece, stages[1].breakHealth), 7 },
+  { "maxTimeD1", offsetof(DestructiblePiece, stages[1].maxTime), 7 },
+  { "explosiveDamageOnlyD1", offsetof(DestructiblePiece, stages[1].flags), 16 },
+  { "meleeDamageD1", offsetof(DestructiblePiece, stages[1].flags), 21 },
+  { "parentDamageD1", offsetof(DestructiblePiece, stages[1].flags), 26 },
+  { "physicsParentD1", offsetof(DestructiblePiece, stages[1].flags), 31 },
+  { "breakEffectD1", offsetof(DestructiblePiece, stages[1].breakEffect), 9 },
+  { "breakSoundD1", offsetof(DestructiblePiece, stages[1].breakSound), 0 },
+  { "loopSoundD1", offsetof(DestructiblePiece, stages[1].loopSound), 0 },
+  { "breakNotifyD1", offsetof(DestructiblePiece, stages[1].breakNotify), 0 },
+  { "spawnModel1D1", offsetof(DestructiblePiece, stages[1].spawnModel[0]), 10 },
+  { "spawnModel2D1", offsetof(DestructiblePiece, stages[1].spawnModel[1]), 10 },
+  { "physPresetD1", offsetof(DestructiblePiece, stages[1].physPreset), 13 },
+  { "showBoneD2", offsetof(DestructiblePiece, stages[2].showBone), 14 },
+  { "breakHealthD2", offsetof(DestructiblePiece, stages[2].breakHealth), 7 },
+  { "maxTimeD2", offsetof(DestructiblePiece, stages[2].maxTime), 7 },
+  { "explosiveDamageOnlyD2", offsetof(DestructiblePiece, stages[2].flags), 17 },
+  { "meleeDamageD2", offsetof(DestructiblePiece, stages[2].flags), 22 },
+  { "parentDamageD2", offsetof(DestructiblePiece, stages[2].flags), 27 },
+  { "physicsParentD2", offsetof(DestructiblePiece, stages[2].flags), 32 },
+  { "breakEffectD2", offsetof(DestructiblePiece, stages[2].breakEffect), 9 },
+  { "breakSoundD2", offsetof(DestructiblePiece, stages[2].breakSound), 0 },
+  { "loopSoundD2", offsetof(DestructiblePiece, stages[2].loopSound), 0 },
+  { "breakNotifyD2", offsetof(DestructiblePiece, stages[2].breakNotify), 0 },
+  { "spawnModel1D2", offsetof(DestructiblePiece, stages[2].spawnModel[0]), 10 },
+  { "spawnModel2D2", offsetof(DestructiblePiece, stages[2].spawnModel[1]), 10 },
+  { "physPresetD2", offsetof(DestructiblePiece, stages[2].physPreset), 13 },
+  { "showBoneD3", offsetof(DestructiblePiece, stages[3].showBone), 14 },
+  { "breakHealthD3", offsetof(DestructiblePiece, stages[3].breakHealth), 7 },
+  { "maxTimeD3", offsetof(DestructiblePiece, stages[3].maxTime), 7 },
+  { "explosiveDamageOnlyD3", offsetof(DestructiblePiece, stages[3].flags), 18 },
+  { "meleeDamageD3", offsetof(DestructiblePiece, stages[3].flags), 23 },
+  { "parentDamageD3", offsetof(DestructiblePiece, stages[3].flags), 28 },
+  { "physicsParentD3", offsetof(DestructiblePiece, stages[3].flags), 33 },
+  { "breakEffectD3", offsetof(DestructiblePiece, stages[3].breakEffect), 9 },
+  { "breakSoundD3", offsetof(DestructiblePiece, stages[3].breakSound), 0 },
+  { "loopSoundD3", offsetof(DestructiblePiece, stages[3].loopSound), 0 },
+  { "breakNotifyD3", offsetof(DestructiblePiece, stages[3].breakNotify), 0 },
+  { "spawnModel1D3", offsetof(DestructiblePiece, stages[3].spawnModel[0]), 10 },
+  { "spawnModel2D3", offsetof(DestructiblePiece, stages[3].spawnModel[1]), 10 },
+  { "physPresetD3", offsetof(DestructiblePiece, stages[3].physPreset), 13 },
+  { "showBoneD4", offsetof(DestructiblePiece, stages[4].showBone), 14 },
+  { "breakHealthD4", offsetof(DestructiblePiece, stages[4].breakHealth), 7 },
+  { "maxTimeD4", offsetof(DestructiblePiece, stages[4].maxTime), 7 },
+  { "explosiveDamageOnlyD4", offsetof(DestructiblePiece, stages[4].flags), 19 },
+  { "meleeDamageD4", offsetof(DestructiblePiece, stages[4].flags), 24 },
+  { "parentDamageD4", offsetof(DestructiblePiece, stages[4].flags), 29 },
+  { "physicsParentD4", offsetof(DestructiblePiece, stages[4].flags), 34 },
+  { "breakEffectD4", offsetof(DestructiblePiece, stages[4].breakEffect), 9 },
+  { "breakSoundD4", offsetof(DestructiblePiece, stages[4].breakSound), 0 },
+  { "loopSoundD4", offsetof(DestructiblePiece, stages[4].loopSound), 0 },
+  { "breakNotifyD4", offsetof(DestructiblePiece, stages[4].breakNotify), 0 },
+  { "spawnModel1D4", offsetof(DestructiblePiece, stages[4].spawnModel[0]), 10 },
+  { "spawnModel2D4", offsetof(DestructiblePiece, stages[4].spawnModel[1]), 10 },
+  { "physPresetD4", offsetof(DestructiblePiece, stages[4].physPreset), 13 }
 };
 
 cspField_t destructibleDefFields[453] =
 {
-  { "clientOnly", 20, 6 },
-  { "model", 4, 10 },
-  { "pristineModel", 8, 10 },
+  { "clientOnly", offsetof(DestructibleDef, clientOnly), 6 },
+  { "model", offsetof(DestructibleDef, model), 10 },
+  { "pristineModel", offsetof(DestructibleDef, pristineModel), 10 },
   { "piece0", 0, 15 },
   { "piece0Health", 0, 47 },
   { "piece1", 0, 16 },
@@ -673,148 +674,57 @@ void __cdecl DestructibleDef_Strcpy(unsigned __int8 *member, const char *keyValu
             *v3++ = *v4++;
         }
         while ( v2 );
-        *(unsigned int *)member = (unsigned int)buf;
+        *(const char **)member = (const char *)buf;
     }
     else
     {
-        *(unsigned int *)member = (unsigned int)"";
+        *(const char **)member = "";
     }
 }
 
 int __cdecl Destructible_ParseDefSpecificFieldType(unsigned __int8 *pStruct, char *pValue, int iFieldType)
 {
-    float v4; // [esp+0h] [ebp-50h]
-    float v5; // [esp+4h] [ebp-4Ch]
-    float v6; // [esp+8h] [ebp-48h]
-    float v7; // [esp+Ch] [ebp-44h]
-    int v8; // [esp+3Ch] [ebp-14h]
-
-    if ( *((unsigned int *)pStruct + 4) )
+    auto ddef = reinterpret_cast<DestructibleDef *>(pStruct);
+    if (iFieldType < 15 || iFieldType > 462)
+        return 1;
+    const int group = (iFieldType - 15) / 32;
+    const int index = (iFieldType - 15) % 32;
+    if (!ddef->pieces)
     {
-        if ( iFieldType < 15 || iFieldType > 46 )
-        {
-            if ( iFieldType < 47 || iFieldType > 78 )
-            {
-                if ( iFieldType < 79 || iFieldType > 110 )
-                {
-                    if ( iFieldType < 111 || iFieldType > 142 )
-                    {
-                        if ( iFieldType < 143 || iFieldType > 174 )
-                        {
-                            if ( iFieldType < 175 || iFieldType > 206 )
-                            {
-                                if ( iFieldType < 207 || iFieldType > 238 )
-                                {
-                                    if ( iFieldType < 239 || iFieldType > 270 )
-                                    {
-                                        if ( iFieldType < 271 || iFieldType > 302 )
-                                        {
-                                            if ( iFieldType < 303 || iFieldType > 334 )
-                                            {
-                                                if ( iFieldType < 335 || iFieldType > 366 )
-                                                {
-                                                    if ( iFieldType < 367 || iFieldType > 398 )
-                                                    {
-                                                        if ( iFieldType < 399 || iFieldType > 430 )
-                                                        {
-                                                            if ( iFieldType >= 431 && iFieldType <= 462 && iFieldType - 431 < *((unsigned int *)pStruct + 3) )
-                                                                *(_WORD *)(*((unsigned int *)pStruct + 4) + 312 * (iFieldType - 431) + 288) = SL_GetLowercaseString(pValue, 0, SCRIPTINSTANCE_SERVER);
-                                                        }
-                                                        else if ( iFieldType - 399 < *((unsigned int *)pStruct + 3) )
-                                                        {
-                                                            *(float *)(*((unsigned int *)pStruct + 4) + 312 * (iFieldType - 399) + 264) = (float)atoi(pValue) * 0.0099999998;
-                                                        }
-                                                    }
-                                                    else if ( iFieldType - 367 < *((unsigned int *)pStruct + 3) )
-                                                    {
-                                                        DestructibleDef_Strcpy(
-                                                            (unsigned __int8 *)(*((unsigned int *)pStruct + 4) + 312 * (iFieldType - 367) + 284),
-                                                            pValue);
-                                                    }
-                                                }
-                                                else if ( iFieldType - 335 < *((unsigned int *)pStruct + 3) )
-                                                {
-                                                    *(unsigned int *)(*((unsigned int *)pStruct + 4) + 312 * (iFieldType - 335) + 280) = (unsigned int)FX_Register(pValue);
-                                                }
-                                            }
-                                            else if ( !G_ExitAfterToolComplete() && iFieldType - 303 < *((unsigned int *)pStruct + 3) )
-                                            {
-                                                DestructibleDef_Strcpy(
-                                                    (unsigned __int8 *)(*((unsigned int *)pStruct + 4) + 312 * (iFieldType - 303) + 276),
-                                                    pValue);
-                                            }
-                                        }
-                                        else if ( iFieldType - 271 < *((unsigned int *)pStruct + 3) && pValue && *pValue )
-                                        {
-                                            *(unsigned int *)(*((unsigned int *)pStruct + 4) + 312 * (iFieldType - 271) + 268) = (unsigned int)XModel_PhysConstraintsPrecache(pValue, 0);
-                                        }
-                                    }
-                                    else if ( iFieldType - 239 < *((unsigned int *)pStruct + 3) )
-                                    {
-                                        v4 = atof(pValue);
-                                        *(float *)(*((unsigned int *)pStruct + 4) + 312 * (iFieldType - 239) + 260) = v4;
-                                    }
-                                }
-                                else if ( iFieldType - 207 < *((unsigned int *)pStruct + 3) )
-                                {
-                                    v5 = atof(pValue);
-                                    *(float *)(*((unsigned int *)pStruct + 4) + 312 * (iFieldType - 207) + 256) = v5;
-                                }
-                            }
-                            else if ( iFieldType - 175 < *((unsigned int *)pStruct + 3) )
-                            {
-                                v6 = atof(pValue);
-                                *(float *)(*((unsigned int *)pStruct + 4) + 312 * (iFieldType - 175) + 252) = v6;
-                            }
-                        }
-                        else if ( iFieldType - 143 < *((unsigned int *)pStruct + 3) )
-                        {
-                            v7 = atof(pValue);
-                            *(float *)(*((unsigned int *)pStruct + 4) + 312 * (iFieldType - 143) + 248) = v7;
-                        }
-                    }
-                    else if ( iFieldType - 111 < *((unsigned int *)pStruct + 3) )
-                    {
-                        *(float *)(*((unsigned int *)pStruct + 4) + 312 * (iFieldType - 111) + 244) = (float)atoi(pValue) / 100.0;
-                    }
-                }
-                else
-                {
-                    v8 = iFieldType - 79;
-                    if ( iFieldType - 79 < *((unsigned int *)pStruct + 3) )
-                    {
-                        *(_BYTE *)(*((unsigned int *)pStruct + 4) + 312 * v8 + 240) = atoi(pValue);
-                        if ( *(unsigned __int8 *)(*((unsigned int *)pStruct + 4) + 312 * v8 + 240) != 255
-                            && *(unsigned __int8 *)(*((unsigned int *)pStruct + 4) + 312 * v8 + 240) >= *((int *)pStruct + 3)
-                            && !Assert_MyHandler(
-                                        "C:\\projects_pc\\cod\\codsrc\\src\\physics\\destructibledef_load_obj.cpp",
-                                        854,
-                                        0,
-                                        "%s",
-                                        "ddef->pieces[pieceIndex].parentPiece < ddef->numPieces") )
-                        {
-                            __debugbreak();
-                        }
-                    }
-                }
-            }
-            else if ( iFieldType - 47 < *((unsigned int *)pStruct + 3) )
-            {
-                *(unsigned int *)(*((unsigned int *)pStruct + 4) + 312 * (iFieldType - 47) + 272) = atoi(pValue);
-            }
-        }
-        else
-        {
-            DestructiblePieceLoadFile(pValue, (DestructiblePiece *)(*((unsigned int *)pStruct + 4) + 312 * (iFieldType - 15)));
-        }
+        if (group == 0 && index + 1 > ddef->numPieces)
+            ddef->numPieces = index + 1;
         return 1;
     }
-    else
-    {
-        if ( iFieldType >= 15 && iFieldType <= 46 && iFieldType - 15 + 1 > *((unsigned int *)pStruct + 3) )
-            *((unsigned int *)pStruct + 3) = iFieldType - 15 + 1;
+    if (index >= ddef->numPieces)
         return 1;
+    auto &piece = ddef->pieces[index];
+    switch (group)
+    {
+        case 0: DestructiblePieceLoadFile(pValue, &piece); break;
+        case 1: piece.health = atoi(pValue); break;
+        case 2:
+            piece.parentPiece = static_cast<unsigned char>(atoi(pValue));
+            iassert(piece.parentPiece == 255 || piece.parentPiece < ddef->numPieces);
+            break;
+        case 3: piece.parentDamagePercent = static_cast<float>(atoi(pValue)) / 100.0f; break;
+        case 4: piece.bulletDamageScale = atof(pValue); break;
+        case 5: piece.explosiveDamageScale = atof(pValue); break;
+        case 6: piece.meleeDamageScale = atof(pValue); break;
+        case 7: piece.impactDamageScale = atof(pValue); break;
+        case 8:
+            if (pValue && *pValue)
+                piece.physConstraints = XModel_PhysConstraintsPrecache(pValue, 0);
+            break;
+        case 9:
+            if (!G_ExitAfterToolComplete())
+                DestructibleDef_Strcpy(reinterpret_cast<unsigned char *>(&piece.damageSound), pValue);
+            break;
+        case 10: piece.burnEffect = FX_Register(pValue); break;
+        case 11: DestructibleDef_Strcpy(reinterpret_cast<unsigned char *>(&piece.burnSound), pValue); break;
+        case 12: piece.entityDamageTransfer = static_cast<float>(atoi(pValue)) * 0.0099999998f; break;
+        case 13: piece.enableLabel = SL_GetLowercaseString(pValue, 0, SCRIPTINSTANCE_SERVER); break;
     }
+    return 1;
 }
 
 DestructibleDef *__cdecl DestructibleDefLoadFile(const char *name, void *(__cdecl *Alloc)(int))
@@ -864,7 +774,7 @@ DestructibleDef *__cdecl DestructibleDefLoadFile(const char *name, void *(__cdec
                     FS_FCloseFile(f);
                     if ( Info_Validate(buffer) )
                     {
-                        pStruct = (unsigned __int8 *)Alloc(24);
+                        pStruct = (unsigned __int8 *)Alloc(sizeof(DestructibleDef));
                         if ( !pStruct
                             && !Assert_MyHandler(
                                         "C:\\projects_pc\\cod\\codsrc\\src\\physics\\destructibledef_load_obj.cpp",
@@ -875,13 +785,8 @@ DestructibleDef *__cdecl DestructibleDefLoadFile(const char *name, void *(__cdec
                         {
                             __debugbreak();
                         }
-                        v3 = pStruct;
-                        *(unsigned int *)pStruct = 0;
-                        *((unsigned int *)v3 + 1) = 0;
-                        *((unsigned int *)v3 + 2) = 0;
-                        *((unsigned int *)v3 + 3) = 0;
-                        *((unsigned int *)v3 + 4) = 0;
-                        *((unsigned int *)v3 + 5) = 0;
+                        auto ddef = reinterpret_cast<DestructibleDef *>(pStruct);
+                        memset(ddef, 0, sizeof(*ddef));
                         if ( ParseConfigStringToStruct(
                                      pStruct,
                                      destructibleDefFields,
@@ -891,10 +796,9 @@ DestructibleDef *__cdecl DestructibleDefLoadFile(const char *name, void *(__cdec
                                      (int (__cdecl *)(unsigned __int8 *, const char *, const int, const int))Destructible_ParseDefSpecificFieldType,
                                      DestructibleDef_Strcpy) )
                         {
-                            count = 312 * *((unsigned int *)pStruct + 3);
-                            v4 = Alloc(count);
-                            *((unsigned int *)pStruct + 4) = (unsigned int)v4;
-                            memset(*((unsigned __int8 **)pStruct + 4), 0, count);
+                            count = sizeof(DestructiblePiece) * ddef->numPieces;
+                            ddef->pieces = static_cast<DestructiblePiece *>(Alloc(count));
+                            memset(ddef->pieces, 0, count);
                             if ( ParseConfigStringToStruct(
                                          pStruct,
                                          destructibleDefFields,
@@ -904,32 +808,30 @@ DestructibleDef *__cdecl DestructibleDefLoadFile(const char *name, void *(__cdec
                                          (int (__cdecl *)(unsigned __int8 *, const char *, const int, const int))Destructible_ParseDefSpecificFieldType,
                                          DestructibleDef_Strcpy) )
                             {
-                                model = (XModel *)*((unsigned int *)pStruct + 1);
+                                model = ddef->model;
                                 if ( model )
                                 {
-                                    for ( i = 0; i < *((unsigned int *)pStruct + 3); ++i )
+                                    for ( i = 0; i < ddef->numPieces; ++i )
                                     {
                                         for ( j = 0; j < 5; ++j )
                                         {
-                                            *(float *)(*((unsigned int *)pStruct + 4) + 312 * i + 48 * j + 4) = *(float *)(312 * i
-                                                                                                                                                                                         + *((unsigned int *)pStruct + 4)
-                                                                                                                                                                                         + 48 * j
-                                                                                                                                                                                         + 4)
-                                                                                                                                                                    / 100.0;
-                                            namea = *(unsigned __int16 *)(312 * i + *((unsigned int *)pStruct + 4) + 48 * j);
+                                            auto &piece = ddef->pieces[i];
+                                            auto &stage = piece.stages[j];
+                                            stage.breakHealth /= 100.0f;
+                                            namea = stage.showBone;
                                             if ( namea )
                                             {
                                                 index = 0;
                                                 if ( XModelGetBoneIndex(model, namea, &index) )
                                                 {
-                                                    if ( *(unsigned int *)(*((unsigned int *)pStruct + 4) + 312 * i + 48 * j + 44) )
+                                                    if ( stage.physPreset )
                                                     {
                                                         if ( !XModelGetCollmapForBoneIndex(model, index) )
                                                         {
                                                             v13 = j;
                                                             v11 = i;
                                                             v9 = model->name;
-                                                            v7 = **(const char ***)(*((unsigned int *)pStruct + 4) + 312 * i + 48 * j + 44);
+                                                            v7 = stage.physPreset->name;
                                                             v6 = SL_ConvertToString(namea, SCRIPTINSTANCE_SERVER);
                                                             Com_PrintError(
                                                                 20,
@@ -943,7 +845,7 @@ DestructibleDef *__cdecl DestructibleDefLoadFile(const char *name, void *(__cdec
                                                                 v13);
                                                         }
                                                     }
-                                                    *(unsigned int *)(*((unsigned int *)pStruct + 4) + 312 * i + 4 * ((int)index >> 5) + 292) = *(unsigned int *)(312 * i + *((unsigned int *)pStruct + 4) + 4 * ((int)index >> 5) + 292) | (0x80000000 >> (index & 0x1F));
+                                                    piece.hideBones[index >> 5] |= 0x80000000u >> (index & 31);
                                                 }
                                                 else
                                                 {

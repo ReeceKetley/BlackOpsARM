@@ -1202,7 +1202,7 @@ void __cdecl XModelReadSurface_BuildCollisionTree(
     unsigned int leafEnd; // [esp+B8h] [ebp-E0h]
     float nodeMaxs[3]; // [esp+BCh] [ebp-DCh] BYREF
     unsigned int allocSize; // [esp+C8h] [ebp-D0h]
-    unsigned int alignedAddr; // [esp+CCh] [ebp-CCh]
+    uintptr_t alignedAddr; // [esp+CCh] [ebp-CCh]
     unsigned __int8 *alloced; // [esp+D0h] [ebp-C8h]
     float combinedVolume; // [esp+D4h] [ebp-C4h]
     float thisVolume; // [esp+D8h] [ebp-C0h]
@@ -1251,7 +1251,7 @@ void __cdecl XModelReadSurface_BuildCollisionTree(
         __debugbreak();
     }
     vertList = &surface->vertList[vertListIndex];
-    tree = (XSurfaceCollisionTree *)Alloc(40);
+    tree = (XSurfaceCollisionTree *)Alloc(sizeof(XSurfaceCollisionTree));
     vertList->collisionTree = tree;
     if ( !surface->triCount
         && !Assert_MyHandler(
@@ -1267,7 +1267,7 @@ void __cdecl XModelReadSurface_BuildCollisionTree(
     options.mins = 0;
     options.maxs = 0;
     options.maintainValidBounds = 1;
-    options.treeNodePool = (GenericAabbTree *)malloc(0x20000u);
+    options.treeNodePool = (GenericAabbTree *)malloc(sizeof(GenericAabbTree) * 0x2000u);
     options.treeNodeLimit = 0x2000;
     options.minItemsPerLeaf = 1;
     options.maxItemsPerLeaf = 16;
@@ -1442,9 +1442,9 @@ void __cdecl XModelReadSurface_BuildCollisionTree(
     allocSize = 16 * nodeCount + 15;
     v3 = (unsigned __int8 *)Alloc(allocSize);
     alloced = v3;
-    alignedAddr = (unsigned int)(v3 + 15) & 0xFFFFFFF0;
+    alignedAddr = reinterpret_cast<uintptr_t>(v3 + 15) & ~uintptr_t(15);
     tree->nodes = (XSurfaceCollisionNode *)alignedAddr;
-    if ( ((int)tree->nodes & 0xF) != 0
+    if ( (reinterpret_cast<uintptr_t>(tree->nodes) & 0xF) != 0
         && !Assert_MyHandler(
                     "C:\\projects_pc\\cod\\codsrc\\src\\gfx_d3d\\r_xsurface_load_obj.cpp",
                     494,

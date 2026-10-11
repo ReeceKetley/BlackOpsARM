@@ -449,9 +449,8 @@ FS_SERVER_COMPARE_RESULT __cdecl FS_CompareIwds(char *needediwds, int len, int d
     userMapDirAdded = 0;
     string = fs_gameDirVar->current.string;
     v7 = string + 1;
-    v9 = (unsigned int)&string[strlen(string) + 1];
-    gameDirNameLength = v9 - (unsigned int)v7;
-    isBaseDir = v9 == (unsigned int)v7;
+    gameDirNameLength = static_cast<int>(strlen(string));
+    isBaseDir = gameDirNameLength == 0;
     for ( i = 0; i < fs_numServerReferencedIwds; ++i )
     {
         haveiwd = 0;

@@ -156,10 +156,10 @@ void __cdecl DB_ConvertOffsetToPointer(void *field)
 
 void __cdecl Load_XStringCustom(const char **str)
 {
-    unsigned __int8 *numBytesLoaded; // [esp+4h] [ebp-8h]
+    int numBytesLoaded; // [esp+4h] [ebp-8h]
 
     numBytesLoaded = DB_LoadXFileDataNullTerminated((unsigned __int8 *)*str);
-    DB_IncStreamPos((int)numBytesLoaded);
+    DB_IncStreamPos(numBytesLoaded);
 }
 
 void __cdecl Load_TempStringCustom(const char **str)
@@ -168,7 +168,7 @@ void __cdecl Load_TempStringCustom(const char **str)
 
     Load_XStringCustom(str);
     if ( *str )
-        String = (const char *)SL_GetString((char *)*str, 4u, SCRIPTINSTANCE_SERVER);
+        String = (const char *)(uintptr_t)SL_GetString((char *)*str, 4u, SCRIPTINSTANCE_SERVER);
     else
         String = 0;
     *str = String;

@@ -5125,8 +5125,8 @@ void __cdecl VEH_UpdateNitrousPosition(gentity_s *pSelf)
     nitrousVeh = veh->nitrousVehicle;
     memset(zero, 0, sizeof(zero));
     Sys_EnterCriticalSection(CRITSECT_PHYSICS);
-    Phys_ObjGetPosition((int)nitrousVeh->m_phys_user_data, absPos, absAxis);
-    Phys_ObjGetVelocities((int)nitrousVeh->m_phys_user_data, tvel, avel);
+    Phys_ObjGetPosition(Phys_GetObjId(nitrousVeh->m_phys_user_data), absPos, absAxis);
+    Phys_ObjGetVelocities(Phys_GetObjId(nitrousVeh->m_phys_user_data), tvel, avel);
     notifyFlags = nitrousVeh->m_server_notify_flags;
     nitrousVeh->m_server_notify_flags = 0;
     intensity = nitrousVeh->m_collision_intensity;
@@ -10036,7 +10036,7 @@ void __cdecl CMD_VEH_GetGunnerTargetVec(scr_entref_t entref)
 
 void __cdecl CMD_VEH_SetGunnerTargetEnt(scr_entref_t entref)
 {
-    int targetOrigin; // edx
+    float *targetOrigin; // edx
     int number; // [esp+0h] [ebp-28h]
     float *v3; // [esp+8h] [ebp-20h]
     scr_vehicle_s *veh; // [esp+Ch] [ebp-1Ch]
@@ -10068,9 +10068,9 @@ void __cdecl CMD_VEH_SetGunnerTargetEnt(scr_entref_t entref)
     v3[1] = targetOffset[1];
     v3[2] = targetOffset[2];
     veh->gunnerTargets[gunnerIndex].targetOrigin[0] = 0.0f;
-    targetOrigin = (int)veh->gunnerTargets[gunnerIndex].targetOrigin;
-    *(unsigned int *)(targetOrigin + 4) = 0;
-    *(unsigned int *)(targetOrigin + 8) = 0;
+    targetOrigin = veh->gunnerTargets[gunnerIndex].targetOrigin;
+    targetOrigin[1] = 0.0f;
+    targetOrigin[2] = 0.0f;
 }
 
 void __cdecl CMD_VEH_ClearGunnerTarget(scr_entref_t entref)

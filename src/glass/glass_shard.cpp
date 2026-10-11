@@ -3896,7 +3896,7 @@ bool __thiscall GlassShard::InitPhysicsObj(bool enableCollisions)
         //gjk_geom_list_t::add_geom(&gjk_geom_list, aabb_gjk_geom);
         gjk_geom_list.add_geom(aabb_gjk_geom);
         PhysObjUserData *obj = Phys_ObjCreate(1, this->origin, quat, vec3_origin, &physPreset, &gjk_geom_list, 1, -1);
-        this->physObjId = (int)obj;
+        this->physObjId = Phys_GetObjId(obj);
 
         broad_phase_base *bpb = obj->m_bpb;
         aasap_list_remove(bpb);

@@ -387,7 +387,7 @@ void __thiscall phys_contact_manifold::set_get_feature_params(
 {
     phys_memory_heap *m_allocator; // edi
     const char *v7; // ecx
-    unsigned int v8; // eax
+    uintptr_t v8; // eax
 
     this->m_feature_hitp.x = hitp->x;
     this->m_feature_hitp.y = hitp->y;
@@ -399,7 +399,7 @@ void __thiscall phys_contact_manifold::set_get_feature_params(
     this->m_feature_distance_eps = feature_distance_eps;
     this->m_sin_feautre_angular_eps_sq = sin_feautre_angular_eps_sq;
     v7 = g_contact_manifold_error_msg;
-    v8 = (int)(m_allocator->m_buffer_cur + 15) & 0xFFFFFFF0;
+    v8 = reinterpret_cast<uintptr_t>(m_allocator->m_buffer_cur + 15) & ~uintptr_t(15);
     m_allocator->m_buffer_cur = (char *)v8;
     if ( (char *)v8 >= m_allocator->m_buffer_end
         && _tlAssert(
@@ -1097,13 +1097,13 @@ const bpei_database_id *__cdecl get_database_id(bpei_database_id *result, gjk_ph
 {
     if (collision_visitor->cent)
     {
-        result->m_id1 = (unsigned int)collision_visitor->cent;
+        result->m_id1 = (uintptr_t)collision_visitor->cent;
         result->m_id2 = 0;
         return result;
     }
     else if (collision_visitor->glass)
     {
-        result->m_id1 = (unsigned int)collision_visitor->glass;
+        result->m_id1 = (uintptr_t)collision_visitor->glass;
         result->m_id2 = 0;
         return result;
     }
@@ -1119,7 +1119,7 @@ const bpei_database_id *__cdecl get_database_id(bpei_database_id *result, gjk_ph
         {
             __debugbreak();
         }
-        result->m_id1 = (unsigned int)collision_visitor->dynEntDef;
+        result->m_id1 = (uintptr_t)collision_visitor->dynEntDef;
         result->m_id2 = 0;
         return result;
     }
@@ -1472,9 +1472,9 @@ void broad_phase_info::set_bpi_env(phys_auto_activate_callback *auto_activate_ca
 }
 
 generic_avl_map_node_t *__cdecl generic_avl_map_add(
-    phys_inplace_avl_tree<unsigned int, generic_avl_map_node_t, generic_avl_map_node_t> *gam,
+    phys_inplace_avl_tree<uintptr_t, generic_avl_map_node_t, generic_avl_map_node_t> *gam,
     void *data,
-    unsigned int avl_key)
+    uintptr_t avl_key)
 {
     //generic_avl_map_node_t *m_tree_root; // [esp+15Ch] [ebp-8h]
     generic_avl_map_node_t *gamn; // [esp+160h] [ebp-4h]
@@ -1507,7 +1507,7 @@ generic_avl_map_node_t *__cdecl generic_avl_map_add(
     iassert(gamn);
 
     gamn->m_data = data;
-    //phys_inplace_avl_tree<unsigned int, generic_avl_map_node_t, generic_avl_map_node_t>::add(gam, &avl_key, gamn);
+    //phys_inplace_avl_tree<uintptr_t, generic_avl_map_node_t, generic_avl_map_node_t>::add(gam, &avl_key, gamn);
     gam->add(avl_key, gamn);
 
     iassert(gam->find(avl_key) != NULL); // add
@@ -1516,8 +1516,8 @@ generic_avl_map_node_t *__cdecl generic_avl_map_add(
 }
 
 void *__cdecl generic_avl_map_destroy(
-    phys_inplace_avl_tree<unsigned int, generic_avl_map_node_t, generic_avl_map_node_t> *gam,
-    unsigned int avl_key)
+    phys_inplace_avl_tree<uintptr_t, generic_avl_map_node_t, generic_avl_map_node_t> *gam,
+    uintptr_t avl_key)
 {
     generic_avl_map_node_t *m_tree_root; // [esp+144h] [ebp-Ch]
     void *data; // [esp+148h] [ebp-8h]
@@ -1533,19 +1533,19 @@ void *__cdecl generic_avl_map_destroy(
     if (!m_tree_root)
         return 0;
     data = m_tree_root->m_data;
-    //phys_inplace_avl_tree<unsigned int, generic_avl_map_node_t, generic_avl_map_node_t>::remove(gam, &avl_key);
+    //phys_inplace_avl_tree<uintptr_t, generic_avl_map_node_t, generic_avl_map_node_t>::remove(gam, &avl_key);
     gam->remove(avl_key);
     //phys_simple_allocator<generic_avl_map_node_t>::free(&g_generic_avl_map_node_allocator, m_tree_root);
     g_generic_avl_map_node_allocator.free(m_tree_root);
     return data;
 }
 
-// yes, convert the int directly to a pointer to a struct. 
+// Physics IDs contain narrow handles on x64 and raw addresses on Win32.
 PhysObjUserData *__cdecl Phys_GetUserData(int id)
 {
     iassert(id);
 
-    return (PhysObjUserData *)id;
+    return BO1_NARROW_DECODE(PhysObjUserData, static_cast<unsigned int>(id));
 }
 
 int __cdecl get_physics_contents_mask(char phys_env_collision_flags)
@@ -1689,7 +1689,7 @@ void standard_query::query(
                 continue;
 
             broad_phase_environment_info *bpei_mt =
-                G_BPM->g_bpei_database.get_bpei_mt(bpei_database_id((unsigned int)brush));
+                G_BPM->g_bpei_database.get_bpei_mt(bpei_database_id((uintptr_t)brush));
 
             if (!bpei_mt->m_data)
             {
@@ -1755,7 +1755,7 @@ void standard_query::query(
                 continue;
 
             broad_phase_environment_info *bpei_mt =
-                G_BPM->g_bpei_database.get_bpei_mt(bpei_database_id((unsigned int)partition));
+                G_BPM->g_bpei_database.get_bpei_mt(bpei_database_id((uintptr_t)partition));
 
             if (!bpei_mt->m_data)
             {
@@ -1919,7 +1919,7 @@ void standard_query::query(
                 gjk_base_t *first_geom = userRb->m_gjk_geom_list.m_first_geom;
 
                 broad_phase_environment_info *bpei_mt =
-                    G_BPM->g_bpei_database.get_bpei_mt(bpei_database_id((unsigned int)userRb));
+                    G_BPM->g_bpei_database.get_bpei_mt(bpei_database_id((uintptr_t)userRb));
 
                 if (!bpei_mt->m_data)
                 {
@@ -2056,8 +2056,8 @@ bool gjk_physics_collision_visitor::query_create_prolog(const void *geom)
     {
         __debugbreak();
     }
-    this->m_local_database_id.m_id1 = (unsigned int)this->m_local_entity;
-    this->m_local_database_id.m_id2 = (unsigned int)geom;
+    this->m_local_database_id.m_id1 = (uintptr_t)this->m_local_entity;
+    this->m_local_database_id.m_id2 = (uintptr_t)geom;
     //this->m_local_bpei = bpei_database_t::get_bpei_mt(&G_BPM->g_bpei_database, this->m_local_database_id);
     this->m_local_bpei = G_BPM->g_bpei_database.get_bpei_mt(this->m_local_database_id);
 

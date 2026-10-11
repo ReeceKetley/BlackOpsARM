@@ -279,14 +279,13 @@ const char *R_Cinematic_CheckBinkError()
     if ( result && *result )
     {
         v1 = va("BinkGetError(): \"%s\"", result);
-        result = (const char *)Assert_MyHandler(
+        if (!Assert_MyHandler(
                                                          "C:\\projects_pc\\cod\\codsrc\\src\\gfx_d3d\\r_cinematic.cpp",
                                                          504,
                                                          0,
                                                          "%s\n\t%s",
                                                          "!binkError || binkError[0] == '\\0'",
-                                                         v1);
-        if ( !(_BYTE)result )
+                                                         v1))
             __debugbreak();
     }
     return result;
@@ -1209,7 +1208,7 @@ void __cdecl R_Cinematic_HunksAllocate(int activeTexture, char playbackFlags)
     CinematicHunk_Open(&cinematicGlob.residentHunk, residentBufferBase, newResidentBufferSize);
 }
 
-int __cdecl CinematicHunk_Alloc(CinematicHunk *hunk, int size)
+char *__cdecl CinematicHunk_Alloc(CinematicHunk *hunk, int size)
 {
     const char *v2; // eax
     char *alloced; // [esp+0h] [ebp-4h]
@@ -1259,14 +1258,14 @@ int __cdecl CinematicHunk_Alloc(CinematicHunk *hunk, int size)
             __debugbreak();
         }
         hunk->lastAllocPtr = alloced;
-        return (int)alloced;
+        return alloced;
     }
     else
     {
         v2 = va("CinematicHunk_Alloc failed: 0x%08x 0x%08x 0x%08x\n", hunk->atFront, size, hunk->atBack);
         if ( !Assert_MyHandler("C:\\projects_pc\\cod\\codsrc\\src\\gfx_d3d\\r_cinematic.cpp", 603, 0, v2) )
             __debugbreak();
-        return -1;
+        return nullptr;
     }
 }
 

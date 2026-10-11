@@ -125,7 +125,7 @@ char __cdecl DynEntPieces_SpawnPhysicsModel(
         else
             surfFlags = 13631488;
         stype = (surfFlags & 0x3F00000) >> 20;
-        physObjId = (int)DynEntPieces_SpawnPhysObj(
+        physObjId = Phys_GetObjId(DynEntPieces_SpawnPhysObj(
                                              model->name,
                                              stype,
                                              mins,
@@ -134,7 +134,7 @@ char __cdecl DynEntPieces_SpawnPhysicsModel(
                                              quat,
                                              velocity,
                                              angularVelocity,
-                                             model->physPreset);
+                                             model->physPreset));
         Sys_LeaveCriticalSection(CRITSECT_PHYSICS);
         if ( physObjId )
         {
@@ -184,7 +184,7 @@ PhysObjUserData *__cdecl DynEntPieces_SpawnPhysObj(
         physObjId = Phys_ObjCreate(0, position, quat, velocity, physPreset, &gjk_geom_list, 1, -1);
         if ( physObjId )
         {
-            Phys_ObjSetAngularVelocity( (int)physObjId, angularVelocity);
+            Phys_ObjSetAngularVelocity(Phys_GetObjId(physObjId), angularVelocity);
             return physObjId;
         }
         else

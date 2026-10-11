@@ -229,7 +229,7 @@ void __cdecl UI_Project_Shutdown(int localClientNum)
 void __cdecl UI_UpdateListboxPos_f()
 {
     int i; // [esp+0h] [ebp-6Ch]
-    const char *max; // [esp+4h] [ebp-68h]
+    int max; // [esp+4h] [ebp-68h]
     itemDef_s *item; // [esp+8h] [ebp-64h]
     char menuName[68]; // [esp+Ch] [ebp-60h] BYREF
     int controllerIndex; // [esp+54h] [ebp-18h]

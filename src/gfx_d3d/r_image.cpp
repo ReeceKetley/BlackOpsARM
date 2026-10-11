@@ -86,9 +86,9 @@ void __cdecl R_GetImageList(ImageList *imageList)
     DB_EnumXAssets(ASSET_TYPE_IMAGE, (void (__cdecl *)(XAssetHeader, void *))R_AddImageToList, imageList, 1);
 }
 
-void __cdecl R_AddImageToList(XAssetHeader header, XAssetHeader *data)
+void __cdecl R_AddImageToList(XAssetHeader header, ImageList *data)
 {
-    if ( (unsigned int)data->xmodelPieces >= sizeof(((ImageList *)0)->image) / sizeof(GfxImage *)
+    if ( data->count >= sizeof(((ImageList *)0)->image) / sizeof(GfxImage *)
         && !Assert_MyHandler(
                     "C:\\projects_pc\\cod\\codsrc\\src\\gfx_d3d\\r_image.cpp",
                     225,
@@ -98,7 +98,7 @@ void __cdecl R_AddImageToList(XAssetHeader header, XAssetHeader *data)
     {
         __debugbreak();
     }
-    data[(int)data->xmodelPieces++ + 1] = header;
+    data->image[data->count++] = header.image;
 }
 
 void __cdecl R_SumOfUsedImages(Image_MemUsage *usage)
@@ -331,7 +331,7 @@ void __cdecl R_ShutdownImages()
     GfxImage *imagea; // [esp+0h] [ebp-2014h]
     int v2; // [esp+4h] [ebp-2010h]
     unsigned int i; // [esp+8h] [ebp-200Ch]
-    unsigned int v4[2049]; // [esp+Ch] [ebp-2008h]
+    GfxImage *v4[2048]; // [esp+Ch] [ebp-2008h]
     int j; // [esp+2010h] [ebp-4h]
 
     RB_UnbindAllImages();
@@ -342,15 +342,15 @@ void __cdecl R_ShutdownImages()
         if ( image )
         {
             if ( Image_IsProg(image) )
-                v4[v2++] = (unsigned int)image;
+                v4[v2++] = image;
             else
                 Image_Free(imageGlobals.imageHashTable[i]);
         }
     }
-    memset((unsigned __int8 *)&imageGlobals, 0, 0x2000u);
+    memset(&imageGlobals, 0, sizeof(imageGlobals));
     for ( j = 0; j < v2; ++j )
     {
-        imagea = (GfxImage *)v4[j];
+        imagea = v4[j];
         imageGlobals.imageHashTable[Image_GetAvailableHashLocation(imagea->name)] = imagea;
     }
 }
@@ -701,7 +701,7 @@ $LN7_167:
 
 void __cdecl R_DelayLoadImage(XAssetHeader header, void *data)
 {
-    const char *externalDataSize; // [esp+4h] [ebp-4h]
+    unsigned int externalDataSize; // [esp+4h] [ebp-4h]
 
     GfxImage *image = header.image;
 
@@ -709,12 +709,12 @@ void __cdecl R_DelayLoadImage(XAssetHeader header, void *data)
     if (image->delayLoadPixels)
     {
         image->delayLoadPixels = 0;
-        externalDataSize = (const char *)image->cardMemory.platform[0];
+        externalDataSize = image->cardMemory.platform[0];
         image->cardMemory.platform[0] = 0;
         image->cardMemory.platform[1] = 0;
         if (r_loadForRenderer->current.enabled && !Image_LoadFromFile(image, 0))
             Image_AssignDefaultTexture(image);
-        DB_LoadedExternalData((unsigned int)externalDataSize);
+        DB_LoadedExternalData(externalDataSize);
     }
 }
 
@@ -1319,13 +1319,12 @@ GfxImage *R_InitRawImage()
     rgp.rawImage = result;
     if ( !result )
     {
-        result = (GfxImage *)Assert_MyHandler(
+        if (!Assert_MyHandler(
                                                      "C:\\projects_pc\\cod\\codsrc\\src\\gfx_d3d\\r_image.cpp",
                                                      1466,
                                                      1,
                                                      "%s",
-                                                     "rgp.rawImage");
-        if ( !(_BYTE)result )
+                                                     "rgp.rawImage"))
             __debugbreak();
     }
     return result;
@@ -1419,13 +1418,12 @@ GfxImage *R_InitCodeImages()
     rgp.r32fWhiteImage = result;
     if ( !result )
     {
-        result = (GfxImage *)Assert_MyHandler(
+        if (!Assert_MyHandler(
                                                      "C:\\projects_pc\\cod\\codsrc\\src\\gfx_d3d\\r_image.cpp",
                                                      1568,
                                                      1,
                                                      "%s",
-                                                     "rgp.r32fWhiteImage");
-        if ( !(_BYTE)result )
+                                                     "rgp.r32fWhiteImage"))
             __debugbreak();
     }
     rgp.heatMapImage = 0;

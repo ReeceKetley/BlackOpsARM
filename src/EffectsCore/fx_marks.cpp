@@ -2002,7 +2002,7 @@ void __cdecl FX_EmitMarkTri(
     if ( marksSystem->hasCarryIndex )
     {
         pIndexa = (r_double_index_t *)&outSurf->indices[outSurf->indexCount - 1];
-        if ( ((unsigned __int8)pIndexa & 3) != 0
+        if ( (reinterpret_cast<uintptr_t>(pIndexa) & 3) != 0
             && !Assert_MyHandler(
                         "C:\\projects_pc\\cod\\codsrc\\src\\EffectsCore\\fx_marks.cpp",
                         1684,
@@ -2021,7 +2021,7 @@ void __cdecl FX_EmitMarkTri(
     else
     {
         pIndex = (r_double_index_t *)&outSurf->indices[outSurf->indexCount];
-        if ( ((unsigned __int8)pIndex & 3) != 0
+        if ( (reinterpret_cast<uintptr_t>(pIndex) & 3) != 0
             && !Assert_MyHandler(
                         "C:\\projects_pc\\cod\\codsrc\\src\\EffectsCore\\fx_marks.cpp",
                         1670,

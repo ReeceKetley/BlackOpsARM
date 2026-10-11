@@ -287,7 +287,7 @@ void __cdecl SND_RvDelayInit(snd_rv_state *state, unsigned int values)
 void __cdecl SND_RvFrame(
                 snd_rv_params *params,
                 snd_rv_state *state,
-                const float *count,
+                unsigned int count,
                 const float *inLF,
                 const float *inRF,
                 const float *inLS,
@@ -322,20 +322,20 @@ void __cdecl SND_RvFrame(
     float v34; // xmm0_4
     float v35; // xmm0_4
     float v36; // xmm2_4
-    int v37; // [esp+10h] [ebp-10h]
-    int v38; // [esp+14h] [ebp-Ch]
-    int v39; // [esp+18h] [ebp-8h]
-    int v40; // [esp+1Ch] [ebp-4h]
+    ptrdiff_t v37; // [esp+10h] [ebp-10h]
+    ptrdiff_t v38; // [esp+14h] [ebp-Ch]
+    ptrdiff_t v39; // [esp+18h] [ebp-8h]
+    ptrdiff_t v40; // [esp+1Ch] [ebp-4h]
     unsigned int counta; // [esp+30h] [ebp+10h]
     unsigned int countb; // [esp+30h] [ebp+10h]
-    const float *inRFa; // [esp+38h] [ebp+18h]
+    unsigned int inRFa; // [esp+38h] [ebp+18h]
     int inLSa; // [esp+3Ch] [ebp+1Ch]
-    const float *inRSa; // [esp+40h] [ebp+20h]
-    float *outRFa; // [esp+48h] [ebp+28h]
+    ptrdiff_t inRSa; // [esp+40h] [ebp+20h]
+    ptrdiff_t outRFa; // [esp+48h] [ebp+28h]
     float *outLSa; // [esp+4Ch] [ebp+2Ch]
-    float *outRSa; // [esp+50h] [ebp+30h]
+    ptrdiff_t outRSa; // [esp+50h] [ebp+30h]
 
-    SND_RvFrameParam(params, state, (unsigned int)count);
+    SND_RvFrameParam(params, state, count);
     earlyLpfState = state->earlyLpfState;
     counta = 4;
     do
@@ -391,9 +391,9 @@ void __cdecl SND_RvFrame(
         v38 = (char *)inRF - (char *)outLS;
         v40 = (char *)outRF - (char *)outLS;
         v37 = (char *)inRS - (char *)outLS;
-        inRSa = (const float *)((char *)outRS - (char *)outLS);
-        outRSa = (float *)((char *)inLF - (char *)outLS);
-        outRFa = (float *)((char *)outLF - (char *)outLS);
+        inRSa = ((char *)outRS - (char *)outLS);
+        outRSa = ((char *)inLF - (char *)outLS);
+        outRFa = ((char *)outLF - (char *)outLS);
         inRFa = count;
         do
         {
@@ -506,7 +506,7 @@ void __cdecl SND_RvFrame(
             if ( ++state->delayIndex >= 0x8000 )
                 state->delayIndex = 0;
             ++v13;
-            inRFa = (const float *)((char *)inRFa - 1);
+            --inRFa;
         }
         while ( inRFa );
     }

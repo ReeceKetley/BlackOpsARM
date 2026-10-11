@@ -883,16 +883,16 @@ void __cdecl GScr_SetGenericField(unsigned __int8 *b, fieldtype_t type, int ofs,
         case F_ACTOR:
             ent = Scr_GetEntityAllowNull(0, SCRIPTINSTANCE_SERVER);
             if ( ent )
-                *(unsigned int *)&b[ofs] = (unsigned int)ent->actor;
+                *(actor_s **)&b[ofs] = ent->actor;
             else
-                *(unsigned int *)&b[ofs] = 0;
+                *(void **)&b[ofs] = nullptr;
             break;
         case F_SENTIENT:
             enta = Scr_GetEntityAllowNull(0, SCRIPTINSTANCE_SERVER);
             if ( enta )
-                *(unsigned int *)&b[ofs] = (unsigned int)enta->sentient;
+                *(sentient_s **)&b[ofs] = enta->sentient;
             else
-                *(unsigned int *)&b[ofs] = 0;
+                *(void **)&b[ofs] = nullptr;
             break;
         case F_SENTIENTHANDLE:
             entb = Scr_GetEntityAllowNull(0, SCRIPTINSTANCE_SERVER);
@@ -902,7 +902,7 @@ void __cdecl GScr_SetGenericField(unsigned __int8 *b, fieldtype_t type, int ofs,
                 ((SentientHandle *)&b[ofs])->setSentient(0);
             break;
         case F_PATHNODE:
-            *(unsigned int *)&b[ofs] = (unsigned int)Scr_GetPathnode(0, SCRIPTINSTANCE_SERVER);
+            *(pathnode_t **)&b[ofs] = Scr_GetPathnode(0, SCRIPTINSTANCE_SERVER);
             break;
         default:
             Scr_SetGenericField(b, type, ofs, SCRIPTINSTANCE_SERVER, whichbits);

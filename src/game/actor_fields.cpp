@@ -339,7 +339,7 @@ void __cdecl ActorScr_SetTime(actor_s *pSelf, const actor_fields_s *pField)
         __debugbreak();
     }
     v2 = Scr_GetFloat(0, SCRIPTINSTANCE_SERVER) * 1000.0;
-    *(gentity_s **)((char *)&pSelf->ent + pField->ofs) = (gentity_s *)(int)(v2 + 9.313225746154785e-10);
+    *reinterpret_cast<int *>(reinterpret_cast<char *>(pSelf) + pField->ofs) = (int)(v2 + 9.313225746154785e-10);
 }
 
 void __cdecl ActorScr_GetTime(actor_s *pSelf, const actor_fields_s *pField)
@@ -386,7 +386,7 @@ void __cdecl ActorScr_SetWeapon(actor_s *pSelf, const actor_fields_s *pField)
         Scr_ParamError(0, v2, SCRIPTINSTANCE_SERVER);
     }
     String = Scr_GetString(0, SCRIPTINSTANCE_SERVER);
-    *(gentity_s **)((char *)&pSelf->ent + pField->ofs) = (gentity_s *)G_GetWeaponIndexForName(String);
+    *reinterpret_cast<int *>(reinterpret_cast<char *>(pSelf) + pField->ofs) = G_GetWeaponIndexForName(String);
 }
 
 void __cdecl ActorScr_GetWeapon(actor_s *pSelf, const actor_fields_s *pField)
@@ -1112,7 +1112,7 @@ LABEL_46:
                     "ent %i: %s = client %i\n",
                     entnum,
                     pField->name,
-                    (signed int)(*(unsigned int *)&pBase[pField->ofs] - (unsigned int)level.clients) / 10720);
+                    static_cast<int>(*reinterpret_cast<gclient_s **>(&pBase[pField->ofs]) - level.clients));
                 break;
             case F_PATHNODE:
                 pNode = *(pathnode_t **)&pBase[pField->ofs];

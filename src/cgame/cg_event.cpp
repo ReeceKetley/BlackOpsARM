@@ -112,7 +112,7 @@ void __cdecl CG_ExplosionEvent(
         cent = CG_GetEntity(localClientNum, entitylist[j]);
         if ( cent->destructible )
         {
-            CG_DestructibleRadiusDamage(cent, (const centity_s **)origin, damageInner, damageOuter, radius, mod, 1);
+            CG_DestructibleRadiusDamage(cent, origin, damageInner, damageOuter, radius, mod, 1);
         }
         else if ( cent->pose.physObjId )
         {
@@ -1928,7 +1928,7 @@ void __cdecl CG_EntityEvent(int localClientNum, centity_s *cent, int event)
                     }
                     else if (v98->pose.physObjId && v98->pose.physObjId != -1)
                     {
-                        userData = (PhysObjUserData *)v98->pose.physObjId;
+                        userData = Phys_GetUserData(v98->pose.physObjId);
                     }
                     if (userData)
                         userData->m_flags |= 8u;
@@ -1943,7 +1943,7 @@ void __cdecl CG_EntityEvent(int localClientNum, centity_s *cent, int event)
                     }
                     else if (v95->pose.physObjId && v95->pose.physObjId != -1)
                     {
-                        m_phys_user_data = (PhysObjUserData *)v95->pose.physObjId;
+                        m_phys_user_data = Phys_GetUserData(v95->pose.physObjId);
                     }
                     if (m_phys_user_data)
                         m_phys_user_data->buoyancy = (int)(float)((float)m_phys_user_data->buoyancy * buoyancy_scale);

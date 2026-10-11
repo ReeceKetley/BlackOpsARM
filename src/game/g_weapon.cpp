@@ -28,6 +28,7 @@
 #include "actor.h"
 #include <game_sp/g_sp_measure.h>
 #include <game_sp/g_sp_headless_dice.h>
+#include <game_sp/g_sp_weapon_sweep.h>
 
 const float traceOffsets[9][2] =
 {
@@ -1738,6 +1739,7 @@ void __cdecl FireWeaponMelee(gentity_s *ent, int gametime)
             weaponIndex = ent->s.weapon;
         else
             weaponIndex = ent->s.lerp.u.player.meleeWeapon;
+        G_SP_WeaponSweepMelee(ent, weaponIndex);
         Weapon_SetWeaponParamsWeapon(&wp, weaponIndex);
         G_GetPlayerViewOrigin(&ent->client->ps, wp.muzzleTrace);
         BG_GetPlayerViewDirection(&ent->client->ps, wp.forward, wp.right, wp.up);

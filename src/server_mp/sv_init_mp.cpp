@@ -826,7 +826,7 @@ void __cdecl    SV_SpawnServer(int controllerIndex, char *server, int mapIsPrelo
 
 const int ikStateSize = (int)Bo1_MaxSize(sizeof(IKState), 3680);
 unsigned __int8 *sv_ikBuf;
-char *__cdecl SV_AllocateClientMemory_SizeRequired(int maxLocalClients, int maxClients)
+size_t __cdecl SV_AllocateClientMemory_SizeRequired(int maxLocalClients, int maxClients)
 {
     int v3; // [esp+0h] [ebp-Ch]
     int v4; // [esp+4h] [ebp-8h]
@@ -840,7 +840,7 @@ char *__cdecl SV_AllocateClientMemory_SizeRequired(int maxLocalClients, int maxC
     else
         v3 = 2;
 
-    return (char *)((sizeof(client_t) - 544000) * maxClients
+    return ((sizeof(client_t) - 544000) * maxClients
         + 0x118D00 * maxClients
         + 0x1A00 * maxClients * maxClients
         + 0x4880

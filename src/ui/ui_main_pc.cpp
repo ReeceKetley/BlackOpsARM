@@ -973,7 +973,7 @@ int __cdecl UI_JoinGameType_HandleKey(int flags, int key)
 
 int __cdecl UI_JoinMod_HandleKey(int flags, int key)
 {
-    const char *nextJoinMod; // [esp+0h] [ebp-4h]
+    int nextJoinMod; // [esp+0h] [ebp-4h]
     int nextJoinModa; // [esp+0h] [ebp-4h]
 
     if ( key != 200 && key != 201 && key != 13 && key != 191 )
@@ -981,15 +981,15 @@ int __cdecl UI_JoinMod_HandleKey(int flags, int key)
     if ( key == 201 )
     {
         if ( ui_browserMod->current.integer - 1 >= -2 )
-            nextJoinMod = ui_browserMod->current.string;
+            nextJoinMod = ui_browserMod->current.integer;
         else
-            nextJoinMod = sharedUiInfo.modList[63].modDescr;
-        nextJoinModa = (int)(nextJoinMod - 1);
+            nextJoinMod = sharedUiInfo.modCount;
+        nextJoinModa = nextJoinMod - 1;
     }
     else
     {
         nextJoinModa = ui_browserMod->current.integer + 1;
-        if ( (const char *)nextJoinModa == sharedUiInfo.modList[63].modDescr )
+        if ( nextJoinModa == sharedUiInfo.modCount )
             nextJoinModa = -2;
     }
     if ( (nextJoinModa < -2 || nextJoinModa > 64)
@@ -1265,13 +1265,14 @@ void __cdecl UI_DrawNetSource(
 
 Material *__cdecl UI_GetLevelShot(int index)
 {
-    if ( index < 0 || index >= sharedUiInfo.mapCount )
+    if (sharedUiInfo.mapCount <= 0)
+        return nullptr;
+    if (index < 0 || index >= sharedUiInfo.mapCount)
         index = 0;
-    if ( !sharedUiInfo.mapList[index].timeToBeat[31] )
-        sharedUiInfo.mapList[index].timeToBeat[31] = (int)Material_RegisterHandle(
-                                                                                                                (char *)&sharedUiInfo.mapList[index].mapPackTypeIndex,
-                                                                                                                3);
-    return (Material *)sharedUiInfo.mapList[index].timeToBeat[31];
+    auto &map = sharedUiInfo.mapList[index];
+    if (!map.levelShot)
+        map.levelShot = Material_RegisterHandle(map.imageName, 3);
+    return map.levelShot;
 }
 
 void __cdecl UI_DrawMapPreview(int contextIndex, const rectDef_s *rect, const float *color)

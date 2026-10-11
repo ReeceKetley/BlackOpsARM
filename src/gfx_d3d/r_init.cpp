@@ -803,7 +803,7 @@ void __cdecl R_ResizeWindow()
     SetWindowLongA(hwnd, -16, style);
     SetWindowPos(
         hwnd,
-        (HWND)(wndParms.fullscreen - 2),
+        reinterpret_cast<HWND>(static_cast<intptr_t>(wndParms.fullscreen - 2)),
         wndParms.x,
         wndParms.y,
         rc.right - rc.left,
@@ -975,12 +975,12 @@ void __cdecl R_SetWndParms(GfxWindowParms *wndParms)
     wndParms->aaSamples = r_aaSamples->current.integer;
 }
 
-const char *__cdecl R_ClosestRefreshRateForMode(unsigned int width, unsigned int height, int refreshRate)
+int __cdecl R_ClosestRefreshRateForMode(unsigned int width, unsigned int height, int refreshRate)
 {
     const char *v4; // eax
     int top; // [esp+0h] [ebp-10h]
     int bot; // [esp+4h] [ebp-Ch]
-    const char *comparison; // [esp+8h] [ebp-8h]
+    int comparison; // [esp+8h] [ebp-8h]
     int mid; // [esp+Ch] [ebp-4h]
 
     bot = 0;
@@ -988,18 +988,18 @@ const char *__cdecl R_ClosestRefreshRateForMode(unsigned int width, unsigned int
     while ( bot <= top )
     {
         mid = (bot + top) / 2;
-        comparison = (const char *)(dx.displayModes[mid].Width - width);
+        comparison = static_cast<int>(dx.displayModes[mid].Width) - static_cast<int>(width);
         if ( !comparison )
         {
-            comparison = (const char *)(intptr_t)((int)dx.displayModes[mid].Height - (int)height);
+            comparison = static_cast<int>(dx.displayModes[mid].Height) - static_cast<int>(height);
             if ( !comparison )
             {
-                comparison = (const char *)(intptr_t)((int)dx.displayModes[mid].RefreshRate - refreshRate);
+                comparison = static_cast<int>(dx.displayModes[mid].RefreshRate) - refreshRate;
                 if ( !comparison )
-                    return (const char *)refreshRate;
+                    return refreshRate;
             }
         }
-        if ( (int)comparison >= 0 )
+        if ( comparison >= 0 )
             top = mid - 1;
         else
             bot = mid + 1;
@@ -1021,7 +1021,7 @@ const char *__cdecl R_ClosestRefreshRateForMode(unsigned int width, unsigned int
         __debugbreak();
     }
     if ( dx.displayModes[top].Width == width && dx.displayModes[top].Height == height )
-        return (const char *)(intptr_t)dx.displayModes[top].RefreshRate;
+        return dx.displayModes[top].RefreshRate;
     if ( dx.displayModes[bot].Width != width || dx.displayModes[bot].Height != height )
     {
         v4 = va(
@@ -1043,7 +1043,7 @@ const char *__cdecl R_ClosestRefreshRateForMode(unsigned int width, unsigned int
                         v4) )
             __debugbreak();
     }
-    return (const char *)(intptr_t)dx.displayModes[bot].RefreshRate;
+    return dx.displayModes[bot].RefreshRate;
 }
 
 bool __cdecl R_SetCustomResolution(GfxWindowParms *wndParms)
@@ -1539,15 +1539,16 @@ HMONITOR__ *__cdecl R_ChooseMonitor()
     return MonitorFromPoint(pt, 1u);
 }
 
-int __stdcall R_MonitorEnumCallback(HMONITOR__ *monitorHandle, HDC__ *hdc, tagRECT *rect, unsigned int *userData)
+int __stdcall R_MonitorEnumCallback(HMONITOR__ *monitorHandle, HDC__ *hdc, tagRECT *rect, LPARAM userData)
 {
-    if ( --*userData )
+    GfxEnumMonitors *data = reinterpret_cast<GfxEnumMonitors *>(userData);
+    if (--data->monitorIndex)
     {
         return 1;
     }
     else
     {
-        userData[1] = (unsigned int)monitorHandle;
+        data->foundMonitor = monitorHandle;
         return 0;
     }
 }
@@ -1816,7 +1817,7 @@ char __cdecl R_CreateWindow(GfxWindowParms *wndParms)
     {
         if (!wndParms->fullscreen)
         {
-            SetWindowPos(wndParms->hwnd, (HWND)0xFFFFFFFE, 0, 0, 0, 0, 3u);
+            SetWindowPos(wndParms->hwnd, HWND_NOTOPMOST, 0, 0, 0, 0, 3u);
             if ( !Sys_IsHeadlessClient() ) // zombies: a headless client never changes focus
                 SetFocus(wndParms->hwnd);
         }
@@ -2203,7 +2204,7 @@ char __cdecl R_ResetDevice()
         rc.top = 0;
         rc.bottom = wndParms.displayHeight;
         AdjustWindowRectEx(&rc, 0xC80000u, 0, 0);
-        SetWindowPos(wndParms.hwnd, (HWND)0xFFFFFFFE, wndParms.x, wndParms.y, rc.right - rc.left, rc.bottom - rc.top, 0x62u);
+        SetWindowPos(wndParms.hwnd, HWND_NOTOPMOST, wndParms.x, wndParms.y, rc.right - rc.left, rc.bottom - rc.top, 0x62u);
     }
     if (!R_CreateForInitOrReset())
         R_FatalInitError("Couldn't reinitialize after a lost Direct3D device");

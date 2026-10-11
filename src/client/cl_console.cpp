@@ -1,3 +1,4 @@
+#include <universal/narrow32.h>
 #include <qcommon/common.h>
 #include "screen_placement.h"
 #include "cl_console.h"
@@ -1102,7 +1103,9 @@ void CL_ConsolePrint_AddLine(
                         goto LABEL_79;
                     }
                     bcassert(con.lineOffset, sizeof(con.textTempLine));
-                    if (!IsValidMaterialHandle(*(Material *const *)(text + 3))
+                    unsigned int iconHandle;
+                    memcpy(&iconHandle, text + 3, sizeof(iconHandle));
+                    if (!IsValidMaterialHandle(BO1_NARROW_DECODE(Material, iconHandle))
                         && !Assert_MyHandler(
                             "C:\\projects_pc\\cod\\codsrc\\src\\client\\cl_console.cpp",
                             1343,
@@ -1796,7 +1799,8 @@ unsigned int __cdecl CL_AddMessageIcon(
     {
         __debugbreak();
     }
-    *(unsigned int *)&msg[msgLenc] = (unsigned int)iconShader;
+    const unsigned int iconHandle = BO1_NARROW_ENCODE(iconShader);
+    memcpy(&msg[msgLenc], &iconHandle, sizeof(iconHandle));
     msgLend = msgLenc + 4;
     if ( msgLend - msgLen != 8
         && !Assert_MyHandler(

@@ -99,216 +99,32 @@ void __cdecl nuge::get_ballistic_info(
                 phys_vec3 *total_momentum,
                 float *total_mass)
 {
-    phys_vec3 *v5; // ecx
-    phys_vec3 *v6; // eax
-    int v7; // edx
-    int v8; // edi
-    double v9; // st7
-    rigid_body *const *v10; // edi
-    float *v11; // edx
-    float *v12; // edx
-    float *v13; // edx
-    float *v14; // edx
-    rigid_body *v15; // edx
-    float v16; // [esp-30h] [ebp-3Ch]
-    float v17; // [esp-30h] [ebp-3Ch]
-    float v18; // [esp-30h] [ebp-3Ch]
-    float v19; // [esp-30h] [ebp-3Ch]
-    float v20; // [esp-30h] [ebp-3Ch]
-    float v21; // [esp-2Ch] [ebp-38h]
-    float v22; // [esp-2Ch] [ebp-38h]
-    float v23; // [esp-2Ch] [ebp-38h]
-    float v24; // [esp-2Ch] [ebp-38h]
-    float v25; // [esp-2Ch] [ebp-38h]
-    float v26; // [esp-28h] [ebp-34h]
-    float v27; // [esp-28h] [ebp-34h]
-    float v28; // [esp-28h] [ebp-34h]
-    float v29; // [esp-28h] [ebp-34h]
-    float v30; // [esp-28h] [ebp-34h]
-    float v31; // [esp-20h] [ebp-2Ch]
-    float v32; // [esp-20h] [ebp-2Ch]
-    float v33; // [esp-20h] [ebp-2Ch]
-    float v34; // [esp-20h] [ebp-2Ch]
-    float v35; // [esp-20h] [ebp-2Ch]
-    float v36; // [esp-1Ch] [ebp-28h]
-    float v37; // [esp-1Ch] [ebp-28h]
-    float v38; // [esp-1Ch] [ebp-28h]
-    float v39; // [esp-1Ch] [ebp-28h]
-    float v40; // [esp-1Ch] [ebp-28h]
-    float v41; // [esp-18h] [ebp-24h]
-    float v42; // [esp-18h] [ebp-24h]
-    float v43; // [esp-18h] [ebp-24h]
-    float v44; // [esp-18h] [ebp-24h]
-    float v45; // [esp-18h] [ebp-24h]
-    int v46; // [esp-Ch] [ebp-18h]
-    float v47; // [esp-Ch] [ebp-18h]
-    unsigned int v48; // [esp-8h] [ebp-14h]
-    float v49; // [esp-4h] [ebp-10h]
-    float v50; // [esp-4h] [ebp-10h]
-    float v51; // [esp-4h] [ebp-10h]
-    float v52; // [esp-4h] [ebp-10h]
-    float v53; // [esp-4h] [ebp-10h]
-
-    v5 = center_of_mass;
-    if ( ((unsigned __int8)center_of_mass & 0xF) != 0 )
+    iassert((reinterpret_cast<uintptr_t>(center_of_mass) & 15) == 0);
+    iassert((reinterpret_cast<uintptr_t>(total_momentum) & 15) == 0);
+    center_of_mass->x = center_of_mass->y = center_of_mass->z = 0.0f;
+    total_momentum->x = total_momentum->y = total_momentum->z = 0.0f;
+    *total_mass = 0.0f;
+    for (int i = 0; i < rbodies_count; ++i)
     {
-        if ( _tlAssert(
-                     "c:\\projects_pc\\cod\\codsrc\\tl\\physics\\include\\phys_math.h",
-                     444,
-                     "uint(v) % PHYS_ALIGNOF(phys_vec3) == 0",
-                     "") )
-        {
-            __debugbreak();
-        }
-        v5 = center_of_mass;
+        const rigid_body *body = list_rigid_body[i];
+        if (!body)
+            continue;
+        const float mass = 1.0 / body->m_inv_mass;
+        center_of_mass->x += body->m_mat.w.x * mass;
+        center_of_mass->y += body->m_mat.w.y * mass;
+        center_of_mass->z += body->m_mat.w.z * mass;
+        total_momentum->x += body->m_t_vel.x * mass;
+        total_momentum->y += body->m_t_vel.y * mass;
+        total_momentum->z += body->m_t_vel.z * mass;
+        *total_mass += mass;
     }
-    v6 = total_momentum;
-    if ( ((unsigned __int8)total_momentum & 0xF) != 0 )
-    {
-        if ( _tlAssert(
-                     "c:\\projects_pc\\cod\\codsrc\\tl\\physics\\include\\phys_math.h",
-                     444,
-                     "uint(v) % PHYS_ALIGNOF(phys_vec3) == 0",
-                     "") )
-        {
-            __debugbreak();
-        }
-        v5 = center_of_mass;
-        v6 = total_momentum;
-    }
-    v7 = rbodies_count;
-    v5->x = PHYS_ZERO_VEC.x;
-    v8 = 0;
-    v5->y = PHYS_ZERO_VEC.y;
-    v5->z = PHYS_ZERO_VEC.z;
-    v6->x = PHYS_ZERO_VEC.x;
-    v6->y = PHYS_ZERO_VEC.y;
-    v6->z = PHYS_ZERO_VEC.z;
-    *total_mass = 0.0;
-    v9 = 1.0;
-    if ( rbodies_count >= 4 )
-    {
-        v48 = ((unsigned int)(rbodies_count - 4) >> 2) + 1;
-        v10 = list_rigid_body + 2;
-        v46 = 4 * v48;
-        do
-        {
-            v11 = (float *)*((unsigned int *)v10 - 2);
-            if ( v11 )
-            {
-                v49 = 1.0 / v11[60];
-                v31 = v49 * v11[24];
-                v36 = v11[25] * v49;
-                v41 = v11[26] * v49;
-                v5->x = v5->x + v31;
-                v5->y = v5->y + v36;
-                v5->z = v5->z + v41;
-                v16 = v11[36] * v49;
-                v21 = v11[37] * v49;
-                v26 = v11[38] * v49;
-                v6->x = v6->x + v16;
-                v6->y = v6->y + v21;
-                v6->z = v26 + v6->z;
-                *total_mass = v49 + *total_mass;
-            }
-            v12 = (float *)*((unsigned int *)v10 - 1);
-            if ( v12 )
-            {
-                v50 = 1.0 / v12[60];
-                v32 = v50 * v12[24];
-                v37 = v12[25] * v50;
-                v42 = v12[26] * v50;
-                v5->x = v5->x + v32;
-                v5->y = v5->y + v37;
-                v5->z = v5->z + v42;
-                v17 = v12[36] * v50;
-                v22 = v12[37] * v50;
-                v27 = v12[38] * v50;
-                v6->x = v6->x + v17;
-                v6->y = v6->y + v22;
-                v6->z = v27 + v6->z;
-                *total_mass = v50 + *total_mass;
-            }
-            v13 = (float *)*v10;
-            if ( *v10 )
-            {
-                v51 = 1.0 / v13[60];
-                v33 = v51 * v13[24];
-                v38 = v13[25] * v51;
-                v43 = v13[26] * v51;
-                v5->x = v5->x + v33;
-                v5->y = v5->y + v38;
-                v5->z = v5->z + v43;
-                v18 = v13[36] * v51;
-                v23 = v13[37] * v51;
-                v28 = v13[38] * v51;
-                v6->x = v6->x + v18;
-                v6->y = v6->y + v23;
-                v6->z = v28 + v6->z;
-                *total_mass = v51 + *total_mass;
-            }
-            v14 = (float *)*((unsigned int *)v10 + 1);
-            if ( v14 )
-            {
-                v52 = 1.0 / v14[60];
-                v34 = v52 * v14[24];
-                v39 = v14[25] * v52;
-                v44 = v14[26] * v52;
-                v5->x = v5->x + v34;
-                v5->y = v5->y + v39;
-                v5->z = v5->z + v44;
-                v19 = v14[36] * v52;
-                v24 = v14[37] * v52;
-                v29 = v14[38] * v52;
-                v6->x = v6->x + v19;
-                v6->y = v6->y + v24;
-                v6->z = v29 + v6->z;
-                *total_mass = v52 + *total_mass;
-            }
-            v10 += 4;
-            --v48;
-        }
-        while ( v48 );
-        v8 = v46;
-        v7 = rbodies_count;
-    }
-    if ( v8 < v7 )
-    {
-        do
-        {
-            v15 = list_rigid_body[v8];
-            if ( v15 )
-            {
-                v53 = 1.0 / v15->m_inv_mass;
-                v35 = v53 * v15->m_mat.w.x;
-                v40 = v15->m_mat.w.y * v53;
-                v45 = v15->m_mat.w.z * v53;
-                v5->x = v5->x + v35;
-                v5->y = v5->y + v40;
-                v5->z = v5->z + v45;
-                v20 = v15->m_t_vel.x * v53;
-                v25 = v15->m_t_vel.y * v53;
-                v30 = v15->m_t_vel.z * v53;
-                v6->x = v6->x + v20;
-                v6->y = v6->y + v25;
-                v6->z = v30 + v6->z;
-                *total_mass = v53 + *total_mass;
-            }
-            ++v8;
-        }
-        while ( v8 < rbodies_count );
-    }
-    if ( *total_mass <= 0.0000099999997 )
-    {
-        if ( _tlAssert("source/phys_util.cpp", 23, "*total_mass > 0.00001f", "") )
-            __debugbreak();
-        v5 = center_of_mass;
-        v9 = 1.0;
-    }
-    v47 = v9 / *total_mass;
-    v5->x = v5->x * v47;
-    v5->y = v5->y * v47;
-    v5->z = v47 * v5->z;
+    if (*total_mass <= 0.0000099999997
+        && _tlAssert("source/phys_util.cpp", 23, "*total_mass > 0.00001f", ""))
+        __debugbreak();
+    const float inv_mass = 1.0 / *total_mass;
+    center_of_mass->x *= inv_mass;
+    center_of_mass->y *= inv_mass;
+    center_of_mass->z *= inv_mass;
 }
 
 void    nuge::apply_ballistic_target(
@@ -461,45 +277,6 @@ void    nuge::apply_ballistic_target(
         center_of_mass.z = total_momentum.z + 0.0;
         B = v18;
         v21 = 1.0;
-        if (rbodies_count >= 4)
-        {
-            v22 = ((unsigned int)(rbodies_count - 4) >> 2) + 1;
-            v23 = list_rigid_body + 2;
-            v20 = 4 * v22;
-            do
-            {
-                v24 = *((_DWORD *)v23 - 2);
-                if (v24)
-                {
-                    s_ = *(float *)(v24 + 240);
-                    s1_ = s_ * s_;
-                    B = 1.0 / s1_ + B;
-                }
-                v25 = *((_DWORD *)v23 - 1);
-                if (v25)
-                {
-                    s_ = *(float *)(v25 + 240);
-                    s1_ = s_ * s_;
-                    B = 1.0 / s1_ + B;
-                }
-                if (*v23)
-                {
-                    s_ = (*v23)->m_inv_mass;
-                    s1_ = s_ * s_;
-                    B = 1.0 / s1_ + B;
-                }
-                v26 = *((_DWORD *)v23 + 1);
-                if (v26)
-                {
-                    s_ = *(float *)(v26 + 240);
-                    s1_ = s_ * s_;
-                    B = 1.0 / s1_ + B;
-                }
-                v23 += 4;
-                --v22;
-            } while (v22);
-            v19 = rbodies_count;
-        }
         for (; v20 < v19; ++v20)
         {
             v27 = list_rigid_body[v20];
@@ -570,7 +347,7 @@ void    nuge::calc_velocities(
     //
     //*(float *)v20 = a1;
     //*(float *)&v20[1] = delta_ta;
-    if (((unsigned __int8)t_vel & 0xF) != 0
+    if (((uintptr_t)t_vel & 0xF) != 0
         && _tlAssert(
             "c:\\projects_pc\\cod\\codsrc\\tl\\physics\\include\\phys_math.h",
             444,
@@ -579,7 +356,7 @@ void    nuge::calc_velocities(
     {
         __debugbreak();
     }
-    if (((unsigned __int8)a_vel & 0xF) != 0
+    if (((uintptr_t)a_vel & 0xF) != 0
         && _tlAssert(
             "c:\\projects_pc\\cod\\codsrc\\tl\\physics\\include\\phys_math.h",
             444,
@@ -668,7 +445,7 @@ void    nuge::calc_velocities(
     //
     //v13[0] = a1;
     //v13[1] = retaddr;
-    if ( ((unsigned __int8)t_vel & 0xF) != 0
+    if ( ((uintptr_t)t_vel & 0xF) != 0
         && _tlAssert(
                  "c:\\projects_pc\\cod\\codsrc\\tl\\physics\\include\\phys_math.h",
                  444,
@@ -677,7 +454,7 @@ void    nuge::calc_velocities(
     {
         __debugbreak();
     }
-    if ( ((unsigned __int8)a_vel & 0xF) != 0
+    if ( ((uintptr_t)a_vel & 0xF) != 0
         && _tlAssert(
                  "c:\\projects_pc\\cod\\codsrc\\tl\\physics\\include\\phys_math.h",
                  444,
@@ -704,7 +481,7 @@ void __cdecl nuge::calc_sphere_inertia(float radius, phys_vec3 *unit_inertia, fl
     float v6; // [esp-4h] [ebp-10h]
 
     v3 = unit_inertia;
-    if ( ((unsigned __int8)unit_inertia & 0xF) != 0 )
+    if ( ((uintptr_t)unit_inertia & 0xF) != 0 )
     {
         if ( _tlAssert(
                      "c:\\projects_pc\\cod\\codsrc\\tl\\physics\\include\\phys_math.h",
@@ -740,7 +517,7 @@ void __cdecl nuge::calc_box_inertia(const phys_vec3 *dim, phys_vec3 *unit_inerti
     float v13; // [esp+18h] [ebp-18h]
 
     v3 = unit_inertia;
-    if ( ((unsigned __int8)unit_inertia & 0xF) != 0 )
+    if ( ((uintptr_t)unit_inertia & 0xF) != 0 )
     {
         if ( _tlAssert(
                      "c:\\projects_pc\\cod\\codsrc\\tl\\physics\\include\\phys_math.h",
@@ -824,7 +601,7 @@ void __cdecl nuge::calc_bound_sphere(const phys_vec3 *vert_list, int vert_count,
     float v55; // [esp+10h] [ebp-10h]
     float v56; // [esp+10h] [ebp-10h]
 
-    if ( ((unsigned __int8)vert_list & 0xF) != 0
+    if ( ((uintptr_t)vert_list & 0xF) != 0
         && _tlAssert(
                  "c:\\projects_pc\\cod\\codsrc\\tl\\physics\\include\\phys_math.h",
                  444,
@@ -833,7 +610,7 @@ void __cdecl nuge::calc_bound_sphere(const phys_vec3 *vert_list, int vert_count,
     {
         __debugbreak();
     }
-    if ( ((unsigned __int8)com & 0xF) != 0
+    if ( ((uintptr_t)com & 0xF) != 0
         && _tlAssert(
                  "c:\\projects_pc\\cod\\codsrc\\tl\\physics\\include\\phys_math.h",
                  444,
@@ -997,7 +774,7 @@ void __cdecl nuge::calc_bound_box(const phys_vec3 *vert_list, int vert_count, ph
     float vmin_8; // [esp+18h] [ebp-18h]
     float vmin_12; // [esp+1Ch] [ebp-14h]
 
-    if ( ((unsigned __int8)vert_list & 0xF) != 0
+    if ( ((uintptr_t)vert_list & 0xF) != 0
         && _tlAssert(
                  "c:\\projects_pc\\cod\\codsrc\\tl\\physics\\include\\phys_math.h",
                  444,
@@ -1006,7 +783,7 @@ void __cdecl nuge::calc_bound_box(const phys_vec3 *vert_list, int vert_count, ph
     {
         __debugbreak();
     }
-    if ( ((unsigned __int8)dim & 0xF) != 0
+    if ( ((uintptr_t)dim & 0xF) != 0
         && _tlAssert(
                  "c:\\projects_pc\\cod\\codsrc\\tl\\physics\\include\\phys_math.h",
                  444,
@@ -1015,7 +792,7 @@ void __cdecl nuge::calc_bound_box(const phys_vec3 *vert_list, int vert_count, ph
     {
         __debugbreak();
     }
-    if ( ((unsigned __int8)com & 0xF) != 0
+    if ( ((uintptr_t)com & 0xF) != 0
         && _tlAssert(
                  "c:\\projects_pc\\cod\\codsrc\\tl\\physics\\include\\phys_math.h",
                  444,

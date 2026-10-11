@@ -33,6 +33,7 @@
 
 #ifndef STACK_ALLOC_H
 #define STACK_ALLOC_H
+#include <stdint.h>
 
 #ifdef USE_ALLOCA
 #include <alloca.h>
@@ -42,25 +43,25 @@
 
 #include <valgrind/memcheck.h>
 /*Aligns the stack to a 'size' boundary */
-#define ALIGN(stack, size) ((stack) += ((size) - (long)(stack)) & ((size) - 1))
+#define ALIGN(stack, size) ((stack) += ((size) - (uintptr_t)(stack)) & ((size) - 1))
 
 /* Allocates 'size' elements of type 'type' on the stack */
 #define PUSH(stack, size, type) (VALGRIND_MAKE_NOACCESS(stack, 1000),ALIGN((stack),sizeof(type)),VALGRIND_MAKE_WRITABLE(stack, ((size)*sizeof(type))),(stack)+=((size)*sizeof(type)),(type*)((stack)-((size)*sizeof(type))))
 
 /* Allocates a struct stack */
-#define PUSHS(stack, type) (VALGRIND_MAKE_NOACCESS(stack, 1000),ALIGN((stack),sizeof(long)),VALGRIND_MAKE_WRITABLE(stack, (sizeof(type))),(stack)+=(sizeof(type)),(type*)((stack)-(sizeof(type))))
+#define PUSHS(stack, type) (VALGRIND_MAKE_NOACCESS(stack, 1000),ALIGN((stack),sizeof(uintptr_t)),VALGRIND_MAKE_WRITABLE(stack, (sizeof(type))),(stack)+=(sizeof(type)),(type*)((stack)-(sizeof(type))))
 
 #else
 
 
 /*Aligns the stack to a 'size' boundary */
-#define ALIGN(stack, size) ((stack) += ((size) - (long)(stack)) & ((size) - 1))
+#define ALIGN(stack, size) ((stack) += ((size) - (uintptr_t)(stack)) & ((size) - 1))
 
 /* Allocates 'size' elements of type 'type' on the stack */
 #define PUSH(stack, size, type) (ALIGN((stack),sizeof(type)),(stack)+=((size)*sizeof(type)),(type*)((stack)-((size)*sizeof(type))))
 
 /* Allocates a struct stack */
-#define PUSHS(stack, type) (ALIGN((stack),sizeof(long)),(stack)+=(sizeof(type)),(type*)((stack)-(sizeof(type))))
+#define PUSHS(stack, type) (ALIGN((stack),sizeof(uintptr_t)),(stack)+=(sizeof(type)),(type*)((stack)-(sizeof(type))))
 
 #endif
 

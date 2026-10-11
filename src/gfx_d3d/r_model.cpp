@@ -53,13 +53,20 @@ const int boxVerts[24][3] =
 
 
 
+struct ModelList
+{
+    int count;
+    XModel *sorted[2048];
+};
+
 void __cdecl R_ModelList_f()
 {
     const char *Name; // eax
     const char *v1; // [esp+8h] [ebp-212Ch]
     const char *fmt; // [esp+Ch] [ebp-2128h]
-    int inData; // [esp+104h] [ebp-2030h] BYREF
-    XModel *v4[2050]; // [esp+108h] [ebp-202Ch] BYREF
+    ModelList list{};
+    int &inData = list.count;
+    XModel **v4 = list.sorted;
     XModel *model; // [esp+2110h] [ebp-24h]
     int v6; // [esp+2114h] [ebp-20h]
     int v7; // [esp+2118h] [ebp-1Ch]
@@ -73,7 +80,7 @@ void __cdecl R_ModelList_f()
     v7 = 0;
     v6 = 0;
     inData = 0;
-    DB_EnumXAssets(ASSET_TYPE_XMODEL, (void (__cdecl *)(XAssetHeader, void *))R_GetModelList, &inData, 1);
+    DB_EnumXAssets(ASSET_TYPE_XMODEL, R_GetModelList, &list, 1);
     //std::_Sort<XModel * *,int,bool (__cdecl *)(XModel * &,XModel * &)>(v4, &v4[inData], (4 * inData) >> 2, R_ModelSort);
 
     std::sort(v4, v4 + inData, R_ModelSort);
@@ -130,19 +137,11 @@ bool __cdecl R_ModelSort(const XModel *model1, const XModel *model2)
     return XModelGetMemUsage(model1) < XModelGetMemUsage(model2);
 }
 
-void __cdecl R_GetModelList(XAssetHeader header, XAssetHeader *data)
+void __cdecl R_GetModelList(XAssetHeader header, void *data)
 {
-    if ( data->xmodelPieces >= (XModelPieces *)0x800
-        && !Assert_MyHandler(
-                    "C:\\projects_pc\\cod\\codsrc\\src\\gfx_d3d\\r_model.cpp",
-                    96,
-                    0,
-                    "%s",
-                    "modelList->count < ARRAY_COUNT( modelList->sorted )") )
-    {
-        __debugbreak();
-    }
-    data[(int)data->xmodelPieces++ + 1] = header;
+    ModelList *list = static_cast<ModelList *>(data);
+    iassert(list->count < 2048);
+    list->sorted[list->count++] = header.model;
 }
 
 XModel *__cdecl R_RegisterModel(char *name)

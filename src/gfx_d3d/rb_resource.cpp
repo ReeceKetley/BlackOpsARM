@@ -319,7 +319,7 @@ void RB_Resource_Update_Internal()
                 }
                 goto LABEL_2;
             case ACTION_RELEASE:
-                (*(void (__thiscall **)(void *, void *))(*(unsigned int *)action->resource + 8))(action->resource, action->resource);
+                static_cast<IUnknown *>(action->resource)->Release();
                 goto LABEL_2;
             case ACTION_LOADTEXTURE:
                 Image_LoadFromData(

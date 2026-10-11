@@ -8,7 +8,7 @@
 
 void __cdecl R_ModelList_f();
 bool __cdecl R_ModelSort(const XModel *model1, const XModel *model2);
-void __cdecl R_GetModelList(XAssetHeader header, XAssetHeader *data);
+void __cdecl R_GetModelList(XAssetHeader header, void *data);
 XModel *__cdecl R_RegisterModel(char *name);
 unsigned __int8 *__cdecl Hunk_AllocXModelPrecache(unsigned int size);
 unsigned __int8 *__cdecl Hunk_AllocXModelPrecacheColl(unsigned int size);

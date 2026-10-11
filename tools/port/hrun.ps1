@@ -12,6 +12,9 @@ param(
 $root = 'D:\Desktop\Black Ops 2 Android\BlackOps64'
 $run = "$root\build\run\$Name"
 $src = "$root\$Build\Release"
+if (Get-Process BO1Zombies -ErrorAction SilentlyContinue | Where-Object { $_.Path -eq "$run\BO1Zombies.exe" }) {
+    throw "A game is already running in $run; use another run name."
+}
 if (-not (Test-Path $run)) {
     New-Item -ItemType Directory -Path $run | Out-Null
     New-Item -ItemType Directory -Path "$run\main" | Out-Null
@@ -19,7 +22,7 @@ if (-not (Test-Path $run)) {
     cmd /c "mklink /J `"$run\mods`" `"$root\build\Release\mods`"" | Out-Null
 }
 foreach ($f in 'BO1Zombies.exe','BO1Zombies.pdb') { Copy-Item "$src\$f" "$run\$f" -Force }
-$sidecar = "$root\build\run\x64_thief_escape"
+$sidecar = if ($Build -eq 'build') { "$root\build\run\w32_reg3" } else { "$root\build\run\x64_thief_escape" }
 foreach ($f in 'Steam.dll','binkw32.dll','cod.bmp','codlogo.bmp','d3dx9_43.dll','localization.txt','msvcp140.dll','steam_api.dll','steamclient.dll','tier0_s.dll','vcruntime140.dll','vcruntime140_1.dll','vstdlib_s.dll','xinput1_3.dll') {
     if (-not (Test-Path "$run\$f")) { Copy-Item "$sidecar\$f" "$run\$f" -Force }
 }

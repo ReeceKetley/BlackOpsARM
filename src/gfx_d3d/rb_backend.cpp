@@ -1,3 +1,4 @@
+#include <universal/narrow32.h>
 #include "rb_backend.h"
 #include "rb_stats.h"
 #include "r_image.h"
@@ -3684,9 +3685,12 @@ double __cdecl RB_DrawHudIcon(
     {
         __debugbreak();
     }
-    if ( !IsValidMaterialHandle(*(Material *const *)(text + 3)) )
+    unsigned int iconHandle;
+    memcpy(&iconHandle, text + 3, sizeof(iconHandle));
+    Material *iconMaterial = BO1_NARROW_DECODE(Material, iconHandle);
+    if ( !IsValidMaterialHandle(iconMaterial) )
         return 0.0;
-    material = Material_FromHandle(*(Material **)(text + 3));
+    material = Material_FromHandle(iconMaterial);
     RB_DrawStretchPicRotate(material, x, ya, 1.0, w, h, s0, 0.0, s1, 1.0, sinAngle, cosAngle, color, GFX_PRIM_STATS_HUD);
     return w;
 }
@@ -5471,7 +5475,7 @@ void __cdecl RB_ExecuteRenderCommandsLoop(const void *cmds, int *ui3dTextureWind
         v3 = -1;
     while (1)
     {
-        if (((int)execState.cmd & 3) != 0
+        if ((reinterpret_cast<uintptr_t>(execState.cmd) & 3) != 0
             && !Assert_MyHandler(
                 "C:\\projects_pc\\cod\\codsrc\\src\\gfx_d3d\\rb_backend.cpp",
                 5999,

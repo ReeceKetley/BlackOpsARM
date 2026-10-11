@@ -955,58 +955,42 @@ void __cdecl Material_DirtySort()
 
 Material *__cdecl Material_Duplicate(Material *mtlCopy, char *name)
 {
-    unsigned int v3; // [esp+8h] [ebp-30h]
-    const char *nameBackup; // [esp+18h] [ebp-20h]
-    Material *mtlNewa; // [esp+1Ch] [ebp-1Ch]
-    unsigned __int8 *mtlNew; // [esp+1Ch] [ebp-1Ch]
-    int constantTableSize; // [esp+24h] [ebp-14h]
-    unsigned __int16 hashIndex[3]; // [esp+28h] [ebp-10h] BYREF
-    bool exists; // [esp+2Fh] [ebp-9h] BYREF
-    unsigned int textureTableSize; // [esp+30h] [ebp-8h]
-    unsigned int stateBitsTableSize; // [esp+34h] [ebp-4h]
-
-    if ( !mtlCopy
-        && !Assert_MyHandler("C:\\projects_pc\\cod\\codsrc\\src\\gfx_d3d\\r_material.cpp", 1397, 0, "%s", "mtlCopy") )
-    {
-        __debugbreak();
-    }
-    if ( !name && !Assert_MyHandler("C:\\projects_pc\\cod\\codsrc\\src\\gfx_d3d\\r_material.cpp", 1398, 0, "%s", "name") )
-        __debugbreak();
+    iassert(mtlCopy);
+    iassert(name);
+    unsigned __int16 hashIndex[3];
+    bool exists;
     Material_GetHashIndex(name, hashIndex, &exists);
-    if ( exists )
+    if (exists)
     {
-        mtlNewa = rg.materialHashTable[hashIndex[0]];
-        nameBackup = mtlNewa->info.name;
-        memcpy(mtlNewa, mtlCopy, sizeof(Material));
-        mtlNewa->info.name = nameBackup;
+        Material *copy = rg.materialHashTable[hashIndex[0]];
+        const char *nameBackup = copy->info.name;
+        *copy = *mtlCopy;
+        copy->info.name = nameBackup;
         rgp.needSortMaterials = 1;
-        return mtlNewa;
+        return copy;
     }
-    else
+    const size_t nameSize = strlen(name) + 1;
+    Material *copy = reinterpret_cast<Material *>(Material_Alloc(sizeof(Material) + nameSize));
+    *copy = *mtlCopy;
+    copy->info.name = reinterpret_cast<char *>(copy + 1);
+    memcpy(const_cast<char *>(copy->info.name), name, nameSize);
+    const size_t stateSize = sizeof(*copy->stateBitsTable) * copy->stateBitsCount;
+    copy->stateBitsTable = reinterpret_cast<GfxStateBits *>(Material_Alloc(stateSize));
+    memcpy(copy->stateBitsTable, mtlCopy->stateBitsTable, stateSize);
+    if (mtlCopy->textureTable)
     {
-        v3 = strlen(name);
-        mtlNew = Material_Alloc(v3 + 193);
-        memcpy(mtlNew, mtlCopy, 0xC0u);
-        *(unsigned int *)mtlNew = (unsigned int)(mtlNew + 192);
-        memcpy(*(unsigned __int8 **)mtlNew, (unsigned __int8 *)name, v3 + 1);
-        stateBitsTableSize = 8 * mtlCopy->stateBitsCount;
-        *((unsigned int *)mtlNew + 47) = (unsigned int)Material_Alloc(stateBitsTableSize);
-        memcpy(*((unsigned __int8 **)mtlNew + 47), (unsigned __int8 *)mtlCopy->stateBitsTable, stateBitsTableSize);
-        if ( mtlCopy->textureTable )
-        {
-            textureTableSize = 16 * mtlCopy->textureCount;
-            *((unsigned int *)mtlNew + 45) = (unsigned int)Material_Alloc(textureTableSize);
-            memcpy(*((unsigned __int8 **)mtlNew + 45), (unsigned __int8 *)mtlCopy->textureTable, textureTableSize);
-        }
-        if ( mtlCopy->localConstantTable )
-        {
-            constantTableSize = 32 * mtlCopy->constantCount;
-            *((unsigned int *)mtlNew + 46) = (unsigned int)Material_Alloc(constantTableSize);
-            memcpy(*((unsigned __int8 **)mtlNew + 46), (unsigned __int8 *)mtlCopy->localConstantTable, constantTableSize);
-        }
-        Material_Add((Material *)mtlNew, hashIndex[0]);
-        return (Material *)mtlNew;
+        const size_t size = sizeof(*copy->textureTable) * copy->textureCount;
+        copy->textureTable = reinterpret_cast<MaterialTextureDef *>(Material_Alloc(size));
+        memcpy(copy->textureTable, mtlCopy->textureTable, size);
     }
+    if (mtlCopy->localConstantTable)
+    {
+        const size_t size = sizeof(*copy->localConstantTable) * copy->constantCount;
+        copy->localConstantTable = reinterpret_cast<MaterialConstantDef *>(Material_Alloc(size));
+        memcpy(copy->localConstantTable, mtlCopy->localConstantTable, size);
+    }
+    Material_Add(copy, hashIndex[0]);
+    return copy;
 }
 
 void __cdecl Material_Add(Material *material, unsigned __int16 hashIndex)
@@ -1196,6 +1180,12 @@ Material *__cdecl Material_RegisterHandle(char *name, int imageTrack)
         return rgp.defaultMaterial;
 }
 
+struct MaterialList
+{
+    unsigned int count;
+    MaterialMemory sorted[4096];
+};
+
 void __cdecl R_MaterialList_f()
 {
     const char *fmt; // [esp+8h] [ebp-8150h]
@@ -1203,14 +1193,15 @@ void __cdecl R_MaterialList_f()
     const char **p_name; // [esp+13Ch] [ebp-801Ch]
     int v3; // [esp+140h] [ebp-8018h]
     MaterialMemory *v4; // [esp+144h] [ebp-8014h]
-    unsigned int inData; // [esp+148h] [ebp-8010h] BYREF
-    MaterialMemory v6[4097]; // [esp+14Ch] [ebp-800Ch] BYREF
+    MaterialList list{};
+    unsigned int &inData = list.count;
+    MaterialMemory *v6 = list.sorted;
     float v7; // [esp+8154h] [ebp-4h]
 
     v3 = 0;
     Com_Printf(8, "-----------------------\n");
     inData = 0;
-    DB_EnumXAssets(ASSET_TYPE_MATERIAL, (void (__cdecl *)(XAssetHeader, void *))R_GetMaterialList, &inData, 0);
+    DB_EnumXAssets(ASSET_TYPE_MATERIAL, R_GetMaterialList, &list, 0);
 
     //std::_Sort<RagdollSortStruct *,int,bool (__cdecl *)(RagdollSortStruct const &,RagdollSortStruct const &)>(
     //    v6,
@@ -1245,28 +1236,15 @@ void __cdecl R_MaterialList_f()
     Com_Printf(8, "Related commands: meminfo, imagelist, gfx_world, gfx_model, cg_drawfps, com_statmon, tempmeminfo\n");
 }
 
-void __cdecl R_GetMaterialList(XAssetHeader header, char *data)
+void __cdecl R_GetMaterialList(XAssetHeader header, void *data)
 {
-    int memory; // [esp+0h] [ebp-Ch]
-    XAssetHeader *materialMemory; // [esp+4h] [ebp-8h]
-
-    memory = R_GetMaterialMemory(header.material);
-    if ( memory )
+    const int memory = R_GetMaterialMemory(header.material);
+    if (memory)
     {
-        if ( *(unsigned int *)data >= 0x1000u
-            && !Assert_MyHandler(
-                        "C:\\projects_pc\\cod\\codsrc\\src\\gfx_d3d\\r_material.cpp",
-                        1697,
-                        0,
-                        "%s",
-                        "materialList->count < ARRAY_COUNT( materialList->sorted )") )
-        {
-            __debugbreak();
-        }
-        materialMemory = (XAssetHeader *)&data[8 * *(unsigned int *)data + 4];
-        materialMemory->xmodelPieces = header.xmodelPieces;
-        materialMemory[1].xmodelPieces = (XModelPieces *)memory;
-        ++*(unsigned int *)data;
+        MaterialList *list = static_cast<MaterialList *>(data);
+        iassert(list->count < 4096);
+        list->sorted[list->count].material = header.material;
+        list->sorted[list->count++].memory = memory;
     }
 }
 

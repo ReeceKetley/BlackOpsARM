@@ -303,7 +303,7 @@ struct r_double_index_t // sizeof=0x4
 struct FxSpriteInfo // sizeof=0x10
 {                                       // XREF: .data:g_spriteInfo/r
                                         // FxSystem/r
-    r_double_index_t *indices;          // XREF: FX_SpriteBegin(void)+3/w
+    union { r_double_index_t *indices; unsigned int spriteCount; }; // mesh indices or waypoint sprite count
     // FX_SpriteAdd(FxSprite *)+5/r ...
     unsigned int indexCount;
     Material *material;

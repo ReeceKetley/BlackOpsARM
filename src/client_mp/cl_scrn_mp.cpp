@@ -629,7 +629,7 @@ int    CL_CGameRendering(int localClientNum)
                                 &uiInfo->uiDC,
                                 0,
                                 toastPopupMenu,
-                                (const ScreenPlacement *)0xFFFFFFFF);
+                                -1);
                             if ((Window_GetDynamicFlags(contextIndex, &toastPopupMenu->window) & 0x42000) == 0)
                             {
                                 Window_RemoveDynamicFlags(contextIndex, &toastPopupMenu->window, 4);
@@ -645,7 +645,7 @@ int    CL_CGameRendering(int localClientNum)
                             &uiInfo->uiDC,
                             0,
                             toastPopupMenu,
-                            (const ScreenPlacement *)0xFFFFFFFF);
+                            -1);
                         if (toastPopupMenu->closeSlideSpeed <= 0 || toastPopupMenu->closeSlideDirection >= 4u)
                         {
                             if (toastPopupMenu->closeFadingTime > 0)
@@ -684,7 +684,7 @@ int    CL_CGameRendering(int localClientNum)
                         &uiInfo->uiDC,
                         0,
                         toastPopupMenu,
-                        (const ScreenPlacement *)0xFFFFFFFF);
+                        -1);
                 }
             }
         }

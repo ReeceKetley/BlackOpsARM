@@ -465,10 +465,12 @@ void __cdecl CG_SP_trigger_radius(int localClientNum, centity_s *ent, char spawn
     }
     if ( CG_InitTrigger(localClientNum, ent) )
     {
-        ent->pose.turret.barrelPitch = -radius;
-        ent->pose.player.waterHeight = -radius;
-        ent->pose.player.nextWaterHeightCheck = 0;
-        ent->pose.turret.firingOffset = radius;
+        // These are trigger bounds. The player union's pointer grows on x64,
+        // so its water-height fields no longer overlap the same bounds slots.
+        ent->pose.general.mins[0] = -radius;
+        ent->pose.general.mins[1] = -radius;
+        ent->pose.general.mins[2] = 0.0f;
+        ent->pose.general.maxs[0] = radius;
         ent->pose.general.maxs[1] = radius;
         ent->pose.general.maxs[2] = height;
         CG_InitTriggerWait(localClientNum, ent, (int *)&spawnFlags, 64);

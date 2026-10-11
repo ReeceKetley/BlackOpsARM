@@ -8,7 +8,12 @@ public class VM {
   [DllImport("kernel32.dll")] public static extern bool CloseHandle(IntPtr h);
   public static List<MBI> Dump(int pid) {
     var l = new List<MBI>(); IntPtr h = OpenProcess(0x0410, false, pid); ulong a = 0; MBI m;
-    while (VirtualQueryEx(h, (IntPtr)(long)a, out m, Marshal.SizeOf(typeof(MBI))) != 0) { l.Add(m); a = (ulong)(long)m.Base + m.Size; if (a >= 0x80000000UL) break; }
+    if (h == IntPtr.Zero) throw new System.ComponentModel.Win32Exception();
+    while (VirtualQueryEx(h, (IntPtr)(long)a, out m, Marshal.SizeOf(typeof(MBI))) != 0) {
+      l.Add(m); ulong next = (ulong)(long)m.Base + m.Size;
+      if (next <= a || next > long.MaxValue) break;
+      a = next;
+    }
     CloseHandle(h); return l; }
 }
 "@

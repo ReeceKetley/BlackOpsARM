@@ -1238,7 +1238,8 @@ void __cdecl VM_Notify(
                                 goto next;
                             }
                         }
-                        ++ * (unsigned int *)Bo1_StackBuf(stackValue.intValue);
+                        auto archivedStack = reinterpret_cast<VariableStackBuffer *>(Bo1_StackBuf(stackValue.intValue));
+                        archivedStack->pos = static_cast<const char *>(archivedStack->pos) + 1;
                         bNoStack = 1;
                     }
                     else
@@ -1537,7 +1538,9 @@ void __cdecl VM_TerminateStack(
     while (size)
     {
         buf -= sizeof(unsigned int);
-        u.codePosValue = Bo1_LoadCodePos(buf);
+        // Archived values are raw union bits: strings/numbers are not narrow pointers.
+        // Pointer members decode the same bits when the value's type requires it.
+        u.intValue = *(const int *)buf;
         buf -= sizeof(unsigned char);
         unsigned char type = buf[0];
         size--;

@@ -109,13 +109,13 @@ void    render_brush(
                 bool persistent,
                 bool ztest,
                 const float *edgeColor);
-void __cdecl calc_color(unsigned int id, float alpha, float *color);
+void __cdecl calc_color(uintptr_t id, float alpha, float *color);
 void __cdecl render_convex_partition(const CollisionAabbTree *tree);
 void    render_chull(const chull_t *first, const phys_mat44 *xform, const float *color);
-void __cdecl render_xmodel_chull(const XModel *model, unsigned int key, const phys_mat44 *xform, const float *color);
+void __cdecl render_xmodel_chull(const XModel *model, uintptr_t key, const phys_mat44 *xform, const float *color);
 void __cdecl render_brushmodel_chull(
                 unsigned int brushmodel,
-                unsigned int key,
+                uintptr_t key,
                 const phys_mat44 *xform,
                 const float *color);
 void __cdecl render_line(const float *p0, const float *p1, const float *color, int duration, int ztest);

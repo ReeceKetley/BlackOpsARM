@@ -1,4 +1,5 @@
 #include "fx_convert.h"
+#include <xanim/xmodel.h>
 #include <gfx_d3d/r_material_load_obj.h>
 #include "FxCurve.h"
 #include <qcommon/common.h>
@@ -69,10 +70,10 @@ const FxEffectDef *__cdecl FX_Convert(const FxEditorEffectDef *editorEffect, voi
                 elemVisual = &edElemDef->visuals[visualIndex];
                 if ( elemVisual->anonymous )
                 {
-                    if ( !*((unsigned int *)elemVisual->anonymous + 59) )
+                    if ( !elemVisual->model->physPreset )
                     {
                         v2 = FX_RegisterPhysPreset("default");
-                        *((unsigned int *)elemVisual->anonymous + 59) = (unsigned int)v2;
+                        elemVisual->model->physPreset = v2;
                         Com_PrintError(
                             20,
                             "ERROR: no physics preset specified for the FX model [%s]\n",

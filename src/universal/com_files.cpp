@@ -2664,7 +2664,7 @@ void FS_RegisterDvars()
         "mod: mods stacked on the search path, e.g. \"mapkit horde zinfo\" = mods/mapkit, mods/horde, mods/zinfo (later wins)");
     fs_usermapDir = _Dvar_RegisterString("fs_usermapdir", (char *)"", 0x144u, "Usermap data directory.");
     fs_ignoreLocalized = _Dvar_RegisterBool("fs_ignoreLocalized", 0, 0xA0u, "Ignore localized files");
-    homePath = (char *)RETURN_ZERO32();
+    homePath = nullptr;
     if ( !homePath || !*homePath )
         homePath = (char *)fs_basepath->reset.string; // Win32 overlaid string onto .integer
     fs_homepath = _Dvar_RegisterString("fs_h", homePath, 0x210u, "Game home path");
