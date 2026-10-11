@@ -1158,7 +1158,7 @@ MaterialTechniqueSet *__cdecl Material_LoadTechniqueSet(char *name)
     {
         v5 = strlen(name);
         nameSize = v5 + 1;
-        techniqueSet = (MaterialTechniqueSet *)Material_Alloc(v5 + 529);
+        techniqueSet = (MaterialTechniqueSet *)Material_Alloc(sizeof(MaterialTechniqueSet) + nameSize);
         techniqueSet->name = (const char *)&techniqueSet[1];
         techniqueSet->worldVertFormat = 0;
         memcpy((unsigned __int8 *)techniqueSet->name, (unsigned __int8 *)name, nameSize);
@@ -1321,7 +1321,7 @@ void __cdecl Material_SetTechnique(const char *name, MaterialTechnique *techniqu
 
 MaterialTechnique *__cdecl Material_LoadTechnique(char *name)
 {
-    unsigned __int8 *technique; // [esp+24h] [ebp-1A0h]
+    MaterialTechnique *technique;
     int stateMapSize; // [esp+28h] [ebp-19Ch]
     MaterialStateMap *stateMap[4]; // [esp+2Ch] [ebp-198h] BYREF
     char filename[260]; // [esp+3Ch] [ebp-188h] BYREF
@@ -1389,19 +1389,23 @@ MaterialTechnique *__cdecl Material_LoadTechnique(char *name)
         }
         else if ( passCount )
         {
-            stateMapSize = 4 * passCount;
+            stateMapSize = sizeof(*stateMapForPass) * passCount;
             nameSize = strlen(name) + 1;
-            technique = Material_Alloc(nameSize + 24 * passCount + 8);
-            stateMapForPass = (MaterialStateMap **)&technique[20 * passCount + 8];
-            *(unsigned int *)technique = (unsigned int)&stateMapForPass[passCount];
-            memcpy(*(unsigned __int8 **)technique, (unsigned __int8 *)name, nameSize);
+            const unsigned int passesSize = sizeof(MaterialPass) * passCount;
+            const unsigned int headerSize = offsetof(MaterialTechnique, passArray);
+            technique = reinterpret_cast<MaterialTechnique *>(
+                Material_Alloc(headerSize + passesSize + stateMapSize + nameSize));
+            stateMapForPass = reinterpret_cast<MaterialStateMap **>(
+                reinterpret_cast<unsigned char *>(technique) + headerSize + passesSize);
+            technique->name = reinterpret_cast<const char *>(stateMapForPass + passCount);
+            memcpy(const_cast<char *>(technique->name), name, nameSize);
 
-            *((_WORD *)technique + 2) = techFlags;
-            if ( !strcmp(*(const char **)technique, "zprepass")
-                || !strncmp(*(const char **)technique, "pimp_technique_zprepass_", 0x18u)
-                || !strncmp(*(const char **)technique, "pimp_technique_layer_zprepass_", 0x1Eu) )
+            technique->flags = techFlags;
+            if ( !strcmp(technique->name, "zprepass")
+                || !strncmp(technique->name, "pimp_technique_zprepass_", 0x18u)
+                || !strncmp(technique->name, "pimp_technique_layer_zprepass_", 0x1Eu) )
             {
-                *((_WORD *)technique + 2) |= 4u;
+                technique->flags |= 4u;
             }
             for ( passIndex = 0; passIndex < passCount; ++passIndex )
             {
@@ -1418,14 +1422,14 @@ MaterialTechnique *__cdecl Material_LoadTechnique(char *name)
                 }
                 if ( vertexDecl->hasOptionalSource )
                 {
-                    *((_WORD *)technique + 2) |= 8u;
+                    technique->flags |= 8u;
                     break;
                 }
             }
-            *((_WORD *)technique + 3) = passCount;
-            memcpy(technique + 8, (unsigned __int8 *)passes, 20 * passCount);
+            technique->passCount = passCount;
+            memcpy(technique->passArray, passes, passesSize);
             memcpy((unsigned __int8 *)stateMapForPass, (unsigned __int8 *)stateMap, stateMapSize);
-            return (MaterialTechnique *)technique;
+            return technique;
         }
         else
         {
@@ -1552,8 +1556,8 @@ char __cdecl Material_LoadPass(
                 ++v6;
             }
             argCount = pass->stableArgCount + pass->perObjArgCount + pass->perPrimArgCount;
-            pass->localArgs = (MaterialShaderArgument *)Material_Alloc(8 * argCount);
-            memcpy((unsigned __int8 *)pass->localArgs, (unsigned __int8 *)args, 8 * argCount);
+            pass->localArgs = (MaterialShaderArgument *)Material_Alloc(sizeof(*pass->localArgs) * argCount);
+            memcpy(pass->localArgs, args, sizeof(*args) * argCount);
             localArgs = pass->localArgs;
             for ( j = 0; j < pass->perPrimArgCount; ++j )
             {
@@ -1750,7 +1754,7 @@ MaterialStateMap *__cdecl Material_LoadStateMap(char *name)
         Com_SetSpaceDelimited(0);
         v2 = strlen(name);
         nameSize = v2 + 1;
-        stateMap = (MaterialStateMap *)Material_Alloc(v2 + 45);
+        stateMap = (MaterialStateMap *)Material_Alloc(sizeof(MaterialStateMap) + nameSize);
         stateMap->name = (const char *)&stateMap[1];
         memcpy((unsigned __int8 *)stateMap->name, (unsigned __int8 *)name, nameSize);
         if ( !Material_ParseStateMap((char **)&text, stateMap) )
@@ -2598,7 +2602,7 @@ MaterialVertexShader *__cdecl Material_LoadVertexShader(char *shaderName)
         __debugbreak();
     }
     nameSize = strlen(shaderName) + 1;
-    totalSize = programSize + nameSize + 16;
+    totalSize = sizeof(*mtlShader) + programSize + nameSize;
     mtlShader = (MaterialVertexShader *)Material_Alloc(totalSize);
     program = (DWORD*)&mtlShader[1];
     mtlShader->name = (char *)&mtlShader[1] + programSize;
@@ -2606,7 +2610,7 @@ MaterialVertexShader *__cdecl Material_LoadVertexShader(char *shaderName)
     v4 = shader;
     v2 = (unsigned __int8 *)shader->GetBufferPointer();
     //v2 = (unsigned __int8 *)((int (__thiscall *)(ID3DXBuffer *))shader->GetBufferPointer)(shader);
-    memcpy((unsigned __int8 *)program, v2, (unsigned int)v4);
+    memcpy(program, shader->GetBufferPointer(), programSize);
     hr = dx.device->CreateVertexShader((const DWORD*)program, &mtlShader->prog.vs);
     //hr = ((int (__stdcall *)(IDirect3DDevice9 *, unsigned int *, MaterialVertexShaderProgram *, unsigned int))dx.device->CreateVertexShader)(
     //             dx.device,
@@ -2634,6 +2638,7 @@ MaterialVertexShader *__cdecl Material_LoadVertexShader(char *shaderName)
     }
     else
     {
+        shader->Release();
         v3 = R_ErrorDescription(hr);
         Com_ScriptError("vertex shader creation failed for %s: %s\n", shaderName, v3);
         return 0;
@@ -2646,109 +2651,77 @@ ID3DXBuffer *__cdecl Material_CompileShader(
                 char *entryPoint,
                 char *target)
 {
-    char *v5; // eax
-    const char *v6; // eax
-    const char *v7; // eax
-    char *ScriptErrorPrefix; // [esp+0h] [ebp-8E64h]
-    _BYTE v9[2052]; // [esp+4h] [ebp-8E60h] BYREF
-    char *prefix; // [esp+808h] [ebp-865Ch]
-    char *fileName; // [esp+80Ch] [ebp-8658h] BYREF
-    void (*v12)(const char *, ...); // [esp+810h] [ebp-8654h]
-    char v13; // [esp+817h] [ebp-864Dh]
-    char *errorMessage; // [esp+818h] [ebp-864Ch]
-    unsigned int lineNumber[2]; // [esp+81Ch] [ebp-8648h] BYREF
-    char dest[516]; // [esp+824h] [ebp-8640h] BYREF
-    unsigned int shaderTextLen; // [esp+A28h] [ebp-843Ch]
-    int v18; // [esp+A2Ch] [ebp-8438h] BYREF
-    HRESULT hr; // [esp+A30h] [ebp-8434h]
-    GfxAssembledShaderText prog; // [esp+A34h] [ebp-8430h] BYREF
-    char *shaderString; // [esp+8E50h] [ebp-14h]
-    unsigned int v22[2]; // [esp+8E54h] [ebp-10h] BYREF
-    ID3DXBuffer *shader; // [esp+8E5Ch] [ebp-8h] BYREF
-    int v24; // [esp+8E60h] [ebp-4h]
-
-    shader = 0;
-    v22[0] = 0;
-    v18 = 0;
-    lineNumber[1] = 0;
-    v22[1] = 0;
+    char dest[516];
+    GfxAssembledShaderText prog;
+    ID3DXBuffer *shader = NULL;
+    ID3DXBuffer *diagnostics = NULL;
+    ID3DXConstantTable *constants = NULL;
     Com_sprintf(dest, 0x200u, "shaders/%s", shaderName);
-    shaderString = (char *)Hunk_AllocateTempMemory(0x80000, "Material_CompileShader");
-    shaderTextLen = Material_GenerateShaderString(&prog, shaderName, shaderType, shaderString, 0x80000u);
+    char *shaderString = (char *)Hunk_AllocateTempMemory(0x80000, "Material_CompileShader");
+    const unsigned int shaderTextLen = Material_GenerateShaderString(
+        &prog, shaderName, shaderType, shaderString, 0x80000u);
     if ( !shaderTextLen )
     {
         Hunk_FreeTempMemory(shaderString);
-        return 0;
+        return NULL;
     }
     if ( Material_FindCachedShaderDX(shaderString, shaderTextLen, entryPoint, target, &shader, shaderName, 0) )
     {
-LABEL_22:
         Hunk_FreeTempMemory(shaderString);
         return shader;
     }
-    v24 = 2;
-    v5 = strstr(shaderName, "pimp_shader_sw4");
-    if ( !v5 )
-        v24 |= 0x10000u;
-    hr = D3DXCompileShader(shaderString, shaderTextLen, 0, 0, entryPoint, target, v24, &shader, NULL, NULL);
-    //hr = D3DXCompileShader(shaderString, shaderTextLen, 0, 0, entryPoint, target, v24, &shader, v22, &v18);
-    //__asm { fnclex }
-    if ( v22[0] )
+    unsigned int flags = 2;
+    if ( !strstr(shaderName, "pimp_shader_sw4") )
+        flags |= 0x10000u;
+    const HRESULT hr = D3DXCompileShader(shaderString, shaderTextLen, NULL, NULL,
+        entryPoint, target, flags, &shader, &diagnostics, &constants);
+    if ( diagnostics )
     {
-        v13 = 0;
-        v6 = (const char *)(*(int (__stdcall **)(unsigned int))(*(unsigned int *)v22[0] + 12))(v22[0]);
-        if ( I_stristr(v6, "error") )
-            v12 = Com_ScriptError;
-        else
-            v12 = Com_ScriptWarning;
-        errorMessage = (char *)(*(int (__stdcall **)(unsigned int))(*(unsigned int *)v22[0] + 12))(v22[0]);
-        Material_FileIncludeFileAndLineNumber(&prog, errorMessage, &fileName, lineNumber);
-        if ( v12 )
-        {
-            ScriptErrorPrefix = (char *)Com_GetScriptErrorPrefix();
-            prefix = (char *)Com_GetScriptWarningPrefix();
-            Com_SetScriptWarningPrefix("^3WARNING: ");
-            Com_SetScriptErrorPrefix("^1ERROR: ");
-            v9[0] = 0;
-            v12(
-                (char*)"compiler message(s) for %s (entryPoint=\"%s\", target=\"%s\"):\n%s\n%s\n%s(%d)\n",
-                dest,
-                entryPoint,
-                target,
-                errorMessage,
-                v9,
-                fileName,
-                lineNumber[0]);
-            Com_SetScriptWarningPrefix(prefix);
-            Com_SetScriptErrorPrefix(ScriptErrorPrefix);
-        }
-        (*(void (__thiscall **)(unsigned int, unsigned int))(*(unsigned int *)v22[0] + 8))(v22[0], v22[0]);
+        char *errorMessage = (char *)diagnostics->GetBufferPointer();
+        void (*reportMessage)(const char *, ...) = I_stristr(errorMessage, "error")
+            ? Com_ScriptError : Com_ScriptWarning;
+        char *fileName;
+        unsigned int lineNumber = 0;
+        Material_FileIncludeFileAndLineNumber(&prog, errorMessage, &fileName, &lineNumber);
+        const char *scriptErrorPrefix = Com_GetScriptErrorPrefix();
+        const char *scriptWarningPrefix = Com_GetScriptWarningPrefix();
+        Com_SetScriptWarningPrefix("^3WARNING: ");
+        Com_SetScriptErrorPrefix("^1ERROR: ");
+        reportMessage("compiler message(s) for %s (entryPoint=\"%s\", target=\"%s\"):\n%s\n%s\n%s(%d)\n",
+            dest, entryPoint, target, errorMessage, "", fileName, lineNumber);
+        Com_SetScriptWarningPrefix(scriptWarningPrefix);
+        Com_SetScriptErrorPrefix(scriptErrorPrefix);
+        diagnostics->Release();
     }
-    if ( hr < 0 )
+    if ( FAILED(hr) )
     {
-        v7 = R_ErrorDescription(hr);
-        Com_ScriptError("%s compilation failed - %s\n", dest, v7);
-        Hunk_FreeTempMemory(shaderString);
-        return 0;
-    }
-    if ( shader )
-    {
-        if ( !v18 )
-        {
+        if ( constants )
+            constants->Release();
+        if ( shader )
             shader->Release();
-            Com_ScriptError("%s compilation failed - NULL constants\n", dest);
-            Hunk_FreeTempMemory(shaderString);
-            return 0;
-        }
-        (*(void (__stdcall **)(int))(*(unsigned int *)v18 + 8))(v18);
-        Material_CacheShaderDX(shaderString, shaderTextLen, entryPoint, target, shader, 0);
-        goto LABEL_22;
+        Com_ScriptError("%s compilation failed - %s\n", dest, R_ErrorDescription(hr));
+        Hunk_FreeTempMemory(shaderString);
+        return NULL;
     }
-    if ( v18 )
-        (*(void (__stdcall **)(int))(*(unsigned int *)v18 + 8))(v18);
-    Com_ScriptError("%s compilation failed - NULL shader\n", dest);
+    if ( !shader )
+    {
+        if ( constants )
+            constants->Release();
+        Com_ScriptError("%s compilation failed - NULL shader\n", dest);
+        Hunk_FreeTempMemory(shaderString);
+        return NULL;
+    }
+    if ( !constants )
+    {
+        shader->Release();
+        Com_ScriptError("%s compilation failed - NULL constants\n", dest);
+        Hunk_FreeTempMemory(shaderString);
+        return NULL;
+    }
+    constants->Release();
+    Material_CacheShaderDX(shaderString, shaderTextLen, entryPoint, target, shader, 0);
     Hunk_FreeTempMemory(shaderString);
-    return 0;
+    return shader;
 }
 
 unsigned int __cdecl Material_GenerateShaderString(
@@ -3648,7 +3621,7 @@ char __cdecl Material_ParseShaderArguments(
     ShaderParamType paramType; // [esp+138h] [ebp-5014h] BYREF
     unsigned int arrayCount; // [esp+13Ch] [ebp-5010h]
     char *src; // [esp+140h] [ebp-500Ch]
-    MaterialShaderArgument argTable; // [esp+144h] [ebp-5008h] BYREF
+    MaterialShaderArgument argTable[512];
     char dst[256][64]; // [esp+1144h] [ebp-4008h] BYREF
 
     memset((unsigned __int8 *)dst, 0, sizeof(dst));
@@ -3704,7 +3677,7 @@ char __cdecl Material_ParseShaderArguments(
                             paramTable,
                             paramCount,
                             &usedCount,
-                            &argTable,
+                            argTable,
                             dst) )
                 return 0;
             if ( argSource.type == 4 )
@@ -3733,7 +3706,7 @@ char __cdecl Material_ParseShaderArguments(
         }
     }
     if ( usedCount == paramCount )
-        return Material_SetShaderArguments(usedCount, &argTable, argLimit, argCount, args);
+        return Material_SetShaderArguments(usedCount, argTable, argLimit, argCount, args);
     for ( i = 0; i < paramCount; ++i )
     {
         if ( !paramTable[i].isAssigned )
@@ -3785,14 +3758,14 @@ char __cdecl Material_ParseShaderArguments(
                                 paramTable,
                                 paramCount,
                                 &usedCount,
-                                &argTable,
+                                argTable,
                                 dst) )
                     return 0;
             }
         }
     }
     if ( usedCount == paramCount )
-        return Material_SetShaderArguments(usedCount, &argTable, argLimit, argCount, args);
+        return Material_SetShaderArguments(usedCount, argTable, argLimit, argCount, args);
     Com_PrintWarning(8, "Undefined shader parameter(s) in %s\n", shaderName);
     for ( i = 0; i < paramCount; ++i )
     {
@@ -4618,7 +4591,7 @@ char __cdecl Material_SetShaderArguments(
             usedCount, sizeof(*(localArgs)),
             (int (__cdecl *)(const void *, const void *))Material_CompareShaderArgumentsForCombining);
         usedCounta = Material_CombineShaderArguments(usedCount, localArgs);
-        memcpy((unsigned __int8 *)&args[*argCount], (unsigned __int8 *)localArgs, 8 * usedCounta);
+        memcpy(&args[*argCount], localArgs, sizeof(*args) * usedCounta);
         *argCount += usedCounta;
         return 1;
     }
@@ -4644,7 +4617,6 @@ int __cdecl Material_CompareShaderArgumentsForCombining(unsigned __int16 *e0, un
 
 unsigned int __cdecl Material_CombineShaderArguments(unsigned int usedCount, MaterialShaderArgument *localArgs)
 {
-    MaterialArgumentDef v2; // ecx
     unsigned int srcIndex; // [esp+4h] [ebp-8h]
     unsigned int dstIndex; // [esp+8h] [ebp-4h]
 
@@ -4654,9 +4626,7 @@ unsigned int __cdecl Material_CombineShaderArguments(unsigned int usedCount, Mat
         if ( !Material_AttemptCombineShaderArguments(&localArgs[dstIndex], &localArgs[srcIndex]) )
         {
             ++dstIndex;
-            LODWORD(v2.literalConst) = localArgs[srcIndex].u.nameHash;
-            *(unsigned int *)&localArgs[dstIndex].type = *(unsigned int *)&localArgs[srcIndex].type;
-            localArgs[dstIndex].u = v2;
+            localArgs[dstIndex] = localArgs[srcIndex];
         }
     }
     return dstIndex + 1;
@@ -4947,7 +4917,7 @@ char __cdecl Material_AddShaderArgumentFromLiteral(
     {
         __debugbreak();
     }
-    arg->u.codeSampler = (unsigned int)literal;
+    arg->u.literalConst = literal;
     return MaterialAddShaderArgument(shaderName, paramName, arg, registerUsage);
 }
 
@@ -5236,7 +5206,7 @@ MaterialPixelShader *__cdecl Material_LoadPixelShader(char *shaderName)
         __debugbreak();
     }
     nameSize = strlen(shaderName) + 1;
-    totalSize = programSize + nameSize + 16;
+    totalSize = sizeof(*mtlShader) + programSize + nameSize;
     mtlShader = (MaterialPixelShader *)Material_Alloc(totalSize);
     program = (DWORD*)&mtlShader[1];
     mtlShader->name = (char *)&mtlShader[1] + programSize;
@@ -5273,6 +5243,7 @@ MaterialPixelShader *__cdecl Material_LoadPixelShader(char *shaderName)
     }
     else
     {
+        shader->Release();
         v3 = R_ErrorDescription(hr);
         Com_ScriptError("pixel shader creation failed for %s: %s\n", shaderName, v3);
         return 0;
@@ -7169,8 +7140,8 @@ void __cdecl Material_BuildStateBitsTable(Material *material, __int16 toolFlags,
 {
     MaterialTechnique *v3; // [esp+0h] [ebp-1074h]
     unsigned int i; // [esp+4h] [ebp-1070h]
-    int v5; // [esp+8h] [ebp-106Ch]
-    unsigned int stateBitsTable[2]; // [esp+Ch] [ebp-1068h] BYREF
+    MaterialStateMap *const *stateMapForPass;
+    unsigned int stateBitsTable[130 * 4][2];
     _QWORD stateBitsOut[4]; // [esp+104Ch] [ebp-28h] BYREF
     unsigned int stateBitsCount; // [esp+106Ch] [ebp-8h] BYREF
     unsigned int j; // [esp+1070h] [ebp-4h]
@@ -7181,12 +7152,13 @@ void __cdecl Material_BuildStateBitsTable(Material *material, __int16 toolFlags,
         v3 = material->localTechniqueSet->techniques[i];
         if ( v3 )
         {
-            v5 = (int)&v3->passArray[v3->passCount];
+            stateMapForPass = reinterpret_cast<MaterialStateMap *const *>(
+                v3->passArray + v3->passCount);
             for ( j = 0; j < v3->passCount; ++j )
                 Material_RemapStateBits(
                     material,
                     toolFlags,
-                    *(const MaterialStateMap **)(v5 + 4 * j),
+                    stateMapForPass[j],
                     refStateBits,
                     (unsigned int *)&stateBitsOut[j]);
             material->stateBitsEntry[i] = Material_AddStateBitsArrayToTable(

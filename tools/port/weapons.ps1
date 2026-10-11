@@ -5,10 +5,12 @@ param(
     [string]$Weapons = 'catalog',
     [switch]$Catalog,
     [switch]$Debugger,
+    [switch]$WaterCells,
     [int]$AutoquitMs = 3600000,
     [switch]$Wait
 )
 $ErrorActionPreference = 'Stop'
+if ($WaterCells -and (!$Debugger -or !$Catalog)) { throw 'Water-cell inspection requires a debugger catalog run' }
 $root = 'D:\Desktop\Black Ops 2 Android\BlackOps64'
 if ($Map -notmatch '^(zombie_[a-z0-9_]+|zombietron)$' -or $Weapons -notmatch '^[a-zA-Z0-9_,: ]+$') { throw 'Invalid map/weapon name' }
 $run = Join-Path "$root\build\run" $Name
@@ -36,7 +38,18 @@ try {
         $debugArch = if ($Build -eq 'build') { 'x86' } else { 'x64' }
         $debugExe = "C:\Program Files (x86)\Windows Kits\10\Debuggers\$debugArch\cdb.exe"
         $debugRegister = if ($Build -eq 'build') { 'eip' } else { 'rip' }
-        @('g','.lastevent','.ecxr','r','k 24',"ub @$debugRegister L8", ".dump /mi weapon_crash.dmp",'q') | Set-Content "$run\_weapon_debug.cdb" -Encoding ascii
+        if ($WaterCells) {
+            $worldExpression = if ($Build -eq 'build') { 'poi(poi(@esp+4))' } else { 'poi(@rcx)' }
+            $countOffset = if ($Build -eq 'build') { '0x20' } else { '0x28' }
+            $headerOffset = if ($Build -eq 'build') { '0x10' } else { '0x18' }
+            $cellsOffset = if ($Build -eq 'build') { '0x24' } else { '0x30' }
+            $pointerCommand = if ($Build -eq 'build') { 'dd' } else { 'dq' }
+            $captureCommand = 'bm *!Load_ComWorldAsset ".printf \"WATER_MAP_CELLS count=%u\n\", dwo(' + $worldExpression + '+' + $countOffset + '); da poi(' + $worldExpression + ') L80; db poi(' + $worldExpression + ') L30; dd ' + $worldExpression + '+' + $headerOffset + ' L4; ' + $pointerCommand + ' ' + $worldExpression + '+' + $cellsOffset + ' L1; g"'
+            @('.reload /f', $captureCommand,
+              'g','.lastevent','qd') | Set-Content "$run\_weapon_debug.cdb" -Encoding ascii
+        } else {
+            @('g','.lastevent','.ecxr','r','k 24',"ub @$debugRegister L8", ".dump /mi weapon_crash.dmp",'q') | Set-Content "$run\_weapon_debug.cdb" -Encoding ascii
+        }
         $debugArgs = "-y `"$run`" -cf `"$run\_weapon_debug.cdb`" `"$run\BO1Zombies.exe`" $args"
         $p = Start-Process -FilePath $debugExe -ArgumentList $debugArgs -WorkingDirectory $run -WindowStyle Hidden -RedirectStandardOutput "$run\debug.log" -PassThru
     } else {

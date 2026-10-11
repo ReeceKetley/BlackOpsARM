@@ -111,6 +111,10 @@ int main(int argc, char **argv) {
     require(SUCCEEDED(device->CreateVertexBuffer(static_cast<UINT>(output.size), D3DUSAGE_DYNAMIC,
         0, D3DPOOL_DEFAULT, &buffer, nullptr)), "real dynamic water vertex buffer");
     data.vertexBuffer = buffer;
+    for (const char *name : {"d3d9.dll", "vulkan-1.dll", "nvoglv64.dll", "VkLayer_khronos_validation.dll"}) {
+        HMODULE module = GetModuleHandleA(name);
+        if (module) { char path[MAX_PATH]; GetModuleFileNameA(module, path, MAX_PATH); printf("MODULE %s: %s\n", name, path); }
+    }
 #endif
     data.buffer[0].v = reinterpret_cast<float4 *>(bank0.ptr); data.buffer[1].v = reinterpret_cast<float4 *>(bank1.ptr);
     data.waterheight.v = reinterpret_cast<short *>(height.ptr); data.shoredist.v = reinterpret_cast<char *>(shore.ptr);

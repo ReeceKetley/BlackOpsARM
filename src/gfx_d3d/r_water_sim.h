@@ -254,7 +254,7 @@ struct __declspec(align(16)) channel_t
             sizeof(T) * 256);
 
         // Halo copies for SIMD safety
-        c->pad0 = c->data[255];
+        c->pad0[16 / sizeof(T) - 1] = c->data[255];
         c->pad1 = c->data[0];
 
         return c->data;
@@ -269,25 +269,17 @@ struct __declspec(align(16)) channel_t
             this->modified = 0;
         }
 
-        T pad0;
+        // Put the wrapping element immediately before the aligned data row.
+        T pad0[16 / sizeof(T)];
 
-        // pad to 0x10
-        //char _pad0[16 - (sizeof(T) % 16 == 0 ? 16 : sizeof(T) % 16)];
-
-        T data[256];
+        // Every cached row starts on a SIMD boundary, including byte/short channels.
+        alignas(16) T data[256];
         T pad1;
 
         int  y;
         bool modified;
 
-        char _pad1[
-            (16 - ((sizeof(T)
-                + (16 - (sizeof(T) % 16 == 0 ? 16 : sizeof(T) % 16))
-                + sizeof(T) * 256
-                + sizeof(T)
-                + sizeof(int)
-                + sizeof(bool)) % 16)) % 16
-        ];
+        // The aligned cache type supplies trailing padding after metadata.
     };
 
     void Free()
@@ -298,7 +290,7 @@ struct __declspec(align(16)) channel_t
 
     T *v;
     unsigned int bufferSize;
-    char         _pad0[8];
+    char         _pad0[16 - sizeof(T *) - sizeof(unsigned int)];
 
     cache_t cache[4];
 

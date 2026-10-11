@@ -711,11 +711,10 @@ void    R_WaterSimulationRender(const float *eyePos, int g_msgTime, unsigned int
 }
 #endif
 
-// aislop
+// Typed scheduler follows the original row and mesh FIFO transitions.
 void R_WaterSimulationRender(const float *eyePos, int time, unsigned int viewIndex)
 {
     unsigned int frameTime;
-    unsigned int prevFrame;
     unsigned int diff;
     unsigned int i, j, k;
     int stepTime;
@@ -789,7 +788,7 @@ void R_WaterSimulationRender(const float *eyePos, int time, unsigned int viewInd
             WaterSimulationCmd cmd;
             memset(&cmd, 0, sizeof(cmd));
 
-            cmd.update.startTile = i;
+            cmd.update.startTile = 16 * i;
 
             if (data.frame & 0x10)
             {
@@ -805,11 +804,11 @@ void R_WaterSimulationRender(const float *eyePos, int time, unsigned int viewInd
             cmd.skin.startTile = prevCmd.update.startTile;
             cmd.skin.srcBuf = prevCmd.update.destBuf;
 
-            tile_t *srcRow = &data.tiles[cmd.skin.startTile * 16];
+            tile_t *srcRow = &data.tiles[cmd.skin.startTile];
 
             /* mark tiles updated */
             for (j = 0; j < 16; ++j)
-                srcRow[j].lastUpdateTime = data.frame;
+                row[j].lastUpdateTime = data.frame;
 
             /* allocate meshes */
             for (k = 0; k < 16; ++k)
@@ -821,7 +820,7 @@ void R_WaterSimulationRender(const float *eyePos, int time, unsigned int viewInd
                 {
                     mesh = &tile->meshes.data[tile->meshes.tail];
 
-                    if (((mesh->lastSkinTime - mesh->baseVertex) & 3) < 2)
+                    if (((tile->meshes.tail - tile->meshes.head) & 3) < 2)
                         break;
 
                     ExpireMesh(tile);
@@ -829,6 +828,11 @@ void R_WaterSimulationRender(const float *eyePos, int time, unsigned int viewInd
 
                 tile->meshes.tail = (tile->meshes.tail + 1) & 3;
 
+                mesh->srcU = tile->srcU;
+                mesh->srcV = tile->srcV;
+                mesh->worldX = tile->worldX;
+                mesh->worldY = tile->worldY;
+                mesh->worldZ = tile->worldZ;
                 mesh->lastSkinTime = data.frame;
                 mesh->baseVertex = AllocMeshVerts();
                 mesh->lockedData = &data.lockedData[mesh->baseVertex];
@@ -964,18 +968,18 @@ void __cdecl R_WaterSimulationTrackView(const float *eyePos)
 }
 #endif
 
-// aislop
+// Preserve retail smoothing, movement easing and tile relocation.
 void R_WaterSimulationTrackView(const float *eyePos)
 {
     int newTileX, newTileY;
     int dx, dy;
-    float d;
     float t;
     float oneMinusT;
 
     /* determine which tile the eye is in */
-    newTileX = (int)(eyePos[0] / (config.gridScale * 16.0f));
-    newTileY = (int)(eyePos[1] / (config.gridScale * 16.0f));
+    const float inverseTileSize = 1.0f / (config.gridScale * 16.0f);
+    newTileX = (int)(eyePos[0] * inverseTileSize);
+    newTileY = (int)(eyePos[1] * inverseTileSize);
 
     dx = data.gridX / 16 - newTileX;
     dy = data.gridY / 16 - newTileY;
@@ -990,11 +994,15 @@ void R_WaterSimulationTrackView(const float *eyePos)
 
         data.localSurfaceDistance = data.localEyeHeight - eyePos[2];
 
-        /* movement distance */
-        d = Vec3Distance(eyePos, data.oldEyePos);
-
-        /* normalize movement by grid scale */
-        t = d / config.gridScale;
+        // Retail sums X/Z/Y, then keeps the sqrt/divide in double precision
+        // until the normalized movement is stored as a float.
+        const float movementX = data.oldEyePos[0] - eyePos[0];
+        const float movementY = data.oldEyePos[1] - eyePos[1];
+        const float movementZ = data.oldEyePos[2] - eyePos[2];
+        const float distanceSquared = (movementX * movementX + movementZ * movementZ)
+                                    + movementY * movementY;
+        t = static_cast<float>(sqrt(static_cast<double>(distanceSquared))
+                             / static_cast<double>(config.gridScale));
 
         /* clamp to [0, 1] */
         if (t > 1.0f)
@@ -1003,7 +1011,7 @@ void R_WaterSimulationTrackView(const float *eyePos)
             t = 0.0f;
 
         /* easing curve (original SSE pow) */
-        oneMinusT = powf(1.0f - t, 1.0f);
+        oneMinusT = static_cast<float>(pow(static_cast<double>(1.0f - t), 0.5));
 
         /* exponential smoothing */
         data.speedScale =
@@ -1321,12 +1329,10 @@ void R_WaterSimulationUpdateConfig()
     // Convert wind direction from degrees to radians
     float windDirRadians = r_watersim_windDir->current.value * (3.14159265f / 180.0f);
 
-    // Compute 2D wind direction vector (x, y)
+    // The simulation uses vertical Y and horizontal X/Z (retail config layout).
     config.windDir[0] = cosf(windDirRadians);
-    config.windDir[1] = sinf(windDirRadians);
-
-    // Set z component to 0 (flat horizontal wind)
-    config.windDir[2] = 0.0f;
+    config.windDir[1] = 0.0f;
+    config.windDir[2] = sinf(windDirRadians);
 }
 
 
@@ -2086,162 +2092,80 @@ void    R_WaterSimulationUpdateFrame(const WaterSimulationCmd *cmd)
 }
 #endif
 
-// aislop
 void R_WaterSimulationUpdateFrame(const WaterSimulationCmd *cmd)
 {
     if (!waterSimInitialized || !r_watersim_enabled->current.enabled)
         return;
 
-    channel_t<float4> *dst = &data.buffer[cmd->update.destBuf];
-    channel_t<float4> *src = &data.buffer[cmd->update.srcBuf];
+    channel_t<float4> &source = data.buffer[cmd->update.srcBuf];
+    channel_t<float4> &destination = data.buffer[cmd->update.destBuf];
+    const float damping = r_watersim_flatten->current.enabled
+                        ? 0.0f : 1.0f - 1.0f / config.waveDamping;
+    // Simulation coordinates have vertical Y. Keep retail's tilted wind vector
+    // and its arithmetic order rather than normalizing a world-space XYZ vector.
+    float wind[3] = {config.windDir[0], -0.1f, config.windDir[2]};
+    const float windLength = sqrtf((wind[0] * wind[0] + wind[1] * wind[1]) + wind[2] * wind[2]);
+    const float windInverse = 1.0f / (windLength > 0.0f ? windLength : 1.0f);
+    for (unsigned lane = 0; lane < 3; ++lane) wind[lane] *= -windInverse;
 
-    /* -------------------------------------------------- */
-    /* Constants from config                              */
-    /* -------------------------------------------------- */
-    const float damping = 1.0f - (1.0f / config.waveDamping);
-    const float curlReduce = config.curlReduce;
-    const float curlMax = config.curlMax;
-    const float minShore = config.minShoreHeight;
-
-    const float foamAppear = config.foamAppear;
-    const float foamDisappear = config.foamDisappear;
-
-    const float windAmount = config.windAmount;
-    const float windMax = config.windMax;
-
-    float windDir[3];
-    windDir[0] = config.windDir[0];
-    windDir[1] = config.windDir[1];
-    windDir[2] = config.windDir[2];
-
-    /* normalize windDir */
+    for (unsigned row = cmd->update.startTile; row < cmd->update.startTile + 16; ++row)
     {
-        float len =
-            windDir[0] * windDir[0] +
-            windDir[1] * windDir[1] +
-            windDir[2] * windDir[2];
+        const unsigned y = static_cast<unsigned char>(row);
+        float4 *output = destination.Cache(y, true, false);
+        const float4 *up = source.Cache(static_cast<unsigned char>(row - 1), false, false);
+        const float4 *center = source.Cache(y, false, false);
+        const float4 *down = source.Cache(static_cast<unsigned char>(row + 1), false, false);
+        // Retail also caches base height and floor offset; neither contributes
+        // to this update's exported values. Shore distance controls the mask.
+        data.waterheight.Cache(y, false, false);
+        data.flooroffset.Cache(y, false, false);
+        const char *shore = data.shoredist.Cache(y, false, false);
+        const int relativeV = static_cast<int>((row - data.centerV + 128u) & 255u) - 128;
 
-        if (len > 0.0f)
+        for (unsigned x = 0; x < 256; ++x)
         {
-            float invLen = 1.0f / sqrtf(len);
-            windDir[0] *= invLen;
-            windDir[1] *= invLen;
-            windDir[2] *= invLen;
-        }
-    }
-
-    /* -------------------------------------------------- */
-    /* Tile range                                         */
-    /* -------------------------------------------------- */
-    int start = cmd->update.startTile;
-    int end = start + 16;
-
-    for (int tile = start; tile < end; ++tile)
-    {
-        //float4 *dstRow = channel_t<float4>::Cache(dst, (uint8_t)tile, 1, 0);
-        float4 *dstRow = dst->Cache((uint8_t)tile, 1, 0);
-        //const float4 *srcRow = channel_t<float4>::Cache(src, (uint8_t)tile, 0, 0);
-        const float4 *srcRow = src->Cache((uint8_t)tile, 0, 0);
-        //const int16_t *waterHeight = channel_t<int16_t>::Cache(&data.waterheight, (uint8_t)tile, 0, 0);
-        const int16_t *waterHeight = data.waterheight.Cache((uint8_t)tile, 0, 0);
-        //const int8_t *floorOffset = channel_t<int8_t>::Cache(&data.flooroffset, (uint8_t)tile, 0, 0);
-        const int8_t *floorOffset = (const int8_t*)data.flooroffset.Cache((uint8_t)tile, 0, 0);
-        //const int8_t *shoreDist = channel_t<int8_t>::Cache(&data.shoredist, (uint8_t)tile, 0, 0);
-        const int8_t *shoreDist = (const int8_t*)data.shoredist.Cache((uint8_t)tile, 0, 0);
-
-        for (int v = 0; v < 256; ++v)
-        {
-            /* -------------------------------------------------- */
-            /* Load history                                      */
-            /* -------------------------------------------------- */
-            const float4 old1 = srcRow[v + 1];
-            const float4 old2 = srcRow[v + 2];
-            const float4 old3 = srcRow[v + 3];
-            const float4 oldc = srcRow[v + 4];
-            const float4 veryoldc = srcRow[v + 5];
-
-            float lap[3];
-
-            /* -------------------------------------------------- */
-            /* Laplacian + damping                               */
-            /* -------------------------------------------------- */
-            lap[0] = (old1.v[0] + old2.v[0] + old3.v[0] + oldc.v[0]) * 0.5f
-                - veryoldc.v[0];
-            lap[1] = (old1.v[1] + old2.v[1] + old3.v[1] + oldc.v[1]) * 0.5f
-                - veryoldc.v[1];
-            lap[2] = (old1.v[2] + old2.v[2] + old3.v[2] + oldc.v[2]) * 0.5f
-                - veryoldc.v[2];
-
-            lap[0] *= damping;
-            lap[1] *= damping;
-            lap[2] *= damping;
-
-            /* -------------------------------------------------- */
-            /* Curl limiting                                     */
-            /* -------------------------------------------------- */
-            float curlMag =
-                lap[0] * lap[0] +
-                lap[1] * lap[1] +
-                lap[2] * lap[2];
-
-            if (curlMag > curlMax)
+            // Wrap explicit indices instead of indexing outside the row array.
+            const float4 &left = center[(x + 255) & 255];
+            const float4 &right = center[(x + 1) & 255];
+            const float4 history = output[x];
+            float4 next{};
+            float average[3];
+            for (unsigned lane = 0; lane < 3; ++lane)
             {
-                lap[0] *= curlReduce;
-                lap[1] *= curlReduce;
-                lap[2] *= curlReduce;
+                const float neighbors = ((right.v[lane] + left.v[lane]) + up[x].v[lane]) + down[x].v[lane];
+                next.v[lane] = (neighbors * 0.5f - history.v[lane]) * damping;
+                average[lane] = neighbors * 0.25f;
             }
+            const float diffX = next.v[0] - average[0];
+            const float diffY = next.v[1] - average[1];
+            const float diffZ = next.v[2] - average[2];
+            const float curlLengthSq = (diffX * diffX + diffZ * diffZ) + diffY * diffY;
+            if (curlLengthSq > config.curlMax)
+                for (unsigned lane = 0; lane < 3; ++lane) next.v[lane] *= config.curlReduce;
 
-            /* -------------------------------------------------- */
-            /* Wind                                              */
-            /* -------------------------------------------------- */
-            float windDot =
-                lap[0] * windDir[0] +
-                lap[1] * windDir[1] +
-                lap[2] * windDir[2];
+            const float normalX = (right.v[1] - left.v[1]) * -0.5f;
+            const float normalZ = (down[x].v[1] - up[x].v[1]) * -0.5f;
+            const float windDot = (normalX * wind[0] + normalZ * wind[2]) + wind[1];
+            const int relativeU = static_cast<int>((x - data.centerU + 128u) & 255u) - 128;
+            const float windSide = static_cast<float>(relativeU) * wind[0] + static_cast<float>(relativeV) * wind[1];
+            if (config.windMax > fabsf(next.v[1]) && windSide > 0.0f)
+                next.v[1] -= windDot * config.windAmount;
 
-            if (fabsf(windDot) < windMax && shoreDist[v] > 0)
-            {
-                lap[0] -= windDir[0] * windDot * windAmount;
-                lap[1] -= windDir[1] * windDot * windAmount;
-                lap[2] -= windDir[2] * windDot * windAmount;
-            }
+            if (!(static_cast<float>(static_cast<signed char>(shore[x])) + config.minShoreHeight < 0.0f))
+                for (unsigned lane = 0; lane < 3; ++lane) next.v[lane] = 0.0f;
+            const float inverseHeight = 1.0f / (next.v[1] >= 1.0f ? next.v[1] : 1.0f);
+            float tilt = ((center[x].v[1] - history.v[1]) * config.curlAmount) * inverseHeight;
+            if (!(next.v[1] > 0.0f)) tilt = 0.0f;
+            next.v[0] += (left.v[1] - right.v[1]) * tilt;
+            next.v[1] += 0.0f * tilt; // Retail adds the zero vertical tilt lane, including signed zero.
+            next.v[2] += (up[x].v[1] - down[x].v[1]) * tilt;
 
-            /* -------------------------------------------------- */
-            /* Shore clamp                                       */
-            /* -------------------------------------------------- */
-            float height = (float)waterHeight[v];
-            float newHeight = height + lap[2];
-
-            if (newHeight < minShore)
-            {
-                newHeight = minShore;
-                lap[0] = 0.0f;
-                lap[1] = 0.0f;
-                lap[2] = 0.0f;
-            }
-
-            /* -------------------------------------------------- */
-            /* Foam accumulation                                 */
-            /* -------------------------------------------------- */
-            float foamDelta =
-                fabsf(lap[0]) +
-                fabsf(lap[1]) +
-                fabsf(lap[2]);
-
-            float foam =
-                (foamDelta * foamAppear + oldc.v[3]) *
-                (1.0f - foamDisappear);
-
-            if (foam < 0.0f) foam = 0.0f;
-            if (foam > 1.0f) foam = 1.0f;
-
-            /* -------------------------------------------------- */
-            /* Write result                                      */
-            /* -------------------------------------------------- */
-            dstRow[v].v[0] = lap[0];
-            dstRow[v].v[1] = lap[1];
-            dstRow[v].v[2] = lap[2];
-            dstRow[v].v[3] = foam;
+            const float foamX = (next.v[0] - center[x].v[0]) * inverseHeight;
+            const float foamZ = (next.v[2] - center[x].v[2]) * inverseHeight;
+            const float foam = ((foamX * foamX + foamZ * foamZ) * config.foamAppear + center[x].v[3])
+                             * (1.0f - config.foamDisappear);
+            next.v[3] = foam > 1.0f ? 1.0f : foam;
+            output[x] = next;
         }
     }
 }
@@ -2442,8 +2366,9 @@ void __cdecl GetBuffersForPoint(int u, int v, int *bufId, float *interpolate)
 
 char __cdecl ConvertWorldToGrid(const float *worldPos, int *u, int *v)
 {
-    *u = (int)(float)(*worldPos / config.gridScale) - data.gridX;
-    *v = (int)(float)(worldPos[1] / config.gridScale) - data.gridY;
+    const float inverseGridScale = 1.0f / config.gridScale;
+    *u = (int)(*worldPos * inverseGridScale) - data.gridX;
+    *v = (int)(worldPos[1] * inverseGridScale) - data.gridY;
     if ( (int)abs(*u) >= 128 || (int)abs(*v) >= 128 )
         return 0;
     *u = (unsigned __int8)(LOBYTE(data.centerU) + *u);
@@ -2864,8 +2789,9 @@ double __cdecl R_WaterSimulationGetHeightGlobal(const float *queryPos)
     ComWaterCell *cells[4]; // [esp+20h] [ebp-18h] BYREF
     int gridY; // [esp+30h] [ebp-8h]
 
-    v3 = floor((float)((float)(*queryPos / 25.0) + 0.5));
-    v2 = floor((float)((float)(queryPos[1] / 25.0) + 0.5));
+    const float inverseGridSpacing = 1.0f / 25.0f;
+    v3 = floor(*queryPos * inverseGridSpacing + 0.5f);
+    v2 = floor(queryPos[1] * inverseGridSpacing + 0.5f);
     gridY = (int)v2;
     if ( R_WaterFindCells((int)v3, gridY, cells) )
         return (double)cells[0]->waterheight;

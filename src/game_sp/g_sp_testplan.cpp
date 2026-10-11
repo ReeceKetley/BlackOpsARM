@@ -113,9 +113,9 @@ const PlanStep s_steps[] =
     { "equip_pm63", STEP_EQUIP, nullptr, nullptr, nullptr, 0, nullptr, nullptr, "pm63_zm", 0, false, false, 10000 },
     // L18: raise the wall M16 before Pack-a-Punch (the PaP script upgrades the current weapon: m16_gl_upgraded_zm).
     { "equip_m16", STEP_EQUIP, nullptr, nullptr, nullptr, 0, nullptr, nullptr, "m16_zm", 0, false, false, 10000 },
-    { "ammo_pm63", STEP_USE, "weapon_upgrade", "zombie_weapon_upgrade", "pm63_zm", 500, nullptr, nullptr, nullptr, 0, true, false, 60000 },
-    { "ammo_rottweil", STEP_USE, "weapon_upgrade", "zombie_weapon_upgrade", "rottweil72_zm", 1500, nullptr, nullptr, nullptr, 0, true, false, 60000 },
-    { "ammo_m14", STEP_USE, "weapon_upgrade", "zombie_weapon_upgrade", "m14_zm", 1500, nullptr, nullptr, nullptr, 0, true, false, 60000 },
+    { "ammo_pm63", STEP_USE, "weapon_upgrade", "zombie_weapon_upgrade", "pm63_zm", 500, nullptr, nullptr, "pm63_zm", 0, true, false, 60000 },
+    { "ammo_rottweil", STEP_USE, "weapon_upgrade", "zombie_weapon_upgrade", "rottweil72_zm", 1500, nullptr, nullptr, "rottweil72_zm", 0, true, false, 60000 },
+    { "ammo_m14", STEP_USE, "weapon_upgrade", "zombie_weapon_upgrade", "m14_zm", 1500, nullptr, nullptr, "m14_zm", 0, true, false, 60000 },
     { "door_conf", STEP_USE, "zombie_door", nullptr, nullptr, 750, "conf1_hall1", nullptr, nullptr, 0, false, false, 90000 },
     { "debris_elev2", STEP_USE, "zombie_debris", "target", "elev2_blocker", 1000, "junk purchased", nullptr, nullptr, 0, false, false, 90000 },
     { "floor1", STEP_FLOOR, nullptr, nullptr, nullptr, 250, nullptr, nullptr, nullptr, 1, false, false, 120000 },
