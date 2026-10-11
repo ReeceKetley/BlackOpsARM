@@ -1,0 +1,202 @@
+Device test directory: /data/local/tmp/blackopsarm-phase1-20261011-190334293
+NDL-L09
+arm64-v8a,armeabi-v7a,armeabi
+36
+adb.exe : D:\Desktop\Black Ops 2 
+Android\BlackOpsARM\build-android-audit\fastfile-genuine-20261011-190307816\bo1_win32_compat_tests: 1 file pushed, 0 
+skipped. 83.7 MB/s (1526216 bytes in 0.017s)
+At D:\Desktop\Black Ops 2 Android\BlackOpsARM\tools\port\run_arm64_audit_tests.ps1:41 char:5
++     & $adb -s $Serial push $binary "$deviceDir/$name" 2>&1 | Out-File ...
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (D:\Desktop\Blac...ytes in 0.017s):String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+PASS: initial error, full DWORD round trip, 8-thread isolation, 80000 concurrent updates
+PASS: frequency/null failure, preserved error, zero/finite/EINTR/infinite Sleep
+bo1_win32_compat_tests: exit=0
+adb.exe : D:\Desktop\Black Ops 2 
+Android\BlackOpsARM\build-android-audit\fastfile-genuine-20261011-190307816\bo1_arm64_narrow_tests: 1 file pushed, 0 
+skipped. 124.9 MB/s (1516888 bytes in 0.012s)
+At D:\Desktop\Black Ops 2 Android\BlackOpsARM\tools\port\run_arm64_audit_tests.ps1:41 char:5
++     & $adb -s $Serial push $binary "$deviceDir/$name" 2>&1 | Out-File ...
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (D:\Desktop\Blac...ytes in 0.012s):String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+adb.exe : Bo1_NarrowFail: region table exhausted for 0x60db000000
+At D:\Desktop\Black Ops 2 Android\BlackOpsARM\tools\port\run_arm64_audit_tests.ps1:43 char:5
++     & $adb -s $Serial shell "chmod 700 $deviceDir/$name && $deviceDir ...
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Bo1_NarrowFail:...or 0x60db000000:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+PASS: pointer=8 narrow=4 align=4; null/roundtrip/raw-slot/high-address/concurrency/exhaustion checks as applicable
+bo1_arm64_narrow_tests: exit=0
+adb.exe : D:\Desktop\Black Ops 2 
+Android\BlackOpsARM\build-android-audit\fastfile-genuine-20261011-190307816\bo1_script_slot_tests: 1 file pushed, 0 
+skipped. 96.3 MB/s (1379536 bytes in 0.014s)
+At D:\Desktop\Black Ops 2 Android\BlackOpsARM\tools\port\run_arm64_audit_tests.ps1:41 char:5
++     & $adb -s $Serial push $binary "$deviceDir/$name" 2>&1 | Out-File ...
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (D:\Desktop\Blac...ytes in 0.014s):String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+PASS production declarations: VariableUnion=4 sval_u=4 VariableValue=8 internal=28 stack.buf=13; handles and FF sentinels roundtrip
+bo1_script_slot_tests: exit=0
+adb.exe : D:\Desktop\Black Ops 2 
+Android\BlackOpsARM\build-android-audit\fastfile-genuine-20261011-190307816\bo1_script_headers_tests: 1 file pushed, 0 
+skipped. 126.4 MB/s (1394776 bytes in 0.011s)
+At D:\Desktop\Black Ops 2 Android\BlackOpsARM\tools\port\run_arm64_audit_tests.ps1:41 char:5
++     & $adb -s $Serial push $binary "$deviceDir/$name" 2>&1 | Out-File ...
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (D:\Desktop\Blac...ytes in 0.011s):String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+PASS actual script headers and cscr_instance.cpp: VM/parse slots=4, fixed records retained; both instance pointer reset/clear paths
+bo1_script_headers_tests: exit=0
+adb.exe : D:\Desktop\Black Ops 2 
+Android\BlackOpsARM\build-android-audit\fastfile-genuine-20261011-190307816\bo1_profile_tests: 1 file pushed, 0 
+skipped. 116.9 MB/s (1685976 bytes in 0.014s)
+At D:\Desktop\Black Ops 2 Android\BlackOpsARM\tools\port\run_arm64_audit_tests.ps1:41 char:5
++     & $adb -s $Serial push $binary "$deviceDir/$name" 2>&1 | Out-File ...
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (D:\Desktop\Blac...ytes in 0.014s):String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+PASS real profile.cpp: monotonic/native ticks, thread filtering, nested/exclusive/builtin scopes, 80000 atomic adds, 10000 deduplicated keys, registration and bounded names
+bo1_profile_tests: exit=0
+adb.exe : D:\Desktop\Black Ops 2 
+Android\BlackOpsARM\build-android-audit\fastfile-genuine-20261011-190307816\bo1_math_axis_tests: 1 file pushed, 0 
+skipped. 103.3 MB/s (38016 bytes in 0.000s)
+At D:\Desktop\Black Ops 2 Android\BlackOpsARM\tools\port\run_arm64_audit_tests.ps1:41 char:5
++     & $adb -s $Serial push $binary "$deviceDir/$name" 2>&1 | Out-File ...
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (D:\Desktop\Blac...ytes in 0.000s):String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+PASS actual axis maths: 5845 angle/axis roundtrips (0.002 degree tolerance)
+bo1_math_axis_tests: exit=0
+adb.exe : D:\Desktop\Black Ops 2 
+Android\BlackOpsARM\build-android-audit\fastfile-genuine-20261011-190307816\bo1_rng_tests: 1 file pushed, 0 skipped. 
+81.9 MB/s (33544 bytes in 0.000s)
+At D:\Desktop\Black Ops 2 Android\BlackOpsARM\tools\port\run_arm64_audit_tests.ps1:41 char:5
++     & $adb -s $Serial push $binary "$deviceDir/$name" 2>&1 | Out-File ...
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (D:\Desktop\Blac...ytes in 0.000s):String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+PASS production RNG bodies: captured Windows streams, [0,1) / [-1,1) ranges, mixed raw/normalized draws; unchanged scaling and Windows legacy entry point
+bo1_rng_tests: exit=0
+adb.exe : D:\Desktop\Black Ops 2 
+Android\BlackOpsARM\build-android-audit\fastfile-genuine-20261011-190307816\bo1_engine_rng_tests: 1 file pushed, 0 
+skipped. 116.4 MB/s (1462944 bytes in 0.012s)
+At D:\Desktop\Black Ops 2 Android\BlackOpsARM\tools\port\run_arm64_audit_tests.ps1:41 char:5
++     & $adb -s $Serial push $binary "$deviceDir/$name" 2>&1 | Out-File ...
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (D:\Desktop\Blac...ytes in 0.012s):String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+PASS Windows-captured RNG vectors: 12 edge seeds x 128 draws, default/reseed, eight independent threads x 64 vector cycles, parent-stream isolation, 15-bit range
+bo1_engine_rng_tests: exit=0
+adb.exe : D:\Desktop\Black Ops 2 
+Android\BlackOpsARM\build-android-audit\fastfile-genuine-20261011-190307816\bo1_script_lookup_tests: 1 file pushed, 0 
+skipped. 138.0 MB/s (440888 bytes in 0.003s)
+At D:\Desktop\Black Ops 2 Android\BlackOpsARM\tools\port\run_arm64_audit_tests.ps1:41 char:5
++     & $adb -s $Serial push $binary "$deviceDir/$name" 2>&1 | Out-File ...
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (D:\Desktop\Blac...ytes in 0.003s):String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+PASS unchanged cscr_readwrite.cpp: 33 lookup checks; direct/collision/miss/empty/sibling/remapped-ID paths, both instances and expanded server pool, four-byte slots
+bo1_script_lookup_tests: exit=0
+adb.exe : D:\Desktop\Black Ops 2 
+Android\BlackOpsARM\build-android-audit\fastfile-genuine-20261011-190307816\bo1_parsetree_tests: 1 file pushed, 0 
+skipped. 152.2 MB/s (1621968 bytes in 0.010s)
+At D:\Desktop\Black Ops 2 Android\BlackOpsARM\tools\port\run_arm64_audit_tests.ps1:41 char:5
++     & $adb -s $Serial push $binary "$deviceDir/$name" 2>&1 | Out-File ...
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (D:\Desktop\Blac...ytes in 0.010s):String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+PASS actual parse-tree: node0..8, raw values, lists, 10000 retained nodes, instance ownership, 4-byte slots/handles
+bo1_parsetree_tests: exit=0
+adb.exe : D:\Desktop\Black Ops 2 
+Android\BlackOpsARM\build-android-audit\fastfile-genuine-20261011-190307816\bo1_hunk_tests: 1 file pushed, 0 skipped. 
+124.6 MB/s (1697608 bytes in 0.013s)
+At D:\Desktop\Black Ops 2 Android\BlackOpsARM\tools\port\run_arm64_audit_tests.ps1:41 char:5
++     & $adb -s $Serial push $binary "$deviceDir/$name" 2>&1 | Out-File ...
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (D:\Desktop\Blac...ytes in 0.013s):String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+adb.exe : Android virtual memory failure: range outside reservation
+At D:\Desktop\Black Ops 2 Android\BlackOpsARM\tools\port\run_arm64_audit_tests.ps1:43 char:5
++     & $adb -s $Serial shell "chmod 700 $deviceDir/$name && $deviceDir ...
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Android virtual...ide reservation:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+Android virtual memory failure: invalid release
+Android virtual memory failure: allocation type mismatch
+Hunk_UserAlloc OOM: name=full type=7 flags=4 size=1 maxSize=65536 pos=527460151296 end=527460151296Unsupported gate 
+service: diagnostic stack
+Android HunkUser: invalid or unsupported configurationEngine assertion 
+C:\projects_pc\cod\codsrc\src\universal\mem_userhunk.cpp:110
+Native page size: 4096; protection/discard/bounds/failures verified
+PASS actual HunkUser: 2000 payloads, alignments 1..4096, growth/reset, caller ownership, 800 independent threaded arenas
+Android HunkUser: invalid allocationAndroid HunkUser: invalid allocationAndroid HunkUser: invalid allocation
+bo1_hunk_tests: exit=0
+adb.exe : D:\Desktop\Black Ops 2 
+Android\BlackOpsARM\build-android-audit\fastfile-genuine-20261011-190307816\bo1_debugger_tests: 1 file pushed, 0 
+skipped. 97.0 MB/s (2257040 bytes in 0.022s)
+At D:\Desktop\Black Ops 2 Android\BlackOpsARM\tools\port\run_arm64_audit_tests.ps1:41 char:5
++     & $adb -s $Serial push $binary "$deviceDir/$name" 2>&1 | Out-File ...
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (D:\Desktop\Blac...ytes in 0.022s):String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+adb.exe : Android zone heap failure: allocation type mismatch
+At D:\Desktop\Black Ops 2 Android\BlackOpsARM\tools\port\run_arm64_audit_tests.ps1:43 char:5
++     & $adb -s $Serial shell "chmod 700 $deviceDir/$name && $deviceDir ...
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Android zone he...n type mismatch:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+Android zone heap failure: unowned or already released allocation
+Android zone heap failure: unowned or already released allocation
+Android zone heap failure: invalid allocation
+Engine assertion D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_parsetree.cpp:428
+PASS actual debugger/evaluator: node0..4, prepend, aligned buffers/strings, both instance cleanup/canonical/literal paths, normal-to-debugger int/float/minus/bool compile+eval and bool-or/and/binary/not compile-only, 8000 zeroed owned heap allocations, four-byte handles
+bo1_debugger_tests: exit=0
+adb.exe : D:\Desktop\Black Ops 2 
+Android\BlackOpsARM\build-android-audit\fastfile-genuine-20261011-190307816\bo1_firstfit_tests: 1 file pushed, 0 
+skipped. 189.5 MB/s (1898384 bytes in 0.010s)
+At D:\Desktop\Black Ops 2 Android\BlackOpsARM\tools\port\run_arm64_audit_tests.ps1:41 char:5
++     & $adb -s $Serial push $binary "$deviceDir/$name" 2>&1 | Out-File ...
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (D:\Desktop\Blac...ytes in 0.010s):String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+adb.exe : Engine assertion D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/mem_firstfit.cpp:208
+At D:\Desktop\Black Ops 2 Android\BlackOpsARM\tools\port\run_arm64_audit_tests.ps1:43 char:5
++     & $adb -s $Serial shell "chmod 700 $deviceDir/$name && $deviceDir ...
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Engine assertio...irstfit.cpp:208:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+Engine assertion C:\projects_pc\cod\codsrc\src\universal\mem_firstfit.cpp:173
+Hunk main thread already registered by another thread
+Engine assertion C:\projects_pc\cod\codsrc\src\universal\mem_userhunk.cpp:157
+PASS actual first-fit/debug HunkUser: 400 odd payloads, native headers, alignments 1..4096, coalescing/exhaustion, 8000 shared-pool operations, thread identity/ownership
+bo1_firstfit_tests: exit=0
+adb.exe : D:\Desktop\Black Ops 2 
+Android\BlackOpsARM\build-android-audit\fastfile-genuine-20261011-190307816\bo1_fastfile_tests: 1 file pushed, 0 
+skipped. 160.9 MB/s (1003544 bytes in 0.006s)
+At D:\Desktop\Black Ops 2 Android\BlackOpsARM\tools\port\run_arm64_audit_tests.ps1:41 char:5
++     & $adb -s $Serial push $binary "$deviceDir/$name" 2>&1 | Out-File ...
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (D:\Desktop\Blac...ytes in 0.006s):String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+PASS bounded FastFile preamble: retail/unsigned magic, version 473, XFile header fields, fixture roundtrip, explicit missing/short/bad errors
+bo1_fastfile_tests: exit=0

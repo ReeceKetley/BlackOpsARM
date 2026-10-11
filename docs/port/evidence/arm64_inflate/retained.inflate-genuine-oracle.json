@@ -1,0 +1,25 @@
+{
+  "source": "Retained authorized HONOR FastFile raw-reader asset; original BO1_GAME_DIR not present in environment",
+  "file": "build-android-audit\\inflate-assets\\code_pre_gfx.ff",
+  "fileBytes": 13280,
+  "fileSHA256": "565f038d4a5a10912bda5741e80f31805f9c7c76fc18296f2a8591d58f1ee41f",
+  "decodedBytes": 49593,
+  "decodedSHA256": "475463b349e00cee0989a17273c8ef8b2a4588b9556ca9c40ac399d9cf90b5fa",
+  "decodedAdler32": "d65f37d2",
+  "xFileFields": [
+    49557,
+    0,
+    36,
+    0,
+    0,
+    0,
+    49092,
+    0,
+    0
+  ],
+  "streamEnd": true,
+  "compressedBytes": 13245,
+  "trailingBytes": 23,
+  "trailingAllZero": true,
+  "oracleZlib": "1.3.2"
+}

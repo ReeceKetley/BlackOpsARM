@@ -1,4 +1,5 @@
 #pragma once
+#include "db_zone_types.h"
 
 #include <Windows.h>
 #include <zlib/zlib.h>
@@ -42,14 +43,6 @@ struct DB_LoadData // sizeof=0x807C
     unsigned __int8 deflateBuffer[32768];
                                         // XREF: DB_LoadXFileDataNullTerminated(uchar *)+2E/r
                                         // DB_LoadXFileData(uchar *,int)+C3/r ...
-};
-
-struct XFile // sizeof=0x24
-{                                       // XREF: ?DB_LoadXFileInternal@@YAXXZ/r
-    unsigned int size;                  // XREF: DB_LoadXFileInternal(void)+28B/r
-    unsigned int externalSize;          // XREF: DB_LoadXFileInternal(void)+2B4/r
-                                        // DB_LoadXFileInternal(void)+2EF/r
-    unsigned int blockSize[7];          // XREF: DB_LoadXFileInternal(void)+348/o
 };
 
 double __cdecl DB_GetLoadedFraction();

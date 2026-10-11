@@ -15,12 +15,12 @@ Device validation must be recorded separately from Windows validation.
 
 ## Current Milestone
 
-Debugger handle/allocation gate complete. Ten actual T5 units compile to
-AArch64, including the complete evaluator and first-fit source. Four-byte
-handles, selected cleanup/literal paths and real native allocation/thread
-services pass on HONOR and Win32/x64. Windows host debugger tests use the Android
-heap; production Windows Z heap integration remains unvalidated. Next:
-normal-to-debugger expression compilation. No full engine/game/backend work.
+Bounded deflate gate complete (TASK-0010): twelve actual T5 units and six
+unchanged bundled zlib C sources compile; sixteen HONOR probes and both Windows
+host ABIs pass. Two genuine FastFiles decode with fixed 36-byte XFile and complete
+checksum/end validation. Actual zone bootstrap remains fixture-only. Next:
+TASK-0011 genuine decoded header to checked zone allocation/stream lifecycle.
+See docs/port/arm64_inflate.md; no full engine/game/backend work.
 
 ## Constraints
 

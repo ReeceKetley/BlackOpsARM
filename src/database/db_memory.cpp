@@ -1,10 +1,20 @@
 #include <platform/bo1_native_width.h>
 #include "db_memory.h"
+#if defined(__ANDROID__)
+#include "db_zone_types.h"
+#include <universal/memory_services.h>
+#include <universal/assertive.h>
+#include <universal/com_errors.h>
+void __cdecl Com_Printf(int channel, const char *format, ...);
+void __cdecl Com_Error(errorParm_t code, const char *format, ...);
+#else
 #include "db_file_load.h"
 #include "db_registry.h"
 #include <universal/physicalmemory.h>
 #include <universal/com_memory.h>
 #include <qcommon/common.h>
+#endif
+#include <universal/physicalmemory.h>
 
 const char *g_block_mem_name[7] =
 {

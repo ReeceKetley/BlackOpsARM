@@ -1,0 +1,1 @@
+PASS production declarations: VariableUnion=4 sval_u=4 VariableValue=8 internal=28 stack.buf=13; handles and FF sentinels roundtrip

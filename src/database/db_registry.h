@@ -1,4 +1,5 @@
 #pragma once
+#include "db_zone_types.h"
 #include <win32/win_common.h>
 #include <cstddef>
 #include "database.h"
@@ -97,12 +98,6 @@ union XAssetEntryPoolEntry // sizeof=0x10
     XAssetEntryPoolEntry()
     {
     }
-};
-
-struct XBlock // sizeof=0x8
-{                                       // XREF: XZone/r
-    unsigned __int8 *data;
-    unsigned int size;
 };
 
 struct XZone // sizeof=0x40

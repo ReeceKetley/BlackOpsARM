@@ -1,0 +1,24 @@
+{
+  "source": "D:\\Desktop\\Black Ops 2 Android\\BlackOps64\\build\\Release\\zone\\common\\zombie_pentagon.ff",
+  "fileBytes": 48229216,
+  "fileSHA256": "70686402a689d5c575f18d2d76e6cec9f9a95ff70446372960f1b5c7f41d92e0",
+  "decodedBytes": 108009041,
+  "decodedSHA256": "67ea43264b91ebb70a5eafbb8bb9d49af016fb8a8a8f5fa035aeeea27ec6899b",
+  "decodedAdler32": "99751857",
+  "xFileFields": [
+    108009005,
+    308074740,
+    2098316,
+    4538228,
+    0,
+    0,
+    93836449,
+    0,
+    7605494
+  ],
+  "streamEnd": true,
+  "compressedBytes": 48229195,
+  "trailingBytes": 9,
+  "trailingAllZero": true,
+  "oracleZlib": "1.3.2"
+}

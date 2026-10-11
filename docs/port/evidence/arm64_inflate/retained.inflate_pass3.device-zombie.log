@@ -1,0 +1,6 @@
+../BlackOps64/build/Release/zone/common/zombie_pentagon.ff: 1 file pushed, 0 skipped. 26.0 MB/s (48229216 bytes in 1.771s)
+70686402a689d5c575f18d2d76e6cec9f9a95ff70446372960f1b5c7f41d92e0  /data/local/tmp/blackopsarm-phase1-20261011-205107669/zombie_pentagon.ff
+codec=1.2.3 streamBytes=104 unsignedLongBytes=8
+GENUINE status=Ok file=/data/local/tmp/blackopsarm-phase1-20261011-205107669/zombie_pentagon.ff fileBytes=48229216 compressedBytes=48229195 padding=9 decoded=108009041 size=108009005 external=308074740 blocks=2098316,4538228,0,0,93836449,0,7605494,
+GENUINE decodedAdler32=99751857
+PASS bounded inflate: independent fixtures, wrapped checksum/end, disk36, exact budgets, corrupt/truncated/dictionary/size/trailing failures, byte/chunk boundaries, atomic output publication

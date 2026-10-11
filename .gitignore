@@ -457,3 +457,7 @@ x64_diag.log
 !/docs/port/evidence/arm64_rng_script/*.log
 !/docs/port/evidence/arm64_parsetree/*.log
 !/docs/port/evidence/arm64_debugger/*.log
+!/docs/port/evidence/arm64_expr_compile/*.log
+!/docs/port/evidence/arm64_fastfile/*.log
+!/docs/port/evidence/arm64_zone/*.log
+!/docs/port/evidence/arm64_inflate/*.log

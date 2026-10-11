@@ -1,2 +1,2 @@
 # Archived diagnostics and reference data carry byte-level SHA256 evidence.
-/docs/port/evidence/** -text
+/docs/port/evidence/** -text -whitespace

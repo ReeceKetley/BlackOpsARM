@@ -1,0 +1,19 @@
+Device genuine directory: /data/local/tmp/blackopsarm-phase1-ffgenuine-20261011-190400000
+adb.exe : D:/Games/Call of Duty - Black Ops/zone/common/code_pre_gfx.ff: 1 file pushed, 0 skipped. 15.3 MB/s (13280 
+bytes in 0.001s)
+At line:1 char:368
++ ... oding utf8; & $adb -s AKWJ9X5116G04618 push "D:/Games/Call of Duty -  ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (D:/Games/Call o...ytes in 0.001s):String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+adb.exe : build-android-audit/fastfile-genuine-20261011-190307816/bo1_fastfile_tests: 1 file pushed, 0 skipped. 165.7 
+MB/s (1003544 bytes in 0.006s)
+At line:1 char:532
++ ... oding utf8; & $adb -s AKWJ9X5116G04618 push "$b/bo1_fastfile_tests" " ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (build-android-a...ytes in 0.006s):String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+GENUINE ok: '/data/local/tmp/blackopsarm-phase1-ffgenuine-20261011-190400000/code_pre_gfx.ff' magic=IWffu100 version=473 size=13280
+PASS bounded FastFile preamble: retail/unsigned magic, version 473, XFile header fields, fixture roundtrip, explicit missing/short/bad errors

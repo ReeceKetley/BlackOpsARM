@@ -1,6 +1,11 @@
 #include <platform/bo1_native_width.h>
 #pragma once
+#if defined(__ANDROID__)
+#include "db_zone_types.h"
+#include <cstdint>
+#else
 #include "db_registry.h"
+#endif
 
 struct StreamPosInfo // sizeof=0x8
 {                                       // XREF: .data:g_streamPosStack/r

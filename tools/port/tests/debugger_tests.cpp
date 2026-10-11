@@ -123,6 +123,146 @@ int main()
             CHECK(result.type == VAR_INTEGER && result.u.intValue == (token == ENUM_true));
             release(inst, literal);
         }
+        // TASK-0007 bounded normal-to-debugger expression compilation.
+        // Normal trees use yacc-shaped node*/node_pos constructors in the
+        // HunkUser arena; actual Scr_CompileExpression /
+        // Scr_CompilePrimitiveExpression emit debugger (Z heap) trees.
+        // Only integer/float/minus/true/false outputs are evaluated here:
+        // they need no VM service beyond the actual evaluator. String /
+        // istring need SL_ConvertToString, variable/call need AllocValue,
+        // expression lists need GetExpressionCount, and bool/or/and/binary
+        // /not/complement evaluation needs CastBool/BinaryOperator fixtures:
+        // every such endpoint aborts via generated services, so operator
+        // trees are compilation-verified and freed, explicitly not
+        // evaluated. List/string/callable ownership is inspected only;
+        // full VM remains deferred (WARN-0007).
+        Scr_InitAllocNode(inst);
+        {
+            auto pos = node_pos(0x1234u);
+            for (int number : {0, 1, -1, 37, -999, INT32_MAX, INT32_MIN}) {
+                auto normalPrim = node2(inst, ENUM_integer, sval_u(number), pos);
+                auto normalExpr = node2(inst, ENUM_primitive_expression, normalPrim, pos);
+                g_debugExprHead = nullptr;
+                Scr_CompileExpression(inst, &normalExpr);
+                CHECK(normalExpr.node[0].type == ENUM_primitive_expression);
+                CHECK(normalExpr.node[1].node[0].type == ENUM_integer);
+                CHECK(normalExpr.node[1].node[1].intValue == number);
+                CHECK(reinterpret_cast<std::uintptr_t>(static_cast<sval_u *>(normalExpr.node)) % 4 == 0);
+                CHECK(reinterpret_cast<std::uintptr_t>(static_cast<sval_u *>(normalExpr.node[1].node)) % 4 == 0);
+                VariableValue result{}; Scr_EvalExpression(inst, normalExpr, 0, &result);
+                CHECK(result.type == VAR_INTEGER && result.u.intValue == number);
+                release(inst, normalExpr);
+                CHECK(ZoneAllocationCount() == 0 && ZoneAllocatedBytes() == 0);
+            }
+            for (int magnitude : {1, 127, 999}) {
+                auto normalPrim = node2(inst, ENUM_minus_integer, sval_u(magnitude), pos);
+                auto normalExpr = node2(inst, ENUM_primitive_expression, normalPrim, pos);
+                g_debugExprHead = nullptr;
+                Scr_CompileExpression(inst, &normalExpr);
+                CHECK(normalExpr.node[0].type == ENUM_primitive_expression);
+                CHECK(normalExpr.node[1].node[0].type == ENUM_minus_integer);
+                CHECK(normalExpr.node[1].node[1].intValue == magnitude);
+                VariableValue result{}; Scr_EvalExpression(inst, normalExpr, 0, &result);
+                CHECK(result.type == VAR_INTEGER && result.u.intValue == -magnitude);
+                release(inst, normalExpr);
+                CHECK(ZoneAllocationCount() == 0 && ZoneAllocatedBytes() == 0);
+            }
+            for (float number : {0.0f, -0.0f, 1.25f, -37.5f}) {
+                sval_u bits; bits.floatValue = number;
+                auto normalPrim = node2(inst, ENUM_float, bits, pos);
+                auto normalExpr = node2(inst, ENUM_primitive_expression, normalPrim, pos);
+                g_debugExprHead = nullptr;
+                Scr_CompileExpression(inst, &normalExpr);
+                CHECK(normalExpr.node[0].type == ENUM_primitive_expression);
+                CHECK(normalExpr.node[1].node[0].type == ENUM_float);
+                CHECK(std::memcmp(&normalExpr.node[1].node[1], &bits, 4) == 0);
+                VariableValue result{}; Scr_EvalExpression(inst, normalExpr, 0, &result);
+                CHECK(result.type == VAR_FLOAT && std::memcmp(&result.u.floatValue, &number, 4) == 0);
+                release(inst, normalExpr);
+                CHECK(ZoneAllocationCount() == 0 && ZoneAllocatedBytes() == 0);
+            }
+            {
+                sval_u bits; bits.floatValue = 1.25f;
+                auto normalPrim = node2(inst, ENUM_minus_float, bits, pos);
+                auto normalExpr = node2(inst, ENUM_primitive_expression, normalPrim, pos);
+                g_debugExprHead = nullptr;
+                Scr_CompileExpression(inst, &normalExpr);
+                CHECK(normalExpr.node[1].node[0].type == ENUM_minus_float);
+                VariableValue result{}; Scr_EvalExpression(inst, normalExpr, 0, &result);
+                CHECK(result.type == VAR_FLOAT && result.u.floatValue == -1.25f);
+                release(inst, normalExpr);
+                CHECK(ZoneAllocationCount() == 0 && ZoneAllocatedBytes() == 0);
+            }
+            for (auto token : {ENUM_false, ENUM_true}) {
+                auto normalPrim = node1(inst, token, pos);
+                g_debugExprHead = nullptr;
+                Scr_CompilePrimitiveExpression(inst, &normalPrim);
+                CHECK(normalPrim.node[0].type == token);
+                VariableValue result{}; Scr_EvalPrimitiveExpression(inst, normalPrim, 0, &result);
+                CHECK(result.type == VAR_INTEGER && result.u.intValue == (token == ENUM_true));
+                release(inst, normalPrim);
+                CHECK(ZoneAllocationCount() == 0 && ZoneAllocatedBytes() == 0);
+            }
+            {
+                auto normalPrim = node1(inst, ENUM_true, pos);
+                auto normalExpr = node2(inst, ENUM_primitive_expression, normalPrim, pos);
+                g_debugExprHead = nullptr;
+                Scr_CompileExpression(inst, &normalExpr);
+                CHECK(normalExpr.node[0].type == ENUM_primitive_expression);
+                CHECK(normalExpr.node[1].node[0].type == ENUM_true);
+                VariableValue result{}; Scr_EvalExpression(inst, normalExpr, 0, &result);
+                CHECK(result.type == VAR_INTEGER && result.u.intValue == 1);
+                release(inst, normalExpr);
+                CHECK(ZoneAllocationCount() == 0 && ZoneAllocatedBytes() == 0);
+            }
+            // Operator shapes compile only; evaluation would reach aborting
+            // CastBool/BinaryOperator fixtures, so it stays unsupported.
+            {
+                auto innerPrim = node1(inst, ENUM_true, pos);
+                auto innerExpr = node2(inst, ENUM_primitive_expression, innerPrim, pos);
+                auto normalNot = node2(inst, ENUM_bool_not, innerExpr, pos);
+                g_debugExprHead = nullptr;
+                Scr_CompileExpression(inst, &normalNot);
+                CHECK(normalNot.node[0].type == ENUM_bool_not);
+                CHECK(normalNot.node[1].node[0].type == ENUM_primitive_expression);
+                CHECK(normalNot.node[1].node[1].node[0].type == ENUM_true);
+                release(inst, normalNot);
+                CHECK(ZoneAllocationCount() == 0 && ZoneAllocatedBytes() == 0);
+            }
+            for (auto token : {ENUM_bool_or, ENUM_bool_and}) {
+                auto leftPrim = node2(inst, ENUM_integer, sval_u(1), pos);
+                auto leftExpr = node2(inst, ENUM_primitive_expression, leftPrim, pos);
+                auto rightPrim = node2(inst, ENUM_integer, sval_u(0), pos);
+                auto rightExpr = node2(inst, ENUM_primitive_expression, rightPrim, pos);
+                auto normalOp = node5(inst, token, leftExpr, rightExpr, pos, pos, pos);
+                g_debugExprHead = nullptr;
+                Scr_CompileExpression(inst, &normalOp);
+                CHECK(normalOp.node[0].type == token);
+                CHECK(normalOp.node[1].node[0].type == ENUM_primitive_expression);
+                CHECK(normalOp.node[2].node[0].type == ENUM_primitive_expression);
+                CHECK(normalOp.node[1].node[1].node[1].intValue == 1);
+                CHECK(normalOp.node[2].node[1].node[1].intValue == 0);
+                release(inst, normalOp);
+                CHECK(ZoneAllocationCount() == 0 && ZoneAllocatedBytes() == 0);
+            }
+            {
+                auto leftPrim = node2(inst, ENUM_integer, sval_u(6), pos);
+                auto leftExpr = node2(inst, ENUM_primitive_expression, leftPrim, pos);
+                auto rightPrim = node2(inst, ENUM_integer, sval_u(7), pos);
+                auto rightExpr = node2(inst, ENUM_primitive_expression, rightPrim, pos);
+                auto normalBinary = node4(inst, ENUM_binary, leftExpr, rightExpr, node1_(inst, 102), pos);
+                g_debugExprHead = nullptr;
+                Scr_CompileExpression(inst, &normalBinary);
+                CHECK(normalBinary.node[0].type == ENUM_binary);
+                CHECK(normalBinary.node[1].node[0].type == ENUM_primitive_expression);
+                CHECK(normalBinary.node[2].node[0].type == ENUM_primitive_expression);
+                CHECK(normalBinary.node[3].intValue == 102);
+                release(inst, normalBinary);
+                CHECK(ZoneAllocationCount() == 0 && ZoneAllocatedBytes() == 0);
+            }
+        }
+        Scr_ShutdownAllocNode(inst);
+        CHECK(ZoneAllocationCount() == 0 && ZoneAllocatedBytes() == 0);
         CHECK(gScrEvaluateGlob[inst].canonicalStringLookup == nullptr);
         int lookup[3] = {0, 1, 0};
         gDebuggerInstance = inst; gScrEvaluateGlob[inst].canonicalStringLookup = lookup;
@@ -154,5 +294,5 @@ int main()
     auto final = debugger_node0(SCRIPTINSTANCE_SERVER, ENUM_NOP);
     release(SCRIPTINSTANCE_SERVER, final);
     CHECK(ZoneAllocationCount() == 0 && ZoneAllocatedBytes() == 0);
-    std::puts("PASS actual debugger/evaluator: node0..4, prepend, aligned buffers/strings, both instance cleanup/canonical/literal paths, 8000 zeroed owned heap allocations, four-byte handles");
+    std::puts("PASS actual debugger/evaluator: node0..4, prepend, aligned buffers/strings, both instance cleanup/canonical/literal paths, normal-to-debugger int/float/minus/bool compile+eval and bool-or/and/binary/not compile-only, 8000 zeroed owned heap allocations, four-byte handles");
 }

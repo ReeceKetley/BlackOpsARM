@@ -173,10 +173,25 @@ handle/buffer fixes, real native heap/thread services, selected evaluator paths
 and test fixture limits. Run `.\tools\port\check_debugger.ps1 -PythonExe python`
 for both Windows host ABIs. These debugger probes use the Android heap; the
 production Windows Z heap's alignment remains unvalidated.
-Recommended next bounded task: actual normal-to-debugger expression compilation
-(TASK-0007), starting with numeric/boolean expressions and auditing list/string/
-callable ownership before widening. Actual 16 KB Android hardware/S25 remains
-untested. Full game/backend integration remains deferred.
+Subsequent TASK-0007 actual normal-to-debugger expression compilation and
+TASK-0008 FastFile raw-header/I/O gates are complete; see arm64_expr_compile.md
+and arm64_fastfile.md. Genuine retail files have been surveyed/verified, but the
+XFile follows the raw 12-byte header inside compressed data.
+TASK-0009 actual DB allocation/stream initialization now passes: twelve actual
+T5 units and fifteen HONOR probes. See arm64_zone.md for exact current device
+and MSVC x86/x64 commands, native named ownership, stale-stride reset fix,
+retained failures and limits. Run tools/port/check_zone.ps1 for both host ABIs.
+The APK remains an environment scaffold. TASK-0010 bounded full wrapped decode
+and real 36-byte XFile validation now pass on two genuine files: sixteen HONOR
+probes, six matching bundled zlib C sources and both host ABIs. See
+[arm64_inflate.md](arm64_inflate.md) for current exact build/device commands,
+custom codec ABI, byte budgets/padding, preserved failures and acceptance.
+Recommended TASK-0011 is genuine decoded header to checked actual zone bootstrap,
+with uint64 allocation preflight and no asset parsing or async integration.
+Actual 16KB Android hardware/S25 remains untested; full game/backend work is
+deferred. The user authorized a local checkpoint through TASK-0010 after the
+64c5d3c checkpoint. See [android_checkpoint.md](android_checkpoint.md); resolve
+the containing commit with git log. No push is authorized.
 
 ## Ledger ownership and handoff
 
