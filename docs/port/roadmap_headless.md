@@ -92,3 +92,10 @@ GSC string-intern/callable services, asset-stream expansion on ARM64 (the
 Win32→native offset remap is the known x64 blocker, see fastfile_32_to_64.md),
 server init, headless `platform: ready`. Each gets its own bounded task when
 its predecessor lands.
+
+
+TASK-0015 completed: see docs/port/arm64_raw_strings.md, FACT-0043/WARN-0015.
+Actual bounded raw strings pass HONOR/x86/x64; raw pointers are not interned IDs.
+Next TASK-0016 actual asset directory before dispatch, TASK17 real SL/MT pool,
+then first genuine StringTable header before payload/fixups. Continue bounded
+autonomously per DEC-0029; local verified checkpoints DEC-0026, no push.
