@@ -1,3 +1,4 @@
+#include <platform/bo1_native_width.h>
 #pragma once
 #include "rigid_body.h"
 #include <gfx_d3d/r_workercmds.h>
@@ -221,7 +222,7 @@ struct broad_phase_memory // sizeof=0xCD8
     void list_bpb_remove(broad_phase_base *bpb_to_remove);
     static broad_phase_memory *allocate_buffer(const broad_phase_memory_info *bpmi);
 };
-#if !defined(BO1_PORT_X64)
+#if !BO1_NATIVE_64BIT
 static_assert(sizeof(broad_phase_memory) == 0xCD8);
 #endif
 
@@ -326,7 +327,7 @@ struct axis_aligned_sweep_and_prune // sizeof=0x28
     void process_active_pair_list();
     void process();
 };
-#if !defined(BO1_PORT_X64)
+#if !BO1_NATIVE_64BIT
 static_assert(sizeof(axis_aligned_sweep_and_prune) == 40);
 #endif
 

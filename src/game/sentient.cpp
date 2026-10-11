@@ -1,3 +1,4 @@
+#include <platform/bo1_native_width.h>
 #include "sentient.h"
 #include <game_mp/g_main_mp.h>
 #include <game_mp/g_utils_mp.h>
@@ -23,7 +24,7 @@ struct SentientGlobals // sizeof=0x28
 } glob;
 
 // DERIVED KB layout corresponding to the pointer-free SP globals at 0x023A5950.
-#if !defined(BO1_PORT_X64)
+#if !BO1_NATIVE_64BIT
 static_assert(sizeof(SentientGlobals) == 0x28, "DERIVED sentient globals save layout");
 #endif
 static_assert(offsetof(SentientGlobals, playerTrail) == 8

@@ -1,3 +1,4 @@
+#include <platform/bo1_native_width.h>
 // Included by g_sp_savegame.cpp after g_sp_save_badplace.inl (uses the WriteStruct/ReadField port).
 // zombies: clients (SP 0x007EA2A0 / 0x007EC530). SP gclient is 0x1D28; KB keeps its 0x29E0 MP
 // gclient_s, so the core image is KB's with a DERIVED table, and the SP-only client fields KB keeps
@@ -28,7 +29,7 @@ static const SPEntitySaveField s_clientFields[] = {
 static const SPEntitySaveField s_clientExtFields[] = {
     { offsetof(SPClientSaveExt, ext.lookatent), sizeof(EntHandle), 3 }
 };
-#if !defined(BO1_PORT_X64)
+#if !BO1_NATIVE_64BIT
 static_assert(sizeof(gclient_s) == 0x29E0, "DERIVED client image");
 #endif
 #if !defined(BO1_PORT_X64)

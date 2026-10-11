@@ -1,0 +1,27 @@
+Device test directory: /data/local/tmp/blackopsarm-phase1-20261011-165219768
+NDL-L09
+arm64-v8a,armeabi-v7a,armeabi
+36
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\build-android-audit\script_headers_validated\bo1_win32_compat_tests: 1 file pushed, 0 skipped. 125.6 MB/s (1526200 bytes in 0.012s)
+PASS: initial error, full DWORD round trip, 8-thread isolation, 80000 concurrent updates
+PASS: frequency/null failure, preserved error, zero/finite/EINTR/infinite Sleep
+bo1_win32_compat_tests: exit=0
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\build-android-audit\script_headers_validated\bo1_arm64_narrow_tests: 1 file pushed, 0 skipped. 175.5 MB/s (1516880 bytes in 0.008s)
+Bo1_NarrowFail: region table exhausted for 0x60db000000
+PASS: pointer=8 narrow=4 align=4; null/roundtrip/raw-slot/high-address/concurrency/exhaustion checks as applicable
+bo1_arm64_narrow_tests: exit=0
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\build-android-audit\script_headers_validated\bo1_script_slot_tests: 1 file pushed, 0 skipped. 156.2 MB/s (1379512 bytes in 0.008s)
+PASS production declarations: VariableUnion=4 sval_u=4 VariableValue=8 internal=28 stack.buf=13; handles and FF sentinels roundtrip
+bo1_script_slot_tests: exit=0
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\build-android-audit\script_headers_validated\bo1_script_headers_tests: 1 file pushed, 0 skipped. 183.8 MB/s (1394768 bytes in 0.007s)
+PASS actual script headers and cscr_instance.cpp: VM/parse slots=4, fixed records retained; both instance pointer reset/clear paths
+bo1_script_headers_tests: exit=0
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\build-android-audit\script_headers_validated\bo1_profile_tests: 1 file pushed, 0 skipped. 129.5 MB/s (1685968 bytes in 0.012s)
+PASS real profile.cpp: monotonic/native ticks, thread filtering, nested/exclusive/builtin scopes, 80000 atomic adds, 10000 deduplicated keys, registration and bounded names
+bo1_profile_tests: exit=0
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\build-android-audit\script_headers_validated\bo1_math_axis_tests: 1 file pushed, 0 skipped. 112.4 MB/s (38000 bytes in 0.000s)
+PASS actual axis maths: 5845 angle/axis roundtrips (0.002 degree tolerance)
+bo1_math_axis_tests: exit=0
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\build-android-audit\script_headers_validated\bo1_rng_tests: 1 file pushed, 0 skipped. 66.1 MB/s (19616 bytes in 0.000s)
+PASS production RNG bodies: 5000 seed comparisons, unchanged rand()/32768 formula; RAND_MAX=2147483647 (range/stream portability deferred)
+bo1_rng_tests: exit=0

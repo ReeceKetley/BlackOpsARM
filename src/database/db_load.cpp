@@ -1,3 +1,4 @@
+#include <platform/bo1_native_width.h>
 #include "db_load.h"
 #include "db_stream_load.h"
 #include "db_stream.h"
@@ -573,7 +574,7 @@ void __cdecl Load_TempStringArray(bool atStreamStart, int count)
     const char **var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_Ptr32Array(varTempString, count);
     else
@@ -619,7 +620,7 @@ void __cdecl Load_XStringArray(bool atStreamStart, int count)
     const char **var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( count < 0 || count > 65536 )
         count = 0;
     if ( atStreamStart )
@@ -767,7 +768,7 @@ void __cdecl Load_XAnimDeltaPartQuatDataFrames(bool atStreamStart)
     {
         __debugbreak();
     }
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     DB_ExpandLoad_XAnimDeltaPartQuatDataFrames(varXAnimDeltaPartQuatDataFrames);
 #else
     Load_Stream(1, (unsigned __int8 *)varXAnimDeltaPartQuatDataFrames, 4);
@@ -821,7 +822,7 @@ void __cdecl Load_XAnimDeltaPartQuat(bool atStreamStart)
     {
         __debugbreak();
     }
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     DB_ExpandLoad_XAnimDeltaPartQuat(varXAnimDeltaPartQuat);
 #else
     Load_Stream(1, (unsigned __int8 *)varXAnimDeltaPartQuat, 4);
@@ -842,7 +843,7 @@ void __cdecl Load_XAnimDeltaPartQuat(bool atStreamStart)
 
 void __cdecl Load_XAnimDeltaPart(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_XAnimDeltaPart(varXAnimDeltaPart);
     else
@@ -967,7 +968,7 @@ void __cdecl Load_XAnimPartTransFrames(bool atStreamStart)
     {
         __debugbreak();
     }
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     DB_ExpandLoad_XAnimPartTransFrames(varXAnimPartTransFrames);
 #else
     Load_Stream(1, (unsigned __int8 *)varXAnimPartTransFrames, 28);
@@ -1014,7 +1015,7 @@ void __cdecl Load_XAnimPartTrans(bool atStreamStart)
     {
         __debugbreak();
     }
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     DB_ExpandLoad_XAnimPartTrans(varXAnimPartTrans);
 #else
     Load_Stream(1, (unsigned __int8 *)varXAnimPartTrans, 4);
@@ -1057,7 +1058,7 @@ void __cdecl Load_XAnimNotifyInfoArray(bool atStreamStart, int count)
 
 void __cdecl Load_XAnimParts(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_XAnimParts(varXAnimParts);
     else
@@ -1249,7 +1250,7 @@ void __cdecl Load_snd_contextArray(bool atStreamStart, int count)
 
 void __cdecl Load_SndDriverGlobals(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_SndDriverGlobals(varSndDriverGlobals);
     else
@@ -1337,7 +1338,7 @@ void __cdecl Load_PackIndexEntryArray(bool atStreamStart, int count)
 
 void __cdecl Load_PackIndex(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_PackIndex(varPackIndex);
     else
@@ -1418,7 +1419,7 @@ void __cdecl Load_snd_align_charArray(bool atStreamStart, int count)
 
 void __cdecl Load_snd_asset(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_snd_asset(varsnd_asset);
     else
@@ -1446,7 +1447,7 @@ void __cdecl Load_snd_asset(bool atStreamStart)
 
 void __cdecl Load_LoadedSound(bool atStreamStart)
 {
-    #if defined(BO1_PORT_X64)
+    #if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_LoadedSound(varLoadedSound);
     else
@@ -1468,7 +1469,7 @@ void __cdecl Load_char_align_2048Array(bool atStreamStart, int count)
 
 void __cdecl Load_PrimedSound(bool atStreamStart)
 {
-    #if defined(BO1_PORT_X64)
+    #if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_PrimedSound(varPrimedSound);
     else
@@ -1509,7 +1510,7 @@ void __cdecl Load_PrimedSoundPtr(bool atStreamStart)
 
 void __cdecl Load_StreamedSound(bool atStreamStart)
 {
-    #if defined(BO1_PORT_X64)
+    #if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_StreamedSound(varStreamedSound);
     else
@@ -1559,7 +1560,7 @@ void __cdecl Load_SoundFileRef()
 
 void __cdecl Load_SoundFile(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_SoundFile(varSoundFile);
     else
@@ -1576,7 +1577,7 @@ void __cdecl Load_SoundFileArray(bool atStreamStart, int count)
     SoundFile *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
-    #if defined(BO1_PORT_X64)
+    #if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_SoundFileArray(varSoundFile, count);
     else
@@ -1596,7 +1597,7 @@ void __cdecl Load_SoundFileArray(bool atStreamStart, int count)
 
 void __cdecl Load_snd_alias_t(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_snd_alias_t(varsnd_alias_t);
     else
@@ -1630,7 +1631,7 @@ void __cdecl Load_snd_alias_tArray(bool atStreamStart, int count)
     snd_alias_t *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_snd_alias_tArray(varsnd_alias_t, count);
     else
@@ -1649,7 +1650,7 @@ void __cdecl Load_snd_alias_tArray(bool atStreamStart, int count)
 
 void __cdecl Load_snd_alias_list_t(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_snd_alias_list_t(varsnd_alias_list_t);
     else
@@ -1679,7 +1680,7 @@ void __cdecl Load_snd_alias_list_tArray(bool atStreamStart, int count)
     snd_alias_list_t *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_snd_alias_list_tArray(varsnd_alias_list_t, count);
     else
@@ -1703,7 +1704,7 @@ void __cdecl Load_SndIndexEntryArray(bool atStreamStart, int count)
 
 void __cdecl Load_SndBank(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_SndBank(varSndBank);
     else
@@ -1774,7 +1775,7 @@ void __cdecl Load_SndBankPtr(bool atStreamStart)
 
 void __cdecl Load_SndPatch(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_SndPatch(varSndPatch);
     else
@@ -1890,7 +1891,7 @@ void __cdecl Load_XSurfaceCollisionNodeArray(bool atStreamStart, int count)
 
 void __cdecl Load_XSurfaceCollisionTree(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_XSurfaceCollisionTree(varXSurfaceCollisionTree);
     else
@@ -1936,7 +1937,7 @@ void __cdecl Load_XSurfaceCollisionTree(bool atStreamStart)
 
 void __cdecl Load_XRigidVertList(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_XRigidVertListArray(varXRigidVertList, 1);
     else
@@ -1964,7 +1965,7 @@ void __cdecl Load_XRigidVertListArray(bool atStreamStart, int count)
     XRigidVertList *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_XRigidVertListArray(varXRigidVertList, count);
     else
@@ -2054,7 +2055,7 @@ void __cdecl Load_r_index16_tArray(bool atStreamStart, int count)
 
 void __cdecl Load_XSurface(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_XSurfaceArray(varXSurface, 1);
     else
@@ -2148,7 +2149,7 @@ void __cdecl Load_XSurfaceArray(bool atStreamStart, int count)
     XSurface *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_XSurfaceArray(varXSurface, count);
     else
@@ -2198,7 +2199,7 @@ void __cdecl Load_GfxTextureLoad(bool atStreamStart)
 
 void __cdecl Load_GfxRawTextureArray(bool atStreamStart, int count)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_Ptr32Array(varGfxRawTexture, count);
     else
@@ -2237,7 +2238,7 @@ void __cdecl Load_GfxImageLoadDef(bool atStreamStart)
 
 void __cdecl Load_GfxImage(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_GfxImage(varGfxImage);
     else
@@ -2289,7 +2290,7 @@ void __cdecl Load_GfxImagePtrArray(bool atStreamStart, int count)
     GfxImage **var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_Ptr32Array(varGfxImagePtr, count);
     else
@@ -2331,7 +2332,7 @@ void __cdecl Mark_GfxImagePtrArray(int count)
 
 void __cdecl Load_water_t(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_water_t(varwater_t);
     else
@@ -2363,7 +2364,7 @@ void __cdecl Mark_water_t()
 
 void __cdecl Load_GfxVertexShaderLoadDef(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     // Embedded; widened by ExpandLoad_MaterialVertexShader.
     (void)atStreamStart;
 #else
@@ -2380,7 +2381,7 @@ void __cdecl Load_GfxVertexShaderLoadDef(bool atStreamStart)
 
 void __cdecl Load_GfxPixelShaderLoadDef(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     (void)atStreamStart;
 #else
     Load_Stream(atStreamStart, (unsigned __int8 *)varGfxPixelShaderLoadDef, 8);
@@ -2395,7 +2396,7 @@ void __cdecl Load_GfxPixelShaderLoadDef(bool atStreamStart)
 
 void __cdecl Load_MaterialVertexShaderProgram(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     // Embedded in MaterialVertexShader; ExpandLoad already widened pointers.
     (void)atStreamStart;
 #else
@@ -2408,7 +2409,7 @@ void __cdecl Load_MaterialVertexShaderProgram(bool atStreamStart)
 
 void __cdecl Load_MaterialPixelShaderProgram(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     (void)atStreamStart;
 #else
     Load_Stream(atStreamStart, (unsigned __int8 *)varMaterialPixelShaderProgram, 12);
@@ -2420,7 +2421,7 @@ void __cdecl Load_MaterialPixelShaderProgram(bool atStreamStart)
 
 void __cdecl Load_MaterialVertexShader(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_MaterialVertexShader(varMaterialVertexShader);
     else
@@ -2454,7 +2455,7 @@ void __cdecl Load_MaterialVertexShaderPtr(bool atStreamStart)
 
 void __cdecl Load_MaterialPixelShader(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_MaterialPixelShader(varMaterialPixelShader);
     else
@@ -2488,7 +2489,7 @@ void __cdecl Load_MaterialPixelShaderPtr(bool atStreamStart)
 
 void __cdecl Load_MaterialVertexDeclaration(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_MaterialVertexDeclaration(varMaterialVertexDeclaration);
     else
@@ -2509,7 +2510,7 @@ void __cdecl Load_MaterialArgumentDef(bool atStreamStart)
     {
         case 1u:
         case 7u:
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
             if ( varMaterialArgumentDef->literalConst )
             {
                 if ( varMaterialArgumentDef->literalConst == (const float *)-1 )
@@ -2566,7 +2567,7 @@ void __cdecl Load_MaterialArgumentDef(bool atStreamStart)
 
 void __cdecl Load_MaterialShaderArgument(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_MaterialShaderArgumentArray(varMaterialShaderArgument, 1);
     else
@@ -2583,7 +2584,7 @@ void __cdecl Load_MaterialShaderArgumentArray(bool atStreamStart, int count)
     MaterialShaderArgument *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_MaterialShaderArgumentArray(varMaterialShaderArgument, count);
     else
@@ -2607,7 +2608,7 @@ void __cdecl Load_GfxStateBitsArray(bool atStreamStart, int count)
 
 void __cdecl Load_MaterialPass(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_MaterialPassArray(reinterpret_cast<MaterialPass *>(varMaterialPass), 1);
     else
@@ -2633,7 +2634,7 @@ void __cdecl Load_MaterialPass(bool atStreamStart)
     Load_MaterialVertexShaderPtr(0);
     varMaterialPixelShaderPtr = (MaterialPixelShader **)(varMaterialPass + 2);
     Load_MaterialPixelShaderPtr(0);
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     {
         auto *pass = reinterpret_cast<MaterialPass *>(varMaterialPass);
         if ( pass->args )
@@ -2664,7 +2665,7 @@ void __cdecl Load_MaterialPassArray(bool atStreamStart, int count)
     MaterialPass *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_MaterialPassArray(reinterpret_cast<MaterialPass *>(varMaterialPass), count);
     else
@@ -2693,7 +2694,7 @@ void __cdecl Load_MaterialTechnique(bool atStreamStart)
     {
         __debugbreak();
     }
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     DB_ExpandLoad_MaterialTechnique(varMaterialTechnique);
 #else
     Load_Stream(1, (unsigned __int8 *)varMaterialTechnique, 8);
@@ -2742,7 +2743,7 @@ void __cdecl Load_MaterialTextureDefInfo(bool atStreamStart)
 
 void __cdecl Load_MaterialTextureDef(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_MaterialTextureDefArray(varMaterialTextureDef, 1);
     else
@@ -2759,7 +2760,7 @@ void __cdecl Load_MaterialTextureDefArray(bool atStreamStart, int count)
     MaterialTextureDef *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_MaterialTextureDefArray(varMaterialTextureDef, count);
     else
@@ -2806,7 +2807,7 @@ void __cdecl Load_MaterialTechniquePtrArray(bool atStreamStart, int count)
     MaterialTechnique **var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_Ptr32Array(varMaterialTechniquePtr, count);
     else
@@ -2825,10 +2826,10 @@ void __cdecl Load_MaterialTechniquePtrArray(bool atStreamStart, int count)
 
 void __cdecl Load_MaterialTechniqueSet(bool atStreamStart)
 {
-    #if !defined(BO1_PORT_X64)
+    #if !BO1_NATIVE_64BIT
     static_assert(sizeof(MaterialTechniqueSet) == 528);
     #endif
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_MaterialTechniqueSet(varMaterialTechniqueSet);
     else
@@ -2877,7 +2878,7 @@ void __cdecl Load_MaterialTechniqueSetPtr(bool atStreamStart)
 
 void __cdecl Load_Material(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_Material(varMaterial);
     else
@@ -3003,7 +3004,7 @@ void __cdecl Load_MaterialHandleArray(bool atStreamStart, int count)
     Material **var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_Ptr32Array(varMaterialHandle, count);
     else
@@ -3110,7 +3111,7 @@ void __cdecl Load_GfxLightImage(bool atStreamStart)
 
 void __cdecl Load_GfxLightDef(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_GfxLightDef(varGfxLightDef);
     else
@@ -3159,7 +3160,7 @@ void __cdecl Load_GfxLightDefPtr(bool atStreamStart)
 
 void __cdecl Load_GfxLight(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_GfxLight(varGfxLight);
     else
@@ -3201,7 +3202,7 @@ void __cdecl Mark_GfxLight()
 
 void __cdecl Load_GfxSurface(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_GfxSurfaceArray(varGfxSurface, 1);
     else
@@ -3218,7 +3219,7 @@ void __cdecl Load_GfxSurfaceArray(bool atStreamStart, int count)
     GfxSurface *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_GfxSurfaceArray(varGfxSurface, count);
     else
@@ -3237,7 +3238,7 @@ void __cdecl Load_GfxSurfaceArray(bool atStreamStart, int count)
 
 void __cdecl Load_GfxLightmapArray(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_GfxLightmapArrayArray(varGfxLightmapArray, 1);
     else
@@ -3258,7 +3259,7 @@ void __cdecl Load_GfxLightmapArrayArray(bool atStreamStart, int count)
     GfxLightmapArray *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_GfxLightmapArrayArray(varGfxLightmapArray, count);
     else
@@ -3321,7 +3322,7 @@ void __cdecl Mark_GfxLightmapArrayArray(int count)
 
 void __cdecl Load_PhysPreset(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_PhysPreset(varPhysPreset);
     else
@@ -3379,7 +3380,7 @@ void __cdecl Mark_PhysPresetPtr()
 
 void __cdecl Load_PhysConstraint(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_PhysConstraintArray(varPhysConstraint, 1);
     else
@@ -3406,7 +3407,7 @@ void __cdecl Load_PhysConstraintArray(bool atStreamStart, int count)
     PhysConstraint *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_PhysConstraintArray(varPhysConstraint, count);
     else
@@ -3425,7 +3426,7 @@ void __cdecl Load_PhysConstraintArray(bool atStreamStart, int count)
 
 void __cdecl Load_PhysConstraints(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_PhysConstraints(varPhysConstraints);
     else
@@ -3526,7 +3527,7 @@ void __cdecl Load_cplane_tArray(bool atStreamStart, int count)
 
 void __cdecl Load_cbrushside_t(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_cbrushside_tArray(varcbrushside_t, 1);
     else
@@ -3554,7 +3555,7 @@ void __cdecl Load_cbrushside_tArray(bool atStreamStart, int count)
     cbrushside_t *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_cbrushside_tArray(varcbrushside_t, count);
     else
@@ -3578,7 +3579,7 @@ void __cdecl Load_XModelCollTriArray(bool atStreamStart, int count)
 
 void __cdecl Load_XModelCollSurf(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_XModelCollSurfArray(varXModelCollSurf, 1);
     else
@@ -3599,7 +3600,7 @@ void __cdecl Load_XModelCollSurfArray(bool atStreamStart, int count)
     XModelCollSurf_s *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_XModelCollSurfArray(varXModelCollSurf, count);
     else
@@ -3623,7 +3624,7 @@ void __cdecl Load_XModelHighMipBoundsArray(bool atStreamStart, int count)
 
 void __cdecl Load_XModelStreamInfo(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     // Embedded in XModel; ExpandLoad_XModel already widened highMipBounds.
     (void)atStreamStart;
     {
@@ -3653,7 +3654,7 @@ void __cdecl Load_XModelStreamInfo(bool atStreamStart)
 
 void __cdecl Load_BrushWrapper(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_BrushWrapper(varBrushWrapper);
     else
@@ -3697,7 +3698,7 @@ void __cdecl Load_BrushWrapper(bool atStreamStart)
 
 void __cdecl Load_PhysGeomInfo(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_PhysGeomInfoArray(varPhysGeomInfo, 1);
     else
@@ -3725,7 +3726,7 @@ void __cdecl Load_PhysGeomInfoArray(bool atStreamStart, int count)
     PhysGeomInfo *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_PhysGeomInfoArray(varPhysGeomInfo, count);
     else
@@ -3744,7 +3745,7 @@ void __cdecl Load_PhysGeomInfoArray(bool atStreamStart, int count)
 
 void __cdecl Load_PhysGeomList(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_PhysGeomList(varPhysGeomList);
     else
@@ -3762,7 +3763,7 @@ void __cdecl Load_PhysGeomList(bool atStreamStart)
 
 void __cdecl Load_Collmap(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_CollmapArray(varCollmap, 1);
     else
@@ -3783,7 +3784,7 @@ void __cdecl Load_CollmapArray(bool atStreamStart, int count)
     Collmap *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_CollmapArray(varCollmap, count);
     else
@@ -3802,7 +3803,7 @@ void __cdecl Load_CollmapArray(bool atStreamStart, int count)
 
 void __cdecl Load_XModel(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_XModel(varXModel);
     else
@@ -3998,7 +3999,7 @@ void __cdecl Load_XModelPtrArray(bool atStreamStart, int count)
     XModel **var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_Ptr32Array(varXModelPtr, count);
     else
@@ -4176,7 +4177,7 @@ void __cdecl Load_pathnode_constant_t(bool atStreamStart)
 
 void __cdecl Load_pathnode_t(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_pathnode_tArray(varpathnode_t, 1);
     else
@@ -4193,7 +4194,7 @@ void __cdecl Load_pathnode_tArray(bool atStreamStart, int count)
     pathnode_t *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_pathnode_tArray(varpathnode_t, count);
     else
@@ -4217,7 +4218,7 @@ void __cdecl Load_pathbasenode_tArray(bool atStreamStart, int count)
 
 void __cdecl Load_pathnode_tree_nodes_t(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_pathnode_tree_nodes_t(varpathnode_tree_nodes_t);
     else
@@ -4235,7 +4236,7 @@ void __cdecl Load_pathnode_tree_nodes_t(bool atStreamStart)
 
 void __cdecl Load_pathnode_tree_ptr(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_Ptr32Array(varpathnode_tree_ptr, 1);
     else
@@ -4263,7 +4264,7 @@ void __cdecl Load_pathnode_tree_ptrArray(bool atStreamStart, int count)
     pathnode_tree_t **var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_Ptr32Array(varpathnode_tree_ptr, count);
     else
@@ -4296,7 +4297,7 @@ void __cdecl Load_pathnode_tree_info_t(bool atStreamStart)
 
 void __cdecl Load_pathnode_tree_t(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_pathnode_tree_tArray(varpathnode_tree_t, 1);
     else
@@ -4313,7 +4314,7 @@ void __cdecl Load_pathnode_tree_tArray(bool atStreamStart, int count)
     pathnode_tree_t *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_pathnode_tree_tArray(varpathnode_tree_t, count);
     else
@@ -4409,7 +4410,7 @@ void __cdecl Load_PathData(bool atStreamStart)
 
 void __cdecl Load_GameWorldSp(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_GameWorldSp(varGameWorldSp);
     else
@@ -4427,7 +4428,7 @@ void __cdecl Load_GameWorldSp(bool atStreamStart)
 
 void __cdecl Load_GameWorldMp(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_GameWorldMp(varGameWorldMp);
     else
@@ -4582,7 +4583,7 @@ void __cdecl Load_FxEffectDefHandleArray(bool atStreamStart, int count)
     const FxEffectDef **var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_Ptr32Array(varFxEffectDefHandle, count);
     else
@@ -4608,7 +4609,7 @@ void __cdecl Load_FxEffectDefRef(bool atStreamStart)
 
 void __cdecl Load_FxElemMarkVisuals(bool atStreamStart)
 {
-    #if defined(BO1_PORT_X64)
+    #if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_FxElemMarkVisuals(varFxElemMarkVisuals);
     else
@@ -4626,7 +4627,7 @@ void __cdecl Load_FxElemMarkVisualsArray(bool atStreamStart, int count)
     FxElemMarkVisuals *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
-    #if defined(BO1_PORT_X64)
+    #if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_FxElemMarkVisualsArray(varFxElemMarkVisuals, count);
     else
@@ -4675,7 +4676,7 @@ void __cdecl Load_FxElemVisualsArray(bool atStreamStart, int count)
     FxElemVisuals *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
-    #if defined(BO1_PORT_X64)
+    #if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_Ptr32Array(varFxElemVisuals, count);
     else
@@ -4695,7 +4696,7 @@ void __cdecl Load_FxElemVisualsArray(bool atStreamStart, int count)
 
 void __cdecl Load_FxElemSpawnSound(bool atStreamStart)
 {
-    #if defined(BO1_PORT_X64)
+    #if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_Ptr32Array(varFxElemSpawnSound, 1);
     else
@@ -4752,7 +4753,7 @@ void __cdecl Load_FxTrailVertexArray(bool atStreamStart, int count)
 
 void __cdecl Load_FxTrailDef(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_FxTrailDef(varFxTrailDef);
     else
@@ -4776,7 +4777,7 @@ void __cdecl Load_FxTrailDef(bool atStreamStart)
 
 void __cdecl Load_FxElemDef(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_FxElemDef(varFxElemDef);
     else
@@ -4821,7 +4822,7 @@ void __cdecl Load_FxElemDefArray(bool atStreamStart, int count)
     FxElemDef *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_FxElemDefArray(varFxElemDef, count);
     else
@@ -4840,7 +4841,7 @@ void __cdecl Load_FxElemDefArray(bool atStreamStart, int count)
 
 void __cdecl Load_FxEffectDef(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_FxEffectDef(varFxEffectDef);
     else
@@ -5023,7 +5024,7 @@ void __cdecl Mark_FxEffectDef()
 
 void __cdecl Load_DynEntityDef(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_DynEntityDefArray(const_cast<DynEntityDef *>(varDynEntityDef), 1);
     else
@@ -5052,7 +5053,7 @@ void __cdecl Load_DynEntityDefArray(bool atStreamStart, int count)
     DynEntityDef *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_DynEntityDefArray(const_cast<DynEntityDef *>(varDynEntityDef), count);
     else
@@ -5123,7 +5124,7 @@ void __cdecl Mark_DynEntityDefArray(int count)
 
 void __cdecl Load_MapEnts(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_MapEnts(varMapEnts);
     else
@@ -5185,7 +5186,7 @@ void __cdecl Mark_MapEntsPtr()
 
 void __cdecl Load_cStaticModel_t(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_cStaticModel_tArray(varcStaticModel_t, 1);
     else
@@ -5202,7 +5203,7 @@ void __cdecl Load_cStaticModel_tArray(bool atStreamStart, int count)
     cStaticModel_s *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_cStaticModel_tArray(varcStaticModel_t, count);
     else
@@ -5221,7 +5222,7 @@ void __cdecl Load_cStaticModel_tArray(bool atStreamStart, int count)
 
 void __cdecl Load_cNode_t(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_cNode_tArray(varcNode_t, 1);
     else
@@ -5249,7 +5250,7 @@ void __cdecl Load_cNode_tArray(bool atStreamStart, int count)
     cNode_t *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_cNode_tArray(varcNode_t, count);
     else
@@ -5313,7 +5314,7 @@ void __cdecl Load_cLeafBrushNodeData_t(bool atStreamStart)
 
 void __cdecl Load_cLeafBrushNode_t(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_cLeafBrushNode_tArray(varcLeafBrushNode_t, 1);
     else
@@ -5330,7 +5331,7 @@ void __cdecl Load_cLeafBrushNode_tArray(bool atStreamStart, int count)
     cLeafBrushNode_s *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_cLeafBrushNode_tArray(varcLeafBrushNode_t, count);
     else
@@ -5359,7 +5360,7 @@ void __cdecl Load_CollisionBorderArray(bool atStreamStart, int count)
 
 void __cdecl Load_CollisionPartition(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_CollisionPartitionArray(const_cast<CollisionPartition *>(varCollisionPartition), 1);
     else
@@ -5387,7 +5388,7 @@ void __cdecl Load_CollisionPartitionArray(bool atStreamStart, int count)
     CollisionPartition *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_CollisionPartitionArray(const_cast<CollisionPartition *>(varCollisionPartition), count);
     else
@@ -5421,7 +5422,7 @@ void __cdecl Load_cmodel_tArray(bool atStreamStart, int count)
 
 void __cdecl Load_cbrush_t(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_cbrush_tArray(const_cast<cbrush_t *>(varcbrush_t), 1);
     else
@@ -5462,7 +5463,7 @@ void __cdecl Load_cbrush_tArray(bool atStreamStart, int count)
     cbrush_t *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_cbrush_tArray(const_cast<cbrush_t *>(varcbrush_t), count);
     else
@@ -5486,7 +5487,7 @@ void __cdecl Load_LeafBrushArray(bool atStreamStart, int count)
 
 void __cdecl Load_rope_tArray(bool atStreamStart, int count)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_rope_tArray(varrope_t, count);
     else
@@ -5498,7 +5499,7 @@ void __cdecl Load_rope_tArray(bool atStreamStart, int count)
 
 void __cdecl Load_clipMap_t(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_clipMap_t(varclipMap_t);
     else
@@ -5849,7 +5850,7 @@ void __cdecl Mark_clipMap_ptr()
 
 void __cdecl Load_ComPrimaryLight(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_ComPrimaryLightArray(varComPrimaryLight, 1);
     else
@@ -5866,7 +5867,7 @@ void __cdecl Load_ComPrimaryLightArray(bool atStreamStart, int count)
     ComPrimaryLight *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_ComPrimaryLightArray(varComPrimaryLight, count);
     else
@@ -5895,7 +5896,7 @@ void __cdecl Load_ComBurnableSampleArray(bool atStreamStart, int count)
 
 void __cdecl Load_ComBurnableCell(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_ComBurnableCellArray(varComBurnableCell, 1);
     else
@@ -5916,7 +5917,7 @@ void __cdecl Load_ComBurnableCellArray(bool atStreamStart, int count)
     ComBurnableCell *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_ComBurnableCellArray(varComBurnableCell, count);
     else
@@ -5935,7 +5936,7 @@ void __cdecl Load_ComBurnableCellArray(bool atStreamStart, int count)
 
 void __cdecl Load_ComWorld(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_ComWorld(varComWorld);
     else
@@ -6058,7 +6059,7 @@ void __cdecl Load_expressionRpnDataUnion(bool atStreamStart)
 
 void __cdecl Load_expressionRpn(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     // Native expressionRpn is 24 bytes; Win32 disk is 12. Expand at array start.
     if ( atStreamStart )
         DB_ExpandLoad_expressionRpnArray(varexpressionRpn, 1);
@@ -6076,7 +6077,7 @@ void __cdecl Load_expressionRpnArray(bool atStreamStart, int count)
     expressionRpn *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     // Keep follow-up walk in lockstep with Expand's clamp (neg / >65536 → 0).
     if ( count < 0 || count > 65536 )
         count = 0;
@@ -6098,7 +6099,7 @@ void __cdecl Load_expressionRpnArray(bool atStreamStart, int count)
 
 void __cdecl Load_ExpressionStatement(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_ExpressionStatement(varExpressionStatement);
     else
@@ -6125,7 +6126,7 @@ void __cdecl Load_ExpressionStatement(bool atStreamStart)
 
 void __cdecl Load_ScriptCondition(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_ScriptCondition(varScriptCondition);
     else
@@ -6143,7 +6144,7 @@ void __cdecl Load_ScriptCondition(bool atStreamStart)
 
 void __cdecl Load_ScriptConditionNext(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_ScriptCondition(varScriptConditionNext);
     else
@@ -6157,7 +6158,7 @@ void __cdecl Load_ScriptConditionNext(bool atStreamStart)
 
 void __cdecl Load_GenericEventScript(bool atStreamStart)
 {
-    #if defined(BO1_PORT_X64)
+    #if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_GenericEventScript(varGenericEventScript);
     else
@@ -6186,7 +6187,7 @@ void __cdecl Load_GenericEventScript(bool atStreamStart)
 
 void __cdecl Load_GenericEventScriptNext(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_GenericEventScript(varGenericEventScriptNext);
     else
@@ -6200,7 +6201,7 @@ void __cdecl Load_GenericEventScriptNext(bool atStreamStart)
 
 void __cdecl Load_GenericEventHandler(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_GenericEventHandler(varGenericEventHandler);
     else
@@ -6226,7 +6227,7 @@ void __cdecl Load_GenericEventHandler(bool atStreamStart)
 
 void __cdecl Load_GenericEventHandlerNext(bool atStreamStart)
 {
-    #if defined(BO1_PORT_X64)
+    #if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_GenericEventHandler(varGenericEventHandlerNext);
     else
@@ -6241,7 +6242,7 @@ void __cdecl Load_GenericEventHandlerNext(bool atStreamStart)
 
 void __cdecl Load_ItemKeyHandler(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_ItemKeyHandler(varItemKeyHandler);
     else
@@ -6265,7 +6266,7 @@ void __cdecl Load_ItemKeyHandler(bool atStreamStart)
 
 void __cdecl Load_ItemKeyHandlerNext(bool atStreamStart)
 {
-    #if defined(BO1_PORT_X64)
+    #if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_ItemKeyHandler(varItemKeyHandlerNext);
     else
@@ -6296,7 +6297,7 @@ void __cdecl Load_editFieldDef_ptr(bool atStreamStart)
 
 void __cdecl Load_multiDef_t(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_multiDef_t(varmultiDef_t);
     else
@@ -6323,7 +6324,7 @@ void __cdecl Load_multiDef_ptr(bool atStreamStart)
 
 void __cdecl Load_enumDvarDef_t(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_enumDvarDef_t(varenumDvarDef_t);
     else
@@ -6348,7 +6349,7 @@ void __cdecl Load_enumDvarDef_ptr(bool atStreamStart)
 
 void __cdecl Load_MenuCell(bool atStreamStart)
 {
-    #if defined(BO1_PORT_X64)
+    #if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_MenuCell(varMenuCell);
     else
@@ -6370,7 +6371,7 @@ void __cdecl Load_MenuCellArray(bool atStreamStart, int count)
     MenuCell *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
-    #if defined(BO1_PORT_X64)
+    #if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_MenuCellArray(varMenuCell, count);
     else
@@ -6390,7 +6391,7 @@ void __cdecl Load_MenuCellArray(bool atStreamStart, int count)
 
 void __cdecl Load_MenuRow(bool atStreamStart)
 {
-    #if defined(BO1_PORT_X64)
+    #if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_MenuRow(varMenuRow);
     else
@@ -6424,7 +6425,7 @@ void __cdecl Load_MenuRowArray(bool atStreamStart, int count)
     MenuRow *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
-    #if defined(BO1_PORT_X64)
+    #if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_MenuRowArray(varMenuRow, count);
     else
@@ -6444,7 +6445,7 @@ void __cdecl Load_MenuRowArray(bool atStreamStart, int count)
 
 void __cdecl Load_animParamsDef_t(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_animParamsDef_t(varanimParamsDef_t);
     else
@@ -6464,7 +6465,7 @@ void __cdecl Load_animParamsDef_t(bool atStreamStart)
 
 void __cdecl Load_windowDef_t(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_windowDef_t(varwindowDef_t);
     else
@@ -6482,7 +6483,7 @@ void __cdecl Load_windowDef_t(bool atStreamStart)
 
 void __cdecl Load_Window(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_windowDef_t(varWindow);
     else
@@ -6510,7 +6511,7 @@ void __cdecl Load_animParamsDef_ptrArray(bool atStreamStart, int count)
     animParamsDef_t **var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
-    #if defined(BO1_PORT_X64)
+    #if BO1_NATIVE_64BIT
     if ( count < 0 || count > 4096 )
     {
         count = 0;
@@ -6534,7 +6535,7 @@ void __cdecl Load_animParamsDef_ptrArray(bool atStreamStart, int count)
 
 void __cdecl Load_imageDef_t(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_imageDef_t(varimageDef_t);
     else
@@ -6559,7 +6560,7 @@ void __cdecl Load_imageDef_ptr(bool atStreamStart)
 
 void __cdecl Load_ownerDrawDef_t(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_ownerDrawDef_t(varownerDrawDef_t);
     else
@@ -6584,7 +6585,7 @@ void __cdecl Load_ownerDrawDef_ptr(bool atStreamStart)
 
 void __cdecl Load_listBoxDef_t(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_listBoxDef_t(varlistBoxDef_t);
     else
@@ -6651,7 +6652,7 @@ void __cdecl Load_focusDefData_t(bool atStreamStart)
 
 void __cdecl Load_focusItemDef_t(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_focusItemDef_t(varfocusItemDef_t);
     else
@@ -6735,7 +6736,7 @@ void __cdecl Load_textDefData_t(bool atStreamStart)
 
 void __cdecl Load_textExp_t(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     // Win32 textExp is a 16-byte ExpressionStatement; native is 24. Never Load_Stream(16).
     if ( atStreamStart )
         DB_ExpandLoad_ExpressionStatement(&vartextExp_t->textExp);
@@ -6750,7 +6751,7 @@ void __cdecl Load_textExp_t(bool atStreamStart)
 
 void __cdecl Load_textDef_t(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_textDef_t(vartextDef_t);
     else
@@ -6783,7 +6784,7 @@ void __cdecl Load_textDef_ptr(bool atStreamStart)
 
 void __cdecl Load_rectData_t(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_rectData_t(varrectData_t);
     else
@@ -6843,7 +6844,7 @@ void __cdecl Load_itemDefData_t(bool atStreamStart)
 
 void __cdecl Load_UIAnimInfo(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_UIAnimInfo(varUIAnimInfo);
     else
@@ -6861,7 +6862,7 @@ void __cdecl Load_UIAnimInfo(bool atStreamStart)
 
 void __cdecl Load_itemDef_t(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_itemDef_t(varitemDef_t);
     else
@@ -6924,7 +6925,7 @@ void __cdecl Load_itemDef_ptrArray(bool atStreamStart, int count)
     itemDef_s **var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
-    #if defined(BO1_PORT_X64)
+    #if BO1_NATIVE_64BIT
     // Keep walk in lockstep with Expand clamp (corrupt itemCount → 0xE06D7363 / AV).
     if ( count < 0 || count > 4096 )
         count = 0;
@@ -6952,7 +6953,7 @@ void __cdecl Load_itemDef_ptrArray(bool atStreamStart, int count)
 
 void __cdecl Load_menuDef_t(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_menuDef_t(varmenuDef_t);
     else
@@ -7032,7 +7033,7 @@ void __cdecl Load_menuDef_ptrArray(bool atStreamStart, int count)
     menuDef_t **var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
-    #if defined(BO1_PORT_X64)
+    #if BO1_NATIVE_64BIT
     if ( count < 0 || count > 4096 )
         count = 0;
     if ( atStreamStart )
@@ -7054,7 +7055,7 @@ void __cdecl Load_menuDef_ptrArray(bool atStreamStart, int count)
 
 void __cdecl Load_MenuList(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_MenuList(varMenuList);
     else
@@ -7065,7 +7066,7 @@ void __cdecl Load_MenuList(bool atStreamStart)
     DB_PushStreamPos(4u);
     varXString = &varMenuList->name;
     Load_XString(0);
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     // Capture before nested loads; stream stomps have corrupted menuCount mid-load.
     const int menuCountLocal = varMenuList->menuCount;
     {
@@ -7075,7 +7076,7 @@ void __cdecl Load_MenuList(bool atStreamStart)
     {
         varMenuList->menus = (menuDef_t **)AllocLoad_FxElemVisStateSample();
         varmenuDef_ptr = varMenuList->menus;
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
         Load_menuDef_ptrArray(1, menuCountLocal);
 #else
         Load_menuDef_ptrArray(1, varMenuList->menuCount);
@@ -7326,7 +7327,7 @@ void __cdecl Mark_MenuListPtr()
 
 void __cdecl Load_LocalizeEntry(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_LocalizeEntry(varLocalizeEntry);
     else
@@ -7384,7 +7385,7 @@ void __cdecl Mark_LocalizeEntryPtr()
 
 void __cdecl Load_FxImpactEntry(bool atStreamStart)
 {
-    #if defined(BO1_PORT_X64)
+    #if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_FxImpactEntry(varFxImpactEntry);
     else
@@ -7404,7 +7405,7 @@ void __cdecl Load_FxImpactEntryArray(bool atStreamStart, int count)
     FxImpactEntry *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
-    #if defined(BO1_PORT_X64)
+    #if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_FxImpactEntryArray(varFxImpactEntry, count);
     else
@@ -7424,7 +7425,7 @@ void __cdecl Load_FxImpactEntryArray(bool atStreamStart, int count)
 
 void __cdecl Load_FxImpactTable(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_FxImpactTable(varFxImpactTable);
     else
@@ -7518,7 +7519,7 @@ void __cdecl Mark_FxImpactTablePtr()
 
 void __cdecl Load_DestructibleStage(bool atStreamStart)
 {
-    #if defined(BO1_PORT_X64)
+    #if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_DestructibleStageArray(varDestructibleStage, 1);
     else
@@ -7548,7 +7549,7 @@ void __cdecl Load_DestructibleStageArray(bool atStreamStart, int count)
     DestructibleStage *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
-    #if defined(BO1_PORT_X64)
+    #if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_DestructibleStageArray(varDestructibleStage, count);
     else
@@ -7568,7 +7569,7 @@ void __cdecl Load_DestructibleStageArray(bool atStreamStart, int count)
 
 void __cdecl Load_DestructiblePiece(bool atStreamStart)
 {
-    #if defined(BO1_PORT_X64)
+    #if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_DestructiblePieceArray(varDestructiblePiece, 1);
     else
@@ -7596,7 +7597,7 @@ void __cdecl Load_DestructiblePieceArray(bool atStreamStart, int count)
     DestructiblePiece *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
-    #if defined(BO1_PORT_X64)
+    #if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_DestructiblePieceArray(varDestructiblePiece, count);
     else
@@ -7616,7 +7617,7 @@ void __cdecl Load_DestructiblePieceArray(bool atStreamStart, int count)
 
 void __cdecl Load_DestructibleDef(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_DestructibleDef(varDestructibleDef);
     else
@@ -7748,7 +7749,7 @@ void __cdecl Mark_DestructibleDefPtr()
 
 void __cdecl Load_flameTable(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if (atStreamStart)
         DB_ExpandLoad_flameTable(varflameTable);
     else
@@ -7791,7 +7792,7 @@ XAsset *__cdecl AllocLoad_FxElemVisStateSample()
 
 void __cdecl Load_WeaponDef(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_WeaponDef(varWeaponDef);
     else
@@ -8229,7 +8230,7 @@ void __cdecl Load_WeaponDef(bool atStreamStart)
 
 void __cdecl Load_WeaponVariantDef(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_WeaponVariantDef(varWeaponVariantDef);
     else
@@ -8471,7 +8472,7 @@ void __cdecl Mark_WeaponVariantDefPtr()
 
 void __cdecl Load_EmblemIcon(bool atStreamStart)
 {
-    #if defined(BO1_PORT_X64)
+    #if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_EmblemIcon(varEmblemIcon);
     else
@@ -8491,7 +8492,7 @@ void __cdecl Load_EmblemIconArray(bool atStreamStart, int count)
     EmblemIcon *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
-    #if defined(BO1_PORT_X64)
+    #if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_EmblemIconArray(varEmblemIcon, count);
     else
@@ -8511,7 +8512,7 @@ void __cdecl Load_EmblemIconArray(bool atStreamStart, int count)
 
 void __cdecl Load_EmblemBackground(bool atStreamStart)
 {
-    #if defined(BO1_PORT_X64)
+    #if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_EmblemBackground(varEmblemBackground);
     else
@@ -8531,7 +8532,7 @@ void __cdecl Load_EmblemBackgroundArray(bool atStreamStart, int count)
     EmblemBackground *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
-    #if defined(BO1_PORT_X64)
+    #if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_EmblemBackgroundArray(varEmblemBackground, count);
     else
@@ -8556,7 +8557,7 @@ void __cdecl Load_EmblemLayerArray(bool atStreamStart, int count)
 
 void __cdecl Load_EmblemCategory(bool atStreamStart)
 {
-    #if defined(BO1_PORT_X64)
+    #if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_EmblemCategory(varEmblemCategory);
     else
@@ -8576,7 +8577,7 @@ void __cdecl Load_EmblemCategoryArray(bool atStreamStart, int count)
     EmblemCategory *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
-    #if defined(BO1_PORT_X64)
+    #if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_EmblemCategoryArray(varEmblemCategory, count);
     else
@@ -8596,7 +8597,7 @@ void __cdecl Load_EmblemCategoryArray(bool atStreamStart, int count)
 
 void __cdecl Load_EmblemSet(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_EmblemSet(varEmblemSet);
     else
@@ -8735,7 +8736,7 @@ void __cdecl Mark_EmblemSetPtr()
 
 void __cdecl Load_RawFile(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_RawFile(varRawFile);
     else
@@ -8797,7 +8798,7 @@ void __cdecl Mark_RawFilePtr()
 
 void __cdecl Load_XGlobals(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_XGlobals(varXGlobals);
     else
@@ -8853,7 +8854,7 @@ void __cdecl Mark_XGlobalsPtr()
 
 void __cdecl Load_StringTableCell(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     // Cells are expanded as an array; single-cell atStreamStart loads are unused.
     if ( atStreamStart )
         DB_ExpandLoad_StringTableCellArray(varStringTableCell, 1);
@@ -8871,7 +8872,7 @@ void __cdecl Load_StringTableCellArray(bool atStreamStart, int count)
     StringTableCell *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_StringTableCellArray(varStringTableCell, count);
     else
@@ -8890,7 +8891,7 @@ void __cdecl Load_StringTableCellArray(bool atStreamStart, int count)
 
 void __cdecl Load_StringTable(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_StringTable(varStringTable);
     else
@@ -8926,7 +8927,7 @@ void __cdecl Load_StringTablePtr(bool atStreamStart)
     const void **inserted; // [esp+0h] [ebp-Ch]
     uintptr_t value; // [esp+4h] [ebp-8h]
 
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if (atStreamStart)
         DB_ExpandLoad_Ptr32Array(varStringTablePtr, 1);
     else
@@ -8970,7 +8971,7 @@ void __cdecl Mark_StringTablePtr()
 
 void __cdecl Load_ddlMemberDef_t(bool atStreamStart)
 {
-    #if defined(BO1_PORT_X64)
+    #if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_ddlMemberDef_tArray(varddlMemberDef_t, 1);
     else
@@ -8988,7 +8989,7 @@ void __cdecl Load_ddlMemberDef_tArray(bool atStreamStart, int count)
     ddlMemberDef_t *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
-    #if defined(BO1_PORT_X64)
+    #if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_ddlMemberDef_tArray(varddlMemberDef_t, count);
     else
@@ -9008,7 +9009,7 @@ void __cdecl Load_ddlMemberDef_tArray(bool atStreamStart, int count)
 
 void __cdecl Load_ddlStructDef_t(bool atStreamStart)
 {
-    #if defined(BO1_PORT_X64)
+    #if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_ddlStructDef_t(varddlStructDef_t);
     else
@@ -9032,7 +9033,7 @@ void __cdecl Load_ddlStructDef_tArray(bool atStreamStart, int count)
     ddlStructDef_t *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
-    #if defined(BO1_PORT_X64)
+    #if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_ddlStructDef_tArray(varddlStructDef_t, count);
     else
@@ -9052,7 +9053,7 @@ void __cdecl Load_ddlStructDef_tArray(bool atStreamStart, int count)
 
 void __cdecl Load_ddlEnumDef_t(bool atStreamStart)
 {
-    #if defined(BO1_PORT_X64)
+    #if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_ddlEnumDef_t(varddlEnumDef_t);
     else
@@ -9076,7 +9077,7 @@ void __cdecl Load_ddlEnumDef_tArray(bool atStreamStart, int count)
     ddlEnumDef_t *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
-    #if defined(BO1_PORT_X64)
+    #if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_ddlEnumDef_tArray(varddlEnumDef_t, count);
     else
@@ -9096,7 +9097,7 @@ void __cdecl Load_ddlEnumDef_tArray(bool atStreamStart, int count)
 
 void __cdecl Load_ddlDef_t(bool atStreamStart)
 {
-    #if defined(BO1_PORT_X64)
+    #if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_ddlDef_t(varddlDef_t);
     else
@@ -9127,7 +9128,7 @@ void __cdecl Load_ddlDef_t(bool atStreamStart)
 
 void __cdecl Load_ddlDefNext(bool atStreamStart)
 {
-    #if defined(BO1_PORT_X64)
+    #if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_ddlDef_t(varddlDefNext);
     else
@@ -9142,7 +9143,7 @@ void __cdecl Load_ddlDefNext(bool atStreamStart)
 
 void __cdecl Load_ddlRoot_t(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_ddlRoot_t(varddlRoot_t);
     else
@@ -9204,7 +9205,7 @@ void __cdecl Mark_ddlRoot_ptr()
 
 void __cdecl Load_GfxStaticModelDrawInst(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_GfxStaticModelDrawInstArray(varGfxStaticModelDrawInst, 1);
     else
@@ -9221,7 +9222,7 @@ void __cdecl Load_GfxStaticModelDrawInstArray(bool atStreamStart, int count)
     GfxStaticModelDrawInst *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_GfxStaticModelDrawInstArray(varGfxStaticModelDrawInst, count);
     else
@@ -9265,7 +9266,7 @@ void __cdecl Mark_GfxStaticModelDrawInstArray(int count)
 
 void __cdecl Load_sunflare_t(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_sunflare_t(varsunflare_t);
     else
@@ -9294,7 +9295,7 @@ void __cdecl Load_GfxReflectionProbeVolumeDataArray(bool atStreamStart, int coun
 
 void __cdecl Load_GfxReflectionProbe(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_GfxReflectionProbeArray(varGfxReflectionProbe, 1);
     else
@@ -9317,7 +9318,7 @@ void __cdecl Load_GfxReflectionProbeArray(bool atStreamStart, int count)
     GfxReflectionProbe *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_GfxReflectionProbeArray(varGfxReflectionProbe, count);
     else
@@ -9366,7 +9367,7 @@ void __cdecl Load_StaticModelIndexArray(bool atStreamStart, int count)
 
 void __cdecl Load_GfxAabbTree(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_GfxAabbTreeArray(varGfxAabbTree, 1);
     else
@@ -9394,7 +9395,7 @@ void __cdecl Load_GfxAabbTreeArray(bool atStreamStart, int count)
     GfxAabbTree *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_GfxAabbTreeArray(varGfxAabbTree, count);
     else
@@ -9413,7 +9414,7 @@ void __cdecl Load_GfxAabbTreeArray(bool atStreamStart, int count)
 
 void __cdecl Load_GfxCell(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_GfxCellArray(varGfxCell, 1);
     else
@@ -9452,7 +9453,7 @@ void __cdecl Load_GfxCellArray(bool atStreamStart, int count)
     GfxCell *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_GfxCellArray(varGfxCell, count);
     else
@@ -9471,7 +9472,7 @@ void __cdecl Load_GfxCellArray(bool atStreamStart, int count)
 
 void __cdecl Load_GfxPortal(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_GfxPortalArray(varGfxPortal, 1);
     else
@@ -9505,7 +9506,7 @@ void __cdecl Load_GfxPortalArray(bool atStreamStart, int count)
     GfxPortal *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_GfxPortalArray(varGfxPortal, count);
     else
@@ -9539,7 +9540,7 @@ void __cdecl Load_GfxCompressedLightGridColorsArray(bool atStreamStart, int coun
 
 void __cdecl Load_MaterialMemory(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_MaterialMemoryArray(varMaterialMemory, 1);
     else
@@ -9556,7 +9557,7 @@ void __cdecl Load_MaterialMemoryArray(bool atStreamStart, int count)
     MaterialMemory *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_MaterialMemoryArray(varMaterialMemory, count);
     else
@@ -9682,7 +9683,7 @@ void __cdecl Load_GfxDrawSurfArray(bool atStreamStart, int count)
 
 void __cdecl Load_GfxShadowGeometry(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_GfxShadowGeometryArray(varGfxShadowGeometry, 1);
     else
@@ -9709,7 +9710,7 @@ void __cdecl Load_GfxShadowGeometryArray(bool atStreamStart, int count)
     GfxShadowGeometry *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_GfxShadowGeometryArray(varGfxShadowGeometry, count);
     else
@@ -9789,7 +9790,7 @@ void __cdecl Load_GfxLightRegionAxisArray(bool atStreamStart, int count)
 
 void __cdecl Load_GfxLightRegionHull(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_GfxLightRegionHullArray(varGfxLightRegionHull, 1);
     else
@@ -9810,7 +9811,7 @@ void __cdecl Load_GfxLightRegionHullArray(bool atStreamStart, int count)
     GfxLightRegionHull *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_GfxLightRegionHullArray(varGfxLightRegionHull, count);
     else
@@ -9829,7 +9830,7 @@ void __cdecl Load_GfxLightRegionHullArray(bool atStreamStart, int count)
 
 void __cdecl Load_GfxLightRegion(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_GfxLightRegionArray(varGfxLightRegion, 1);
     else
@@ -9850,7 +9851,7 @@ void __cdecl Load_GfxLightRegionArray(bool atStreamStart, int count)
     GfxLightRegion *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_GfxLightRegionArray(varGfxLightRegion, count);
     else
@@ -10169,7 +10170,7 @@ void __cdecl Load_GfxWorldDraw(bool atStreamStart)
 
 void __cdecl Load_GfxWorld(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_GfxWorld(varGfxWorld);
     else
@@ -10524,7 +10525,7 @@ void __cdecl Load_GlyphArray(bool atStreamStart, int count)
 
 void __cdecl Load_Font(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_Font(varFont);
     else
@@ -10606,7 +10607,7 @@ void __cdecl Mark_FontHandle()
 
 void __cdecl Load_GlassDef(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_GlassDef(varGlassDef);
     else
@@ -10636,7 +10637,7 @@ void __cdecl Load_GlassDef(bool atStreamStart)
 
 void __cdecl Load_Glass(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_GlassArray(varGlass, 1);
     else
@@ -10670,7 +10671,7 @@ void __cdecl Load_GlassArray(bool atStreamStart, int count)
     Glass *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_GlassArray(varGlass, count);
     else
@@ -10689,7 +10690,7 @@ void __cdecl Load_GlassArray(bool atStreamStart, int count)
 
 void __cdecl Load_Glasses(bool atStreamStart)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     if ( atStreamStart )
         DB_ExpandLoad_Glasses(varGlasses);
     else

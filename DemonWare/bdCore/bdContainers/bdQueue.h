@@ -1,3 +1,4 @@
+#include <platform/bo1_native_width.h>
 #pragma once
 
 #pragma once
@@ -56,6 +57,6 @@ struct bdQueue
     }
 };
 
-#if !defined(BO1_PORT_X64)
+#if !BO1_NATIVE_64BIT
 static_assert(sizeof(bdQueue<void *>) == 0x0C, "bdQueue size mismatch");
 #endif

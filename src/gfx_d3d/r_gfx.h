@@ -1,3 +1,4 @@
+#include <platform/bo1_native_width.h>
 #pragma once
 #include <universal/com_math.h>
 
@@ -258,7 +259,7 @@ struct __declspec(align(16)) GfxLight // sizeof=0x170
         // padding byte
         // padding byte
 };
-#if !defined(BO1_PORT_X64)
+#if !BO1_NATIVE_64BIT
 static_assert(sizeof(GfxLight) == 0x170, "GfxLight must match the exe (zone stream, 368-stride copies)");
 #endif
 static_assert(offsetof(GfxLight, origin) == 0x1C && offsetof(GfxLight, radius) == 0x28, "GfxLight origin/radius");

@@ -1,3 +1,4 @@
+#include <platform/bo1_native_width.h>
 #pragma once
 
 #include "phys_local.h"
@@ -237,7 +238,7 @@ struct phys_heap_gjk_cache_system_avl_tree // sizeof=0x10
         phys_inplace_avl_tree_node<phys_heap_gjk_cache_system_avl_tree::phys_gjk_cache_info_internal> m_avl_tree_node;
         phys_heap_gjk_cache_system_avl_tree::phys_gjk_cache_info_internal *m_next_gjk_ci;
     };
-    #if !defined(BO1_PORT_X64)
+    #if !BO1_NATIVE_64BIT
     static_assert(sizeof(phys_heap_gjk_cache_system_avl_tree::phys_gjk_cache_info_internal) == 0x90);
     #endif
 
@@ -865,7 +866,7 @@ struct __declspec(align(16)) gjk_trace_output_t // sizeof=0x50
     // padding byte
     // padding byte
 };
-#if !defined(BO1_PORT_X64)
+#if !BO1_NATIVE_64BIT
 static_assert(sizeof(gjk_trace_output_t) == 80);
 #endif
 

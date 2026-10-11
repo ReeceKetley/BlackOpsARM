@@ -1,3 +1,5 @@
+#include <platform/engine_random.h>
+#include <platform/bo1_native_width.h>
 #include <qcommon/actor_model_state.h>
 #include <cgame_mp/cg_anim_commands.h>
 #include "cl_main_mp.h"
@@ -2686,7 +2688,7 @@ unsigned __int8 *perLocalClientMemBuffer;
 HunkUser *perLocalClientMemHunk;
 int cl_allocatedClients = 32;
 unsigned int cl_lastAllocFlags;
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
 #include <EffectsCore/fx_system.h>
 #include <EffectsCore/fx_marks.h>
 #include <cgame/cg_local.h>
@@ -4012,7 +4014,7 @@ static cmd_function_s CL_RemapControllerToPrimaryAndActivate_f_VAR;
 
 void __cdecl CL_InitOnceForAllClients()
 {
-    srand(Sys_MillisecondsRaw());
+    BO1_CrtSrand(Sys_MillisecondsRaw());
     Con_Init();
     CL_InitInput();
     G_SP_PlayTraceRegister(); // j1: play-session recorder dvars (tool, off by default)

@@ -1,3 +1,4 @@
+#include <platform/bo1_native_width.h>
 #pragma once
 #include <sound/snd.h>
 #include <bgame/bg_weapons_def.h>
@@ -34,7 +35,7 @@ struct weaponInfo_s // sizeof=0x24
     const char *translatedModename;
     const char *translatedAIOverlayDescription;
 };
-#if !defined(BO1_PORT_X64)
+#if !BO1_NATIVE_64BIT
 static_assert(sizeof(weaponInfo_s) == 0x24);
 #endif
 

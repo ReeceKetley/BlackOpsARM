@@ -72,7 +72,7 @@ static void SND_BO1NoDeviceLength(unsigned int id, SndEntHandle entHandle, const
     // SND_PlaySoundAlias's 'force', which skips that cull, SP 0x0057B224 / 0x005BBB4A)
     else if (alias->flags & 1)
         why = "looping"; // SND_AddLengthNotify: a looping voice reports its totalMsec, 0
-    else if ((float)alias->probability / 255.0f > 0.0f && random() > (float)alias->probability / 255.0f)
+    else if ((float)alias->probability / 255.0f > 0.0f && BO1_Random() > (float)alias->probability / 255.0f)
         why = "probability";
     else if (alias->soundFile->type != 1)
     {

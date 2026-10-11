@@ -1,3 +1,4 @@
+#include <platform/bo1_native_width.h>
 #include "phys_broad_phase.h"
 #include "phys_main.h"
 #include <bgame/bg_slidemove.h>
@@ -1865,7 +1866,7 @@ void __cdecl destroy_broad_phase_info(broad_phase_info *bpi)
     if (bpi)
     {
         using TI = phys_free_list<broad_phase_info>::T_internal;
-        #if !defined(BO1_PORT_X64)
+        #if !BO1_NATIVE_64BIT
         static_assert(sizeof(TI) == 0x90, "size mismatch");
         #endif
         TI *ti = (TI *)((char *)bpi - offsetof(TI, m_data));

@@ -1,3 +1,4 @@
+#include <platform/bo1_native_width.h>
 #include "g_sp_savegame.h"
 #include "g_sp_levelstart.h"
 #include <game_mp/g_main_mp.h>
@@ -520,8 +521,11 @@ static constexpr SPPathSaveField s_pathSaveFields[] = {
 #if !defined(BO1_PORT_X64)
 static_assert(sizeof(pathnode_dynamic_t) == 0x20, "DERIVED path dynamic save layout");
 #endif
-#if !defined(BO1_PORT_X64)
+#if !BO1_NATIVE_64BIT
 static_assert(sizeof(pathnode_t) == 0x80 && sizeof(pathlink_s) == 0xC, "DERIVED path save layout");
+#endif
+#if defined(__ANDROID__)
+static_assert(sizeof(pathlink_s) == 0xC, "fixed path link save layout");
 #endif
 #if !defined(BO1_PORT_X64)
 static_assert(sizeof(SentientHandle) == 4 && offsetof(SentientHandle, number) == 0,

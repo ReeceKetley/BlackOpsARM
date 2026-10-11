@@ -1,3 +1,4 @@
+#include <platform/bo1_native_width.h>
 #pragma once
 #include <tl/tl_system.h>
 
@@ -174,7 +175,7 @@ struct _jqBatch // sizeof=0x0
 {                                       // XREF: jqBatch/r
 };
 
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
 // x64: the inline command data sits at byte 64 of the batch (ParamData[3]); command structs with SSE members are compiled
 // with aligned vector loads, so the whole batch must be 16-byte aligned wherever it is copied to.
 #define JQ_BATCH_ALIGN 16
@@ -198,7 +199,7 @@ struct __declspec(align(JQ_BATCH_ALIGN)) jqBatch // sizeof=0x7C
                                         // jqAddBatch(jqModule const &,void *,void *,jqBatchGroup *,jqQueue *,void *,int)+20/w ...
     unsigned int ConditionalValue;      // XREF: Sys_AddWorkerCmdInternal(jqWorkerCmd *,void *,WorkerCmdConditional *)+57/w
                                         // jqAddBatch(jqModule const &,void *,void *,jqBatchGroup *,jqQueue *,void *,int)+27/w ...
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     // x64: [0..1] holds a jqWorkerCmd * (8 bytes), [2] the fence, inline command data starts at [3]; same 84-byte inline capacity.
     unsigned int ParamData[24];
 #else
@@ -212,7 +213,7 @@ struct __declspec(align(JQ_BATCH_ALIGN)) jqBatch // sizeof=0x7C
 
     jqBatch();
 };
-#if !defined(BO1_PORT_X64)
+#if !BO1_NATIVE_64BIT
 static_assert(sizeof(jqBatch) == 124);
 #endif
 

@@ -25,16 +25,7 @@ enum hitLocation_t : __int32
     HITLOC_GUN       = 0x12,
     HITLOC_NUM       = 0x13,
 };
-enum errorParm_t : __int32
-{                                                                             // XREF: ?Com_Error@@YAXW4errorParm_t@@PBDZZ/r
-        ERR_FATAL                        = 0x0,
-        ERR_DROP                         = 0x1,
-        ERR_SERVERDISCONNECT = 0x2,
-        ERR_DISCONNECT             = 0x3,
-        ERR_SCRIPT                     = 0x4,
-        ERR_SCRIPT_DROP            = 0x5,
-        ERR_LOCALIZATION         = 0x6,
-};
+#include <universal/com_errors.h>
 
 struct SpawnVar // sizeof=0xA0C
 {                                       // XREF: level_locals_t/r

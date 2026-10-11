@@ -121,7 +121,7 @@ union VariableUnion // sizeof=0x4
     BO1_NARROW(VariableStackBuffer) stackValue;
     unsigned int entityOffset;
 };
-#if defined(BO1_PORT_X64)
+#if defined(BO1_PORT_X64) || defined(__ANDROID__)
 static_assert(sizeof(VariableUnion) == 4, "VariableUnion must stay 4 bytes");
 #endif
 

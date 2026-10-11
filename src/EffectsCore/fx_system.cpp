@@ -1,3 +1,4 @@
+#include <platform/engine_random.h>
 #include <universal/com_memory.h>
 #include "fx_system.h"
 #include "fx_random.h"
@@ -1413,7 +1414,7 @@ void __cdecl FX_SetEffectRandomSeed(FxEffect *effect, const FxEffectDef *remoteD
     if ( FX_EffectAffectsGameplay(remoteDef) )
         effect->randomSeed = (479 * ((unsigned int)(214013 * effect->msecBegin + 2531011) >> 17)) >> 15;
     else
-        effect->randomSeed = 479 * rand() / 0x8000;
+        effect->randomSeed = 479 * BO1_CrtRand() / 0x8000;
 }
 
 char __cdecl FX_IsSpotLightEffect(FxSystem *system, const FxEffectDef *def)

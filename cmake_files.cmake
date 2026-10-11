@@ -2990,6 +2990,12 @@ set(TL_PHYSICS_FILES
 # Build target
 # ======================================================================
 
+# Allow the Android compile audit to reuse these lists without creating the
+# Windows executable. The normal root build leaves this unset and is unchanged.
+if(BO1_SOURCE_INVENTORY_ONLY)
+    return()
+endif()
+
 add_executable(${BIN_NAME}
 	${DW_DEMONWAREROOT_FILES}
 	${DW_BDCORE_FILES}

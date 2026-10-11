@@ -1,3 +1,4 @@
+#include <platform/bo1_native_width.h>
 #include <Windows.h>
 
 #include "physicalmemory.h"
@@ -45,7 +46,7 @@ void __cdecl PMem_Init()
             }
             size += zoneWords > 2 ? (unsigned int)zoneWords * 0x8000000u : 0x10000000u;
         }
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
         // FastFile zones are expanded 32 -> 64 bit as they stream in (db_expand), and DB_AllocXBlocks allocates up to 2x
         // the Win32 block sizes (see DB_AllocXBlocks); the zones actually in use grow ~1.0-1.3x, so 1.5x the retail pool.
         size = size + size / 2;

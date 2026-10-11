@@ -1,3 +1,4 @@
+#include <platform/bo1_native_width.h>
 #pragma once
 #include <universal/q_shared.h>
 #include <game/teams.h>
@@ -494,7 +495,7 @@ struct SndDriverGlobals // sizeof=0x34
     unsigned int masterCount;
     snd_master * masters;
 };
-#if !defined(BO1_PORT_X64)
+#if !BO1_NATIVE_64BIT
 static_assert(sizeof(SndDriverGlobals) == 52);
 #endif
 

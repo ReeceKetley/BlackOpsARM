@@ -1,3 +1,4 @@
+#include <platform/bo1_native_width.h>
 #pragma once
 
 struct StreamDelayInfo // sizeof=0x8
@@ -24,5 +25,5 @@ inline void __cdecl DB_ConvertOffsetToPointer(unsigned int *data)
 }
 void __cdecl Load_XStringCustom(const char **str);
 void __cdecl Load_TempStringCustom(const char **str);
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
 #endif

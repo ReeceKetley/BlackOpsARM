@@ -1,7 +1,12 @@
 #include "com_math_anglevectors.h"
 
 #include <cmath>
+#if defined(__ANDROID__)
+// This unit needs math declarations/assertions, not q_shared's x86 profiler.
+#include "com_math.h"
+#else
 #include "q_shared.h"
+#endif
 
 void __cdecl AngleVectors(const float *angles, float *forward, float *right, float *up)
 {
@@ -154,9 +159,9 @@ void __cdecl AxisToSignedAngles(const float (*axis)[3], float *angles)
     float fSin; // [esp+34h] [ebp-4h]
 
     vectosignedangles((const float *)axis, angles);
-    right[0] = (*axis)[3];
-    right[1] = (*axis)[4];
-    right[2] = (*axis)[5];
+    right[0] = axis[1][0];
+    right[1] = axis[1][1];
+    right[2] = axis[1][2];
     //rad = COERCE_FLOAT(*((unsigned int *)angles + 1) ^ _mask__NegFloat_) * 0.017453292;
     rad = -angles[1] * 0.017453292;
     fCos = cos(rad);

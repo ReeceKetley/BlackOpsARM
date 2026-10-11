@@ -1,3 +1,4 @@
+#include <platform/engine_random.h>
 #include "cg_weapons.h"
 #include <bgame/bg_local.h>
 #include <cgame_mp/cg_local_mp.h>
@@ -5965,7 +5966,7 @@ void __cdecl CG_SndWeaponFakeFire(snd_weapon_shot *shot, const WeaponDef *weapon
         && (cgameGlob->bgs.clientinfo[shooter_index].team != cgameGlob->bgs.clientinfo[cgameGlob->nextSnap->ps.clientNum].team
          || cgameGlob->bgs.clientinfo[cgameGlob->nextSnap->ps.clientNum].team == TEAM_FREE
          && shooter_index != cgameGlob->nextSnap->ps.clientNum)
-        && (float)(cg_fakefireWizbyChance->current.value * 32768.0) > (float)rand() )
+        && (float)(cg_fakefireWizbyChance->current.value * 32768.0) > (float)BO1_CrtRand() )
     {
         CG_SoundWhizby(shot->localClientNum, weaponDef, shot->origin, shotDirection, endPosition);
     }
@@ -6184,7 +6185,7 @@ void __cdecl CG_SpawnTracer(
 
     cgameGlob = CG_GetLocalClientGlobals(localClientNum);
     if ( cgameGlob->frametime )
-        v6 = rand() % cgameGlob->frametime / 2;
+        v6 = BO1_CrtRand() % cgameGlob->frametime / 2;
     else
         v6 = 0;
     startTime = cgameGlob->time - v6;
@@ -6506,7 +6507,7 @@ void __cdecl CG_RandomEffectAxis(float *forward, float *left, float *up)
     point[1] += (dot * forward[1]);
     point[2] += (dot * forward[2]);
 
-    degrees = random() * 360.0;
+    degrees = BO1_Random() * 360.0;
 
     RotatePointAroundVector(left, forward, point, degrees);
     Vec3Normalize(left);

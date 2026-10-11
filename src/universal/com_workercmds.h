@@ -1,9 +1,10 @@
+#include <platform/bo1_native_width.h>
 #pragma once
 
 #include <tl/jobqueue/jobqueue_all.h>
 
 // Worker command payload sizes are Win32 sizeof literals in the decompile; on x64 the command structs hold 8-byte pointers.
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
 #define JQ_CMD_SIZE(T, win32Size) ((unsigned int)sizeof(T))
 #else
 #define JQ_CMD_SIZE(T, win32Size) (win32Size)

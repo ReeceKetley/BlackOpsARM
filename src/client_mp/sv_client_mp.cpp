@@ -1,3 +1,4 @@
+#include <platform/engine_random.h>
 #include <game_sp/g_sp_client.h>
 #include <cgame/cg_sp_nettrace.h>
 #include "sv_client_mp.h"
@@ -144,8 +145,8 @@ void __cdecl SV_GetChallenge(netadr_t from)
     if ( i == 1024 )
     {
         challenge = &svs.challenges[oldest];
-        v1 = rand() << 16;
-        challenge->challenge = svs.time ^ rand() ^ v1;
+        v1 = BO1_CrtRand() << 16;
+        challenge->challenge = svs.time ^ BO1_CrtRand() ^ v1;
         challenge->adr = from;
         challenge->firstTime = svs.time;
         challenge->firstPing = 0;

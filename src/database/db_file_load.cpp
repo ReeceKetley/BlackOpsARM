@@ -1,3 +1,4 @@
+#include <platform/bo1_native_width.h>
 #include "db_file_load.h"
 #include <universal/assertive.h>
 #include "db_auth.h"
@@ -533,7 +534,7 @@ void __cdecl DB_LoadXFileInternal()
 void Load_XAssetListCustom()
 {
     varXAssetList = &g_varXAssetList;
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     DB_ExpandLoad_XAssetList(&g_varXAssetList);
 #else
     DB_LoadXFileData((unsigned __int8 *)&g_varXAssetList, 16);
@@ -548,7 +549,7 @@ extern int g_dbTopAssetType;
 
 static unsigned int DB_DiagBlock4Off()
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     return DB_StreamWin32Pos(4);
 #else
     if (!g_streamBlocks || !g_streamBlocks[4].data)
@@ -563,7 +564,7 @@ void __cdecl Load_XAssetArrayCustom(int count)
     XAsset *var; // [esp+0h] [ebp-8h]
     int i; // [esp+4h] [ebp-4h]
 
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     DB_ExpandLoad_XAssetArray(varXAsset, count);
 #else
     Load_Stream(1, (unsigned __int8 *)varXAsset, 8 * count);

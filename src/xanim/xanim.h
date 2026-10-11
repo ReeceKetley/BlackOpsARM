@@ -1,4 +1,5 @@
 #pragma once
+#include "xanim_debug.h"
 #include <clientscript/cscr_main.h>
 #include "dobj.h"
 
@@ -456,7 +457,6 @@ bool __cdecl XAnimHasFinished(const XAnimTree_s *tree, unsigned int animIndex);
 int __cdecl XAnimGetNumChildren(const XAnim_s *anims, unsigned int animIndex);
 unsigned int __cdecl XAnimGetChildAt(const XAnim_s *anims, unsigned int animIndex, unsigned int childIndex);
 const char *__cdecl XAnimGetAnimName(const XAnim_s *anims, unsigned int animIndex);
-char *__cdecl XAnimGetAnimDebugName(const XAnim_s *anims, unsigned int animIndex);
 unsigned int __cdecl XAnimGetAnimTreeSize(const XAnim_s *anims);
 void __cdecl XAnimInitInfo(XAnimInfo *info);
 void __cdecl XAnimUpdateOldTime(

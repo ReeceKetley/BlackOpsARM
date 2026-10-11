@@ -1,0 +1,1 @@
+PASS real profile.cpp: monotonic/native ticks, thread filtering, nested/exclusive/builtin scopes, 80000 atomic adds, 10000 deduplicated keys, registration and bounded names

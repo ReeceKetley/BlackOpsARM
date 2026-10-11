@@ -1,3 +1,4 @@
+#include <platform/bo1_native_width.h>
 #include "cscr_debugger.h"
 #include <universal/assertive.h>
 #include "cscr_compiler.h"
@@ -4442,7 +4443,7 @@ void __cdecl Scr_DebugKillThread(scriptInstance_t inst, unsigned int threadId, c
 
 void __cdecl Scr_DebugTerminateThread(scriptInstance_t inst, int topThread)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     // Thread cancellation is required even when the debugger UI is unavailable.
     // Use the normal VM end position instead of debugger breakpoints in that case.
     if (!gScrDebuggerGlob[inst].debugger_inited_system)

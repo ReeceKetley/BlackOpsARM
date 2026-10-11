@@ -1,0 +1,34 @@
+{
+  "parsetree_pass4.device-tests.log": {
+    "source": "build-android-audit/parsetree_pass4/device-tests.log",
+    "sha256": "db8a9d194d942d04805a4fc285659a90c7c445602a991f613f430275c8804056"
+  },
+  "parsetree_pass5.device-tests.log": {
+    "source": "build-android-audit/parsetree_pass5/device-tests.log",
+    "sha256": "4d9411440c112d8abc66f2bc8eee7880bf17d3a2b6f0aaaaa6f6aa169e89af73"
+  },
+  "parsetree-host-run2.log": {
+    "source": "build-android-audit/parsetree-host-run2.log",
+    "sha256": "33f0fd30d0bbbd4db74600263b2d4ed376a86596bd8a4c8150fcd63a7b5ad4f5"
+  },
+  "parsetree-host-run3.log": {
+    "source": "build-android-audit/parsetree-host-run3.log",
+    "sha256": "4a9796975c23aaddb9554aced3e340052cea7c2b9b75ff9615a190cfcc5af4a7"
+  },
+  "host-parsetree-20261011-173414324.x86.parsetree-compile.log": {
+    "source": "build-android-audit/host-parsetree-20261011-173414324/x86/parsetree-compile.log",
+    "sha256": "ec29d29229a73c579de3245ad6291b80b171ec91640cb344827d0cac9cbdd5aa"
+  },
+  "host-parsetree-20261011-173414324.x86.parsetree-command.txt": {
+    "source": "build-android-audit/host-parsetree-20261011-173414324/x86/parsetree-command.txt",
+    "sha256": "c49e8ba3e263973214a99220e707715799ab82351f89145c67f304479befa02e"
+  },
+  "host-parsetree-20261011-173445035.x86.parsetree-compile.log": {
+    "source": "build-android-audit/host-parsetree-20261011-173445035/x86/parsetree-compile.log",
+    "sha256": "33f0fd30d0bbbd4db74600263b2d4ed376a86596bd8a4c8150fcd63a7b5ad4f5"
+  },
+  "host-parsetree-20261011-173445035.x86.parsetree-command.txt": {
+    "source": "build-android-audit/host-parsetree-20261011-173445035/x86/parsetree-command.txt",
+    "sha256": "af0d27a00030afe9a5c934f14c83c029bf166af66c3af052453fb3dcf84767a5"
+  }
+}

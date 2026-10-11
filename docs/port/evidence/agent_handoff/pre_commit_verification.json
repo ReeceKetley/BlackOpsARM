@@ -1,0 +1,59 @@
+{
+  "observedUtc": "2026-10-11T18:26:44.778732+00:00",
+  "protected": {
+    "BlackOps64": {
+      "unchanged": true,
+      "head": "76edfd5e75976c41bfab5a5db262b8b593432518",
+      "branch": "main",
+      "filesVerified": 2528,
+      "indexUnchanged": true,
+      "statusUnchanged": true
+    },
+    "DXVK-Native": {
+      "unchanged": true,
+      "head": "0e271c6be16ded1a8638d117360c2e65d9df4603",
+      "branch": "master",
+      "filesVerified": 2552,
+      "indexUnchanged": true,
+      "statusUnchanged": true
+    },
+    "rootLedger": {
+      "unchanged": true,
+      "filesVerified": 15
+    },
+    "frozenEvidence": {
+      "unchanged": true,
+      "filesVerified": 436
+    }
+  },
+  "android": {
+    "branch": "android-arm64",
+    "baseHead": "76edfd5e75976c41bfab5a5db262b8b593432518",
+    "indexUnchangedBeforeStaging": true
+  },
+  "noPortingChangesDuringRotation": true,
+  "sourceHashesVerified": 67,
+  "aarch64ArtifactsVerified": 55,
+  "latestDeviceExitCodes": {
+    "bo1_win32_compat_tests": "0",
+    "bo1_arm64_narrow_tests": "0",
+    "bo1_script_slot_tests": "0",
+    "bo1_script_headers_tests": "0",
+    "bo1_profile_tests": "0",
+    "bo1_math_axis_tests": "0",
+    "bo1_rng_tests": "0",
+    "bo1_engine_rng_tests": "0",
+    "bo1_script_lookup_tests": "0",
+    "bo1_parsetree_tests": "0",
+    "bo1_hunk_tests": "0",
+    "bo1_debugger_tests": "0",
+    "bo1_firstfit_tests": "0"
+  },
+  "hostDebuggerFirstFitBothABIsPassed": true,
+  "passingPathUBSanFindings": false,
+  "apkSHA256": "DFA4C3BD6C8FDDF121CF87EE9B5847367FB6C29CDB5EAD8FC164F3A31F1135B5",
+  "ledgerHealthy": true,
+  "processEvidence": "process_state.json",
+  "commitAuthorization": "User explicitly requests committing changes at rotation; no push.",
+  "handoffOnlyCorrection": "Removed extra EOF blank line in check_script_headers.ps1; commands/behavior unchanged."
+}

@@ -1,3 +1,4 @@
+#include <platform/engine_random.h>
 #include "r_buffers.h"
 #include <universal/assertive.h>
 #include "r_init.h"
@@ -568,9 +569,9 @@ void __cdecl R_CreateParticleCloudBuffer()
                 particleVertsIter = &particleVerts[4 * vertexIndex];
                 lfsr = -(lfsr & 1) & 0x240 ^ ((int)lfsr >> 1);
                 vertexIndex = lfsr & 0x3FF;
-                pos[0][0] = (float)((float)((float)((float)rand() / 32767.0) + (float)xIter) * 0.25) + -1.0;
-                pos[0][1] = (float)((float)((float)((float)rand() / 32767.0) + (float)yIter) * 0.25) + -1.0;
-                pos[0][2] = (float)((float)((float)((float)rand() / 32767.0) + (float)zIter) * 0.125) + -1.0;
+                pos[0][0] = (float)((float)((float)((float)BO1_CrtRand() / 32767.0) + (float)xIter) * 0.25) + -1.0;
+                pos[0][1] = (float)((float)((float)((float)BO1_CrtRand() / 32767.0) + (float)yIter) * 0.25) + -1.0;
+                pos[0][2] = (float)((float)((float)((float)BO1_CrtRand() / 32767.0) + (float)zIter) * 0.125) + -1.0;
                 GaussianRandom(&rand0, &rand1);
                 GaussianRandom(&rand2, &rand3);
                 if ( (float)((float)(rand0 * 0.25) - 1.0) < 0.0 )

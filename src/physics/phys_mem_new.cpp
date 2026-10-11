@@ -1,3 +1,4 @@
+#include <platform/bo1_native_width.h>
 #include "phys_mem_new.h"
 
 #include <Windows.h> // interlockedexchange
@@ -14,7 +15,7 @@ static unsigned int pmm_ptr_to_bits(void *p)
 {
     if (!p)
         return 0;
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     const uintptr_t base = reinterpret_cast<uintptr_t>(g_phys_memory_buffer);
     const uintptr_t addr = reinterpret_cast<uintptr_t>(p);
     if ((addr < base || addr - base > static_cast<uintptr_t>(g_phys_memory_buffer_size))
@@ -30,7 +31,7 @@ static void *pmm_bits_to_ptr(unsigned int bits)
 {
     if (!bits)
         return nullptr;
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     return static_cast<char *>(g_phys_memory_buffer) + bits;
 #else
     return reinterpret_cast<void *>(static_cast<uintptr_t>(bits));
@@ -146,7 +147,7 @@ phys_slot_pool *__thiscall phys_memory_manager::get_slot_pool(
     {
         __debugbreak();
     }
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     // Footer holds native pointers; keep slot base/size 8-aligned for Interlocked*Pointer.
     if ( slot_alignment < 8 )
         slot_alignment = 8;

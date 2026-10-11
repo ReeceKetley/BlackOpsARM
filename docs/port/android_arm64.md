@@ -1,0 +1,198 @@
+# BlackOpsARM Android ARM64 development
+
+## Scope and source baseline
+
+This is an Android scaffold with a bounded Phase 1 engine compilation audit.
+It is not a running engine port. `android-arm64`
+starts at `76edfd5e75976c41bfab5a5db262b8b593432518` (2026-10-11, native
+water/material fixes and Windows Vulkan validation). `../BlackOps64` stays on
+`main`. Both worktrees share Git history/object storage but have independent
+working directories, HEADs and indexes. No commit or push was made for setup.
+
+`BlackOpsARM` was not empty: it contained a newly initialized `.ledger` only.
+To preserve it, setup created an adjacent worktree with `--no-checkout`, moved
+only the newly created `.git` pointer into this folder, ran `git worktree repair`,
+populated its independent index with `git read-tree HEAD`, and materialized
+tracked files with non-forcing `git checkout-index --all`. No existing Ledger
+file was moved, deleted or replaced by checkout.
+
+## Structure
+
+```text
+BlackOpsARM/
+  AGENTS.md
+  .ledger/                         Android memory, linked to ../.ledger
+  android/                         Gradle wrapper and APK packaging
+    app/src/main/                  Manifest and development Activity
+  src/platform/
+    android/                       NDK environment target and atomic narrow handles
+    win32_compat/                   Minimal timing and thread-local error shims
+    windows/                       Existing Windows adapters, unchanged
+  docs/port/android_arm64.md
+  CMakeLists.txt                    Existing Windows engine build, unchanged
+  cmake_files.cmake                Shared inventory; opt-in inventory-only mode
+  src/, tl/, DemonWare/            Shared sources; reviewed native-width guards
+```
+
+The development APK loads `libblackopsarm_environment.so`, whose only purpose
+is to prove Android/aarch64, 64-bit pointers, C++20 and JNI packaging. Its screen
+explicitly says the engine and renderer are not connected. No assets, SDL, DXVK
+binary, Windows shims or gameplay are packaged in this milestone.
+
+## Toolchain and build
+
+Pinned project versions: Gradle 8.9, Android Gradle Plugin 8.7.3, compile/target
+SDK 35, build tools 35.0.0, minimum API 28, NDK `30.0.16248370`, CMake 3.22.1,
+and ABI `arm64-v8a` only. Use a JDK compatible with Gradle 8.9 and AGP (minimum
+JDK 17); this machine has JDK 21.0.1. Java sources target Java 17.
+The AGP requirement is documented in the
+[official 8.7 release notes](https://developer.android.com/build/releases/agp-8-7-0-release-notes).
+The official wrapper JAR was verified against Gradle's published checksum;
+`distributionSha256Sum` pins the downloaded Gradle distribution. See
+[Gradle wrapper verification](https://docs.gradle.org/8.9/userguide/gradle_wrapper.html).
+
+On this workstation, the SDK is `D:/Android/Sdk`; `android/local.properties`
+records that machine-local path and is ignored by Git. For another workstation,
+set `ANDROID_HOME` or create its own `local.properties` with `sdk.dir=<SDK path>`.
+Install the pinned SDK packages using Android SDK Manager. Equivalent commands
+in PowerShell on this machine are:
+
+```powershell
+$env:JAVA_HOME = 'C:\Program Files\Java\jdk-21'
+$env:ANDROID_HOME = 'D:\Android\Sdk'
+& "$env:ANDROID_HOME\cmdline-tools\latest\bin\sdkmanager.bat" `
+  'platforms;android-35' 'build-tools;35.0.0' `
+  'ndk;30.0.16248370' 'cmake;3.22.1' 'platform-tools'
+
+Set-Location 'D:\Desktop\Black Ops 2 Android\BlackOpsARM\android'
+.\gradlew.bat --no-daemon :app:assembleDebug :app:lintDebug
+```
+
+On POSIX hosts use `sh ./gradlew --no-daemon :app:assembleDebug :app:lintDebug`
+from `android/`, with the same SDK components and a compatible JDK. Build
+outputs are ignored. The debug APK is
+`android/app/build/outputs/apk/debug/app-debug.apk`; lint reports are under
+`android/app/build/reports/`. Debug signing is for local development only.
+
+Setup verification on 2026-10-11: debug build and lint passed; lint reported
+0 errors and 4 warnings (ARM64-only ChromeOS support, backup rules, development
+icon and localization). APK signing and the packaged ELF64/AArch64 library/JNI
+export were verified. The pinned AGP emitted a non-fatal SDK XML-version warning
+with the newer installed command-line tools. No device install/launch was run.
+
+Optional device smoke check, after selecting the intended attached device:
+
+```powershell
+& "$env:ANDROID_HOME\platform-tools\adb.exe" devices -l
+# Replace DEVICE_SERIAL with the selected device; this installs the dev APK.
+& "$env:ANDROID_HOME\platform-tools\adb.exe" -s DEVICE_SERIAL install -r `
+  '.\app\build\outputs\apk\debug\app-debug.apk'
+& "$env:ANDROID_HOME\platform-tools\adb.exe" -s DEVICE_SERIAL shell am start `
+  -n 'com.blackopsarm.dev/.DevelopmentActivity'
+```
+
+Expect the ARM64 environment text with no JNI load failure in logcat. Device
+installation/launch is a separate check, not part of the build-only setup claim.
+
+## Renderer and platform direction
+
+The goal is the original native T5 Zombies engine on HONOR Pad X8a and Samsung
+Galaxy S25 with Xbox controller-first input. Keep original game assets and
+FastFile formats. Shared engine changes must remain Windows compatible.
+
+Initial renderer target: DXVK Native 1.9.2 using the tested SDL2/Vulkan
+integration in `../DXVK-Native`. That repository stays independent; neither
+its source nor binaries are copied or changed by this scaffold. Its
+`ANDROID-PORT-NOTES.md`, `android/DXVK-ANDROID-PROFILE.md` and baseline APK provide
+renderer evidence, not proof that T5 already runs. Record external revision
+`0e271c6be16ded1a8638d117360c2e65d9df4603` when consuming future artifacts.
+Confirm actual device GPU/Vulkan properties directly; older root Mali/SDL3
+assumptions must not override the measured SDL2 integration.
+
+Use `src/platform/android/` for graphics/WSI, audio, lifecycle and controller
+input. Use `src/platform/win32_compat/` only for small OS services where shims
+avoid invasive shared changes. Unsupported functions must fail explicitly.
+Use native-width pointers, preserve 32-bit disk/serialization layouts, and
+implement synchronization with ARM64-correct atomics and memory ordering.
+
+## Reusing engine CMake and first compilation task
+
+The root `CMakeLists.txt` currently assumes MSVC, Windows libraries and executable
+packaging. `cmake_files.cmake` contains source groups and an `add_executable`, not
+a platform-neutral list-only module. Directly adding the root project to the
+NDK build today would pull in Windows flags, headers and libraries. The scaffold
+therefore uses the isolated environment target without copying engine sources.
+
+Phase 1 now reuses that inventory through `BO1_SOURCE_INVENTORY_ONLY`. The root
+Windows executable remains the default. The separate target compiles genuine
+`com_encode.cpp`, `com_math_anglevectors.cpp`, and `timing.cpp` to AArch64 objects.
+See `arm64_compilation_audit.md` for the dependency/flag audit and full evidence.
+
+From this worktree in PowerShell, use a fresh output directory on each run:
+
+```powershell
+.\tools\port\build_arm64_audit.ps1 -BuildDirectory build-android-audit/my-run
+.\tools\port\check_narrow32.ps1 -PythonExe python
+.\tools\port\run_arm64_audit_tests.ps1 -Serial <adb-serial> -BuildDirectory build-android-audit/my-run
+```
+
+The host probes require MSVC Build Tools (`-VcVars` overrides its path), Python
+3 and Windows SDK. The NDK compile target also needs host Python 3 for extracting
+current production declaration probes. The Phase 1 device runner pushed three native
+test executables into a unique `/data/local/tmp/blackopsarm-phase1-*` directory;
+it installs no APK. Inspect `adb devices -l` and select the intended device.
+These are ABI/compatibility tests; engine startup, renderer, audio, input and
+gameplay have not been validated on Android.
+
+The next actual-header gate is now complete: profile.cpp and cscr_instance.cpp
+also compile, with direct cscr_variable/debugger headers and four-byte checks.
+See [arm64_script_headers.md](arm64_script_headers.md) for evidence and limits.
+The device runner now executes seven native probes when this gate is enabled.
+Run the Windows checks from this Android worktree:
+
+```powershell
+.\tools\port\check_script_headers.ps1 -PythonExe python
+```
+
+Use a fresh build directory for every retained build/device run. The CMake
+option BO1_ARM64_SCRIPT_HEADERS defaults ON with compatibility enabled; OFF
+selects the original bounded utility/probe suite. The APK still has no engine.
+The Windows-reference RNG and unchanged cscr_readwrite.cpp lookup gate are now
+complete; see [arm64_rng_script.md](arm64_rng_script.md). The device runner runs
+nine probes, including captured CRT streams and real script lookup fixtures.
+Use tools/port/check_engine_rng.ps1 for actual Win32/x64 CRT comparisons.
+The actual parse-tree/default HunkUser gate is now complete: eight actual T5
+units compile, and the device runner executes eleven probes. See
+[arm64_parsetree.md](arm64_parsetree.md) for source/evidence/limits. Run
+`.\tools\port\check_parsetree.ps1` in this Android worktree for Win32/x64
+constructor/allocator checks with real Windows virtual-memory services.
+The debugger handle/allocation gate is now complete: ten actual T5 units
+compile, including the entire evaluator and first-fit source, and thirteen
+HONOR native probes pass. See [arm64_debugger.md](arm64_debugger.md) for typed
+handle/buffer fixes, real native heap/thread services, selected evaluator paths
+and test fixture limits. Run `.\tools\port\check_debugger.ps1 -PythonExe python`
+for both Windows host ABIs. These debugger probes use the Android heap; the
+production Windows Z heap's alignment remains unvalidated.
+Recommended next bounded task: actual normal-to-debugger expression compilation
+(TASK-0007), starting with numeric/boolean expressions and auditing list/string/
+callable ownership before widening. Actual 16 KB Android hardware/S25 remains
+untested. Full game/backend integration remains deferred.
+
+## Ledger ownership and handoff
+
+Run `ledger context "<task>"`, `ledger status`, and `ledger doctor` from
+`BlackOpsARM/`. Consult `../.ledger` for shared T5 decisions and Windows evidence.
+The parent remains authoritative for those facts, while `.ledger` here owns
+Android goals, setup, decisions, blockers and test evidence. IDs are independent;
+qualify references such as `../.ledger FACT-0104`. No root Ledger data was copied
+or edited. Current user steering authorizes the bounded compilation/flag audit
+and connected-device probes; full engine/backend work remains deferred. Follow
+`AGENTS.md` and `.ledger/AGENT-INSTRUCTIONS.md`.
+
+Verification evidence and the exact setup file inventory are recorded in
+`.ledger/setup-verification.json`. The ignored `.ledger/setup-baseline.json`
+contains before-state SHA256 hashes for Windows/DXVK tracked and nonignored
+untracked files, their branch/HEAD/status/index, and the existing root Ledger.
+Git administrative worktree registration inside the shared `.git` is expected;
+the Windows index, branch, working files and scratch files must remain unchanged.
+See `android_setup_changes.md` here for the concise authored-file inventory.

@@ -96,7 +96,11 @@ struct orientation_t // sizeof=0x30
     float axis[3][3];                                     // XREF: CG_Laser_Add(centity_s *,DObj *,cpose_t *,float const * const,LaserOwnerEnum)+50/o
 };
 
-double __cdecl random();
+// Distinct engine symbol: Android libc declares POSIX long random().
+double __cdecl BO1_Random();
+#if !defined(__ANDROID__)
+double __cdecl random(); // retain the original Windows entry point
+#endif
 double __cdecl crandom();
 void __cdecl GaussianRandom(float *f0, float *f1);
 unsigned int __cdecl RandWithSeed(int *seed);

@@ -1,5 +1,7 @@
 #pragma once
+#if !defined(__ANDROID__)
 #include <database/db_registry.h>
+#endif
 #include "cscr_main.h"
 #include "cscr_debugger.h"
 

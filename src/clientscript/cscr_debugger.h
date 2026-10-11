@@ -1,3 +1,4 @@
+#include <platform/bo1_native_width.h>
 #pragma once
 #include "cscr_main.h"
 #include "cscr_variable.h"
@@ -26,11 +27,16 @@ enum ParseToken_t : __int32;
 
 #include <universal/narrow32.h>
 
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
 // The GSC parse tree is built from 4-byte slots (sval_u) addressed with hard-coded +4 strides, and holds pointers in them.
 // On x64 sval_u stays exactly 4 bytes: its pointer members are Narrow32.
 // Read a narrow pointer stored in a parse-tree slot at (32-bit) address `addr`.
+#if defined(__ANDROID__)
+// Both the slot address and its pointer value are region-tagged handles.
+#define SVAL_PTR_AT(T, addr) BO1_NARROW_DECODE(T, *BO1_NARROW_DECODE(const unsigned int, addr))
+#else
 #define SVAL_PTR_AT(T, addr) (reinterpret_cast<T *>(static_cast<uintptr_t>(*reinterpret_cast<const unsigned int *>(static_cast<uintptr_t>(addr)))))
+#endif
 #else
 #define SVAL_PTR_AT(T, addr) (*(T **)(addr))
 #endif
@@ -56,7 +62,7 @@ union sval_u // sizeof=0x4
     unsigned int idValue;
     float floatValue;
     int intValue;
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     Narrow32<sval_u> node;
     unsigned int sourcePosValue;
     Narrow32<const char> codePosValue;
@@ -70,12 +76,12 @@ union sval_u // sizeof=0x4
     scr_block_s *block;
 #endif
 };
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
 static_assert(sizeof(sval_u) == 4, "sval_u must stay 4 bytes");
 #endif
 
 // Child-block lists in the parse tree are arrays of 4-byte slots holding block pointers.
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
 typedef Narrow32<scr_block_s> ScrBlockPtr;
 #else
 typedef scr_block_s *ScrBlockPtr;

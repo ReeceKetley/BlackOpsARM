@@ -1,3 +1,4 @@
+#include <platform/bo1_native_width.h>
 #include "db_stream_load.h"
 #include "db_stream.h"
 #include <universal/assertive.h>
@@ -7,7 +8,7 @@
 #include "db_file_load.h"
 #include <clientscript/cscr_stringlist.h>
 
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
 extern int g_dbTopAssetType;
 #endif
 
@@ -15,7 +16,7 @@ StreamDelayInfo g_streamDelayArray[4096];
 
 void __cdecl Load_Stream(bool atStreamStart, unsigned __int8 *ptr, int size)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     // Expand follow-ups can see ptr==pos on Load_Stream(0, ...); Win32 never does (asserts).
     // Do not promote to a read — that overwrites already-expanded pointer fields with file bytes.
     if (!atStreamStart && ptr == DB_GetStreamPos())
@@ -97,7 +98,7 @@ void __cdecl DB_ConvertOffsetToAlias(void *field)
     {
         __debugbreak();
     }
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     {
         const unsigned int blockIndex = (offset - 1) >> 29;
         const unsigned int within = (offset - 1) & 0x1FFFFFFFu;
@@ -141,7 +142,7 @@ void __cdecl DB_ConvertOffsetToPointer(void *field)
 {
     auto *data = reinterpret_cast<uintptr_t *>(field);
     const unsigned int offset = static_cast<unsigned int>(*data);
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     {
         const unsigned int blockIndex = (offset - 1) >> 29;
         const unsigned int within = (offset - 1) & 0x1FFFFFFFu;

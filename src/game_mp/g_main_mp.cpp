@@ -1,3 +1,5 @@
+#include <platform/engine_random.h>
+#include <platform/bo1_native_width.h>
 #include <qcommon/cm_mapkit.h>
 #include <universal/profile.h>
 #include <algorithm>
@@ -821,7 +823,7 @@ void __cdecl    G_InitGame(int levelTime, int randomSeed, int restart, int regis
     level.initializing = 1;
     level.currentEntityThink = -1;
     level.scriptPrintChannel = 25;
-    srand(randomSeed);
+    BO1_CrtSrand(randomSeed);
     Rand_Init(randomSeed);
     if ( registerDvars )
         G_RegisterDvars();
@@ -982,7 +984,7 @@ void __cdecl    G_InitGame(int levelTime, int randomSeed, int restart, int regis
     if (!restart)
     {
         memset(&bgs->animData->animScriptData, 0, sizeof(animScriptData_t)/*0x8D388u*/);
-        #if !defined(BO1_PORT_X64)
+        #if !BO1_NATIVE_64BIT
         static_assert(sizeof(animScriptData_t) == 0x8D388);
         #endif
 

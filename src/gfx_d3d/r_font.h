@@ -1,3 +1,4 @@
+#include <platform/bo1_native_width.h>
 #pragma once
 
 struct Glyph // sizeof=0x18
@@ -27,7 +28,7 @@ struct Font_s // sizeof=0x18
     struct Material *glowMaterial;
     Glyph *glyphs;
 };
-#if !defined(BO1_PORT_X64)
+#if !BO1_NATIVE_64BIT
 static_assert(sizeof(Font_s) == 24);
 #endif
 

@@ -1,3 +1,4 @@
+#include <platform/bo1_native_width.h>
 #pragma once
 #include "db_registry.h"
 
@@ -14,7 +15,7 @@ void __cdecl DB_PopStreamPos();
 unsigned __int8 *__cdecl DB_GetStreamPos();
 unsigned __int8 *__cdecl DB_AllocStreamPos(int alignment);
 void __cdecl DB_IncStreamPos(int size);
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
 // Next DB_IncStreamPos(nativeSize) advances the Win32 cursor by win32Size (for baked-offset remap).
 void DB_SetExpandWin32Size(int win32Size);
 void DB_SetExpandElem(int wElem, int nElem);

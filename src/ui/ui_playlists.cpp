@@ -1,3 +1,4 @@
+#include <platform/engine_random.h>
 #include "ui_playlists.h"
 #include <universal/assertive.h>
 #include <universal/q_shared.h>
@@ -2127,7 +2128,7 @@ int __cdecl Playlist_ChooseEntry(int localControllerIndex, int lastSelection)
     else
     {
 LABEL_15:
-        v3 = rand();
+        v3 = BO1_CrtRand();
         itemSelected = Playlist_FindEntryByWeight(playlistId, v3 * totalWeight / 0x8000uLL, lastSelection);
     }
 LABEL_16:

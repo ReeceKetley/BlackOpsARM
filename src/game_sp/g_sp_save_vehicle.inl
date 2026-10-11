@@ -1,3 +1,4 @@
+#include <platform/bo1_native_width.h>
 // Included by g_sp_savegame.cpp after g_sp_save_actor.inl (uses the WriteStruct/ReadField port).
 // zombies: script vehicles (SP 0x007EDD58 loop -> 0x007ED410, reader loop 0x007ED030 -> 0x007EC930).
 // SP scr_vehicle_s is 0xE10 with 64 slots; KB keeps its 0xE60 MP struct (0xE2C in the MP exe; KB aligns the visitor to 16) with 16 (s_vehicles), so the
@@ -19,7 +20,7 @@ static const SPEntitySaveField s_vehicleFields[] = {
 };
 #undef NODE
 #undef VF
-#if !defined(BO1_PORT_X64)
+#if !BO1_NATIVE_64BIT
 static_assert(sizeof(scr_vehicle_s) == 0xE60, "DERIVED vehicle image (KB: 16-byte aligned collision visitor)");
 #endif
 #if !defined(BO1_PORT_X64)

@@ -1,3 +1,4 @@
+#include <platform/engine_random.h>
 #include "snd.h"
 #include <universal/narrow32.h>
 #include <win32/win_main.h>
@@ -721,7 +722,7 @@ void __cdecl SND_SetVoiceStartFlux(snd_voice_t *voice, float *player)
     if ( move_type )
     {
         if ( move_type == SND_FLUX_TYPE_RANDOM_PLAYER )
-            move_type = (snd_flux_type_t)(rand() % 3 + 1);
+            move_type = (snd_flux_type_t)(BO1_CrtRand() % 3 + 1);
         if ( !((alias->flags & 2) >> 1) )
         {
             Com_PrintError(9, "Alias %s has move_type but is not 3d\n", alias->name);
@@ -812,11 +813,11 @@ void __cdecl SND_SetVoiceStartSeeds(const snd_alias_t *alias, snd_voice_t *voice
     if ( (((alias->flags & 0xE0000000) >> 29) & 1) != 0 && randomSeed )
         voice->volModSeed = SND_GetSeed(baseHash | 0x80000000, g_snd.time);
     else
-        voice->volModSeed = random();
+        voice->volModSeed = BO1_Random();
     if ( (((alias->flags & 0xE0000000) >> 29) & 2) != 0 && randomSeed )
         voice->pitchModSeed = SND_GetSeed(baseHash & 0x7FFFFFFF, g_snd.time);
     else
-        voice->pitchModSeed = random();
+        voice->pitchModSeed = BO1_Random();
     if ( voice->volModSeed < 0.0
         && !Assert_MyHandler("C:\\projects_pc\\cod\\codsrc\\src\\sound\\snd.cpp", 527, 0, "%s", "voice->volModSeed >= 0.0f") )
     {
@@ -1764,7 +1765,7 @@ snd_alias_t *__cdecl SND_PickSoundAliasFromList(snd_alias_list_t *aliasList, int
         else
         {
             for ( j = 0; j < 0x64 && actualCount > 2 && randomIndex == aliasList->sequence || randomIndex == -1; ++j )
-                randomIndex = rand() % actualCount;
+                randomIndex = BO1_CrtRand() % actualCount;
         }
         aliasList->sequence = randomIndex;
         return selectionArray[randomIndex];
@@ -1946,7 +1947,7 @@ unsigned int __cdecl SND_PlaySoundAlias(
     if ( (float)((float)alias->probability * 0.003921569f) > 0.0 )
     {
         v12 = (float)alias->probability * 0.003921569f;
-        if ( random() > v12 )
+        if ( BO1_Random() > v12 )
             return -1;
     }
     volume = Snd_GetGlobalPriorityVolume(alias, org);

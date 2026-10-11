@@ -1,3 +1,4 @@
+#include <platform/bo1_native_width.h>
 #pragma once
 #include <universal/assertive.h>
 #include <cstring>
@@ -247,7 +248,7 @@ struct chull_t // sizeof=0x20
     int touched;
     chull_t *next_list;
 };
-#if !defined(BO1_PORT_X64)
+#if !BO1_NATIVE_64BIT
 static_assert(sizeof(chull_t) == 0x20);
 #endif
 

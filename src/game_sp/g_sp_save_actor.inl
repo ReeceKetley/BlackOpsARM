@@ -1,3 +1,4 @@
+#include <platform/bo1_native_width.h>
 // Included by g_sp_savegame.cpp after g_sp_save_client.inl (uses the WriteStruct/ReadField port).
 // zombies: actors (SP 0x007EDC3F loop, extras 0x007EA6B0, reader 0x007EC760 / 0x007EA710) and
 // sentients (SP 0x007EDCCE loop, reader loop 0x007ECFD0). SP actor is 0x3240 with a 0x2254-byte
@@ -47,7 +48,7 @@ static const SPEntitySaveField s_actorExtFields[] = {
 // sightTraceHitNum tail (SP +0x31F8); KB's image stops at the same member.
 static const unsigned SP_ACTOR_IMAGE_SIZE = offsetof(actor_s, pPotentialCoverNode);
 static const unsigned SP_ACTOR_EXT_IMAGE_SIZE = offsetof(actor_sp_ext_t, sightTraceHitNum);
-#if !defined(BO1_PORT_X64)
+#if !BO1_NATIVE_64BIT
 static_assert(sizeof(actor_s) == 0x27B0, "DERIVED actor image (KB: 16-byte aligned Physics, actor_fields.cpp)");
 #endif
 #if !defined(BO1_PORT_X64)
@@ -68,7 +69,7 @@ static const SPEntitySaveField s_sentientFields[] = {
     SF(scriptOwner, 3), SF(scriptTargetTag, 1)
 };
 #undef SF
-#if !defined(BO1_PORT_X64)
+#if !BO1_NATIVE_64BIT
 static_assert(sizeof(sentient_s) == 0x90 && offsetof(sentient_s, inuse) == 0x84, "DERIVED sentient image");
 #endif
 #if !defined(BO1_PORT_X64)

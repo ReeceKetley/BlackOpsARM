@@ -1,3 +1,4 @@
+#include <platform/bo1_native_width.h>
 #include "com_workercmds.h"
 
 #include <tl/jobqueue/jobqueue_all.h>
@@ -10,7 +11,7 @@
 #include <gfx_d3d/r_workercmds.h>
 
 // ParamData layout: Win32 [0]=jqWorkerCmd*, [1]=fence, inline data from [2]; x64 widens the pointer to two slots.
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
 #define JQ_PARAM_FENCE 2
 #define JQ_PARAM_INLINE 3
 #else

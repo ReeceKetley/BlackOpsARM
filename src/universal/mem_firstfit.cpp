@@ -1,7 +1,28 @@
 #include "mem_firstfit.h"
 #include "assertive.h"
+#if defined(__ANDROID__)
+#include <platform/android/hunk_services.h>
+#else
 #include <win32/win_common.h>
+#endif
 #include <cstdint>
+
+static void FirstFit_Lock()
+{
+#if defined(__ANDROID__)
+    bo1::android::LockFirstFit();
+#else
+    Sys_EnterCriticalSection(CRITSECT_MEMFIRSTFIT);
+#endif
+}
+static void FirstFit_Unlock()
+{
+#if defined(__ANDROID__)
+    bo1::android::UnlockFirstFit();
+#else
+    Sys_LeaveCriticalSection(CRITSECT_MEMFIRSTFIT);
+#endif
+}
 
 static constexpr uintptr_t kFirstFitBusyTag = static_cast<uintptr_t>(static_cast<intptr_t>(-559038737));
 
@@ -82,6 +103,9 @@ static uintptr_t FirstFit_AlignUser(uintptr_t linkAddr, int alignment)
 {
     // Heapnode header, then optional pad, then back-pointer, then aligned user payload.
     const uintptr_t minPayload = linkAddr + sizeof(_firstfit_heapnode) + sizeof(void *);
+#if BO1_NATIVE_64BIT
+    if (alignment < static_cast<int>(alignof(_firstfit_heapnode))) alignment = alignof(_firstfit_heapnode);
+#endif
     const uintptr_t mask = static_cast<uintptr_t>(alignment) - 1;
     return (minPayload + mask) & ~mask;
 }
@@ -93,12 +117,16 @@ void *__cdecl Hunk_FirstFitAlloc(HunkUser *_user, int size, int alignment)
     _firstfit_heapnode *last;
     int adj_size;
 
+#if BO1_NATIVE_64BIT
+    iassert(size >= 0 && size <= INT32_MAX - 8192);
+    iassert(alignment > 0 && alignment <= 4096 && !(alignment & (alignment - 1)));
+#endif
     if ( alignment <= 0
         && !Assert_MyHandler("C:\\projects_pc\\cod\\codsrc\\src\\universal\\mem_firstfit.cpp", 90, 0, "%s", "alignment>0") )
     {
         __debugbreak();
     }
-    Sys_EnterCriticalSection(CRITSECT_MEMFIRSTFIT);
+    FirstFit_Lock();
     free_link = user->free_blocks;
     last = nullptr;
     while ( 1 )
@@ -108,7 +136,15 @@ void *__cdecl Hunk_FirstFitAlloc(HunkUser *_user, int size, int alignment)
         {
             const uintptr_t linkAddr = reinterpret_cast<uintptr_t>(free_link);
             const uintptr_t aligned = FirstFit_AlignUser(linkAddr, alignment);
+#if BO1_NATIVE_64BIT
+            // The next heap header and payload back-pointer need native alignment,
+            // even when the requested payload size/alignment is only one byte.
+            const uintptr_t end = (aligned + static_cast<uintptr_t>(size) + alignof(_firstfit_heapnode) - 1)
+                & ~(static_cast<uintptr_t>(alignof(_firstfit_heapnode)) - 1);
+            adj_size = static_cast<int>(end - linkAddr);
+#else
             adj_size = static_cast<int>(aligned - linkAddr) + size;
+#endif
         }
         if ( free_link->size >= adj_size )
             break;
@@ -118,14 +154,18 @@ void *__cdecl Hunk_FirstFitAlloc(HunkUser *_user, int size, int alignment)
     if ( !free_link->next && (free_link->size - adj_size) <= 1024 )
     {
 LABEL_16:
-        Sys_LeaveCriticalSection(CRITSECT_MEMFIRSTFIT);
+        FirstFit_Unlock();
         return nullptr;
     }
     if ( (free_link->size - adj_size) > 1024 )
     {
         const uintptr_t linkAddr = reinterpret_cast<uintptr_t>(free_link);
         const uintptr_t aligned = FirstFit_AlignUser(linkAddr, alignment);
+#if BO1_NATIVE_64BIT
+        auto *split = reinterpret_cast<_firstfit_heapnode *>(linkAddr + static_cast<uintptr_t>(adj_size));
+#else
         auto *split = reinterpret_cast<_firstfit_heapnode *>(aligned + static_cast<uintptr_t>(size));
+#endif
         split->next = free_link->next;
         split->size = free_link->size - adj_size;
         free_link->next = split;
@@ -142,7 +182,7 @@ LABEL_16:
         free_link->next = reinterpret_cast<_firstfit_heapnode *>(kFirstFitBusyTag);
         *reinterpret_cast<_firstfit_heapnode **>(aligned - sizeof(void *)) = free_link;
         user->used += free_link->size;
-        Sys_LeaveCriticalSection(CRITSECT_MEMFIRSTFIT);
+        FirstFit_Unlock();
         return reinterpret_cast<void *>(aligned);
     }
 }
@@ -157,10 +197,22 @@ void __cdecl Hunk_FirstFitFree(HunkUser *_user, void *ptr)
     if ( !ptr )
         return;
 
-    Sys_EnterCriticalSection(CRITSECT_MEMFIRSTFIT);
+    FirstFit_Lock();
     last = nullptr;
     scan = user->free_blocks;
+#if BO1_NATIVE_64BIT
+    const uintptr_t first = reinterpret_cast<uintptr_t>(user) + sizeof(FirstFitHunkUser);
+    const uintptr_t end = reinterpret_cast<uintptr_t>(user) + user->size;
+    const uintptr_t address = reinterpret_cast<uintptr_t>(ptr);
+    iassert(address >= first + sizeof(_firstfit_heapnode) + sizeof(void *) && address < end);
+    iassert(address % alignof(void *) == 0);
+#endif
     free_link = *reinterpret_cast<_firstfit_heapnode **>(static_cast<unsigned char *>(ptr) - sizeof(void *));
+#if BO1_NATIVE_64BIT
+    const uintptr_t linkAddress = reinterpret_cast<uintptr_t>(free_link);
+    iassert(linkAddress >= first && linkAddress <= end - sizeof(_firstfit_heapnode));
+    iassert(linkAddress % alignof(_firstfit_heapnode) == 0);
+#endif
     if ( free_link->next == reinterpret_cast<_firstfit_heapnode *>(kFirstFitBusyTag) )
     {
         user->used -= free_link->size;
@@ -227,5 +279,5 @@ void __cdecl Hunk_FirstFitFree(HunkUser *_user, void *ptr)
         __debugbreak();
     }
 LABEL_24:
-    Sys_LeaveCriticalSection(CRITSECT_MEMFIRSTFIT);
+    FirstFit_Unlock();
 }

@@ -1,3 +1,4 @@
+#include <platform/bo1_native_width.h>
 #pragma once
 #include <qcommon/msg_mp.h>
 #include <bgame/bg_local.h>
@@ -160,6 +161,6 @@ struct client_t // sizeof=0x84D00
 };
 // zombies: connectState sits in padding; the KB size (544120, before and after) must not change.
 // Note: SV_AllocateClientMemory allocates 544000 (the "sizeof=0x84D00" above) per client, 120 short.
-#if !defined(BO1_PORT_X64)
+#if !BO1_NATIVE_64BIT
 static_assert(sizeof(client_t) == 544120, "client_t size changed");
 #endif

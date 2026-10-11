@@ -1,0 +1,514 @@
+{
+  "passes": {
+    "rng_script_pass1": {
+      "generatorFailure": true,
+      "errors": 0,
+      "warnings": 312,
+      "warningClasses": {
+        "-Wlanguage-extension-token": 282,
+        "-Wgnu-anonymous-struct": 10,
+        "-Wnested-anon-types": 4,
+        "-Wmissing-declarations": 4,
+        "-Wlogical-op-parentheses": 4,
+        "-Wunused-parameter": 4,
+        "-Wdollar-in-identifier-extension": 4
+      }
+    },
+    "rng_script_pass2": {
+      "generatorFailure": false,
+      "errors": 0,
+      "warnings": 322,
+      "warningClasses": {
+        "-Wlanguage-extension-token": 291,
+        "-Wgnu-anonymous-struct": 11,
+        "-Wnested-anon-types": 4,
+        "-Wmissing-declarations": 4,
+        "-Wlogical-op-parentheses": 4,
+        "-Wunused-parameter": 4,
+        "-Wdollar-in-identifier-extension": 4
+      }
+    }
+  },
+  "artifacts": [
+    {
+      "path": "build-android-audit/rng_script_pass2/CMakeFiles/3.22.1-g37088a8-dirty/CompilerIdCXX/CMakeCXXCompilerId.o",
+      "sha256": "e8994253d09e4a9b495058b23bc218bac7c62df2aa5adc893edf4c049dd0ddfd",
+      "machine": "AArch64"
+    },
+    {
+      "path": "build-android-audit/rng_script_pass2/CMakeFiles/bo1_arm64_abi_contract.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/arm64_abi_contract.cpp.o",
+      "sha256": "e2291ea7bf1a05f22b7a2e08945b4532abeed64bd350652ca8297d964e061097",
+      "machine": "AArch64"
+    },
+    {
+      "path": "build-android-audit/rng_script_pass2/CMakeFiles/bo1_arm64_narrow.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/android/narrow32_android.cpp.o",
+      "sha256": "c5f56d76be6187628596fe790f4b93ab4a50f5ae3722bc2f06c72cfc0ece5305",
+      "machine": "AArch64"
+    },
+    {
+      "path": "build-android-audit/rng_script_pass2/CMakeFiles/bo1_arm64_narrow_slot_probe.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/arm64_narrow_slot_probe.cpp.o",
+      "sha256": "7accadcd4dd4b0f6e86635455fabef416286ea3ff6723b451255fdc9bc8559ea",
+      "machine": "AArch64"
+    },
+    {
+      "path": "build-android-audit/rng_script_pass2/CMakeFiles/bo1_arm64_narrow_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/narrow32_tests.cpp.o",
+      "sha256": "7d911dc8e687e4cd1d4485ad7ac069329895929dc9e54b98290b49d787d1aae2",
+      "machine": "AArch64"
+    },
+    {
+      "path": "build-android-audit/rng_script_pass2/CMakeFiles/bo1_arm64_profile.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/android/profile_services.cpp.o",
+      "sha256": "2d50a3be164f78b04905464724638122d2be0abf6369d1a47d320332b13fede7",
+      "machine": "AArch64"
+    },
+    {
+      "path": "build-android-audit/rng_script_pass2/CMakeFiles/bo1_arm64_profile.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/universal/profile.cpp.o",
+      "sha256": "2b55f4179c7aca1d798df979614e0b141b12fc4a546fb41b332a186033fd938b",
+      "machine": "AArch64"
+    },
+    {
+      "path": "build-android-audit/rng_script_pass2/CMakeFiles/bo1_arm64_rng.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/android/engine_random.cpp.o",
+      "sha256": "376dacc191ff00d12186f93c13682f5e3aa7823d7d973a59ffbd26833b167504",
+      "machine": "AArch64"
+    },
+    {
+      "path": "build-android-audit/rng_script_pass2/CMakeFiles/bo1_arm64_utilities.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/universal/com_encode.cpp.o",
+      "sha256": "e216e0c434a55dd11316d625731096638a081f3e521e14d7de79104dc1df7b56",
+      "machine": "AArch64"
+    },
+    {
+      "path": "build-android-audit/rng_script_pass2/CMakeFiles/bo1_arm64_utilities.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/universal/com_math_anglevectors.cpp.o",
+      "sha256": "623377bcb9998be7a088f4d3a4850e5c128f8d3190c7789e2788741283363868",
+      "machine": "AArch64"
+    },
+    {
+      "path": "build-android-audit/rng_script_pass2/CMakeFiles/bo1_arm64_utilities.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/universal/timing.cpp.o",
+      "sha256": "d53ec99ec873e38055289607e61f18f8170d9d092e840e0f55f0aac2eaf01b73",
+      "machine": "AArch64"
+    },
+    {
+      "path": "build-android-audit/rng_script_pass2/CMakeFiles/bo1_engine_rng_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/engine_rng_tests.cpp.o",
+      "sha256": "4942a9fb51ba2f7b8598504c9b7b5fd449a32cb2f2c6d6a5a3fe8ffd1563771e",
+      "machine": "AArch64"
+    },
+    {
+      "path": "build-android-audit/rng_script_pass2/CMakeFiles/bo1_flag_guard_probe.dir/flag_guard_probe.cpp.o",
+      "sha256": "dec5a057d5209df770c40ca2f683a82e793931b0d5e908de956ec1199d8de499",
+      "machine": "AArch64"
+    },
+    {
+      "path": "build-android-audit/rng_script_pass2/CMakeFiles/bo1_math_axis_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/universal/com_math_anglevectors.cpp.o",
+      "sha256": "623377bcb9998be7a088f4d3a4850e5c128f8d3190c7789e2788741283363868",
+      "machine": "AArch64"
+    },
+    {
+      "path": "build-android-audit/rng_script_pass2/CMakeFiles/bo1_math_axis_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/math_axis_tests.cpp.o",
+      "sha256": "d1eb25b4a65ef0452c670af37171215b53248050d88bdd5b22fab230593fe0d8",
+      "machine": "AArch64"
+    },
+    {
+      "path": "build-android-audit/rng_script_pass2/CMakeFiles/bo1_profile_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/profile_tests.cpp.o",
+      "sha256": "751ef55c65cdeafc491b35a3bfaa85ac1123acff468394803ae128f158568a16",
+      "machine": "AArch64"
+    },
+    {
+      "path": "build-android-audit/rng_script_pass2/CMakeFiles/bo1_rng_tests.dir/rng_probe.cpp.o",
+      "sha256": "db138f40c40bc829ab13d0c1d5e59bf09d1a099ab8c3fba9cf1ab3ad8cab774e",
+      "machine": "AArch64"
+    },
+    {
+      "path": "build-android-audit/rng_script_pass2/CMakeFiles/bo1_script_headers_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/clientscript/cscr_instance.cpp.o",
+      "sha256": "c8a11af92817275ea91c04e9e2d22978bd6e9bd6c275e2b53231859792628d2a",
+      "machine": "AArch64"
+    },
+    {
+      "path": "build-android-audit/rng_script_pass2/CMakeFiles/bo1_script_headers_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/script_headers_tests.cpp.o",
+      "sha256": "a11205603f8904e883fedf8cdfaad76cf191a8b5da0e8cfe371cb75d01c59630",
+      "machine": "AArch64"
+    },
+    {
+      "path": "build-android-audit/rng_script_pass2/CMakeFiles/bo1_script_lookup_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/clientscript/cscr_readwrite.cpp.o",
+      "sha256": "063de9e27b30912662fc5f5ed49d742c66011e488d79e04b11c212579d71af12",
+      "machine": "AArch64"
+    },
+    {
+      "path": "build-android-audit/rng_script_pass2/CMakeFiles/bo1_script_lookup_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/script_lookup_tests.cpp.o",
+      "sha256": "6cce0bddf8e8ff5ebca3411bbe93b7910932f0e3efa5f6de7a965bdaf1e9a834",
+      "machine": "AArch64"
+    },
+    {
+      "path": "build-android-audit/rng_script_pass2/CMakeFiles/bo1_script_slot_tests.dir/script_slot_probe.cpp.o",
+      "sha256": "3d623fdf2f1e6de6037ff3a856508a979ff4e18d4af0428181300f7142ca6d14",
+      "machine": "AArch64"
+    },
+    {
+      "path": "build-android-audit/rng_script_pass2/CMakeFiles/bo1_win32_compat.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/win32_compat/win32_errors.cpp.o",
+      "sha256": "dfdefec54c6178b57475e15a41434d7598f19e06328a91537abf6971dc4a7601",
+      "machine": "AArch64"
+    },
+    {
+      "path": "build-android-audit/rng_script_pass2/CMakeFiles/bo1_win32_compat.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/win32_compat/win32_time.cpp.o",
+      "sha256": "30e75083d74b85ddb10bac4f0f31408cc640a486cda0e8e4e9a9d887845fea14",
+      "machine": "AArch64"
+    },
+    {
+      "path": "build-android-audit/rng_script_pass2/CMakeFiles/bo1_win32_compat_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/win32_compat_tests.cpp.o",
+      "sha256": "00c1fe1e5d9be296c066f2530f2f7910bcfbb4a305cc958018618558ca759516",
+      "machine": "AArch64"
+    },
+    {
+      "path": "build-android-audit/rng_script_pass2/CMakeFiles/bo1_win32_compat_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/win32_error_tests.cpp.o",
+      "sha256": "69d2495e7b1c51def15b70c28f013134b9ca93a5933a028211017294f80d67af",
+      "machine": "AArch64"
+    },
+    {
+      "path": "build-android-audit/rng_script_pass2/bo1_win32_compat_tests",
+      "sha256": "18f803ef568a7f7af5df1550ddf015c1624e942d7cb357d183cee8e409942500",
+      "machine": "AArch64"
+    },
+    {
+      "path": "build-android-audit/rng_script_pass2/bo1_arm64_narrow_tests",
+      "sha256": "b067696dda08ed08a01d0f02aeaa955a0bb1860638fd997dc4c9d6aa47ef3b9a",
+      "machine": "AArch64"
+    },
+    {
+      "path": "build-android-audit/rng_script_pass2/bo1_script_slot_tests",
+      "sha256": "d995e37974491e93205ad80a446785e42b0dd71a9fefceacaa41433bc0a8d8e5",
+      "machine": "AArch64"
+    },
+    {
+      "path": "build-android-audit/rng_script_pass2/bo1_script_headers_tests",
+      "sha256": "bad47d8174f205f9ad16e6433bc1d4aaa5340fb20a58bad6edc0b9b5baea79d1",
+      "machine": "AArch64"
+    },
+    {
+      "path": "build-android-audit/rng_script_pass2/bo1_profile_tests",
+      "sha256": "ee78e98c8f6af7fc6ba655680dfa105003584d4cbd9742243d342057169aa902",
+      "machine": "AArch64"
+    },
+    {
+      "path": "build-android-audit/rng_script_pass2/bo1_math_axis_tests",
+      "sha256": "36df4fc05dca7835e1f045ac519098d4ada68e100a51c116ccbfe0ac12abc235",
+      "machine": "AArch64"
+    },
+    {
+      "path": "build-android-audit/rng_script_pass2/bo1_rng_tests",
+      "sha256": "3ec69c8c752ef3c61c1b33de8a3094a7d1863180200fbe34d45b3f01e0c4f024",
+      "machine": "AArch64"
+    },
+    {
+      "path": "build-android-audit/rng_script_pass2/bo1_engine_rng_tests",
+      "sha256": "b855794b9d9e982311017ebc2f4c60d25cffb581283c696120ffb1d4aa930116",
+      "machine": "AArch64"
+    },
+    {
+      "path": "build-android-audit/rng_script_pass2/bo1_script_lookup_tests",
+      "sha256": "02b4df4fc10ed60ef955159bc1569c6fa1b468a5adae3ab1852c11afc29374fb",
+      "machine": "AArch64"
+    }
+  ],
+  "sourceSHA256": {
+    "src/universal/com_encode.cpp": "f4fa5f8f930188a69be0e53c723ddf2835ddc0e7858f2b729a481f14c6f0eda9",
+    "src/universal/com_math_anglevectors.cpp": "69e3acd05f380b1f59312d4cfb2e2f07d166628f03b973f216d243d3842ace9b",
+    "src/universal/timing.cpp": "8cfe05b2e52a5b308abb933666f46d168203ccb954c0160212ddd8336e1c84e5",
+    "src/platform/win32_compat/win32_time.cpp": "841d2f309d58fe7a16d9cf6b4bb5cb52389770df51bc5f160bb9f0adfa9065ab",
+    "src/platform/win32_compat/win32_errors.cpp": "a3f04736ac812422fdcd4040e1314b496909dc79199ee04b97800ed9d962cafc",
+    "tools/port/tests/win32_compat_tests.cpp": "135c1978c08482c640dda5c5ebfaca5398ff977f68952aa61e5dda21b5596e9f",
+    "tools/port/tests/win32_error_tests.cpp": "88995c3edb86cb913ae9fd177a98e218c5895ddd6b9e5669c67683158d012616",
+    "tools/port/tests/arm64_abi_contract.cpp": "17e040ff1cdab40d51e4bd0d133ac31704158f3eb35c0d224116c77277b02924",
+    "src/platform/android/narrow32_android.cpp": "e876b545af6b50ee4973d1e61513143c5764e2af99651ece00212254de968a0d",
+    "tools/port/tests/narrow32_tests.cpp": "21c85d0dca5f458f40cb2301ffd3f8def3dab5a5503904a19aaa27811ff60931",
+    "build-android-audit/rng_script_pass2/script_slot_probe.cpp": "4e98b86abd3d475417b21ff107d23aa7f81fce9f918aeaf845f3cc139e1459c0",
+    "build-android-audit/rng_script_pass2/flag_guard_probe.cpp": "e071b698ba0bbb6cbd8bfe075e9b1a19923d033982d719b422e260feecb0c404",
+    "src/universal/profile.cpp": "f730c8bea4f5d13856e742071ef9e0216f30420e4be82fd30409d7cae0b1bf32",
+    "src/platform/android/profile_services.cpp": "ac932aa0b35aff310d3e490ddec69981d8e2bdc3ee632ae4da7b2c74164034e6",
+    "tools/port/tests/script_headers_tests.cpp": "86edea67732996d0d1f0c9703ca59546271bd04bef99a8f99597e3fd820f3511",
+    "src/clientscript/cscr_instance.cpp": "570d23676ab00ca930190224434b78edb972865cbdfd847e5a52f017e8391311",
+    "tools/port/tests/profile_tests.cpp": "a827f065a002178dc14c132e2ff90addcd5f21155b28d17e8665522c272fc76a",
+    "tools/port/tests/math_axis_tests.cpp": "096df1e2f14a4aa6983794ac8358a489b9ee514573059b90a2213c6e337e1a06",
+    "build-android-audit/rng_script_pass2/rng_probe.cpp": "77adece0ee41509f12c3e5a4c0f6468dbde1641cb9a24c37201659a149e1ae9d",
+    "src/platform/android/engine_random.cpp": "1d275d3c2150bdba1d610dbeefb041ac41a3d20c9a6801580b8d68a8b05a9fdf",
+    "tools/port/tests/engine_rng_tests.cpp": "b4dfeea1fb79b5509eeadb4851e2f1d4310975fd17e70d2eb3c792ba6cdf0c34",
+    "tools/port/tests/script_lookup_tests.cpp": "4ae583f2d4526438c520537dff0675be0d0e1de16cccf16250031b4c0ed6e7d0",
+    "src/clientscript/cscr_readwrite.cpp": "cc1f9e4251f58ec0adeeb85ce8516e043e7a6d432fb1fc7f8a5d64615f51a991",
+    "tools/port/tests/arm64_narrow_slot_probe.cpp": "d040e31acd197e11cbff33623c944bdf9f680e66fa7bb00ca34240e5042555f1",
+    "src/clientscript/cscr_main.h": "99f73a770faa7bcf8638d0352b170aeb0da619733fb86d605d9288a658f63902",
+    "src/clientscript/cscr_variable.h": "4bdfbcda3ab7eeee4434241dda7081a54337b5f3ced166f0d16edf3fc4329efd",
+    "src/clientscript/cscr_debugger.h": "7e6801a3e0925dc5f6c84dd90ac90d69a2bc5eff1213be7c073421edd933f094",
+    "src/clientscript/cscr_instance.h": "e43510e9d904c6a5ba382f119eed5cba635b3d671afe624b36c41e86a6db799d",
+    "src/clientscript/cscr_stringlist.h": "e070abbd895c1e7e50dc9c75abd500f919aa5569c9a18d48d470510ad98cfe63",
+    "src/universal/mem_userhunk.h": "342eca1ac53c17b9b27abdf2f4e4e58247df1aa614ff8ec819a5366039fc27c6",
+    "src/universal/q_shared.h": "01ebda929fc896bc6ff867dbf70b8974d8d11d91a8d07afc8cc0fa789e78fe02",
+    "src/universal/profile.h": "4f4bc3b6f5debaa20cdf33bb03ae4052f8f9649c2929f3c4fda2ff07a04b4af8",
+    "src/universal/com_math.h": "378c636344982d09e9349a6e33fc9cd1845bfc571929a0f46a92a1d050b31993",
+    "src/universal/com_math.cpp": "4f68c9fba2c267a6947b7685968b6336cdc0717bf667266833dfb08b1bed2f84",
+    "src/platform/profile_services.h": "ae5eb497f6caaefa8077added8581124e889f9fdcf6caba6238fb656ab2a5260",
+    "src/platform/android/profile_services.h": "364f13334ca8939aeff5ab5e047a14bd346a461e8d9c611b9cba84696c17c0b5",
+    "src/universal/narrow32.h": "20b813cced7a54819957052b8b541b6f0cb74ae24ae20ab2894a56ec94463ba0",
+    "src/platform/engine_random.h": "c81df9fab447303846e9072e086b379e41184f7da48e22b0ef10a7c6e6bf26eb",
+    "src/platform/android/engine_random.h": "9076e610661e85708aadddd70aa00d21d0431f7186d7ed6197e338545af92988",
+    "src/clientscript/cscr_readwrite.h": "86af27af3a8753387185e4fb9d6b5b5ae963bce57fc1ec8154a98ed7ec434fdc",
+    "tools/port/tests/windows_crt_rng_vectors.h": "39dfea773112f181247b9b591ff9f17d470b323332cb443353acb52e93dc549d"
+  },
+  "copiedLogs": {
+    "rng_script_pass1.configure.log": {
+      "source": "build-android-audit/rng_script_pass1/configure.log",
+      "sha256": "5bdf6917cc9438959d8fe35de6b0b89e17dfa9032b691b16464f367d56047367"
+    },
+    "rng_script_pass1.build.log": {
+      "source": "build-android-audit/rng_script_pass1/build.log",
+      "sha256": "59ed1b5c70a09806136954f377fe2b0e46ba75c7f10e7892fe5ae63746a2772a"
+    },
+    "rng_script_pass1.compile_commands.json": {
+      "source": "build-android-audit/rng_script_pass1/compile_commands.json",
+      "sha256": "1e66b24a549113ad5ec77c67cde8d5cbfb7edc24eda2d99b4eaccdcc1dfdd448"
+    },
+    "rng_script_pass2.configure.log": {
+      "source": "build-android-audit/rng_script_pass2/configure.log",
+      "sha256": "28d62208ba098428e77aea353579639d6dd835461e4a952879d3751c7c762e8b"
+    },
+    "rng_script_pass2.build.log": {
+      "source": "build-android-audit/rng_script_pass2/build.log",
+      "sha256": "dd954769902ef928ddebb8b2386d10322e757d6a3cf794e820088aaf474a9831"
+    },
+    "rng_script_pass2.compile_commands.json": {
+      "source": "build-android-audit/rng_script_pass2/compile_commands.json",
+      "sha256": "70a58d48e380b491c4caee0e11725b8ae00795eb345d8754e51b3e232413fd45"
+    },
+    "host_x86.script_headers.compile.log": {
+      "source": "build-android-audit/host-script-20261011-171115629/x86/script_headers-compile.log",
+      "sha256": "4d8d99e04c8892637cc1c7cb598ffde685be8f0f55289c2520479c0c8b024a1e"
+    },
+    "host_x86.script_headers.test.log": {
+      "source": "build-android-audit/host-script-20261011-171115629/x86/script_headers-test.log",
+      "sha256": "b04093d31196bb07e377e4173f4baca477fc059610126a604d8df0a40585d640"
+    },
+    "host_x86.script_headers.command.txt": {
+      "source": "build-android-audit/host-script-20261011-171115629/x86/script_headers-command.txt",
+      "sha256": "0cd90979bf612cc3607ec63c7911912b1fb35b5c6e8b3ce0c136cdc5881f8a01"
+    },
+    "host_x86.profile.compile.log": {
+      "source": "build-android-audit/host-script-20261011-171115629/x86/profile-compile.log",
+      "sha256": "b73bf3e52ec38949de6272970091a8a61c7a8ee5dd56da9377ebd9da278d788d"
+    },
+    "host_x86.profile.test.log": {
+      "source": "build-android-audit/host-script-20261011-171115629/x86/profile-test.log",
+      "sha256": "396a28dbb79cc3992427d35022777d1e47729d002abb57c7ddc8e748efa8232a"
+    },
+    "host_x86.profile.command.txt": {
+      "source": "build-android-audit/host-script-20261011-171115629/x86/profile-command.txt",
+      "sha256": "bd71bf7f950812663eee4f42652abd687495d3c8394c80f8e3125df0fbf9c235"
+    },
+    "host_x86.math_axis.compile.log": {
+      "source": "build-android-audit/host-script-20261011-171115629/x86/math_axis-compile.log",
+      "sha256": "865ce6d213e3ebbadf47e38c044bb1d35d0fbbe54200a09e21eec8d35a43aa41"
+    },
+    "host_x86.math_axis.test.log": {
+      "source": "build-android-audit/host-script-20261011-171115629/x86/math_axis-test.log",
+      "sha256": "c8fc9fbf91a8f2309febf8bdd8940c208d7c4bb8855f5398a6c01ec428f61bf4"
+    },
+    "host_x86.math_axis.command.txt": {
+      "source": "build-android-audit/host-script-20261011-171115629/x86/math_axis-command.txt",
+      "sha256": "0122c41b0f4755f84017e4b21780091fe44652bbe0d92dc6c7428a100a4e29a8"
+    },
+    "host_x86.rng.compile.log": {
+      "source": "build-android-audit/host-script-20261011-171115629/x86/rng-compile.log",
+      "sha256": "24a5bcb34dbef50c00533b3dcfbfbcb05b4198a6d21f80e6689da181f3b602f8"
+    },
+    "host_x86.rng.test.log": {
+      "source": "build-android-audit/host-script-20261011-171115629/x86/rng-test.log",
+      "sha256": "4d97bb75ee629cdab6cf9a391560d74936f00d54817451be6525d6d5717f7eab"
+    },
+    "host_x86.rng.command.txt": {
+      "source": "build-android-audit/host-script-20261011-171115629/x86/rng-command.txt",
+      "sha256": "1f66a0caaae2e4964e85292f3e2e88723581f728445f74f14cae565285223fe2"
+    },
+    "host_x86.engine_rng.compile.log": {
+      "source": "build-android-audit/host-script-20261011-171115629/x86/engine_rng-compile.log",
+      "sha256": "0dfe3c3ed4acb8a7bc5911f287c5ddf232f8a432c7dd11214eb9a0b35861a83b"
+    },
+    "host_x86.engine_rng.test.log": {
+      "source": "build-android-audit/host-script-20261011-171115629/x86/engine_rng-test.log",
+      "sha256": "1a3dbbf1de6cd4bca79cce92aeba51945939ba2254a77e2b0131367d3e9c1ef3"
+    },
+    "host_x86.engine_rng.command.txt": {
+      "source": "build-android-audit/host-script-20261011-171115629/x86/engine_rng-command.txt",
+      "sha256": "8e6437033ab4ed0ff3b13e4d75e851533c3685d02def3f7208df7f1537170141"
+    },
+    "host_x86.script_lookup.compile.log": {
+      "source": "build-android-audit/host-script-20261011-171115629/x86/script_lookup-compile.log",
+      "sha256": "6e05655c7fa7aaee4fa617daa290d8e96f2a07e30d3bff7da5170c4dca47e5a1"
+    },
+    "host_x86.script_lookup.test.log": {
+      "source": "build-android-audit/host-script-20261011-171115629/x86/script_lookup-test.log",
+      "sha256": "2603f35f0754ec28af5d1c58e3afe0b9e73faa030c476edf2b18c2fc0310fbfb"
+    },
+    "host_x86.script_lookup.command.txt": {
+      "source": "build-android-audit/host-script-20261011-171115629/x86/script_lookup-command.txt",
+      "sha256": "18f65a563223470c2a959dd612767ad6e5af278b5e753ca5f045c89f6bf8d0af"
+    },
+    "narrow_x86.compile.log": {
+      "source": "build-android-audit/host-narrow-20261011-171215821/x86/compile.log",
+      "sha256": "f3156e83a2ef752e8684cc5a67d8e8fe6868703bd6cf7c53429c0c44a865ad6e"
+    },
+    "narrow_x86.test.log": {
+      "source": "build-android-audit/host-narrow-20261011-171215821/x86/test.log",
+      "sha256": "deafbbee1651fead81cf3a2148c39d94c29b55103115c281187a22d9112835ae"
+    },
+    "narrow_x86.slot-compile.log": {
+      "source": "build-android-audit/host-narrow-20261011-171215821/x86/slot-compile.log",
+      "sha256": "4942f19afa11dfeca0972aca2deb03bbff200671cf55e0f3de70a43fe54b0410"
+    },
+    "narrow_x86.slot-test.log": {
+      "source": "build-android-audit/host-narrow-20261011-171215821/x86/slot-test.log",
+      "sha256": "d80cc866395942902fc3712b00f9f509ee365200fd3b5b8c7d4c35b8becb7dae"
+    },
+    "narrow_x86.guard-compile.log": {
+      "source": "build-android-audit/host-narrow-20261011-171215821/x86/guard-compile.log",
+      "sha256": "a1b19ae4f780c4a739d07360a11cc7512d030e3bf7178a087dfd95743a686f28"
+    },
+    "host_x64.script_headers.compile.log": {
+      "source": "build-android-audit/host-script-20261011-171115629/x64/script_headers-compile.log",
+      "sha256": "06610fd04c3d3d635dfae1063254797e4b8ea2b4d4ed6cd02ed8b57402265033"
+    },
+    "host_x64.script_headers.test.log": {
+      "source": "build-android-audit/host-script-20261011-171115629/x64/script_headers-test.log",
+      "sha256": "b04093d31196bb07e377e4173f4baca477fc059610126a604d8df0a40585d640"
+    },
+    "host_x64.script_headers.command.txt": {
+      "source": "build-android-audit/host-script-20261011-171115629/x64/script_headers-command.txt",
+      "sha256": "69a69c30b1f805182f60ff59e62d1c785a241b359546c721ca75fdf6d441e176"
+    },
+    "host_x64.profile.compile.log": {
+      "source": "build-android-audit/host-script-20261011-171115629/x64/profile-compile.log",
+      "sha256": "b73bf3e52ec38949de6272970091a8a61c7a8ee5dd56da9377ebd9da278d788d"
+    },
+    "host_x64.profile.test.log": {
+      "source": "build-android-audit/host-script-20261011-171115629/x64/profile-test.log",
+      "sha256": "396a28dbb79cc3992427d35022777d1e47729d002abb57c7ddc8e748efa8232a"
+    },
+    "host_x64.profile.command.txt": {
+      "source": "build-android-audit/host-script-20261011-171115629/x64/profile-command.txt",
+      "sha256": "31e7afac326d807fe63394c5125199520256aaee3ccfec37b8df9d0be5bc8116"
+    },
+    "host_x64.math_axis.compile.log": {
+      "source": "build-android-audit/host-script-20261011-171115629/x64/math_axis-compile.log",
+      "sha256": "865ce6d213e3ebbadf47e38c044bb1d35d0fbbe54200a09e21eec8d35a43aa41"
+    },
+    "host_x64.math_axis.test.log": {
+      "source": "build-android-audit/host-script-20261011-171115629/x64/math_axis-test.log",
+      "sha256": "c8fc9fbf91a8f2309febf8bdd8940c208d7c4bb8855f5398a6c01ec428f61bf4"
+    },
+    "host_x64.math_axis.command.txt": {
+      "source": "build-android-audit/host-script-20261011-171115629/x64/math_axis-command.txt",
+      "sha256": "710aa38d9e1cf0f015f5e5430cfb973cd7358a2d47e5f5c3afb3d91ad2c5048c"
+    },
+    "host_x64.rng.compile.log": {
+      "source": "build-android-audit/host-script-20261011-171115629/x64/rng-compile.log",
+      "sha256": "24a5bcb34dbef50c00533b3dcfbfbcb05b4198a6d21f80e6689da181f3b602f8"
+    },
+    "host_x64.rng.test.log": {
+      "source": "build-android-audit/host-script-20261011-171115629/x64/rng-test.log",
+      "sha256": "4d97bb75ee629cdab6cf9a391560d74936f00d54817451be6525d6d5717f7eab"
+    },
+    "host_x64.rng.command.txt": {
+      "source": "build-android-audit/host-script-20261011-171115629/x64/rng-command.txt",
+      "sha256": "4064e6e4bd54a63add201ec1446b515e9561ee7269b8210502c129bf8954b5eb"
+    },
+    "host_x64.engine_rng.compile.log": {
+      "source": "build-android-audit/host-script-20261011-171115629/x64/engine_rng-compile.log",
+      "sha256": "0dfe3c3ed4acb8a7bc5911f287c5ddf232f8a432c7dd11214eb9a0b35861a83b"
+    },
+    "host_x64.engine_rng.test.log": {
+      "source": "build-android-audit/host-script-20261011-171115629/x64/engine_rng-test.log",
+      "sha256": "1a3dbbf1de6cd4bca79cce92aeba51945939ba2254a77e2b0131367d3e9c1ef3"
+    },
+    "host_x64.engine_rng.command.txt": {
+      "source": "build-android-audit/host-script-20261011-171115629/x64/engine_rng-command.txt",
+      "sha256": "250a7576bee585148695b7d13b4a02a078e1e8fbe4ba35aa4483721019efc87e"
+    },
+    "host_x64.script_lookup.compile.log": {
+      "source": "build-android-audit/host-script-20261011-171115629/x64/script_lookup-compile.log",
+      "sha256": "75554d4be01d90f9128014ac73d0049c556dbd50904236c4ef630d4c1ef34398"
+    },
+    "host_x64.script_lookup.test.log": {
+      "source": "build-android-audit/host-script-20261011-171115629/x64/script_lookup-test.log",
+      "sha256": "2603f35f0754ec28af5d1c58e3afe0b9e73faa030c476edf2b18c2fc0310fbfb"
+    },
+    "host_x64.script_lookup.command.txt": {
+      "source": "build-android-audit/host-script-20261011-171115629/x64/script_lookup-command.txt",
+      "sha256": "7e7c0bb8e1c9d6be8980fc62a190976fb774fe77a665233c9bc05d5e6e5532b5"
+    },
+    "narrow_x64.compile.log": {
+      "source": "build-android-audit/host-narrow-20261011-171215821/x64/compile.log",
+      "sha256": "f3156e83a2ef752e8684cc5a67d8e8fe6868703bd6cf7c53429c0c44a865ad6e"
+    },
+    "narrow_x64.test.log": {
+      "source": "build-android-audit/host-narrow-20261011-171215821/x64/test.log",
+      "sha256": "ba7104e2ac0de98159fe7ba56636d9b291dc4c3bbe291688d786e35b7043b90b"
+    },
+    "narrow_x64.slot-compile.log": {
+      "source": "build-android-audit/host-narrow-20261011-171215821/x64/slot-compile.log",
+      "sha256": "4942f19afa11dfeca0972aca2deb03bbff200671cf55e0f3de70a43fe54b0410"
+    },
+    "narrow_x64.slot-test.log": {
+      "source": "build-android-audit/host-narrow-20261011-171215821/x64/slot-test.log",
+      "sha256": "d80cc866395942902fc3712b00f9f509ee365200fd3b5b8c7d4c35b8becb7dae"
+    },
+    "narrow_x64.guard-compile.log": {
+      "source": "build-android-audit/host-narrow-20261011-171215821/x64/guard-compile.log",
+      "sha256": "a1b19ae4f780c4a739d07360a11cc7512d030e3bf7178a087dfd95743a686f28"
+    },
+    "narrow_x64.guard-off-compile.log": {
+      "source": "build-android-audit/host-narrow-20261011-171215821/x64/guard-off-compile.log",
+      "sha256": "a1b19ae4f780c4a739d07360a11cc7512d030e3bf7178a087dfd95743a686f28"
+    },
+    "rng_oracle_x86.command.txt": {
+      "source": "build-android-audit/host-rng-20261011-170846140/x86/command.txt",
+      "sha256": "1f67808c317365d8120cef110cbdbf1871ae873ebfe3c0032d19ec46b6a24d31"
+    },
+    "rng_oracle_x86.compile.log": {
+      "source": "build-android-audit/host-rng-20261011-170846140/x86/compile.log",
+      "sha256": "ea510355bee4d1c690f45ed12d97436fe110004a721133d24594a2489beb8893"
+    },
+    "rng_oracle_x86.test.log": {
+      "source": "build-android-audit/host-rng-20261011-170846140/x86/test.log",
+      "sha256": "67a48bebe645d431463196c02ac8862d6035bbba29cc16f4afaf30b177b2353a"
+    },
+    "rng_oracle_x86.windows_crt_rng_vectors.h": {
+      "source": "build-android-audit/host-rng-20261011-170846140/x86/windows_crt_rng_vectors.h",
+      "sha256": "39dfea773112f181247b9b591ff9f17d470b323332cb443353acb52e93dc549d"
+    },
+    "rng_oracle_x64.command.txt": {
+      "source": "build-android-audit/host-rng-20261011-170846140/x64/command.txt",
+      "sha256": "40fc4b625c013213b8741163f71ca175ba44c8cefbe74c913be58ebce3cc73d6"
+    },
+    "rng_oracle_x64.compile.log": {
+      "source": "build-android-audit/host-rng-20261011-170846140/x64/compile.log",
+      "sha256": "ea510355bee4d1c690f45ed12d97436fe110004a721133d24594a2489beb8893"
+    },
+    "rng_oracle_x64.test.log": {
+      "source": "build-android-audit/host-rng-20261011-170846140/x64/test.log",
+      "sha256": "67a48bebe645d431463196c02ac8862d6035bbba29cc16f4afaf30b177b2353a"
+    },
+    "rng_oracle_x64.windows_crt_rng_vectors.h": {
+      "source": "build-android-audit/host-rng-20261011-170846140/x64/windows_crt_rng_vectors.h",
+      "sha256": "39dfea773112f181247b9b591ff9f17d470b323332cb443353acb52e93dc549d"
+    },
+    "device-tests.log": {
+      "source": "build-android-audit/rng_script_pass2/device-tests.log",
+      "sha256": "b6f96889c99d8bd5f4947009e8eb2eeb51b2f014e5d37c50bc099489784011bc"
+    },
+    "apk-recheck.log": {
+      "source": "build-android-audit/rng_script_pass2/apk-recheck.log",
+      "sha256": "85d628a101647d9424b7429164f38640022777e04ca80d67f4da8b1a0c2bcc11"
+    },
+    "diff-check.log": {
+      "source": "build-android-audit/rng_script_pass2/diff-check.log",
+      "sha256": "e13353668047342f9766f10270b9ad69210ad25c4bfbf5ad8989322ffa9cf188"
+    }
+  },
+  "compiler": "Android (16134705, based on r574158c) clang version 21.0.0 (https://android.googlesource.com/toolchain/llvm-project 9f872551d3c681d06fd303b36f16ed5c274735eb)\nTarget: x86_64-w64-windows-gnu\nThread model: posix\nInstalledDir: D:/Android/Sdk/ndk/30.0.16248370/toolchains/llvm/prebuilt/windows-x86_64/bin\n",
+  "finalBuild": "build-android-audit/rng_script_pass2",
+  "hostBuild": "build-android-audit/host-script-20261011-171115629",
+  "narrowBuild": "build-android-audit/host-narrow-20261011-171215821"
+}

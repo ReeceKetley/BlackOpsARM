@@ -1,3 +1,4 @@
+#include <platform/engine_random.h>
 #include "rope.h"
 #include <qcommon/cm_load.h>
 #include "physconstraints_load_obj.h"
@@ -633,8 +634,8 @@ void __cdecl Rope_ApplyPhysics(int rope_index, float dt)
     ++g_update_count;
     gravity = -800.0f;
     BG_GetVariantWindVector(rope_index % 16, wind_vector);
-    wind_vector[0] = (float)((float)(rand() % 101) / 100.0) * wind_vector[0];
-    wind_vector[1] = (float)((float)(rand() % 101) / 100.0) * wind_vector[1];
+    wind_vector[0] = (float)((float)(BO1_CrtRand() % 101) / 100.0) * wind_vector[0];
+    wind_vector[1] = (float)((float)(BO1_CrtRand() % 101) / 100.0) * wind_vector[1];
     v2 = RETURN_ZERO32();
     windscale = CG_GetLocalWindSourceScale(v2, (float *)rope) * 10.0 + 1.0;
     wind_vector[0] = wind_vector[0] * windscale;

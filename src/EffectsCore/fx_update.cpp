@@ -1,3 +1,4 @@
+#include <platform/engine_random.h>
 #include "fx_update.h"
 #include <cgame/cg_sp_client_ext.h>
 #include "fx_random.h"
@@ -2172,7 +2173,7 @@ unsigned __int8 __cdecl FX_ProcessEmitting(
     while (1)
     {
         distLastEmit = distNextEmit;
-        distNextEmit = (float)((float)((float)((float)rand() * 0.000030517578) * elemDef->emitDistVariance.amplitude)
+        distNextEmit = (float)((float)((float)((float)BO1_CrtRand() * 0.000030517578) * elemDef->emitDistVariance.amplitude)
             + baseDistPerEmit)
             + distNextEmit;
         if (distNextEmit > distInUpdate)

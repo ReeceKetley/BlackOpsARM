@@ -1,3 +1,4 @@
+#include <platform/bo1_native_width.h>
 // Included by g_sp_savegame.cpp after the weapon-name helpers.
 // zombies: entity images (SP 0x007EA5C0 / 0x007EC6C0), DERIVED KB field tables.
 // SP gentity is 0x34C with 31 attachments; KB stays 0x2F8 with 19. SP-only fields
@@ -40,13 +41,13 @@ static const SPEntitySaveField s_tagFields[] = {
     { offsetof(tagInfo_s, next), sizeof(((tagInfo_s *)0)->next), 2 },
     { offsetof(tagInfo_s, name), sizeof(((tagInfo_s *)0)->name), 1 }
 };
-#if !defined(BO1_PORT_X64)
+#if !BO1_NATIVE_64BIT
 static_assert(sizeof(gentity_s) == 0x2F8, "DERIVED entity image");
 #endif
 #if !defined(BO1_PORT_X64)
 static_assert(sizeof(gentitySpExt) == 0x20, "DERIVED entity extension image");
 #endif
-#if !defined(BO1_PORT_X64)
+#if !BO1_NATIVE_64BIT
 static_assert(sizeof(tagInfo_s) == 0x70 && offsetof(tagInfo_s, name) == 8, "DERIVED tag image");
 #endif
 #if !defined(BO1_PORT_X64)

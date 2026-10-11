@@ -1,0 +1,105 @@
+# Current State
+
+Updated 2026-10-11. Debugger handle/allocation gate complete
+(DEC-0014/0015, FACT-0017/0018). See docs/port/arm64_debugger.md.
+
+## Architecture
+
+- android-arm64 shares BlackOps64 history with an independent index/directory.
+  Base is 76edfd5; the user authorized a local checkpoint at agent rotation.
+  The commit containing docs/port/agent_handoff.md records the durable work;
+  resolve its ID with git log -1. Windows main remains at 76edfd5. No push.
+- Existing CMake inventory selects ten actual T5 units: com_encode.cpp,
+  com_math_anglevectors.cpp, timing.cpp, profile.cpp, cscr_instance.cpp,
+  cscr_readwrite.cpp, cscr_parsetree.cpp, mem_userhunk.cpp, cscr_evaluate.cpp
+  and mem_firstfit.cpp. Evaluator function bodies remain unchanged.
+- Parse constructor bodies remain unchanged. Four-byte sval_u/Narrow32 slots,
+  native runtime pointers and disk/FastFile assertions remain active.
+- Actual default HunkUser policy uses typed dispatch adapters. Windows retains
+  page/allocation policy. Android uses native-page mmap/mprotect/madvise/munmap
+  services, bounds/type checks and corrected exact-end rounding.
+- Registry operations are mutex-protected; individual HunkUser mutation remains
+  owner-thread confined. Caller-owned buffers are never unmapped. Handles must
+  not outlive their owning arena; Narrow32 has no stale-handle invalidation.
+- Debugger cleanup uses typed handles; prepend decodes links before indexing;
+  buffer/string returns preserve node handles and copied bytes. Actual first-fit
+  aligns native headers/back-pointers while retaining Win32 placement policy.
+- Android Z_Malloc/Free own zeroed, aligned allocations with synchronized
+  metadata. First-fit uses a recursive mutex; debug HunkUser requires registered
+  main-thread identity. Default/debug reserve and default/first-fit caller-buffer
+  schemes are supported; tracking/fixed schemes remain rejected.
+- Fifty missing compiler/VM endpoints abort in test-only generated fixtures;
+  cleanup reference/value state is explicitly test-owned. No fixture enters the
+  APK. First-fit reset/destroy require quiescent users; debug lists remain
+  owner-thread confined. No runtime success stubs.
+- Previous native profiler, first-party Windows-reference per-thread CRT RNG,
+  lookup, timing/error and handle foundations remain tested. Vendor RNG and
+  full replay schedules remain independent/unvalidated. DXVK 1.9.2/SDL2 is a
+  separate future renderer dependency; root Ledger owns shared history.
+
+## Working
+
+- Final NDK r30/Clang21/API28/arm64-v8a/Debug C++20: 0 errors, 1261 retained
+  warnings, successful link. 55 ELF64 little-endian AArch64 artifacts verified.
+- Thirteen HONOR NDL-L09/API36 probes pass. Actual node0..8, raw slot values,
+  list operations, 10000 retained nodes through arena growth and both instance
+  ownership/lifetimes pass with four-byte ABI and real addresses above 4 GB.
+- Actual HunkUser passes 2000 payloads/alignment 1..4096, growth/reset/recommit,
+  caller-buffer ownership/SetPos, string copying and 800 independent threaded
+  arenas. Native memory protection/discard/bounds/failure checks pass in isolated
+  children; device native page size is 4096.
+- Actual debugger node0..4/prepend/aligned copies, both instance cleanup,
+  initialization/canonical comparison and numeric/boolean literals pass. Real
+  first-fit tests retain 400 odd payloads and run 8000 shared-pool operations;
+  another 8000 allocations validate real zeroed Z ownership. Android children
+  verify invalid free/size/alignment and main-thread failures abort explicitly.
+- Actual parsetree/HunkUser/evaluator/first-fit objects and new probe bodies use
+  unrecoverable UBSan; passing paths have no findings. Native service libraries
+  and the whole engine are not claimed comprehensively sanitized.
+- Both new probes pass with MSVC x86/x64 in this Android worktree. Debugger host
+  probes use the Android heap; first-fit hosts use real Windows virtual memory,
+  thread identity and critical sections. Production Windows Z heap is unchanged.
+  Existing direct-header/profiler/maths/RNG/lookup and Narrow32/483 flag-guard
+  probes also pass from this Android worktree.
+- APK assemble/lint passes; scaffold APK SHA256 unchanged. Windows/DXVK/root
+  Ledger and all four earlier evidence directories remain unchanged.
+  Exact incremental changes: docs/port/arm64_debugger_changes.md.
+
+## Broken or Blocked
+
+WARN-0007: normal-to-debugger expression compilation, text parsing, string
+interning, callable slots/lists, nonliteral operators/variables and full VM
+remain unvalidated. Cleanup uses test-owned value/reference callbacks. Fifty
+unavailable test endpoints abort and cannot ship. The unchanged Windows engine
+Z heap's 164-byte prefix does not certify native debugger-prefix alignment;
+testing the Android heap on Windows does not establish that integration.
+Tracking/fixed schemes remain unsupported. Expected OOM child abort reaches the
+test-only diagnostic-stack fixture, not a complete engine handler.
+No actual 16 KB Android device/emulator or Samsung S25 test has run. No full
+replay, profiler live-report synchronization, graphics/audio/input or gameplay
+claim. All com_math.cpp and RNG caller modules remain outside compilation.
+
+## Current Milestone
+
+TASK-0006 complete/archived; WARN-0006 superseded by WARN-0007. Older evidence
+remains frozen; new evidence is docs/port/evidence/arm64_debugger. Full engine
+and backend integration remain deferred. No Windows checkout build or write.
+
+## Agent Rotation
+
+The bounded task is complete; no active compiler/native probes or partially
+running work remain. docs/port/agent_handoff.md records exact HONOR reproduction
+commands and TASK-0007 acceptance criteria. The user requests a local checkpoint
+of all accumulated durable Android changes; no push is authorized.
+evidence/agent_handoff/pre_commit_inventory.json records modified/untracked files
+before checkpoint. Ignored builds, scratch outputs, SQLite and local.properties
+remain local and retained. Five frozen evidence archives preserve failures and
+reference data; root Ledger remains unchanged.
+
+## Next Work
+
+TASK-0007: exercise actual normal-to-debugger numeric/boolean expression
+compilation, then inspect list/string/callable ownership dependencies. Establish
+only services justified by the bounded gate. Retain Windows/four-byte ABI
+references and account for the Windows legacy Z heap alignment. Obtain real 16 KB
+Android page evidence when suitable hardware/emulator becomes available.

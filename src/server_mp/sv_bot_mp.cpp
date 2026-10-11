@@ -1,3 +1,4 @@
+#include <platform/engine_random.h>
 #include "sv_bot_mp.h"
 #include <server/server.h>
 #include <game/actor_navigation.h>
@@ -801,15 +802,15 @@ void __cdecl Bot_UpdateBestThreat(bot_info_t *botInfo, bot_threat_t *threats, in
                     {
                         bestThreat = &threats[i];
                     }
-                    else if ( human && random() < 0.75 )
+                    else if ( human && BO1_Random() < 0.75 )
                     {
                         bestThreat = &threats[i];
                     }
-                    else if ( closer && random() < 0.5 )
+                    else if ( closer && BO1_Random() < 0.5 )
                     {
                         bestThreat = &threats[i];
                     }
-                    else if ( betterAngle && random() < 0.5 )
+                    else if ( betterAngle && BO1_Random() < 0.5 )
                     {
                         bestThreat = &threats[i];
                     }
@@ -1121,7 +1122,7 @@ void __cdecl Bot_GetStrafeInput(const client_t *bot, bot_info_t *botInfo, usercm
     checkStrafe = v4;
     if ( v4 )
     {
-        if ( sv_botStrafeChance->current.value <= random() )
+        if ( sv_botStrafeChance->current.value <= BO1_Random() )
         {
             cmd->forwardmove = 0;
             cmd->rightmove = 0;
@@ -2132,11 +2133,11 @@ void __cdecl Bot_UpdateStance(bot_info_t *botInfo, const client_t *bot, usercmd_
     if ( Path_Exists(&botInfo->path)
         && !Bot_IsAtNegotiationNode(botInfo, bot, &botInfo->path)
         && sv_botCrouchDistance->current.value > botInfo->path.fLookaheadDist
-        && random() < 0.050000001 )
+        && BO1_Random() < 0.050000001 )
     {
         if ( svs.time >= botInfo->lastMoveTime )
             Bot_SetTimedAction(9u, &botInfo->crouchEndTime, sv_botMinCrouchTime, sv_botMaxCrouchTime, cmd, &bot->lastUsercmd);
-        if ( random() < 0.2 )
+        if ( BO1_Random() < 0.2 )
             Bot_SetTimedAction(0xBu, &botInfo->adsEndTime, sv_botMinAdsTime, sv_botMaxAdsTime, cmd, &bot->lastUsercmd);
     }
     if ( botInfo->crouchEndTime )
@@ -2198,7 +2199,7 @@ void __cdecl Bot_UpdateSprint(bot_info_t *botInfo, const client_t *bot, usercmd_
                 {
                     cmd->button_bits.setBit(1);
                 }
-                if ( (ps->pm_flags & 0x8000) != 0 && ps->damageCount > 1 && random() < 0.30000001 )
+                if ( (ps->pm_flags & 0x8000) != 0 && ps->damageCount > 1 && BO1_Random() < 0.30000001 )
                     cmd->button_bits.setBit(0x2C);
                 //if ( g_DXDeviceThread == GetCurrentThreadId() )
                     //D3DPERF_EndEvent();
@@ -2248,7 +2249,7 @@ void __cdecl Bot_UpdateReload(bot_info_t *botInfo, const client_t *bot, usercmd_
         v4 = curClip > 999 ? 999 : curClip;
         maxClip = BG_GetClipSize(ps->ps.weapon);
         v3 = maxClip > 999 ? 999 : maxClip;
-        if ( (float)((float)v3 * weapDef->lowAmmoWarningThreshold) >= (float)v4 && (botInfo->sightHitNum || random() < 0.1) )
+        if ( (float)((float)v3 * weapDef->lowAmmoWarningThreshold) >= (float)v4 && (botInfo->sightHitNum || BO1_Random() < 0.1) )
             cmd->button_bits.setBit(5);
     }
     //if ( GetCurrentThreadId() == g_DXDeviceThread )
@@ -2279,7 +2280,7 @@ void __cdecl Bot_UpdateCombat(bot_info_t *botInfo, const client_t *bot, usercmd_
     ps = G_GetPlayerState(bot->gentity->s.number);
     if ( Bot_IsFlashbanged(bot) )
     {
-        if ( random() < 0.0099999998 )
+        if ( BO1_Random() < 0.0099999998 )
             cmd->button_bits.setBit(2);
         //if ( GetCurrentThreadId() != g_DXDeviceThread )
         //    return;
@@ -2287,7 +2288,7 @@ LABEL_98:
         //D3DPERF_EndEvent();
         return;
     }
-    if ( ps->ps.throwBackGrenadeTimeLeft > 0 && random() < 0.89999998 )
+    if ( ps->ps.throwBackGrenadeTimeLeft > 0 && BO1_Random() < 0.89999998 )
     {
         cmd->button_bits.resetBit(0);
         cmd->button_bits.resetBit(0xB);
@@ -2375,29 +2376,29 @@ LABEL_98:
     {
         if ( sv_botsForceFragOnly->current.enabled )
         {
-            if ( random() < 0.0099999998 )
+            if ( BO1_Random() < 0.0099999998 )
                 cmd->button_bits.setBit(0xE);
         }
         else if ( sv_botsForceSpecialOnly->current.enabled )
         {
-            if ( random() < 0.0099999998 )
+            if ( BO1_Random() < 0.0099999998 )
                 cmd->button_bits.setBit(0xF);
         }
         else
         {
-            if ( random() < 0.0049999999 || sv_botsForceFragOnly->current.enabled )
+            if ( BO1_Random() < 0.0049999999 || sv_botsForceFragOnly->current.enabled )
                 goto LABEL_87;
-            if ( random() < 0.0049999999
+            if ( BO1_Random() < 0.0049999999
                 || sv_botsForceSpecialOnly->current.enabled
                 || ((v7 = botInfo->threat.enemy) == 0 || !v7->pTurretInfo ? (v4 = 0) : (v4 = 1),
-                        v4 && botInfo->threat.distSq < 4194304.0 && random() < 0.050000001) )
+                        v4 && botInfo->threat.distSq < 4194304.0 && BO1_Random() < 0.050000001) )
             {
                 cmd->button_bits.setBit(0xF);
                 goto LABEL_95;
             }
             v6 = botInfo->threat.enemy;
             v3 = v6 && v6->pTurretInfo;
-            if ( v3 && botInfo->threat.distSq < 4194304.0 && random() < 0.050000001 )
+            if ( v3 && botInfo->threat.distSq < 4194304.0 && BO1_Random() < 0.050000001 )
             {
 LABEL_87:
                 cmd->button_bits.setBit(0xE);
@@ -2409,7 +2410,7 @@ LABEL_87:
             else if ( !cmd->button_bits.testBit(0xB) )
             {
                 cmd->button_bits.setBit(0);
-                if ( weapDef->bDualWield && random() < 0.89999998 )
+                if ( weapDef->bDualWield && BO1_Random() < 0.89999998 )
                     cmd->button_bits.setBit(0x18);
             }
         }
@@ -2433,7 +2434,7 @@ char __cdecl Bot_UpdateMelee(bot_info_t *botInfo, const client_t *bot, usercmd_s
                 //D3DPERF_EndEvent();
             return 0;
         }
-        else if ( (float)(40.0 * 40.0) <= botInfo->threat.distSq || random() >= 0.75 )
+        else if ( (float)(40.0 * 40.0) <= botInfo->threat.distSq || BO1_Random() >= 0.75 )
         {
             //if ( g_DXDeviceThread == GetCurrentThreadId() )
                 //D3DPERF_EndEvent();
@@ -2730,7 +2731,7 @@ char __cdecl Bot_GrenadePickType(const bot_info_t *botInfo, const playerState_s 
     {
         enemy = botInfo->threat.enemy;
         v4 = enemy && enemy->pTurretInfo;
-        if ( v4 || random() < 0.0099999998 )
+        if ( v4 || BO1_Random() < 0.0099999998 )
         {
             *slot = OFFHAND_SLOT_TACTICAL_GRENADE;
             offHandIndex = BG_GetFirstAvailableOffhand(ps, *slot);
@@ -2812,7 +2813,7 @@ char __cdecl Bot_ShouldThrowGrenade(bot_info_t *botInfo, const client_t *bot)
                                     if ( v4
                                         && svs.time + irand(sv_botMinGrenadeTime->current.integer, sv_botMaxGrenadeTime->current.integer) > botInfo->threat.lastSightTime )
                                     {
-                                        if ( random() >= 0.75 )
+                                        if ( BO1_Random() >= 0.75 )
                                         {
                                             botInfo->grenadeTime = svs.time + 2000;
                                             //if ( g_DXDeviceThread == GetCurrentThreadId() )
@@ -2828,18 +2829,18 @@ char __cdecl Bot_ShouldThrowGrenade(bot_info_t *botInfo, const client_t *bot)
                                     }
                                     else if ( botInfo->sightHitNum
                                                  || Bot_IsInRangeOfEnemy(bot, botInfo->threat.enemy, &distSq)
-                                                 || random() >= 0.25 )
+                                                 || BO1_Random() >= 0.25 )
                                     {
                                         if ( botInfo->sightHitNum
                                             || ps->ps.fWeaponPosFrac <= 0.0
                                             || noAmmo
                                             || ps->ps.damageCount
-                                            || random() >= 0.0049999999 )
+                                            || BO1_Random() >= 0.0049999999 )
                                         {
                                             if ( botInfo->sightHitNum
                                                 || ps->ps.fWeaponPosFrac <= 0.0
                                                 || !ps->ps.damageCount
-                                                || random() >= 0.0099999998 )
+                                                || BO1_Random() >= 0.0099999998 )
                                             {
                                                 if ( botInfo->sightHitNum || !noAmmo )
                                                 {
@@ -3706,7 +3707,7 @@ char __cdecl SV_BotNameRandomFriend(int controller, char *buf, int bufLen)
         return 0;
     for ( numIteration = 0; numIteration < 18; ++numIteration )
     {
-        friendIndex = rand() % friendCount;
+        friendIndex = BO1_CrtRand() % friendCount;
         Friends_GetByIndex(controller, 0, friendIndex, &friendInfo);
         if ( (friendInfo.status & 0x30) == 0
             && !Friends_IsInCurrentSession(friendInfo.name)

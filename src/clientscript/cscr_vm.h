@@ -1,6 +1,12 @@
 #pragma once
 #include "cscr_variable.h"
+#if defined(__ANDROID__)
+struct XAnimTree_s;
+struct scr_anim_s;
+struct scr_animtree_t;
+#else
 #include <bgame/bg_local.h>
+#endif
 #include <universal/dvar.h>
 
 enum $6D51E4D9581472729AE3FDE62615AD51 : __int32

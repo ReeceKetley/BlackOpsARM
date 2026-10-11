@@ -1,3 +1,4 @@
+#include <platform/bo1_native_width.h>
 #pragma once
 #include <cstddef>
 
@@ -343,7 +344,7 @@ struct centity_s // sizeof=0x328
         // padding bit
         // padding bit
 };
-#if !defined(BO1_PORT_X64)
+#if !BO1_NATIVE_64BIT
 static_assert(sizeof(centity_s) == 0x328);
 #endif
 // The decompiler addressed centity_s's flag bits as dword #201 (offset 804). The bit-field word follows updateDelayedNext

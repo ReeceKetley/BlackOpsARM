@@ -1,4 +1,5 @@
 #pragma once
+#include "memory_services.h"
 #include <xanim/xanim.h>
 
 #include "mem_largelocal.h"
@@ -30,7 +31,6 @@ struct hunkUsed_t // sizeof=0x8
                                         // _Hunk_CheckTempMemoryHighClear:loc_7B2BC0/r ...
 };
 
-void *__cdecl Z_VirtualReserve(int size);
 void __cdecl Z_VirtualDecommitInternal(void *ptr, int size);
 void __cdecl Z_VirtualFreeInternal(void *ptr);
 void *__cdecl Z_TryVirtualAllocInternal(int size);
@@ -85,13 +85,8 @@ void Hunk_ClearTempMemory();
 void __cdecl Com_TempMeminfo_f();
 char *__cdecl Z_TryVirtualAlloc(int size, const char *name, int type);
 char *__cdecl Z_VirtualAlloc(int size, const char *name, int type);
-void __cdecl Z_VirtualCommit(char *ptr, int size, int type);
-void __cdecl Z_VirtualFree(void *ptr, int type);
-void __cdecl Z_VirtualDecommit(char *ptr, int size, int type);
-void __cdecl Z_Free(char *ptr, int type);
 unsigned int *__cdecl Z_TryMalloc(int size, const char *name, int type);
 char *__cdecl Z_TryMallocGarbage(int size, const char *name, int type);
-unsigned int *__cdecl Z_Malloc(int size, const char *name, int type);
 void __cdecl    Z_MallocFailed(int size);
 char *__cdecl Z_MallocGarbage(int size, const char *name, int type);
 char *__cdecl CopyString(char *in, const char *name, int type, scriptInstance_t inst);
