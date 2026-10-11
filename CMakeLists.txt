@@ -15,6 +15,7 @@ set(TL_DIR  "${CMAKE_CURRENT_SOURCE_DIR}/tl")
 set(DW_DIR  "${CMAKE_CURRENT_SOURCE_DIR}/DemonWare")
 
 include(cmake_files.cmake)
+target_sources(BO1Zombies PRIVATE "${SRC_DIR}/game_sp/g_sp_weapon_sweep.cpp")
 
 # phys_gjk.cpp specific flag (experimental) — IA32 only on Win32
 if (NOT BO1_PORT_X64)

@@ -879,6 +879,10 @@ void __cdecl GlassCl_Update(int localClientNum)
 // local client never reaches CA_ACTIVE. Same wire format as GlassesClient::ParseSnapshot, without applying any state.
 static void GlassCl_SkipSnapshot(msg_t *msg)
 {
+    // The server emits no glass section when the map has no glasses.
+    const Glasses *glasses = GetGlasses();
+    if (!glasses || !glasses->numGlasses)
+        return;
     if ( MSG_ReadBit(msg) == 1 )
     {
         if ( MSG_ReadBit(msg) == 1 )

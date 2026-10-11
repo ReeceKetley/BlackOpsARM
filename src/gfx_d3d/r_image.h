@@ -30,7 +30,7 @@ struct Image_MemUsage;
 void __cdecl Image_TrackTotalMemory(GfxImage *image, int platform, int memory);
 bool __cdecl Image_IsCodeImage(int track);
 void __cdecl R_GetImageList(ImageList *imageList);
-void __cdecl R_AddImageToList(XAssetHeader header, XAssetHeader *data);
+void __cdecl R_AddImageToList(XAssetHeader header, ImageList *data);
 void __cdecl R_SumOfUsedImages(Image_MemUsage *usage);
 void __cdecl Image_Release(GfxImage *image);
 GfxImage *__cdecl Image_AllocProg(int imageProgType, unsigned __int8 category, unsigned __int8 semantic);

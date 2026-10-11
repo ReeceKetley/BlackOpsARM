@@ -484,13 +484,13 @@ void __cdecl Scr_InitVariables(scriptInstance_t inst)
     if (gScrVarDebugPub[inst])
     {
         gScrVarDebugPub[inst]->varUsage = (const char **)Scr_AllocVarsMem(inst, 
-            4 * VARIABLELIST_SIZE(inst) /* retail 0x11FFF8 */,
-            4u,
+            sizeof(*gScrVarDebugPub[inst]->varUsage) * VARIABLELIST_SIZE(inst),
+            alignof(const char *),
             4,
             1u,
             gScriptVarsAlloc,
             TRACK_SCRIPT);
-        memset((unsigned __int8 *)gScrVarDebugPub[inst]->varUsage, 0, 4 * VARIABLELIST_SIZE(inst) /* retail 0x11FFF8 */);
+        memset((unsigned __int8 *)gScrVarDebugPub[inst]->varUsage, 0, sizeof(*gScrVarDebugPub[inst]->varUsage) * VARIABLELIST_SIZE(inst));
     }
     Scr_InitVariableRange(inst, 1u, VARIABLELIST_CHILD_BEGIN(inst) - 1);
     Scr_InitVariableRange(inst, VARIABLELIST_CHILD_BEGIN(inst), VARIABLELIST_SIZE(inst));

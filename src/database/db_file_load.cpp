@@ -145,7 +145,7 @@ static unsigned long long g_xfileBytes;
 unsigned long long DB_XFileBytesLoaded() { return g_xfileBytes; }
 void DB_XFileBytesReset() { g_xfileBytes = 0; }
 
-unsigned __int8 *__cdecl DB_LoadXFileDataNullTerminated(unsigned __int8 *pos)
+int __cdecl DB_LoadXFileDataNullTerminated(unsigned __int8 *pos)
 {
     unsigned __int8 *origPos; // [esp+0h] [ebp-4h]
 
@@ -161,7 +161,7 @@ unsigned __int8 *__cdecl DB_LoadXFileDataNullTerminated(unsigned __int8 *pos)
         }
     }
     while ( *pos++ );
-    return (unsigned __int8 *)(pos - origPos);
+    return static_cast<int>(pos - origPos);
 }
 
 void __cdecl DB_LoadXFileSetSize(int size)
@@ -601,7 +601,7 @@ char __cdecl DB_LoadXFile(
                 int allocType,
                 int flags)
 {
-    if ( ((unsigned __int8)buf & 3) != 0
+    if ( ((uintptr_t)buf & 3) != 0
         && !Assert_MyHandler(
                     "C:\\projects_pc\\cod\\codsrc\\src\\database\\db_file_load.cpp",
                     1959,

@@ -854,7 +854,7 @@ PhysObjUserData * Phys_CreateUserBody(float *position, int id, PhysicsGeomType g
     float rot_[3][3]; // [esp+12Ch] [ebp-104h] BYREF
     float trans_[4]; // [esp+158h] [ebp-D8h] BYREF
     user_rigid_body *body; // [esp+168h] [ebp-C8h]
-    int bodyId; // [esp+16Ch] [ebp-C4h]
+    PhysObjUserData *bodyId; // [esp+16Ch] [ebp-C4h]
     PhysObjUserData *userData; // [esp+170h] [ebp-C0h]
     PhysGlob *v31; // [esp+174h] [ebp-BCh]
     phys_free_list<PhysObjUserData>::iterator i; // [esp+178h] [ebp-B8h]
@@ -1054,7 +1054,7 @@ PhysObjUserData * Phys_CreateUserBody(float *position, int id, PhysicsGeomType g
             userData->body = body;
             userData->refcount = 1;
             userData->id = (int)id;
-            bodyId = (int)userData;
+            bodyId = userData;
             for (j = 0; j < 16; ++j)
             {
                 if (!physGlob.userRigidBodies[j])
@@ -1064,7 +1064,7 @@ PhysObjUserData * Phys_CreateUserBody(float *position, int id, PhysicsGeomType g
                 }
             }
             Sys_LeaveCriticalSection(CRITSECT_PHYSICS);
-            return (PhysObjUserData *)bodyId;
+            return bodyId;
         }
         else
         {
@@ -1128,7 +1128,7 @@ PhysObjUserData * Phys_CreateBodyFromState(
     float volume; // [esp+324h] [ebp-70h] BYREF
     phys_vec3 dim; // [esp+328h] [ebp-6Ch] BYREF
     rigid_body *body; // [esp+340h] [ebp-54h]
-    int bodyId; // [esp+344h] [ebp-50h]
+    PhysObjUserData *bodyId; // [esp+344h] [ebp-50h]
     PhysObjUserData *userData; // [esp+348h] [ebp-4Ch]
     PhysGlob *v100; // [esp+34Ch] [ebp-48h]
     phys_free_list<PhysObjUserData>::iterator i; // [esp+350h] [ebp-44h]
@@ -1156,8 +1156,8 @@ PhysObjUserData * Phys_CreateBodyFromState(
             v100 = &physGlob;
             if (&physGlob == (PhysGlob *)i.m_ptr)
                 break;
-            userData = (PhysObjUserData *)&i.m_ptr[2];
-            if (i.m_ptr[29].m_next_T_internal == (phys_free_list<PhysObjUserData>::T_internal_base *)state->id)
+            userData = &static_cast<phys_free_list<PhysObjUserData>::T_internal *>(i.m_ptr)->m_data;
+            if (userData->id == state->id)
             {
                 destroy_gjk_geom(gjk_geom_list);
                 ++userData->refcount;
@@ -1228,7 +1228,7 @@ PhysObjUserData * Phys_CreateBodyFromState(
     m2w.w.y = state->position[1];
     m2w.w.z = state->position[2];
 
-    bodyId = (int)userData;
+    bodyId = userData;
 
     userData->m_gjk_geom_list.m_first_geom = gjk_geom_list->m_first_geom;
     userData->m_gjk_geom_list.m_geom_count = gjk_geom_list->m_geom_count;
@@ -1324,7 +1324,7 @@ PhysObjUserData * Phys_CreateBodyFromState(
 
     Sys_LeaveCriticalSection(CRITSECT_PHYSICS);
 
-    return (PhysObjUserData *)bodyId;
+    return bodyId;
 }
 
 void    phys_full_inverse(phys_mat44 *dest, const phys_mat44 *source)
@@ -2292,8 +2292,8 @@ void    Phys_FindAndRenderEntityBrushes(const float *pos, int contentmask)
     void *v3; // esp
     const XModel *XModell; // eax
     const XModel *v5; // eax
-    unsigned int v6; // [esp-38FCh] [ebp-3908h]
-    unsigned int v7; // [esp-38FCh] [ebp-3908h]
+    uintptr_t v6; // [esp-38FCh] [ebp-3908h]
+    uintptr_t v7; // [esp-38FCh] [ebp-3908h]
     const chull_t *collmap_chull; // [esp-38E8h] [ebp-38F4h]
     PhysGeomList *Collmap; // [esp-38E4h] [ebp-38F0h]
     phys_mat44 v10; // [esp-38E0h] [ebp-38ECh] BYREF
@@ -2393,7 +2393,7 @@ void    Phys_FindAndRenderEntityBrushes(const float *pos, int contentmask)
                 v36 = (const float *)v47;
             else
                 v36 = v48;
-            v6 = (unsigned int)v40;
+            v6 = (uintptr_t)v40;
             XModell = DObjGetXModel(ServerDObj, 0);
             render_xmodel_chull(XModell, v6, &v38, v36);
         }
@@ -2403,7 +2403,7 @@ void    Phys_FindAndRenderEntityBrushes(const float *pos, int contentmask)
                 v35 = (const float *)v47;
             else
                 v35 = v48;
-            render_brushmodel_chull(v40->s.index.brushmodel, (unsigned int)v40, &v38, v35);
+            render_brushmodel_chull(v40->s.index.brushmodel, (uintptr_t)v40, &v38, v35);
         }
     }
     v34 = Phys_GetMaskFromDVar() == 0x2820011
@@ -2428,7 +2428,7 @@ void    Phys_FindAndRenderEntityBrushes(const float *pos, int contentmask)
                         v26 = (const float *)v44;
                     else
                         v26 = (const float *)v45;
-                    v7 = (unsigned int)Entity;
+                    v7 = (uintptr_t)Entity;
                     v5 = DObjGetXModel(ClientDObj, 0);
                     render_xmodel_chull(v5, v7, &v28, v26);
                 }
@@ -2438,7 +2438,7 @@ void    Phys_FindAndRenderEntityBrushes(const float *pos, int contentmask)
                         v25 = (const float *)v44;
                     else
                         v25 = (const float *)v45;
-                    render_brushmodel_chull(Entity->nextState.index.brushmodel, (unsigned int)Entity, &v28, v25);
+                    render_brushmodel_chull(Entity->nextState.index.brushmodel, (uintptr_t)Entity, &v28, v25);
                 }
             }
         }
@@ -2473,15 +2473,15 @@ void    Phys_FindAndRenderEntityBrushes(const float *pos, int contentmask)
                 Phys_Vec3ToNitrousVec(v12->pose.origin, &v10.w);
                 if ( k )
                 {
-                    render_brushmodel_chull(EntityDef->brushModel, (unsigned int)EntityDef, &v10, v46);
+                    render_brushmodel_chull(EntityDef->brushModel, (uintptr_t)EntityDef, &v10, v46);
                 }
                 else
                 {
-                    render_xmodel_chull(EntityDef->xModel, (unsigned int)EntityDef, &v10, v48);
+                    render_xmodel_chull(EntityDef->xModel, (uintptr_t)EntityDef, &v10, v48);
                     if ( XModelHasCollmap(EntityDef->xModel) )
                     {
                         Collmap = XModelGetCollmap(EntityDef->xModel, 0);
-                        collmap_chull = get_collmap_chull(Collmap, (unsigned int)EntityDef);
+                        collmap_chull = get_collmap_chull(Collmap, (uintptr_t)EntityDef);
                         render_chull(collmap_chull, &v10, v46);
                     }
                 }
@@ -2892,7 +2892,7 @@ void __cdecl print_static_models_stats()
     signed int j; // [esp+24h] [ebp-1002Ch]
     signed int i; // [esp+28h] [ebp-10028h]
     cStaticModel_s *smodel; // [esp+2Ch] [ebp-10024h]
-    unsigned int base[16384]; // [esp+30h] [ebp-10020h] BYREF
+    cStaticModel_s *base[16384]; // [esp+30h] [ebp-10020h] BYREF
     int refcount; // [esp+10030h] [ebp-20h]
     float v7; // [esp+10034h] [ebp-1Ch]
     float v8; // [esp+10038h] [ebp-18h]
@@ -2909,13 +2909,15 @@ void __cdecl print_static_models_stats()
         numStaticModels = 0x4000;
     num = numStaticModels;
     for ( i = 0; i < (int)num; ++i )
-        base[i] = (unsigned int) & cm.staticModelList[i];
+        base[i] = &cm.staticModelList[i];
+    if (num == 0)
+        return;
     qsort(base, num, sizeof(*(base)), SortModelsFunc);
     refcount = 1;
     smodel = (cStaticModel_s *)base[0];
-    dims = *(float *)(base[0] + 68) - *(float *)(base[0] + 56);
-    v11 = *(float *)(base[0] + 72) - *(float *)(base[0] + 60);
-    v12 = *(float *)(base[0] + 76) - *(float *)(base[0] + 64);
+    dims = base[0]->absmax[0] - base[0]->absmin[0];
+    v11 = base[0]->absmax[1] - base[0]->absmin[1];
+    v12 = base[0]->absmax[2] - base[0]->absmin[2];
     for ( j = 1; j < (int)num; ++j )
     {
         v1 = (cStaticModel_s *)base[j];
@@ -2944,10 +2946,9 @@ void __cdecl print_static_models_stats()
 
 int __cdecl SortModelsFunc(const void *a, const void *b)
 {
-    if ( *(unsigned int *)(*(unsigned int *)a + 4) <= *(unsigned int *)(*(unsigned int *)b + 4) )
-        return *(unsigned int *)(*(unsigned int *)a + 4) < *(unsigned int *)(*(unsigned int *)b + 4);
-    else
-        return -1;
+    const uintptr_t left = reinterpret_cast<uintptr_t>((*static_cast<cStaticModel_s *const *>(a))->xmodel);
+    const uintptr_t right = reinterpret_cast<uintptr_t>((*static_cast<cStaticModel_s *const *>(b))->xmodel);
+    return left > right ? -1 : (left < right ? 1 : 0);
 }
 
 void __cdecl draw_static_models_bounds()
@@ -3343,7 +3344,7 @@ void collide_vehicle_wheels(PhysObjUserData *userData)
     environment_rigid_body *TraceResultsRigidBody; // [esp+A4h] [ebp-500h]
     phys_vec3 v20; // [esp+A8h] [ebp-4FCh] BYREF
     phys_vec3 v21; // [esp+B8h] [ebp-4ECh] BYREF
-    int v22; // [esp+CCh] [ebp-4D8h] BYREF
+    float v22[3]; // world-space wheel contact point
     int m_entnum; // [esp+D8h] [ebp-4CCh]
     col_context_t v24; // [esp+DCh] [ebp-4C8h] BYREF
     float zero[3]; // [esp+13Ch] [ebp-468h] BYREF
@@ -3395,7 +3396,6 @@ void collide_vehicle_wheels(PhysObjUserData *userData)
                 //rigid_body_constraint_wheel::get_wheel_collide_segment(v33, v41, &rb->m_mat, &v30, &v31);
                 v33->get_wheel_collide_segment(&rb->m_mat, &v30, &v31);
                 v29 = (float)(v30.z - v31.z) * 0.30000001;
-                LODWORD(p0[3]) = (DWORD)&v30.z;
                 v30.z = v30.z + v29;
                 Phys_NitrousVecToVec3(&v30, p0);
                 Phys_NitrousVecToVec3(&v31, p1);
@@ -3427,10 +3427,11 @@ void collide_vehicle_wheels(PhysObjUserData *userData)
                     v21.x = v15->x;
                     v21.y = v15->y;
                     v21.z = v15->z;
-                    LODWORD(v14.z) = (DWORD)phys_inv_multiply((phys_vec3 *)&v14.w, &TraceResultsRigidBody->m_mat, &v20);
-                    v20.x = *(float *)LODWORD(v14.z);
-                    v20.y = *(float *)(LODWORD(v14.z) + 4);
-                    v20.z = *(float *)(LODWORD(v14.z) + 8);
+                    phys_vec3 localNormal;
+                    phys_inv_multiply(&localNormal, &TraceResultsRigidBody->m_mat, &v20);
+                    v20.x = localNormal.x;
+                    v20.y = localNormal.y;
+                    v20.z = localNormal.z;
                     //rigid_body_constraint_wheel::set_collision(v33, TraceResultsRigidBody, &v21, &v20);
                     v33->set_collision(TraceResultsRigidBody, &v21, &v20);
                     LODWORD(v14.y) = (traceResults.sflags & 0x3F00000) >> 20;

@@ -644,7 +644,7 @@ struct gjk_query_output : gjk_collision_visitor // sizeof=0x150
     void calc_query_aabb(const gjk_query_input *input);
     void query_epilog();
 
-    broad_phase_environment_info *get_ent_info(unsigned int ent_id);
+    broad_phase_environment_info *get_ent_info(uintptr_t ent_id);
     void set_local_query_info(
         const gjk_query_input &input,
         gjk_entity_info_t *ent_info);
@@ -754,15 +754,15 @@ struct __declspec(align(16)) gjk_trace_input_t // sizeof=0xB0
 struct generic_avl_map_node_t // sizeof=0x14
 {
     void *m_data;
-    unsigned int m_avl_key;
+    uintptr_t m_avl_key;
     phys_inplace_avl_tree_node<generic_avl_map_node_t> m_avl_tree_node;
 
-    static inline bool less(unsigned int key, const generic_avl_map_node_t *node)
+    static inline bool less(uintptr_t key, const generic_avl_map_node_t *node)
     {
         return key < node->m_avl_key;
     }
 
-    static inline bool less(const generic_avl_map_node_t *node, unsigned int key)
+    static inline bool less(const generic_avl_map_node_t *node, uintptr_t key)
     {
         return node->m_avl_key < key;
     }
@@ -773,12 +773,12 @@ struct generic_avl_map_node_t // sizeof=0x14
     }
 
     // aislop hacky shit
-    static inline bool equals(const generic_avl_map_node_t *node, unsigned int key)
+    static inline bool equals(const generic_avl_map_node_t *node, uintptr_t key)
     {
         return node->m_avl_key == key;
     }
 
-    static inline void set_key(generic_avl_map_node_t *node, unsigned int key)
+    static inline void set_key(generic_avl_map_node_t *node, uintptr_t key)
     {
         node->m_avl_key = key;
     }
@@ -787,7 +787,7 @@ struct generic_avl_map_node_t // sizeof=0x14
 struct __declspec(align(4)) gjkcc_info_database_t // sizeof=0x10
 {                                       // XREF: .data:gjkcc_info_database_t g_gjkcc_info_client_database/r
                                         // .data:gjkcc_info_database_t g_gjkcc_info_server_database/r
-    phys_inplace_avl_tree<unsigned int,generic_avl_map_node_t,generic_avl_map_node_t> m_map;
+    phys_inplace_avl_tree<uintptr_t,generic_avl_map_node_t,generic_avl_map_node_t> m_map;
                                         // XREF: _dynamic_initializer_for__g_gjkcc_info_client_database__+3/w
                                         // _dynamic_initializer_for__g_gjkcc_info_server_database__+3/w
     volatile unsigned int m_token;                        // XREF: _dynamic_initializer_for__g_gjkcc_info_client_database__+D/w
@@ -808,24 +808,24 @@ struct __declspec(align(4)) gjkcc_info_database_t // sizeof=0x10
     }
 
     gjkcc_info *gjkcc_info_find_or_create(
-        unsigned int gjkcc_id,
+        uintptr_t gjkcc_id,
         bool is_server_thread,
         const float *origin);
     void Lock();
     void Unlock();
     void verify_internal(bool is_server_thread);
     gjkcc_info *gjkcc_info_find(
-        unsigned int gjkcc_id,
+        uintptr_t gjkcc_id,
         bool is_server_thread);
     void gjkcc_info_destroy(
-        unsigned int gjkcc_id,
+        uintptr_t gjkcc_id,
         bool is_server_thread);
 };
 
 struct gjkcc_input_t // sizeof=0x20
 {                                       // XREF: ?Actor_Physics_z@@YAHPAUactor_physics_t@@@Z/r
                                         // Actor_CallThink/r ...
-    unsigned int gjkcc_id;              // XREF: ai_physics_trace(trace_t *,float const * const,float const * const,float const * const,float const * const,int,int,actor_physics_t *):loc_912994/w
+    uintptr_t gjkcc_id;              // XREF: ai_physics_trace(trace_t *,float const * const,float const * const,float const * const,float const * const,int,int,actor_physics_t *):loc_912994/w
     bool is_server_thread;              // XREF: ai_physics_trace(trace_t *,float const * const,float const * const,float const * const,float const * const,int,int,actor_physics_t *)+5B/w
     // padding byte
     // padding byte

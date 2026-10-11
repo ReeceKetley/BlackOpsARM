@@ -140,7 +140,7 @@ $LN10_13:
     if ( pose->destructiblePose )
         CG_Destructible_DoControllers(pose, obj, partBits);
     CG_DoBaseOriginController(pose, obj, setPartBits);
-    if ( pose->isRagdoll && (pose->ragdollHandle > 0 || pose->killcamRagdollHandle > 0) )
+    if ( pose->isRagdoll && (pose->ragdollHandle != 0 || pose->killcamRagdollHandle != 0) )
         Ragdoll_DoControllers(pose, obj, partBits);
     if ( pose->eType != 21 )
     {
@@ -165,7 +165,7 @@ void __cdecl CG_Player_DoControllers(const cpose_t *pose, const DObj *obj, int *
     cg_s *cgameGlob; // [esp+8h] [ebp-8h]
     centity_s *ent; // [esp+Ch] [ebp-4h]
 
-    if ( pose->fx.triggerTime )
+    if ( pose->player.control )
     {
         cgameGlob = CG_GetLocalClientGlobals(pose->localClientNum);
         ent = CG_GetEntity(pose->localClientNum, obj->entnum - 1);

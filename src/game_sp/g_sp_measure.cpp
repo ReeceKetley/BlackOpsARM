@@ -2,6 +2,7 @@
 #include "g_sp_headless_dice.h"
 #include "g_sp_measure.h"
 #include "g_sp_testplan.h"
+#include "g_sp_weapon_sweep.h"
 #include "g_sp_headless_move.h"
 #include "g_anim_commands_sp.h"
 
@@ -258,6 +259,7 @@ SPPathProfile::~SPPathProfile()
 void G_SP_MeasureFields(scriptInstance_t inst)
 {
     G_SP_TestPlanFields(inst); // headless test-client plan (harness only)
+    G_SP_WeaponSweepFields(inst);
     G_SP_HeadlessThrowFields(inst); // w1 c6 TEST SWITCH bo1_testclient_scriptgive
     G_SP_HeadlessDiceFields(inst); // k1 TEST SWITCH bo1_testclient_dice: canonical local / field names
     if (inst != SCRIPTINSTANCE_SERVER || !Enabled())
@@ -587,6 +589,7 @@ void G_SP_MeasureFrame()
 
 void G_SP_MeasureNotify(scriptInstance_t inst, unsigned int owner, unsigned int name, const VariableValue *top)
 {
+    G_SP_WeaponSweepNotify(inst, owner, name, top);
     G_SP_TestPlanNotify(inst, owner, name, top); // headless test-client plan (harness only)
     if (inst == SCRIPTINSTANCE_SERVER && owner == gScrVarPub[inst].levelId && Sys_IsHeadless())
     {

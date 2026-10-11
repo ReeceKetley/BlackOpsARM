@@ -2244,7 +2244,7 @@ void __cdecl MultiplePointDistSqFromBounds(
     float4 v6; // [esp-20h] [ebp-120h]
     float4 v7; // [esp-10h] [ebp-110h]
 
-    if ( ((unsigned int)&s_viewPos & 0xF) != 0
+    if ( (reinterpret_cast<uintptr_t>(&s_viewPos) & 0xF) != 0
         && !Assert_MyHandler(
                     "C:\\projects_pc\\cod\\codsrc\\src\\gfx_d3d\\r_stream.cpp",
                     3465,
@@ -2255,7 +2255,7 @@ void __cdecl MultiplePointDistSqFromBounds(
         __debugbreak();
     }
 #if !defined(BO1_PORT_X64) // x64: surface bounds are only 4-byte aligned here and are read with 64-bit loads below
-    if ( ((unsigned __int8)mip0mins & 0xF) != 0
+    if ( (reinterpret_cast<uintptr_t>(mip0mins) & 0xF) != 0
         && !Assert_MyHandler(
                     "C:\\projects_pc\\cod\\codsrc\\src\\gfx_d3d\\r_stream.cpp",
                     3469,
@@ -2265,7 +2265,7 @@ void __cdecl MultiplePointDistSqFromBounds(
     {
         __debugbreak();
     }
-    if ( ((unsigned __int8)mip0maxs & 0xF) != 0
+    if ( (reinterpret_cast<uintptr_t>(mip0maxs) & 0xF) != 0
         && !Assert_MyHandler(
                     "C:\\projects_pc\\cod\\codsrc\\src\\gfx_d3d\\r_stream.cpp",
                     3470,

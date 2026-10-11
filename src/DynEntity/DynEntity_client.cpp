@@ -903,7 +903,7 @@ void __cdecl DynEnt_UpdateConstraints(int localClientNum, DynEntityClient *dynEn
                     switch ( c->type )
                     {
                         case CONSTRAINT_POINT:
-                            phys_sys::destroy((rigid_body_constraint_point *const)c->constraintHandle);
+                            phys_sys::destroy(BO1_NARROW_DECODE(rigid_body_constraint_point, static_cast<unsigned int>(c->constraintHandle)));
                             break;
                         case CONSTRAINT_DISTANCE:
                         case CONSTRAINT_ROPE:
@@ -915,10 +915,10 @@ void __cdecl DynEnt_UpdateConstraints(int localClientNum, DynEntityClient *dynEn
                                     Rope_RemoveAnchor(c->rope_index, 0);
                             }
                             c->rope_index = -1;
-                            phys_sys::destroy((rigid_body_constraint_distance *const)c->constraintHandle);
+                            phys_sys::destroy(BO1_NARROW_DECODE(rigid_body_constraint_distance, static_cast<unsigned int>(c->constraintHandle)));
                             break;
                         case CONSTRAINT_HINGE:
-                            phys_sys::destroy((rigid_body_constraint_hinge *const)c->constraintHandle);
+                            phys_sys::destroy(BO1_NARROW_DECODE(rigid_body_constraint_hinge, static_cast<unsigned int>(c->constraintHandle)));
                             break;
                         case CONSTRAINT_LIGHT:
                             for ( clientindex = 0; clientindex < 1; ++clientindex )
@@ -1044,7 +1044,7 @@ void    DynEnt_SetupConstraints(const DynEntityDef *dynEntDef)
                     }
                     if (!dynEnt1->physObjId)
                         continue;
-                    userData1 = (PhysObjUserData *)dynEnt1->physObjId;
+                    userData1 = Phys_GetUserData(dynEnt1->physObjId);
                     rb1 = userData1->body;
                     damage1 = DynEnt_GetDamage(dynEnt1, dedef1);
                     if (c->min_health && c->min_health < damage1)
@@ -1109,7 +1109,7 @@ void    DynEnt_SetupConstraints(const DynEntityDef *dynEntDef)
                         {
                             //rigid_body_constraint_point::set(constraint, &b1loc, &b2loc);
                             constraint->set(&b1loc, &b2loc);
-                            c->constraintHandle = (int)constraint;
+                            c->constraintHandle = static_cast<int>(BO1_NARROW_ENCODE(constraint));
                         }
                         else
                         {
@@ -1123,7 +1123,7 @@ void    DynEnt_SetupConstraints(const DynEntityDef *dynEntDef)
                         {
                             //rigid_body_constraint_distance::set(rbc_dist, &b1loc, &b2loc, 0.0, c->distance);
                             rbc_dist->set(&b1loc, &b2loc, 0.0, c->distance);
-                            c->constraintHandle = (int)rbc_dist;
+                            c->constraintHandle = static_cast<int>(BO1_NARROW_ENCODE(rbc_dist));
                         }
                         else
                         {
@@ -1165,6 +1165,7 @@ void    DynEnt_SetupConstraints(const DynEntityDef *dynEntDef)
                                 c->minAngle * 0.017453292,
                                 c->maxAngle * 0.017453292,
                                 c->damp);
+                            c->constraintHandle = static_cast<int>(BO1_NARROW_ENCODE(rbc_hinge));
                         }
                         else
                         {
@@ -1185,7 +1186,7 @@ void    DynEnt_SetupConstraints(const DynEntityDef *dynEntDef)
                 }
                 if (dynEnt2->physObjId)
                 {
-                    userData2 = (PhysObjUserData *)dynEnt2->physObjId;
+                    userData2 = Phys_GetUserData(dynEnt2->physObjId);
                     rb2 = userData2->body;
                     damage2 = DynEnt_GetDamage(dynEnt2, dedef2);
                     if (c->min_health && c->min_health < damage2)
@@ -1302,11 +1303,11 @@ int __cdecl DynEntCl_CreatePhysObj(
     //collision_visitor.__vftable = (create_gjk_geom_collision_visitor_vtbl *)&create_gjk_geom_collision_visitor::`vftable';
     collision_visitor.gjk_geom_list = &gjk_geom_list;
     create_gjk_geom(dynEntDef, &collision_visitor, 0x280EC93u);
-    physId = (int)Phys_ObjCreate(0, pose->origin, pose->quat, vec3_origin, dynEntDef->physPreset, &gjk_geom_list, 1, -1);
+    physId = Phys_GetObjId(Phys_ObjCreate(0, pose->origin, pose->quat, vec3_origin, dynEntDef->physPreset, &gjk_geom_list, 1, -1));
     dynEntClient->physObjId = physId;
     if ( physId )
     {
-        phys_user_data = (PhysObjUserData *)dynEntClient->physObjId;
+        phys_user_data = Phys_GetUserData(dynEntClient->physObjId);
         if ( phys_user_data->m_bpb->is_bpi() )
         {
             //bpi = broad_phase_base::get_bpi(phys_user_data->m_bpb);

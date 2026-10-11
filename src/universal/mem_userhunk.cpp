@@ -46,11 +46,11 @@ ALLOCATION_SCHEME_FUNCTIONS g_HunkUserAllocationSchemeMap[4] =
     Hunk_FirstFitFree
   },
   {
-    (HunkUser *(*)(void *, int, HU_ALLOCATION_SCHEME, unsigned int, void *, const char *, int))Hunk_FixedInit,
+    Hunk_FixedInit,
     Hunk_FixedReset,
     Hunk_FixedDestroy,
-    (void *(*)(HunkUser *, int, int, const char *))Hunk_FixedAlloc,
-    (void(__cdecl *)(HunkUser *, void *))Hunk_FixedFree
+    Hunk_FixedAlloc,
+    Hunk_FixedFree
   }
 };
 
@@ -181,7 +181,15 @@ void *__cdecl Hunk_UserDebugAlloc(HunkUser *_user, int size, int alignment)
     {
         __debugbreak();
     }
-    return Hunk_FirstFitAlloc(reinterpret_cast<HunkUserDebug *>(_user)->firstFit, size, alignment);
+    HunkUser *firstFit = reinterpret_cast<HunkUserDebug *>(_user)->firstFit;
+    void *result = Hunk_FirstFitAlloc(firstFit, size, alignment);
+    if (!result)
+    {
+        const FirstFitHunkUser *heap = reinterpret_cast<const FirstFitHunkUser *>(firstFit);
+        Com_Error(ERR_FATAL, "Hunk_UserDebugAlloc: out of memory (%d requested, %d used, %u capacity)",
+            size, heap->used, heap->size);
+    }
+    return result;
 }
 
 void __cdecl Hunk_UserDebugFree(HunkUser *_user, void *ptr)
@@ -477,13 +485,9 @@ void __cdecl Hunk_UserDefaultFree(HunkUser *user, void *ptr)
 void __cdecl Hunk_UserStartup()
 {
     iassert(!g_DebugHunkUser);
-    #if defined(BO1_PORT_X64)
-    // Script lookup tables (OpcodeLookup 12 -> 16 bytes, pointers in SourceBufferInfo, ...) outgrow the Win32 24 MB budget when the
-    // client script VM is compiled with developer on as well.
+    // Both script VMs keep developer lookup metadata. Shangri-La's client
+    // scripts exhaust the original Win32 23 MB arena; use 48 MB on both hosts.
     g_DebugHunkUser = Hunk_UserCreate(0x3000000, HU_SCHEME_DEBUG, 0, 0, "Hunk_InitDebugMemory", 0);
-#else
-    g_DebugHunkUser = Hunk_UserCreate(0x1700000, HU_SCHEME_DEBUG, 0, 0, "Hunk_InitDebugMemory", 0);
-#endif
 }
 
 void __cdecl Hunk_UserShutdown()

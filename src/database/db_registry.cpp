@@ -536,7 +536,7 @@ int s_usageCounts[43];
 unsigned int g_zoneIndex;
 int g_sync;
 bool s_inuseCacheEnabled;
-unsigned __int16 *s_inuseCache;
+uintptr_t *s_inuseCache;
 unsigned int s_inuseCacheHits;
 unsigned int s_inuseCacheMisses;
 volatile unsigned int g_zoneInfoCount;
@@ -3142,7 +3142,7 @@ void __cdecl DB_GetXAsset(XAssetType type, XAssetHeader header)
     XAssetEntry *assetEntry; // [esp+14h] [ebp-4h]
 
     if ( s_inuseCacheEnabled
-        && s_inuseCache[((unsigned int)header.xmodelPieces >> 2) & 0x1FFF] == HIWORD(header.physPreset) )
+        && s_inuseCache[((uintptr_t)header.xmodelPieces >> 2) & 0x1FFF] == reinterpret_cast<uintptr_t>(header.physPreset) )
     {
         ++s_inuseCacheHits;
     }
@@ -3161,7 +3161,7 @@ void __cdecl DB_GetXAsset(XAssetType type, XAssetHeader header)
             {
                 assetEntry->inuse = 1;
                 if ( s_inuseCacheEnabled )
-                    s_inuseCache[((unsigned int)header.xmodelPieces >> 2) & 0x1FFF] = HIWORD(header.physPreset);
+                    s_inuseCache[((uintptr_t)header.xmodelPieces >> 2) & 0x1FFF] = reinterpret_cast<uintptr_t>(header.physPreset);
                 return;
             }
         }
@@ -5118,22 +5118,24 @@ void DB_FreeUnusedResources()
     const char *XAssetTypeName; // eax
     const char *v3; // [esp-4h] [ebp-8024h]
     const char *XAssetName; // [esp-4h] [ebp-8024h]
-    unsigned __int16 data[16386]; // [esp+0h] [ebp-8020h] BYREF
+    uintptr_t data[8192]; // [esp+0h] [ebp-8020h] BYREF
     unsigned int i; // [esp+8008h] [ebp-18h]
     _WORD *v7; // [esp+800Ch] [ebp-14h]
     int j; // [esp+8010h] [ebp-10h]
     char *name; // [esp+8014h] [ebp-Ch]
     char *str; // [esp+8018h] [ebp-8h]
+    XAssetEntry *entry;
     XAsset *asset; // [esp+801Ch] [ebp-4h]
 
     SL_TransferSystem(4u, 8u, SCRIPTINSTANCE_SERVER);
     DB_EnableInUseCache(data);
     for ( i = 0; i < 0x8000; ++i )
     {
-        for ( j = db_hashTable[i]; j; j = HIWORD(asset[1].type) )
+        for ( j = db_hashTable[i]; j; j = entry->nextHash )
         {
-            asset = &g_assetEntryPool[j].entry.asset;
-            if ( LOBYTE(asset[1].type) )
+            entry = &g_assetEntryPool[j].entry;
+            asset = &entry->asset;
+            if ( entry->zoneIndex )
             {
                 varXAsset = asset;
                 Mark_XAsset();
@@ -5147,22 +5149,23 @@ void DB_FreeUnusedResources()
         while ( *v7 )
         {
             j = (unsigned __int16)*v7;
-            asset = &g_assetEntryPool[j].entry.asset;
-            if ( LOBYTE(asset[1].type) )
+            entry = &g_assetEntryPool[j].entry;
+            asset = &entry->asset;
+            if ( entry->zoneIndex )
             {
-                v7 = (_WORD *)&asset[1].type + 1;
+                v7 = &entry->nextHash;
             }
-            else if ( BYTE1(asset[1].type) )
+            else if ( entry->inuse )
             {
                 str = (char *)DB_GetXAssetName(asset);
                 String = SL_GetString(str, 4u, SCRIPTINSTANCE_SERVER);
                 name = SL_ConvertToString(String, SCRIPTINSTANCE_SERVER);
                 DB_SetXAssetName(asset, name);
-                v7 = (_WORD *)&asset[1].type + 1;
+                v7 = &entry->nextHash;
             }
             else
             {
-                if ( LOWORD(asset[1].header.xmodelPieces)
+                if ( entry->nextOverride
                     && !Assert_MyHandler(
                                 "C:\\projects_pc\\cod\\codsrc\\src\\database\\db_registry.cpp",
                                 5847,
@@ -5172,7 +5175,7 @@ void DB_FreeUnusedResources()
                 {
                     __debugbreak();
                 }
-                *v7 = HIWORD(asset[1].type);
+                *v7 = entry->nextHash;
                 if ( !g_defaultAssetCount
                     && !Assert_MyHandler(
                                 "C:\\projects_pc\\cod\\codsrc\\src\\database\\db_registry.cpp",
@@ -5196,14 +5199,14 @@ void DB_FreeUnusedResources()
                         Com_Printf(16, "DB_FreeUnusedResources: freed asset: '%s','%s'\n", XAssetTypeName, XAssetName);
                     }
                 }
-                DB_FreeXAssetEntry((XAssetEntryPoolEntry *)asset);
+                DB_FreeXAssetEntry(&g_assetEntryPool[j]);
             }
         }
     }
     SL_ShutdownSystem(SCRIPTINSTANCE_SERVER, 8u);
 }
 
-void __cdecl DB_EnableInUseCache(unsigned __int16 *data)
+void __cdecl DB_EnableInUseCache(uintptr_t *data)
 {
     if ( s_inuseCacheEnabled
         && !Assert_MyHandler(
@@ -5219,7 +5222,7 @@ void __cdecl DB_EnableInUseCache(unsigned __int16 *data)
     s_inuseCacheHits = 0;
     s_inuseCacheMisses = 0;
     s_inuseCache = data;
-    *(unsigned int *)data = -1;
+    memset(data, 0, 8192 * sizeof(*data));
 }
 
 bool DB_DisableInUseCache()

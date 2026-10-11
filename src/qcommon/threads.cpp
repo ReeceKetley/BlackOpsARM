@@ -45,7 +45,7 @@ void *demoStreamingReady;
 unsigned int g_networkOverrideThread;
 ThreadOwner g_discReadsOwner;
 
-LONG smpData;
+void *volatile smpData;
 int g_databaseStopServer;
 volatile unsigned int s_winThreadLock;
 
@@ -241,7 +241,7 @@ void __cdecl Sys_CreateThread(void (__cdecl *function)(unsigned int), unsigned i
         0,
         0,
         Sys_ThreadMain,
-        (LPVOID)threadContext,
+        reinterpret_cast<LPVOID>(static_cast<uintptr_t>(threadContext)),
         CREATE_SUSPENDED,
         &threadId[threadContext]);
 
@@ -280,7 +280,7 @@ void __cdecl SetThreadName(unsigned int dwThreadID, const char *szThreadName)
 
 DWORD WINAPI Sys_ThreadMain(LPVOID parameter)
 {
-    unsigned int threadContext = (unsigned int)parameter;
+    unsigned int threadContext = static_cast<unsigned int>(reinterpret_cast<uintptr_t>(parameter));
 
     bcassert(threadContext, THREAD_CONTEXT_COUNT);
     iassert(threadFunc[threadContext]);
@@ -475,9 +475,9 @@ void __cdecl Sys_ResumeThread(unsigned int threadContext)
     ResumeThread(threadHandle[threadContext]);
 }
 
-int __cdecl Sys_RendererSleep()
+void *__cdecl Sys_RendererSleep()
 {
-    return InterlockedExchange(&smpData, 0);
+    return InterlockedExchangePointer(&smpData, nullptr);
 }
 
 bool __cdecl Sys_RendererReady()
@@ -527,7 +527,7 @@ bool __cdecl Sys_WaitForSingleObjectTimeout(void **event, unsigned int msec)
 void __cdecl Sys_WakeRenderer(void *data)
 {
     Sys_ResetEvent(&renderCompletedEvent);
-    smpData = (int)data;
+    InterlockedExchangePointer(&smpData, data);
     //PIXSetMarker(-1, "set smpData");
     Sys_SetEvent(&backendEvent[1]);
     Sys_SetWorkerCmdEvent();

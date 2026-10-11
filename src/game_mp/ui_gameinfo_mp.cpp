@@ -311,7 +311,7 @@ int UI_LoadArenasFromFile()
 const char *UI_LoadArenasFromFile_LoadObj()
 {
     const char *result; // eax
-    const char *v1; // [esp+14h] [ebp-24A4h]
+    int v1; // [esp+14h] [ebp-24A4h]
     char string[132]; // [esp+18h] [ebp-24A0h] BYREF
     char *v3; // [esp+9Ch] [ebp-241Ch]
     char listbuf[1024]; // [esp+A0h] [ebp-2418h] BYREF
@@ -321,9 +321,9 @@ const char *UI_LoadArenasFromFile_LoadObj()
     int v8; // [esp+24B0h] [ebp-8h]
     unsigned int v9; // [esp+24B4h] [ebp-4h]
 
+    result = nullptr;
     ui_numArenas = 0;
-    result = (const char *)FS_GetFileList("mp", (char*)"arena", FS_LIST_PURE_ONLY, listbuf, 1024);
-    v1 = result;
+    v1 = FS_GetFileList("mp", (char*)"arena", FS_LIST_PURE_ONLY, listbuf, 1024);
     v3 = listbuf;
     v8 = 0;
     while ( v8 < (int)v1 )
@@ -338,7 +338,7 @@ const char *UI_LoadArenasFromFile_LoadObj()
                 FS_Read((unsigned __int8 *)buffer, len, f);
                 buffer[len] = 0;
                 FS_FCloseFile(f);
-                ui_numArenas += UI_ParseInfos(buffer, 128 - ui_numArenas, (char **)(4 * ui_numArenas + 160058192));
+                ui_numArenas += UI_ParseInfos(buffer, 128 - ui_numArenas, &ui_arenaInfos[ui_numArenas]);
             }
             else
             {

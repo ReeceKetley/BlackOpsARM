@@ -2,15 +2,16 @@ param([string]$Name = 'x64hi_t', [string]$Build = 'build-x64-hi', [string]$Plan 
        [string]$Cmds = 'g;.lastevent;r;ub rip L10;u rip L4;k 14;q', [string]$Extra = '')
 $root = 'D:\Desktop\Black Ops 2 Android\BlackOps64'
 $run = "$root\build\run\$Name"
-Get-Process BO1Zombies, cdb -ErrorAction SilentlyContinue | Stop-Process -Force
-Start-Sleep 1
+if (Get-Process BO1Zombies -ErrorAction SilentlyContinue | Where-Object { $_.Path -eq "$run\BO1Zombies.exe" }) {
+    throw "A game is already running in $run; use another run name."
+}
 foreach ($f in 'BO1Zombies.exe', 'BO1Zombies.pdb') { Copy-Item "$root\$Build\Release\$f" "$run\$f" -Force }
 Copy-Item "$root\$Build\Release\BO1Zombies.pdb" "$root\$Build\Release\%%%BO1Zombies.pdb%%%" -Force
 $log = "$run\main\console_mp.log"; if (Test-Path $log) { [IO.File]::Delete($log) }
 Set-Location $run
 $pre = ".sympath $root\$Build\Release`n.reload /f`n"
 ($pre + ($Cmds -replace ';', "`n")) | Set-Content "$run\_cdbh.txt" -Encoding ascii
-$a = "-g -cf _cdbh.txt `"$run\BO1Zombies.exe`" +set fs_b `"$root\build\Release`" +set fs_h `"$run`" +set bo1_headless 1 +set bo1_zombies 1 +set net_ip 127.0.0.1 +set logfile 2 +set bo1_autoquit 90000 +set QuitOnError 1 +set developer_script 1 +set bo1_testclient 1 +set bo1_testclient_fight 1 +set bo1_testclient_god 1 +set bo1_testclient_score 10000 +set bo1_testclient_plan `"$Plan`" $Extra +devmap zombie_pentagon"
+$a = "-cf _cdbh.txt `"$run\BO1Zombies.exe`" +set fs_b `"$root\build\Release`" +set fs_h `"$run`" +set bo1_headless 1 +set bo1_zombies 1 +set net_ip 127.0.0.1 +set logfile 2 +set bo1_autoquit 90000 +set QuitOnError 1 +set developer_script 1 +set bo1_testclient 1 +set bo1_testclient_fight 1 +set bo1_testclient_god 1 +set bo1_testclient_score 10000 +set bo1_testclient_plan `"$Plan`" $Extra +devmap zombie_pentagon"
 $out = "$run\cdb_out.txt"
 $p = Start-Process -FilePath 'C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\cdb.exe' -ArgumentList $a -WorkingDirectory $run -RedirectStandardOutput $out -NoNewWindow -PassThru
 $t = 0

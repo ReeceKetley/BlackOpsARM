@@ -4772,7 +4772,7 @@ void __cdecl R_AddWorldSurfacesPortalWalk(int cameraCellIndex)
     int j; // [esp+14h] [ebp-109Ch]
     _BYTE v4[128]; // [esp+18h] [ebp-1098h] BYREF
     unsigned int v5; // [esp+9Ch] [ebp-1014h]
-    GfxCell *v6[1025]; // [esp+A0h] [ebp-1010h]
+    unsigned int v6[1025]; // [esp+A0h] [ebp-1010h]
     GfxCell *cell; // [esp+10A4h] [ebp-Ch]
     int i; // [esp+10A8h] [ebp-8h]
     DpvsView *dpvsView; // [esp+10ACh] [ebp-4h]
@@ -4842,7 +4842,7 @@ void __cdecl R_AddWorldSurfacesPortalWalk(int cameraCellIndex)
                         {
                             __debugbreak();
                         }
-                        v6[v5++] = (GfxCell *)j;
+                        v6[v5++] = j;
                     }
                 }
                 dpvsGlob.farPlaneEnabled = 0;
@@ -4850,7 +4850,7 @@ void __cdecl R_AddWorldSurfacesPortalWalk(int cameraCellIndex)
                 memset((unsigned __int8 *)dpvsGlob.cellForceInvisibleBits, 0, sizeof(dpvsGlob.cellForceInvisibleBits));
                 for ( k = 0; k < (int)v5; ++k )
                 {
-                    v1 = &rgp.world->cells[(unsigned int)v6[k]];
+                    v1 = &rgp.world->cells[v6[k]];
                     R_AddCellSurfacesAndCullGroupsInFrustumDelayed(
                         v1,
                         dpvsView->frustumPlanes,

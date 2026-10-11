@@ -45,8 +45,7 @@ union operandInternalDataUnion // sizeof=0x4
     float floatVal;
     const char *string;
 
-    // The decompiled evaluator stores string pointers through `.intVal = (int)ptr`; on x64 the union is 8 bytes, so every
-    // constructor clears the whole union first (pointers stay below 4 GB, see BO1_X64_LOW_VA, so the low half is the pointer).
+    // Keep inactive union bytes initialized when constructing numeric operands.
     operandInternalDataUnion()
     {
         string = nullptr;

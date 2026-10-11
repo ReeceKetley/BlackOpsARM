@@ -819,7 +819,7 @@ void NitrousVehicleController::UpdateControlsDefault(
     phys_vec3 *velocity; // [esp+30h] [ebp-60h]
     int v6; // [esp+34h] [ebp-5Ch] BYREF
     float *v7; // [esp+4Ch] [ebp-44h]
-    int p_m_mat; // [esp+50h] [ebp-40h]
+    phys_mat44 *p_m_mat; // [esp+50h] [ebp-40h]
     PhysObjUserData *m_phys_user_data; // [esp+54h] [ebp-3Ch]
     bool v10; // [esp+5Bh] [ebp-35h]
     float AnalogButtonValue; // [esp+5Ch] [ebp-34h]
@@ -893,8 +893,8 @@ void NitrousVehicleController::UpdateControlsDefault(
         if ( v10 )
         {
             m_phys_user_data = rbveh->m_phys_user_data;
-            p_m_mat = (int)&m_phys_user_data->body->m_mat;
-            v7 = (float *)(p_m_mat + 16);
+            p_m_mat = &m_phys_user_data->body->m_mat;
+            v7 = &p_m_mat->y.x;
             //velocity = NitrousVehicle::get_velocity(rbveh, (phys_vec3 *)&v6);
             phys_vec3 tmp;
             //velocity = rbveh->get_velocity((phys_vec3 *)&v6);

@@ -19,7 +19,7 @@ union GfxPixelCostKey // sizeof=0x8
     //GfxPixelCostKey::<unnamed_type_mtl> mtl;
     struct
     {
-        const Material *material;
+        unsigned int materialHandle;
         unsigned __int8 techType;
     } mtl;
     unsigned __int64 packed;

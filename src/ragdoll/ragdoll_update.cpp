@@ -691,7 +691,7 @@ void __cdecl Ragdoll_SetCurrentPoseFromSnapshot(RagdollBody *body, BoneOrientati
         max_error_sq = 0.0f;
         for ( j = 0; j < body->numJoints; ++j )
         {
-            id = (rigid_body_constraint_ragdoll *)body->joints[j].joint;
+            id = BO1_NARROW_DECODE(rigid_body_constraint_ragdoll, static_cast<unsigned int>(body->joints[j].joint));
             if ( id )
             {
                 //error_sq = rigid_body_constraint_ragdoll::pull_together(id, (int)&savedregs);
@@ -794,7 +794,7 @@ char __cdecl Ragdoll_CreatePhysJoint(RagdollBody *body, JointDef *jointDef, Join
     type = jointDef->type;
     if ( type == RAGDOLL_JOINT_HINGE )
     {
-        joint->joint = (int)Phys_CreateHinge(
+        joint->joint = static_cast<int>(BO1_NARROW_ENCODE(Phys_CreateHinge(
                                                     bone->rigidBody,
                                                     parentBone->rigidBody,
                                                     anchor,
@@ -802,12 +802,12 @@ char __cdecl Ragdoll_CreatePhysJoint(RagdollBody *body, JointDef *jointDef, Join
                                                     0.0,
                                                     fric[0],
                                                     jointDef->minAngles[0],
-                                                    jointDef->maxAngles[0]);
+                                                    jointDef->maxAngles[0])));
         joint->joint2 = 0;
     }
     else if ( type == RAGDOLL_JOINT_SWIVEL )
     {
-        joint->joint = (int)Phys_CreateSwivel(
+        joint->joint = static_cast<int>(BO1_NARROW_ENCODE(Phys_CreateSwivel(
                                                     bone->rigidBody,
                                                     parentBone->rigidBody,
                                                     anchor,
@@ -816,7 +816,7 @@ char __cdecl Ragdoll_CreatePhysJoint(RagdollBody *body, JointDef *jointDef, Join
                                                     vec3_origin,
                                                     fric,
                                                     jointDef->minAngles,
-                                                    jointDef->maxAngles);
+                                                    jointDef->maxAngles)));
     }
     return 1;
 }
@@ -858,8 +858,8 @@ char __cdecl Ragdoll_CreatePhysObjs(RagdollBody *body)
         i1 = def->selfPairDefs[j].bones[1];
         if ( body->bones[i0].rigidBody && body->bones[i1].rigidBody )
         {
-            userData0 = (PhysObjUserData *)body->bones[i0].rigidBody;
-            userData1 = (PhysObjUserData *)body->bones[i1].rigidBody;
+            userData0 = Phys_GetUserData(body->bones[i0].rigidBody);
+            userData1 = Phys_GetUserData(body->bones[i1].rigidBody);
 
             iassert(userData0->m_bpb && userData0->m_bpb->is_bpi());
             iassert(userData1->m_bpb && userData1->m_bpb->is_bpi());
@@ -883,7 +883,7 @@ char __cdecl Ragdoll_CreatePhysObjs(RagdollBody *body)
     {
         if ( body->bones[ia].rigidBody )
         {
-            userData = (PhysObjUserData *)body->bones[ia].rigidBody;
+            userData = Phys_GetUserData(body->bones[ia].rigidBody);
             
             iassert(userData->m_bpb && userData->m_bpb->is_bpi());
 
@@ -1018,11 +1018,11 @@ char __cdecl Ragdoll_CreatePhysObj(RagdollBody *body, BoneDef *boneDef, Bone *bo
                                              &g_empty_collision_visitor);
     //gjk_geom_list_t::add_geom(&gjk_geom_list, capsule_gjk_geom);
     gjk_geom_list.add_geom(capsule_gjk_geom);
-    bone->rigidBody = (int)Phys_ObjCreate(2, b0Origin, b0Quat, vec3_origin, &preset, &gjk_geom_list, 0, -1);
+    bone->rigidBody = Phys_GetObjId(Phys_ObjCreate(2, b0Origin, b0Quat, vec3_origin, &preset, &gjk_geom_list, 0, -1));
     cent = CG_GetEntity(body->localClientNum, body->dobj);
     if ( bone->rigidBody )
     {
-        userData = (PhysObjUserData *)bone->rigidBody;
+        userData = Phys_GetUserData(bone->rigidBody);
         if ( ((CENT_FLAGS(cent) >> 19) & 1) != 0 )
             userData->m_flags |= 4u;
         if ( ((CENT_FLAGS(cent) >> 20) & 1) != 0 )
@@ -1323,7 +1323,7 @@ char    Ragdoll_TunnelTest(RagdollBody *body)
     {
         if (bone->rigidBody)
         {
-            userData = (PhysObjUserData *)bone->rigidBody;
+            userData = Phys_GetUserData(bone->rigidBody);
             p_m_mat = &userData->body->m_mat;
             last_position = p_m_mat->w;
             v9 = last_position.x - sphere_center.x;
@@ -1759,7 +1759,7 @@ void __cdecl Ragdoll_UpdateFriction(RagdollBody *body)
         if ( type == RAGDOLL_JOINT_HINGE )
         {
             if ( joint->joint )
-                Phys_SetHingeParams((rigid_body_constraint_ragdoll *)joint->joint, 0.0, jointDef->axisFriction[0] * lerpScale);
+                Phys_SetHingeParams(BO1_NARROW_DECODE(rigid_body_constraint_ragdoll, static_cast<unsigned int>(joint->joint)), 0.0, jointDef->axisFriction[0] * lerpScale);
         }
         else if ( type == RAGDOLL_JOINT_SWIVEL )
         {
@@ -1767,7 +1767,7 @@ void __cdecl Ragdoll_UpdateFriction(RagdollBody *body)
             frictionVec[1] = lerpScale * jointDef->axisFriction[1];
             frictionVec[2] = lerpScale * jointDef->axisFriction[2];
             if ( joint->joint )
-                Phys_SetAngularMotorParams((rigid_body_constraint_ragdoll *)joint->joint, vec3_origin, frictionVec);
+                Phys_SetAngularMotorParams(BO1_NARROW_DECODE(rigid_body_constraint_ragdoll, static_cast<unsigned int>(joint->joint)), vec3_origin, frictionVec);
         }
         ++i;
         ++jointDef;
@@ -1813,14 +1813,14 @@ void    Ragdoll_DebugRender(RagdollBody *body)
         {
             if ( (renderflag & (1 << id)) != 0 )
             {
-                userData = (PhysObjUserData *)body->bones[id].rigidBody;
+                userData = Phys_GetUserData(body->bones[id].rigidBody);
                 body1 = (rigid_body *)userData;
                 debug_render(userData);
             }
         }
     }
     rigidBody = body->bones[hangBone].rigidBody;
-    v10 = (environment_rigid_body **)rigidBody;
+    v10 = nullptr;
     if ( ragdoll_debug->current.integer <= 1 )
     {
         if ( body->debug_hang_point )
@@ -1833,7 +1833,7 @@ void    Ragdoll_DebugRender(RagdollBody *body)
     }
     else if ( !body->debug_hang_point )
     {
-        v9 = *v10;
+        v9 = static_cast<environment_rigid_body *>(Phys_GetUserData(rigidBody)->body);
         v6[0] = LODWORD(v9->m_mat.w.x);
         v6[1] = LODWORD(v9->m_mat.w.y);
         z = v9->m_mat.w.z;

@@ -7,11 +7,11 @@ for line in open(log, encoding='utf-8', errors='replace'):
     m = pat.search(line)
     if m:
         f = m.group(1).replace('\\', '/')
-        key = (f, m.group(2), m.group(3))
+        key = (f, m.group(2))
         seen[key] = line.strip()
 by_file = collections.Counter()
 by_dir = collections.Counter()
-for (f, ln, c) in seen:
+for (f, ln) in seen:
     by_file[f] += 1
     by_dir[f.split('/')[0]] += 1
 print('unique warnings', len(seen))

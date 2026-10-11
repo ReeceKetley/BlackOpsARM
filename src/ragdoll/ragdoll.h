@@ -207,7 +207,7 @@ void __cdecl Ragdoll_Shutdown();
 
 inline RagdollBody *__cdecl Ragdoll_HandleBody(int handle)
 {
-    return (RagdollBody *)handle;
+    return BO1_NARROW_DECODE(RagdollBody, static_cast<unsigned int>(handle));
 }
 
 extern const dvar_t *ragdoll_enable;

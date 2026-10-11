@@ -496,7 +496,7 @@ void __cdecl FX_RunGarbageCollectionAndPrioritySort(FxSystem *system)
                 {
                     effectHandle = system->shared->allEffectHandles[--activeIndex & 0x3FF];
                     effect = (FxEffect *)FX_EffectFromHandle(system, effectHandle);
-                    if ( ((int)effect[1].def & 0x3FFF) != 0 )
+                    if ( (reinterpret_cast<FxEffectContainer *>(effect)->atomics.status & 0x3FFF) != 0 )
                     {
                         system->shared->allEffectHandles[((_WORD)freedCount + (_WORD)activeIndex) & 0x3FF] = effectHandle;
                     }
@@ -1368,7 +1368,7 @@ void __cdecl FX_AddRefToEffect(FxSystem *__formal, FxEffect *effect)
     {
         __debugbreak();
     }
-    _InterlockedExchangeAdd((volatile unsigned __int32 *)&effect[1], 1u);
+    _InterlockedExchangeAdd(&reinterpret_cast<FxEffectContainer *>(effect)->atomics.status, 1u);
 }
 
 char __cdecl FX_CullEffectForSpawn(const FxCamera *camera, const FxEffectDef *effectDef, const float *origin)
@@ -3297,7 +3297,7 @@ bool __cdecl FX_SpawnModelPhysics(
     {
         __debugbreak();
     }
-    elem->physObjId = (int)Phys_ObjCreate(
+    elem->physObjId = Phys_GetObjId(Phys_ObjCreate(
         1,
         worldOrigin,
         quat,
@@ -3305,7 +3305,7 @@ bool __cdecl FX_SpawnModelPhysics(
         *((const PhysPreset **)visuals.anonymous + 59),
         &gjk_geom_list,
         1,
-        id);
+        id));
     if (elem->physObjId)
         Phys_ObjSetAngularVelocity(elem->physObjId, angularVelocity);
     Sys_LeaveCriticalSection(CRITSECT_PHYSICS);

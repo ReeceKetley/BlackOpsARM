@@ -478,7 +478,7 @@ inline Material *Material_RegisterHandle(const char *name, int imgTrack)
     return Material_RegisterHandle((char *)name, imgTrack);
 }
 void __cdecl R_MaterialList_f();
-void __cdecl R_GetMaterialList(XAssetHeader header, char *data);
+void __cdecl R_GetMaterialList(XAssetHeader header, void *data);
 int __cdecl R_GetMaterialMemory(Material *material);
 bool __cdecl R_MaterialCompare(const MaterialMemory &material0, const MaterialMemory &material1);
 void __cdecl R_MaterialEdit_f();

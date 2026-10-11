@@ -1213,7 +1213,7 @@ void __cdecl InitFlameTable(flameTable *fTable)
     while ( iField < 119 )
     {
         if ( !pField->iFieldType )
-            *(unsigned int *)((char *)&fTable->flameVar_streamChunkGravityStart + pField->iOffset) = (unsigned int)"";
+            *reinterpret_cast<const char **>((char *)&fTable->flameVar_streamChunkGravityStart + pField->iOffset) = "";
         ++iField;
         ++pField;
     }
@@ -2104,7 +2104,7 @@ WeaponFullDef *__cdecl BG_LoadWeaponVariantDefInternal(const char *folder, char 
     WeaponFullDef *weapFullDef; // [esp+8h] [ebp-Ch]
     WeaponDef *weapDef; // [esp+10h] [ebp-4h]
 
-    weapFullDef = (WeaponFullDef *)Hunk_AllocLow(0xC48u, "BG_LoadWeaponVariantDefInternal", 10);
+    weapFullDef = (WeaponFullDef *)Hunk_AllocLow(sizeof(WeaponFullDef), "BG_LoadWeaponVariantDefInternal", 10);
     InitWeaponDef(weapFullDef);
     weapDef = &weapFullDef->weapDef;
     if (!BG_LoadWeaponVariantDefFile(weapFullDef, folder, name))
@@ -2248,7 +2248,7 @@ char __cdecl BG_WeaponUpdateField(const char *weaponName, char *keyValue)
     if ( w )
     {
         weapVariantDef = (WeaponVariantDef *)BG_GetWeaponVariantDef(w);
-        memcpy(&weapFullDef, weapVariantDef, 0xE4u);
+        memcpy(&weapFullDef.weapVariantDef, weapVariantDef, sizeof(weapFullDef.weapVariantDef));
         memcpy(&weapFullDef.weapDef, weapVariantDef->weapDef, sizeof(weapFullDef.weapDef));
         if ( !ParseConfigStringToStruct(
                         (unsigned __int8 *)&weapFullDef,

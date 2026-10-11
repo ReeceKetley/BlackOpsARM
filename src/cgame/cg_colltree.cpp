@@ -17,7 +17,7 @@ CgEntCollNode *cgEntCollNodes[1] = { cgEntCollNodes_data[0] };
 // free sectors hold no entities). The first failure prints the ops since the last good check (op, entity, the node's
 // sector before and after, the entity's eType/number, the caller as exe offset) once.
 static const dvar_s *cg_collTreeCheck;
-struct CgCollOp { unsigned short ent, before, after; unsigned char op, eType; int number; unsigned int caller; };
+struct CgCollOp { unsigned short ent, before, after; unsigned char op, eType; int number; uintptr_t caller; };
 static CgCollOp s_collOps[256];
 static unsigned int s_collOpCount, s_collOpsSinceCheck;
 static bool s_collTreeReported;
@@ -73,7 +73,7 @@ static const char *CG_CheckEntityCollWorldFail(int localClientNum)
     return 0;
 }
 
-static void CG_CollTreeOp(int localClientNum, unsigned int entIndex, int op, unsigned int caller)
+static void CG_CollTreeOp(int localClientNum, unsigned int entIndex, int op, uintptr_t caller)
 {
     if (!cg_collTreeCheck || !cg_collTreeCheck->current.integer || s_collTreeReported)
         return;
@@ -93,8 +93,8 @@ static void CG_CollTreeOp(int localClientNum, unsigned int entIndex, int op, uns
             for (unsigned int k = s_collOpCount - n; k != s_collOpCount; ++k)
             {
                 const CgCollOp *o = &s_collOps[k & 255];
-                Com_Printf(1, "BO1_COLLTREE op %u: %s ent %u sector %u -> %u eType %u number %d caller +0x%X\n", k,
-                    o->op ? "link" : "unlink", o->ent, o->before, o->after, o->eType, o->number, o->caller);
+                Com_Printf(1, "BO1_COLLTREE op %u: %s ent %u sector %u -> %u eType %u number %d caller +0x%llX\n", k,
+                    o->op ? "link" : "unlink", o->ent, o->before, o->after, o->eType, o->number, static_cast<unsigned long long>(o->caller));
             }
             return;
         }
@@ -107,7 +107,7 @@ static void CG_CollTreeOp(int localClientNum, unsigned int entIndex, int op, uns
     o->before = o->after = cgEntCollNodes[localClientNum][entIndex].sector;
     o->eType = (unsigned char)cent->nextState.eType;
     o->number = cent->nextState.number;
-    o->caller = caller - (unsigned int)GetModuleHandleA(0);
+    o->caller = caller - reinterpret_cast<uintptr_t>(GetModuleHandleA(0));
 }
 
 
@@ -158,7 +158,7 @@ void __cdecl CG_UnlinkEntityColl(int localClientNum, unsigned int entIndex)
     unsigned __int16 sectorIndex; // [esp+28h] [ebp-8h]
     CgEntCollWorld *world; // [esp+2Ch] [ebp-4h]
 
-    CG_CollTreeOp(localClientNum, entIndex, 0, (unsigned int)_ReturnAddress()); // mod (L43)
+    CG_CollTreeOp(localClientNum, entIndex, 0, reinterpret_cast<uintptr_t>(_ReturnAddress())); // mod (L43)
     if ( localClientNum
         && !Assert_MyHandler(
                     "C:\\projects_pc\\cod\\codsrc\\src\\cgame\\cg_colltree.cpp",
@@ -351,7 +351,7 @@ void __cdecl CG_LinkEntityColl(int localClientNum, unsigned int entIndex, const 
     CgEntCollWorld *world; // [esp+38h] [ebp-8h]
     int axis; // [esp+3Ch] [ebp-4h]
 
-    CG_CollTreeOp(localClientNum, entIndex, 1, (unsigned int)_ReturnAddress()); // mod (L43)
+    CG_CollTreeOp(localClientNum, entIndex, 1, reinterpret_cast<uintptr_t>(_ReturnAddress())); // mod (L43)
     if ( localClientNum
         && !Assert_MyHandler(
                     "C:\\projects_pc\\cod\\codsrc\\src\\cgame\\cg_colltree.cpp",

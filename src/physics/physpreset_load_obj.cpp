@@ -74,7 +74,7 @@ PhysPreset *__cdecl PhysPresetLoadFile(const char *name, void *(__cdecl *Alloc)(
                         physAlloc = Alloc;
                         if ( ParseConfigStringToStruct(dst, physPresetFields, 19, buffer, 0, 0, PhysPreset_Strcpy) )
                         {
-                            v14 = (float *)Alloc(84);
+                            v14 = (float *)Alloc(sizeof(PhysPreset));
                             if ( !v14
                                 && !Assert_MyHandler(
                                             "C:\\projects_pc\\cod\\codsrc\\src\\physics\\physpreset_load_obj.cpp",
@@ -103,31 +103,20 @@ PhysPreset *__cdecl PhysPresetLoadFile(const char *name, void *(__cdecl *Alloc)(
                             else
                                 v4 = 0.01f;
                             *(float *)&dst[36] = v4;
-                            v14[2] = *(float *)dst * 0.001;
-                            v14[3] = *(float *)&dst[4];
-                            if ( *(unsigned int *)&dst[12] )
-                                v3 = 1.0e10f;
-                            else
-                                v3 = *(float *)&dst[8];
-                            v14[4] = v3;
-                            v14[5] = *(float *)&dst[16];
-                            v14[6] = *(float *)&dst[20];
-                            v14[8] = *(float *)&dst[24];
-                            v14[9] = *(float *)&dst[28];
-                            v14[10] = *(float *)&dst[32];
-                            v14[11] = *(float *)&dst[36];
-                            v8 = (char *)(v14 + 12);
-                            v14[12] = *(float *)&dst[40];
-                            *((unsigned int *)v8 + 1) = *(unsigned int *)&dst[44];
-                            *((unsigned int *)v8 + 2) = *(unsigned int *)&dst[48];
-                            v7 = (char *)(v14 + 15);
-                            v14[15] = *(float *)&dst[52];
-                            *((unsigned int *)v7 + 1) = *(unsigned int *)&dst[56];
-                            *((unsigned int *)v7 + 2) = *(unsigned int *)&dst[60];
-                            v6 = (char *)(v14 + 18);
-                            v14[18] = *(float *)&dst[64];
-                            *((unsigned int *)v6 + 1) = *(unsigned int *)&dst[68];
-                            *((unsigned int *)v6 + 2) = *(unsigned int *)&dst[72];
+                            auto preset = reinterpret_cast<PhysPreset *>(v14);
+                            memset(preset, 0, sizeof(*preset));
+                            preset->mass = *(float *)dst * 0.001f;
+                            preset->bounce = *(float *)&dst[4];
+                            preset->friction = *(unsigned int *)&dst[12] ? 1.0e10f : *(float *)&dst[8];
+                            preset->bulletForceScale = *(float *)&dst[16];
+                            preset->explosiveForceScale = *(float *)&dst[20];
+                            preset->piecesSpreadFraction = *(float *)&dst[24];
+                            preset->piecesUpwardVelocity = *(float *)&dst[28];
+                            preset->canFloat = *(int *)&dst[32];
+                            preset->gravityScale = *(float *)&dst[36];
+                            memcpy(preset->centerOfMassOffset, &dst[40], sizeof(preset->centerOfMassOffset));
+                            memcpy(preset->buoyancyBoxMin, &dst[52], sizeof(preset->buoyancyBoxMin));
+                            memcpy(preset->buoyancyBoxMax, &dst[64], sizeof(preset->buoyancyBoxMax));
                             return (PhysPreset *)v14;
                         }
                         else
@@ -186,11 +175,11 @@ void __cdecl PhysPreset_Strcpy(unsigned __int8 *member, const char *keyValue)
             *v3++ = *v4++;
         }
         while ( v2 );
-        *(unsigned int *)member = (unsigned int)buf;
+        *(const char **)member = (const char *)buf;
     }
     else
     {
-        *(unsigned int *)member = (unsigned int)"";
+        *(const char **)member = "";
     }
 }
 

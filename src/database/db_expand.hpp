@@ -321,4 +321,7 @@ void DB_ExpandLoad_multiDef_t(multiDef_s *dst);
 struct enumDvarDef_s;
 void DB_ExpandLoad_enumDvarDef_t(enumDvarDef_s *dst);
 
+struct flameTable;
+void DB_ExpandLoad_flameTable(flameTable *dst);
+
 #endif // BO1_PORT_X64

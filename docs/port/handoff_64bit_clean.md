@@ -1,6 +1,6 @@
 # Handoff: making the x64 build genuinely 64-bit clean (drop BO1_X64_LOW_VA)
 
-Written 2026-10-10 mid-task. Everything below is the state at the moment work stopped. Nothing from this phase is committed (HEAD is `5dd11a4`, already pushed).
+Original handoff written 2026-10-10. The script rewrite was subsequently committed and pushed as `9693e39`. Follow-up fixes are uncommitted. **Read `64bit_clean_progress.md` first for current verification and pending work**; the original crash and verification sections below are historical.
 
 ## Why this work exists
 

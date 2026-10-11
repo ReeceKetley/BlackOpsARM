@@ -2547,10 +2547,10 @@ void __cdecl FX_UpdateBatch(
 
 char __cdecl FX_AcquireEffectLock_IsLiveEffect(FxEffect *effect)
 {
-    while ( _InterlockedExchangeAdd((volatile unsigned __int32 *)&effect[1], 0x20000000u) >= 0x20000000 )
+    while ( _InterlockedExchangeAdd(&reinterpret_cast<FxEffectContainer *>(effect)->atomics.status, 0x20000000u) >= 0x20000000 )
     {
-        _InterlockedExchangeAdd((volatile unsigned __int32 *)&effect[1], 0xE0000000);
-        if ( ((int)effect[1].def & 0x3FFF) == 0 )
+        _InterlockedExchangeAdd(&reinterpret_cast<FxEffectContainer *>(effect)->atomics.status, 0xE0000000);
+        if ( (reinterpret_cast<FxEffectContainer *>(effect)->atomics.status & 0x3FFF) == 0 )
             return 0;
     }
     return 1;
@@ -3246,7 +3246,7 @@ void __cdecl FX_RewindTo(int localClientNum, int time)
     int bitNum; // [esp+2Ch] [ebp-1010h]
     int bitNuma; // [esp+2Ch] [ebp-1010h]
     FxSystemContainer *system; // [esp+30h] [ebp-100Ch]
-    unsigned int v12[1024]; // [esp+34h] [ebp-1008h]
+    FxEffectContainer *v12[1024]; // [esp+34h] [ebp-1008h]
     int v13; // [esp+1034h] [ebp-8h]
     volatile int i; // [esp+1038h] [ebp-4h]
 
@@ -3266,7 +3266,7 @@ void __cdecl FX_RewindTo(int localClientNum, int time)
         {
             v5 = system->system.shared->allEffectHandles[i & 0x3FF];
             effect = FX_EffectFromHandle(&system->system, v5);
-            v12[v13++] = (unsigned int)effect;
+            v12[v13++] = effect;
             if ( (effect->atomics.status & 0x3FFF) != 0 && effect->effect.msecBegin < time && effect->effect.owner == v5 )
             {
                 IsDObjEntityValid = 1;
@@ -3307,7 +3307,7 @@ void __cdecl FX_RewindTo(int localClientNum, int time)
         }
         for ( bitNum = 0; bitNum < v13; ++bitNum )
         {
-            effecta = (FxEffectContainer *)v12[bitNum];
+            effecta = v12[bitNum];
             if ( (effecta->atomics.status & 0x3FFF) != 0 )
             {
                 while ( _InterlockedExchangeAdd(&effecta->atomics.status, 0x20000000u) >= 0x20000000 )
@@ -3324,7 +3324,7 @@ void __cdecl FX_RewindTo(int localClientNum, int time)
             {
                 if ( Com_BitCheckAssert(system->system.restartList, bitNuma, 128) )
                 {
-                    effectb = (FxEffectContainer *)v12[bitNuma];
+                    effectb = v12[bitNuma];
                     effectb->effect.msecLastUpdate = effectb->effect.msecBegin;
                     if ( effectb->effect.def )
                     {

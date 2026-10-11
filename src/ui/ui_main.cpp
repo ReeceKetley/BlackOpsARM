@@ -774,7 +774,7 @@ void __cdecl UI_Refresh(int localClientNum)
                             &uiInfo->uiDC,
                             0,
                             toastPopupMenu,
-                            (const ScreenPlacement *)0xFFFFFFFF);
+                            -1);
                         if ( (Window_GetDynamicFlags(contextIndex, &toastPopupMenu->window) & 0x42000) == 0 )
                         {
                             Window_RemoveDynamicFlags(contextIndex, &toastPopupMenu->window, 4);
@@ -790,7 +790,7 @@ void __cdecl UI_Refresh(int localClientNum)
                         &uiInfo->uiDC,
                         0,
                         toastPopupMenu,
-                        (const ScreenPlacement *)0xFFFFFFFF);
+                        -1);
                     if ( toastPopupMenu->closeSlideSpeed <= 0 || toastPopupMenu->closeSlideDirection >= 4u )
                     {
                         if ( toastPopupMenu->closeFadingTime > 0 )
@@ -829,7 +829,7 @@ void __cdecl UI_Refresh(int localClientNum)
                     &uiInfo->uiDC,
                     0,
                     toastPopupMenu,
-                    (const ScreenPlacement *)0xFFFFFFFF);
+                    -1);
             }
         }
         UI_BuildFindPlayerList();
@@ -1063,7 +1063,7 @@ int __cdecl UI_GetClientNumForPlayerListNum(int playerListIndex)
     return sharedUiInfo.playerClientNums[playerListIndex - 1];
 }
 
-void __cdecl UI_RunMenuScript(int localClientNum, int contextIndex, __int64 args)
+void __cdecl UI_RunMenuScript(int localClientNum, int contextIndex, const char **args, const char *script)
 {
     int ControllerIndex; // eax
     char *v5; // eax
@@ -1231,7 +1231,7 @@ void __cdecl UI_RunMenuScript(int localClientNum, int contextIndex, __int64 args
                                                                                                                                                                     contextIndex,
                                                                                                                                                                     out,
                                                                                                                                                                     (const char **)args,
-                                                                                                                                                                    (const char *)HIDWORD(args));
+                                                                                                                                                                    script);
                                                                                                                                                             else
                                                                                                                                                                 LB_OnSelect(localClientNum);
                                                                                                                                                         }
@@ -3879,7 +3879,7 @@ void __cdecl UI_DrawMapLevelshot(int localClientNum)
                 &uiInfo->uiDC,
                 0,
                 menua,
-                (const ScreenPlacement *)0xFFFFFFFF);
+                -1);
         }
         else
         {

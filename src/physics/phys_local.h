@@ -204,14 +204,14 @@ inline phys_vec3 operator/(const phys_vec3 &a, float d)
 
 struct bpei_database_id // sizeof=0x8
 {                                       // XREF: broad_phase_environment_info/r
-    unsigned int m_id1;                 // XREF: gjk_physics_collision_visitor::query_create_prolog(void const *)+5F/w
-    unsigned int m_id2;                 // XREF: gjk_physics_collision_visitor::query_create_prolog(void const *)+65/w
+    uintptr_t m_id1;                 // XREF: gjk_physics_collision_visitor::query_create_prolog(void const *)+5F/w
+    uintptr_t m_id2;                 // XREF: gjk_physics_collision_visitor::query_create_prolog(void const *)+65/w
 
     bpei_database_id()
     {
     }
 
-    bpei_database_id(unsigned int id) // this is psycho, but it looks like what's going on
+    bpei_database_id(uintptr_t id) // this is psycho, but it looks like what's going on
     {
         m_id1 = id;
         m_id2 = 0;
@@ -238,7 +238,7 @@ struct __declspec(align(16)) plane_lt // sizeof=0x20
 
 struct chull_t // sizeof=0x20
 {
-    unsigned int key;
+    uintptr_t key;
     int nverts;
     phys_vec3 *verts;
     int ninds;

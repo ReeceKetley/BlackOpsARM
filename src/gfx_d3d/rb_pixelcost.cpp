@@ -1,3 +1,4 @@
+#include <universal/narrow32.h>
 #include "rb_pixelcost.h"
 #include "r_init.h"
 #include "rb_corona.h"
@@ -242,7 +243,7 @@ int __cdecl RB_PixelCost_GetCostForRecordIndex(int recordIndex)
 
 unsigned __int64 __cdecl R_PixelCost_PackedKeyForMaterial(const Material *material, unsigned __int8 techType)
 {
-    unsigned int key_4; // [esp+4h] [ebp-4h]
+    unsigned int key_4 = 0; // [esp+4h] [ebp-4h]
 
     if ( !material
         && !Assert_MyHandler("C:\\projects_pc\\cod\\codsrc\\src\\gfx_d3d\\rb_pixelcost.cpp", 254, 0, "%s", "material") )
@@ -250,14 +251,12 @@ unsigned __int64 __cdecl R_PixelCost_PackedKeyForMaterial(const Material *materi
         __debugbreak();
     }
     LOBYTE(key_4) = techType;
-    return __PAIR64__(key_4, (unsigned int)material);
+    return __PAIR64__(key_4, BO1_NARROW_ENCODE(material));
 }
 
 bool __cdecl RB_PixelCost_DoesPrimMatch(unsigned __int64 packedKey)
 {
-    return __PAIR64__(
-                     HIDWORD(pixelCostGlob.records[pixelCostGlob.recordCount].key.packed),
-                     pixelCostGlob.records[pixelCostGlob.recordCount].key.mtl.material) == packedKey;
+    return pixelCostGlob.records[pixelCostGlob.recordCount].key.packed == packedKey;
 }
 
 void __cdecl RB_PixelCost_ResetPrim(unsigned __int64 packedKey)

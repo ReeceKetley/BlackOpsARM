@@ -842,7 +842,7 @@ bool __cdecl jqPoll(jqBatchGroup *GroupID)
     p_group = GroupID;
     if (!GroupID)
         p_group = &jqPool.group;
-    if (((unsigned __int8)p_group & 7) != 0
+    if ((reinterpret_cast<uintptr_t>(p_group) & 7) != 0
         && _tlAssert(
             "c:\\projects_pc\\cod\\codsrc\\tl\\jobqueue\\jobqueue.cpp",
             390,
@@ -940,22 +940,22 @@ void __cdecl jqCheckDMALS(const void *addr)
 {
   if ( !addr )
     tlFatal("%s (LS) is NULL.", jqCheckContext);
-  if ( ((unsigned __int8)addr & 0xF) != 0 )
-    tlFatal("%s 0x%x (LS) not 16byte aligned.", jqCheckContext, addr);
-  if ( (unsigned int)addr > 0x40000 )
-    tlFatal("%s 0x%x (LS) is > 256k.", jqCheckContext, addr);
-  if ( (unsigned int)addr < 0x4000 )
-    tlFatal("%s 0x%x (LS) is in kernel memory.", jqCheckContext, addr);
+  if ( (reinterpret_cast<uintptr_t>(addr) & 0xF) != 0 )
+    tlFatal("%s %p (LS) not 16byte aligned.", jqCheckContext, addr);
+  if ( reinterpret_cast<uintptr_t>(addr) > 0x40000 )
+    tlFatal("%s %p (LS) is > 256k.", jqCheckContext, addr);
+  if ( reinterpret_cast<uintptr_t>(addr) < 0x4000 )
+    tlFatal("%s %p (LS) is in kernel memory.", jqCheckContext, addr);
 }
 
 void __cdecl jqCheckDMAMain(const void *addr)
 {
   if ( !addr )
     tlFatal("%s (Main) is NULL.", jqCheckContext);
-  if ( ((unsigned __int8)addr & 0xF) != 0 )
-    tlFatal("%s 0x%x (Main) not 16byte aligned.", jqCheckContext, addr);
-  if ( (unsigned int)addr < 0x40000 )
-    tlFatal("%s 0x%x (Main) is < 256k.", jqCheckContext, addr);
+  if ( (reinterpret_cast<uintptr_t>(addr) & 0xF) != 0 )
+    tlFatal("%s %p (Main) not 16byte aligned.", jqCheckContext, addr);
+  if ( reinterpret_cast<uintptr_t>(addr) < 0x40000 )
+    tlFatal("%s %p (Main) is < 256k.", jqCheckContext, addr);
 }
 
 void __cdecl jqCheckDMASize(unsigned int size)

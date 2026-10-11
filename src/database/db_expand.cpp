@@ -18,6 +18,7 @@
 #include <qcommon/cm_staticmodel.h>
 #include <qcommon/cm_load_obj.h>
 #include <DynEntity/DynEntity_client.h>
+#include <flame/flame_system.h>
 #include <universal/assertive.h>
 #include <cstring>
 #include <cstdlib>
@@ -5000,6 +5001,33 @@ void DB_ExpandLoad_FxImpactEntryArray(FxImpactEntry *dst, int count)
             DB_ExpandPtrStore(reinterpret_cast<uintptr_t *>(&dst[i].flesh[j]), disk[static_cast<size_t>(i)].flesh[j]);
     }
     DB_Expand_Commit(static_cast<int>(sizeof(FxImpactEntry) * static_cast<size_t>(count)), count);
+}
+
+void DB_ExpandLoad_flameTable(flameTable *dst)
+{
+    // Disk: 106 floats followed by 13 four-byte pointer tokens (476 bytes).
+    struct Disk { float values[106]; uint32_t pointers[13]; };
+    static_assert(sizeof(Disk)==476, "flame table disk layout");
+    static_assert(offsetof(flameTable,name)==424, "flame table scalar prefix");
+    iassert(dst == reinterpret_cast<flameTable *>(DB_GetStreamPos()));
+    Disk disk{};
+    DB_Expand_ReadFile(&disk,sizeof(disk));
+    memset(dst,0,sizeof(*dst));
+    memcpy(dst,disk.values,sizeof(disk.values));
+    DB_ExpandPtrStore(reinterpret_cast<uintptr_t *>(&dst->name),disk.pointers[0]);
+    DB_ExpandPtrStore(reinterpret_cast<uintptr_t *>(&dst->fire),disk.pointers[1]);
+    DB_ExpandPtrStore(reinterpret_cast<uintptr_t *>(&dst->smoke),disk.pointers[2]);
+    DB_ExpandPtrStore(reinterpret_cast<uintptr_t *>(&dst->heat),disk.pointers[3]);
+    DB_ExpandPtrStore(reinterpret_cast<uintptr_t *>(&dst->drips),disk.pointers[4]);
+    DB_ExpandPtrStore(reinterpret_cast<uintptr_t *>(&dst->streamFuel),disk.pointers[5]);
+    DB_ExpandPtrStore(reinterpret_cast<uintptr_t *>(&dst->streamFuel2),disk.pointers[6]);
+    DB_ExpandPtrStore(reinterpret_cast<uintptr_t *>(&dst->streamFlame),disk.pointers[7]);
+    DB_ExpandPtrStore(reinterpret_cast<uintptr_t *>(&dst->streamFlame2),disk.pointers[8]);
+    DB_ExpandPtrStore(reinterpret_cast<uintptr_t *>(&dst->flameOffLoopSound),disk.pointers[9]);
+    DB_ExpandPtrStore(reinterpret_cast<uintptr_t *>(&dst->flameIgniteSound),disk.pointers[10]);
+    DB_ExpandPtrStore(reinterpret_cast<uintptr_t *>(&dst->flameOnLoopSound),disk.pointers[11]);
+    DB_ExpandPtrStore(reinterpret_cast<uintptr_t *>(&dst->flameCooldownSound),disk.pointers[12]);
+    DB_Expand_Commit(static_cast<int>(sizeof(*dst)));
 }
 
 void DB_ExpandLoad_WeaponDef(WeaponDef *dst)

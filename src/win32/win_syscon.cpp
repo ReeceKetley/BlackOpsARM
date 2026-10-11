@@ -7,20 +7,20 @@
 WinConData s_wcd;
 unsigned int s_totalChars;
 
-LRESULT __stdcall InputLineWndProc(HWND__ *hWnd, UINT uMsg, HWND__ *wParam, LPARAM lParam)
+LRESULT __stdcall InputLineWndProc(HWND__ *hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     char displayBuffer[1024]; // [esp+20h] [ebp-808h] BYREF
     char inputBuffer[1028]; // [esp+420h] [ebp-408h] BYREF
 
     if ( uMsg == 8 )
     {
-        if ( wParam == s_wcd.hWnd )
+        if ( wParam == reinterpret_cast<WPARAM>(s_wcd.hWnd) )
         {
             SetFocus(hWnd);
             return 0;
         }
     }
-    else if ( uMsg == 258 && wParam == (HWND__ *)13 )
+    else if ( uMsg == 258 && wParam == 13 )
     {
         GetWindowTextA(s_wcd.hwndInputLine, inputBuffer, 1024);
         strncat(s_wcd.consoleText, inputBuffer, 512 - strlen(s_wcd.consoleText) - 5);
@@ -134,10 +134,8 @@ void __cdecl Sys_CreateConsole(HINSTANCE__ *hInstance)
                                                      hInstance,
                                                      0);
             SendMessageA(s_wcd.hwndBuffer, 0x30u, (WPARAM)s_wcd.hfBufferFont, 0);
-            s_wcd.SysInputLineWndProc = (int (__stdcall *)(HWND__ *, unsigned int, unsigned int, int))SetWindowLongA(
-                                                                                                                                                                                                    s_wcd.hwndInputLine,
-                                                                                                                                                                                                    -4,
-                                                                                                                                                                                                    (int)InputLineWndProc);
+            s_wcd.SysInputLineWndProc = reinterpret_cast<WNDPROC>(SetWindowLongPtrA(
+                s_wcd.hwndInputLine, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(InputLineWndProc)));
             SendMessageA(s_wcd.hwndInputLine, 0x30u, (WPARAM)s_wcd.hfBufferFont, 0);
             SetFocus(s_wcd.hwndInputLine);
             Con_GetTextCopy(text, 0x4000);
@@ -180,7 +178,7 @@ LRESULT __stdcall ConWndProc(HWND__ *hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
     }
 }
 
-char *__cdecl Conbuf_CleanText(const char *source, char *target, int sizeofTarget)
+int __cdecl Conbuf_CleanText(const char *source, char *target, int sizeofTarget)
 {
     const char *start; // [esp+0h] [ebp-8h]
     const char *last; // [esp+4h] [ebp-4h]
@@ -220,7 +218,7 @@ char *__cdecl Conbuf_CleanText(const char *source, char *target, int sizeofTarge
         }
     }
     *target = 0;
-    return (char *)(target - start);
+    return static_cast<int>(target - start);
 }
 
 void __cdecl Sys_DestroyConsole()
@@ -278,7 +276,7 @@ void __cdecl Conbuf_AppendText(char *pMsg)
 {
     char target[32772]; // [esp+20h] [ebp-8010h] BYREF
     char *source; // [esp+8028h] [ebp-8h]
-    char *v3; // [esp+802Ch] [ebp-4h]
+    int v3; // [esp+802Ch] [ebp-4h]
 
     if ( !s_wcd.hwndBuffer
         && !Assert_MyHandler("C:\\projects_pc\\cod\\codsrc\\src\\win32\\win_syscon.cpp", 414, 0, "%s", "s_wcd.hwndBuffer") )
@@ -290,7 +288,7 @@ void __cdecl Conbuf_AppendText(char *pMsg)
     else
         source = &pMsg[strlen(pMsg) - 0x3FFF];
     v3 = Conbuf_CleanText(source, target, 0x8000);
-    s_totalChars += (unsigned int)v3;
+    s_totalChars += v3;
     if ( s_totalChars <= 0x4000 )
     {
         SendMessageA(s_wcd.hwndBuffer, 0xB1u, 0xFFFFu, 0xFFFF);
@@ -298,7 +296,7 @@ void __cdecl Conbuf_AppendText(char *pMsg)
     else
     {
         SendMessageA(s_wcd.hwndBuffer, 0xB1u, 0, -1);
-        s_totalChars = (unsigned int)v3;
+        s_totalChars = v3;
     }
     SendMessageA(s_wcd.hwndBuffer, 0xB6u, 0, 0xFFFF);
     SendMessageA(s_wcd.hwndBuffer, 0xB7u, 0, 0);

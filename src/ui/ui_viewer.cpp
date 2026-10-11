@@ -915,7 +915,7 @@ void __thiscall UIViewer::DrawDobj::Set(
 {
     this->weaponOptions.i = weapParam->weaponOptions.i;
     this->weaponOptions.i = (playerParams->facePatternIndex << 26)
-                                                | ((unsigned int)&objBuf[1758][1] + 3) & this->weaponOptions.i;
+                                                | 0x03FFFFFFu & this->weaponOptions.i;
     this->heroLighting = hero;
     this->startTime = cls.realtime;
     this->weaponVariantDef = wvd;
@@ -1054,9 +1054,9 @@ const WeaponVariantDef *__thiscall UIViewer::GetWeaponVariantDef(const UIViewer:
     while ( v11 );
     if ( isDualWield )
     {
-        v10 = (char *)&attachRefs[3] + 3;
-        while ( *++v10 )
-            ;
+        v10 = weaponDefName;
+        while (*v10)
+            ++v10;
         strcpy(v10, "dw");
     }
     for ( i = 0; i < 4; ++i )
@@ -1064,16 +1064,16 @@ const WeaponVariantDef *__thiscall UIViewer::GetWeaponVariantDef(const UIViewer:
         if ( attachRefs[i] && I_strcmp(attachRefs[i], "none") )
         {
             v7 = va("_%s", attachRefs[i]);
-            v8 = (unsigned int)&v7[strlen(v7) + 1];
-            v6 = (char *)&attachRefs[3] + 3;
-            while ( *++v6 )
-                ;
-            memcpy(v6, v7, v8 - (unsigned int)v7);
+            v8 = strlen(v7) + 1;
+            v6 = weaponDefName;
+            while (*v6)
+                ++v6;
+            memcpy(v6, v7, v8);
         }
     }
-    v4 = (char *)&attachRefs[3] + 3;
-    while ( *++v4 )
-        ;
+    v4 = weaponDefName;
+    while (*v4)
+        ++v4;
     strcpy(v4, "_mp");
     weaponDefIndex = BG_GetWeaponIndexForName(weaponDefName, 0);
     return BG_GetWeaponVariantDef(weaponDefIndex);

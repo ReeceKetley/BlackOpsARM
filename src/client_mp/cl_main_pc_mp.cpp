@@ -788,15 +788,15 @@ void __cdecl CL_Rcon_f()
 
 void CL_RconLogin()
 {
-    unsigned int v0; // [esp+Ch] [ebp-1Ch]
+    size_t length; // [esp+Ch] [ebp-1Ch]
     char *password; // [esp+24h] [ebp-4h]
 
     if ( Cmd_Argc() == 3 )
     {
         password = (char *)Cmd_Argv(2);
-        v0 = (unsigned int)&password[strlen(password) + 1];
-        if ( v0 - (unsigned int)(password + 1) < 0x18 )
-            memcpy((unsigned __int8 *)&rconGlob, (unsigned __int8 *)password, v0 - (unsigned int)password);
+        length = strlen(password);
+        if ( length < 0x18 )
+            memcpy((unsigned __int8 *)&rconGlob, (unsigned __int8 *)password, length + 1);
         else
             Com_Printf(14, "rcon password must be %i characters or less\n", 24);
     }

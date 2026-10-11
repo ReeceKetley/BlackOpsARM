@@ -83,117 +83,55 @@ void __cdecl IPN_merge(rigid_body *dest, rigid_body *source)
 
 void __cdecl rigid_body_island_qsort(rigid_body **list, int list_count)
 {
-    rigid_body *v2; // ecx
-    rigid_body **v3; // esi
-    rigid_body **v4; // edi
-    unsigned int i; // eax
-    rigid_body *v6; // ecx
-    unsigned int v7; // ecx
-    int v8; // esi
-    rigid_body **last; // [esp+4h] [ebp-4h]
-
-    if ( list_count >= 3 )
+    if (list_count >= 3)
     {
-        v3 = list;
-        rigid_body_island_qsort(list, list_count / 2);
-        rigid_body_island_qsort(&list[list_count / 2], list_count - list_count / 2);
-        v4 = &list[list_count / 2];
-        last = &list[list_count];
-        for ( i = (unsigned int)(v4 - 1); v4 < last; ++v4 )
+        const int middle = list_count / 2;
+        rigid_body_island_qsort(list, middle);
+        rigid_body_island_qsort(list + middle, list_count - middle);
+        auto cursor = list + middle - 1;
+        for (auto right = list + middle; right < list + list_count; ++right)
         {
-            v6 = *(rigid_body **)i;
-            if ( (*v4)->m_partition_node.m_partition_size <= *(unsigned int *)(*(unsigned int *)i + 348) )
+            if ((*right)->m_partition_node.m_partition_size <= (*cursor)->m_partition_node.m_partition_size)
                 break;
-            *(unsigned int *)i = (unsigned int)*v4;
-            *v4 = v6;
-            v7 = i - 4;
-            if ( i > (unsigned int)v3 )
+            std::swap(*cursor, *right);
+            while (cursor > list && (*cursor)->m_partition_node.m_partition_size > (*(cursor - 1))->m_partition_node.m_partition_size)
             {
-                while ( 1 )
-                {
-                    v8 = *(unsigned int *)v7;
-                    if ( *(unsigned int *)(*(unsigned int *)i + 348) <= *(unsigned int *)(*(unsigned int *)v7 + 348) )
-                        break;
-                    *(unsigned int *)v7 = *(unsigned int *)i;
-                    *(unsigned int *)i = v8;
-                    v3 = list;
-                    i = v7;
-                    v7 -= 4;
-                    if ( i <= (unsigned int)list )
-                        goto LABEL_12;
-                }
-                v3 = list;
+                std::swap(*cursor, *(cursor - 1));
+                --cursor;
             }
-LABEL_12:
-            i = (unsigned int)v4;
+            cursor = right;
         }
     }
-    else if ( list_count == 2 )
+    else if (list_count == 2 && list[1]->m_partition_node.m_partition_size > list[0]->m_partition_node.m_partition_size)
     {
-        v2 = *list;
-        if ( list[1]->m_partition_node.m_partition_size > (*list)->m_partition_node.m_partition_size )
-        {
-            *list = list[1];
-            list[1] = v2;
-        }
+        std::swap(list[0], list[1]);
     }
 }
 
 void __cdecl merge_sort(rigid_body_constraint_contact **list, int list_count)
 {
-    rigid_body_constraint_contact *v2; // ecx
-    rigid_body_constraint_contact **v3; // esi
-    rigid_body_constraint_contact **v4; // edi
-    unsigned int i; // eax
-    rigid_body_constraint_contact *v6; // ecx
-    unsigned int v7; // ecx
-    int v8; // esi
-    rigid_body_constraint_contact **last; // [esp+4h] [ebp-4h]
-
-    if ( list_count >= 3 )
+    if (list_count >= 3)
     {
-        v3 = list;
-        merge_sort(list, list_count / 2);
-        merge_sort(&list[list_count / 2], list_count - list_count / 2);
-        v4 = &list[list_count / 2];
-        last = &list[list_count];
-        for ( i = (unsigned int)(v4 - 1); v4 < last; ++v4 )
+        const int middle = list_count / 2;
+        merge_sort(list, middle);
+        merge_sort(list + middle, list_count - middle);
+        auto cursor = list + middle - 1;
+        for (auto right = list + middle; right < list + list_count; ++right)
         {
-            v6 = *(rigid_body_constraint_contact **)i;
-            if ( (*v4)->m_solver_priority >= *(unsigned int *)(*(unsigned int *)i + 20) )
+            if ((*right)->m_solver_priority >= (*cursor)->m_solver_priority)
                 break;
-            *(unsigned int *)i = (unsigned int)*v4;
-            *v4 = v6;
-            v7 = i - 4;
-            if ( i > (unsigned int)v3 )
+            std::swap(*cursor, *right);
+            while (cursor > list && (*cursor)->m_solver_priority < (*(cursor - 1))->m_solver_priority)
             {
-                while ( 1 )
-                {
-                    v8 = *(unsigned int *)v7;
-                    if ( *(unsigned int *)(*(unsigned int *)i + 20) >= *(unsigned int *)(*(unsigned int *)v7 + 20) )
-                        break;
-                    *(unsigned int *)v7 = *(unsigned int *)i;
-                    *(unsigned int *)i = v8;
-                    v3 = list;
-                    i = v7;
-                    v7 -= 4;
-                    if ( i <= (unsigned int)list )
-                        goto LABEL_12;
-                }
-                v3 = list;
+                std::swap(*cursor, *(cursor - 1));
+                --cursor;
             }
-LABEL_12:
-            i = (unsigned int)v4;
+            cursor = right;
         }
     }
-    else if ( list_count == 2 )
+    else if (list_count == 2 && list[1]->m_solver_priority < list[0]->m_solver_priority)
     {
-        v2 = *list;
-        if ( list[1]->m_solver_priority < (*list)->m_solver_priority )
-        {
-            *list = list[1];
-            list[1] = v2;
-        }
+        std::swap(list[0], list[1]);
     }
 }
 

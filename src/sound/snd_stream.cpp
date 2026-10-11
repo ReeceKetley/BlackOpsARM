@@ -78,7 +78,7 @@ void __cdecl Snd_StreamInit()
             "C:\\projects_pc\\cod\\codsrc\\src\\sound\\snd_stream.cpp",
             247);
         g_snd_streams = (snd_stream *)_PMem_Alloc(
-            0xFA0u,
+            sizeof(*g_snd_streams) * 10,
             0x80u,
             4u,
             1u,
@@ -86,7 +86,7 @@ void __cdecl Snd_StreamInit()
             "C:\\projects_pc\\cod\\codsrc\\src\\sound\\snd_stream.cpp",
             254);
         g_snd_buffers = (snd_buffer *)_PMem_Alloc(
-            0x15E0u,
+            sizeof(*g_snd_buffers) * 20,
             0x80u,
             4u,
             1u,
@@ -927,10 +927,9 @@ void __cdecl Snd_StreamReleaseWindow(unsigned int index, char *data)
     }
     for ( i = 0; i < 3; ++i )
     {
-        if ( !_InterlockedCompareExchange(
-                        (volatile unsigned __int32 *)&g_snd_streams[index].window_return[i],
-                        (signed __int32)data,
-                        0) )
+        if ( !InterlockedCompareExchangePointer(
+                        reinterpret_cast<void *volatile *>(&g_snd_streams[index].window_return[i]),
+                        data, nullptr) )
         {
             Sys_WakeStream();
             return;
@@ -1075,10 +1074,10 @@ void __cdecl Snd_StreamReleaseProcess(unsigned int index)
     }
     for ( i = 0; i < 3; ++i )
     {
-        data = g_snd_streams[index].window_return[i];
+        data = static_cast<char *>(InterlockedExchangePointer(reinterpret_cast<void *volatile *>(&g_snd_streams[index].window_return[i]), nullptr));
         if ( data )
         {
-            g_snd_streams[index].window_return[i] = 0;
+
             Snd_StreamReleaseWindowWork(index, data);
         }
     }
@@ -1093,8 +1092,34 @@ void __cdecl Snd_StreamLoadHeader(snd_stream *s, char *data, const char *filenam
     {
         __debugbreak();
     }
-    memcpy(&s->header, data, sizeof(s->header));
-    s->header.seek_table = (unsigned int *)(data + 56);
+    // The stream file stores the original 56-byte header. Native snd_asset
+    // contains wider pointers, so a native-size memcpy also shifts data_size.
+    struct DiskHeader
+    {
+        unsigned int version, frame_count, frame_rate, channel_count;
+        unsigned int header_size, block_size, buffer_size;
+        snd_asset_format format;
+        snd_asset_channel channel_flags;
+        snd_asset_flags flags;
+        unsigned int seek_table_count, seek_table_token, data_size, data_token;
+    };
+    static_assert(sizeof(DiskHeader) == 56, "sound stream disk header");
+    DiskHeader disk;
+    memcpy(&disk, data, sizeof(disk));
+    s->header.version = disk.version;
+    s->header.frame_count = disk.frame_count;
+    s->header.frame_rate = disk.frame_rate;
+    s->header.channel_count = disk.channel_count;
+    s->header.header_size = disk.header_size;
+    s->header.block_size = disk.block_size;
+    s->header.buffer_size = disk.buffer_size;
+    s->header.format = disk.format;
+    s->header.channel_flags = disk.channel_flags;
+    s->header.flags = disk.flags;
+    s->header.seek_table_count = disk.seek_table_count;
+    s->header.seek_table = reinterpret_cast<unsigned int *>(data + sizeof(DiskHeader));
+    s->header.data_size = disk.data_size;
+    s->header.data = nullptr; // Stream windows supply audio data separately.
     s->have_header = 1;
     if ( s->looping == ((s->header.flags & 1) != 0) )
     {

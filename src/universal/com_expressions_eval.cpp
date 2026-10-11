@@ -1627,12 +1627,12 @@ char __cdecl GetOperand(OperandStack *dataStack, Operand *data)
         list = &dataStack->stack[dataStack->numOperandLists - 1];
         if ( list->operandCount == 1 )
         {
-            v4.intVal = list->operands[0].internals.intVal;
+            v4 = list->operands[0].internals;
             data->dataType = list->operands[0].dataType;
             data->internals = v4;
             --dataStack->numOperandLists;
             if ( data->dataType == VAL_STRING
-                && !data->internals.intVal
+                && !data->internals.string
                 && !Assert_MyHandler(
                             "C:\\projects_pc\\cod\\codsrc\\src\\universal\\com_expressions_eval.cpp",
                             191,
@@ -1659,7 +1659,7 @@ char __cdecl GetOperand(OperandStack *dataStack, Operand *data)
         Expression_Error(" Invalid operation - missing parameter inside function or parenthesis\n");
         dataStack->numOperandLists = 1;
         dataStack->stack[0].operandCount = 1;
-        v2.intVal = (int)dataStack->stack[0].operands[0].internals;
+        v2 = dataStack->stack[0].operands[0].internals;
         data->dataType = dataStack->stack[0].operands[0].dataType;
         data->internals = v2;
         data->dataType = VAL_INT;
@@ -1841,7 +1841,7 @@ void __cdecl AddOperandToStack(OperandStack *dataStack, Operand *data)
     int numOperandLists; // ecx
 
     if ( data->dataType == VAL_STRING
-        && !data->internals.intVal
+        && !data->internals.string
         && !Assert_MyHandler(
                     "C:\\projects_pc\\cod\\codsrc\\src\\universal\\com_expressions_eval.cpp",
                     225,
@@ -1851,7 +1851,7 @@ void __cdecl AddOperandToStack(OperandStack *dataStack, Operand *data)
     {
         __debugbreak();
     }
-    v2.intVal = (int)data->internals;
+    v2 = data->internals;
     numOperandLists = dataStack->numOperandLists;
     dataStack->stack[numOperandLists].operands[0].dataType = data->dataType;
     dataStack->stack[numOperandLists].operands[0].internals = v2;
@@ -4626,7 +4626,7 @@ void __cdecl GetPlayerStatByName(int localClientNum, itemDef_s *item, OperandSta
     }
     if ( uiscript_debug && uiscript_debug->current.integer )
     {
-        v7.intVal = (int)result.internals;
+        v7 = result.internals;
         v5 = GetSourceString(source);
         Expression_TraceInternal("getstatbyname( %s ) = %i\n", v5, v7.intVal);
     }
@@ -12099,7 +12099,7 @@ void __cdecl GetClassBonus(int localClientNum, itemDef_s *item, OperandStack *da
             {
                 if ( uiscript_debug->current.integer )
                 {
-                    v5.intVal = (int)operandResult.internals;
+                    v5 = operandResult.internals;
                     v4 = GetSourceString(list.operands[0]);
                     Expression_TraceInternal("getclassbonus( %s ) == %d\n", v4, v5.intVal);
                 }
@@ -13396,7 +13396,7 @@ void __cdecl RPN_OP_MODULUS(int localClientNum, itemDef_s *item, OperandStack *d
     }
     operandResult.dataType = VAL_INT;
     if ( data2.internals.intVal )
-        v3.intVal = (int)data2.internals;
+        v3 = data2.internals;
     else
         v3.intVal = 1;
     operandResult.internals.intVal = data1.internals.intVal % v3.intVal;
@@ -13864,7 +13864,7 @@ void __cdecl RPN_OP_COMMA(int localClientNum, itemDef_s *item, OperandStack *dat
             operand = 0;
             for ( list1Operand = 0; list1Operand < list1.operandCount; ++list1Operand )
             {
-                v3.intVal = (int)list1.operands[list1Operand].internals;
+                v3 = list1.operands[list1Operand].internals;
                 v4 = operand;
                 v5 = finalList;
                 finalList[operand].dataType = list1.operands[list1Operand].dataType;
@@ -13884,7 +13884,7 @@ void __cdecl RPN_OP_COMMA(int localClientNum, itemDef_s *item, OperandStack *dat
             }
             for ( list2Operand = 0; list2Operand < list2.operandCount; ++list2Operand )
             {
-                v6.intVal = (int)list2.operands[list2Operand].internals;
+                v6 = list2.operands[list2Operand].internals;
                 v7 = operand;
                 v8 = finalList;
                 finalList[operand].dataType = list2.operands[list2Operand].dataType;

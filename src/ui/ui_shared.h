@@ -1104,7 +1104,7 @@ void __cdecl UI_ValidatePrivateMatchGametype_f();
 void __cdecl UI_SetActiveMenu_f();
 int __cdecl Item_SetFocus(int localClientNum, UiContext *dc, itemDef_s *item, float x, float y);
 textDef_s *__cdecl Item_GetTextRect(int contextIndex, const itemDef_s *item);
-const char *__cdecl Item_ListBox_MaxScroll(int localClientNum, int contextIndex, itemDef_s *item);
+int __cdecl Item_ListBox_MaxScroll(int localClientNum, int contextIndex, itemDef_s *item);
 int __cdecl Item_ListBox_Viewmax(int localClientNum, int contextIndex, itemDef_s *item);
 bool __cdecl Window_IsHorizontal(const windowDef_t *w);
 double __cdecl Item_ListBox_GetMaxHeight(int localClientNum, int contextIndex, itemDef_s *item);
@@ -1281,7 +1281,7 @@ char    Menu_Paint(
                 UiContext *dc,
                 ScreenPlacementStack *scrPlaceViewStack,
                 menuDef_t *menu,
-                const ScreenPlacement *UI3DOverrideId);
+                int UI3DOverrideId);
 void __cdecl Window_Paint(
                 int localClientNum,
                 UiContext *dc,

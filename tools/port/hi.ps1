@@ -5,7 +5,6 @@ if (-not $NoBuild) {
     $b | Select-Object -First 6
     if ($b -match 'errors: [1-9]') { return }
 }
-Get-Process BO1Zombies -ErrorAction SilentlyContinue | Stop-Process -Force
 $l = "D:\Desktop\Black Ops 2 Android\BlackOps64\build\run\$Name\main\console_mp.log"
 & "$sd\hrun.ps1" -Name $Name -Build $Build -God -AutoquitMs $Quit -QuitDone 3000 -Plan $Plan -Extra $Extra -Wait
 $pass = (Select-String -Path $l -Pattern 'bo1_plan:.* PASS' -ErrorAction SilentlyContinue | Measure-Object).Count

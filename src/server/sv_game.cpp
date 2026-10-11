@@ -425,7 +425,7 @@ void __cdecl SV_ResetSkeletonCache()
 {
     if (!++sv.skelTimeStamp)
         sv.skelTimeStamp = 1;
-    g_sv_skel_memory_start = (char *)((unsigned int)&g_sv_skel_memory[15] & 0xFFFFFFF0);
+    g_sv_skel_memory_start = (char *)(reinterpret_cast<uintptr_t>(&g_sv_skel_memory[15]) & ~uintptr_t(15));
     sv.skelMemPos = 0;
 }
 

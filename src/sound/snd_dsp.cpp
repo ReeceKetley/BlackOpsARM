@@ -28,7 +28,7 @@ void __cdecl SND_DspScale(unsigned int count, float a, float *c)
     {
         __debugbreak();
     }
-    if ( ((unsigned __int8)c & 0xF) != 0
+    if ( (reinterpret_cast<uintptr_t>(c) & 0xF) != 0
         && !Assert_MyHandler("C:\\projects_pc\\cod\\codsrc\\src\\sound\\snd_dsp.cpp", 161, 0, "%s", "(((int)c)&15) == 0") )
     {
         __debugbreak();
@@ -101,7 +101,7 @@ void __cdecl SND_DspScale(unsigned int count, float a, const float *b, float *c)
     {
         __debugbreak();
     }
-    if ( ((unsigned __int8)c & 0xF) != 0
+    if ( (reinterpret_cast<uintptr_t>(c) & 0xF) != 0
         && !Assert_MyHandler("C:\\projects_pc\\cod\\codsrc\\src\\sound\\snd_dsp.cpp", 201, 0, "%s", "(((int)c)&15) == 0") )
     {
         __debugbreak();

@@ -36,6 +36,7 @@
 #include "g_sp_headless_labs.h"
 #include "g_sp_headless_throw.h"
 #include "g_sp_playtrace.h"
+#include "g_sp_weapon_sweep.h"
 #include <bgame/bg_animation.h>
 
 extern bot_info_t botInfos[32]; // sv_bot_mp.cpp
@@ -216,6 +217,8 @@ void G_SP_ResetClientConnects()
     G_SP_HeadlessLabsInit(); // f2 test switch bo1_testclient_labs (headless only)
     G_SP_HeadlessThrowReset(); // w1 chunk 6 test switches (headless only)
     G_SP_HeadlessThrowRegister();
+    G_SP_WeaponSweepReset();
+    if (G_SP_TestHarness()) G_SP_WeaponSweepRegister();
     G_SP_TestPlanRegister();
     G_SP_TestPlanReset();
 }
@@ -412,6 +415,7 @@ bool G_SP_HeadlessFightCommand(client_t *client, usercmd_s *cmd)
     }
 
     playerState_s *ps = &player->client->ps;
+    if (G_SP_WeaponSweepCommand(player, client, cmd)) return true;
     if (passiveOnly)
     {
         SP_HeadlessPassiveMove(player, ps, cmd);

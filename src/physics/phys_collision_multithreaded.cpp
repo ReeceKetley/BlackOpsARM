@@ -51,7 +51,7 @@ void __thiscall phys_memory_heap::set_buffer(char *start, int size, unsigned int
     {
         __debugbreak();
     }
-    if ( (unsigned int)start % alignment
+    if ( (uintptr_t)start % alignment
         && _tlAssert(
                  "C:\\projects_pc\\cod\\codsrc\\tl\\physics\\include\\phys_mem.h",
                  37,
