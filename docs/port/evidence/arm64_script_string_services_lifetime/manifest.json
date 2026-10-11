@@ -1,0 +1,270 @@
+{
+  "schema": "BlackOpsARM.script-services-evidence.v1",
+  "files": {
+    "host.invocations.json": {
+      "source": "build-android-audit/script_services_host_pass2/invocations.json",
+      "sha256": "121946c2e0d6fe0b1a5e1cff4ebbe801200f201e235a11ba066cde954343ff86"
+    },
+    "host.results.json": {
+      "source": "build-android-audit/script_services_host_pass2/results.json",
+      "sha256": "7e88c4400d815d7ec97ed5f2cebe061cf0240bd773637330f218e26d3cddbaa7"
+    },
+    "host.x64.command.txt": {
+      "source": "build-android-audit/script_services_host_pass2/x64/command.txt",
+      "sha256": "d894e5ad00cc3495f52e61eb2d7528acc5fc211f304e2625d69856f3d5c312fb"
+    },
+    "host.x64.compile.log": {
+      "source": "build-android-audit/script_services_host_pass2/x64/compile.log",
+      "sha256": "35627d4896e13ea0158df3e36320f5ac16640ab874943c7927cf5a2232bb77ec"
+    },
+    "host.x64.conflicting-server.stderr.log": {
+      "source": "build-android-audit/script_services_host_pass2/x64/conflicting-server.stderr.log",
+      "sha256": "69aadf1258bbbde1ff65f927a1e71536470330b97224db440c66fb84c9d43341"
+    },
+    "host.x64.conflicting-server.stdout.log": {
+      "source": "build-android-audit/script_services_host_pass2/x64/conflicting-server.stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "host.x64.invalid-lock.stderr.log": {
+      "source": "build-android-audit/script_services_host_pass2/x64/invalid-lock.stderr.log",
+      "sha256": "67ce2cace674d8eae5649f82eee70ee0f391ee054dcdc5363d191b76f8535aed"
+    },
+    "host.x64.invalid-lock.stdout.log": {
+      "source": "build-android-audit/script_services_host_pass2/x64/invalid-lock.stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "host.x64.passing.stderr.log": {
+      "source": "build-android-audit/script_services_host_pass2/x64/passing.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "host.x64.passing.stdout.log": {
+      "source": "build-android-audit/script_services_host_pass2/x64/passing.stdout.log",
+      "sha256": "7d03f1c48965c2484620b660f1a9c79466ec21920c48a72a14f58a0ed991488c"
+    },
+    "host.x64.script_string_services.map": {
+      "source": "build-android-audit/script_services_host_pass2/x64/script_string_services.map",
+      "sha256": "73373385cfd949ddfd20a302b392010aeb7ac16d7e906d0bfab9851cffb1e96f"
+    },
+    "host.x86.command.txt": {
+      "source": "build-android-audit/script_services_host_pass2/x86/command.txt",
+      "sha256": "0abd5e8f77b83ea3a2e9b0d7306760d8fdf36fdb8d76945bb5c7a799f00c0a8c"
+    },
+    "host.x86.compile.log": {
+      "source": "build-android-audit/script_services_host_pass2/x86/compile.log",
+      "sha256": "35627d4896e13ea0158df3e36320f5ac16640ab874943c7927cf5a2232bb77ec"
+    },
+    "host.x86.conflicting-server.stderr.log": {
+      "source": "build-android-audit/script_services_host_pass2/x86/conflicting-server.stderr.log",
+      "sha256": "69aadf1258bbbde1ff65f927a1e71536470330b97224db440c66fb84c9d43341"
+    },
+    "host.x86.conflicting-server.stdout.log": {
+      "source": "build-android-audit/script_services_host_pass2/x86/conflicting-server.stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "host.x86.invalid-lock.stderr.log": {
+      "source": "build-android-audit/script_services_host_pass2/x86/invalid-lock.stderr.log",
+      "sha256": "67ce2cace674d8eae5649f82eee70ee0f391ee054dcdc5363d191b76f8535aed"
+    },
+    "host.x86.invalid-lock.stdout.log": {
+      "source": "build-android-audit/script_services_host_pass2/x86/invalid-lock.stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "host.x86.passing.stderr.log": {
+      "source": "build-android-audit/script_services_host_pass2/x86/passing.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "host.x86.passing.stdout.log": {
+      "source": "build-android-audit/script_services_host_pass2/x86/passing.stdout.log",
+      "sha256": "56bceaf4df53169095515abc45fd3e44f99e69fcf0ac2b3df1ef861ac87c370d"
+    },
+    "host.x86.script_string_services.map": {
+      "source": "build-android-audit/script_services_host_pass2/x86/script_string_services.map",
+      "sha256": "35698701fcc731ac7eba8e7e46de214562b8029eeab7551e77dd4754ce764e99"
+    },
+    "honor.conflicting-server.stderr.log": {
+      "source": "build-android-audit/script_services_device_pass2/conflicting-server.stderr.log",
+      "sha256": "179883d7d29a6c939a12746f2ad0dd63ebc25f088046a58e5c17278d2910cd4c"
+    },
+    "honor.conflicting-server.stdout.log": {
+      "source": "build-android-audit/script_services_device_pass2/conflicting-server.stdout.log",
+      "sha256": "a528a486a15c6990ee12ec9b87c54db9dbb0f8f1ab7b329eddc3296509201dc1"
+    },
+    "honor.device-abi.stderr.log": {
+      "source": "build-android-audit/script_services_device_pass2/device-abi.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "honor.device-abi.stdout.log": {
+      "source": "build-android-audit/script_services_device_pass2/device-abi.stdout.log",
+      "sha256": "cdd88508602b58eab46d0bb2fccbb3df401788d20b81c650391a9dbd3c8c1e10"
+    },
+    "honor.device-api.stderr.log": {
+      "source": "build-android-audit/script_services_device_pass2/device-api.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "honor.device-api.stdout.log": {
+      "source": "build-android-audit/script_services_device_pass2/device-api.stdout.log",
+      "sha256": "0a6b5e02cbe592ef9285db1440db99874166326dff103608c6dfd5068ec714f5"
+    },
+    "honor.device-chmod.stderr.log": {
+      "source": "build-android-audit/script_services_device_pass2/device-chmod.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "honor.device-chmod.stdout.log": {
+      "source": "build-android-audit/script_services_device_pass2/device-chmod.stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "honor.device-create.stderr.log": {
+      "source": "build-android-audit/script_services_device_pass2/device-create.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "honor.device-create.stdout.log": {
+      "source": "build-android-audit/script_services_device_pass2/device-create.stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "honor.device-executable-sha.stderr.log": {
+      "source": "build-android-audit/script_services_device_pass2/device-executable-sha.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "honor.device-executable-sha.stdout.log": {
+      "source": "build-android-audit/script_services_device_pass2/device-executable-sha.stdout.log",
+      "sha256": "b2912a1db66897f4ac0a602c79eec7a39f3fcf582ce86a42d681dcfdb4b877e4"
+    },
+    "honor.device-model.stderr.log": {
+      "source": "build-android-audit/script_services_device_pass2/device-model.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "honor.device-model.stdout.log": {
+      "source": "build-android-audit/script_services_device_pass2/device-model.stdout.log",
+      "sha256": "ea74f343ecb6d82774cb8988507d2efae4e01c6365555ce96b49706fed593284"
+    },
+    "honor.device-push.stderr.log": {
+      "source": "build-android-audit/script_services_device_pass2/device-push.stderr.log",
+      "sha256": "6b9bc45d901a0547717572b14045ea6e11f2fea1de8b3855600af9dbf4a25668"
+    },
+    "honor.device-push.stdout.log": {
+      "source": "build-android-audit/script_services_device_pass2/device-push.stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "honor.device-state.stderr.log": {
+      "source": "build-android-audit/script_services_device_pass2/device-state.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "honor.device-state.stdout.log": {
+      "source": "build-android-audit/script_services_device_pass2/device-state.stdout.log",
+      "sha256": "5a49c5eb1807bf1dd12637504e6a6e49f1c9c4bce601ae34c9984843074b129c"
+    },
+    "honor.host-results.snapshot.json": {
+      "source": "build-android-audit/script_services_device_pass2/host-results.snapshot.json",
+      "sha256": "7e88c4400d815d7ec97ed5f2cebe061cf0240bd773637330f218e26d3cddbaa7"
+    },
+    "honor.invalid-lock.stderr.log": {
+      "source": "build-android-audit/script_services_device_pass2/invalid-lock.stderr.log",
+      "sha256": "8b49d82e88e03a731b701806ee9bd15cd61fdca2ab41aa65270917bfbae31411"
+    },
+    "honor.invalid-lock.stdout.log": {
+      "source": "build-android-audit/script_services_device_pass2/invalid-lock.stdout.log",
+      "sha256": "a528a486a15c6990ee12ec9b87c54db9dbb0f8f1ab7b329eddc3296509201dc1"
+    },
+    "honor.invocations.json": {
+      "source": "build-android-audit/script_services_device_pass2/invocations.json",
+      "sha256": "6ad523b7c15ae78f91d1b245554b54e8469c3c57383ac4b7bb719872cd743c2d"
+    },
+    "honor.passing.stderr.log": {
+      "source": "build-android-audit/script_services_device_pass2/passing.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "honor.passing.stdout.log": {
+      "source": "build-android-audit/script_services_device_pass2/passing.stdout.log",
+      "sha256": "bf4ba53dc3805307c6bc0d857a2845d2410dbdc95ebc8064d5f04fa0d120eb52"
+    },
+    "honor.results.json": {
+      "source": "build-android-audit/script_services_device_pass2/results.json",
+      "sha256": "c0f34b6a5fd0e0fc1344dee0592ade965d7952575873375d0dfeb165c7218b26"
+    },
+    "native.configure.log": {
+      "source": "build-android-audit/script_services_native_pass2/configure.log",
+      "sha256": "0e736cf086699a469de18ebde55cb5402a26700fdcafedab15c21ae21c29a5cd"
+    },
+    "native.build.log": {
+      "source": "build-android-audit/script_services_native_pass2/build.log",
+      "sha256": "2c0e197d2c515dba36516dbf3c209a33a6deedbddc3a2df8b3d27f45b73ad57e"
+    }
+  },
+  "source_sha256": {
+    "src/platform/atomic32.h": "62a90a29703b7ac9ae6e2ad4a457f8803fb72776def9e97c071141f9d1f90e1d",
+    "src/platform/android/script_string_services.h": "9c1cfff8ceda19622e8741a618c1791a853b914fde279b58900b314f8b397ae6",
+    "src/platform/android/script_string_services.cpp": "1fd8c6195e75bfd7be3fb1460605c3c05cb35fc387e3328cb424fe621398ab47",
+    "tools/port/tests/script_string_services_tests.cpp": "b671687666df95dc8911bccde015bdb78fd9c2d896d736ac47139a06ca13d29b",
+    "tools/port/build_script_string_services_host.ps1": "abd801cd1a78814d5fc6877a5fe8e7045ca10636c77e486a4d0edd7a2e321bf5",
+    "tools/port/run_script_string_services.py": "0c22dd5d68fd8570bff34f1141150444486a0e97faa3b56b4de13022efa61e0d",
+    "tools/port/collect_script_string_services_evidence.py": "435ee19ef810e30c42a826ed9457cec7f4e2bc9e27c8e1f46054d3e0868936ab",
+    "tools/port/build_script_string_services_arm64.ps1": "ee39a266741e8057f4df48a84e369643c950f48dd94ad7a0d3f1e318e4ce1c16"
+  },
+  "pool_certified": false,
+  "device_results": {
+    "schema": "BlackOpsARM.script-services-device.v1",
+    "recorded_utc": "2026-10-11T23:40:13.667350+00:00",
+    "serial": "AKWJ9X5116G04618",
+    "status": "passed",
+    "scope": "Real platform atomics, recursive locks and server identity; actual SL/MT pool remains unvalidated",
+    "native_executable": {
+      "path": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\script_services_native_pass2\\bo1_script_string_services_tests",
+      "sha256": "f90e0675cc0488350a748d9acda95200a67be982f2b086251b6afc7e5895644a",
+      "elf_machine": 183
+    },
+    "host_reference": {
+      "path": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\script_services_host_pass2\\results.json",
+      "sha256": "7e88c4400d815d7ec97ed5f2cebe061cf0240bd773637330f218e26d3cddbaa7",
+      "executables": [
+        {
+          "arch": "x86",
+          "machine": 332,
+          "path": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\script_services_host_pass2\\x86\\script_string_services.exe",
+          "sha256": "9cf19a44c6a8243e01b8504e647ca6d757a46f838105a9d2c7e7e3a76406f31e"
+        },
+        {
+          "arch": "x64",
+          "machine": 34404,
+          "path": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\script_services_host_pass2\\x64\\script_string_services.exe",
+          "sha256": "146f7a9ba4e2d63459a833e084220796ba78283c7430ef0a745dc26c52c00af2"
+        }
+      ]
+    },
+    "device": {
+      "model": "NDL-L09",
+      "abi_list": "arm64-v8a,armeabi-v7a,armeabi",
+      "api": "36"
+    },
+    "device_directory": "/data/local/tmp/blackopsarm-script-services-20261011-234013948995-418a7e7d",
+    "cases": [
+      {
+        "case": "passing",
+        "native_exit": 0,
+        "diagnostic_expected": null,
+        "payload": {
+          "schema": "BlackOpsARM.script-services.v1",
+          "pointer_bytes": 8,
+          "atomic_bytes": 4,
+          "atomic_updates": 80000,
+          "locked_updates": 80000,
+          "recursive_sections": 2,
+          "independent_sections": true,
+          "contention_pass": true,
+          "server_identity_pass": true,
+          "pool_certified": false
+        }
+      },
+      {
+        "case": "invalid-lock",
+        "native_exit": 134,
+        "diagnostic_expected": "invalid lock"
+      },
+      {
+        "case": "conflicting-server",
+        "native_exit": 134,
+        "diagnostic_expected": "server thread already registered"
+      }
+    ]
+  },
+  "limitations": "Process lifetime locks and immutable server identity; no reset/unregister. Full SL/MT pool and wider threading model unvalidated."
+}

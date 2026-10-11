@@ -1,0 +1,78 @@
+[
+  {
+    "arch": "x86",
+    "case": "passing",
+    "argv": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\script_services_host_pass3\\x86\\script_string_services.exe"
+    ],
+    "cwd": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\script_services_host_pass3",
+    "timeout_seconds": 60,
+    "exit": 0,
+    "timed_out": false,
+    "launch_error": null
+  },
+  {
+    "arch": "x86",
+    "case": "invalid-lock",
+    "argv": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\script_services_host_pass3\\x86\\script_string_services.exe",
+      "--invalid-lock"
+    ],
+    "cwd": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\script_services_host_pass3",
+    "timeout_seconds": 60,
+    "exit": 3,
+    "timed_out": false,
+    "launch_error": null
+  },
+  {
+    "arch": "x86",
+    "case": "conflicting-server",
+    "argv": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\script_services_host_pass3\\x86\\script_string_services.exe",
+      "--conflicting-server"
+    ],
+    "cwd": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\script_services_host_pass3",
+    "timeout_seconds": 60,
+    "exit": 3,
+    "timed_out": false,
+    "launch_error": null
+  },
+  {
+    "arch": "x64",
+    "case": "passing",
+    "argv": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\script_services_host_pass3\\x64\\script_string_services.exe"
+    ],
+    "cwd": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\script_services_host_pass3",
+    "timeout_seconds": 60,
+    "exit": 0,
+    "timed_out": false,
+    "launch_error": null
+  },
+  {
+    "arch": "x64",
+    "case": "invalid-lock",
+    "argv": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\script_services_host_pass3\\x64\\script_string_services.exe",
+      "--invalid-lock"
+    ],
+    "cwd": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\script_services_host_pass3",
+    "timeout_seconds": 60,
+    "exit": 3,
+    "timed_out": false,
+    "launch_error": null
+  },
+  {
+    "arch": "x64",
+    "case": "conflicting-server",
+    "argv": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\script_services_host_pass3\\x64\\script_string_services.exe",
+      "--conflicting-server"
+    ],
+    "cwd": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\script_services_host_pass3",
+    "timeout_seconds": 60,
+    "exit": 3,
+    "timed_out": false,
+    "launch_error": null
+  }
+]

@@ -467,3 +467,6 @@ x64_diag.log
 !/docs/port/evidence/arm64_assetlist/*.log
 !/docs/port/evidence/arm64_string_table/*.log
 !/docs/port/evidence/arm64_raw_strings/*.log
+!/docs/port/evidence/arm64_asset_directory/*.log
+!/docs/port/evidence/arm64_script_string_services/*.log
+!/docs/port/evidence/arm64_script_string_services_lifetime/*.log

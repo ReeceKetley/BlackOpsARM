@@ -1,0 +1,65 @@
+{
+  "schema": "BlackOpsARM.script-services-device.v1",
+  "recorded_utc": "2026-10-11T23:36:55.492173+00:00",
+  "serial": "AKWJ9X5116G04618",
+  "status": "passed",
+  "scope": "Real platform atomics, recursive locks and server identity; actual SL/MT pool remains unvalidated",
+  "native_executable": {
+    "path": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\asset_directory_pass2\\bo1_script_string_services_tests",
+    "sha256": "74d662a90462b0d3bdd93cfe695ba1804708f5382f3d6b04bd6395d0a9301cd9",
+    "elf_machine": 183
+  },
+  "host_reference": {
+    "path": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\script_services_host_pass1\\results.json",
+    "sha256": "0500b772457b7d32320bf7481507cfc5f940708ef1d20521853990b901ead36e",
+    "executables": [
+      {
+        "arch": "x86",
+        "machine": 332,
+        "path": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\script_services_host_pass1\\x86\\script_string_services.exe",
+        "sha256": "5cb3e304c885ca0f4054f429f976e5a84abb8a5b06755799e0dc07a042ce264b"
+      },
+      {
+        "arch": "x64",
+        "machine": 34404,
+        "path": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\script_services_host_pass1\\x64\\script_string_services.exe",
+        "sha256": "3950e4ce3713c5c4782cac1d12631e83ed2849f8d08df632385b0b4cd797c9e6"
+      }
+    ]
+  },
+  "device": {
+    "model": "NDL-L09",
+    "abi_list": "arm64-v8a,armeabi-v7a,armeabi",
+    "api": "36"
+  },
+  "device_directory": "/data/local/tmp/blackopsarm-script-services-20261011-233655768004-a12299f4",
+  "cases": [
+    {
+      "case": "passing",
+      "native_exit": 0,
+      "diagnostic_expected": null,
+      "payload": {
+        "schema": "BlackOpsARM.script-services.v1",
+        "pointer_bytes": 8,
+        "atomic_bytes": 4,
+        "atomic_updates": 80000,
+        "locked_updates": 80000,
+        "recursive_sections": 2,
+        "independent_sections": true,
+        "contention_pass": true,
+        "server_identity_pass": true,
+        "pool_certified": false
+      }
+    },
+    {
+      "case": "invalid-lock",
+      "native_exit": 134,
+      "diagnostic_expected": "invalid lock"
+    },
+    {
+      "case": "conflicting-server",
+      "native_exit": 134,
+      "diagnostic_expected": "server thread already registered"
+    }
+  ]
+}

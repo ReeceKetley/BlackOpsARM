@@ -243,3 +243,9 @@ Actual bounded raw strings pass HONOR/x86/x64; raw pointers are not interned IDs
 Next TASK-0016 actual asset directory before dispatch, TASK17 real SL/MT pool,
 then first genuine StringTable header before payload/fixups. Continue bounded
 autonomously per DEC-0029; local verified checkpoints DEC-0026, no push.
+
+
+CurrentTASK16structuralcorecomplete: arm64_asset_directory.md, FACT46/WARN16.
+RealpoolprerequisitesverifiedFACT48/FAIL11(correctedliveworker), actualSLMTnext.
+Next3 TASK17intern/user4release, TASK18firstStringTableheader, boundedcells/index
+beforefixups/registry. ContinueautonomouslyDEC29, localverifiedcommitsDEC26/no push.

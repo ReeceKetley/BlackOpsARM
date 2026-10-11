@@ -5,6 +5,10 @@
 #include <platform/fastfile_script_table.h>
 #include <platform/fastfile_raw_string.h>
 #include <platform/fastfile_inflate.h>
+#if defined(BO1_ASSET_DIRECTORY_GATE)
+#include <platform/fastfile_asset_directory.h>
+#include <database/db_assetlist_types.h>
+#endif
 #include <database/db_expand.hpp>
 #include <database/db_stream_load.h>
 #include <zlib/zlib.h>
@@ -52,8 +56,83 @@ static Front preflight(const unsigned char*data,std::size_t bytes,std::uint64_t 
     }return f;
 }
 static std::vector<unsigned char>readPrefix(const char*path){std::ifstream file(path,std::ios::binary|std::ios::ate);require(bool(file),"prefix exists");auto n=file.tellg();require(n>=52&&n<=std::streamoff(INT32_MAX),"finite prefix extent");std::vector<unsigned char>b(static_cast<std::size_t>(n));file.seekg(0);file.read(reinterpret_cast<char*>(b.data()),n);require(bool(file),"exact prefix read");return b;}
+
+#if defined(BO1_ASSET_DIRECTORY_GATE)
+static AssetDirectoryPlan directoryPlan(const Front&f,const unsigned char*data,std::size_t bytes){AssetDirectoryPlan p;
+    require(f.end<=bytes,"raw prefix fits before directory");require(PlanAssetDirectory(f.envelope.disk.assetCount,f.envelope.disk.assetsTag,data+f.end,bytes-f.end,f.envelope.zone.file.blockSize[4],f.envelope.zone.logical[4],f.diskEnd,f.nativeEnd,p)==AssetDirectoryResult::Ok,"checked genuine directory records before allocation");return p;}
+static uintptr_t widenTag(std::uint32_t tag){
+#if BO1_NATIVE_64BIT
+    return tag==0xffffffffu?~uintptr_t(0):tag==0xfffffffeu?~uintptr_t(1):uintptr_t(tag);
+#else
+    return tag;
+#endif
+}
+static void executeDirectory(const Front&f,const AssetDirectoryPlan&p,DecodedSource&r,XBlock(&blocks)[7],bool measurements){
+    if(!p.present)return;
+    const auto sourceStart=r.Position();require(sourceStart==f.end-52,"directory follows raw source without file alignment");
+    const auto prefixBytes=static_cast<unsigned>(f.nativeEnd);const auto prefixAdler=adler32(1,blocks[4].data,prefixBytes);
+    DB_PushStreamPos(4);auto*assets=reinterpret_cast<XAsset*>(DB_AllocStreamPos(3));require(reinterpret_cast<unsigned char*>(assets)==blocks[4].data+p.nativeStart,"directory native memory alignment");reader=&r;tableReadBytes=static_cast<std::size_t>(p.diskBytes);
+#if BO1_NATIVE_64BIT
+    DB_ExpandLoad_XAssetArray(assets,p.count);
+#else
+    if(p.diskBytes)Load_Stream(true,reinterpret_cast<unsigned char*>(assets),static_cast<int>(p.diskBytes));
+#endif
+    tableReadBytes=0;reader=nullptr;
+    if(measurements)std::printf("{\"directory_measurements\":[");
+    for(int i=0;i<p.count;++i){auto*disk=r.Current()-p.diskBytes+8*std::size_t(i);const auto type=u32(disk),tag=u32(disk+4);uintptr_t actual;std::memcpy(&actual,&assets[i].header,sizeof(actual));
+        require(static_cast<unsigned>(assets[i].type)==type&&actual==widenTag(tag),"every directory type and widened header tag matches source");
+#if BO1_NATIVE_64BIT
+        auto*element=reinterpret_cast<unsigned char*>(&assets[i]);for(unsigned j=4;j<sizeof(void*);++j)require(element[j]==0,"native internal XAsset padding zero");
+        const auto w=static_cast<unsigned>(p.diskStart+8*std::uint64_t(i));require(DB_StreamExactLookup(4,w)==element,"directory element starts map exactly");
+        for(unsigned j=1;j<8;++j)require(!DB_StreamExactLookup(4,w+j),"record interior not exact expanded object mapping");
+        require(DB_StreamAliasSlotLookup(4,w+4)==reinterpret_cast<uintptr_t*>(&assets[i].header),"disk headerfield alias maps native header slot");
+#endif
+        if(measurements){if(i)std::printf(",");std::printf("{\"index\":%d,\"type\":%u,\"tag\":%u}",i,type,tag);}
+    }
+    if(measurements)std::printf("]}\n");
+    require(r.Position()==sourceStart+p.diskBytes&&DB_GetStreamPos()==blocks[4].data+p.nativeEnd,"directory source and native footprint");
+    require(adler32(1,blocks[4].data,prefixBytes)==prefixAdler,"preceding raw table/characters/alignment bytes unchanged");
+#if BO1_NATIVE_64BIT
+    require(DB_StreamWin32Pos(4)==p.diskEnd&&!DB_StreamExactLookup(4,static_cast<unsigned>(p.diskEnd)),"directory shadow endpoint not committed interior");
+    for(const auto&e:f.strings){require(DB_StreamAliasSlotLookup(4,unsigned(4*e.index))==reinterpret_cast<uintptr_t*>(blocks[4].data+sizeof(void*)*e.index),"prior raw table aliases preserved");if(e.plan.present)require(DB_StreamExactLookup(4,static_cast<unsigned>(e.plan.diskStart))==blocks[4].data+e.plan.nativeStart,"prior raw character mapping preserved");}
+#endif
+    DB_PopStreamPos();require(!g_streamPosStackIndex&&!g_streamPosIndex&&g_streamPos==blocks[0].data&&g_streamPosArray[0]==nullptr,"directory balanced pop convention");
+    for(unsigned i=1;i<7;++i)if(i!=4)require(g_streamPosArray[i]==blocks[i].data,"other block cursors unchanged");
+}
+static unsigned directoryFixtures(const ZonePlan&zone){unsigned count=0;const auto baseline=frontend_fixture::counts();std::array<std::uint32_t,12>records={0,0,42,1,36,0x80000000u,37,0xfffffffdu,1,0xfffffffeu,2,0xffffffffu};
+    auto test=[&](int n,std::uint32_t tag,const unsigned char*data,std::size_t source,std::uint64_t dc,std::uint64_t nc,std::uint64_t w,std::uint64_t native,AssetDirectoryResult expected){const auto state=frontend_fixture::streamState();AssetDirectoryPlan p;
+        require(PlanAssetDirectory(n,tag,data,source,dc,nc,w,native,p)==expected,"controlled directory preflight result");require(state==frontend_fixture::streamState()&&baseline==frontend_fixture::counts(),"directory preflight no mutations");if(expected!=AssetDirectoryResult::Ok)require(!p.present&&!p.diskBytes,"directory failed plan cleared");
+        std::printf("{\"fixture\":\"directory_preflight_%u\",\"status\":\"%s\",\"no_mutation\":true}\n",++count,AssetDirectoryResultName(expected));};
+    const auto*data=reinterpret_cast<const unsigned char*>(records.data());
+    test(-1,0,nullptr,0,0,0,0,0,AssetDirectoryResult::NegativeCount);test(INT32_MAX,0,nullptr,0,0,0,0,0,AssetDirectoryResult::Ok);
+    test(0,1,nullptr,0,4,8,1,1,AssetDirectoryResult::Ok);test(0,1,nullptr,0,0,0,0,0,AssetDirectoryResult::NativeBounds);
+    test(1,1,data,7,16,32,0,0,AssetDirectoryResult::SourceBounds);test(1,1,nullptr,8,16,32,0,0,AssetDirectoryResult::InvalidSource);
+    test(1,1,data,8,7,32,0,0,AssetDirectoryResult::DiskBounds);test(1,1,data,8,8,sizeof(XAsset)-1,0,0,AssetDirectoryResult::NativeBounds);
+    test(1,1,data,8,8,sizeof(XAsset),0,0,AssetDirectoryResult::Ok);test(1,1,data,8,11,32,1,1,AssetDirectoryResult::DiskBounds);
+    test(0,1,data,0,UINT64_MAX,UINT64_MAX,UINT64_MAX,0,AssetDirectoryResult::DiskBounds);test(0,1,data,0,UINT64_MAX,UINT64_MAX,0,UINT64_MAX,AssetDirectoryResult::NativeBounds);
+    test(INT32_MAX,1,nullptr,SIZE_MAX,UINT64_MAX,UINT64_MAX,0,0,BO1_NATIVE_64BIT?AssetDirectoryResult::HelperDomain:AssetDirectoryResult::CommitOverflow);
+    for(auto type:{0xffffffffu,43u,0x7fffffffu}){auto invalid=records;invalid[10]=type;test(6,1,reinterpret_cast<const unsigned char*>(invalid.data()),48,48,6*sizeof(XAsset),0,0,AssetDirectoryResult::InvalidType);}
+    frontend_fixture::Owner owner;XBlock blocks[7]{};unsigned failed;require(AllocateZonePlan(zone,frontend_fixture::page(),frontend_fixture::backend(owner),blocks,failed)==ZoneResult::Ok,"directory fixtures real owner");
+    for(unsigned off:{0u,1u})for(int n:{0,1,6}){DB_InitStreams(blocks);if(off){DB_PushStreamPos(4);DB_IncStreamPos(1);DB_PopStreamPos();}Front f;f.end=52;f.nativeEnd=off;f.diskEnd=off;AssetDirectoryPlan p;
+        require(PlanAssetDirectory(n,1,data,48,zone.file.blockSize[4],zone.logical[4],off,off,p)==AssetDirectoryResult::Ok,"controlled actual directory plan");DecodedSource r(data,48);executeDirectory(f,p,r,blocks,false);++count;}
+    DB_InitStreams(blocks);DB_PushStreamPos(4);auto*dst=reinterpret_cast<XAsset*>(DB_AllocStreamPos(3));const auto before=frontend_fixture::streamState();const auto owners=frontend_fixture::counts();std::array<unsigned char,96>snapshot{};std::memcpy(snapshot.data(),dst,snapshot.size());DecodedSource shortReader(data,47);reader=&shortReader;tableReadBytes=48;bool threw=false;
+    try{
+#if BO1_NATIVE_64BIT
+        DB_ExpandLoad_XAssetArray(dst,6);
+#else
+        Load_Stream(true,reinterpret_cast<unsigned char*>(dst),48);
+#endif
+    }catch(const std::runtime_error&){threw=true;}reader=nullptr;tableReadBytes=0;require(threw&&!shortReader.Position()&&before==frontend_fixture::streamState()&&owners==frontend_fixture::counts()&&!std::memcmp(snapshot.data(),dst,snapshot.size()),"directory injected short read no partial output/commit/alias change before reset");++count;
+    std::printf("{\"fixture\":\"directory_actual\",\"status\":\"ok\",\"no_mutation\":false,\"cases\":7}\n");
+    DB_InitStreams(detached);DB_FreeXBlocks(blocks,0);frontend_fixture::release(&owner);require(frontend_fixture::counts()==baseline,"directory failure cleanup baseline");return count;
+}
+#endif
 static void decode(const char*path,const char*out){Bo1InflatedFastFile f;require(Bo1_InflateFastFilePath(path,{},&f)==Bo1InflateResult::Ok,"complete genuine production decode");
-    auto plan=preflight(f.decoded.data(),f.decoded.size(),f.decoded.size());const auto bytes=f.decoded.size(),capacity=f.decoded.capacity();const auto adler=adler32(1,f.decoded.data(),static_cast<unsigned>(bytes));
+    auto plan=preflight(f.decoded.data(),f.decoded.size(),f.decoded.size());
+#if defined(BO1_ASSET_DIRECTORY_GATE)
+    const auto directory=directoryPlan(plan,f.decoded.data(),f.decoded.size());plan.end+=static_cast<std::size_t>(directory.diskBytes);
+#endif
+    const auto bytes=f.decoded.size(),capacity=f.decoded.capacity();const auto adler=adler32(1,f.decoded.data(),static_cast<unsigned>(bytes));
     std::ofstream file(out,std::ios::binary|std::ios::trunc);file.write(reinterpret_cast<char*>(f.decoded.data()),static_cast<std::streamsize>(plan.end));file.close();require(bool(file),"small validated string prefix output");
     std::vector<std::uint8_t>().swap(f.decoded);std::printf("{\"decoded_bytes\":%zu,\"decoded_adler32\":%lu,\"vector_capacity_bytes\":%zu,\"prefix_bytes\":%zu,\"decoded_buffer_released\":true}\n",bytes,adler,capacity,plan.end);
 }
@@ -125,16 +204,41 @@ static unsigned fixtures(const ZonePlan&zone){unsigned count=0;const auto baseli
 }
 int main(int argc,char**argv){require(argc>=2,"decode/gate mode");if(!std::strcmp(argv[1],"decode")){require(argc==4,"decode input output");decode(argv[2],argv[3]);return 0;}
     require(argc==6&&!std::strcmp(argv[1],"gate"),"gate prefix1 decoded1 prefix2 decoded2");frontend_fixture::startup();DB_InitStreams(detached);const auto baseline=frontend_fixture::counts();
-    auto a=readPrefix(argv[2]),b=readPrefix(argv[4]);auto ap=preflight(a.data(),a.size(),std::strtoull(argv[3],nullptr,10)),bp=preflight(b.data(),b.size(),std::strtoull(argv[5],nullptr,10));require(ap.end==a.size()&&bp.end==b.size(),"prefix stops exactly before asset directory");
-    const auto tested=fixtures(ap.envelope.zone);unsigned cycles=0;
+    auto a=readPrefix(argv[2]),b=readPrefix(argv[4]);auto ap=preflight(a.data(),a.size(),std::strtoull(argv[3],nullptr,10)),bp=preflight(b.data(),b.size(),std::strtoull(argv[5],nullptr,10));
+#if defined(BO1_ASSET_DIRECTORY_GATE)
+    auto ad=directoryPlan(ap,a.data(),a.size()),bd=directoryPlan(bp,b.data(),b.size());require(ap.end+ad.diskBytes==a.size()&&bp.end+bd.diskBytes==b.size(),"prefix stops exactly after directory before dispatch");
+#else
+    require(ap.end==a.size()&&bp.end==b.size(),"prefix stops exactly before asset directory");
+#endif
+    auto tested=fixtures(ap.envelope.zone);
+#if defined(BO1_ASSET_DIRECTORY_GATE)
+    tested+=directoryFixtures(ap.envelope.zone);
+#endif
+    unsigned cycles=0;
     for(unsigned round=0;round<3;++round)for(unsigned type=0;type<2;++type)for(unsigned asset=0;asset<2;++asset){auto&f=asset?bp:ap;auto&bytes=asset?b:a;auto zone=f.envelope.zone;zone.limits.allocType=type;frontend_fixture::Owner owner;owner.type=type;XBlock blocks[7]{};unsigned failed;
         require(AllocateZonePlan(zone,frontend_fixture::page(),frontend_fixture::backend(owner),blocks,failed)==ZoneResult::Ok,"genuine actual allocator policy");DB_InitStreams(blocks);DecodedSource r(bytes.data()+52,bytes.size()-52);execute(f,r,blocks,asset&&round==0&&type==0);
+#if defined(BO1_ASSET_DIRECTORY_GATE)
+        const auto&directory=asset?bd:ad;executeDirectory(f,directory,r,blocks,round==0&&type==0);
+#endif
         DB_InitStreams(detached);
 #if BO1_NATIVE_64BIT
         for(int i=0;i<f.table.count;++i)require(!DB_StreamAliasSlotLookup(4,unsigned(4*i)),"all table aliases detached before owner release");
+#if defined(BO1_ASSET_DIRECTORY_GATE)
+        for(int i=0;directory.present&&i<directory.count;++i){const auto w=static_cast<unsigned>(directory.diskStart+8*std::uint64_t(i));require(!DB_StreamAliasSlotLookup(4,w+4)&&!DB_StreamExactLookup(4,w),"all directory aliases and exact mappings detached before owner release");}
+#endif
 #endif
         DB_FreeXBlocks(blocks,0);frontend_fixture::release(&owner);require(frontend_fixture::counts()==baseline,"logical baseline after each genuine cycle");++cycles;
+#if defined(BO1_ASSET_DIRECTORY_GATE)
+        std::printf("{\"asset_index\":%u,\"round\":%u,\"alloc_type\":%u,\"inline_string_count\":%zu,\"raw_string_bytes\":%llu,\"directory_count\":%d,\"directory_disk_bytes\":%llu,\"directory_native_bytes\":%llu,\"directory_source_start\":%zu,\"directory_disk_start\":%llu,\"directory_native_start\":%llu,\"decoded_source_end\":%zu,\"source_consumed_bytes\":%zu,\"block4_disk_cursor\":%llu,\"block4_native_cursor\":%llu,\"directory_types_match\":true,\"header_tags_match\":true,\"padding_zero\":true,\"exact_element_mappings\":true,\"all_aliases_match\":true,\"reset_and_release_pass\":true}\n",asset,round,type,f.strings.size()-f.nulls,(unsigned long long)(f.end-52-f.table.diskBytes),directory.count,(unsigned long long)directory.diskBytes,(unsigned long long)directory.nativeBytes,f.end,(unsigned long long)directory.diskStart,(unsigned long long)directory.nativeStart,f.end+static_cast<std::size_t>(directory.diskBytes),r.Position(),(unsigned long long)directory.diskEnd,(unsigned long long)directory.nativeEnd);
+#else
         std::printf("{\"asset_index\":%u,\"round\":%u,\"alloc_type\":%u,\"inline_string_count\":%zu,\"raw_string_bytes\":%llu,\"max_string_bytes\":%u,\"null_slots\":%u,\"empty_slots\":%u,\"source_consumed_bytes\":%zu,\"decoded_source_end\":%zu,\"block4_disk_cursor\":%llu,\"block4_native_cursor\":%llu,\"native_padding_bytes\":%llu,\"per_string_lengths_match\":true,\"raw_bytes_match\":true,\"mappings_match\":true,\"all_aliases_match\":true,\"reset_and_release_pass\":true}\n",asset,round,type,f.strings.size()-f.nulls,(unsigned long long)(f.end-52-f.table.diskBytes),f.max,f.nulls,f.empty,r.Position(),f.end,(unsigned long long)f.diskEnd,(unsigned long long)f.nativeEnd,(unsigned long long)f.padding);
+#endif
     }
-    std::printf("{\"schema\":\"BlackOpsARM.TASK-0015.raw-strings.v1\",\"pointer_bytes\":%zu,\"fixtures_passed\":%u,\"genuine_cycles_passed\":%u,\"logical_baseline_restored\":true}\n",sizeof(void*),tested,cycles);
+    const char*schema=
+#if defined(BO1_ASSET_DIRECTORY_GATE)
+        "BlackOpsARM.TASK-0016.asset-directory.v1";
+#else
+        "BlackOpsARM.TASK-0015.raw-strings.v1";
+#endif
+    std::printf("{\"schema\":\"%s\",\"pointer_bytes\":%zu,\"fixtures_passed\":%u,\"genuine_cycles_passed\":%u,\"logical_baseline_restored\":true}\n",schema,sizeof(void*),tested,cycles);
 }
