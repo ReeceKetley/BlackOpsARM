@@ -1,0 +1,6 @@
+Audited 504 references in 98 files; 483 conditional guards.
+PASS: pointer=4 narrow=4 align=4; null/roundtrip/raw-slot/high-address/concurrency/exhaustion checks as applicable
+PASS production declarations: VariableUnion=4 sval_u=4 VariableValue=8 internal=28 stack.buf=13; handles and FF sentinels roundtrip
+PASS: pointer=8 narrow=4 align=4; null/roundtrip/raw-slot/high-address/concurrency/exhaustion checks as applicable
+PASS production declarations: VariableUnion=4 sval_u=4 VariableValue=8 internal=28 stack.buf=13; handles and FF sentinels roundtrip
+Host probe evidence: D:\Desktop\Black Ops 2 Android\BlackOpsARM\build-android-audit\host-narrow-20261011-204918350

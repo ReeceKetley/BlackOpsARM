@@ -52,22 +52,32 @@ Update `.ledger/STATE.md`, run `ledger status` and `ledger doctor` at handoff.
 Keep `docs/port/android_arm64.md` build/test steps reproducible and distinguish
 toolchain/APK checks from engine, renderer and on-device gameplay evidence.
 
-Current milestone: bounded debugger handle/allocation gate complete. Ten actual
-T5 units compile, including the whole evaluator and first-fit source; thirteen
-HONOR probes and Windows x86/x64 checks pass. See docs/port/arm64_debugger.md,
-DEC-0014/0015 and WARN-0007. Android has real owned Z allocations, registered
-main-thread identity and first-fit synchronization; register the main thread
-before debug HunkUser startup. Native-width split headers/back-pointers are
-aligned; Win32 placement remains unchanged. Host debugger tests use the Android
-heap and do not certify the unchanged Windows engine Z heap's alignment.
-Default HunkUser/global debugger compile lists are owner-thread confined;
-first-fit reset/destroy require quiescent users. Handles must not outlive their
-allocations. Android tracking/fixed schemes remain rejected. Test-owned cleanup
-state and fifty aborting compiler/VM endpoints are fixtures, absent from the APK.
-Preserve all earlier frozen evidence. TASK-0007 is the next bounded actual
-normal-to-debugger expression compilation boundary; inspect before expanding.
-Do not attempt a full engine build, launch Zombies, integrate DXVK, port
-audio/input, restructure the engine, modify gameplay or import assets. The user
-authorized one local checkpoint at agent rotation; future commits/pushes need
-explicit authorization. See docs/port/agent_handoff.md before resuming. No actual
-16 KB Android device or Samsung S25 validation is claimed.
+Current milestone: TASK-0010 bounded deflate isolation complete. Twelve actual
+T5 units and six unchanged bundled zlib C units compile; sixteen HONOR probes
+and both Windows host ABIs pass. Current handoff: docs/port/arm64_inflate.md,
+FACT-0029/0030, DEC-0019 and WARN-0010. Older reports preserve earlier milestones.
+T5 zlib removes stream.reserved; use matching bundled sources and native sizeof,
+never link engine stream headers to system libz. Disk XFile stays36; size counts
+payload after the header, external/block sizes have separate meanings. Isolated
+decoder validates whole wrapped stream/checksum/end and exact output before
+publishing fields. Optional bounded0..31 trailing-zero policy is measured on
+two files only. Decoded length cap is not an exact heap/capacity budget.
+Next TASK-0011 connects genuine decoded headers to actual zone bootstrap only
+after checked uint64 native expansion/backend/per-block/aggregate preflight.
+Do not pass arbitrary header block sizes to the existing allocation arithmetic.
+Native zones use real debug HunkUser/first-fit named ownership; register main
+thread first, then Begin -> allocations -> End -> detach streams/clear blocks ->
+Release. This is not legacy PMem pool/tracker/full API. Ordinary DB_FreeXBlocks
+clears metadata, not ownership. Keep zero slots, owner-thread and handle lifetime
+rules explicit; mixed Z/physical flags remain unvalidated. First-fit reset/destroy
+requires quiescence; hosts using native ownership do not certify Windows PMem.
+Missing test-only VM/over-allocation/compressed-byte callbacks abort and cannot
+ship; dependent stream tracing stays disabled. Preserve all earlier evidence.
+Stop before asset-list/string/payload deserialization or async integration. No
+full engine launch, Zombies, DXVK/audio/input, restructuring or gameplay work.
+Original assets stay outside Git/APK. Actual16KB Android/S25 remains untested.
+User authorized two read-only audit agents for this gate; root owned writes and
+builds. TASK-0010 is complete; further work follows user direction. User now
+authorizes one local checkpoint through TASK-0010 (DEC-0020); no push or later
+commit is authorized. See docs/port/android_checkpoint.md. Windows checkout,
+DXVK and root Ledger stay intact.

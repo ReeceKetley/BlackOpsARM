@@ -17,6 +17,9 @@ parser.add_argument('--narrow', required=True)
 parser.add_argument('--rng-host', help='Optional standalone Windows CRT oracle directory')
 parser.add_argument('--parsetree-host', help='Optional actual parse-tree/HunkUser Windows probe directory')
 parser.add_argument('--debugger-host', help='Optional debugger/evaluator and first-fit Windows probe directory')
+parser.add_argument('--zone-host', help='Optional actual zone bootstrap Windows probe directory')
+parser.add_argument('--fastfile-host', help='Optional FastFile Windows probe directory')
+parser.add_argument('--inflate-host', help='Optional bounded inflate Windows probe directory')
 parser.add_argument('--pass-prefix', default='script_headers_', help='Build directories to archive')
 parser.add_argument('--output', default='docs/port/evidence/arm64_script_headers')
 args = parser.parse_args()
@@ -79,6 +82,21 @@ if args.debugger_host:
                 copy(debugger_host / arch / (name + '-' + suffix), 'debugger_host_' + arch + '.' + name + '.' + suffix)
     copy(debugger_host / 'evaluator_test_services.cpp', 'host_evaluator_test_services.cpp')
     copy(final / 'evaluator_test_services.cpp', 'android_evaluator_test_services.cpp')
+for option, prefix, stem in [(args.zone_host, 'zone_host', ''), (args.fastfile_host, 'fastfile_host', 'fastfile-')]:
+    if option:
+        directory = local(option)
+        for arch in ['x86', 'x64']:
+            for leaf in ['command.txt', 'compile.log', 'test.log']:
+                copy(directory / arch / (stem + leaf), prefix + '_' + arch + '.' + leaf)
+if args.inflate_host:
+    directory = local(args.inflate_host)
+    for arch in ['x86', 'x64']:
+        for leaf in ['command.txt', 'compile.log', 'test.log', 'fixtures.log']:
+            copy(directory / arch / leaf, 'inflate_host_' + arch + '.' + leaf)
+        if (directory / arch / 'genuine-zombie.log').is_file():
+            copy(directory / arch / 'genuine-zombie.log', 'inflate_host_' + arch + '.genuine-zombie.log')
+        copy(directory / arch / 'inflate-fixtures/manifest.json', 'inflate_host_' + arch + '.fixture_manifest.json')
+    copy(final / 'inflate-fixtures/manifest.json', 'android_fixture_manifest.json')
 for leaf in ['device-tests.log', 'apk-recheck.log', 'diff-check.log']:
     copy(final / leaf, leaf)
 llvm = Path('D:/Android/Sdk/ndk/30.0.16248370/toolchains/llvm/prebuilt/windows-x86_64/bin')
@@ -88,6 +106,9 @@ binaries = ['bo1_win32_compat_tests', 'bo1_arm64_narrow_tests', 'bo1_script_slot
 if new_gate: binaries += ['bo1_engine_rng_tests', 'bo1_script_lookup_tests']
 if args.parsetree_host: binaries += ['bo1_parsetree_tests', 'bo1_hunk_tests']
 if args.debugger_host: binaries += ['bo1_debugger_tests', 'bo1_firstfit_tests']
+if args.fastfile_host: binaries += ['bo1_fastfile_tests']
+if args.zone_host: binaries += ['bo1_zone_tests']
+if args.inflate_host: binaries += ['bo1_inflate_tests']
 for path in sorted(final.rglob('*.o')) + [final / name for name in binaries]:
     data = path.read_bytes()
     if data[:6] != b'\x7fELF\x02\x01' or struct.unpack_from('<H', data, 18)[0] != 183:
@@ -120,6 +141,21 @@ if args.debugger_host:
         summary['sourceSHA256']['src/' + name] = sha(root / 'src' / name)
     summary['debuggerHostBuild'] = str(debugger_host.relative_to(root)).replace('\\', '/')
     summary['executables'] = binaries
+if args.zone_host:
+    for name in ['database/db_zone_types.h', 'database/db_memory.h', 'database/db_stream.h',
+                 'database/db_registry.h', 'database/db_file_load.h', 'universal/physicalmemory.h',
+                 'platform/android/zone_memory.h', 'platform/android/database_diagnostics.h',
+                 'platform/fastfile_reader.h']:
+        summary['sourceSHA256']['src/' + name] = sha(root / 'src' / name)
+    summary['zoneHostBuild'] = str(local(args.zone_host).relative_to(root)).replace('\\', '/')
+if args.fastfile_host:
+    summary['fastfileHostBuild'] = str(local(args.fastfile_host).relative_to(root)).replace('\\', '/')
+if args.inflate_host:
+    for path in sorted((root / 'src/zlib').glob('*.h')) + [root / 'src/platform/fastfile_inflate.h']:
+        summary['sourceSHA256'][path.relative_to(root).as_posix()] = sha(path)
+    summary['sourceSHA256']['tools/port/generate_inflate_fixtures.py'] = sha(root / 'tools/port/generate_inflate_fixtures.py')
+    summary['inflateHostBuild'] = local(args.inflate_host).relative_to(root).as_posix()
+summary['executables'] = binaries
 summary['compiler'] = subprocess.check_output([str(llvm / 'clang++.exe'), '--version'], text=True)
 summary['finalBuild'] = str(final.relative_to(root)).replace('\\', '/')
 summary['hostBuild'] = str(host.relative_to(root)).replace('\\', '/')

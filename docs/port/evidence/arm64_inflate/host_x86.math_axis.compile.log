@@ -1,0 +1,29 @@
+math_axis_tests.cpp
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\build-android-audit\host-script-20261011-204850021\legacy_axis_oracle.inc(17): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\build-android-audit\host-script-20261011-204850021\legacy_axis_oracle.inc(23): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\build-android-audit\host-script-20261011-204850021\legacy_axis_oracle.inc(28): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+com_math_anglevectors.cpp
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal/com_math.h(63): warning C4201: nonstandard extension used: nameless struct/union
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal\q_shared.h(385): warning C4100: 'fakearg': unreferenced parameter
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal\com_math_anglevectors.cpp(23): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal\com_math_anglevectors.cpp(26): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal\com_math_anglevectors.cpp(38): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal\com_math_anglevectors.cpp(71): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal\com_math_anglevectors.cpp(74): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal\com_math_anglevectors.cpp(81): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal\com_math_anglevectors.cpp(126): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal\com_math_anglevectors.cpp(139): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal\com_math_anglevectors.cpp(143): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal\com_math_anglevectors.cpp(147): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal\com_math_anglevectors.cpp(166): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal\com_math_anglevectors.cpp(172): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal\com_math_anglevectors.cpp(177): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal\q_shared.h(354): warning C4127: conditional expression is constant
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal\q_shared.h(354): note: consider using 'if constexpr' statement instead
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal\q_shared.h(354): note: the template instantiation context (the oldest one first) is
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal\q_shared.h(369): note: see reference to function template instantiation 'T __ROL__<uint8>(T,int)' being compiled
+        with
+        [
+            T=uint8
+        ]
+Generating Code...

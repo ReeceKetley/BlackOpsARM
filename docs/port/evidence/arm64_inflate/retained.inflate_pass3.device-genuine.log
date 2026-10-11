@@ -1,0 +1,5 @@
+565f038d4a5a10912bda5741e80f31805f9c7c76fc18296f2a8591d58f1ee41f  /data/local/tmp/blackopsarm-phase1-ffgenuine-20261011-190400000/code_pre_gfx.ff
+codec=1.2.3 streamBytes=104 unsignedLongBytes=8
+GENUINE status=Ok file=/data/local/tmp/blackopsarm-phase1-ffgenuine-20261011-190400000/code_pre_gfx.ff fileBytes=13280 compressedBytes=13245 padding=23 decoded=49593 size=49557 external=0 blocks=36,0,0,0,49092,0,0,
+GENUINE decodedAdler32=d65f37d2
+PASS bounded inflate: independent fixtures, wrapped checksum/end, disk36, exact budgets, corrupt/truncated/dictionary/size/trailing failures, byte/chunk boundaries, atomic output publication

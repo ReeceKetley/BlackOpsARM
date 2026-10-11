@@ -1,0 +1,1 @@
+PASS actual script headers and cscr_instance.cpp: VM/parse slots=4, fixed records retained; both instance pointer reset/clear paths

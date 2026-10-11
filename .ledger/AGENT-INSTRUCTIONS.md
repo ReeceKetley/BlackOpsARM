@@ -70,6 +70,22 @@ acceptance criteria. The checkpoint containing that document captures durable
 sources/Ledger/evidence; ignored local build/SQLite/scratch files remain intact.
 New porting work and later commits/pushes require fresh user authorization.
 
+Current user continuation authorized TASK-0010 and two read-only audit agents.
+Bounded full wrapped decode is complete (FACT-0029/0030, DEC-0019, FAIL-0005);
+WARN-0010 supersedes WARN-0009. Twelve actual T5 units plus six unchanged matching
+custom-ABI zlib C units, sixteen HONOR probes and MSVC x86/x64 pass. Genuine
+code_pre_gfx and zombie_pentagon decode completely; known retail root is
+../BlackOps64/build/Release, read-only. Root wrote/built/tested only BlackOpsARM.
+Read docs/port/arm64_inflate.md for current commands, failures, padding/limits
+and TASK-0011 checked genuine-header-to-zone acceptance. Engine async/asset
+pipeline remains deferred. Never mix system libz with engine custom streams;
+keep uint64 budgets independent of native zlib ulong and fixed disk widths.
+Root shared history/all older evidence stay immutable. Historical no-assets
+statements are superseded. TASK-0011 has not started. The user now authorizes
+one local checkpoint of accumulated completed work (DEC-0020); no push or later
+commit is authorized. Read docs/port/android_checkpoint.md. Follow user direction
+and update all current pointers at the next completed gate.
+
 Run `ledger context "<your current task>"`. Use current ACTIVE knowledge. Do not assume historical entries remain valid.
 
 ## Before major architectural decisions

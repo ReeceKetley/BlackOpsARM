@@ -98,3 +98,47 @@ Record stable, high-level decisions here. Use Ledger entries for searchable deta
   Git attributes disable text normalization to retain archived byte hashes.
   docs/port/agent_handoff.md defines commands, limits and TASK-0007 acceptance
   criteria; its containing commit is the durable fresh-agent checkpoint.
+
+## Expression, FastFile and zone gates — 2026-10-11
+
+- TASK-0007/0008 user work is preserved: actual numeric/boolean expression compile
+  and evaluation, other operators compile-only; raw 12-byte FastFile reader with
+  logical fixture header. FACT-0024 supersedes earlier lack-of-assets statements:
+  158 genuine retail files exist, compressed XFile still needs inflate.
+- DEC-0018: reuse complete actual database sources, shared unchanged lightweight
+  disk/block declarations and native diagnostic services. Named native ownership
+  uses actual debug HunkUser/first-fit under reviewed types/flags and explicit
+  main-thread Begin/End/detach/Release; not full legacy PMem ordering/tracking.
+- FAIL-0004 / FACT-0027: preserve the stale-stride failure; clear native pending
+  element strides at stream init. Retain Win32 behavior and production Windows
+  services. Fresh-process negative probes avoid inherited parent thread identity.
+- TASK-0009 complete; WARN-0009 retains all fixture/runtime/asset/hardware limits.
+  Freeze evidence/arm64_zone and older evidence; no commit/push. TASK-0010 deflate
+  isolation follows only on user direction, without asset parsing or async loading.
+
+## Bounded deflate isolation — 2026-10-11
+
+- DEC-0019: user continuation/delegation authorizes two read-only audits, root
+  implementation/builds/Ledger. Reuse six matching bundled zlib1.2.3 C sources;
+  custom stream lacks reserved and differs on LP64, so system libz is invalid.
+- Wrapped unsigned decode validates complete checksum/end and36+XFile.size with
+  independent uint64 budgets. Candidate output publishes only on success.
+  Authenticated input/dictionaries/wrong wrappers/trailing data fail explicitly.
+  Optional0..31 trailing zeros are deliberate policy measured on two assets;
+  decoded length limit does not certify exact total heap usage.
+- FACT-0029/0030: sixteen HONOR/host regressions and two genuine full decodes pass.
+  Windows/DXVK/root/index and595 earlier evidence files remain frozen. No source
+  fork, assets in Git/APK, async/game work, commit/push or scratch deletion.
+- TASK-0010 complete; WARN-0010 bounds remaining integration. TASK-0011 genuine
+  decoded header to actual zone bootstrap requires checked allocation preflight
+  first and must stop before asset-list loading. Not started in this gate.
+
+## Local checkpoint after deflate — 2026-10-11
+
+- DEC-0020: user authorizes committing all accumulated durable Android work
+  through TASK-0010, including their expression/FastFile changes and retained
+  evidence. No push, further porting, Windows/DXVK/root changes or scratch cleanup.
+- Stage source/docs/Ledger/evidence only; retain ignored builds/assets locally.
+  Verify archived byte hashes through staging/commit and clean durable status.
+  docs/port/android_checkpoint.md and its pre-commit manifest identify the scope;
+  ignored post-commit verification records the final ID without another commit.

@@ -1,0 +1,11 @@
+-- The CXX compiler identification is Clang 21.0.0
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: D:/Android/Sdk/ndk/30.0.16248370/toolchains/llvm/prebuilt/windows-x86_64/bin/clang++.exe - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Found Python3: D:/Users/recox/anaconda3/python.exe (found version "3.9.7") found components: Interpreter 
+Audited 504 references in 98 files; 483 conditional guards.
+-- Configuring done
+-- Generating done
+-- Build files have been written to: D:/Desktop/Black Ops 2 Android/BlackOpsARM/build-android-audit/zone_pass2

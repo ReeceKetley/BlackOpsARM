@@ -28,13 +28,34 @@ if (Test-Path -LiteralPath (Join-Path $auditBuild 'bo1_parsetree_tests')) {
 if (Test-Path -LiteralPath (Join-Path $auditBuild 'bo1_debugger_tests')) {
     $testNames += @('bo1_debugger_tests', 'bo1_firstfit_tests')
 }
+if (Test-Path -LiteralPath (Join-Path $auditBuild 'bo1_fastfile_tests')) {
+    $testNames += @('bo1_fastfile_tests')
+}
+if (Test-Path -LiteralPath (Join-Path $auditBuild 'bo1_zone_tests')) {
+    $testNames += @('bo1_zone_tests')
+}
+if (Test-Path -LiteralPath (Join-Path $auditBuild 'bo1_inflate_tests')) {
+    $oldErr = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    & $adb -s $Serial push (Join-Path $auditBuild 'inflate-fixtures') "$deviceDir/inflate-fixtures" 2>&1 | Out-File $log -Append -Encoding utf8
+    $fixtureExit = $LASTEXITCODE
+    $ErrorActionPreference = $oldErr
+    if ($fixtureExit) { throw 'Inflate fixture push failed' }
+    $testNames += @('bo1_inflate_tests')
+}
 foreach ($name in $testNames) {
     $binary = Join-Path $auditBuild $name
     if (!(Test-Path -LiteralPath $binary)) { throw "Missing test executable: $binary" }
+    # adb progress/diagnostics go to stderr; keep them in the log without
+    # letting $ErrorActionPreference=Stop abort a successful push/run.
+    $oldErr = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
     & $adb -s $Serial push $binary "$deviceDir/$name" 2>&1 | Out-File $log -Append -Encoding utf8
-    if ($LASTEXITCODE) { throw "Push failed: $name" }
+    $pushExit = $LASTEXITCODE
     & $adb -s $Serial shell "chmod 700 $deviceDir/$name && $deviceDir/$name" 2>&1 | Tee-Object -FilePath $log -Append
     $result = $LASTEXITCODE
+    $ErrorActionPreference = $oldErr
+    if ($pushExit) { throw "Push failed: $name" }
     "${name}: exit=$result" | Tee-Object -FilePath $log -Append
     if ($result) { throw "Device test failed: $name" }
 }

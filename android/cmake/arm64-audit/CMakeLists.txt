@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.22.1)
-project(BlackOpsARMCompilationAudit LANGUAGES CXX)
+project(BlackOpsARMCompilationAudit LANGUAGES C CXX)
 
 if(NOT ANDROID OR NOT CMAKE_ANDROID_ARCH_ABI STREQUAL "arm64-v8a")
     message(FATAL_ERROR "The audit requires the Android NDK arm64-v8a toolchain.")
@@ -76,6 +76,16 @@ if(BO1_ARM64_COMPAT)
     add_executable(bo1_script_slot_tests "${BO1_SLOT_PROBE}")
     target_link_libraries(bo1_script_slot_tests PRIVATE bo1_arm64_narrow)
     target_compile_options(bo1_script_slot_tests PRIVATE -Wall -Wextra -Wpedantic -fms-extensions -fsigned-char)
+
+    # TASK-0008: bounded FastFile preamble probe. Shared header-only reader,
+    # fixture roundtrip; no engine sources, no zone loading.
+    add_executable(bo1_fastfile_tests "${BO1_ROOT}/tools/port/tests/fastfile_tests.cpp")
+    target_include_directories(bo1_fastfile_tests PRIVATE "${SRC_DIR}")
+    target_compile_features(bo1_fastfile_tests PRIVATE cxx_std_20)
+    target_compile_options(bo1_fastfile_tests PRIVATE
+        -Wall -Wextra -Wpedantic -Werror
+        -fsanitize=undefined -fno-sanitize-recover=all)
+    target_link_options(bo1_fastfile_tests PRIVATE -fsanitize=undefined)
 
     set(BO1_FLAG_PROBE "${CMAKE_CURRENT_BINARY_DIR}/flag_guard_probe.cpp")
     # Generate a compile-only test without rewriting the retained audit evidence.
@@ -240,6 +250,59 @@ if(BO1_ARM64_COMPAT)
         target_link_libraries(bo1_debugger_tests PRIVATE bo1_android_zone_heap)
         target_sources(bo1_firstfit_tests PRIVATE $<TARGET_OBJECTS:bo1_firstfit_compile>)
         target_compile_definitions(bo1_firstfit_tests PRIVATE BO1_REAL_FIRSTFIT_GATE=1)
+        foreach(source IN ITEMS "${SRC_DIR}/database/db_memory.cpp" "${SRC_DIR}/database/db_stream.cpp")
+            if(NOT source IN_LIST DATABASE_FILES)
+                message(FATAL_ERROR "Zone source missing from existing inventory: ${source}")
+            endif()
+        endforeach()
+        add_library(bo1_zone_compile OBJECT "${SRC_DIR}/database/db_memory.cpp" "${SRC_DIR}/database/db_stream.cpp")
+        target_include_directories(bo1_zone_compile PRIVATE "${SRC_DIR}")
+        target_compile_features(bo1_zone_compile PRIVATE cxx_std_20)
+        target_compile_definitions(bo1_zone_compile PRIVATE _DEBUG=1)
+        target_compile_options(bo1_zone_compile PRIVATE -Wall -Wextra -Wpedantic -Wcast-align
+            -Werror=return-type -fms-extensions -fsigned-char -ffunction-sections -fdata-sections
+            -fsanitize=undefined -fno-sanitize-recover=all
+            -include "${SRC_DIR}/platform/win32_compat/msvc_compat.h")
+        add_executable(bo1_zone_tests "${BO1_ROOT}/tools/port/tests/zone_tests.cpp"
+            "${BO1_ROOT}/tools/port/tests/zone_test_support.cpp"
+            "${BO1_ROOT}/tools/port/tests/hunk_test_support.cpp"
+            "${SRC_DIR}/platform/android/zone_memory.cpp" "${SRC_DIR}/platform/android/database_diagnostics.cpp"
+            $<TARGET_OBJECTS:bo1_zone_compile> $<TARGET_OBJECTS:bo1_parsetree_compile> $<TARGET_OBJECTS:bo1_firstfit_compile>)
+        target_compile_features(bo1_zone_tests PRIVATE cxx_std_20)
+        target_compile_definitions(bo1_zone_tests PRIVATE _DEBUG=1 BO1_ZONE_GATE=1 BO1_REAL_FIRSTFIT_GATE=1 BO1_DEBUGGER_GATE=1)
+        target_compile_options(bo1_zone_tests PRIVATE -Wall -Wextra -Wpedantic -Werror=return-type
+            -fms-extensions -fsigned-char -ffunction-sections -fdata-sections
+            -fsanitize=undefined -fno-sanitize-recover=all
+            -include "${SRC_DIR}/platform/win32_compat/msvc_compat.h")
+        target_link_libraries(bo1_zone_tests PRIVATE bo1_arm64_narrow bo1_android_virtual_memory
+            bo1_android_hunk_services bo1_android_zone_heap)
+        target_link_options(bo1_zone_tests PRIVATE -Wl,--gc-sections -fsanitize=undefined)
+        set(BO1_INFLATE_SOURCES)
+        foreach(name IN ITEMS inflate inffast inftrees adler32 crc32 zutil)
+            set(source "${SRC_DIR}/zlib/${name}.c")
+            if(NOT source IN_LIST ZLIB_FILES)
+                message(FATAL_ERROR "Inflate source missing from existing inventory: ${source}")
+            endif()
+            list(APPEND BO1_INFLATE_SOURCES "${source}")
+        endforeach()
+        add_library(bo1_fastfile_zlib STATIC ${BO1_INFLATE_SOURCES})
+        set_target_properties(bo1_fastfile_zlib PROPERTIES C_STANDARD 99 C_STANDARD_REQUIRED YES)
+        target_compile_options(bo1_fastfile_zlib PRIVATE -Wall -Wextra -fsigned-char -fsanitize=undefined -fno-sanitize-recover=all)
+        add_executable(bo1_inflate_tests "${BO1_ROOT}/tools/port/tests/inflate_tests.cpp"
+            "${SRC_DIR}/platform/fastfile_inflate.cpp")
+        target_include_directories(bo1_inflate_tests PRIVATE "${SRC_DIR}")
+        target_compile_features(bo1_inflate_tests PRIVATE cxx_std_20)
+        target_compile_options(bo1_inflate_tests PRIVATE -Wall -Wextra -Wpedantic -Werror=return-type
+            -fms-extensions -fsigned-char -fsanitize=undefined -fno-sanitize-recover=all
+            -include "${SRC_DIR}/platform/win32_compat/msvc_compat.h")
+        target_link_libraries(bo1_inflate_tests PRIVATE bo1_fastfile_zlib)
+        target_link_options(bo1_inflate_tests PRIVATE -fsanitize=undefined)
+        add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/inflate-fixtures/ready.stamp"
+            COMMAND "${Python3_EXECUTABLE}" "${BO1_ROOT}/tools/port/generate_inflate_fixtures.py"
+                    "${CMAKE_CURRENT_BINARY_DIR}/inflate-fixtures"
+            DEPENDS "${BO1_ROOT}/tools/port/generate_inflate_fixtures.py" VERBATIM)
+        add_custom_target(bo1_inflate_fixtures DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/inflate-fixtures/ready.stamp")
+        add_dependencies(bo1_inflate_tests bo1_inflate_fixtures)
     endif()
 endif()
 

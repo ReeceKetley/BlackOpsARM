@@ -1,6 +1,11 @@
 #include <platform/bo1_native_width.h>
 #include "db_stream.h"
+#if defined(__ANDROID__)
+#include <platform/android/database_diagnostics.h>
+unsigned long long DB_XFileBytesLoaded();
+#else
 #include "db_file_load.h"
+#endif
 #include <universal/assertive.h>
 #include <cstdint>
 #include <cstdio>
@@ -40,6 +45,14 @@ static void DB_TraceInit()
     if (g_traceInit)
         return;
     g_traceInit = true;
+#if defined(__ANDROID__)
+    if (const char *path = std::getenv("BO1_STREAM_TRACE")) {
+        if (*path) { g_traceFile = std::fopen(path, "w"); if (!g_traceFile) Bo1_Diag("Cannot open stream trace: %s", path); }
+    }
+    if (const char *zone = std::getenv("BO1_TRACE_ZONE")) std::snprintf(g_traceZoneFilter, sizeof(g_traceZoneFilter), "%s", zone);
+    if (const char *asset = std::getenv("BO1_TRACE_ASSET")) g_traceAssetFilter = std::atoi(asset);
+    if (const char *op = std::getenv("BO1_TRACE_STACK_OP")) g_traceStackOp = std::atoi(op);
+#else
     char buf[512];
     size_t n = 0;
     if (getenv_s(&n, buf, sizeof(buf), "BO1_STREAM_TRACE") == 0 && n > 1)
@@ -50,6 +63,7 @@ static void DB_TraceInit()
         g_traceAssetFilter = atoi(buf);
     if (getenv_s(&n, buf, sizeof(buf), "BO1_TRACE_STACK_OP") == 0 && n > 1)
         g_traceStackOp = atoi(buf);
+#endif
 }
 
 static unsigned int DB_TraceW32(unsigned int idx);
@@ -61,6 +75,9 @@ static void DB_TraceOp(char kind)
     // BO1_TRACE_STACK_OP=<n>: dump the call stack (module RVAs) at the n-th non-block-0 op of the traced asset.
     if (g_streamPosIndex != 0 && ++g_traceOpNo == g_traceStackOp)
     {
+#if defined(__ANDROID__)
+        Bo1_DiagStack("stream op");
+#else
         void *frames[24];
         const unsigned short n = RtlCaptureStackBackTrace(1, 24, frames, nullptr);
         const unsigned char *base = reinterpret_cast<const unsigned char *>(GetModuleHandleA(nullptr));
@@ -69,11 +86,16 @@ static void DB_TraceOp(char kind)
         for (unsigned short i = 0; i < n && len < 480; ++i)
             len += snprintf(line + len, sizeof(line) - len, " %llx", (unsigned long long)(static_cast<const unsigned char *>(frames[i]) - base));
         Bo1_Diag("%s", line);
+#endif
     }
 }
 
 void Bo1_Diag(const char *fmt, ...)
 {
+#if defined(__ANDROID__)
+    char line[2048]; va_list args; va_start(args, fmt); std::vsnprintf(line, sizeof(line), fmt, args); va_end(args);
+    bo1::android::DatabaseDiag("[%s] %s", g_traceZone, line);
+#else
     // x64 bring-up diagnostics: BO1_DIAG_LOG names the file, default is x64_diag.log in the working directory.
     static char s_path[MAX_PATH];
     if (!s_path[0] && !GetEnvironmentVariableA("BO1_DIAG_LOG", s_path, sizeof(s_path)))
@@ -88,10 +110,14 @@ void Bo1_Diag(const char *fmt, ...)
     va_end(ap);
     fputc('\n', f);
     fclose(f);
+#endif
 }
 
 void Bo1_DiagStack(const char *tag)
 {
+#if defined(__ANDROID__)
+    bo1::android::DatabaseDiagStack(tag);
+#else
     void *frames[32];
     const unsigned short n = RtlCaptureStackBackTrace(1, 32, frames, nullptr);
     const unsigned char *exeBase = reinterpret_cast<const unsigned char *>(GetModuleHandleA(nullptr));
@@ -114,12 +140,17 @@ void Bo1_DiagStack(const char *tag)
             len += snprintf(line + len, sizeof(line) - len, " %llx", (unsigned long long)(addr - exeBase));
     }
     Bo1_Diag("%s", line);
+#endif
 }
 
 void DB_Trace_Zone(const char *zone)
 {
     DB_TraceInit();
+#if defined(__ANDROID__)
+    std::snprintf(g_traceZone, sizeof(g_traceZone), "%s", zone ? zone : "");
+#else
     strncpy_s(g_traceZone, sizeof(g_traceZone), zone ? zone : "", _TRUNCATE);
+#endif
     if (g_traceFile)
         fprintf(g_traceFile, "ZONE %s\n", g_traceZone);
 }
@@ -405,6 +436,7 @@ void __cdecl DB_InitStreams(XBlock *blocks)
     }
 #if BO1_NATIVE_64BIT
     g_expandWin32Size = -1;
+    g_expandElemW = g_expandElemN = 0; // No pending stride may cross a zone lifetime.
     for (int bi = 0; bi < 7; ++bi)
     {
         g_streamSegs[bi].clear();
