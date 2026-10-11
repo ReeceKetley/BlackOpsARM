@@ -5,8 +5,13 @@
 #include <string.h>
 #include <cstdint>
 #include <cstdio>
+#if defined(BO1_RAW_STRING_GATE)
+void DB_LoadXFileData(unsigned __int8 *, int);
+int DB_LoadXFileDataNullTerminated(unsigned __int8 *);
+#else
 #include "db_file_load.h"
 #include <clientscript/cscr_stringlist.h>
+#endif
 
 #if BO1_NATIVE_64BIT
 extern int g_dbTopAssetType;
@@ -163,6 +168,7 @@ void __cdecl Load_XStringCustom(const char **str)
     DB_IncStreamPos(numBytesLoaded);
 }
 
+#if !defined(BO1_RAW_STRING_GATE)
 void __cdecl Load_TempStringCustom(const char **str)
 {
     const char *String; // [esp+0h] [ebp-4h]
@@ -175,3 +181,5 @@ void __cdecl Load_TempStringCustom(const char **str)
     *str = String;
 }
 
+
+#endif

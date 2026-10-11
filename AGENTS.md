@@ -106,3 +106,10 @@ read per DEC-0029 supersedes previous loose planning; no fake gameplay/frames.
 Record next3 milestones and distinguish actual production leaves/fixture readers.
 Local verified checkpoint approval DEC-0026 persists; no push. Preserve1280 prior
 archive/report/handoff files for this gate. Goal continues autonomously after gates.
+
+
+TASK-0015 completed: see docs/port/arm64_raw_strings.md, FACT-0043/WARN-0015.
+Actual bounded raw strings pass HONOR/x86/x64; raw pointers are not interned IDs.
+Next TASK-0016 actual asset directory before dispatch, TASK17 real SL/MT pool,
+then first genuine StringTable header before payload/fixups. Continue bounded
+autonomously per DEC-0029; local verified checkpoints DEC-0026, no push.

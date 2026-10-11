@@ -1,3 +1,31 @@
+# Current active overnight progress — TASK-0015 complete, 2026-10-12
+
+Current objective: user file DEC-0029; autonomous bounded native engine/assets
+progress. Local verified milestone commits authorized DEC-0026; no push. Prior
+checkpoint583b976 preserves TASK14. TASK15 checkpoint follows final preservation.
+
+Actual Load_XStringCustom / Win32 Load_Stream / native table expand passes HONOR
+and Windowsx86/x64:24 fixtures,12 genuine cycles each. Zombie859 inline strings,
+15393 bytes inclNUL,max38,null0/empty12, source18885/shadow18833/native25639,
+3366 nativepadding. Everybyte/digest/length/map/alias andcleanupverified.
+Raw pointers only; noSL IDs/assetdirectory/payload/graphics. Full normal Windows
+stream-load TU x86/x64 passes; old16 HONOR regressions pass. Final0errors3275
+warnings,128 AArch64 artifacts/21exes, no passing-path UBSan. Failed MSVC std::max
+and review corrections retained. DEC30/FACT43/FAIL10/WARN15; arm64_raw_strings.md.
+
+Next3: TASK16 genuine37/1045 asset-directory expansion beforedispatch; TASK17real
+SL/MTpool init/intern/user4 release with recursive locks/fixed32ARM atomics; first
+realStringTable20->32 header block0 before name/cells/fixups/registry. Independent
+pool platform services in progress are uncommitted until separately verified.
+
+Protected Windows/DXVK/root and oldfrozen evidence unchanged. No new APK/graphics
+output, performance ratio or RSS/leak claim. Borrowed decoded reader is real;
+finite bridgecallbacks not fullasync/refill/APC. Encodedoffsets explicitunsupported;
+post-read vector/segment exceptions/fatal/init recovery still unvalidated. Exact
+current gitstate from status/log; historical reports preserve formerheads/state.
+
+# Historical progress (preserved)
+
 # Current active overnight progress — 2026-10-12
 
 Read updated user objective file referenced by DEC-0029; autonomous bounded
@@ -15,7 +43,8 @@ WARN-0014. Final0errors2859warnings,114 AArch64 artifacts/20 exes. Old16 HONOR,
 Windows zone/Narrow32/483 guards and full normal Windows expander pass.
 
 Checkpoint ffc4241 already protects TASK-0011/0012/0013 (FACT-0039); TASK-0014
-checkpoint follows final preservation. Current exact HEAD is git log. Ignore
+checkpoint583b976 verified (FACT-0042). TASK-0015 bounded raw strings active
+under DEC-0030. Current exact HEAD is git log. Ignore
 historical HEAD/uncommitted wording in older frozen reports.
 
 Next3: TASK-0015 actual bounded raw string bytes; verified asset-directory

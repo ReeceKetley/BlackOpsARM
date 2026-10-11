@@ -236,3 +236,10 @@ failures and next3 milestones. Original game root D:/Games/Call of Duty - Black 
 Autonomous updated objective and explicit local verified checkpoint approval
 supersede historical no-commit/no-continuation wording; no push. No strings or
 engine-owned graphics claimed at this gate. Next actual bounded raw-string leaf.
+
+
+TASK-0015 completed: see docs/port/arm64_raw_strings.md, FACT-0043/WARN-0015.
+Actual bounded raw strings pass HONOR/x86/x64; raw pointers are not interned IDs.
+Next TASK-0016 actual asset directory before dispatch, TASK17 real SL/MT pool,
+then first genuine StringTable header before payload/fixups. Continue bounded
+autonomously per DEC-0029; local verified checkpoints DEC-0026, no push.

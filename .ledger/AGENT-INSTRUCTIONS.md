@@ -166,3 +166,10 @@ retained and corrected.26 fixtures/12cycles eachABI, actual pointertable source,
 114 AArch64 artifacts/20exes. Next raw bytes -> directory -> real SL/MT, then
 critical engine/app/game-owned graphics dependencies, no deadline/fake progress.
 Updated objective file read; preserve1280 prior archives/protected state.
+
+
+TASK-0015 completed: see docs/port/arm64_raw_strings.md, FACT-0043/WARN-0015.
+Actual bounded raw strings pass HONOR/x86/x64; raw pointers are not interned IDs.
+Next TASK-0016 actual asset directory before dispatch, TASK17 real SL/MT pool,
+then first genuine StringTable header before payload/fixups. Continue bounded
+autonomously per DEC-0029; local verified checkpoints DEC-0026, no push.

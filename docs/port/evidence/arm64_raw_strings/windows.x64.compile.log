@@ -1,0 +1,24 @@
+db_stream_load.cpp
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src\universal/com_math.h(63): warning C4201: nonstandard extension used: nameless struct/union
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src\universal/q_shared.h(385): warning C4100: 'fakearg': unreferenced parameter
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\ui\ui_shared.h(55): warning C4369: 'itemGroup_t':  enumerator value '4294967295' cannot be represented as 'int', value is '4294967295'
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src\qcommon/cmd.h(39): warning C4359: 'cmd_function_s': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon\ent.h(79): warning C4359: 'LerpEntityStateVehicle': Alignment specifier is less than actual alignment (4), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon\ent.h(228): warning C4201: nonstandard extension used: nameless struct/union
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src\qcommon/msg_mp.h(105): warning C4359: 'usercmd_s': Alignment specifier is less than actual alignment (4), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d\r_gfx.h(197): warning C4359: 'GfxLightImage': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d\r_gfx.h(261): warning C4324: 'GfxLight': structure was padded due to alignment specifier
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src\gfx_d3d/r_material.h(37): warning C4369: 'surfaceType_t':  enumerator value '4294967295' cannot be represented as 'int', value is '4294967295'
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src\gfx_d3d/r_material.h(45): warning C4369: 'GfxDepthRangeType':  enumerator value '4294967295' cannot be represented as 'int', value is '4294967295'
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src\gfx_d3d/r_material.h(132): warning C4359: 'GfxVertexShaderLoadDef': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src\gfx_d3d/r_material.h(152): warning C4359: 'GfxPixelShaderLoadDef': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\clientscript\cscr_main.h(46): warning C4201: nonstandard extension used: nameless struct/union
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\clientscript\cscr_main.h(191): warning C4324: 'scrStringGlob_t': structure was padded due to alignment specifier
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src\universal/q_shared.h(354): warning C4127: conditional expression is constant
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src\universal/q_shared.h(354): note: consider using 'if constexpr' statement instead
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src\universal/q_shared.h(354): note: the template instantiation context (the oldest one first) is
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src\universal/q_shared.h(369): note: see reference to function template instantiation 'T __ROL__<uint8>(T,int)' being compiled
+        with
+        [
+            T=uint8
+        ]
