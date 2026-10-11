@@ -4,6 +4,12 @@
 #if BO1_NATIVE_64BIT
 
 #include "db_stream.h"
+// The standalone envelope gate selects actual production bodies only.
+// Normal engine builds retain the complete expander and existing includes.
+#if defined(BO1_ASSETLIST_GATE)
+#include "db_assetlist_types.h"
+void __cdecl DB_LoadXFileData(unsigned __int8 *pos, int size);
+#else
 #include "db_stream_load.h"
 #include "db_registry.h"
 #include "db_file_load.h"
@@ -20,6 +26,7 @@
 #include <qcommon/cm_load_obj.h>
 #include <DynEntity/DynEntity_client.h>
 #include <flame/flame_system.h>
+#endif
 #include <universal/assertive.h>
 #include <cstring>
 #include <cstdlib>
@@ -168,6 +175,7 @@ void DB_ExpandLoad_XAssetList(XAssetList *dst)
     DB_ExpandPtrStore(reinterpret_cast<uintptr_t *>(&dst->assets), disk.assets);
 }
 
+#if !defined(BO1_ASSETLIST_GATE)
 void DB_ExpandLoad_XAssetArray(XAsset *dst, int count)
 {
     iassert(dst == reinterpret_cast<XAsset *>(DB_GetStreamPos()));
@@ -5839,4 +5847,5 @@ void DB_ExpandLoad_enumDvarDef_t(enumDvarDef_s *dst)
     DB_Expand_Commit(static_cast<int>(sizeof(enumDvarDef_s)));
 }
 
+#endif // !BO1_ASSETLIST_GATE
 #endif // BO1_PORT_X64

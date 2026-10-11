@@ -297,6 +297,61 @@ if(BO1_ARM64_COMPAT)
             -include "${SRC_DIR}/platform/win32_compat/msvc_compat.h")
         target_link_libraries(bo1_inflate_tests PRIVATE bo1_fastfile_zlib)
         target_link_options(bo1_inflate_tests PRIVATE -fsanitize=undefined)
+        add_executable(bo1_checked_zone_tests "${BO1_ROOT}/tools/port/tests/checked_zone_tests.cpp"
+            "${BO1_ROOT}/tools/port/tests/checked_zone_support.cpp"
+            "${BO1_ROOT}/tools/port/tests/hunk_test_support.cpp"
+            "${SRC_DIR}/platform/fastfile_zone.cpp" "${SRC_DIR}/platform/fastfile_inflate.cpp"
+            "${SRC_DIR}/platform/android/zone_memory.cpp"
+            "${SRC_DIR}/platform/android/database_diagnostics.cpp"
+            $<TARGET_OBJECTS:bo1_zone_compile> $<TARGET_OBJECTS:bo1_parsetree_compile>
+            $<TARGET_OBJECTS:bo1_firstfit_compile>)
+        target_compile_features(bo1_checked_zone_tests PRIVATE cxx_std_20)
+        target_compile_definitions(bo1_checked_zone_tests PRIVATE _DEBUG=1 BO1_ZONE_GATE=1
+            BO1_REAL_FIRSTFIT_GATE=1 BO1_DEBUGGER_GATE=1 BO1_CHECKED_ZONE_GATE=1)
+        target_compile_options(bo1_checked_zone_tests PRIVATE -Wall -Wextra -Wpedantic -Werror=return-type
+            -fms-extensions -fsigned-char -ffunction-sections -fdata-sections
+            -fsanitize=undefined -fno-sanitize-recover=all
+            -include "${SRC_DIR}/platform/win32_compat/msvc_compat.h")
+        target_link_libraries(bo1_checked_zone_tests PRIVATE bo1_arm64_narrow bo1_android_virtual_memory
+            bo1_android_hunk_services bo1_fastfile_zlib)
+        target_link_options(bo1_checked_zone_tests PRIVATE -Wl,--gc-sections -fsanitize=undefined)
+        add_executable(bo1_stream_init_tests "${BO1_ROOT}/tools/port/tests/stream_init_tests.cpp"
+            "${BO1_ROOT}/tools/port/tests/stream_init_support.cpp"
+            "${BO1_ROOT}/tools/port/tests/checked_zone_support.cpp"
+            "${BO1_ROOT}/tools/port/tests/hunk_test_support.cpp"
+            "${SRC_DIR}/platform/fastfile_zone.cpp" "${SRC_DIR}/platform/android/zone_memory.cpp"
+            "${SRC_DIR}/platform/android/database_diagnostics.cpp"
+            $<TARGET_OBJECTS:bo1_zone_compile> $<TARGET_OBJECTS:bo1_parsetree_compile>
+            $<TARGET_OBJECTS:bo1_firstfit_compile>)
+        target_compile_features(bo1_stream_init_tests PRIVATE cxx_std_20)
+        target_compile_definitions(bo1_stream_init_tests PRIVATE _DEBUG=1 BO1_ZONE_GATE=1
+            BO1_REAL_FIRSTFIT_GATE=1 BO1_DEBUGGER_GATE=1 BO1_CHECKED_ZONE_GATE=1)
+        target_compile_options(bo1_stream_init_tests PRIVATE -Wall -Wextra -Wpedantic -Werror=return-type
+            -fms-extensions -fsigned-char -ffunction-sections -fdata-sections
+            -fsanitize=undefined -fno-sanitize-recover=all
+            -include "${SRC_DIR}/platform/win32_compat/msvc_compat.h")
+        target_link_libraries(bo1_stream_init_tests PRIVATE bo1_arm64_narrow bo1_android_virtual_memory
+            bo1_android_hunk_services)
+        target_link_options(bo1_stream_init_tests PRIVATE -Wl,--gc-sections -fsanitize=undefined)
+        add_executable(bo1_assetlist_tests "${BO1_ROOT}/tools/port/tests/assetlist_tests.cpp"
+            "${BO1_ROOT}/tools/port/tests/stream_init_support.cpp"
+            "${BO1_ROOT}/tools/port/tests/checked_zone_support.cpp"
+            "${BO1_ROOT}/tools/port/tests/hunk_test_support.cpp"
+            "${SRC_DIR}/database/db_expand.cpp" "${SRC_DIR}/platform/fastfile_assetlist.cpp"
+            "${SRC_DIR}/platform/fastfile_zone.cpp" "${SRC_DIR}/platform/fastfile_inflate.cpp"
+            "${SRC_DIR}/platform/android/zone_memory.cpp" "${SRC_DIR}/platform/android/database_diagnostics.cpp"
+            $<TARGET_OBJECTS:bo1_zone_compile> $<TARGET_OBJECTS:bo1_parsetree_compile>
+            $<TARGET_OBJECTS:bo1_firstfit_compile>)
+        target_compile_features(bo1_assetlist_tests PRIVATE cxx_std_20)
+        target_compile_definitions(bo1_assetlist_tests PRIVATE _DEBUG=1 BO1_ZONE_GATE=1
+            BO1_REAL_FIRSTFIT_GATE=1 BO1_DEBUGGER_GATE=1 BO1_CHECKED_ZONE_GATE=1 BO1_ASSETLIST_GATE=1)
+        target_compile_options(bo1_assetlist_tests PRIVATE -Wall -Wextra -Wpedantic -Werror=return-type
+            -fms-extensions -fsigned-char -ffunction-sections -fdata-sections
+            -fsanitize=undefined -fno-sanitize-recover=all
+            -include "${SRC_DIR}/platform/win32_compat/msvc_compat.h")
+        target_link_libraries(bo1_assetlist_tests PRIVATE bo1_arm64_narrow bo1_android_virtual_memory
+            bo1_android_hunk_services bo1_fastfile_zlib)
+        target_link_options(bo1_assetlist_tests PRIVATE -Wl,--gc-sections -fsanitize=undefined)
         add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/inflate-fixtures/ready.stamp"
             COMMAND "${Python3_EXECUTABLE}" "${BO1_ROOT}/tools/port/generate_inflate_fixtures.py"
                     "${CMAKE_CURRENT_BINARY_DIR}/inflate-fixtures"

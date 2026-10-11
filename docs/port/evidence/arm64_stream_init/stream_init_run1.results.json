@@ -1,0 +1,2027 @@
+{
+  "schema": "BlackOpsARM.TASK-0012.gate.v1",
+  "recorded_utc": "2026-10-11T21:42:00.752667+00:00",
+  "device_serial": "AKWJ9X5116G04618",
+  "device_directory": "/data/local/tmp/blackopsarm-phase1-stream-init-20261011-214157543312",
+  "oracles": {
+    "code_pre_gfx": {
+      "raw_sha256": "565f038d4a5a10912bda5741e80f31805f9c7c76fc18296f2a8591d58f1ee41f",
+      "original_path": "D:\\Desktop\\Black Ops 2 Android\\BlackOps64\\build\\Release\\zone\\common\\code_pre_gfx.ff",
+      "oracle_path": "docs/port/evidence/arm64_inflate/retained.inflate-genuine-oracle.json",
+      "oracle_sha256": "739f1967b83d6c566cb87c6d10ce9a94a88201c75bf87f4ba58c6f285332151e",
+      "header_hex": "95c100000000000024000000000000000000000000000000c4bf00000000000000000000",
+      "header_sha256": "4766bde913aeefde1b65d60e253124916ecff6c5a6af250facae038ddde31d4b",
+      "decoded_bytes": 49593,
+      "decoded_adler32": 3596564434
+    },
+    "zombie_pentagon": {
+      "raw_sha256": "70686402a689d5c575f18d2d76e6cec9f9a95ff70446372960f1b5c7f41d92e0",
+      "original_path": "D:\\Desktop\\Black Ops 2 Android\\BlackOps64\\build\\Release\\zone\\common\\zombie_pentagon.ff",
+      "oracle_path": "docs/port/evidence/arm64_inflate/retained.inflate-zombie-oracle.json",
+      "oracle_sha256": "f5967caa37bd5605b7d2304821c75319dda51efaa184ec9620f9cb7d2aa1e90d",
+      "header_hex": "2d167006f4d85c128c042000743f45000000000000000000a1d4970500000000f60c7400",
+      "header_sha256": "22f81970d8b8678cbb5b910c73580f52a3f6b4e3dbc7c459937f57135f166bb4",
+      "decoded_bytes": 108009041,
+      "decoded_adler32": 2574587991
+    }
+  },
+  "scope": "Init/cursor reset/detach/free/release only; synthetic cursor arithmetic reads/writes no payload; separate full decode processes",
+  "platforms": {
+    "windows_x86": {
+      "probe_sha256": "79b7b1d38562b8f623e44b01e8f723bebbe41b85b470d7039773a5f9f00f439e",
+      "decoder_sha256": "f7cf7847b09bb68630c272c6fb87e26745c5f7ba0efd9b15dba64711c6be4b32",
+      "fresh_decodes": {
+        "code_pre_gfx": {
+          "mode": "decode_only_fresh_process",
+          "decode_ns": 467100,
+          "decoded_adler32": 3596564434,
+          "vector_final_capacity_bytes": 49593,
+          "file_bytes": 13280,
+          "compressed_bytes": 13245,
+          "padding_bytes": 23,
+          "header_hex": "95c100000000000024000000000000000000000000000000c4bf00000000000000000000",
+          "plan": {
+            "decoded_bytes": 49593,
+            "XFile_size": 49557,
+            "externalSize": 0,
+            "logical_bytes": 49128,
+            "backend_request_bytes": 49158,
+            "first_fit_capacity_bytes": 65536,
+            "windows_low_consumption_bytes": 53203,
+            "windows_high_consumption_bytes": 53248,
+            "alignment": 4096,
+            "blocks": [
+              {
+                "index": 0,
+                "disk_bytes": 36,
+                "logical_bytes": 36,
+                "request_bytes": 51,
+                "factor100": 100,
+                "additive_expansion_bytes": 0
+              },
+              {
+                "index": 1,
+                "disk_bytes": 0,
+                "logical_bytes": 0,
+                "request_bytes": 0,
+                "factor100": 0,
+                "additive_expansion_bytes": 0
+              },
+              {
+                "index": 2,
+                "disk_bytes": 0,
+                "logical_bytes": 0,
+                "request_bytes": 0,
+                "factor100": 0,
+                "additive_expansion_bytes": 0
+              },
+              {
+                "index": 3,
+                "disk_bytes": 0,
+                "logical_bytes": 0,
+                "request_bytes": 0,
+                "factor100": 0,
+                "additive_expansion_bytes": 0
+              },
+              {
+                "index": 4,
+                "disk_bytes": 49092,
+                "logical_bytes": 49092,
+                "request_bytes": 49107,
+                "factor100": 100,
+                "additive_expansion_bytes": 0
+              },
+              {
+                "index": 5,
+                "disk_bytes": 0,
+                "logical_bytes": 0,
+                "request_bytes": 0,
+                "factor100": 0,
+                "additive_expansion_bytes": 0
+              },
+              {
+                "index": 6,
+                "disk_bytes": 0,
+                "logical_bytes": 0,
+                "request_bytes": 0,
+                "factor100": 0,
+                "additive_expansion_bytes": 0
+              }
+            ]
+          },
+          "before": {
+            "resident_bytes": 4059136,
+            "process_lifetime_resident_hwm_bytes": 4063232,
+            "VmSize_bytes": null,
+            "VmPeak_bytes": null,
+            "windows_private_commit_bytes": 733184,
+            "windows_peak_pagefile_bytes": 733184
+          },
+          "after_decode": {
+            "resident_bytes": 4374528,
+            "process_lifetime_resident_hwm_bytes": 4444160,
+            "VmSize_bytes": null,
+            "VmPeak_bytes": null,
+            "windows_private_commit_bytes": 987136,
+            "windows_peak_pagefile_bytes": 1060864
+          },
+          "after_cleanup": {
+            "resident_bytes": 4714496,
+            "process_lifetime_resident_hwm_bytes": 4718592,
+            "VmSize_bytes": null,
+            "VmPeak_bytes": null,
+            "windows_private_commit_bytes": 1118208,
+            "windows_peak_pagefile_bytes": 1118208
+          },
+          "sampled_peak_resident_bytes": 4689920,
+          "sample_period_ms": 1
+        },
+        "zombie_pentagon": {
+          "mode": "decode_only_fresh_process",
+          "decode_ns": 544533000,
+          "decoded_adler32": 2574587991,
+          "vector_final_capacity_bytes": 145282681,
+          "file_bytes": 48229216,
+          "compressed_bytes": 48229195,
+          "padding_bytes": 9,
+          "header_hex": "2d167006f4d85c128c042000743f45000000000000000000a1d4970500000000f60c7400",
+          "plan": {
+            "decoded_bytes": 108009041,
+            "XFile_size": 108009005,
+            "externalSize": 308074740,
+            "logical_bytes": 108078487,
+            "backend_request_bytes": 108078532,
+            "first_fit_capacity_bytes": 108093440,
+            "windows_low_consumption_bytes": 108084470,
+            "windows_high_consumption_bytes": 108085248,
+            "alignment": 4096,
+            "blocks": [
+              {
+                "index": 0,
+                "disk_bytes": 2098316,
+                "logical_bytes": 2098316,
+                "request_bytes": 2098331,
+                "factor100": 100,
+                "additive_expansion_bytes": 0
+              },
+              {
+                "index": 1,
+                "disk_bytes": 4538228,
+                "logical_bytes": 4538228,
+                "request_bytes": 4538243,
+                "factor100": 100,
+                "additive_expansion_bytes": 0
+              },
+              {
+                "index": 2,
+                "disk_bytes": 0,
+                "logical_bytes": 0,
+                "request_bytes": 0,
+                "factor100": 0,
+                "additive_expansion_bytes": 0
+              },
+              {
+                "index": 3,
+                "disk_bytes": 0,
+                "logical_bytes": 0,
+                "request_bytes": 0,
+                "factor100": 0,
+                "additive_expansion_bytes": 0
+              },
+              {
+                "index": 4,
+                "disk_bytes": 93836449,
+                "logical_bytes": 93836449,
+                "request_bytes": 93836464,
+                "factor100": 100,
+                "additive_expansion_bytes": 0
+              },
+              {
+                "index": 5,
+                "disk_bytes": 0,
+                "logical_bytes": 0,
+                "request_bytes": 0,
+                "factor100": 0,
+                "additive_expansion_bytes": 0
+              },
+              {
+                "index": 6,
+                "disk_bytes": 7605494,
+                "logical_bytes": 7605494,
+                "request_bytes": 7605494,
+                "factor100": 100,
+                "additive_expansion_bytes": 0
+              }
+            ]
+          },
+          "before": {
+            "resident_bytes": 4059136,
+            "process_lifetime_resident_hwm_bytes": 4063232,
+            "VmSize_bytes": null,
+            "VmPeak_bytes": null,
+            "windows_private_commit_bytes": 741376,
+            "windows_peak_pagefile_bytes": 741376
+          },
+          "after_decode": {
+            "resident_bytes": 149856256,
+            "process_lifetime_resident_hwm_bytes": 246763520,
+            "VmSize_bytes": null,
+            "VmPeak_bytes": null,
+            "windows_private_commit_bytes": 146558976,
+            "windows_peak_pagefile_bytes": 243720192
+          },
+          "after_cleanup": {
+            "resident_bytes": 4636672,
+            "process_lifetime_resident_hwm_bytes": 246763520,
+            "VmSize_bytes": null,
+            "VmPeak_bytes": null,
+            "windows_private_commit_bytes": 987136,
+            "windows_peak_pagefile_bytes": 243720192
+          },
+          "sampled_peak_resident_bytes": 246759424,
+          "sample_period_ms": 1
+        }
+      },
+      "cycles": [
+        {
+          "asset_index": 0,
+          "round": 0,
+          "alloc_type": 0,
+          "disk_sizes": [
+            36,
+            0,
+            0,
+            0,
+            49092,
+            0,
+            0
+          ],
+          "logical_sizes": [
+            36,
+            0,
+            0,
+            0,
+            49092,
+            0,
+            0
+          ],
+          "allocated": {
+            "owners": 1,
+            "allocation_count": 0,
+            "requested_bytes": 0,
+            "reservations": 1,
+            "low": 53203,
+            "high": 343932928
+          },
+          "seven_cursors_pass": true,
+          "reset_pass": true,
+          "detached_before_release": true,
+          "logical_baseline_restored": true
+        },
+        {
+          "asset_index": 1,
+          "round": 0,
+          "alloc_type": 0,
+          "disk_sizes": [
+            2098316,
+            4538228,
+            0,
+            0,
+            93836449,
+            0,
+            7605494
+          ],
+          "logical_sizes": [
+            2098316,
+            4538228,
+            0,
+            0,
+            93836449,
+            0,
+            7605494
+          ],
+          "allocated": {
+            "owners": 1,
+            "allocation_count": 0,
+            "requested_bytes": 0,
+            "reservations": 1,
+            "low": 108084470,
+            "high": 343932928
+          },
+          "seven_cursors_pass": true,
+          "reset_pass": true,
+          "detached_before_release": true,
+          "logical_baseline_restored": true
+        },
+        {
+          "asset_index": 0,
+          "round": 0,
+          "alloc_type": 1,
+          "disk_sizes": [
+            36,
+            0,
+            0,
+            0,
+            49092,
+            0,
+            0
+          ],
+          "logical_sizes": [
+            36,
+            0,
+            0,
+            0,
+            49092,
+            0,
+            0
+          ],
+          "allocated": {
+            "owners": 1,
+            "allocation_count": 0,
+            "requested_bytes": 0,
+            "reservations": 1,
+            "low": 0,
+            "high": 343879680
+          },
+          "seven_cursors_pass": true,
+          "reset_pass": true,
+          "detached_before_release": true,
+          "logical_baseline_restored": true
+        },
+        {
+          "asset_index": 1,
+          "round": 0,
+          "alloc_type": 1,
+          "disk_sizes": [
+            2098316,
+            4538228,
+            0,
+            0,
+            93836449,
+            0,
+            7605494
+          ],
+          "logical_sizes": [
+            2098316,
+            4538228,
+            0,
+            0,
+            93836449,
+            0,
+            7605494
+          ],
+          "allocated": {
+            "owners": 1,
+            "allocation_count": 0,
+            "requested_bytes": 0,
+            "reservations": 1,
+            "low": 0,
+            "high": 235847680
+          },
+          "seven_cursors_pass": true,
+          "reset_pass": true,
+          "detached_before_release": true,
+          "logical_baseline_restored": true
+        },
+        {
+          "asset_index": 0,
+          "round": 1,
+          "alloc_type": 0,
+          "disk_sizes": [
+            36,
+            0,
+            0,
+            0,
+            49092,
+            0,
+            0
+          ],
+          "logical_sizes": [
+            36,
+            0,
+            0,
+            0,
+            49092,
+            0,
+            0
+          ],
+          "allocated": {
+            "owners": 1,
+            "allocation_count": 0,
+            "requested_bytes": 0,
+            "reservations": 1,
+            "low": 53203,
+            "high": 343932928
+          },
+          "seven_cursors_pass": true,
+          "reset_pass": true,
+          "detached_before_release": true,
+          "logical_baseline_restored": true
+        },
+        {
+          "asset_index": 1,
+          "round": 1,
+          "alloc_type": 0,
+          "disk_sizes": [
+            2098316,
+            4538228,
+            0,
+            0,
+            93836449,
+            0,
+            7605494
+          ],
+          "logical_sizes": [
+            2098316,
+            4538228,
+            0,
+            0,
+            93836449,
+            0,
+            7605494
+          ],
+          "allocated": {
+            "owners": 1,
+            "allocation_count": 0,
+            "requested_bytes": 0,
+            "reservations": 1,
+            "low": 108084470,
+            "high": 343932928
+          },
+          "seven_cursors_pass": true,
+          "reset_pass": true,
+          "detached_before_release": true,
+          "logical_baseline_restored": true
+        },
+        {
+          "asset_index": 0,
+          "round": 1,
+          "alloc_type": 1,
+          "disk_sizes": [
+            36,
+            0,
+            0,
+            0,
+            49092,
+            0,
+            0
+          ],
+          "logical_sizes": [
+            36,
+            0,
+            0,
+            0,
+            49092,
+            0,
+            0
+          ],
+          "allocated": {
+            "owners": 1,
+            "allocation_count": 0,
+            "requested_bytes": 0,
+            "reservations": 1,
+            "low": 0,
+            "high": 343879680
+          },
+          "seven_cursors_pass": true,
+          "reset_pass": true,
+          "detached_before_release": true,
+          "logical_baseline_restored": true
+        },
+        {
+          "asset_index": 1,
+          "round": 1,
+          "alloc_type": 1,
+          "disk_sizes": [
+            2098316,
+            4538228,
+            0,
+            0,
+            93836449,
+            0,
+            7605494
+          ],
+          "logical_sizes": [
+            2098316,
+            4538228,
+            0,
+            0,
+            93836449,
+            0,
+            7605494
+          ],
+          "allocated": {
+            "owners": 1,
+            "allocation_count": 0,
+            "requested_bytes": 0,
+            "reservations": 1,
+            "low": 0,
+            "high": 235847680
+          },
+          "seven_cursors_pass": true,
+          "reset_pass": true,
+          "detached_before_release": true,
+          "logical_baseline_restored": true
+        },
+        {
+          "asset_index": 0,
+          "round": 2,
+          "alloc_type": 0,
+          "disk_sizes": [
+            36,
+            0,
+            0,
+            0,
+            49092,
+            0,
+            0
+          ],
+          "logical_sizes": [
+            36,
+            0,
+            0,
+            0,
+            49092,
+            0,
+            0
+          ],
+          "allocated": {
+            "owners": 1,
+            "allocation_count": 0,
+            "requested_bytes": 0,
+            "reservations": 1,
+            "low": 53203,
+            "high": 343932928
+          },
+          "seven_cursors_pass": true,
+          "reset_pass": true,
+          "detached_before_release": true,
+          "logical_baseline_restored": true
+        },
+        {
+          "asset_index": 1,
+          "round": 2,
+          "alloc_type": 0,
+          "disk_sizes": [
+            2098316,
+            4538228,
+            0,
+            0,
+            93836449,
+            0,
+            7605494
+          ],
+          "logical_sizes": [
+            2098316,
+            4538228,
+            0,
+            0,
+            93836449,
+            0,
+            7605494
+          ],
+          "allocated": {
+            "owners": 1,
+            "allocation_count": 0,
+            "requested_bytes": 0,
+            "reservations": 1,
+            "low": 108084470,
+            "high": 343932928
+          },
+          "seven_cursors_pass": true,
+          "reset_pass": true,
+          "detached_before_release": true,
+          "logical_baseline_restored": true
+        },
+        {
+          "asset_index": 0,
+          "round": 2,
+          "alloc_type": 1,
+          "disk_sizes": [
+            36,
+            0,
+            0,
+            0,
+            49092,
+            0,
+            0
+          ],
+          "logical_sizes": [
+            36,
+            0,
+            0,
+            0,
+            49092,
+            0,
+            0
+          ],
+          "allocated": {
+            "owners": 1,
+            "allocation_count": 0,
+            "requested_bytes": 0,
+            "reservations": 1,
+            "low": 0,
+            "high": 343879680
+          },
+          "seven_cursors_pass": true,
+          "reset_pass": true,
+          "detached_before_release": true,
+          "logical_baseline_restored": true
+        },
+        {
+          "asset_index": 1,
+          "round": 2,
+          "alloc_type": 1,
+          "disk_sizes": [
+            2098316,
+            4538228,
+            0,
+            0,
+            93836449,
+            0,
+            7605494
+          ],
+          "logical_sizes": [
+            2098316,
+            4538228,
+            0,
+            0,
+            93836449,
+            0,
+            7605494
+          ],
+          "allocated": {
+            "owners": 1,
+            "allocation_count": 0,
+            "requested_bytes": 0,
+            "reservations": 1,
+            "low": 0,
+            "high": 235847680
+          },
+          "seven_cursors_pass": true,
+          "reset_pass": true,
+          "detached_before_release": true,
+          "logical_baseline_restored": true
+        }
+      ],
+      "summary": {
+        "schema": "BlackOpsARM.TASK-0012.stream-init.v1",
+        "pointer_bytes": 4,
+        "native64": false,
+        "cycles_passed": 12,
+        "preflight_rejections": 6,
+        "partial_failures": 6,
+        "init_calls": 49,
+        "baseline": {
+          "owners": 0,
+          "allocation_count": 0,
+          "requested_bytes": 0,
+          "reservations": 1,
+          "low": 0,
+          "high": 343932928
+        },
+        "final": {
+          "owners": 0,
+          "allocation_count": 0,
+          "requested_bytes": 0,
+          "reservations": 1,
+          "low": 0,
+          "high": 343932928
+        },
+        "payload_bytes_read": 0,
+        "payload_bytes_written": 0
+      }
+    },
+    "windows_x64": {
+      "probe_sha256": "0867f2268ecfdd183652e6d7a8b9329269dce20fcb0d557b34072504a8fb0c9b",
+      "decoder_sha256": "90e32797279c6d3733491a76e68f215c8f6131fe865a94baf8f9b7f83eb49370",
+      "fresh_decodes": {
+        "code_pre_gfx": {
+          "mode": "decode_only_fresh_process",
+          "decode_ns": 527400,
+          "decoded_adler32": 3596564434,
+          "vector_final_capacity_bytes": 49593,
+          "file_bytes": 13280,
+          "compressed_bytes": 13245,
+          "padding_bytes": 23,
+          "header_hex": "95c100000000000024000000000000000000000000000000c4bf00000000000000000000",
+          "plan": {
+            "decoded_bytes": 49593,
+            "XFile_size": 49557,
+            "externalSize": 0,
+            "logical_bytes": 229328,
+            "backend_request_bytes": 229358,
+            "first_fit_capacity_bytes": 241664,
+            "windows_low_consumption_bytes": 233367,
+            "windows_high_consumption_bytes": 233472,
+            "alignment": 4096,
+            "blocks": [
+              {
+                "index": 0,
+                "disk_bytes": 36,
+                "logical_bytes": 65608,
+                "request_bytes": 65623,
+                "factor100": 200,
+                "additive_expansion_bytes": 65536
+              },
+              {
+                "index": 1,
+                "disk_bytes": 0,
+                "logical_bytes": 0,
+                "request_bytes": 0,
+                "factor100": 0,
+                "additive_expansion_bytes": 0
+              },
+              {
+                "index": 2,
+                "disk_bytes": 0,
+                "logical_bytes": 0,
+                "request_bytes": 0,
+                "factor100": 0,
+                "additive_expansion_bytes": 0
+              },
+              {
+                "index": 3,
+                "disk_bytes": 0,
+                "logical_bytes": 0,
+                "request_bytes": 0,
+                "factor100": 0,
+                "additive_expansion_bytes": 0
+              },
+              {
+                "index": 4,
+                "disk_bytes": 49092,
+                "logical_bytes": 163720,
+                "request_bytes": 163735,
+                "factor100": 200,
+                "additive_expansion_bytes": 65536
+              },
+              {
+                "index": 5,
+                "disk_bytes": 0,
+                "logical_bytes": 0,
+                "request_bytes": 0,
+                "factor100": 0,
+                "additive_expansion_bytes": 0
+              },
+              {
+                "index": 6,
+                "disk_bytes": 0,
+                "logical_bytes": 0,
+                "request_bytes": 0,
+                "factor100": 0,
+                "additive_expansion_bytes": 0
+              }
+            ]
+          },
+          "before": {
+            "resident_bytes": 2985984,
+            "process_lifetime_resident_hwm_bytes": 2990080,
+            "VmSize_bytes": null,
+            "VmPeak_bytes": null,
+            "windows_private_commit_bytes": 573440,
+            "windows_peak_pagefile_bytes": 573440
+          },
+          "after_decode": {
+            "resident_bytes": 3416064,
+            "process_lifetime_resident_hwm_bytes": 3440640,
+            "VmSize_bytes": null,
+            "VmPeak_bytes": null,
+            "windows_private_commit_bytes": 864256,
+            "windows_peak_pagefile_bytes": 909312
+          },
+          "after_cleanup": {
+            "resident_bytes": 3686400,
+            "process_lifetime_resident_hwm_bytes": 3690496,
+            "VmSize_bytes": null,
+            "VmPeak_bytes": null,
+            "windows_private_commit_bytes": 868352,
+            "windows_peak_pagefile_bytes": 917504
+          },
+          "sampled_peak_resident_bytes": 3670016,
+          "sample_period_ms": 1
+        },
+        "zombie_pentagon": {
+          "mode": "decode_only_fresh_process",
+          "decode_ns": 531661800,
+          "decoded_adler32": 2574587991,
+          "vector_final_capacity_bytes": 145282681,
+          "file_bytes": 48229216,
+          "compressed_bytes": 48229195,
+          "padding_bytes": 9,
+          "header_hex": "2d167006f4d85c128c042000743f45000000000000000000a1d4970500000000f60c7400",
+          "plan": {
+            "decoded_bytes": 108009041,
+            "XFile_size": 108009005,
+            "externalSize": 308074740,
+            "logical_bytes": 154001221,
+            "backend_request_bytes": 154001266,
+            "first_fit_capacity_bytes": 154017792,
+            "windows_low_consumption_bytes": 154009350,
+            "windows_high_consumption_bytes": 154009600,
+            "alignment": 4096,
+            "blocks": [
+              {
+                "index": 0,
+                "disk_bytes": 2098316,
+                "logical_bytes": 4052336,
+                "request_bytes": 4052351,
+                "factor100": 190,
+                "additive_expansion_bytes": 65536
+              },
+              {
+                "index": 1,
+                "disk_bytes": 4538228,
+                "logical_bytes": 8688169,
+                "request_bytes": 8688184,
+                "factor100": 190,
+                "additive_expansion_bytes": 65536
+              },
+              {
+                "index": 2,
+                "disk_bytes": 0,
+                "logical_bytes": 0,
+                "request_bytes": 0,
+                "factor100": 0,
+                "additive_expansion_bytes": 0
+              },
+              {
+                "index": 3,
+                "disk_bytes": 0,
+                "logical_bytes": 0,
+                "request_bytes": 0,
+                "factor100": 0,
+                "additive_expansion_bytes": 0
+              },
+              {
+                "index": 4,
+                "disk_bytes": 93836449,
+                "logical_bytes": 126744742,
+                "request_bytes": 126744757,
+                "factor100": 135,
+                "additive_expansion_bytes": 65536
+              },
+              {
+                "index": 5,
+                "disk_bytes": 0,
+                "logical_bytes": 0,
+                "request_bytes": 0,
+                "factor100": 0,
+                "additive_expansion_bytes": 0
+              },
+              {
+                "index": 6,
+                "disk_bytes": 7605494,
+                "logical_bytes": 14515974,
+                "request_bytes": 14515974,
+                "factor100": 190,
+                "additive_expansion_bytes": 65536
+              }
+            ]
+          },
+          "before": {
+            "resident_bytes": 2985984,
+            "process_lifetime_resident_hwm_bytes": 2990080,
+            "VmSize_bytes": null,
+            "VmPeak_bytes": null,
+            "windows_private_commit_bytes": 569344,
+            "windows_peak_pagefile_bytes": 569344
+          },
+          "after_decode": {
+            "resident_bytes": 148873216,
+            "process_lifetime_resident_hwm_bytes": 247582720,
+            "VmSize_bytes": null,
+            "VmPeak_bytes": null,
+            "windows_private_commit_bytes": 146407424,
+            "windows_peak_pagefile_bytes": 245358592
+          },
+          "after_cleanup": {
+            "resident_bytes": 3653632,
+            "process_lifetime_resident_hwm_bytes": 247582720,
+            "VmSize_bytes": null,
+            "VmPeak_bytes": null,
+            "windows_private_commit_bytes": 872448,
+            "windows_peak_pagefile_bytes": 245358592
+          },
+          "sampled_peak_resident_bytes": 247578624,
+          "sample_period_ms": 1
+        }
+      },
+      "cycles": [
+        {
+          "asset_index": 0,
+          "round": 0,
+          "alloc_type": 0,
+          "disk_sizes": [
+            36,
+            0,
+            0,
+            0,
+            49092,
+            0,
+            0
+          ],
+          "logical_sizes": [
+            65608,
+            0,
+            0,
+            0,
+            163720,
+            0,
+            0
+          ],
+          "allocated": {
+            "owners": 1,
+            "allocation_count": 0,
+            "requested_bytes": 0,
+            "reservations": 1,
+            "low": 233367,
+            "high": 515899392
+          },
+          "seven_cursors_pass": true,
+          "reset_pass": true,
+          "detached_before_release": true,
+          "logical_baseline_restored": true
+        },
+        {
+          "asset_index": 1,
+          "round": 0,
+          "alloc_type": 0,
+          "disk_sizes": [
+            2098316,
+            4538228,
+            0,
+            0,
+            93836449,
+            0,
+            7605494
+          ],
+          "logical_sizes": [
+            4052336,
+            8688169,
+            0,
+            0,
+            126744742,
+            0,
+            14515974
+          ],
+          "allocated": {
+            "owners": 1,
+            "allocation_count": 0,
+            "requested_bytes": 0,
+            "reservations": 1,
+            "low": 154009350,
+            "high": 515899392
+          },
+          "seven_cursors_pass": true,
+          "reset_pass": true,
+          "detached_before_release": true,
+          "logical_baseline_restored": true
+        },
+        {
+          "asset_index": 0,
+          "round": 0,
+          "alloc_type": 1,
+          "disk_sizes": [
+            36,
+            0,
+            0,
+            0,
+            49092,
+            0,
+            0
+          ],
+          "logical_sizes": [
+            65608,
+            0,
+            0,
+            0,
+            163720,
+            0,
+            0
+          ],
+          "allocated": {
+            "owners": 1,
+            "allocation_count": 0,
+            "requested_bytes": 0,
+            "reservations": 1,
+            "low": 0,
+            "high": 515665920
+          },
+          "seven_cursors_pass": true,
+          "reset_pass": true,
+          "detached_before_release": true,
+          "logical_baseline_restored": true
+        },
+        {
+          "asset_index": 1,
+          "round": 0,
+          "alloc_type": 1,
+          "disk_sizes": [
+            2098316,
+            4538228,
+            0,
+            0,
+            93836449,
+            0,
+            7605494
+          ],
+          "logical_sizes": [
+            4052336,
+            8688169,
+            0,
+            0,
+            126744742,
+            0,
+            14515974
+          ],
+          "allocated": {
+            "owners": 1,
+            "allocation_count": 0,
+            "requested_bytes": 0,
+            "reservations": 1,
+            "low": 0,
+            "high": 361889792
+          },
+          "seven_cursors_pass": true,
+          "reset_pass": true,
+          "detached_before_release": true,
+          "logical_baseline_restored": true
+        },
+        {
+          "asset_index": 0,
+          "round": 1,
+          "alloc_type": 0,
+          "disk_sizes": [
+            36,
+            0,
+            0,
+            0,
+            49092,
+            0,
+            0
+          ],
+          "logical_sizes": [
+            65608,
+            0,
+            0,
+            0,
+            163720,
+            0,
+            0
+          ],
+          "allocated": {
+            "owners": 1,
+            "allocation_count": 0,
+            "requested_bytes": 0,
+            "reservations": 1,
+            "low": 233367,
+            "high": 515899392
+          },
+          "seven_cursors_pass": true,
+          "reset_pass": true,
+          "detached_before_release": true,
+          "logical_baseline_restored": true
+        },
+        {
+          "asset_index": 1,
+          "round": 1,
+          "alloc_type": 0,
+          "disk_sizes": [
+            2098316,
+            4538228,
+            0,
+            0,
+            93836449,
+            0,
+            7605494
+          ],
+          "logical_sizes": [
+            4052336,
+            8688169,
+            0,
+            0,
+            126744742,
+            0,
+            14515974
+          ],
+          "allocated": {
+            "owners": 1,
+            "allocation_count": 0,
+            "requested_bytes": 0,
+            "reservations": 1,
+            "low": 154009350,
+            "high": 515899392
+          },
+          "seven_cursors_pass": true,
+          "reset_pass": true,
+          "detached_before_release": true,
+          "logical_baseline_restored": true
+        },
+        {
+          "asset_index": 0,
+          "round": 1,
+          "alloc_type": 1,
+          "disk_sizes": [
+            36,
+            0,
+            0,
+            0,
+            49092,
+            0,
+            0
+          ],
+          "logical_sizes": [
+            65608,
+            0,
+            0,
+            0,
+            163720,
+            0,
+            0
+          ],
+          "allocated": {
+            "owners": 1,
+            "allocation_count": 0,
+            "requested_bytes": 0,
+            "reservations": 1,
+            "low": 0,
+            "high": 515665920
+          },
+          "seven_cursors_pass": true,
+          "reset_pass": true,
+          "detached_before_release": true,
+          "logical_baseline_restored": true
+        },
+        {
+          "asset_index": 1,
+          "round": 1,
+          "alloc_type": 1,
+          "disk_sizes": [
+            2098316,
+            4538228,
+            0,
+            0,
+            93836449,
+            0,
+            7605494
+          ],
+          "logical_sizes": [
+            4052336,
+            8688169,
+            0,
+            0,
+            126744742,
+            0,
+            14515974
+          ],
+          "allocated": {
+            "owners": 1,
+            "allocation_count": 0,
+            "requested_bytes": 0,
+            "reservations": 1,
+            "low": 0,
+            "high": 361889792
+          },
+          "seven_cursors_pass": true,
+          "reset_pass": true,
+          "detached_before_release": true,
+          "logical_baseline_restored": true
+        },
+        {
+          "asset_index": 0,
+          "round": 2,
+          "alloc_type": 0,
+          "disk_sizes": [
+            36,
+            0,
+            0,
+            0,
+            49092,
+            0,
+            0
+          ],
+          "logical_sizes": [
+            65608,
+            0,
+            0,
+            0,
+            163720,
+            0,
+            0
+          ],
+          "allocated": {
+            "owners": 1,
+            "allocation_count": 0,
+            "requested_bytes": 0,
+            "reservations": 1,
+            "low": 233367,
+            "high": 515899392
+          },
+          "seven_cursors_pass": true,
+          "reset_pass": true,
+          "detached_before_release": true,
+          "logical_baseline_restored": true
+        },
+        {
+          "asset_index": 1,
+          "round": 2,
+          "alloc_type": 0,
+          "disk_sizes": [
+            2098316,
+            4538228,
+            0,
+            0,
+            93836449,
+            0,
+            7605494
+          ],
+          "logical_sizes": [
+            4052336,
+            8688169,
+            0,
+            0,
+            126744742,
+            0,
+            14515974
+          ],
+          "allocated": {
+            "owners": 1,
+            "allocation_count": 0,
+            "requested_bytes": 0,
+            "reservations": 1,
+            "low": 154009350,
+            "high": 515899392
+          },
+          "seven_cursors_pass": true,
+          "reset_pass": true,
+          "detached_before_release": true,
+          "logical_baseline_restored": true
+        },
+        {
+          "asset_index": 0,
+          "round": 2,
+          "alloc_type": 1,
+          "disk_sizes": [
+            36,
+            0,
+            0,
+            0,
+            49092,
+            0,
+            0
+          ],
+          "logical_sizes": [
+            65608,
+            0,
+            0,
+            0,
+            163720,
+            0,
+            0
+          ],
+          "allocated": {
+            "owners": 1,
+            "allocation_count": 0,
+            "requested_bytes": 0,
+            "reservations": 1,
+            "low": 0,
+            "high": 515665920
+          },
+          "seven_cursors_pass": true,
+          "reset_pass": true,
+          "detached_before_release": true,
+          "logical_baseline_restored": true
+        },
+        {
+          "asset_index": 1,
+          "round": 2,
+          "alloc_type": 1,
+          "disk_sizes": [
+            2098316,
+            4538228,
+            0,
+            0,
+            93836449,
+            0,
+            7605494
+          ],
+          "logical_sizes": [
+            4052336,
+            8688169,
+            0,
+            0,
+            126744742,
+            0,
+            14515974
+          ],
+          "allocated": {
+            "owners": 1,
+            "allocation_count": 0,
+            "requested_bytes": 0,
+            "reservations": 1,
+            "low": 0,
+            "high": 361889792
+          },
+          "seven_cursors_pass": true,
+          "reset_pass": true,
+          "detached_before_release": true,
+          "logical_baseline_restored": true
+        }
+      ],
+      "summary": {
+        "schema": "BlackOpsARM.TASK-0012.stream-init.v1",
+        "pointer_bytes": 8,
+        "native64": true,
+        "cycles_passed": 12,
+        "preflight_rejections": 6,
+        "partial_failures": 6,
+        "init_calls": 49,
+        "baseline": {
+          "owners": 0,
+          "allocation_count": 0,
+          "requested_bytes": 0,
+          "reservations": 1,
+          "low": 0,
+          "high": 515899392
+        },
+        "final": {
+          "owners": 0,
+          "allocation_count": 0,
+          "requested_bytes": 0,
+          "reservations": 1,
+          "low": 0,
+          "high": 515899392
+        },
+        "payload_bytes_read": 0,
+        "payload_bytes_written": 0
+      }
+    },
+    "honor_arm64": {
+      "probe_sha256": "dc12e026dc647719570e19cbf2c9abccab5b6fdee87b53c8428fcef10a005b3b",
+      "decoder_sha256": "39d7a4684165359c792925e6b5164546d830e5c498f96f0a21653c79418c477f",
+      "fresh_decodes": {
+        "code_pre_gfx": {
+          "mode": "decode_only_fresh_process",
+          "decode_ns": 5261458,
+          "decoded_adler32": 3596564434,
+          "vector_final_capacity_bytes": 65536,
+          "file_bytes": 13280,
+          "compressed_bytes": 13245,
+          "padding_bytes": 23,
+          "header_hex": "95c100000000000024000000000000000000000000000000c4bf00000000000000000000",
+          "plan": {
+            "decoded_bytes": 49593,
+            "XFile_size": 49557,
+            "externalSize": 0,
+            "logical_bytes": 229328,
+            "backend_request_bytes": 229358,
+            "first_fit_capacity_bytes": 241664,
+            "windows_low_consumption_bytes": 233367,
+            "windows_high_consumption_bytes": 233472,
+            "alignment": 4096,
+            "blocks": [
+              {
+                "index": 0,
+                "disk_bytes": 36,
+                "logical_bytes": 65608,
+                "request_bytes": 65623,
+                "factor100": 200,
+                "additive_expansion_bytes": 65536
+              },
+              {
+                "index": 1,
+                "disk_bytes": 0,
+                "logical_bytes": 0,
+                "request_bytes": 0,
+                "factor100": 0,
+                "additive_expansion_bytes": 0
+              },
+              {
+                "index": 2,
+                "disk_bytes": 0,
+                "logical_bytes": 0,
+                "request_bytes": 0,
+                "factor100": 0,
+                "additive_expansion_bytes": 0
+              },
+              {
+                "index": 3,
+                "disk_bytes": 0,
+                "logical_bytes": 0,
+                "request_bytes": 0,
+                "factor100": 0,
+                "additive_expansion_bytes": 0
+              },
+              {
+                "index": 4,
+                "disk_bytes": 49092,
+                "logical_bytes": 163720,
+                "request_bytes": 163735,
+                "factor100": 200,
+                "additive_expansion_bytes": 65536
+              },
+              {
+                "index": 5,
+                "disk_bytes": 0,
+                "logical_bytes": 0,
+                "request_bytes": 0,
+                "factor100": 0,
+                "additive_expansion_bytes": 0
+              },
+              {
+                "index": 6,
+                "disk_bytes": 0,
+                "logical_bytes": 0,
+                "request_bytes": 0,
+                "factor100": 0,
+                "additive_expansion_bytes": 0
+              }
+            ]
+          },
+          "before": {
+            "resident_bytes": 2633728,
+            "process_lifetime_resident_hwm_bytes": 2633728,
+            "VmSize_bytes": 2285117440,
+            "VmPeak_bytes": 2285117440,
+            "windows_private_commit_bytes": null,
+            "windows_peak_pagefile_bytes": null
+          },
+          "after_decode": {
+            "resident_bytes": 3121152,
+            "process_lifetime_resident_hwm_bytes": 3121152,
+            "VmSize_bytes": 2295603200,
+            "VmPeak_bytes": 2295603200,
+            "windows_private_commit_bytes": null,
+            "windows_peak_pagefile_bytes": null
+          },
+          "after_cleanup": {
+            "resident_bytes": 3121152,
+            "process_lifetime_resident_hwm_bytes": 3121152,
+            "VmSize_bytes": 2295603200,
+            "VmPeak_bytes": 2295603200,
+            "windows_private_commit_bytes": null,
+            "windows_peak_pagefile_bytes": null
+          },
+          "sampled_peak_resident_bytes": 3121152,
+          "sample_period_ms": 1
+        },
+        "zombie_pentagon": {
+          "mode": "decode_only_fresh_process",
+          "decode_ns": 5107898800,
+          "decoded_adler32": 2574587991,
+          "vector_final_capacity_bytes": 134217728,
+          "file_bytes": 48229216,
+          "compressed_bytes": 48229195,
+          "padding_bytes": 9,
+          "header_hex": "2d167006f4d85c128c042000743f45000000000000000000a1d4970500000000f60c7400",
+          "plan": {
+            "decoded_bytes": 108009041,
+            "XFile_size": 108009005,
+            "externalSize": 308074740,
+            "logical_bytes": 154001221,
+            "backend_request_bytes": 154001266,
+            "first_fit_capacity_bytes": 154017792,
+            "windows_low_consumption_bytes": 154009350,
+            "windows_high_consumption_bytes": 154009600,
+            "alignment": 4096,
+            "blocks": [
+              {
+                "index": 0,
+                "disk_bytes": 2098316,
+                "logical_bytes": 4052336,
+                "request_bytes": 4052351,
+                "factor100": 190,
+                "additive_expansion_bytes": 65536
+              },
+              {
+                "index": 1,
+                "disk_bytes": 4538228,
+                "logical_bytes": 8688169,
+                "request_bytes": 8688184,
+                "factor100": 190,
+                "additive_expansion_bytes": 65536
+              },
+              {
+                "index": 2,
+                "disk_bytes": 0,
+                "logical_bytes": 0,
+                "request_bytes": 0,
+                "factor100": 0,
+                "additive_expansion_bytes": 0
+              },
+              {
+                "index": 3,
+                "disk_bytes": 0,
+                "logical_bytes": 0,
+                "request_bytes": 0,
+                "factor100": 0,
+                "additive_expansion_bytes": 0
+              },
+              {
+                "index": 4,
+                "disk_bytes": 93836449,
+                "logical_bytes": 126744742,
+                "request_bytes": 126744757,
+                "factor100": 135,
+                "additive_expansion_bytes": 65536
+              },
+              {
+                "index": 5,
+                "disk_bytes": 0,
+                "logical_bytes": 0,
+                "request_bytes": 0,
+                "factor100": 0,
+                "additive_expansion_bytes": 0
+              },
+              {
+                "index": 6,
+                "disk_bytes": 7605494,
+                "logical_bytes": 14515974,
+                "request_bytes": 14515974,
+                "factor100": 190,
+                "additive_expansion_bytes": 65536
+              }
+            ]
+          },
+          "before": {
+            "resident_bytes": 2633728,
+            "process_lifetime_resident_hwm_bytes": 2633728,
+            "VmSize_bytes": 2243174400,
+            "VmPeak_bytes": 2245271552,
+            "windows_private_commit_bytes": null,
+            "windows_peak_pagefile_bytes": null
+          },
+          "after_decode": {
+            "resident_bytes": 111312896,
+            "process_lifetime_resident_hwm_bytes": 137629696,
+            "VmSize_bytes": 2589728768,
+            "VmPeak_bytes": 2589728768,
+            "windows_private_commit_bytes": null,
+            "windows_peak_pagefile_bytes": null
+          },
+          "after_cleanup": {
+            "resident_bytes": 3461120,
+            "process_lifetime_resident_hwm_bytes": 137629696,
+            "VmSize_bytes": 2589728768,
+            "VmPeak_bytes": 2589728768,
+            "windows_private_commit_bytes": null,
+            "windows_peak_pagefile_bytes": null
+          },
+          "sampled_peak_resident_bytes": 135196672,
+          "sample_period_ms": 1
+        }
+      },
+      "cycles": [
+        {
+          "asset_index": 0,
+          "round": 0,
+          "alloc_type": 0,
+          "disk_sizes": [
+            36,
+            0,
+            0,
+            0,
+            49092,
+            0,
+            0
+          ],
+          "logical_sizes": [
+            65608,
+            0,
+            0,
+            0,
+            163720,
+            0,
+            0
+          ],
+          "allocated": {
+            "owners": 1,
+            "allocation_count": 2,
+            "requested_bytes": 229358,
+            "reservations": 1,
+            "low": 0,
+            "high": 0
+          },
+          "seven_cursors_pass": true,
+          "reset_pass": true,
+          "detached_before_release": true,
+          "logical_baseline_restored": true
+        },
+        {
+          "asset_index": 1,
+          "round": 0,
+          "alloc_type": 0,
+          "disk_sizes": [
+            2098316,
+            4538228,
+            0,
+            0,
+            93836449,
+            0,
+            7605494
+          ],
+          "logical_sizes": [
+            4052336,
+            8688169,
+            0,
+            0,
+            126744742,
+            0,
+            14515974
+          ],
+          "allocated": {
+            "owners": 1,
+            "allocation_count": 4,
+            "requested_bytes": 154001266,
+            "reservations": 1,
+            "low": 0,
+            "high": 0
+          },
+          "seven_cursors_pass": true,
+          "reset_pass": true,
+          "detached_before_release": true,
+          "logical_baseline_restored": true
+        },
+        {
+          "asset_index": 0,
+          "round": 0,
+          "alloc_type": 1,
+          "disk_sizes": [
+            36,
+            0,
+            0,
+            0,
+            49092,
+            0,
+            0
+          ],
+          "logical_sizes": [
+            65608,
+            0,
+            0,
+            0,
+            163720,
+            0,
+            0
+          ],
+          "allocated": {
+            "owners": 1,
+            "allocation_count": 2,
+            "requested_bytes": 229358,
+            "reservations": 1,
+            "low": 0,
+            "high": 0
+          },
+          "seven_cursors_pass": true,
+          "reset_pass": true,
+          "detached_before_release": true,
+          "logical_baseline_restored": true
+        },
+        {
+          "asset_index": 1,
+          "round": 0,
+          "alloc_type": 1,
+          "disk_sizes": [
+            2098316,
+            4538228,
+            0,
+            0,
+            93836449,
+            0,
+            7605494
+          ],
+          "logical_sizes": [
+            4052336,
+            8688169,
+            0,
+            0,
+            126744742,
+            0,
+            14515974
+          ],
+          "allocated": {
+            "owners": 1,
+            "allocation_count": 4,
+            "requested_bytes": 154001266,
+            "reservations": 1,
+            "low": 0,
+            "high": 0
+          },
+          "seven_cursors_pass": true,
+          "reset_pass": true,
+          "detached_before_release": true,
+          "logical_baseline_restored": true
+        },
+        {
+          "asset_index": 0,
+          "round": 1,
+          "alloc_type": 0,
+          "disk_sizes": [
+            36,
+            0,
+            0,
+            0,
+            49092,
+            0,
+            0
+          ],
+          "logical_sizes": [
+            65608,
+            0,
+            0,
+            0,
+            163720,
+            0,
+            0
+          ],
+          "allocated": {
+            "owners": 1,
+            "allocation_count": 2,
+            "requested_bytes": 229358,
+            "reservations": 1,
+            "low": 0,
+            "high": 0
+          },
+          "seven_cursors_pass": true,
+          "reset_pass": true,
+          "detached_before_release": true,
+          "logical_baseline_restored": true
+        },
+        {
+          "asset_index": 1,
+          "round": 1,
+          "alloc_type": 0,
+          "disk_sizes": [
+            2098316,
+            4538228,
+            0,
+            0,
+            93836449,
+            0,
+            7605494
+          ],
+          "logical_sizes": [
+            4052336,
+            8688169,
+            0,
+            0,
+            126744742,
+            0,
+            14515974
+          ],
+          "allocated": {
+            "owners": 1,
+            "allocation_count": 4,
+            "requested_bytes": 154001266,
+            "reservations": 1,
+            "low": 0,
+            "high": 0
+          },
+          "seven_cursors_pass": true,
+          "reset_pass": true,
+          "detached_before_release": true,
+          "logical_baseline_restored": true
+        },
+        {
+          "asset_index": 0,
+          "round": 1,
+          "alloc_type": 1,
+          "disk_sizes": [
+            36,
+            0,
+            0,
+            0,
+            49092,
+            0,
+            0
+          ],
+          "logical_sizes": [
+            65608,
+            0,
+            0,
+            0,
+            163720,
+            0,
+            0
+          ],
+          "allocated": {
+            "owners": 1,
+            "allocation_count": 2,
+            "requested_bytes": 229358,
+            "reservations": 1,
+            "low": 0,
+            "high": 0
+          },
+          "seven_cursors_pass": true,
+          "reset_pass": true,
+          "detached_before_release": true,
+          "logical_baseline_restored": true
+        },
+        {
+          "asset_index": 1,
+          "round": 1,
+          "alloc_type": 1,
+          "disk_sizes": [
+            2098316,
+            4538228,
+            0,
+            0,
+            93836449,
+            0,
+            7605494
+          ],
+          "logical_sizes": [
+            4052336,
+            8688169,
+            0,
+            0,
+            126744742,
+            0,
+            14515974
+          ],
+          "allocated": {
+            "owners": 1,
+            "allocation_count": 4,
+            "requested_bytes": 154001266,
+            "reservations": 1,
+            "low": 0,
+            "high": 0
+          },
+          "seven_cursors_pass": true,
+          "reset_pass": true,
+          "detached_before_release": true,
+          "logical_baseline_restored": true
+        },
+        {
+          "asset_index": 0,
+          "round": 2,
+          "alloc_type": 0,
+          "disk_sizes": [
+            36,
+            0,
+            0,
+            0,
+            49092,
+            0,
+            0
+          ],
+          "logical_sizes": [
+            65608,
+            0,
+            0,
+            0,
+            163720,
+            0,
+            0
+          ],
+          "allocated": {
+            "owners": 1,
+            "allocation_count": 2,
+            "requested_bytes": 229358,
+            "reservations": 1,
+            "low": 0,
+            "high": 0
+          },
+          "seven_cursors_pass": true,
+          "reset_pass": true,
+          "detached_before_release": true,
+          "logical_baseline_restored": true
+        },
+        {
+          "asset_index": 1,
+          "round": 2,
+          "alloc_type": 0,
+          "disk_sizes": [
+            2098316,
+            4538228,
+            0,
+            0,
+            93836449,
+            0,
+            7605494
+          ],
+          "logical_sizes": [
+            4052336,
+            8688169,
+            0,
+            0,
+            126744742,
+            0,
+            14515974
+          ],
+          "allocated": {
+            "owners": 1,
+            "allocation_count": 4,
+            "requested_bytes": 154001266,
+            "reservations": 1,
+            "low": 0,
+            "high": 0
+          },
+          "seven_cursors_pass": true,
+          "reset_pass": true,
+          "detached_before_release": true,
+          "logical_baseline_restored": true
+        },
+        {
+          "asset_index": 0,
+          "round": 2,
+          "alloc_type": 1,
+          "disk_sizes": [
+            36,
+            0,
+            0,
+            0,
+            49092,
+            0,
+            0
+          ],
+          "logical_sizes": [
+            65608,
+            0,
+            0,
+            0,
+            163720,
+            0,
+            0
+          ],
+          "allocated": {
+            "owners": 1,
+            "allocation_count": 2,
+            "requested_bytes": 229358,
+            "reservations": 1,
+            "low": 0,
+            "high": 0
+          },
+          "seven_cursors_pass": true,
+          "reset_pass": true,
+          "detached_before_release": true,
+          "logical_baseline_restored": true
+        },
+        {
+          "asset_index": 1,
+          "round": 2,
+          "alloc_type": 1,
+          "disk_sizes": [
+            2098316,
+            4538228,
+            0,
+            0,
+            93836449,
+            0,
+            7605494
+          ],
+          "logical_sizes": [
+            4052336,
+            8688169,
+            0,
+            0,
+            126744742,
+            0,
+            14515974
+          ],
+          "allocated": {
+            "owners": 1,
+            "allocation_count": 4,
+            "requested_bytes": 154001266,
+            "reservations": 1,
+            "low": 0,
+            "high": 0
+          },
+          "seven_cursors_pass": true,
+          "reset_pass": true,
+          "detached_before_release": true,
+          "logical_baseline_restored": true
+        }
+      ],
+      "summary": {
+        "schema": "BlackOpsARM.TASK-0012.stream-init.v1",
+        "pointer_bytes": 8,
+        "native64": true,
+        "cycles_passed": 12,
+        "preflight_rejections": 6,
+        "partial_failures": 6,
+        "init_calls": 49,
+        "baseline": {
+          "owners": 0,
+          "allocation_count": 0,
+          "requested_bytes": 0,
+          "reservations": 0,
+          "low": 0,
+          "high": 0
+        },
+        "final": {
+          "owners": 0,
+          "allocation_count": 0,
+          "requested_bytes": 0,
+          "reservations": 0,
+          "low": 0,
+          "high": 0
+        },
+        "payload_bytes_read": 0,
+        "payload_bytes_written": 0
+      }
+    }
+  },
+  "native64_logical_contract_matches": true
+}

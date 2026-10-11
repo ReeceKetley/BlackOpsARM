@@ -461,3 +461,7 @@ x64_diag.log
 !/docs/port/evidence/arm64_fastfile/*.log
 !/docs/port/evidence/arm64_zone/*.log
 !/docs/port/evidence/arm64_inflate/*.log
+
+!/docs/port/evidence/arm64_checked_zone/*.log
+!/docs/port/evidence/arm64_stream_init/*.log
+!/docs/port/evidence/arm64_assetlist/*.log

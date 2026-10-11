@@ -1,2 +1,5 @@
 # Archived diagnostics and reference data carry byte-level SHA256 evidence.
 /docs/port/evidence/** -text -whitespace
+# This historical report is hash-frozen with its original CRCRLF bytes.
+# Preserve it rather than normalizing an already verified milestone artifact.
+/docs/port/arm64_checked_zone.md -text -whitespace

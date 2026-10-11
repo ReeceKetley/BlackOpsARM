@@ -13,14 +13,22 @@ T5 Zombies round with sound and an Xbox controller on HONOR Pad X8a and Samsung
 Galaxy S25. Initial renderer: DXVK Native 1.9.2 with tested SDL2/Vulkan integration.
 Device validation must be recorded separately from Windows validation.
 
-## Current Milestone
+## Approved overnight milestone
 
-Bounded deflate gate complete (TASK-0010): twelve actual T5 units and six
-unchanged bundled zlib C sources compile; sixteen HONOR probes and both Windows
-host ABIs pass. Two genuine FastFiles decode with fixed 36-byte XFile and complete
-checksum/end validation. Actual zone bootstrap remains fixture-only. Next:
-TASK-0011 genuine decoded header to checked zone allocation/stream lifecycle.
-See docs/port/arm64_inflate.md; no full engine/game/backend work.
+Native FastFile structural front end: both genuine files/3 ABIs through pointer
+tables, bounded raw strings and typed asset directory, before dispatch. Real
+production interning is conditional stretch. DEC-0026 authorizes local verified
+checkpoint commits, never push. See docs/port/overnight_frontend.md.
+
+## Last completed gate
+
+TASK-0013 genuine16-byte XAssetList envelope read/expansion is complete on HONOR
+ARM64 and Windows x86/x64,72 fixtures/12 cycles each. Counts/tags, persistent
+aliases, unchanged cursors and reset/release pass with independent full-decode
+provenance. Actual body bytes unchanged; finite reader is fixture-only.
+See docs/port/arm64_assetlist.md, FACT-0037/0038, WARN-0013. Next recommended
+TASK-0014 is the block4 script-string pointer table, before strings/assets/fixups.
+Not started. TASK-0011 timing/RSS and all older evidence remain frozen.
 
 ## Constraints
 

@@ -86,6 +86,23 @@ one local checkpoint of accumulated completed work (DEC-0020); no push or later
 commit is authorized. Read docs/port/android_checkpoint.md. Follow user direction
 and update all current pointers at the next completed gate.
 
+Current user TASK-0011 supersedes the historical bootstrap plan above: checked
+allocation stops before DB_InitStreams, zone initialization, assets/fixups or
+rendering. Completed gate: DEC-0021/0022, FACT-0032/0033/0034, FAIL-0006 and
+WARN-0011 (supersedes WARN-0010). Read docs/port/arm64_checked_zone.md for current
+commands, measurements and failure semantics. Native64 plans exactly match
+production Windows x64; Win32 sizes/layouts stay intact. Use genuine validated
+36-byte XFile metadata, never payload-derived descriptors. Actual expansion and
+alignment/tail capacity are checked in uint64 before backend allocation.
+Begin failures must leave no owner; End/Release must not throw. Main-thread native
+owner registration and allocation-free rollback are explicit. Windows retained
+PMem commit/working set differ from Android protection/touch/RSS. Separate decoder
+and allocation processes; preserve original raw samples, failed diagnostics,
+independent oracles and old archives. Two read-only agents audited policy and
+adversarial/methodology; lead owns edits/tests/Ledger. All tests completed.
+TASK-0012 recommendation is genuine DB_InitStreams cursor/reset only, not started.
+Current request forbids commit/push; HEAD6f0787ab and protected checkouts remain.
+
 Run `ledger context "<your current task>"`. Use current ACTIVE knowledge. Do not assume historical entries remain valid.
 
 ## Before major architectural decisions
@@ -101,3 +118,40 @@ When evidence disproves a belief, use `ledger invalidate <ID> --because <ID>` or
 ## At the end of significant work
 
 Record important discoveries, decisions, outcomes, failures, unresolved questions, and changes in project state. Run `ledger status` and update STATE.md when needed.
+
+## Current TASK-0012 continuation — complete
+
+The user's continuation authorized genuine checked blocks to DB_InitStreams.
+DEC-0023, FACT-0035/0036 and WARN-0012 supersede the historical not-started pointers
+above. Read docs/port/arm64_stream_init.md and stream_init_handoff.md. All tests
+completed; no shared engine edits or asset reads. Preserve847 prior archive/
+handoff files and protected repositories. Persistent detached descriptors before
+DB_FreeXBlocks/named release; initializer/fatal OOM recovery is not certified.
+TASK-0013 is recommended16-byte XAssetList envelope only, before strings/assets/
+fixups/zone init; no implementation started. Current HEAD6f0787ab; TASK-0011/0012
+remain uncommitted; no commit/push is authorized. Lead owns this gate; no new
+subagent delegation requested. Exact reproduction and inventory are in report.
+
+## Current TASK-0013 continuation — complete
+
+User authorized the next bounded envelope task and optional delegation.
+DEC-0024/0025, FACT-0037/0038, FAIL-0007, WARN-0013 supersede historical pointers
+above. Read docs/port/arm64_assetlist.md/assetlist_handoff.md. Both genuine files/
+3 ABIs pass checked16-byte envelope read through actual native expander/Win32
+branch; no strings/assets/fixups. Finite reader is explicit standalone fixture;
+normal async/refill loader unvalidated. Persistent final aliases detach before
+owner/output reuse. Normal full Windows expander and actual registry pass;
+BO1_ASSETLIST_GATE is bounded Android subset, guards/layouts unchanged.
+Preserve997 prior evidence/report/handoff files and protected repositories.
+All tests completed; two read-only agents finished; lead owns edits/Ledger.
+TASK-0014 pointer table only is recommended, not started. No commit/push;
+HEAD6f0787ab, all TASK-0011/0012/0013 work uncommitted. See exact inventory/report.
+
+## Current approved overnight goal
+
+DEC-0026 and docs/port/overnight_frontend.md now authorize the structural front end
+through pointer tables, raw string bytes and asset directory, before dispatch;
+production interning is conditional stretch. Local checkpoint commits after
+verified milestones are explicitly authorized; no push. Earlier no-commit
+statements are historical. Lead owns code/tests/Ledger; three read-only audits.
+Preserve all prior evidence/protected checkouts and record each boundary/decision.

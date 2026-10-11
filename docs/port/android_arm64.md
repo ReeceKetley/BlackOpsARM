@@ -186,12 +186,27 @@ and real 36-byte XFile validation now pass on two genuine files: sixteen HONOR
 probes, six matching bundled zlib C sources and both host ABIs. See
 [arm64_inflate.md](arm64_inflate.md) for current exact build/device commands,
 custom codec ABI, byte budgets/padding, preserved failures and acceptance.
-Recommended TASK-0011 is genuine decoded header to checked actual zone bootstrap,
-with uint64 allocation preflight and no asset parsing or async integration.
-Actual 16KB Android hardware/S25 remains untested; full game/backend work is
-deferred. The user authorized a local checkpoint through TASK-0010 after the
-64c5d3c checkpoint. See [android_checkpoint.md](android_checkpoint.md); resolve
-the containing commit with git log. No push is authorized.
+TASK-0011 checked genuine FastFile allocation is now complete. See
+[arm64_checked_zone.md](arm64_checked_zone.md) for exact reproduction, real Windows
+PMem comparison, warm/cold samples, separate decoder/mapping/RSS observations,
+recoverable vs fatal failures and current inventory. Native64 plans match on
+HONOR/x64; Win32 sizes and fixed layouts remain. This gate stops before genuine
+stream/zone init, asset parsing or fixups. Its recommended successor was actual
+DB_InitStreams cursor/reset on these checked blocks (TASK-0012, now complete).
+TASK-0012 genuine checked blocks to actual DB_InitStreams is now complete.
+See [arm64_stream_init.md](arm64_stream_init.md) for exact fresh build/full decode/
+HONOR/actual Windows PMem commands and frozen evidence. All7 cursors/zero slots,
+pending stride/size/alias/drift reset and repeated detach/free/release pass. No
+shared engine edits or asset deserialization. TASK-0013 is recommended16-byte
+XAssetList envelope only, before strings/assets/fixups (now complete below).
+TASK-0013 genuine16-byte asset-list envelope now passes on HONOR/x86/x64. See
+[arm64_assetlist.md](arm64_assetlist.md) for full commands/evidence, actual-source
+selection, unchanged declarations/body proof, finite-reader fixture scope and
+persistent aliases. Counts/tags/exact read/reset pass; no strings/assets/fixups.
+Next TASK-0014 is the script-string pointer table only; not started.
+Actual16KB Android/S25 and full game/backend remain deferred. Current local
+checkpoint is6f0787ab (through TASK-0010); all TASK-0011/0012/0013 changes are uncommitted.
+No commit or push is authorized by this request.
 
 ## Ledger ownership and handoff
 
