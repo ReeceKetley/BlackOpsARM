@@ -196,7 +196,7 @@ jqModule r_water_simModule =
     .Type = JQ_WORKER_GENERIC,
     .Code = r_water_simCallback,
 };
-jqWorkerCmd r_water_simWorkerCmd = { &r_water_simModule, 84u, 0, 0, &r_water_simLimit, NULL, 0u };
+jqWorkerCmd r_water_simWorkerCmd = { &r_water_simModule, JQ_CMD_SIZE(WaterSimulationCmd, 84u), 0, 0, &r_water_simLimit, NULL, 0u };
 
 
 volatile unsigned int fx_update_remaining_ppuLimit = 1;

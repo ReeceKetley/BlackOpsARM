@@ -130,3 +130,109 @@ User reported silence. win_main.cpp initializes s_nosnd by substring presence, s
 ## Checkpoint publication - 2026-10-11
 
 User explicitly requested committing and pushing the current batch40 checkpoint before continuing the native x64 audit. This changes the earlier commit deferral. LOW_VA remains default ON; remaining audit, fresh final route gates, client glass and script debugger work are not represented as complete. Round-map weapon coverage remains 120/120 on each architecture, with the scope and limits in weapon_sweep.md. Dead Ops gameplay is out of scope at user request.
+
+
+## Native config fields - batch41
+
+Checkpoint17003a7 was pushed first at user request. Follow-up batch41 converts748 weapon and119 flame config offsets to native offsetof with retained compile-time Win32 checks; fixes sizeof(flameTable) allocation; snapshots/commits developer backing arrays and restores original pointers. Standalone Win32/high-address tests pass867 mappings and838 generic field writes, guarded initialization and array edits; old weapon/flame tables fail separate negative controls. See weapon_fields.md for reproducible tests and limitations.
+
+All four builds compile0errors. Fresh original Pentagon routes complete through Pack-a-Punch: w32_fields41 24PASS, x64hi_fields41 32PASS (extra thief recovery), x64low_fields41 24PASS, x64guard_fields41 24PASS. All0FAIL/exit0, no recorded assert/emergency crash, and all four SaveGame readback checks passed in each. These are headless fastfile regressions with god mode, not full loose asset pipeline or manual audio/visual validation. Full native_full41 rebuild completes194s/0errors,184 warning sites (182src/tl plus2DemonWare), unchanged from full30. LOW_VA staysON; batch41 work is uncommitted. Next audit target: common/brush_edges.cpp packed queue and pointer copies still use Win32 widths.
+
+## Native brush geometry and Windows Vulkan - batches42/43
+
+Batch42 replaces packed x86 brush BFS storage and pointer-sized array copies with typed native access, plus a real PartitionEdges output array. Focused Win32/x64 tests pass at0x180000000 with a1024-point guarded cycle. Original Pentagon routes w32_brush42/high/low/guard complete25/31/24/31PASS, all0FAIL/exit0 and all four SaveGame checks. Full native_full42 rebuild216s/0errors has178unique truncation sites (176src/tl plus2DemonWare), down184. See brush_edges.md. LOW_VA default remainsON.
+
+Windows Vulkan now renders the unrestricted x64 game with official pinned DXVK3.1.1. x64hi_dxvk43_smoke3 passes qr/two-frag3/0 and exit0; full x64hi_dxvk43_route passes24/0 through actual Pack-a-Punch, all SaveGame checks, no DXVK warn/err/error and exit0. Both use soundON/god automation. LunarG presented-frame images show actual gameplay; these are valid evidence, unlike the earlier desktop screenshots. Source, package/binary hashes, logs, modules, profiles and shader caches are preserved per run.
+
+First Moon validation sweep passes5/5 weapon cases but has Vulkan VUID errors with OBS/Overwolf/Twitch implicit layers. Same-map repeat disables only child implicit layers with Khronos loader filtering; result pending. No mobile compatibility claim: Samsung S25 EU/Honor X8a are later targets; Windows Vulkan is current focus. See vulkan_windows.md for scripts, evidence and the eventual native DXVK/WSI boundary.
+
+## DXVK lifecycle correction and final Windows Vulkan gates - batch44
+
+Official DXVK3.1.1 validation exposed implicit overlay conflicts and a distinct one-pipeline leak during device destruction. Per-child Khronos loader filtering removes the OBS/Overwolf/Twitch framebuffer/loader errors. The leak remains without screenshot capture or HUD. Upstream DxvkMetaCopyObjects omits destruction of its input-attachment-copy pipeline cache; the tracked three-line patch adds it. tools/port/build_dxvk.ps1 checks out the exact release/submodules, verifies the sole patch, builds MSVC x64 D3D9 and records source/patch/DLL/compiler identity. Source, binaries and build logs remain ignored dependencies; the reproducible scripts and patch are tracked working files.
+
+Patched Vulkan runs x64hi_dxvk44_patched_frag / patched_moon / patched_route complete3/5/26 accepted cases respectively, all0FAIL/exit0 and all four SaveGame checks each. Full route uses the real PaP machine and waits30seconds after completion; grenade test sees two real grenade_fire events and waits20seconds after completion. Explicit Khronos validation and LunarG screenshots remain enabled; no Vulkan err/error/VUID messages occur through teardown. The only warning is expected debug-utils performance overhead. No FPS benchmark or new user sound confirmation is claimed. Genuine presented-frame images and aggregate native_brush42_dxvk44_results.json preserve evidence and failed earlier attempts.
+
+Native D3D9 Moon sound-on control also completes5/5/exit0. Private-desktop native back-buffer images show the same weapon-HUD checker texture as Vulkan. Moon cassimir plate script precache errors also occur on Win32/native D3D9. Those baseline engine/content issues remain open; the Vulkan milestone does not certify all map features, all native cold paths, client glass, script debugger or mobile compatibility. Native audit count remains178 and LOW_VA default remainsON; tests use unrestricted build-x64-hi/OFF. Batches41/42/44 follow-up changes are uncommitted after pushed17003a7. Current user focus remains Windows Vulkan; native Android on S25 EU/Honor X8a is later.
+
+
+## Batch45: Moon HUD material correction
+
+The frozen Win32 batch42 client reproduces the same HUD checker square, ruling
+out an x64-only regression. CG_Init stores eleven HUD registrations in the
+wrong named members: the equipment highlight receives a missing night-vision
+material and ammo materials are shifted or overwritten. Corrected assignments
+preserve asset names and drawing behavior. All four builds compile0errors;
+corrected Win32 and unrestricted x64 Vulkan each pass the five Moon weapon
+cases (including both upgraded Wave Guns), all four SaveGame checks and exit0.
+Real back-buffer/presentation captures show the square is gone. Patched DXVK
+has zero validation errors through shutdown. See hud_materials.md and
+build/run/hud45_build_results.json. SoundON/god automation for Vulkan; muted
+private-desktop Win32. Cassimir plate script errors and wider native audit remain
+open. Batch45 is uncommitted with the prior follow-ups; LOW_VA default remainsON.
+
+
+## Batch46: client glass restored under native x64/Vulkan
+
+Typed glass arena alignment/header recovery, native pane/outline sizes, split
+pointer clearing and proper list destruction are repaired. Enabling the client
+first exposed a silent Win32 glass stride in R_StreamUpdateDynamicModels;
+named glassBrush fields replace those accesses. Glass now initializes normally
+on x64. Focused production allocator tests pass6000 guarded operations on x86
+and above4GB on x64, including std::list reuse; the old x64 implementation is an
+access-violation negative control. Win32 real pane-shattering3/0/exit0 and the
+final default-enabled Vulkan route25/0/exit0 through actual upgraded shotgun
+pass, including clean Vulkan teardown. Original headless Win32/high/low/guard
+routes26/26/26/31PASS, all0FAIL/exit0, all four SaveGame checks each. New unrestricted
+build-x64-hi-guard (LOW_VA OFF, GUARDHEAP ON) compiles0errors and passes its
+original route24/0/exit0 plus real Vulkan glass3/0/exit0 with clean validation.
+The existing restricted-address guard real window still runs out of texture
+address space before glass; that failed attempt is retained. Full high rebuild
+231s/0errors/175unique sites (173src/tl+2DemonWare), down178. No game remains
+running. See glass_native.md and build/run/glass46_results.json. Batches41-46
+remain uncommitted. Wider cold-path audit/script debugger, Moon sidequest issue
+and later Android remain open; LOW_VA default staysON.
+
+
+## Batch47: native water renderer pointers and worker payload
+
+Water model surfaces use native sizeof/named COM fields and aligned bounded
+atomic arena reservations. Water skinning retains full mesh/output pointers and
+integer channel IDs; packed GPU vertices stay16bytes. Water worker payload is
+now sizeof(WaterSimulationCmd) on x64 (152bytes), preserving all16mesh pointers,
+with the84byte Win32 path retained. Swizzle constants initialize integer lanes
+instead of converting the packed byte indices to floats. Focused extracted
+production tests pass on Win32 and above4GB on x64, including2000concurrent
+allocations, ring/LOD/scalar fields, channel seams and queue copy/lookup. Pinned
+17003a7 negative controls fail native payload size/alignment and Win32 swizzle.
+All five variants compile0errors; full high rebuild206s/0errors/144unique sites
+(142src/tl+2DemonWare), down175. Final original Win32/high/low/guard routes
+26/24/24/24PASS, all0FAIL/exit0/all four SaveGame checks. Vulkan47 reaches
+actual upgraded MP5K and glass, exit0/clean Vulkan teardown, but30PASS/1FAIL
+for portal recovery; this is a failed route. The planner marked the original
+portal armed before its DEFCON dependencies completed, then a thief/Bonfire
+reset invalidated that readiness. Batch48 defers that flag and is under test.
+Full water vertex math remains unverified (WARN0009), including suspect vector
+stack writes; route passes do not prove water-cell simulation. See water_native.md,
+pack_rearm.md and build/run/water47_results.json. LOW_VA remains defaultON;
+current focus is Windows Vulkan, with Android deferred.
+
+
+## Batch48: portal prerequisite readiness and fresh Vulkan gate
+
+PackCheck now leaves the original portal unarmed when inserting DEFCON pulls.
+A thief/Bonfire reset during the dependencies therefore triggers another check
+before entering the portal. Focused extracted production PackCheck/InsertStep
+tests pass Win32/x64, including reset, ready state, Bonfire policy, failure cap
+and floor ordering; pinned17003a7 fails the deferred flag check. All five builds
+compile0errors/no new pointer warnings. Fresh original Win32/high/low/guard
+routes26/26/25/25PASS, all0FAIL/exit0/all four SaveGame checks. Final Vulkan
+x64hi_dxvk48_pane2_route explicitly selects glass2, shatters the pane, completes
+32PASS/0FAIL/exit0 through real m14_upgraded_zm, then30seconds more and clean
+Vulkan teardown. Actual module paths and presented-frame captures confirm
+DXVK/Vulkan; soundON/god automation. The earlier pane0 observation has1FAIL
+(11.9health after5shots at long range/20seconds); intentionally stopped/exit-1,
+not an engine crash, retained with intentional-stop.txt. All six attempts are in
+pack48_results.json; no game remains live. Full warning count stays144 from47.
+See pack_rearm.md and vulkan_windows.md. Water math WARN0009, wider cold paths
+and script debugger remain open. LOW_VA default staysON; Android deferred.
+Batches41-48 remain uncommitted after pushed17003a7.

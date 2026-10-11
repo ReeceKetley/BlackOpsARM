@@ -1978,6 +1978,10 @@ void PackCheck(gentity_s *player)
     const int defcon = LevelInt(F_DEFCON, -1);
     if (defcon < 1 || defcon >= 5 || ZombieVar(F_BONFIRE) == 1)
         return;
+    // A thief/Bonfire Sale can reset DEFCON while the inserted pulls run.
+    // Recheck the original portal after those dependencies finish; they do not
+    // establish that it is armed merely because its first arm check ran.
+    s_planFlags[s_index] &= ~PLAN_ARMED;
     char why[96];
     sprintf_s(why, "defcon level %d before the pack room portal; pull to 5", defcon);
     for (int i = 0; i < (int)ARRAY_COUNT(s_steps); ++i)

@@ -1,4 +1,6 @@
 #include <cstdint>
+#include <cstddef>
+#include <climits>
 #include "glass_allocator.h"
 #include "glass_client.h"
 #include <universal/assertive.h>
@@ -82,9 +84,11 @@ void __thiscall SmallAllocator::Free(void **ptr, unsigned int num)
 
 bool __thiscall SmallAllocator::IsValidPointer(void *ptr)
 {
-    return ptr >= this->memory
-            && !(((uintptr_t)ptr - (uintptr_t)this->memory) % this->blockSize)
-            && (uintptr_t)ptr - (uintptr_t)this->memory < (uintptr_t)this->numBlocks * this->blockSize;
+    const uintptr_t address = (uintptr_t)ptr;
+    const uintptr_t begin = (uintptr_t)this->memory;
+    return this->blockSize && address >= begin
+        && (address - begin) % this->blockSize == 0
+        && address - begin < (uintptr_t)this->numBlocks * this->blockSize;
 }
 
 void __thiscall Allocator::Memory::Init()
@@ -132,8 +136,8 @@ void __thiscall Allocator::Init(void *buf, int size)
     Allocator::Memory *end; // [esp+Ch] [ebp-4h]
 
     this->buffer = buf;
-    end = (Allocator::Memory *)(((int)this->buffer + size - 21) & 0xFFFFFFF0);
-    this->head = (Allocator::Memory *)(((int)this->buffer + 15) & 0xFFFFFFF0);
+    end = (Allocator::Memory *)(((uintptr_t)this->buffer + size - sizeof(Memory) - 1) & ~uintptr_t(15));
+    this->head = (Allocator::Memory *)(((uintptr_t)this->buffer + 15) & ~uintptr_t(15));
     //Allocator::Memory::Init(this->head);
     this->head->Init();
     this->tail = end;
@@ -173,7 +177,12 @@ Allocator::Memory **__thiscall Allocator::Allocate(int size, void *userData)
     if ( this->freeHead == this->tail )
         return 0;
     bestFit = 0;
-    sizea = (size + 31) & 0xFFFFFFF0;
+    // The final free-list link is payload while the block is allocated.
+    const int payloadOffset = (int)offsetof(Memory, prevFree);
+    if (size < 0 || size > INT_MAX - payloadOffset - 15)
+        return 0;
+    const int payloadSize = size < (int)sizeof(void *) ? (int)sizeof(void *) : size;
+    sizea = (payloadSize + payloadOffset + 15) & ~15;
     for ( free = this->freeHead; free != this->tail; free = free->nextFree )
     {
         if ( free->next )
@@ -238,8 +247,8 @@ void __thiscall Allocator::Free(unsigned int *ptr)
 
     if ( ptr )
     {
-        mem = (Allocator::Memory *)(ptr - 4);
-        if ( *(ptr - 1)
+        mem = (Allocator::Memory *)((char *)ptr - offsetof(Memory, prevFree));
+        if ( mem->nextFree
             && !Assert_MyHandler(
                         "C:\\projects_pc\\cod\\codsrc\\src\\glass\\glass_allocator.cpp",
                         233,
@@ -251,7 +260,7 @@ void __thiscall Allocator::Free(unsigned int *ptr)
         }
         if ( this->freeHead == this->tail )
         {
-            *ptr = 0;
+            mem->prevFree = 0;
             mem->nextFree = this->tail;
             this->freeHead = mem;
         }
@@ -267,7 +276,7 @@ void __thiscall Allocator::Free(unsigned int *ptr)
             {
                 __debugbreak();
             }
-            if ( !*ptr )
+            if ( !mem->prevFree )
                 this->freeHead = mem;
         }
         while ( mem->prev && mem->prev == mem->prevFree )
@@ -281,10 +290,9 @@ unsigned int __thiscall Allocator::GetMemorySize(unsigned int *ptr)
 {
     if ( !ptr )
         return -1;
-    if ( *(ptr - 4) )
-        return *(ptr - 4) - (unsigned int)(ptr - 4);
-    else
-        return 0;
+    const Memory *mem = (const Memory *)((const char *)ptr - offsetof(Memory, prevFree));
+    // Keep the original accounting contract: total block span, including header.
+    return mem->next ? (unsigned int)((const char *)mem->next - (const char *)mem) : 0;
 }
 
 void __thiscall Allocator::Split(Allocator::Memory *mem, int size)
@@ -316,15 +324,15 @@ void __thiscall Allocator::Split(Allocator::Memory *mem, int size)
         v3 = (char *)mem->next - (char *)mem;
     else
         v3 = 0;
-    if ( v3 - size > 32 )
+    if ( v3 - size > ((sizeof(Memory) + 15) & ~size_t(15)) )
     {
         mem2 = (Allocator::Memory *)((char *)mem + size);
-        *(void **)((char *)&mem->userData + size) = 0;
+        mem2->userData = 0;
         mem2->next = mem->next;
         mem2->prev = mem;
         mem2->nextFree = mem->nextFree;
         mem2->prevFree = mem;
-        if ( *(Allocator::Memory **)((char *)&mem->next + size) )
+        if ( mem2->next )
             mem2->next->prev = mem2;
         if ( mem2->nextFree )
             mem2->nextFree->prevFree = mem2;
