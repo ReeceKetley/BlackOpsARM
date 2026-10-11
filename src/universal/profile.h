@@ -19,17 +19,14 @@
 // zombies (p1): without Tracy, PROF_SCOPED feeds a small zone profiler - measurement only, off unless the headless
 // command line sets bo1_frameperf (win_main.cpp). Per zone: inclusive time of the current frame on the main thread
 // (outermost entry only) and on all other threads, read and cleared once per frame by G_SP_FramePerfEnd.
-#include <intrin.h>
-#if defined(_M_X64) || defined(_WIN64) || defined(BO1_PORT_X64)
-#include <Windows.h>
-#endif
+#include <platform/profile_services.h>
 
 struct BO1ProfZone
 {
     const char *name;
     BO1ProfZone *next;
     unsigned long long mainTicks;
-    volatile long otherTicks1k; // other threads, rdtsc ticks / 1024
+    volatile long otherTicks1k; // other threads, platform ticks / 1024
     unsigned int mainCalls;
     int mainDepth;
     volatile long registered;
@@ -74,7 +71,7 @@ enum BO1RenderCountKind
     BO1_RC_KINDS
 };
 extern volatile long g_bo1RenderCount[BO1_RC_KINDS];
-inline void BO1_RenderCount(int kind, long n) { if (g_bo1ProfOn) _InterlockedExchangeAdd(&g_bo1RenderCount[kind], n); }
+inline void BO1_RenderCount(int kind, long n) { if (g_bo1ProfOn) BO1_ProfileAdd(&g_bo1RenderCount[kind], n); }
 
 // GPU phases: frame start..draw commands, shadow maps, depth prepass, lit (+reflected, resolves), decal / sun /
 // coronas / dlights / distortion, emissive (effects), post effects, rest of the frame (2D, UI)
@@ -109,16 +106,12 @@ struct BO1ProfScope
     {
         if (!g_bo1ProfOn)
             return;
-        if (!z->registered)
+        if (!BO1_ProfileLoad(&z->registered))
             BO1_ProfRegister(z);
         zone = z;
-#if defined(_M_X64) || defined(_WIN64) || defined(BO1_PORT_X64)
-        main = GetCurrentThreadId() == g_bo1ProfMainThread;
-#else
-        main = __readfsdword(0x24) == g_bo1ProfMainThread;
-#endif
+        main = BO1_ProfileThreadId() == g_bo1ProfMainThread;
         if (!main || !z->mainDepth++)
-            start = __rdtsc();
+            start = BO1_ProfileTicks();
     }
     ~BO1ProfScope()
     {
@@ -129,13 +122,13 @@ struct BO1ProfScope
             --zone->mainDepth;
             if (start)
             {
-                zone->mainTicks += __rdtsc() - start;
+                zone->mainTicks += BO1_ProfileTicks() - start;
                 ++zone->mainCalls;
             }
         }
         else
         {
-            _InterlockedExchangeAdd(&zone->otherTicks1k, (long)((__rdtsc() - start) >> 10));
+            BO1_ProfileAdd(&zone->otherTicks1k, (long)((BO1_ProfileTicks() - start) >> 10));
         }
     }
 };
@@ -160,7 +153,7 @@ struct BO1ProfScope
 // tools/stress.ps1). Each SVPROF_SCOPED charges the time since the last boundary to the category on top of a small stack,
 // so nested scopes (script inside actor think, traces inside script) are counted once, in the innermost category.
 // Only the server thread counts (the renderer / client share CM_* and DObjCalcSkel). Off by default: one load and branch.
-#include <intrin.h>
+#include <platform/profile_services.h>
 enum SvProfCat
 {
     SVPROF_OTHER,  // the rest of SV_PreFrame / SV_RunFrame / SV_PostFrame
@@ -191,14 +184,10 @@ struct SvProfScope
     bool on;
     explicit SvProfScope(int cat)
     {
-#if defined(_M_X64) || defined(_WIN64) || defined(BO1_PORT_X64)
-        on = g_svProfOn && GetCurrentThreadId() == g_svProfThread && g_svProfDepth < 63;
-#else
-        on = g_svProfOn && __readfsdword(0x24) == g_svProfThread && g_svProfDepth < 63;
-#endif
+        on = g_svProfOn && BO1_ProfileThreadId() == g_svProfThread && g_svProfDepth < 63;
         if (!on)
             return;
-        const unsigned long long now = __rdtsc();
+        const unsigned long long now = BO1_ProfileTicks();
         g_svProfTicks[g_svProfStack[g_svProfDepth]] += now - g_svProfLast;
         g_svProfStack[++g_svProfDepth] = cat;
         ++g_svProfCalls[cat];
@@ -208,7 +197,7 @@ struct SvProfScope
     {
         if (!on)
             return;
-        const unsigned long long now = __rdtsc();
+        const unsigned long long now = BO1_ProfileTicks();
         g_svProfTicks[g_svProfStack[g_svProfDepth]] += now - g_svProfLast;
         if (g_svProfDepth > 0)
             --g_svProfDepth;
@@ -230,13 +219,13 @@ struct SvProfBuiltin
     explicit SvProfBuiltin(unsigned int i) : scope(SVPROF_BUILTIN), t0(0), idx(i)
     {
         if (scope.on && i < SVPROF_MAX_BUILTINS)
-            t0 = __rdtsc();
+            t0 = BO1_ProfileTicks();
     }
     ~SvProfBuiltin()
     {
         if (!t0)
             return;
-        g_svProfBuiltinTicks[idx] += __rdtsc() - t0;
+        g_svProfBuiltinTicks[idx] += BO1_ProfileTicks() - t0;
         ++g_svProfBuiltinCalls[idx];
     }
 };

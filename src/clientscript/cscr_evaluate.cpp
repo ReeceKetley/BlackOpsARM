@@ -4,10 +4,21 @@
 #include <string.h>
 #include "cscr_stringlist.h"
 #include "cscr_compiler.h"
+#if defined(__ANDROID__)
+// Only the logging interface is used here; networking/UI headers are unrelated.
+void __cdecl Com_PrintError(int channel, const char *format, ...);
+extern const dvar_t *com_sv_running;
+#else
 #include <qcommon/common.h>
+#endif
 #include "cscr_vm.h"
 #include "cscr_parser.h"
+#if defined(__ANDROID__)
+#include "cscr_animtree.h"
+#include <xanim/xanim_debug.h>
+#else
 #include <xanim/xanim.h>
+#endif
 #include "cscr_parsetree.h"
 #include "cscr_tempmemory.h"
 #include "cscr_yacc.h"

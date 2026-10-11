@@ -1,7 +1,8 @@
-﻿#include "db_assetnames.h"
+﻿#include <platform/bo1_native_width.h>
+#include "db_assetnames.h"
 #include "db_registry.h"
 
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
 #include <cstdio>
 #endif
 
@@ -171,12 +172,12 @@ void(__cdecl *DB_XAssetSetNameHandler[43])(XAssetHeader *, const char *) =
   NULL
 };
 
-#if !defined(BO1_PORT_X64)
+#if !BO1_NATIVE_64BIT
 static_assert(sizeof(RawFile) == 12);
 #endif
 int __cdecl DB_SizeofXAsset_RawFile_()
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     return (int)sizeof(RawFile);
 #else
     return 12;
@@ -188,74 +189,74 @@ int __cdecl DB_SizeofXAsset_LocalizeEntry_()
     return (int)sizeof(LocalizeEntry);
 }
 
-#if !defined(BO1_PORT_X64)
+#if !BO1_NATIVE_64BIT
 static_assert(sizeof(PhysPreset) == 84);
 #endif
 int __cdecl DB_SizeofXAsset_PhysPreset_()
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     return (int)sizeof(PhysPreset);
 #else
     return 84;
 #endif
 }
 
-#if !defined(BO1_PORT_X64)
+#if !BO1_NATIVE_64BIT
 static_assert(sizeof(PhysConstraints) == 2696);
 #endif
 int __cdecl DB_SizeofXAsset_PhysConstraints_()
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     return (int)sizeof(PhysConstraints);
 #else
     return 2696;
 #endif
 }
 
-#if !defined(BO1_PORT_X64)
+#if !BO1_NATIVE_64BIT
 static_assert(sizeof(DestructibleDef) == 24);
 #endif
 //int __cdecl SV_GetMaxAttachCount()
 int __cdecl DB_SizeofXAsset_DestructibleDef_()
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     return (int)sizeof(DestructibleDef);
 #else
     return 24;
 #endif
 }
 
-#if !defined(BO1_PORT_X64)
+#if !BO1_NATIVE_64BIT
 static_assert(sizeof(Font_s) == 24);
 #endif
 int __cdecl DB_SizeofXAsset_Font_s_()
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     return (int)sizeof(Font_s);
 #else
     return 24;
 #endif
 }
 
-#if !defined(BO1_PORT_X64)
+#if !BO1_NATIVE_64BIT
 static_assert(sizeof(XAnimParts) == 104);
 #endif
 //int __cdecl PM_MediumLandingForSurface()
 int __cdecl DB_SizeofXAsset_XAnimParts_()
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     return (int)sizeof(XAnimParts);
 #else
     return 104;
 #endif
 }
 
-#if !defined(BO1_PORT_X64)
+#if !BO1_NATIVE_64BIT
 static_assert(sizeof(XModel) == 252);
 #endif
 int __cdecl DB_SizeofXAsset_XModel_()
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     return (int)sizeof(XModel);
 #else
     return 252;
@@ -265,159 +266,159 @@ int __cdecl DB_SizeofXAsset_XModel_()
 // (for some reason the intellisense size is wrong unless it's right next to the struct definition)
 int __cdecl DB_SizeofXAsset_Material_()
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     return (int)sizeof(Material);
 #else
     return 192;
 #endif
 }
 
-#if !defined(BO1_PORT_X64)
+#if !BO1_NATIVE_64BIT
 static_assert(sizeof(MaterialTechniqueSet) == 528);
 #endif
 int __cdecl DB_SizeofXAsset_MaterialTechniqueSet_()
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     return (int)sizeof(MaterialTechniqueSet);
 #else
     return 528;
 #endif
 }
 
-#if !defined(BO1_PORT_X64)
+#if !BO1_NATIVE_64BIT
 static_assert(sizeof(SndDriverGlobals) == 52);
 #endif
 int __cdecl DB_SizeofXAsset_SndDriverGlobals_()
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     return (int)sizeof(SndDriverGlobals);
 #else
     return 52;
 #endif
 }
 
-#if !defined(BO1_PORT_X64)
+#if !BO1_NATIVE_64BIT
 static_assert(sizeof(GfxImage) == 52);
 #endif
 int __cdecl DB_SizeofXAsset_GfxImage_()
 {
     // Win32 table reused SndDriverGlobals size (==52 == sizeof(GfxImage)). Native GfxImage is larger on x64.
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     return (int)sizeof(GfxImage);
 #else
     return 52;
 #endif
 }
 
-#if !defined(BO1_PORT_X64)
+#if !BO1_NATIVE_64BIT
 static_assert(sizeof(MenuList) == 12);
 #endif
 int __cdecl DB_SizeofXAsset_MenuList_()
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     return (int)sizeof(MenuList);
 #else
     return 12;
 #endif
 }
 
-#if !defined(BO1_PORT_X64)
+#if !BO1_NATIVE_64BIT
 static_assert(sizeof(XGlobals) == 40);
 #endif
 int __cdecl DB_SizeofXAsset_XGlobals_()
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     return (int)sizeof(XGlobals);
 #else
     return 40;
 #endif
 }
 
-#if !defined(BO1_PORT_X64)
+#if !BO1_NATIVE_64BIT
 static_assert(sizeof(StringTable) == 20);
 #endif
 int __cdecl DB_SizeofXAsset_StringTable_()
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     return (int)sizeof(StringTable);
 #else
     return 20;
 #endif
 }
 
-#if !defined(BO1_PORT_X64)
+#if !BO1_NATIVE_64BIT
 static_assert(sizeof(clipMap_t) == 332);
 #endif
 int __cdecl DB_SizeofXAsset_clipMap_t_()
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     return (int)sizeof(clipMap_t);
 #else
     return 332;
 #endif
 }
 
-#if !defined(BO1_PORT_X64)
+#if !BO1_NATIVE_64BIT
 static_assert(sizeof(ComWorld) == 64);
 #endif
 int __cdecl DB_SizeofXAsset_ComWorld_()
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     return (int)sizeof(ComWorld);
 #else
     return 64;
 #endif
 }
 
-#if !defined(BO1_PORT_X64)
+#if !BO1_NATIVE_64BIT
 static_assert(sizeof(EmblemSet) == 44);
 #endif
 int __cdecl DB_SizeofXAsset_EmblemSet_()
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     return (int)sizeof(EmblemSet);
 #else
     return 44;
 #endif
 }
 
-#if !defined(BO1_PORT_X64)
+#if !BO1_NATIVE_64BIT
 static_assert(sizeof(GfxWorld) == 1084);
 #endif
 int __cdecl DB_SizeofXAsset_GfxWorld_()
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     return (int)sizeof(GfxWorld);
 #else
     return 1084;
 #endif
 }
 
-#if !defined(BO1_PORT_X64)
+#if !BO1_NATIVE_64BIT
 static_assert(sizeof(GfxLightDef) == 16);
 #endif
 int __cdecl DB_SizeofXAsset_GfxLightDef_()
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     return (int)sizeof(GfxLightDef);
 #else
     return 16;
 #endif
 }
 
-#if !defined(BO1_PORT_X64)
+#if !BO1_NATIVE_64BIT
 static_assert(sizeof(menuDef_t) == 400);
 #endif
 int __cdecl DB_SizeofXAsset_menuDef_t_()
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     return (int)sizeof(menuDef_t);
 #else
     return 400;
 #endif
 }
 
-#if !defined(BO1_PORT_X64)
+#if !BO1_NATIVE_64BIT
 static_assert(sizeof(XAnimTree_s) == 8);
 #endif
 //int __cdecl XAnimTreeSize()
@@ -425,7 +426,7 @@ static_assert(sizeof(XAnimTree_s) == 8);
 //    return 8;
 //}
 
-#if !defined(BO1_PORT_X64)
+#if !BO1_NATIVE_64BIT
 static_assert(sizeof(ddlRoot_t) == 8);
 #endif
 int __cdecl DB_SizeofXAsset_ddlRoot_t_()
@@ -434,48 +435,48 @@ int __cdecl DB_SizeofXAsset_ddlRoot_t_()
     return (int)sizeof(ddlRoot_t);
 }
 
-#if !defined(BO1_PORT_X64)
+#if !BO1_NATIVE_64BIT
 static_assert(sizeof(WeaponVariantDef) == 228);
 #endif
 int __cdecl DB_SizeofXAsset_WeaponVariantDef_()
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     return (int)sizeof(WeaponVariantDef);
 #else
     return 228;
 #endif
 }
 
-#if !defined(BO1_PORT_X64)
+#if !BO1_NATIVE_64BIT
 static_assert(sizeof(FxEffectDef) == 60);
 #endif
 int __cdecl DB_SizeofXAsset_FxEffectDef_()
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     return (int)sizeof(FxEffectDef);
 #else
     return 60;
 #endif
 }
 
-#if !defined(BO1_PORT_X64)
+#if !BO1_NATIVE_64BIT
 static_assert(sizeof(PackIndex) == 28);
 #endif
 int __cdecl DB_SizeofXAsset_PackIndex_()
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     return (int)sizeof(PackIndex);
 #else
     return 28;
 #endif
 }
 
-#if !defined(BO1_PORT_X64)
+#if !BO1_NATIVE_64BIT
 static_assert(sizeof(Glasses) == 56);
 #endif
 int __cdecl DB_SizeofXAsset_Glasses_()
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     return (int)sizeof(Glasses);
 #else
     return 56;
@@ -484,7 +485,7 @@ int __cdecl DB_SizeofXAsset_Glasses_()
 
 // The retail Win32 table reused same-sized getters for different types (decompiler folded them). On x64 their sizes differ,
 // so each type gets its own getter; the Win32 values are unchanged.
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
 #define BO1_ASSET_SIZE(T, win32) ((int)sizeof(T))
 #else
 #define BO1_ASSET_SIZE(T, win32) (win32)

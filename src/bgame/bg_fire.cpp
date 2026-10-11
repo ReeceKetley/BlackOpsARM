@@ -1,3 +1,4 @@
+#include <platform/engine_random.h>
 #include "bg_fire.h"
 #include <cgame/cg_weapons.h>
 #include <EffectsCore/fx_load_obj.h>
@@ -635,7 +636,7 @@ void __cdecl CG_SetFireToWall(int localClientNum, float *pos, int *models, int m
     axis[2][0] = 1.0f;
     axis[2][1] = 0.0f;
     axis[2][2] = 0.0f;
-    v5 = rand() & 0x80000000;
+    v5 = BO1_CrtRand() & 0x80000000;
     if ( v5 < 0 )
         v5 = 0;
     fxIndex = v5;
@@ -751,7 +752,7 @@ void __cdecl CG_SetFireToTerrain(
     axis[2][0] = 1.0f;
     axis[2][1] = 0.0f;
     axis[2][2] = 0.0f;
-    fxIndex = rand() % 3;
+    fxIndex = BO1_CrtRand() % 3;
     if ( !g_FM_fx_flamethrower_effect[fxIndex]
         && !Assert_MyHandler(
                     "C:\\projects_pc\\cod\\codsrc\\src\\bgame\\bg_fire.cpp",

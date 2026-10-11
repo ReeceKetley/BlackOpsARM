@@ -1,3 +1,4 @@
+#include <platform/bo1_native_width.h>
 #pragma once
 
 #include <cstdint>
@@ -161,6 +162,6 @@ struct bdLinkedList
     }
 };
 
-#if !defined(BO1_PORT_X64)
+#if !BO1_NATIVE_64BIT
 static_assert(sizeof(bdLinkedList<void *>) == 0x0C, "bdLinkedList size mismatch");
 #endif

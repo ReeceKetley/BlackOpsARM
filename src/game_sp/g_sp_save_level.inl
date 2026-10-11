@@ -1,3 +1,4 @@
+#include <platform/bo1_native_width.h>
 // zombies: G_SaveState segment 3 after the script vehicles (SP 0x007EDD81..0x007EE0F6) and the
 // G_LoadGame readers (SP 0x007ED04D..0x007ED278). Included by g_sp_savegame.cpp.
 #include <universal/CurveManager.h>
@@ -16,7 +17,7 @@ extern AIEventListener g_AIEVlisteners[32];
 #if !defined(BO1_PORT_X64)
 static_assert(sizeof(cCurve) == 0xE58, "SP curve record");
 #endif
-#if !defined(BO1_PORT_X64)
+#if !BO1_NATIVE_64BIT
 static_assert(sizeof(TurretInfo) == 0xE0 && offsetof(TurretInfo, detachSentient) == 0x68, "SP turret record");
 #endif
 #if !defined(BO1_PORT_X64)

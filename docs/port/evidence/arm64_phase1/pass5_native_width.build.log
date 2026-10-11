@@ -1,0 +1,121 @@
+[1/15] D:\Android\Sdk\ndk\30.0.16248370\toolchains\llvm\prebuilt\windows-x86_64\bin\clang++.exe --target=aarch64-none-linux-android28 --sysroot=D:/Android/Sdk/ndk/30.0.16248370/toolchains/llvm/prebuilt/windows-x86_64/sysroot -D_DEBUG=1 -I"D:/Desktop/Black Ops 2 Android/BlackOpsARM/src" -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fno-limit-debug-info  -fPIC -Wall -Wextra -Wpedantic -Wcast-align -Werror=return-type -ferror-limit=0 -ffp-contract=off -fms-extensions -fsigned-char -include "D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/win32_compat/msvc_compat.h" -std=gnu++20 -MD -MT CMakeFiles/bo1_arm64_utilities.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/universal/timing.cpp.o -MF CMakeFiles\bo1_arm64_utilities.dir\D_\Desktop\Black_Ops_2_Android\BlackOpsARM\src\universal\timing.cpp.o.d -o CMakeFiles/bo1_arm64_utilities.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/universal/timing.cpp.o -c "D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/timing.cpp"
+[2/15] D:\Android\Sdk\ndk\30.0.16248370\toolchains\llvm\prebuilt\windows-x86_64\bin\clang++.exe --target=aarch64-none-linux-android28 --sysroot=D:/Android/Sdk/ndk/30.0.16248370/toolchains/llvm/prebuilt/windows-x86_64/sysroot   -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fno-limit-debug-info  -fPIC -Wall -Wextra -Wpedantic -Werror -std=gnu++20 -MD -MT CMakeFiles/bo1_win32_compat.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/win32_compat/win32_errors.cpp.o -MF CMakeFiles\bo1_win32_compat.dir\D_\Desktop\Black_Ops_2_Android\BlackOpsARM\src\platform\win32_compat\win32_errors.cpp.o.d -o CMakeFiles/bo1_win32_compat.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/win32_compat/win32_errors.cpp.o -c "D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/win32_compat/win32_errors.cpp"
+[3/15] D:\Android\Sdk\ndk\30.0.16248370\toolchains\llvm\prebuilt\windows-x86_64\bin\clang++.exe --target=aarch64-none-linux-android28 --sysroot=D:/Android/Sdk/ndk/30.0.16248370/toolchains/llvm/prebuilt/windows-x86_64/sysroot   -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fno-limit-debug-info  -fPIC -Wall -Wextra -Wpedantic -Werror -std=gnu++20 -MD -MT CMakeFiles/bo1_win32_compat.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/win32_compat/win32_time.cpp.o -MF CMakeFiles\bo1_win32_compat.dir\D_\Desktop\Black_Ops_2_Android\BlackOpsARM\src\platform\win32_compat\win32_time.cpp.o.d -o CMakeFiles/bo1_win32_compat.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/win32_compat/win32_time.cpp.o -c "D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/win32_compat/win32_time.cpp"
+[4/15] D:\Android\Sdk\ndk\30.0.16248370\toolchains\llvm\prebuilt\windows-x86_64\bin\clang++.exe --target=aarch64-none-linux-android28 --sysroot=D:/Android/Sdk/ndk/30.0.16248370/toolchains/llvm/prebuilt/windows-x86_64/sysroot  -I"D:/Desktop/Black Ops 2 Android/BlackOpsARM/src" -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fno-limit-debug-info  -fPIC -Wall -Wextra -Wpedantic -fms-extensions -fsigned-char -std=gnu++20 -MD -MT CMakeFiles/bo1_arm64_abi_contract.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/arm64_abi_contract.cpp.o -MF CMakeFiles\bo1_arm64_abi_contract.dir\D_\Desktop\Black_Ops_2_Android\BlackOpsARM\tools\port\tests\arm64_abi_contract.cpp.o.d -o CMakeFiles/bo1_arm64_abi_contract.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/arm64_abi_contract.cpp.o -c "D:/Desktop/Black Ops 2 Android/BlackOpsARM/tools/port/tests/arm64_abi_contract.cpp"
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/tools/port/tests/arm64_abi_contract.cpp:11:22: warning: extension used [-Wlanguage-extension-token]
+   11 | static_assert(sizeof(__int8) == 1 && std::is_signed_v<__int8>);
+      |                      ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/tools/port/tests/arm64_abi_contract.cpp:11:55: warning: extension used [-Wlanguage-extension-token]
+   11 | static_assert(sizeof(__int8) == 1 && std::is_signed_v<__int8>);
+      |                                                       ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/tools/port/tests/arm64_abi_contract.cpp:12:30: warning: extension used [-Wlanguage-extension-token]
+   12 | static_assert(std::is_same_v<__int16, short>);
+      |                              ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/tools/port/tests/arm64_abi_contract.cpp:13:30: warning: extension used [-Wlanguage-extension-token]
+   13 | static_assert(std::is_same_v<__int32, int>);
+      |                              ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/tools/port/tests/arm64_abi_contract.cpp:14:30: warning: extension used [-Wlanguage-extension-token]
+
+   14 | static_assert(std::is_same_v<__int64, long long>);
+
+      |                              ^
+
+5 warnings generated.
+
+[5/15] D:\Android\Sdk\ndk\30.0.16248370\toolchains\llvm\prebuilt\windows-x86_64\bin\clang++.exe --target=aarch64-none-linux-android28 --sysroot=D:/Android/Sdk/ndk/30.0.16248370/toolchains/llvm/prebuilt/windows-x86_64/sysroot -D_DEBUG=1 -I"D:/Desktop/Black Ops 2 Android/BlackOpsARM/src" -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fno-limit-debug-info  -fPIC -Wall -Wextra -Wpedantic -Wcast-align -Werror=return-type -ferror-limit=0 -ffp-contract=off -fms-extensions -fsigned-char -include "D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/win32_compat/msvc_compat.h" -std=gnu++20 -MD -MT CMakeFiles/bo1_arm64_utilities.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/universal/com_encode.cpp.o -MF CMakeFiles\bo1_arm64_utilities.dir\D_\Desktop\Black_Ops_2_Android\BlackOpsARM\src\universal\com_encode.cpp.o.d -o CMakeFiles/bo1_arm64_utilities.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/universal/com_encode.cpp.o -c "D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_encode.cpp"
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_encode.cpp:1:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_encode.h:3:37: warning: extension used [-Wlanguage-extension-token]
+    3 | int __cdecl Com_EncodeYEnc(unsigned __int8 *indata, int inlen, char *outdata, int outlen);
+      |                                     ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_encode.h:4:38: warning: extension used [-Wlanguage-extension-token]
+    4 | bool __cdecl YEncIsCritical(unsigned __int8 c);
+      |                                      ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_encode.h:5:57: warning: extension used [-Wlanguage-extension-token]
+    5 | int __cdecl Com_DecodeYEnc(const char *indata, unsigned __int8 *outdata, int outlen);
+      |                                                         ^
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_encode.cpp:2:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/assertive.h:6:24: warning: extension used [-Wlanguage-extension-token]
+    6 | enum AssertOccurance : __int32
+      |                        ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_encode.cpp:4:37: warning: extension used [-Wlanguage-extension-token]
+    4 | int __cdecl Com_EncodeYEnc(unsigned __int8 *indata, int inlen, char *outdata, int outlen)
+      |                                     ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_encode.cpp:50:38: warning: extension used [-Wlanguage-extension-token]
+   50 | bool __cdecl YEncIsCritical(unsigned __int8 c)
+      |                                      ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_encode.cpp:55:57: warning: extension used [-Wlanguage-extension-token]
+
+   55 | int __cdecl Com_DecodeYEnc(const char *indata, unsigned __int8 *outdata, int outlen)
+
+      |                                                         ^
+
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_encode.cpp:57:14: warning: extension used [-Wlanguage-extension-token]
+
+   57 |     unsigned __int8 c; // [esp+3h] [ebp-9h]
+
+      |              ^
+
+8 warnings generated.
+
+[6/15] cmd.exe /C "cd . && D:\Android\Sdk\cmake\3.22.1\bin\cmake.exe -E rm -f libbo1_win32_compat.a && D:\Android\Sdk\ndk\30.0.16248370\toolchains\llvm\prebuilt\windows-x86_64\bin\llvm-ar.exe qc libbo1_win32_compat.a  CMakeFiles/bo1_win32_compat.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/win32_compat/win32_time.cpp.o CMakeFiles/bo1_win32_compat.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/win32_compat/win32_errors.cpp.o && D:\Android\Sdk\ndk\30.0.16248370\toolchains\llvm\prebuilt\windows-x86_64\bin\llvm-ranlib.exe libbo1_win32_compat.a && cd ."
+[7/15] D:\Android\Sdk\ndk\30.0.16248370\toolchains\llvm\prebuilt\windows-x86_64\bin\clang++.exe --target=aarch64-none-linux-android28 --sysroot=D:/Android/Sdk/ndk/30.0.16248370/toolchains/llvm/prebuilt/windows-x86_64/sysroot -D_DEBUG=1 -I"D:/Desktop/Black Ops 2 Android/BlackOpsARM/src" -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fno-limit-debug-info  -fPIC -Wall -Wextra -Wpedantic -Wcast-align -Werror=return-type -ferror-limit=0 -ffp-contract=off -fms-extensions -fsigned-char -include "D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/win32_compat/msvc_compat.h" -std=gnu++20 -MD -MT CMakeFiles/bo1_arm64_utilities.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/universal/com_math_anglevectors.cpp.o -MF CMakeFiles\bo1_arm64_utilities.dir\D_\Desktop\Black_Ops_2_Android\BlackOpsARM\src\universal\com_math_anglevectors.cpp.o.d -o CMakeFiles/bo1_arm64_utilities.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/universal/com_math_anglevectors.cpp.o -c "D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_math_anglevectors.cpp"
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_math_anglevectors.cpp:6:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_math.h:2:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/assertive.h:6:24: warning: extension used [-Wlanguage-extension-token]
+    6 | enum AssertOccurance : __int32
+      |                        ^
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_math_anglevectors.cpp:6:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_math.h:5:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_pack.h:21:14: warning: extension used [-Wlanguage-extension-token]
+   21 |     unsigned __int8 array[4];
+      |              ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_pack.h:28:14: warning: extension used [-Wlanguage-extension-token]
+   28 |     unsigned __int8 array[4];
+      |              ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_pack.h:38:45: warning: extension used [-Wlanguage-extension-token]
+   38 | void __cdecl Byte4UnpackRgba(const unsigned __int8 *from, float *to);
+      |                                             ^
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_math_anglevectors.cpp:6:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_math.h:29:18: warning: extension used [-Wlanguage-extension-token]
+   29 |         unsigned __int8 type;
+      |                  ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_math.h:30:18: warning: extension used [-Wlanguage-extension-token]
+   30 |         unsigned __int8 signbits;
+      |                  ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_math.h:31:18: warning: extension used [-Wlanguage-extension-token]
+   31 |         unsigned __int8 pad[2];
+      |                  ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_math.h:63:5: warning: anonymous structs are a GNU extension [-Wgnu-anonymous-struct]
+   63 |     struct {
+      |     ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_math.h:112:1: warning: extension used [-Wlanguage-extension-token]
+  112 | __int16 __cdecl ClampShort(int i);
+      | ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_math.h:113:10: warning: extension used [-Wlanguage-extension-token]
+  113 | unsigned __int8 __cdecl DirToByte(const float *dir);
+      |          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_math_anglevectors.cpp:162:17: warning: array index 3 is past the end of the array (that has type 'const float[3]') [-Warray-bounds]
+  162 |     right[0] = (*axis)[3];
+      |                 ^      ~
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_math_anglevectors.cpp:163:17: warning: array index 4 is past the end of the array (that has type 'const float[3]') [-Warray-bounds]
+
+  163 |     right[1] = (*axis)[4];
+
+      |                 ^      ~
+
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_math_anglevectors.cpp:164:17: warning: array index 5 is past the end of the array (that has type 'const float[3]') [-Warray-bounds]
+
+  164 |     right[2] = (*axis)[5];
+
+      |                 ^      ~
+
+13 warnings generated.
+
+[8/15] D:\Android\Sdk\ndk\30.0.16248370\toolchains\llvm\prebuilt\windows-x86_64\bin\clang++.exe --target=aarch64-none-linux-android28 --sysroot=D:/Android/Sdk/ndk/30.0.16248370/toolchains/llvm/prebuilt/windows-x86_64/sysroot  -I"D:/Desktop/Black Ops 2 Android/BlackOpsARM/src" -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fno-limit-debug-info  -fPIC -std=gnu++20 -MD -MT CMakeFiles/bo1_arm64_narrow_slot_probe.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/arm64_narrow_slot_probe.cpp.o -MF CMakeFiles\bo1_arm64_narrow_slot_probe.dir\D_\Desktop\Black_Ops_2_Android\BlackOpsARM\tools\port\tests\arm64_narrow_slot_probe.cpp.o.d -o CMakeFiles/bo1_arm64_narrow_slot_probe.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/arm64_narrow_slot_probe.cpp.o -c "D:/Desktop/Black Ops 2 Android/BlackOpsARM/tools/port/tests/arm64_narrow_slot_probe.cpp"
+[9/15] D:\Android\Sdk\ndk\30.0.16248370\toolchains\llvm\prebuilt\windows-x86_64\bin\clang++.exe --target=aarch64-none-linux-android28 --sysroot=D:/Android/Sdk/ndk/30.0.16248370/toolchains/llvm/prebuilt/windows-x86_64/sysroot  -I"D:/Desktop/Black Ops 2 Android/BlackOpsARM/src" -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fno-limit-debug-info  -fPIC -Wall -Wextra -Wpedantic -Werror -std=gnu++20 -MD -MT CMakeFiles/bo1_arm64_narrow.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/android/narrow32_android.cpp.o -MF CMakeFiles\bo1_arm64_narrow.dir\D_\Desktop\Black_Ops_2_Android\BlackOpsARM\src\platform\android\narrow32_android.cpp.o.d -o CMakeFiles/bo1_arm64_narrow.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/android/narrow32_android.cpp.o -c "D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/android/narrow32_android.cpp"
+[10/15] cmd.exe /C "cd . && D:\Android\Sdk\cmake\3.22.1\bin\cmake.exe -E rm -f libbo1_arm64_narrow.a && D:\Android\Sdk\ndk\30.0.16248370\toolchains\llvm\prebuilt\windows-x86_64\bin\llvm-ar.exe qc libbo1_arm64_narrow.a  CMakeFiles/bo1_arm64_narrow.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/android/narrow32_android.cpp.o && D:\Android\Sdk\ndk\30.0.16248370\toolchains\llvm\prebuilt\windows-x86_64\bin\llvm-ranlib.exe libbo1_arm64_narrow.a && cd ."
+[11/15] D:\Android\Sdk\ndk\30.0.16248370\toolchains\llvm\prebuilt\windows-x86_64\bin\clang++.exe --target=aarch64-none-linux-android28 --sysroot=D:/Android/Sdk/ndk/30.0.16248370/toolchains/llvm/prebuilt/windows-x86_64/sysroot  -I"D:/Desktop/Black Ops 2 Android/BlackOpsARM/src" -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fno-limit-debug-info  -fPIE -Wall -Wextra -Wpedantic -Werror -std=gnu++20 -MD -MT CMakeFiles/bo1_win32_compat_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/win32_compat_tests.cpp.o -MF CMakeFiles\bo1_win32_compat_tests.dir\D_\Desktop\Black_Ops_2_Android\BlackOpsARM\tools\port\tests\win32_compat_tests.cpp.o.d -o CMakeFiles/bo1_win32_compat_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/win32_compat_tests.cpp.o -c "D:/Desktop/Black Ops 2 Android/BlackOpsARM/tools/port/tests/win32_compat_tests.cpp"
+[12/15] D:\Android\Sdk\ndk\30.0.16248370\toolchains\llvm\prebuilt\windows-x86_64\bin\clang++.exe --target=aarch64-none-linux-android28 --sysroot=D:/Android/Sdk/ndk/30.0.16248370/toolchains/llvm/prebuilt/windows-x86_64/sysroot  -I"D:/Desktop/Black Ops 2 Android/BlackOpsARM/src" -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fno-limit-debug-info  -fPIE -Wall -Wextra -Wpedantic -Werror -std=gnu++20 -MD -MT CMakeFiles/bo1_arm64_narrow_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/narrow32_tests.cpp.o -MF CMakeFiles\bo1_arm64_narrow_tests.dir\D_\Desktop\Black_Ops_2_Android\BlackOpsARM\tools\port\tests\narrow32_tests.cpp.o.d -o CMakeFiles/bo1_arm64_narrow_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/narrow32_tests.cpp.o -c "D:/Desktop/Black Ops 2 Android/BlackOpsARM/tools/port/tests/narrow32_tests.cpp"
+[13/15] D:\Android\Sdk\ndk\30.0.16248370\toolchains\llvm\prebuilt\windows-x86_64\bin\clang++.exe --target=aarch64-none-linux-android28 --sysroot=D:/Android/Sdk/ndk/30.0.16248370/toolchains/llvm/prebuilt/windows-x86_64/sysroot  -I"D:/Desktop/Black Ops 2 Android/BlackOpsARM/src" -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fno-limit-debug-info  -fPIE -Wall -Wextra -Wpedantic -Werror -std=gnu++20 -MD -MT CMakeFiles/bo1_win32_compat_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/win32_error_tests.cpp.o -MF CMakeFiles\bo1_win32_compat_tests.dir\D_\Desktop\Black_Ops_2_Android\BlackOpsARM\tools\port\tests\win32_error_tests.cpp.o.d -o CMakeFiles/bo1_win32_compat_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/win32_error_tests.cpp.o -c "D:/Desktop/Black Ops 2 Android/BlackOpsARM/tools/port/tests/win32_error_tests.cpp"
+[14/15] cmd.exe /C "cd . && D:\Android\Sdk\ndk\30.0.16248370\toolchains\llvm\prebuilt\windows-x86_64\bin\clang++.exe --target=aarch64-none-linux-android28 --sysroot=D:/Android/Sdk/ndk/30.0.16248370/toolchains/llvm/prebuilt/windows-x86_64/sysroot -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fno-limit-debug-info -static-libstdc++ -Wl,--build-id=sha1 -Wl,--no-rosegment -Wl,--no-undefined-version -Wl,--fatal-warnings -Wl,--no-undefined -Qunused-arguments CMakeFiles/bo1_arm64_narrow_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/narrow32_tests.cpp.o -o bo1_arm64_narrow_tests  libbo1_arm64_narrow.a  -latomic -lm && cd ."
+[15/15] cmd.exe /C "cd . && D:\Android\Sdk\ndk\30.0.16248370\toolchains\llvm\prebuilt\windows-x86_64\bin\clang++.exe --target=aarch64-none-linux-android28 --sysroot=D:/Android/Sdk/ndk/30.0.16248370/toolchains/llvm/prebuilt/windows-x86_64/sysroot -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fno-limit-debug-info -static-libstdc++ -Wl,--build-id=sha1 -Wl,--no-rosegment -Wl,--no-undefined-version -Wl,--fatal-warnings -Wl,--no-undefined -Qunused-arguments CMakeFiles/bo1_win32_compat_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/win32_compat_tests.cpp.o CMakeFiles/bo1_win32_compat_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/win32_error_tests.cpp.o -o bo1_win32_compat_tests  libbo1_win32_compat.a  -latomic -lm && cd ."

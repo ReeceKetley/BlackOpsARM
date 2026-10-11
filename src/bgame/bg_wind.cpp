@@ -1,3 +1,4 @@
+#include <platform/engine_random.h>
 #include "bg_wind.h"
 #include <cgame_mp/cg_local_mp.h>
 #include <cgame/cg_drawtools.h>
@@ -297,7 +298,7 @@ void __cdecl SeedVariantWind(
     wind->reset_timer = start_time - 1875 * (16 - i);
     wind->gust_start = start_time - (int)(float)(g_GlobalWindGrassGustInterval->current.value / 16.0) * (16 - i);
     v5 = (int)(float)(g_GlobalWindGrassGustInterval->current.value / 2.0);
-    wind->gust_dur = rand() % v5 + v5;
+    wind->gust_dur = BO1_CrtRand() % v5 + v5;
     varint_4 = g_WindVariants[(i + 1) % 17];
     varint_8 = g_WindVariants[(i + 2) % 17];
     wind->wind_vector[0] = *seedWindVector * g_WindVariants[i % 17];
@@ -310,15 +311,15 @@ void __cdecl SeedVariantWind(
                                                     + (float)(wind->wind_vector[1] * wind->wind_vector[1]))
                                     + (float)(wind->wind_vector[2] * wind->wind_vector[2]))
                     / (float)(windLeafScale * windLeafScale);
-    v9 = (float)(rand() - 0x3FFF) / 32767.0;
-    v10 = (float)(rand() - 0x3FFF) / 32767.0;
-    v11 = (float)(rand() - 0x3FFF) / 32767.0;
+    v9 = (float)(BO1_CrtRand() - 0x3FFF) / 32767.0;
+    v10 = (float)(BO1_CrtRand() - 0x3FFF) / 32767.0;
+    v11 = (float)(BO1_CrtRand() - 0x3FFF) / 32767.0;
     wind->rustle_amplitude[0] = v_scale * v9;
     wind->rustle_amplitude[1] = v_scale * v10;
     wind->rustle_amplitude[2] = v_scale * v11;
-    v6 = (float)(rand() - 0x3FFF) / 32767.0;
-    v7 = (float)(rand() - 0x3FFF) / 32767.0;
-    v8 = (float)(rand() - 0x3FFF) / 32767.0;
+    v6 = (float)(BO1_CrtRand() - 0x3FFF) / 32767.0;
+    v7 = (float)(BO1_CrtRand() - 0x3FFF) / 32767.0;
+    v8 = (float)(BO1_CrtRand() - 0x3FFF) / 32767.0;
     wind->rustle_angular_frequency[0] = (float)(v_scale * 3.1415927) * v6;
     wind->rustle_angular_frequency[1] = (float)(v_scale * 3.1415927) * v7;
     wind->rustle_angular_frequency[2] = (float)(v_scale * 3.1415927) * v8;
@@ -331,9 +332,9 @@ void __cdecl BG_SeedVarintWinds(unsigned int variant_seed, int start_time)
     int ia; // [esp+8h] [ebp-4h]
     int ib; // [esp+8h] [ebp-4h]
 
-    srand(variant_seed);
+    BO1_CrtSrand(variant_seed);
     for (i = 0; i < 17; ++i)
-        g_WindVariants[i] = (float)((float)(rand() - 0x3FFF) * 0.1) / 32767.0;
+        g_WindVariants[i] = (float)((float)(BO1_CrtRand() - 0x3FFF) * 0.1) / 32767.0;
     for (ia = 0; ia < 16; ++ia)
         SeedVariantWind(
             &g_VariantWind[ia],
@@ -383,7 +384,7 @@ void    BG_UpdateVariantWind(
         const int halfInterval =
             (int)(g_GlobalWindGrassGustInterval->current.value * 0.5f);
 
-        wind->gust_dur = (rand() % halfInterval) + halfInterval;
+        wind->gust_dur = (BO1_CrtRand() % halfInterval) + halfInterval;
 
         const float mag2 =
             wind->wind_vector[0] * wind->wind_vector[0]
@@ -391,7 +392,7 @@ void    BG_UpdateVariantWind(
             + wind->wind_vector[2] * wind->wind_vector[2];
 
         const float gustStrength =
-            random() * (-mag2) + mag2 + 1.0f;
+            BO1_Random() * (-mag2) + mag2 + 1.0f;
 
         wind->blade_acceleration =
             gustStrength / g_GlobalWindGrassScale->current.value;

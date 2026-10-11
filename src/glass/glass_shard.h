@@ -1,3 +1,4 @@
+#include <platform/bo1_native_width.h>
 #pragma once
 #include <universal/com_math.h>
 #include <physics/phys_local.h>
@@ -104,7 +105,7 @@ struct ShardGroup // sizeof=0x54
         int mod);
     int __thiscall TracePoint(float *p0, const float *p1);
 };
-#if !defined(BO1_PORT_X64)
+#if !BO1_NATIVE_64BIT
 static_assert(sizeof(ShardGroup) == 84);
 #endif
 
@@ -363,7 +364,7 @@ struct GlassShard // sizeof=0x90
     static int lastFreeMemorySize;
     static int removeReasonsCount[BO1_TOTAL];
 };
-#if !defined(BO1_PORT_X64)
+#if !BO1_NATIVE_64BIT
 static_assert(sizeof(GlassShard) == 144);
 #endif
 

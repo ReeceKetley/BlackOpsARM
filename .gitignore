@@ -432,3 +432,28 @@ build-x64*/
 /matsz.obj
 /msz.obj
 x64_diag.log
+
+# Android development outputs and machine-local configuration
+/.gradle/
+/android/.gradle/
+/android/.kotlin/
+/android/app/.cxx/
+/android/local.properties
+/build-android*/
+*.apk
+*.aab
+!android/gradle/wrapper/gradle-wrapper.jar
+
+# Ledger JSONL and Markdown are durable memory; SQLite is a local index.
+/.ledger/*.db
+/.ledger/*.db-*
+/.ledger/.lock
+/.ledger/archive/
+/.ledger/setup-baseline.json
+
+# Retain the bounded ARM64 compiler/test evidence alongside its audit report.
+!/docs/port/evidence/arm64_phase1/*.log
+!/docs/port/evidence/arm64_script_headers/*.log
+!/docs/port/evidence/arm64_rng_script/*.log
+!/docs/port/evidence/arm64_parsetree/*.log
+!/docs/port/evidence/arm64_debugger/*.log

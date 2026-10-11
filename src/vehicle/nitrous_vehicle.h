@@ -1,3 +1,4 @@
+#include <platform/bo1_native_width.h>
 #pragma once
 #include <physics/phys_local.h>
 #include <game/teams.h>
@@ -482,7 +483,7 @@ struct alignas(16) NitrousVehicle // sizeof=0x440
     // padding byte
     // padding byte
 };
-#if !defined(BO1_PORT_X64)
+#if !BO1_NATIVE_64BIT
 static_assert(sizeof(NitrousVehicle) == 0x440);
 #endif
 

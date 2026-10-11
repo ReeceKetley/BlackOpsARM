@@ -1,3 +1,4 @@
+#include <platform/engine_random.h>
 // zombies: client ends of SP server commands that BO1Zombies's MP CG_DeployServerCommand did not
 // handle. Each is the body of a case of SP's CG_DeployServerCommand (SP 0x0078daf0; its jump table is
 // indexed by the command letter through the byte table at 0x0078e930). They are called only from
@@ -104,14 +105,14 @@ void CG_SP_UpdateDoubleVision(int localClientNum)
         if (!s_targetSeeded)
         {
             s_targetSeeded = true;
-            s_targetAngle = (float)rand() * 20.0f * 0.000030517578f - 10.0f;
+            s_targetAngle = (float)BO1_CrtRand() * 20.0f * 0.000030517578f - 10.0f;
         }
         float delta = s_targetAngle - s_angle;
         s_angle = delta * frac + s_angle;
         if (fabs(delta) < 0.1f)
         {
-            float spread = (float)rand() * 2.0f * 0.000030517578f - 1.0f;
-            float scale = (float)rand() * 2.0f * 0.000030517578f + 1.0f;
+            float spread = (float)BO1_CrtRand() * 2.0f * 0.000030517578f - 1.0f;
+            float scale = (float)BO1_CrtRand() * 2.0f * 0.000030517578f + 1.0f;
             s_targetAngle = scale * spread + s_angle;
         }
         dv->direction[0] = (float)sin(s_angle);

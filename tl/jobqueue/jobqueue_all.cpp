@@ -1,3 +1,4 @@
+#include <platform/bo1_native_width.h>
 #include "jobqueue_all.h"
 
 #include <Windows.h>
@@ -1580,7 +1581,7 @@ void __cdecl jqWorkerLoop(jqWorker *Worker, jqBatchGroup *GroupID, bool BreakWhe
                     if (!freeList)
                     {
                         block = (jqAtomicQueue<jqBatch,32>::NodeType *)tlMemAlloc(sizeof(jqAtomicQueue<jqBatch, 32>::NodeType) * 32 + 8, 4, 0);
-                        #if !defined(BO1_PORT_X64)
+                        #if !BO1_NATIVE_64BIT
                         static_assert(sizeof(jqAtomicQueue<jqBatch, 32>::NodeType) * 32 + 8 == 0x1008);
                         #endif
 
@@ -1745,7 +1746,7 @@ void __cdecl jqTempWorkerLoop(jqWorker *Worker, jqBatchGroup *GroupID, bool (__c
         {
 
           block = (jqAtomicQueue<jqBatch, 32>::NodeType *)tlMemAlloc(sizeof(jqAtomicQueue<jqBatch, 32>::NodeType) * 32 + 8, 4u, 0);
-          #if !defined(BO1_PORT_X64)
+          #if !BO1_NATIVE_64BIT
           static_assert(sizeof(jqAtomicQueue<jqBatch, 32>::NodeType) * 32 + 8 == 0x1008);
           #endif
 

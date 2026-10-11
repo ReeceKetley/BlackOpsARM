@@ -1,3 +1,4 @@
+#include <platform/engine_random.h>
 #include "com_files.h"
 #include "assertive.h"
 #include "q_shared.h"
@@ -883,7 +884,7 @@ unsigned int __cdecl FS_FOpenFileReadForThread(const char *filename, int *file, 
                                 if ( fsh[*file].handleFiles.file.o )
                                 {
                                     if (!search->bLocalized && !search->ignorePureCheck && !FS_PureIgnoreFiles(sanitizedName))
-                                        fs_fakeChkSum = rand() + 1;
+                                        fs_fakeChkSum = BO1_CrtRand() + 1;
                                     I_strncpyz(fsh[*file].name, sanitizedName, 256);
                                     fsh[*file].zipFile = 0;
                                     if ( fs_debug->current.integer )

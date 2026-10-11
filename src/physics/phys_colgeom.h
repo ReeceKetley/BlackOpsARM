@@ -1,3 +1,4 @@
+#include <platform/bo1_native_width.h>
 #pragma once
 
 #include "phys_local.h"
@@ -253,7 +254,7 @@ struct __declspec(align(16)) gjk_aabb_t : gjk_base_t // sizeof=0x80
         virtual bool is_walkable(const phys_vec3 *hit_point, const phys_vec3 *up) override;
         virtual const cbrush_t *get_brush() const override;
 };
-#if !defined(BO1_PORT_X64)
+#if !BO1_NATIVE_64BIT
 static_assert(sizeof(gjk_aabb_t) == 128);
 #endif
 
@@ -340,7 +341,7 @@ struct gjk_obb_t : gjk_base_t // sizeof=0xA0
         // is_walkable() - gjk_base_t
         // get_brush() - gjk_base_t
 };
-#if !defined(BO1_PORT_X64)
+#if !BO1_NATIVE_64BIT
 static_assert(sizeof(gjk_obb_t) == 160);
 #endif
 
@@ -401,7 +402,7 @@ struct __declspec(align(8)) gjk_brush_t : gjk_base_t // sizeof=0x60
         virtual bool is_walkable(const phys_vec3 *hit_point, const phys_vec3 *up) override;
         virtual const cbrush_t *get_brush() const override;
 };
-#if !defined(BO1_PORT_X64)
+#if !BO1_NATIVE_64BIT
 static_assert(sizeof(gjk_brush_t) == 96);
 #endif
 
@@ -498,7 +499,7 @@ struct __declspec(align(16)) gjk_partition_t : gjk_base_t // sizeof=0x70
         virtual bool is_walkable(const phys_vec3 *hit_point, const phys_vec3 *up) override;
         // get_brush() - gjk_base_t
 };
-#if !defined(BO1_PORT_X64)
+#if !BO1_NATIVE_64BIT
 static_assert(sizeof(gjk_partition_t) == 112);
 #endif
 
@@ -558,7 +559,7 @@ struct gjk_double_sphere_t : gjk_base_t // sizeof=0x90
         // is_walkable() - gjk_base_t
         // get_brush() - gjk_base_t
 };
-#if !defined(BO1_PORT_X64)
+#if !BO1_NATIVE_64BIT
 static_assert(sizeof(gjk_double_sphere_t) == 144);
 #endif
 
@@ -623,7 +624,7 @@ struct gjk_cylinder_t : gjk_base_t // sizeof=0xA0
 
         const phys_vec3 * get_dims(phys_vec3 *result) const;
 };
-#if !defined(BO1_PORT_X64)
+#if !BO1_NATIVE_64BIT
 static_assert(sizeof(gjk_cylinder_t) == 160);
 #endif
 
@@ -747,7 +748,7 @@ struct __declspec(align(8)) gjk_polygon_cylinder_t : gjk_base_t // sizeof=0x80
 
         //gjk_polygon_cylinder_t::poly_verts gjk_polygon_cylinder_t::s_poly_verts
 };
-#if !defined(BO1_PORT_X64)
+#if !BO1_NATIVE_64BIT
 static_assert(sizeof(gjk_polygon_cylinder_t) == 128);
 #endif
 

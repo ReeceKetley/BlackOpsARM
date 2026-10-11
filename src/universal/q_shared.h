@@ -1,3 +1,4 @@
+#include <platform/bo1_native_width.h>
 #pragma once
 
 // this is the define for determining if we have an asm version of a C function
@@ -220,7 +221,7 @@ typedef ull                         uint64;
 #define RAD2DEG( a ) ( ( (a) * INV_PI_DIV_180 ) )
 
 // Some convenience macros to make partial accesses nicer
-#if defined(BO1_PORT_X64) && defined(__cplusplus)
+#if BO1_NATIVE_64BIT && defined(__cplusplus)
 #include <type_traits>
 // IDA's HIWORD/HIBYTE/... pick the top part of sizeof(x). Decompiled code applies them to values that were 4 bytes on Win32
 // but are pointers (8 bytes) here, which moved "bits 16..31" to "bits 48..63". Pointers keep their Win32 width (the x64 port runs

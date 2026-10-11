@@ -1,3 +1,4 @@
+#include <platform/bo1_native_width.h>
 #pragma once
 
 #include <bgame/bg_local.h>
@@ -370,7 +371,7 @@ struct clientActive_t // sizeof=0x1A6100
 };
 // mod (L43): bytes the parseEntities ring adds over retail (sizeof=0x1A6100 with 2048); cl_main_mp.cpp allocates them.
 #define CL_PARSE_ENTITIES_EXTRA_BYTES ((CL_PARSE_ENTITIES_COUNT - 2048) * (int)sizeof(entityState_s))
-#if !defined(BO1_PORT_X64)
+#if !BO1_NATIVE_64BIT
 static_assert(sizeof(clientActive_t) <= 0x1A6100 + CL_PARSE_ENTITIES_EXTRA_BYTES, "clientActive_t outgrew its allocation");
 #endif
 

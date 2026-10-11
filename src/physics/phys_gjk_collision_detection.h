@@ -1,3 +1,4 @@
+#include <platform/bo1_native_width.h>
 #pragma once
 #include "phys_local.h"
 #include "phys_gjk.h"
@@ -43,7 +44,7 @@ struct destructible_ent_aa : phys_auto_activate_callback // sizeof=0xC
     }
     void auto_activate(struct broad_phase_info *bpi_impactor);
 };
-#if !defined(BO1_PORT_X64)
+#if !BO1_NATIVE_64BIT
 static_assert(sizeof(destructible_ent_aa) == 12);
 #endif
 

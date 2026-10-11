@@ -1,3 +1,4 @@
+#include <platform/bo1_native_width.h>
 #pragma once
 
 // FastFile 32→64 stream-time expansion helpers (BO1_PORT_X64).
@@ -6,7 +7,7 @@
 
 #include <cstdint>
 
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
 
 struct XAsset;
 struct XAssetList;

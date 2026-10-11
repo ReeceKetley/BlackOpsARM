@@ -1,5 +1,9 @@
 #pragma once
 #include <cstdint>
+#include <platform/bo1_native_width.h>
+#if defined(__ANDROID__)
+#include <atomic>
+#endif
 
 // 32-bit "narrow" pointer for decompiled structures whose layout is built from 4-byte slots (the GSC parse tree, the script VM's
 // VariableUnion, the compiled code stream, ...). On Win32 the type is the plain pointer.
@@ -16,14 +20,22 @@
 #define BO1_NARROW_HANDLES 1
 #endif
 
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
 
 void Bo1_NarrowFail(const void *p);
 
 #if BO1_NARROW_HANDLES
+#if defined(__ANDROID__)
+// Each published region is immutable. Acquire/release replaces the Windows
+// volatile + MemoryBarrier protocol on ARM64; volatile is not synchronization.
+extern std::atomic<uintptr_t> g_bo1NarrowBase[256];
+extern std::atomic<uint64_t> g_bo1NarrowKey[2048];
+extern std::atomic<uint8_t> g_bo1NarrowIdx[2048];
+#else
 extern uintptr_t g_bo1NarrowBase[256];
 extern volatile uint64_t g_bo1NarrowKey[2048];
 extern volatile uint8_t g_bo1NarrowIdx[2048];
+#endif
 unsigned int Bo1_NarrowEncodeSlow(const void *p);
 
 inline unsigned int Bo1_NarrowEncode(const void *p)
@@ -35,7 +47,11 @@ inline unsigned int Bo1_NarrowEncode(const void *p)
     unsigned int i = static_cast<unsigned int>((chunk * 0x9E3779B97F4A7C15ull) >> 53);
     for (unsigned int n = 0; n < 2048; ++n, i = (i + 1) & 2047)
     {
+#if defined(__ANDROID__)
+        const uint64_t k = g_bo1NarrowKey[i].load(std::memory_order_acquire);
+#else
         const uint64_t k = g_bo1NarrowKey[i];
+#endif
         if (k == chunk)
             return (static_cast<unsigned int>(g_bo1NarrowIdx[i]) << 24) | static_cast<unsigned int>(a & 0xFFFFFF);
         if (!k)
@@ -48,7 +64,11 @@ inline void *Bo1_NarrowDecode(unsigned int v)
 {
     if (!v)
         return nullptr;
+#if defined(__ANDROID__)
+    return reinterpret_cast<void *>(g_bo1NarrowBase[v >> 24].load(std::memory_order_acquire) + (v & 0xFFFFFF));
+#else
     return reinterpret_cast<void *>(g_bo1NarrowBase[v >> 24] + (v & 0xFFFFFF));
+#endif
 }
 #else
 inline unsigned int Bo1_NarrowEncode(const void *p)

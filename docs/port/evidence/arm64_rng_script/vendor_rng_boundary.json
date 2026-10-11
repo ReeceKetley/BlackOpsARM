@@ -1,0 +1,17 @@
+{
+  "src/libs/libtommath-1.0/tommath.h": {
+    "unchanged": true,
+    "sha256": "389d38d3b3ed4ad2e0c8bb6b6f0301a59fce421ace6e64d47e60f0d2510edc12",
+    "classification": "Third-party vendor RNG; retains libc behavior. nb_celp only has an inactive comment."
+  },
+  "src/groupvoice/speex/misc.c": {
+    "unchanged": true,
+    "sha256": "f6b4493126c1a5be75fa89fb1d900470eac66937a665ef53d3960edd0a551514",
+    "classification": "Third-party vendor RNG; retains libc behavior. nb_celp only has an inactive comment."
+  },
+  "src/groupvoice/speex/nb_celp.c": {
+    "unchanged": true,
+    "sha256": "c3f98b84cbeca872fbc854b11a2f0a6b863b176c9a63aab5a20671878a9c8979",
+    "classification": "Third-party vendor RNG; retains libc behavior. nb_celp only has an inactive comment."
+  }
+}

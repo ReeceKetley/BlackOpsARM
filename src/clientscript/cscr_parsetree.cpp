@@ -2,9 +2,14 @@
 #include <universal/assertive.h>
 #include <universal/mem_userhunk.h>
 #include "cscr_evaluate.h"
+#if defined(__ANDROID__)
+#include <universal/memory_services.h>
+#else
 #include <universal/com_memory.h>
+#endif
 #include "cscr_vm.h"
 #include "cscr_compiler.h"
+#include <climits>
 
 HunkUser *g_allocNodeUser[2];
 
@@ -266,7 +271,9 @@ void __cdecl Scr_ClearDebugExpr(scriptInstance_t inst, debugger_sval_s *debugExp
     {
         //Scr_ClearDebugExprValue(inst, (sval_u)&debugExprHead[1]);
         sval_u *pval = (sval_u *)((char *)debugExprHead + sizeof(debugger_sval_s));
-        Scr_ClearDebugExprValue(inst, *(sval_u *)&pval);
+        sval_u value;
+        value.node = pval;
+        Scr_ClearDebugExprValue(inst, value);
         debugExprHead = debugExprHead->next;
     }
 }
@@ -275,6 +282,8 @@ sval_u *__cdecl Scr_AllocDebugExpr(scriptInstance_t inst, ParseToken_t type, int
 {
     sval_u *val; // eax
     debugger_sval_s *debugval;
+
+    iassert(size >= 4 && size <= INT_MAX - static_cast<int>(sizeof(debugger_sval_s)));
 
     // prefix the malloc with a `debugger_sval_s`
     unsigned char *data = (unsigned char*)Z_Malloc(sizeof(debugger_sval_s) + size, name, 0);
@@ -307,7 +316,9 @@ void __cdecl Scr_FreeDebugExpr(scriptInstance_t inst, ScriptExpression_t *expr)
     {
         // See Prefixed data in Scr_AllocDebugExpr()
         sval_u *pval = (sval_u *)((char *)debugExprHead + sizeof(debugger_sval_s));
-        Scr_FreeDebugExprValue(inst, *(sval_u *)&pval);
+        sval_u value;
+        value.node = pval;
+        Scr_FreeDebugExprValue(inst, value);
 
         nextDebugExprHead = debugExprHead->next;
         Z_Free((char*)debugExprHead, 0);
@@ -375,7 +386,8 @@ sval_u __cdecl debugger_node4(
 sval_u __cdecl debugger_prepend_node(scriptInstance_t inst, sval_u val1, sval_u val2)
 {
     //val2.node[0].stringValue = *(unsigned int *)&debugger_node2(inst, 0, val1, *val2.node) + 4;
-    *(_DWORD *)val2.type = debugger_node2(inst, ENUM_NOP, val1, (sval_u)val2.node->type).type + 4;
+    sval_u link = debugger_node2(inst, ENUM_NOP, val1, val2.node[0]);
+    val2.node[0].node = &link.node[1];
     return val2;
 }
 
@@ -413,16 +425,24 @@ sval_u __cdecl debugger_buffer(
 
     //if ((alignment & (alignment - 1)) != 0)
     //    MyAssertHandler((char *)".\\script\\scr_parsetree.cpp", 594, 0, "%s", "IsPowerOf2( alignment )");
+    iassert(alignment > 0 && alignment <= 4096 && !(alignment & (alignment - 1)));
+    iassert(size <= static_cast<unsigned int>(INT_MAX - alignment - 7 - sizeof(debugger_sval_s)));
+    iassert(buf || size == 0);
     alignmenta = alignment - 1;
     result = Scr_AllocDebugExpr(inst, type, size + alignmenta + 8, "debugger_buffer");
     bufCopy = (unsigned __int8 *)(~(uintptr_t)alignmenta & ((uintptr_t)&result[2] + alignmenta));
-    memcpy(bufCopy, (unsigned __int8 *)buf, size);
+    if (size) memcpy(bufCopy, (unsigned __int8 *)buf, size);
     result[1].codePosValue = (const char *)bufCopy;
-    return *result; // sus deref
+    sval_u value;
+    value.node = result;
+    return value;
 }
 
 sval_u __cdecl debugger_string(scriptInstance_t inst, ParseToken_t type, char *s)
 {
-    return debugger_buffer(inst, type, s, strlen(s) + 1, 1);
+    iassert(s);
+    const size_t bytes = strlen(s) + 1;
+    iassert(bytes <= static_cast<size_t>(INT_MAX - 8 - sizeof(debugger_sval_s)));
+    return debugger_buffer(inst, type, s, static_cast<unsigned int>(bytes), 1);
 }
 

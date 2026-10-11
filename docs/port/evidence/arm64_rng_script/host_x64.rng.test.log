@@ -1,0 +1,1 @@
+PASS production RNG bodies: captured Windows streams, [0,1) / [-1,1) ranges, mixed raw/normalized draws; unchanged scaling and Windows legacy entry point

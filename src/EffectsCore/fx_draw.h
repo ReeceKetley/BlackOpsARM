@@ -1,3 +1,4 @@
+#include <platform/bo1_native_width.h>
 #pragma once
 
 #include <gfx_d3d/fxprimitives.h>
@@ -21,7 +22,7 @@ struct __declspec(align(4)) FxGenerateVertsCmd // sizeof=0x50
     // padding byte
     // padding byte
 };
-#if !defined(BO1_PORT_X64)
+#if !BO1_NATIVE_64BIT
 static_assert(sizeof(FxGenerateVertsCmd) == 80);
 #endif
 

@@ -1,3 +1,4 @@
+#include <platform/bo1_native_width.h>
 #include "physics_system_internal.h"
 #include "phys_assert.h"
 #include "phys_util.h"
@@ -911,7 +912,7 @@ void physics_system::validate_member(environment_rigid_body *rb)
             if ((m_flags & 0x20) != 0)
             {
                 using TI = phys_free_list<user_rigid_body>::T_internal;
-                #if !defined(BO1_PORT_X64)
+                #if !BO1_NATIVE_64BIT
                 static_assert(sizeof(TI) == 0x1D0, "size mismatch");
                 #endif
                 TI *ti = (TI *)((char *)rb - offsetof(TI, m_data));
@@ -922,7 +923,7 @@ void physics_system::validate_member(environment_rigid_body *rb)
             else
             {
                 using TI = phys_free_list<rigid_body>::T_internal;
-                #if !defined(BO1_PORT_X64)
+                #if !BO1_NATIVE_64BIT
                 static_assert(sizeof(TI) == 0x180, "size mismatch");
                 #endif
                 TI *ti = (TI *)((char *)rb - offsetof(TI, m_data));

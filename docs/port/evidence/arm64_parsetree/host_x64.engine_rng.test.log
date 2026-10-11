@@ -1,0 +1,1 @@
+PASS Windows-captured RNG vectors: 12 edge seeds x 128 draws, default/reseed, eight independent threads x 64 vector cycles, parent-stream isolation, 15-bit range

@@ -1,5 +1,5 @@
 #include "r_model_skin.h"
-#if defined(BO1_PORT_X64) || defined(_M_X64) || defined(_WIN64)
+#if defined(BO1_PORT_X64) || defined(_M_X64) || defined(_WIN64) || (defined(__ANDROID__) && defined(__aarch64__))
 #  define BO1_MMX_EMPTY() ((void)0)
 #else
 #  include <mmintrin.h>
@@ -498,7 +498,7 @@ void R_SkinXModelCmd(SkinXModelCmd *data)
     PROF_SCOPED("R_SkinXModelCmd");
 
     useSSE = sys_SSE->current.enabled && r_sse_skinning->current.enabled;
-#if defined(BO1_PORT_X64) || defined(_M_X64) || defined(_WIN64)
+#if defined(BO1_PORT_X64) || defined(_M_X64) || defined(_WIN64) || (defined(__ANDROID__) && defined(__aarch64__))
     // MMX skin path is x86-only; force scalar skinning on x64.
     useSSE = 0;
 #endif

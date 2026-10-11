@@ -1,3 +1,4 @@
+#include <platform/bo1_native_width.h>
 #include "db_stream.h"
 #include "db_file_load.h"
 #include <universal/assertive.h>
@@ -6,7 +7,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <cstdarg>
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
 #include <vector>
 #include <algorithm>
 #include <unordered_map>
@@ -145,7 +146,7 @@ void DB_Trace_AssetEnd(int index, int type)
     g_traceOpsOn = false;
 }
 
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
 namespace
 {
 // Drift mark: for Win32 offsets >= win32Off, add `drift` to get the native address.
@@ -372,7 +373,7 @@ unsigned __int8 *DB_StreamMapLookup(unsigned int blockIndex, unsigned int win32W
 
 static unsigned int DB_TraceW32(unsigned int idx)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     return g_streamWin32Pos[idx];
 #else
     if (!g_streamBlocks || !g_streamBlocks[idx].data)
@@ -396,13 +397,13 @@ void __cdecl DB_InitStreams(XBlock *blocks)
     {
         if ( i )
             g_streamPosArray[i] = blocks[i].data;
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
         g_streamWin32Pos[i] = 0;
         g_driftMarks[i].clear();
         g_driftMarks[i].push_back(DriftMark{0, 0});
 #endif
     }
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     g_expandWin32Size = -1;
     for (int bi = 0; bi < 7; ++bi)
     {
@@ -467,7 +468,7 @@ unsigned __int8 *__cdecl DB_AllocStreamPos(int alignment)
         __debugbreak();
     }
     const unsigned __int8 *before = g_streamPos;
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     // `alignment` is the Win32 request, taken literally by the Win32 shadow cursor (the FastFile's offsets were baked
     // with it). The native cursor is aligned to at least 8 so expanded structs holding pointers are naturally aligned.
     const int nativeAlignment = alignment | static_cast<int>(sizeof(void *) - 1);
@@ -477,7 +478,7 @@ unsigned __int8 *__cdecl DB_AllocStreamPos(int alignment)
     const uintptr_t aligned =
         static_cast<uintptr_t>(~(uintptr_t)nativeAlignment) &
         (reinterpret_cast<uintptr_t>(g_streamPos) + static_cast<uintptr_t>(nativeAlignment));
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     {
         const int nativePad = static_cast<int>(reinterpret_cast<unsigned __int8 *>(aligned) - before);
         const unsigned int win32Before = g_streamWin32Pos[g_streamPosIndex];
@@ -507,7 +508,7 @@ void __cdecl DB_IncStreamPos(int size)
 {
     iassert(g_streamPos);
     iassert(g_streamPos + size <= g_streamBlocks[g_streamPosIndex].data + g_streamBlocks[g_streamPosIndex].size);
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     {
         const int wSize = (g_expandWin32Size >= 0) ? g_expandWin32Size : size;
         g_expandWin32Size = -1;
@@ -539,7 +540,7 @@ const void **__cdecl DB_InsertPointer()
 
     DB_PushStreamPos(4u);
     pData = (const void **)DB_AllocStreamPos(3); // Win32 pointer slot alignment; native cursor aligns to 8
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     // Retail FFs reserve 4-byte alias slots; store a full pointer but advance Win32 cursor by 4.
     DB_SetExpandWin32Size(4);
 #endif

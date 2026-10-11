@@ -1,3 +1,4 @@
+#include <platform/bo1_native_width.h>
 #include <qcommon/cm_mapkit.h>
 #include "r_rendercmds.h"
 #include "r_dobj_skin.h"
@@ -27,7 +28,7 @@
 #include <client/cl_debugdata.h>
 
 // Render command sizes were Win32 literals; commands that hold pointers (materials, fonts) are larger on x64.
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
 #define R_CMD_BYTES(T, win32Bytes) ((int)((sizeof(T) + 3) & ~(size_t)3))
 #else
 #define R_CMD_BYTES(T, win32Bytes) (win32Bytes)

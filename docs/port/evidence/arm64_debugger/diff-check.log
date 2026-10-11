@@ -1,0 +1,7 @@
+warning: in the working copy of '.gitignore', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'cmake_files.cmake', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/clientscript/cscr_debugger.h', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/clientscript/cscr_variable.h', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/game_sp/g_sp_savegame.cpp', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/universal/narrow32.h', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/universal/timing.cpp', LF will be replaced by CRLF the next time Git touches it

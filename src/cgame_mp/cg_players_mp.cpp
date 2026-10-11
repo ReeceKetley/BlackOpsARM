@@ -1,3 +1,4 @@
+#include <platform/engine_random.h>
 #include "cg_players_mp.h"
 #include "cg_local_mp.h"
 #include <client_mp/cl_cgame_mp.h>
@@ -1889,7 +1890,7 @@ void __cdecl CG_UpdateWeaponVisibilityInternal(int localClientNum, centity_s *ce
             if ( ci->nextHideWeaponTime <= hideCheckIntervalMax + cgameGlob->time && ci->nextHideWeaponTime > cgameGlob->time )
                 return;
             v2 = hideCheckIntervalMin + cgameGlob->time;
-            ci->nextHideWeaponTime = rand() % (hideCheckIntervalMax - hideCheckIntervalMin) + v2;
+            ci->nextHideWeaponTime = BO1_CrtRand() % (hideCheckIntervalMax - hideCheckIntervalMin) + v2;
         }
         if ( weapModel && (useFastFile->current.enabled || !XModelBad(weapModel)) )
         {

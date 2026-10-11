@@ -1,4 +1,19 @@
 #include "mem_userhunk.h"
+#if defined(__ANDROID__)
+#include "memory_services.h"
+#include "com_errors.h"
+#include "mem_firstfit.h"
+#include "mem_fixed.h"
+#include <qcommon/mem_track.h>
+#include <platform/android/virtual_memory.h>
+#include <platform/android/hunk_services.h>
+#include <cstring>
+#include <cstddef>
+// Debug/telemetry services remain external; the default allocator does not call them.
+void __cdecl Com_Error(errorParm_t code, const char *format, ...);
+void Bo1_Diag(const char *format, ...);
+void Bo1_DiagStack(const char *context);
+#else
 #include <database/db_stream.h>
 #include "assertive.h"
 #include <qcommon/threads.h>
@@ -9,6 +24,17 @@
 #include <qcommon/common.h>
 #include "mem_firstfit.h"
 #include "mem_fixed.h"
+
+#endif
+
+static bool Hunk_IsMainThread()
+{
+#if defined(__ANDROID__)
+    return bo1::android::IsHunkMainThread();
+#else
+    return Sys_IsMainThread();
+#endif
+}
 
 HunkUser *g_DebugHunkUser;
 
@@ -21,39 +47,38 @@ struct ALLOCATION_SCHEME_FUNCTIONS // sizeof=0x14
     void (__cdecl *Free)(HunkUser *, void *);
 };
 
-// BO1TODO: remove casts and fix prototypes
+// Typed adapters preserve each allocator's API without incompatible function-pointer calls.
 ALLOCATION_SCHEME_FUNCTIONS g_HunkUserAllocationSchemeMap[4] =
 {
   {
-    (HunkUser *(*)(void*, int, HU_ALLOCATION_SCHEME, unsigned int, void*, const char *, int))Hunk_UserDefaultInit,
-    (void(*)(HunkUser*))Hunk_UserDefaultReset,
-     (void(*)(HunkUser *))Hunk_UserDefaultDestroy,
-    (void *(*)(HunkUser *, int, int, const char *))Hunk_UserDefaultAlloc,
+    [](void *b, int s, HU_ALLOCATION_SCHEME h, unsigned f, void *d, const char *n, int t) { return Hunk_UserDefaultInit(static_cast<unsigned char *>(b), s, h, f, d, n, t); },
+    [](HunkUser *u) { Hunk_UserDefaultReset(reinterpret_cast<HunkUserDefault *>(u)); },
+    [](HunkUser *u) { Hunk_UserDefaultDestroy(reinterpret_cast<HunkUserDefault *>(u)); },
+    [](HunkUser *u, int s, int a, const char *n) { return Hunk_UserDefaultAlloc(reinterpret_cast<HunkUserDefault *>(u), static_cast<unsigned int>(s), a, n); },
     Hunk_UserDefaultFree
   },
   {
-    (HunkUser *(*)(void *, int, HU_ALLOCATION_SCHEME, unsigned int, void *, const char *, int))Hunk_UserDebugInit,
-    Hunk_UserDebugReset,
-    Hunk_UserDebugDestroy,
-    (void *(*)(HunkUser *, int, int, const char *))Hunk_UserDebugAlloc,
+    Hunk_UserDebugInit, Hunk_UserDebugReset, Hunk_UserDebugDestroy,
+    [](HunkUser *u, int s, int a, const char *) { return Hunk_UserDebugAlloc(u, s, a); },
     Hunk_UserDebugFree
   },
   {
-    (HunkUser *(*)(void *, int, HU_ALLOCATION_SCHEME, unsigned int, void *, const char *, int))Hunk_FirstFitInit,
-    Hunk_FirstFitReset,
-    Hunk_FirstFitDestroy,
-    (void *(*)(HunkUser *, int, int, const char *))Hunk_FirstFitAlloc,
+    [](void *b, int s, HU_ALLOCATION_SCHEME h, unsigned f, void *d, const char *n, int t) { return Hunk_FirstFitInit(b, static_cast<unsigned int>(s), h, f, d, n, t); },
+    Hunk_FirstFitReset, Hunk_FirstFitDestroy,
+    [](HunkUser *u, int s, int a, const char *) { return Hunk_FirstFitAlloc(u, s, a); },
     Hunk_FirstFitFree
   },
-  {
-    Hunk_FixedInit,
-    Hunk_FixedReset,
-    Hunk_FixedDestroy,
-    Hunk_FixedAlloc,
-    Hunk_FixedFree
-  }
+  { Hunk_FixedInit, Hunk_FixedReset, Hunk_FixedDestroy, Hunk_FixedAlloc, Hunk_FixedFree }
 };
 
+static psize_int Hunk_PageSize()
+{
+#if defined(__ANDROID__)
+    return static_cast<psize_int>(bo1::android::VirtualPageSize());
+#else
+    return 4096;
+#endif
+}
 
 
 HunkUser *__cdecl Hunk_UserDebugInit(
@@ -79,7 +104,7 @@ HunkUser *__cdecl Hunk_UserDebugInit(
     {
         __debugbreak();
     }
-    if ( !Sys_IsMainThread()
+    if ( !Hunk_IsMainThread()
         && !Assert_MyHandler(
                     "C:\\projects_pc\\cod\\codsrc\\src\\universal\\mem_userhunk.cpp",
                     110,
@@ -106,6 +131,9 @@ HunkUser *__cdecl Hunk_UserDebugInit(
 
 void __cdecl Hunk_UserDebugReset(HunkUser *_user)
 {
+#if defined(__ANDROID__)
+    iassert(Hunk_IsMainThread());
+#endif
     Hunk_FirstFitReset(reinterpret_cast<HunkUserDebug *>(_user)->firstFit);
 }
 
@@ -121,7 +149,7 @@ void __cdecl Hunk_UserDebugDestroy(HunkUser *_user)
     {
         __debugbreak();
     }
-    if ( !Sys_IsMainThread()
+    if ( !Hunk_IsMainThread()
         && !Assert_MyHandler(
                     "C:\\projects_pc\\cod\\codsrc\\src\\universal\\mem_userhunk.cpp",
                     137,
@@ -151,7 +179,7 @@ void *__cdecl Hunk_UserDebugAlloc(HunkUser *_user, int size, int alignment)
     {
         __debugbreak();
     }
-    if ( !Sys_IsMainThread()
+    if ( !Hunk_IsMainThread()
         && !Assert_MyHandler(
                     "C:\\projects_pc\\cod\\codsrc\\src\\universal\\mem_userhunk.cpp",
                     157,
@@ -204,7 +232,7 @@ void __cdecl Hunk_UserDebugFree(HunkUser *_user, void *ptr)
     {
         __debugbreak();
     }
-    if ( !Sys_IsMainThread()
+    if ( !Hunk_IsMainThread()
         && !Assert_MyHandler(
                     "C:\\projects_pc\\cod\\codsrc\\src\\universal\\mem_userhunk.cpp",
                     169,
@@ -256,7 +284,7 @@ HunkUser *__cdecl Hunk_UserDefaultInit(
     if ( (flags & 2) != 0 )
         user->locked = user->pos + (psize_int)size;
     else
-        user->locked = (user->pos + 4095) & ~(psize_int)4095;
+        user->locked = (user->pos + Hunk_PageSize() - 1) & ~(Hunk_PageSize() - 1);
     user->maxSize = size;
     user->current = user;
     user->next = 0;
@@ -302,8 +330,8 @@ void __cdecl Hunk_UserDefaultReset(HunkUserDefault *_user)
     else
     {
         // First page boundary after the hunk base (base is page-aligned from VirtualReserve).
-        pos = (char *)(((psize_int)_user + 4096) & ~(psize_int)4095);
-        if (pos != (char *)((_user->pos + 4095) & ~(psize_int)4095))
+        pos = (char *)(((psize_int)_user + Hunk_PageSize()) & ~(Hunk_PageSize() - 1));
+        if (pos != (char *)((_user->pos + Hunk_PageSize() - 1) & ~(Hunk_PageSize() - 1)))
         {
             if ((psize_int)(_user->pos - (psize_int)pos) <= 0
                 && !Assert_MyHandler(
@@ -318,8 +346,13 @@ void __cdecl Hunk_UserDefaultReset(HunkUserDefault *_user)
             Z_VirtualDecommit(pos, (int)(_user->pos - (psize_int)pos), _user->hunkUser.type);
         }
         _user->pos = (psize_int)_user->buf;
-        _user->locked = (_user->pos + 4095) & ~(psize_int)4095;
+        _user->locked = (_user->pos + Hunk_PageSize() - 1) & ~(Hunk_PageSize() - 1);
+#if defined(__ANDROID__)
+        const psize_int clearEnd = _user->maxSize < Hunk_PageSize() ? _user->maxSize : Hunk_PageSize();
+        memset(_user->buf, 0, static_cast<size_t>(clearEnd - headerBytes));
+#else
         memset(_user->buf, 0, (size_t)(4096 - headerBytes));
+#endif
     }
 }
 
@@ -437,13 +470,17 @@ void *__cdecl Hunk_UserDefaultAlloc(HunkUserDefault *user, unsigned int size, in
     current->pos = (psize_int)size + v8;
     if (current->pos > current->locked)
     {
+#if defined(__ANDROID__)
+        range = ((current->pos + Hunk_PageSize() - 1) & ~(Hunk_PageSize() - 1)) - current->locked;
+#else
         range = ((current->pos + 4096) & ~(psize_int)4095) - current->locked;
+#endif
         if (range <= 0
             && !Assert_MyHandler("C:\\projects_pc\\cod\\codsrc\\src\\universal\\mem_userhunk.cpp", 323, 0, "%s", "range > 0"))
         {
             __debugbreak();
         }
-        if (range % 4096
+        if (range % Hunk_PageSize()
             && !Assert_MyHandler(
                 "C:\\projects_pc\\cod\\codsrc\\src\\universal\\mem_userhunk.cpp",
                 324,
@@ -515,6 +552,9 @@ HunkUser *__cdecl Hunk_UserCreateFromBuffer(
                 const char *name,
                 int type)
 {
+#if defined(__ANDROID__)
+    if (!(buffer && size > static_cast<int>(offsetof(HunkUserDefault, buf) + 31) && !(flags & 8) && (scheme == HU_SCHEME_DEFAULT || scheme == HU_SCHEME_FIRSTFIT) && (reinterpret_cast<uintptr_t>(buffer) % alignof(HunkUserDefault)) == 0)) Com_Error(ERR_FATAL, "Android HunkUser: invalid or unsupported configuration");
+#endif
     if ( scheme == HU_SCHEME_DEBUG
         && !Assert_MyHandler(
                     "C:\\projects_pc\\cod\\codsrc\\src\\universal\\mem_userhunk.cpp",
@@ -538,6 +578,9 @@ HunkUser *__cdecl Hunk_UserCreate(
 {
     char *buffer; // [esp+0h] [ebp-4h]
 
+#if defined(__ANDROID__)
+    if (!(size > static_cast<int>(offsetof(HunkUserDefault, buf) + 31) && !(flags & 8) && (scheme == HU_SCHEME_DEFAULT || scheme == HU_SCHEME_DEBUG))) Com_Error(ERR_FATAL, "Android HunkUser: invalid or unsupported configuration");
+#endif
     if ((flags & 2) != 0
         && !Assert_MyHandler(
             "C:\\projects_pc\\cod\\codsrc\\src\\universal\\mem_userhunk.cpp",
@@ -585,6 +628,10 @@ HunkUser *__cdecl Hunk_UserCreate(
 
 void *__cdecl Hunk_UserAlloc(HunkUser *user, int size, int alignment, const char *name)
 {
+#if defined(__ANDROID__)
+    if (!user || (user->scheme != HU_SCHEME_DEFAULT && user->scheme != HU_SCHEME_DEBUG && user->scheme != HU_SCHEME_FIRSTFIT) || size < 0 || alignment <= 0 || alignment > 4096 || (alignment & (alignment - 1)))
+        Com_Error(ERR_FATAL, "Android HunkUser: invalid allocation");
+#endif
     return g_HunkUserAllocationSchemeMap[user->scheme].Alloc(user, size, alignment, name);
 }
 

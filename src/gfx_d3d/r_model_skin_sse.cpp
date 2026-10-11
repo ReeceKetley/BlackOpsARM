@@ -1,6 +1,6 @@
 #include "r_model_skin.h"
 
-#if defined(BO1_PORT_X64) || defined(_M_X64) || defined(_WIN64)
+#if defined(BO1_PORT_X64) || defined(_M_X64) || defined(_WIN64) || (defined(__ANDROID__) && defined(__aarch64__))
 // BO1_PORT_X64_SSE_STUB: MMX skinning is x86-only; fall back to scalar.
 void __cdecl R_SkinXSurfaceSkinnedSse(
     const XSurface *xsurf,

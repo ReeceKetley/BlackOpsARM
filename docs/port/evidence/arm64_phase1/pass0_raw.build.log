@@ -1,0 +1,702 @@
+[1/3] D:\Android\Sdk\ndk\30.0.16248370\toolchains\llvm\prebuilt\windows-x86_64\bin\clang++.exe --target=aarch64-none-linux-android28 --sysroot=D:/Android/Sdk/ndk/30.0.16248370/toolchains/llvm/prebuilt/windows-x86_64/sysroot -D_DEBUG=1 -I"D:/Desktop/Black Ops 2 Android/BlackOpsARM/src" -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fno-limit-debug-info  -fPIC -Wall -Wextra -Wpedantic -Wcast-align -Werror=return-type -ferror-limit=0 -ffp-contract=off -std=gnu++20 -MD -MT CMakeFiles/bo1_arm64_utilities.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/universal/timing.cpp.o -MF CMakeFiles\bo1_arm64_utilities.dir\D_\Desktop\Black_Ops_2_Android\BlackOpsARM\src\universal\timing.cpp.o.d -o CMakeFiles/bo1_arm64_utilities.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/universal/timing.cpp.o -c "D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/timing.cpp"
+FAILED: CMakeFiles/bo1_arm64_utilities.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/universal/timing.cpp.o 
+D:\Android\Sdk\ndk\30.0.16248370\toolchains\llvm\prebuilt\windows-x86_64\bin\clang++.exe --target=aarch64-none-linux-android28 --sysroot=D:/Android/Sdk/ndk/30.0.16248370/toolchains/llvm/prebuilt/windows-x86_64/sysroot -D_DEBUG=1 -I"D:/Desktop/Black Ops 2 Android/BlackOpsARM/src" -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fno-limit-debug-info  -fPIC -Wall -Wextra -Wpedantic -Wcast-align -Werror=return-type -ferror-limit=0 -ffp-contract=off -std=gnu++20 -MD -MT CMakeFiles/bo1_arm64_utilities.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/universal/timing.cpp.o -MF CMakeFiles\bo1_arm64_utilities.dir\D_\Desktop\Black_Ops_2_Android\BlackOpsARM\src\universal\timing.cpp.o.d -o CMakeFiles/bo1_arm64_utilities.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/universal/timing.cpp.o -c "D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/timing.cpp"
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/timing.cpp:3:10: fatal error: 'Windows.h' file not found
+
+    3 | #include <Windows.h>
+
+      |          ^~~~~~~~~~~
+
+1 error generated.
+
+[2/3] D:\Android\Sdk\ndk\30.0.16248370\toolchains\llvm\prebuilt\windows-x86_64\bin\clang++.exe --target=aarch64-none-linux-android28 --sysroot=D:/Android/Sdk/ndk/30.0.16248370/toolchains/llvm/prebuilt/windows-x86_64/sysroot -D_DEBUG=1 -I"D:/Desktop/Black Ops 2 Android/BlackOpsARM/src" -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fno-limit-debug-info  -fPIC -Wall -Wextra -Wpedantic -Wcast-align -Werror=return-type -ferror-limit=0 -ffp-contract=off -std=gnu++20 -MD -MT CMakeFiles/bo1_arm64_utilities.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/universal/com_encode.cpp.o -MF CMakeFiles\bo1_arm64_utilities.dir\D_\Desktop\Black_Ops_2_Android\BlackOpsARM\src\universal\com_encode.cpp.o.d -o CMakeFiles/bo1_arm64_utilities.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/universal/com_encode.cpp.o -c "D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_encode.cpp"
+FAILED: CMakeFiles/bo1_arm64_utilities.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/universal/com_encode.cpp.o 
+D:\Android\Sdk\ndk\30.0.16248370\toolchains\llvm\prebuilt\windows-x86_64\bin\clang++.exe --target=aarch64-none-linux-android28 --sysroot=D:/Android/Sdk/ndk/30.0.16248370/toolchains/llvm/prebuilt/windows-x86_64/sysroot -D_DEBUG=1 -I"D:/Desktop/Black Ops 2 Android/BlackOpsARM/src" -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fno-limit-debug-info  -fPIC -Wall -Wextra -Wpedantic -Wcast-align -Werror=return-type -ferror-limit=0 -ffp-contract=off -std=gnu++20 -MD -MT CMakeFiles/bo1_arm64_utilities.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/universal/com_encode.cpp.o -MF CMakeFiles\bo1_arm64_utilities.dir\D_\Desktop\Black_Ops_2_Android\BlackOpsARM\src\universal\com_encode.cpp.o.d -o CMakeFiles/bo1_arm64_utilities.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/universal/com_encode.cpp.o -c "D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_encode.cpp"
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_encode.cpp:1:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_encode.h:3:44: error: expected ')'
+    3 | int __cdecl Com_EncodeYEnc(unsigned __int8 *indata, int inlen, char *outdata, int outlen);
+      |                                            ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_encode.h:3:27: note: to match this '('
+    3 | int __cdecl Com_EncodeYEnc(unsigned __int8 *indata, int inlen, char *outdata, int outlen);
+      |                           ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_encode.h:4:45: error: expected ')'
+    4 | bool __cdecl YEncIsCritical(unsigned __int8 c);
+      |                                             ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_encode.h:4:28: note: to match this '('
+    4 | bool __cdecl YEncIsCritical(unsigned __int8 c);
+      |                            ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_encode.h:5:64: error: expected ')'
+    5 | int __cdecl Com_DecodeYEnc(const char *indata, unsigned __int8 *outdata, int outlen);
+      |                                                                ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_encode.h:5:27: note: to match this '('
+    5 | int __cdecl Com_DecodeYEnc(const char *indata, unsigned __int8 *outdata, int outlen);
+      |                           ^
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_encode.cpp:2:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/assertive.h:6:24: error: unknown type name '__int32'; did you mean '__int32_t'?
+    6 | enum AssertOccurance : __int32
+      |                        ^~~~~~~
+      |                        __int32_t
+D:/Android/Sdk/ndk/30.0.16248370/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/stdint.h:43:13: note: '__int32_t' declared here
+   43 | typedef int __int32_t;
+      |             ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_encode.cpp:4:44: error: expected ')'
+    4 | int __cdecl Com_EncodeYEnc(unsigned __int8 *indata, int inlen, char *outdata, int outlen)
+      |                                            ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_encode.cpp:4:27: note: to match this '('
+    4 | int __cdecl Com_EncodeYEnc(unsigned __int8 *indata, int inlen, char *outdata, int outlen)
+      |                           ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_encode.cpp:11:24: error: use of undeclared identifier 'inlen'
+   11 |     for ( in = 0; in < inlen; ++in )
+      |                        ^~~~~
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_encode.cpp:13:13: error: use of undeclared identifier 'indata'
+   13 |         c = indata[in] + 42;
+      |             ^~~~~~
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_encode.cpp:17:29: error: use of undeclared identifier 'outlen'
+   17 |             if ( len + 1 == outlen )
+      |                             ^~~~~~
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_encode.cpp:19:18: error: use of undeclared identifier 'outdata'
+   19 |                 *outdata = 0;
+      |                  ^~~~~~~
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_encode.cpp:22:13: error: use of undeclared identifier 'outdata'
+   22 |             outdata[len++] = 61;
+      |             ^~~~~~~
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_encode.cpp:24:25: error: use of undeclared identifier 'outlen'
+   24 |         if ( len + 1 == outlen )
+      |                         ^~~~~~
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_encode.cpp:26:14: error: use of undeclared identifier 'outdata'
+   26 |             *outdata = 0;
+      |              ^~~~~~~
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_encode.cpp:37:13: error: use of undeclared identifier '__debugbreak'
+   37 |             __debugbreak();
+      |             ^~~~~~~~~~~~
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_encode.cpp:39:9: error: use of undeclared identifier 'outdata'
+   39 |         outdata[len++] = c;
+      |         ^~~~~~~
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_encode.cpp:41:17: error: use of undeclared identifier 'outlen'
+   41 |     if ( len >= outlen
+      |                 ^~~~~~
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_encode.cpp:44:9: error: use of undeclared identifier '__debugbreak'
+   44 |         __debugbreak();
+      |         ^~~~~~~~~~~~
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_encode.cpp:46:5: error: use of undeclared identifier 'outdata'
+   46 |     outdata[len] = 0;
+      |     ^~~~~~~
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_encode.cpp:4:37: warning: unused parameter '__int8' [-Wunused-parameter]
+    4 | int __cdecl Com_EncodeYEnc(unsigned __int8 *indata, int inlen, char *outdata, int outlen)
+      |                                     ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_encode.cpp:50:45: error: expected ')'
+   50 | bool __cdecl YEncIsCritical(unsigned __int8 c)
+      |                                             ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_encode.cpp:50:28: note: to match this '('
+   50 | bool __cdecl YEncIsCritical(unsigned __int8 c)
+      |                            ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_encode.cpp:52:13: error: use of undeclared identifier 'c'
+   52 |     return !c || c == 61 || c == 10 || c == 13 || c == 127 || c == 92 || c == 37 || c == 146 || c == 34 || c == 59;
+      |             ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_encode.cpp:52:18: error: use of undeclared identifier 'c'
+   52 |     return !c || c == 61 || c == 10 || c == 13 || c == 127 || c == 92 || c == 37 || c == 146 || c == 34 || c == 59;
+      |                  ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_encode.cpp:52:29: error: use of undeclared identifier 'c'
+   52 |     return !c || c == 61 || c == 10 || c == 13 || c == 127 || c == 92 || c == 37 || c == 146 || c == 34 || c == 59;
+      |                             ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_encode.cpp:52:40: error: use of undeclared identifier 'c'
+   52 |     return !c || c == 61 || c == 10 || c == 13 || c == 127 || c == 92 || c == 37 || c == 146 || c == 34 || c == 59;
+      |                                        ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_encode.cpp:52:51: error: use of undeclared identifier 'c'
+   52 |     return !c || c == 61 || c == 10 || c == 13 || c == 127 || c == 92 || c == 37 || c == 146 || c == 34 || c == 59;
+      |                                                   ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_encode.cpp:52:63: error: use of undeclared identifier 'c'
+   52 |     return !c || c == 61 || c == 10 || c == 13 || c == 127 || c == 92 || c == 37 || c == 146 || c == 34 || c == 59;
+      |                                                               ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_encode.cpp:52:74: error: use of undeclared identifier 'c'
+   52 |     return !c || c == 61 || c == 10 || c == 13 || c == 127 || c == 92 || c == 37 || c == 146 || c == 34 || c == 59;
+      |                                                                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_encode.cpp:52:85: error: use of undeclared identifier 'c'
+   52 |     return !c || c == 61 || c == 10 || c == 13 || c == 127 || c == 92 || c == 37 || c == 146 || c == 34 || c == 59;
+      |                                                                                     ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_encode.cpp:52:97: error: use of undeclared identifier 'c'
+   52 |     return !c || c == 61 || c == 10 || c == 13 || c == 127 || c == 92 || c == 37 || c == 146 || c == 34 || c == 59;
+      |                                                                                                 ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_encode.cpp:52:108: error: use of undeclared identifier 'c'
+   52 |     return !c || c == 61 || c == 10 || c == 13 || c == 127 || c == 92 || c == 37 || c == 146 || c == 34 || c == 59;
+      |                                                                                                            ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_encode.cpp:50:38: warning: unused parameter '__int8' [-Wunused-parameter]
+   50 | bool __cdecl YEncIsCritical(unsigned __int8 c)
+      |                                      ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_encode.cpp:55:64: error: expected ')'
+   55 | int __cdecl Com_DecodeYEnc(const char *indata, unsigned __int8 *outdata, int outlen)
+      |                                                                ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_encode.cpp:55:27: note: to match this '('
+   55 | int __cdecl Com_DecodeYEnc(const char *indata, unsigned __int8 *outdata, int outlen)
+      |                           ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_encode.cpp:57:14: error: redefinition of '__int8'
+   57 |     unsigned __int8 c; // [esp+3h] [ebp-9h]
+      |              ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_encode.cpp:55:57: note: previous definition is here
+   55 | int __cdecl Com_DecodeYEnc(const char *indata, unsigned __int8 *outdata, int outlen)
+      |                                                         ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_encode.cpp:57:20: error: expected ';' at end of declaration
+   57 |     unsigned __int8 c; // [esp+3h] [ebp-9h]
+      |                    ^
+      |                    ;
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_encode.cpp:65:9: error: use of undeclared identifier 'c'
+   65 |         c = *indata;
+      |         ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_encode.cpp:66:24: error: use of undeclared identifier 'c'
+   66 |         if ( escape || c != 61 )
+      |                        ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_encode.cpp:68:25: error: use of undeclared identifier 'outlen'
+   68 |             if ( len == outlen )
+      |                         ^~~~~~
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_encode.cpp:72:17: error: use of undeclared identifier 'c'
+   72 |                 c -= 64;
+      |                 ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_encode.cpp:75:13: error: use of undeclared identifier 'outdata'
+   75 |             outdata[len++] = c - 42;
+      |             ^~~~~~~
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_encode.cpp:75:30: error: use of undeclared identifier 'c'
+   75 |             outdata[len++] = c - 42;
+      |                              ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_encode.cpp:55:57: warning: unused parameter '__int8' [-Wunused-parameter]
+   55 | int __cdecl Com_DecodeYEnc(const char *indata, unsigned __int8 *outdata, int outlen)
+
+      |                                                         ^
+
+3 warnings and 37 errors generated.
+
+[3/3] D:\Android\Sdk\ndk\30.0.16248370\toolchains\llvm\prebuilt\windows-x86_64\bin\clang++.exe --target=aarch64-none-linux-android28 --sysroot=D:/Android/Sdk/ndk/30.0.16248370/toolchains/llvm/prebuilt/windows-x86_64/sysroot -D_DEBUG=1 -I"D:/Desktop/Black Ops 2 Android/BlackOpsARM/src" -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fno-limit-debug-info  -fPIC -Wall -Wextra -Wpedantic -Wcast-align -Werror=return-type -ferror-limit=0 -ffp-contract=off -std=gnu++20 -MD -MT CMakeFiles/bo1_arm64_utilities.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/universal/com_math_anglevectors.cpp.o -MF CMakeFiles\bo1_arm64_utilities.dir\D_\Desktop\Black_Ops_2_Android\BlackOpsARM\src\universal\com_math_anglevectors.cpp.o.d -o CMakeFiles/bo1_arm64_utilities.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/universal/com_math_anglevectors.cpp.o -c "D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_math_anglevectors.cpp"
+FAILED: CMakeFiles/bo1_arm64_utilities.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/universal/com_math_anglevectors.cpp.o 
+D:\Android\Sdk\ndk\30.0.16248370\toolchains\llvm\prebuilt\windows-x86_64\bin\clang++.exe --target=aarch64-none-linux-android28 --sysroot=D:/Android/Sdk/ndk/30.0.16248370/toolchains/llvm/prebuilt/windows-x86_64/sysroot -D_DEBUG=1 -I"D:/Desktop/Black Ops 2 Android/BlackOpsARM/src" -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fno-limit-debug-info  -fPIC -Wall -Wextra -Wpedantic -Wcast-align -Werror=return-type -ferror-limit=0 -ffp-contract=off -std=gnu++20 -MD -MT CMakeFiles/bo1_arm64_utilities.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/universal/com_math_anglevectors.cpp.o -MF CMakeFiles\bo1_arm64_utilities.dir\D_\Desktop\Black_Ops_2_Android\BlackOpsARM\src\universal\com_math_anglevectors.cpp.o.d -o CMakeFiles/bo1_arm64_utilities.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/universal/com_math_anglevectors.cpp.o -c "D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_math_anglevectors.cpp"
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_math_anglevectors.cpp:4:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/q_shared.h:13:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:3:22: error: unknown type name '__int32'; did you mean '__int32_t'?
+    3 | enum DvarSetSource : __int32
+      |                      ^~~~~~~
+      |                      __int32_t
+D:/Android/Sdk/ndk/30.0.16248370/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/stdint.h:43:13: note: '__int32_t' declared here
+   43 | typedef int __int32_t;
+      |             ^
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_math_anglevectors.cpp:4:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/q_shared.h:13:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:11:19: error: unknown type name '__int32'; did you mean '__int32_t'?
+   11 | enum dvarType_t : __int32
+      |                   ^~~~~~~
+      |                   __int32_t
+D:/Android/Sdk/ndk/30.0.16248370/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/stdint.h:43:13: note: '__int32_t' declared here
+   43 | typedef int __int32_t;
+      |             ^
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_math_anglevectors.cpp:4:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/q_shared.h:13:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:35:9: error: unknown type name '__int64'; did you mean '__int64_t'?
+   35 |         __int64 integer64;
+      |         ^~~~~~~
+      |         __int64_t
+D:/Android/Sdk/ndk/30.0.16248370/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/stdint.h:46:14: note: '__int64_t' declared here
+   46 | typedef long __int64_t;
+      |              ^
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_math_anglevectors.cpp:4:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/q_shared.h:13:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:36:25: error: expected ';' at end of declaration list
+   36 |         unsigned __int64 unsignedInt64;
+      |                         ^
+      |                         ;
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:40:24: error: expected ';' at end of declaration list
+   40 |         unsigned __int8 color[4];
+      |                        ^
+      |                        ;
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:57:9: error: unknown type name '__int64'; did you mean '__int64_t'?
+   57 |         __int64 min;
+      |         ^~~~~~~
+      |         __int64_t
+D:/Android/Sdk/ndk/30.0.16248370/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/stdint.h:46:14: note: '__int64_t' declared here
+   46 | typedef long __int64_t;
+      |              ^
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_math_anglevectors.cpp:4:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/q_shared.h:13:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:58:9: error: unknown type name '__int64'; did you mean '__int64_t'?
+   58 |         __int64 max;
+      |         ^~~~~~~
+      |         __int64_t
+D:/Android/Sdk/ndk/30.0.16248370/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/stdint.h:46:14: note: '__int64_t' declared here
+   46 | typedef long __int64_t;
+      |              ^
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_math_anglevectors.cpp:4:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/q_shared.h:13:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:83:25: error: expected parameter declarator
+   83 | struct __declspec(align(8)) dvar_s // sizeof=0x70
+      |                         ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:83:25: error: expected ')'
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:83:24: note: to match this '('
+   83 | struct __declspec(align(8)) dvar_s // sizeof=0x70
+      |                        ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:83:29: error: expected function body after function declarator
+   83 | struct __declspec(align(8)) dvar_s // sizeof=0x70
+      |                             ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:107:16: error: unknown type name 'dvar_s'
+  107 | using dvar_t = dvar_s;
+      |                ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:112:58: error: unknown type name 'dvar_s'
+  112 | void __cdecl Dvar_ForEach(void (__cdecl *callback)(const dvar_s *, void *), void *userData);
+      |                                                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:117:45: error: unknown type name 'dvar_s'
+  117 | const char *__cdecl Dvar_EnumToString(const dvar_s *dvar);
+      |                                             ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:118:56: error: unknown type name 'dvar_s'
+  118 | const char *__cdecl Dvar_IndexStringToEnumString(const dvar_s *dvar, const char *indexString);
+      |                                                        ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:119:49: error: unknown type name 'dvar_s'
+  119 | const char *__cdecl Dvar_DisplayableValue(const dvar_s *dvar);
+      |                                                 ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:120:46: error: unknown type name 'dvar_s'
+  120 | const char *__cdecl Dvar_ValueToString(const dvar_s *dvar, DvarValue value);
+      |                                              ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:121:54: error: unknown type name 'dvar_s'
+  121 | const char *__cdecl Dvar_DisplayableResetValue(const dvar_s *dvar);
+      |                                                      ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:122:56: error: unknown type name 'dvar_s'
+  122 | const char *__cdecl Dvar_DisplayableLatchedValue(const dvar_s *dvar);
+      |                                                        ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:140:41: error: unknown type name 'dvar_s'
+  140 | bool __cdecl Dvar_HasLatchedValue(const dvar_s *dvar);
+      |                                         ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:142:7: error: unknown type name 'dvar_s'
+  142 | const dvar_s *__cdecl Dvar_FindVar(const char *dvarName);
+      |       ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:143:1: error: unknown type name 'dvar_s'
+  143 | dvar_s *__cdecl Dvar_FindMalleableVar(const char *dvarName);
+      | ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:145:7: error: unknown type name 'dvar_s'
+  145 | const dvar_s *__cdecl Dvar_FindVar(int dvarHash);
+      |       ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:146:39: error: unknown type name 'dvar_s'
+  146 | void __cdecl Dvar_ClearModified(const dvar_s *dvar);
+      |                                       ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:147:37: error: unknown type name 'dvar_s'
+  147 | void __cdecl Dvar_SetModified(const dvar_s *dvar);
+      |                                     ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:148:36: error: unknown type name 'dvar_s'
+  148 | void __cdecl Dvar_UpdateEnumDomain(dvar_s *dvar, const char **stringTable);
+      |                                    ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:160:31: error: unknown type name 'dvar_s'
+  160 | int __cdecl Dvar_GetInt(const dvar_s *dvar);
+      |                               ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:162:1: error: unknown type name '__int64'; did you mean '__int64_t'?
+  162 | __int64 __cdecl Dvar_StringToInt64(const char *string);
+      | ^~~~~~~
+      | __int64_t
+D:/Android/Sdk/ndk/30.0.16248370/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/stdint.h:46:14: note: '__int64_t' declared here
+   46 | typedef long __int64_t;
+      |              ^
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_math_anglevectors.cpp:4:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/q_shared.h:13:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:169:42: error: unknown type name 'dvar_s'
+  169 | void __cdecl Dvar_GetUnpackedColor(const dvar_s *dvar, float *expandedColor);
+      |                                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:170:69: error: expected ')'
+  170 | void __cdecl Dvar_StringToColor(const char *string, unsigned __int8 *color);
+      |                                                                     ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:170:32: note: to match this '('
+  170 | void __cdecl Dvar_StringToColor(const char *string, unsigned __int8 *color);
+      |                                ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:183:43: error: unknown type name 'dvar_s'
+  183 | bool __cdecl Dvar_ShouldFreeCurrentString(dvar_s *dvar);
+      |                                           ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:184:43: error: unknown type name 'dvar_s'
+  184 | bool __cdecl Dvar_ShouldFreeLatchedString(dvar_s *dvar);
+      |                                           ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:185:41: error: unknown type name 'dvar_s'
+  185 | bool __cdecl Dvar_ShouldFreeResetString(dvar_s *dvar);
+      |                                         ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:187:36: error: unknown type name 'dvar_s'
+  187 | void __cdecl Dvar_ChangeResetValue(dvar_s *dvar, DvarValue value);
+      |                                    ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:188:36: error: unknown type name 'dvar_s'
+  188 | void __cdecl Dvar_UpdateResetValue(dvar_s *dvar, DvarValue value);
+      |                                    ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:189:42: error: unknown type name 'dvar_s'
+  189 | void __cdecl Dvar_AssignResetStringValue(dvar_s *dvar, DvarValue *dest, char *string);
+      |                                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:192:43: error: unknown type name 'dvar_s'
+  192 | void __cdecl Dvar_MakeLatchedValueCurrent(dvar_s *dvar);
+      |                                           ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:193:30: error: unknown type name 'dvar_s'
+  193 | void __cdecl Dvar_SetVariant(dvar_s *dvar, DvarValue value, DvarSetSource source);
+      |                              ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:194:44: error: unknown type name 'dvar_s'
+  194 | void __cdecl Dvar_AssignCurrentStringValue(dvar_s *dvar, DvarValue *dest, char *string);
+      |                                            ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:195:35: error: unknown type name 'dvar_s'
+  195 | void __cdecl Dvar_SetLatchedValue(dvar_s *dvar, DvarValue value);
+      |                                   ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:196:44: error: unknown type name 'dvar_s'
+  196 | void __cdecl Dvar_AssignLatchedStringValue(dvar_s *dvar, DvarValue *dest, char *string);
+      |                                            ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:197:40: error: unknown type name 'dvar_s'
+  197 | char __cdecl Dvar_CanChangeValue(const dvar_s *dvar, DvarValue value, DvarSetSource source);
+      |                                        ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:198:37: error: unknown type name 'dvar_s'
+  198 | void __cdecl Dvar_ClearLatchedValue(dvar_s *dvar);
+      |                                     ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:199:7: error: unknown type name 'dvar_s'
+  199 | const dvar_s *__cdecl _Dvar_RegisterBool(const char *dvarName, bool value, unsigned __int16 flags, const char *description);
+      |       ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:199:93: error: expected ')'
+  199 | const dvar_s *__cdecl _Dvar_RegisterBool(const char *dvarName, bool value, unsigned __int16 flags, const char *description);
+      |                                                                                             ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:199:41: note: to match this '('
+  199 | const dvar_s *__cdecl _Dvar_RegisterBool(const char *dvarName, bool value, unsigned __int16 flags, const char *description);
+      |                                         ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:200:7: error: unknown type name 'dvar_s'
+  200 | const dvar_s *__cdecl Dvar_RegisterVariant(
+      |       ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:203:34: error: expected ')'
+  203 |                 unsigned __int16 flags,
+      |                                  ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:200:43: note: to match this '('
+  200 | const dvar_s *__cdecl Dvar_RegisterVariant(
+      |                                           ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:208:17: error: unknown type name 'dvar_s'
+  208 |                 dvar_s *dvar,
+      |                 ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:211:34: error: expected ')'
+  211 |                 unsigned __int16 flags,
+      |                                  ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:207:29: note: to match this '('
+  207 | void __cdecl Dvar_Reregister(
+      |                             ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:216:17: error: unknown type name 'dvar_s'
+  216 |                 dvar_s *dvar,
+      |                 ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:219:34: error: expected ')'
+  219 |                 unsigned __int16 flags,
+      |                                  ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:215:35: note: to match this '('
+  215 | void __cdecl Dvar_MakeExplicitType(
+      |                                   ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:227:31: error: unknown type name 'dvar_s'
+  227 | void __cdecl Dvar_UpdateValue(dvar_s *dvar, DvarValue value);
+      |                               ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:229:17: error: unknown type name 'dvar_s'
+  229 |                 dvar_s *dvar,
+      |                 ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:232:34: error: expected ')'
+  232 |                 unsigned __int16 flags,
+      |                                  ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:228:34: note: to match this '('
+  228 | void __cdecl Dvar_ReinterpretDvar(
+      |                                  ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:235:41: error: unknown type name 'dvar_s'
+  235 | void __cdecl Dvar_PerformUnregistration(dvar_s *dvar);
+      |                                         ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:237:71: error: unknown type name 'dvar_s'
+  237 | DvarValue *__cdecl Dvar_GetReinterpretedResetValue(DvarValue *result, dvar_s *__formal, DvarValue value);
+      |                                                                       ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:238:7: error: unknown type name 'dvar_s'
+  238 | const dvar_s *__cdecl Dvar_RegisterNew(
+      |       ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:241:34: error: expected ')'
+  241 |                 unsigned __int16 flags,
+      |                                  ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:238:39: note: to match this '('
+  238 | const dvar_s *__cdecl Dvar_RegisterNew(
+      |                                       ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:245:7: error: unknown type name 'dvar_s'
+  245 | const dvar_s *__cdecl _Dvar_RegisterInt(
+      |       ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:250:34: error: expected ')'
+  250 |                 unsigned __int16 flags,
+      |                                  ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:245:40: note: to match this '('
+  245 | const dvar_s *__cdecl _Dvar_RegisterInt(
+      |                                        ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:252:7: error: unknown type name 'dvar_s'
+  252 | const dvar_s *__cdecl _Dvar_RegisterInt64(
+      |       ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:254:17: error: unknown type name '__int64'; did you mean '__int64_t'?
+  254 |                 __int64 value,
+      |                 ^~~~~~~
+      |                 __int64_t
+D:/Android/Sdk/ndk/30.0.16248370/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/stdint.h:46:14: note: '__int64_t' declared here
+   46 | typedef long __int64_t;
+      |              ^
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_math_anglevectors.cpp:4:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/q_shared.h:13:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:255:17: error: unknown type name '__int64'; did you mean '__int64_t'?
+  255 |                 __int64 min,
+      |                 ^~~~~~~
+      |                 __int64_t
+D:/Android/Sdk/ndk/30.0.16248370/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/stdint.h:46:14: note: '__int64_t' declared here
+   46 | typedef long __int64_t;
+      |              ^
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_math_anglevectors.cpp:4:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/q_shared.h:13:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:256:17: error: unknown type name '__int64'; did you mean '__int64_t'?
+  256 |                 __int64 max,
+      |                 ^~~~~~~
+      |                 __int64_t
+D:/Android/Sdk/ndk/30.0.16248370/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/stdint.h:46:14: note: '__int64_t' declared here
+   46 | typedef long __int64_t;
+      |              ^
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_math_anglevectors.cpp:4:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/q_shared.h:13:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:257:34: error: expected ')'
+  257 |                 unsigned __int16 flags,
+      |                                  ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:252:42: note: to match this '('
+  252 | const dvar_s *__cdecl _Dvar_RegisterInt64(
+      |                                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:259:7: error: unknown type name 'dvar_s'
+  259 | const dvar_s *__cdecl _Dvar_RegisterFloat(
+      |       ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:264:34: error: expected ')'
+  264 |                 unsigned __int16 flags,
+      |                                  ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:259:42: note: to match this '('
+  259 | const dvar_s *__cdecl _Dvar_RegisterFloat(
+      |                                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:266:7: error: unknown type name 'dvar_s'
+  266 | const dvar_s *__cdecl _Dvar_RegisterVec2(
+      |       ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:272:34: error: expected ')'
+  272 |                 unsigned __int16 flags,
+      |                                  ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:266:41: note: to match this '('
+  266 | const dvar_s *__cdecl _Dvar_RegisterVec2(
+      |                                         ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:274:7: error: unknown type name 'dvar_s'
+  274 | const dvar_s *__cdecl _Dvar_RegisterVec3(
+      |       ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:281:34: error: expected ')'
+  281 |                 unsigned __int16 flags,
+      |                                  ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:274:41: note: to match this '('
+  274 | const dvar_s *__cdecl _Dvar_RegisterVec3(
+      |                                         ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:283:7: error: unknown type name 'dvar_s'
+  283 | const dvar_s *__cdecl _Dvar_RegisterVec4(
+      |       ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:291:34: error: expected ')'
+  291 |                 unsigned __int16 flags,
+      |                                  ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:283:41: note: to match this '('
+  283 | const dvar_s *__cdecl _Dvar_RegisterVec4(
+      |                                         ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:293:7: error: unknown type name 'dvar_s'
+  293 | const dvar_s *__cdecl _Dvar_RegisterString(
+      |       ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:296:34: error: expected ')'
+  296 |                 unsigned __int16 flags,
+      |                                  ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:293:43: note: to match this '('
+  293 | const dvar_s *__cdecl _Dvar_RegisterString(
+      |                                           ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:298:7: error: unknown type name 'dvar_s'
+  298 | const dvar_s *__cdecl _Dvar_RegisterEnum(
+      |       ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:302:34: error: expected ')'
+  302 |                 unsigned __int16 flags,
+      |                                  ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:298:41: note: to match this '('
+  298 | const dvar_s *__cdecl _Dvar_RegisterEnum(
+      |                                         ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:304:7: error: unknown type name 'dvar_s'
+  304 | const dvar_s *__cdecl _Dvar_RegisterColor(
+      |       ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:310:34: error: expected ')'
+  310 |                 unsigned __int16 flags,
+      |                                  ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:304:42: note: to match this '('
+  304 | const dvar_s *__cdecl _Dvar_RegisterColor(
+      |                                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:312:7: error: unknown type name 'dvar_s'
+  312 | const dvar_s *__cdecl _Dvar_RegisterLinearRGB(
+      |       ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:319:34: error: expected ')'
+  319 |                 unsigned __int16 flags,
+      |                                  ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:312:46: note: to match this '('
+  312 | const dvar_s *__cdecl _Dvar_RegisterLinearRGB(
+      |                                              ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:321:7: error: unknown type name 'dvar_s'
+  321 | const dvar_s *__cdecl _Dvar_RegisterColorXYZ(
+      |       ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:328:34: error: expected ')'
+  328 |                 unsigned __int16 flags,
+      |                                  ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:321:45: note: to match this '('
+  321 | const dvar_s *__cdecl _Dvar_RegisterColorXYZ(
+      |                                             ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:330:42: error: unknown type name 'dvar_s'
+  330 | void __cdecl Dvar_SetDvarValueFromSource(dvar_s *dvar, DvarValue newValue, DvarSetSource source);
+      |                                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:331:37: error: unknown type name 'dvar_s'
+  331 | void __cdecl Dvar_SetBoolFromSource(dvar_s *dvar, bool value, DvarSetSource source);
+      |                                     ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:332:36: error: unknown type name 'dvar_s'
+  332 | void __cdecl Dvar_SetIntFromSource(dvar_s *dvar, int value, DvarSetSource source);
+      |                                    ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:333:38: error: unknown type name 'dvar_s'
+  333 | void __cdecl Dvar_SetInt64FromSource(dvar_s *dvar, __int64 value, DvarSetSource source);
+      |                                      ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:333:52: error: unknown type name '__int64'
+  333 | void __cdecl Dvar_SetInt64FromSource(dvar_s *dvar, __int64 value, DvarSetSource source);
+      |                                                    ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:334:38: error: unknown type name 'dvar_s'
+  334 | void __cdecl Dvar_SetFloatFromSource(dvar_s *dvar, float value, DvarSetSource source);
+      |                                      ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:335:37: error: unknown type name 'dvar_s'
+  335 | void __cdecl Dvar_SetVec2FromSource(dvar_s *dvar, float x, float y, DvarSetSource source);
+      |                                     ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:336:37: error: unknown type name 'dvar_s'
+  336 | void __cdecl Dvar_SetVec3FromSource(dvar_s *dvar, float x, float y, float z, DvarSetSource source);
+      |                                     ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:338:17: error: unknown type name 'dvar_s'
+  338 |                 dvar_s *dvar,
+      |                 ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:344:38: error: unknown type name 'dvar_s'
+  344 | void __cdecl Dvar_SetColorFromSource(dvar_s *dvar, float r, float g, float b, float a, DvarSetSource source);
+      |                                      ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:345:27: error: unknown type name 'dvar_s'
+  345 | void __cdecl Dvar_SetBool(dvar_s *dvar, bool value);
+      |                           ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:346:26: error: unknown type name 'dvar_s'
+  346 | void __cdecl Dvar_SetInt(dvar_s *dvar, int value);
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:347:28: error: unknown type name 'dvar_s'
+  347 | void __cdecl Dvar_SetInt64(dvar_s *dvar, __int64 value);
+      |                            ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:347:42: error: unknown type name '__int64'
+  347 | void __cdecl Dvar_SetInt64(dvar_s *dvar, __int64 value);
+      |                                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:348:28: error: unknown type name 'dvar_s'
+  348 | void __cdecl Dvar_SetFloat(dvar_s *dvar, float value);
+      |                            ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:349:27: error: unknown type name 'dvar_s'
+  349 | void __cdecl Dvar_SetVec2(dvar_s *dvar, float x, float y);
+      |                           ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:350:27: error: unknown type name 'dvar_s'
+  350 | void __cdecl Dvar_SetVec3(dvar_s *dvar, float x, float y, float z);
+      |                           ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:351:27: error: unknown type name 'dvar_s'
+  351 | void __cdecl Dvar_SetVec4(dvar_s *dvar, float x, float y, float z, float w);
+      |                           ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:352:29: error: unknown type name 'dvar_s'
+  352 | void __cdecl Dvar_SetString(dvar_s *dvar, const char *value);
+      |                             ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:353:39: error: unknown type name 'dvar_s'
+  353 | void __cdecl Dvar_SetStringFromSource(dvar_s *dvar, const char *string, DvarSetSource source);
+      |                                       ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:354:28: error: unknown type name 'dvar_s'
+  354 | void __cdecl Dvar_SetColor(dvar_s *dvar, float r, float g, float b, float a);
+      |                            ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:355:33: error: unknown type name 'dvar_s'
+  355 | void __cdecl Dvar_SetFromString(dvar_s *dvar, const char *string);
+      |                                 ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:356:43: error: unknown type name 'dvar_s'
+  356 | void __cdecl Dvar_SetFromStringFromSource(dvar_s *dvar, const char *string, DvarSetSource source);
+      |                                           ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:359:56: error: unknown type name '__int64'
+  359 | void __cdecl Dvar_SetInt64ByName(const char *dvarName, __int64 value);
+      |                                                        ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:366:7: error: unknown type name 'dvar_s'
+  366 | const dvar_s *__cdecl Dvar_SetFromStringByNameFromSource(
+      |       ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:370:34: error: expected ')'
+  370 |                 unsigned __int16 flags);
+      |                                  ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:366:57: note: to match this '('
+  366 | const dvar_s *__cdecl Dvar_SetFromStringByNameFromSource(
+      |                                                         ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:373:34: error: unknown type name 'dvar_s'
+  373 | void __cdecl Dvar_AddFlags(const dvar_s *dvar, int flags);
+      |                                  ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:374:25: error: unknown type name 'dvar_s'
+  374 | void __cdecl Dvar_Reset(dvar_s *dvar, DvarSetSource setSource);
+      |                         ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:391:36: error: unknown type name 'dvar_s'
+  391 | void __cdecl Dvar_SetBoolIfChanged(dvar_s *dvar, bool value);
+      |                                    ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:392:35: error: unknown type name 'dvar_s'
+  392 | void __cdecl Dvar_SetIntIfChanged(dvar_s *dvar, int value);
+      |                                   ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:393:37: error: unknown type name 'dvar_s'
+  393 | void __cdecl Dvar_SetFloatIfChanged(dvar_s *dvar, float value);
+      |                                     ^
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_math_anglevectors.cpp:4:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/q_shared.h:14:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_math.h:2:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/assertive.h:6:24: error: unknown type name '__int32'
+    6 | enum AssertOccurance : __int32
+      |                        ^
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_math_anglevectors.cpp:4:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/q_shared.h:14:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_math.h:5:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_pack.h:21:20: error: expected ';' at end of declaration list
+   21 |     unsigned __int8 array[4];
+      |                    ^
+      |                    ;
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_pack.h:28:20: error: expected ';' at end of declaration list
+   28 |     unsigned __int8 array[4];
+      |                    ^
+      |                    ;
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_pack.h:38:52: error: expected ')'
+   38 | void __cdecl Byte4UnpackRgba(const unsigned __int8 *from, float *to);
+      |                                                    ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_pack.h:38:29: note: to match this '('
+   38 | void __cdecl Byte4UnpackRgba(const unsigned __int8 *from, float *to);
+      |                             ^
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_math_anglevectors.cpp:4:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/q_shared.h:14:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_math.h:29:24: error: expected ';' at end of declaration list
+   29 |         unsigned __int8 type;
+      |                        ^
+      |                        ;
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_math.h:30:18: error: duplicate member '__int8'
+   30 |         unsigned __int8 signbits;
+      |                  ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_math.h:29:18: note: previous declaration is here
+   29 |         unsigned __int8 type;
+      |                  ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_math.h:30:24: error: expected ';' at end of declaration list
+   30 |         unsigned __int8 signbits;
+      |                        ^
+      |                        ;
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_math.h:31:18: error: duplicate member '__int8'
+   31 |         unsigned __int8 pad[2];
+      |                  ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_math.h:29:18: note: previous declaration is here
+   29 |         unsigned __int8 type;
+      |                  ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_math.h:31:24: error: expected ';' at end of declaration list
+   31 |         unsigned __int8 pad[2];
+      |                        ^
+      |                        ;
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_math.h:63:5: warning: anonymous structs are a GNU extension [-Wgnu-anonymous-struct]
+   63 |     struct {
+      |     ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_math.h:112:1: error: unknown type name '__int16'
+  112 | __int16 __cdecl ClampShort(int i);
+      | ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_math.h:113:16: error: expected ';' after top level declarator
+  113 | unsigned __int8 __cdecl DirToByte(const float *dir);
+      |                ^
+      |                ;
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_math.h:113:25: error: a type specifier is required for all declarations
+  113 | unsigned __int8 __cdecl DirToByte(const float *dir);
+      |                         ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_math.h:322:9: error: use of undeclared identifier '__debugbreak'
+  322 |         __debugbreak();
+      |         ^~~~~~~~~~~~
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_math_anglevectors.cpp:4:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/q_shared.h:16:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/profile.h:22:
+
+D:/Android/Sdk/ndk/30.0.16248370/toolchains/llvm/prebuilt/windows-x86_64/lib/clang/21/include/intrin.h:12:15: fatal error: 'intrin.h' file not found
+
+   12 | #include_next <intrin.h>
+
+      |               ^~~~~~~~~~
+
+1 warning and 127 errors generated.
+
+ninja: build stopped: cannot make progress due to previous errors.

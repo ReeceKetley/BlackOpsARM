@@ -1,3 +1,4 @@
+#include <platform/engine_random.h>
 #include "ui_utils.h"
 #include <universal/assertive.h>
 #include <client_mp/cl_scrn_mp.h>
@@ -866,9 +867,9 @@ void __cdecl CL_SelectStringTableEntryInDvar_f()
             v0 = Cmd_Argv(1);
             StringTable_GetAsset(v0, (XAssetHeader *)&table);
             v1 = Sys_Milliseconds();
-            srand(v1);
+            BO1_CrtSrand(v1);
             rowCount = (float)table->rowCount;
-            row = (int)(float)((float)(rowCount * (float)rand()) / 32767.0);
+            row = (int)(float)((float)(rowCount * (float)BO1_CrtRand()) / 32767.0);
             v2 = Cmd_Argv(2);
             v3 = atoi(v2);
             ColumnValueForRow = (char *)StringTable_GetColumnValueForRow(table, row, v3);

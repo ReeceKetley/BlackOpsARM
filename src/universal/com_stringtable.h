@@ -1,3 +1,4 @@
+#include <platform/bo1_native_width.h>
 #pragma once
 
 struct StringTableCell // sizeof=0x8
@@ -14,7 +15,7 @@ struct StringTable // sizeof=0x14
     StringTableCell *values;
     __int16 *cellIndex;
 };
-#if !defined(BO1_PORT_X64)
+#if !BO1_NATIVE_64BIT
 static_assert(sizeof(StringTable) == 20);
 #endif
 

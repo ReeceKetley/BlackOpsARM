@@ -1,0 +1,6 @@
+In file included from tools/port/tests/arm64_narrow_slot_probe.cpp:1:
+In file included from src/universal/narrow32.h:3:
+src/platform/bo1_native_width.h:24:4: error: Android ARM64 requires region-tagged Narrow32 handles
+   24 | #  error Android ARM64 requires region-tagged Narrow32 handles
+      |    ^
+1 error generated.

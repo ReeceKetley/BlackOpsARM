@@ -1,6 +1,7 @@
+#include <platform/bo1_native_width.h>
 #include "db_expand.hpp"
 
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
 
 #include "db_stream.h"
 #include "db_stream_load.h"
@@ -143,7 +144,7 @@ static inline void DB_ExpandPtrStore(uintptr_t *slot, const T &src)
 
 static void DB_Expand_Commit(int nativeSize, int count = 1)
 {
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
     // Disk bytes read == Win32 stream footprint. Empty commits keep both cursors still.
     DB_SetExpandWin32Size(g_expandReadAccum);
     // Expanded arrays: element starts inside the commit map exactly (Win32 stride != native stride).

@@ -1,3 +1,4 @@
+#include <platform/bo1_native_width.h>
 #include "db_memory.h"
 #include "db_file_load.h"
 #include "db_registry.h"
@@ -36,7 +37,7 @@ void __cdecl DB_AllocXBlocks(
     for ( blockIndex = 0; blockIndex < 7; ++blockIndex )
     {
         buf.size = blockSize[blockIndex];
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
         // FastFile block sizes are Win32 sizes; the expanded 64-bit structs (8-byte pointers, 8-aligned) are larger.
         // Measured native/Win32 block-use ratios (all zombie_pentagon zones): 1.0-1.3, worst 1.69 for a 10 MB pointer-dense patch
         // zone, ~1.02 for the 50-100 MB bulk-data zones. The address space is tight (2 GB with BO1_X64_LOW_VA), so big blocks get

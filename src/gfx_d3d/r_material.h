@@ -1,3 +1,4 @@
+#include <platform/bo1_native_width.h>
 #pragma once
 
 #include <d3d9.h>
@@ -232,7 +233,7 @@ struct MaterialTechniqueSet // sizeof=0x210
         unsigned __int16 techsetFlags;
         MaterialTechnique *techniques[130];
 };
-#if !defined(BO1_PORT_X64)
+#if !BO1_NATIVE_64BIT
 static_assert(sizeof(MaterialTechniqueSet) == 528);
 #endif
 
@@ -396,7 +397,7 @@ struct Material // sizeof=0xC0
         };
         GfxStateBits *stateBitsTable;
 };
-#if !defined(BO1_PORT_X64)
+#if !BO1_NATIVE_64BIT
 static_assert(sizeof(Material) == 192);
 #endif
 

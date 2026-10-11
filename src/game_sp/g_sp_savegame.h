@@ -1,3 +1,4 @@
+#include <platform/bo1_native_width.h>
 #pragma once
 #include <universal/memfile.h>
 #include <universal/q_shared.h>
@@ -73,10 +74,10 @@ struct SPSaveGame
     bool suppressPrint;             // +0x104F0: no 'S' server command on commit
     bool callbackNow;               // +0x104F1: 0x0068BE40 calls the callback at once
 };
-#if !defined(BO1_PORT_X64)
+#if !BO1_NATIVE_64BIT
 static_assert(sizeof(MemoryFile) == 0x8024, "SP MemoryFile size");
 #endif
-#if !defined(BO1_PORT_X64)
+#if !BO1_NATIVE_64BIT
 static_assert(offsetof(SPSaveGame, state) == 0x10048, "SP SaveGame layout");
 static_assert(offsetof(SPSaveGame, header) == 0x1004C, "SP SaveGame layout");
 static_assert(offsetof(SPSaveGame, isUsingGlobalBuffer) == 0x104EC, "SP SaveGame layout");

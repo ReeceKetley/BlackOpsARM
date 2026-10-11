@@ -1,6 +1,13 @@
 #include "timing.h"
 
+#if defined(__ANDROID__)
+#include <platform/win32_compat/win32_time.h>
+using bo1::win32::_LARGE_INTEGER;
+using bo1::win32::Sleep;
+using bo1::win32::QueryPerformanceFrequency;
+#else
 #include <Windows.h>
+#endif
 
 long double msecPerRawTimerTick;
 

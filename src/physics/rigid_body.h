@@ -1,3 +1,4 @@
+#include <platform/bo1_native_width.h>
 #pragma once
 
 #include "phys_local.h"
@@ -542,7 +543,7 @@ struct phys_collision_pair : phys_link_list_base<phys_collision_pair> // sizeof=
     float m_hit_time;
     struct phys_gjk_cache_info *m_gjk_ci;
 };
-#if !defined(BO1_PORT_X64)
+#if !BO1_NATIVE_64BIT
 static_assert(sizeof(phys_collision_pair) == 20);
 #endif
 
@@ -638,7 +639,7 @@ struct avl_tree_accessor
     void setup_constraint(struct pulse_sum_constraint_solver *phys, float delta_t);
     void verify_constraint(environment_rigid_body *b1_, environment_rigid_body *b2_);
 };
-#if !defined(BO1_PORT_X64)
+#if !BO1_NATIVE_64BIT
 static_assert(sizeof(rigid_body_constraint_contact) == 0x2C);
 #endif
 

@@ -1,3 +1,4 @@
+#include <platform/engine_random.h>
 #include "com_math.h"
 
 #include <stdlib.h>
@@ -208,14 +209,21 @@ float bradfordMI[4][4] =
 
 
 
+double __cdecl BO1_Random()
+{
+    return (double)BO1_CrtRand() / 32768.0;
+}
+
+#if !defined(__ANDROID__)
 double __cdecl random()
 {
-    return (double)rand() / 32768.0;
+    return BO1_Random();
 }
+#endif
 
 double __cdecl crandom()
 {
-    return random() * 2.0 - 1.0;
+    return BO1_Random() * 2.0 - 1.0;
 }
 
 void __cdecl GaussianRandom(float *f0, float *f1)

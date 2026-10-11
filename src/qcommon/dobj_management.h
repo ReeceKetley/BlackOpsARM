@@ -1,3 +1,4 @@
+#include <platform/bo1_native_width.h>
 #pragma once
 #include <xanim/dobj.h>
 
@@ -23,7 +24,7 @@ void __cdecl DB_SaveDObjs();
 void __cdecl DB_LoadDObjs();
 DObj *__cdecl Com_GetClientDObj(unsigned int handle, int localClientNum);
 
-#if defined(BO1_PORT_X64)
+#if BO1_NATIVE_64BIT
 #define DOBJ_BUF_UINTS 40 // 160 bytes per DObj slot (sizeof(DObj) is 0x7C on Win32; checked in dobj.cpp)
 #else
 #define DOBJ_BUF_UINTS 31

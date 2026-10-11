@@ -1,3 +1,4 @@
+#include <platform/engine_random.h>
 #include "cg_vehicle.h"
 #include <client/splitscreen.h>
 #include <universal/com_math_anglevectors.h>
@@ -1638,7 +1639,7 @@ void    CG_UpdateTankSurfaceSounds(
                                 {
                                     v8 = 0.0f;
                                 }
-                                if ( (float)((float)(rand() % 101) / 100.0) >= v8 )
+                                if ( (float)((float)(BO1_CrtRand() % 101) / 100.0) >= v8 )
                                 {
                                     v5 = Com_SurfaceTypeToName(v14);
                                     v6 = va("%s_%s", (const char *)accum[0][1], v5);
@@ -1798,7 +1799,7 @@ void CG_UpdateTankSurfaceSounds(
                     // sound name composed from material + surface
                     // randomness preserved
 
-                    if ((float)(rand() % 101) / 100.0f >= damageRatio)
+                    if ((float)(BO1_CrtRand() % 101) / 100.0f >= damageRatio)
                     {
                         const char *surfName =
                             Com_SurfaceTypeToName(
