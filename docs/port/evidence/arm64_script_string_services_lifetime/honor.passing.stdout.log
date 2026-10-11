@@ -1,0 +1,3 @@
+{"schema":"BlackOpsARM.script-services.v1","pointer_bytes":8,"atomic_bytes":4,"atomic_updates":80000,"locked_updates":80000,"recursive_sections":2,"independent_sections":true,"contention_pass":true,"server_identity_pass":true,"pool_certified":false}
+
+BO1_SCRIPT_SERVICES_EXIT:0

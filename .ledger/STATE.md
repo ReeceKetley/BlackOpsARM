@@ -1,3 +1,43 @@
+# Current overnight state — structural front end complete, 12 October 2026
+
+The user's objective in DEC-0029 remains active. Continue bounded milestones
+autonomously. Local verified commits are authorized by DEC-0026; never push.
+Pointer-table checkpoint: 583b976. Raw-string checkpoint: da7f496 (FACT-0045).
+TASK-0016 is verified and awaiting its local checkpoint; Git gives the exact HEAD.
+
+Actual production decoding, checked zone/stream/envelope allocation, pointer
+expansion, Load_XStringCustom and native XAssetArray / Win32 Load_Stream now
+reach both genuine asset directories: 37 and 1045 records. All 47 fixtures and
+12 genuine cycles per ABI pass on HONOR and Windows x86/x64. File ends are
+348/27245; disk block4 ends 296/27196 and native64 ends 592/42360. Every type,
+tag, stride, alias, prior raw bytes, cursor and cleanup is checked. No payload
+or pointer fixups, interned IDs, full async reader or graphics run. See FACT-0046,
+DEC-0031, WARN-0016 and arm64_asset_directory.md. Final build: zero errors, 3692
+retained warnings, 146 AArch64 artifacts and 23 executables. No UBSan failures
+on passing paths. Shared raw-string Windows regressions also pass 24/12.
+
+Real pool synchronization prerequisites pass on HONOR and Windows (FACT-0048).
+The first identity probe's lifetime fault is preserved under FAIL-0011. Corrected
+live-thread probes and case-specific fatal diagnostics pass; Android's fresh
+service-only build has zero errors and warnings. Actual SL/MT is next.
+
+Next three tasks: TASK-0017 real SL/MT init, intern, deduplicate, user4 release
+and reinitialization, then genuine strings; TASK-0018 first StringTable header
+in block0; bounded StringTable name/cell/index data before fixups/registration.
+Preserve four-byte disk/slot layouts and Windows behavior. No fake callbacks,
+asset data, menus or rendered frames. Read frontend_handoff.md for acceptance.
+
+Windows, DXVK-Native, root Ledger and older evidence remain protected. No APK
+installation or new performance/RSS claim. Encoded strings remain explicitly
+unsupported; finite reader bridges do not certify async/refill/APC. Post-read
+helper/segment allocation failures and fatal initializer recovery are unvalidated.
+Enum validity does not certify dispatcher support. Server identity requires a
+live registered thread; broader pool threading and restart remain unvalidated.
+Windows PMem caching/freeTot/multiple owners, full VM/Z/backend, 16KB pages and
+S25 remain open. Historical TASK-0011 decoder/allocator measurements stay separate.
+
+# Historical state (preserved)
+
 # Current active overnight progress — TASK-0015 complete, 2026-10-12
 
 Current objective: user file DEC-0029; autonomous bounded native engine/assets
