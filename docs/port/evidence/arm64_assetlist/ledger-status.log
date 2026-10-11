@@ -1,0 +1,113 @@
+Project: BlackOpsARM
+
+Goal
+----
+Native Android ARM64 port of the original T5 Zombies engine. Windows x64 is the
+functional reference implementation; the original Win32 path remains a behavior
+and serialization oracle. This Git worktree shares BlackOps64 history and sources.
+
+Current Milestone
+-----------------
+TASK-0013 genuine16-byte XAssetList envelope read/expansion is complete on HONOR
+ARM64 and Windows x86/x64,72 fixtures/12 cycles each. Counts/tags, persistent
+aliases, unchanged cursors and reset/release pass with independent full-decode
+provenance. Actual body bytes unchanged; finite reader is fixture-only.
+See docs/port/arm64_assetlist.md, FACT-0037/0038, WARN-0013. Next recommended
+TASK-0014 is the block4 script-string pointer table, before strings/assets/fixups.
+Not started. TASK-0011 timing/RSS and all older evidence remain frozen.
+
+Current State
+-------------
+# Current State
+
+Updated 2026-10-11: TASK-0013 complete. Current report/reproduction:
+docs/port/arm64_assetlist.md; handoff assetlist_handoff.md. DEC-0024/0025,
+FACT-0037/0038, FAIL-0007, WARN-0013. TASK-0014 recommended only, not started.
+
+## Completed boundaries
+
+- Android android-arm64 at6f0787ab; Windows main76edfd5 shares history with own
+  working directory/index; DXVK independent master0e271c6. Root Ledger owns shared
+  Windows history. All TASK-0011/0012/0013 changes remain uncommitted.
+- Earlier native-width/four-byte ABI, script/thread/profile/RNG, parse/debug Hunk,
+  first-fit/Z, expression, raw FastFile/fixture zone and full decode gates intact.
+  TASK-0011 checked genuine production allocation/timing/memory baseline and
+  TASK-0012 genuine Init/cursor/reset/release complete; original archives frozen.
+- TASK-0013 reads exact16-byte envelope at decoded offset36. Actual native64
+  production helper/body bytes unchanged;3 production declarations moved once
+  into lightweight width/offset-asserted header. Normal Windows behavior retained.
+- code_pre:0 strings/null,37 assets/-1; zombie:860 strings/-1,1045 assets/-1.
+  Signed fields/tag widths, persistent destination aliases4/12, all unchanged
+  cursors/shadow positions and repeated detach/free/release pass on3 ABIs.
+- Additional checked planner revalidates genuine zone metadata, nonnegative
+  counts and uint64 present-array disk/native minimum footprints vs decoded
+  remaining/block4. No arbitrary limits, expansion or clamping; null-positive
+  counts preserve absence semantics. No arrays read/allocated or tags dereferenced.
+- Independent Python streaming full decoded SHA/Adler/prefix oracle and native
+  full codec decode match raw/device/executable/prefix digests. Each separate
+  decoder process releases one vector before header-only zone allocation starts.
+  No duplicate decompressed buffers or original game/prefix files in Git/APK.
+-72 fixtures/12 alternating genuine low/high cycles each ABI. Preflight and short
+  read failure snapshots aliases/cursors/output/read/owners before reset. Actual
+  read adapter is finite checked16-byte fixture, not engine async/refill loader.
+
+## Verification
+
+- Final assetlist_pass3 NDK30/Clang21/API28 Debug C99/C++20:0 compiler/link errors,
+  2495 retained warnings,102 AArch64 artifacts/19 exes.12 selected full T5 units+
+  actual bounded expander subset+6 unchanged custom codec C units compile.
+  New ELF has real envelope/init/alloc/free and finite reader, no later asset/
+  pointer-table/string/fixup/zone-init functions. No UBSan on passing paths.
+- MSVC x86/x64 genuine gate; actual full registry x86/x64 and light legacy-off
+  header layouts; full normal x64 expander TU compile pass. Earlier16 HONOR probes,
+  67/66 allocator fixtures,12-cycle/61-Init genuine stream gate, Windows zone and
+  four-byte Narrow32/actual declarations/483 guards pass. All tests completed.
+- Three passing builds/runs retained; final strengthens pre-reset failure checks
+  and exact trailing extent. Optional header1 NetField link failure, header2
+  heavy legacy-off graphics layout assertions and LF/CRLF source-proof correction
+  retained under FAIL-0007; no graphics guard disabled. Two read-only agents
+  confirmed final code and reviews; lead owns edits/tests/Ledger.
+- Windows2528 files/index/status/HEAD, DXVK2552, root Ledger15 and Android index/
+  HEAD preserved;997 prior archive/report/handoff files unchanged. Scaffold APK
+  SHA remainsDFA4C3BD6C8FDDF121CF87EE9B5847367FB6C29CDB5EAD8FC164F3A31F1135B5.
+  Exact delta/cumulative status/ignored artifacts: arm64_assetlist_changes.md and
+  evidence file_inventory.json. No deletion/reset/APK install/commit/push.
+
+## Active limits — WARN-0013
+
+Finite reader does not certify engine async/refill/APC/authentication. Android
+expander TU selected envelope subset only; full normal Windows TU passes. No
+script-string table/bytes/interning, asset array/dispatch/fixups/registry/zone init/
+rendering. Side-buffer alias registration is correct but production conversion
+may reject outside-XBlock slots; fixup resolution unvalidated. Post-read vector
+bad_alloc, Init/fatal OOM recovery not certified. Inactive vector/stack/diagnostic
+storage may remain. Legacy native64 multi-owner PMem stride/freeTot remains gap;
+reference one owner with fixture diagnostic reset. Heavy legacy-off x64 graphics
+assertions unchanged. Full Windows Z heap, VM/string/callable/vendor/profiler/math
+consumers,16KB/S25 and engine/backend deferred. Original timing/RSS comparison
+remains different allocator work, not CPU/gameplay ratio.
+
+## Recommended TASK-0014
+
+Actual block4 script-string pointer-table reservation and packed tag expansion
+before Load_TempStringArray string loop. Both files/3 ABIs, validated table bytes
+at decoded offset52; absent zero-string case, zombie860 entries3440 disk/6880
+native. Actual alignment/width/cursor/stride/alias bounds, truncation/count/capacity
+failures and repeat detach/release. Audit existing count policies. No string bytes/
+interning/assets/fixups/registry/zone init/async/rendering. Await next continuation.
+
+Recent Progress
+---------------
+- FACT-0038 Envelope gate protected state and uncommitted inventory
+- TASK-0014 TASK-0014 bounded script-string pointer table
+- WARN-0013 Remaining pointer-table and full loader boundaries
+- FACT-0037 Genuine asset-list envelope conversion verified
+- FAIL-0007 Preserved envelope verification diagnostics and corrections
+
+Current Warnings
+----------------
+- WARN-0013 Remaining pointer-table and full loader boundaries
+
+Open Tasks
+----------
+- TASK-0014 TASK-0014 bounded script-string pointer table

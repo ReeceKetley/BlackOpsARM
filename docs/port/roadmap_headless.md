@@ -44,13 +44,40 @@ pass on HONOR/MSVC x86/x64, with checksum/end/exact output, custom bundled codec
 explicit errors/padding and independent fixtures/oracles. No assets parsed;
 engine async pipeline remains deferred. See arm64_inflate.md.
 
-### TASK-0011 — Genuine decoded header to checked zone bootstrap (next)
+### TASK-0011 — Checked genuine FastFile allocation (complete 2026-10-11)
 
-Preflight native expansion/backend/per-block/aggregate budgets in uint64, then
-feed genuine XFile to actual DB_AllocXBlocks/DB_InitStreams. Reject oversized or
-unsupported requests before allocation; repeat/reset/detach/release with zero
-owners/reservations on HONOR and both host ABIs; all sixteen prior probes pass.
-Stop before asset-list/strings/payload loading or async integration.
+Genuine code_pre_gfx/zombie_pentagon decoded headers drive checked unchanged
+production allocation policies on HONOR and Windows x86/x64. uint64 preflight,
+actual native capacities, controlled rollback, warm/cold latency and distinct
+decoder/allocator memory peaks are frozen. Native64 plans match; Windows retained
+pool and Android touched mappings are different contracts. No new stream init,
+asset parsing or fixups. See arm64_checked_zone.md, FACT-0032/0033, WARN-0011.
+
+### TASK-0012 — Genuine checked blocks to DB_InitStreams (complete 2026-10-11)
+
+Actual stream initialization on both genuine files/HONOR/Windows x86/x64 passes
+seven cursors, zero slots, independent pending size/stride/alias/drift reset and
+repeated detach/free/named release.12 cycles and61 Init calls per ABI; invalid
+plans/partial failures never publish streams. No shared engine edits or payload
+reads. See arm64_stream_init.md, FACT-0035/0036, WARN-0012 and exact inventory.
+
+### TASK-0013 — Genuine16-byte asset-list envelope (complete 2026-10-11)
+
+Actual native expander/Win32 branch, checked count/footprint metadata, persistent
+aliases and exact16-byte side-buffer read pass both files/3 ABIs.72 fixtures and
+12 repeated ownership cycles each; cursors unchanged, reset/release baseline.
+Independent full decoded SHA/Adler/prefix provenance; actual body/declaration
+bytes unchanged. Finite reader does not certify async/refill loader. Full normal
+Windows expander passes; bounded Android subset only. See arm64_assetlist.md,
+FACT-0037/0038, FAIL-0007, WARN-0013 and exact inventory.
+
+### TASK-0014 — Script-string pointer table (recommended)
+
+Block4 reservation/actual packed tag expansion only, before string loops/bytes/
+interning. Both genuine files/3 ABIs; absent0-string case plus zombie860 entries,
+3440 disk/6880 native bytes at decoded offset52. Actual alignment/capacity, tags,
+cursor/stride maps and alias destinations, invalid bounds and repeated release.
+No asset arrays/dispatch/fixups/registry/zone init/async/rendering. Not started.
 
 ## Beyond
 

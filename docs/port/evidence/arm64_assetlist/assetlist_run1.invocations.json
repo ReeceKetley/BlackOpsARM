@@ -1,0 +1,223 @@
+[
+  {
+    "label": "device-create",
+    "argv": [
+      "D:\\Android\\Sdk\\platform-tools\\adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "mkdir /data/local/tmp/blackopsarm-phase1-assetlist-20261011-220011306895"
+    ],
+    "exit": 0
+  },
+  {
+    "label": "device-metadata",
+    "argv": [
+      "D:\\Android\\Sdk\\platform-tools\\adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "getprop ro.product.model; getprop ro.build.version.sdk; uname -a; cat /proc/meminfo"
+    ],
+    "exit": 0
+  },
+  {
+    "label": "device-probe-push",
+    "argv": [
+      "D:\\Android\\Sdk\\platform-tools\\adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "push",
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\assetlist_pass1\\bo1_assetlist_tests",
+      "/data/local/tmp/blackopsarm-phase1-assetlist-20261011-220011306895/probe"
+    ],
+    "exit": 0
+  },
+  {
+    "label": "device-probe-chmod",
+    "argv": [
+      "D:\\Android\\Sdk\\platform-tools\\adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "chmod 700 /data/local/tmp/blackopsarm-phase1-assetlist-20261011-220011306895/probe"
+    ],
+    "exit": 0
+  },
+  {
+    "label": "device-probe-sha",
+    "argv": [
+      "D:\\Android\\Sdk\\platform-tools\\adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "sha256sum /data/local/tmp/blackopsarm-phase1-assetlist-20261011-220011306895/probe"
+    ],
+    "exit": 0
+  },
+  {
+    "label": "code_pre_gfx-push",
+    "argv": [
+      "D:\\Android\\Sdk\\platform-tools\\adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "push",
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOps64\\build\\Release\\zone\\common\\code_pre_gfx.ff",
+      "/data/local/tmp/blackopsarm-phase1-assetlist-20261011-220011306895/code_pre_gfx.ff"
+    ],
+    "exit": 0
+  },
+  {
+    "label": "code_pre_gfx-device-sha",
+    "argv": [
+      "D:\\Android\\Sdk\\platform-tools\\adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "sha256sum /data/local/tmp/blackopsarm-phase1-assetlist-20261011-220011306895/code_pre_gfx.ff"
+    ],
+    "exit": 0
+  },
+  {
+    "label": "zombie_pentagon-push",
+    "argv": [
+      "D:\\Android\\Sdk\\platform-tools\\adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "push",
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOps64\\build\\Release\\zone\\common\\zombie_pentagon.ff",
+      "/data/local/tmp/blackopsarm-phase1-assetlist-20261011-220011306895/zombie_pentagon.ff"
+    ],
+    "exit": 0
+  },
+  {
+    "label": "zombie_pentagon-device-sha",
+    "argv": [
+      "D:\\Android\\Sdk\\platform-tools\\adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "sha256sum /data/local/tmp/blackopsarm-phase1-assetlist-20261011-220011306895/zombie_pentagon.ff"
+    ],
+    "exit": 0
+  },
+  {
+    "label": "windows_x86-code_pre_gfx-decode",
+    "argv": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\assetlist_host_pass1\\x86\\assetlist.exe",
+      "decode",
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOps64\\build\\Release\\zone\\common\\code_pre_gfx.ff",
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\assetlist_run1\\windows_x86-code_pre_gfx.prefix"
+    ],
+    "exit": 0
+  },
+  {
+    "label": "windows_x86-zombie_pentagon-decode",
+    "argv": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\assetlist_host_pass1\\x86\\assetlist.exe",
+      "decode",
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOps64\\build\\Release\\zone\\common\\zombie_pentagon.ff",
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\assetlist_run1\\windows_x86-zombie_pentagon.prefix"
+    ],
+    "exit": 0
+  },
+  {
+    "label": "windows_x86-envelope",
+    "argv": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\assetlist_host_pass1\\x86\\assetlist.exe",
+      "gate",
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\assetlist_run1\\windows_x86-code_pre_gfx.prefix",
+      "49593",
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\assetlist_run1\\windows_x86-zombie_pentagon.prefix",
+      "108009041"
+    ],
+    "exit": 0
+  },
+  {
+    "label": "windows_x64-code_pre_gfx-decode",
+    "argv": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\assetlist_host_pass1\\x64\\assetlist.exe",
+      "decode",
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOps64\\build\\Release\\zone\\common\\code_pre_gfx.ff",
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\assetlist_run1\\windows_x64-code_pre_gfx.prefix"
+    ],
+    "exit": 0
+  },
+  {
+    "label": "windows_x64-zombie_pentagon-decode",
+    "argv": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\assetlist_host_pass1\\x64\\assetlist.exe",
+      "decode",
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOps64\\build\\Release\\zone\\common\\zombie_pentagon.ff",
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\assetlist_run1\\windows_x64-zombie_pentagon.prefix"
+    ],
+    "exit": 0
+  },
+  {
+    "label": "windows_x64-envelope",
+    "argv": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\assetlist_host_pass1\\x64\\assetlist.exe",
+      "gate",
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\assetlist_run1\\windows_x64-code_pre_gfx.prefix",
+      "49593",
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\assetlist_run1\\windows_x64-zombie_pentagon.prefix",
+      "108009041"
+    ],
+    "exit": 0
+  },
+  {
+    "label": "honor_arm64-code_pre_gfx-decode",
+    "argv": [
+      "D:\\Android\\Sdk\\platform-tools\\adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "/data/local/tmp/blackopsarm-phase1-assetlist-20261011-220011306895/probe decode /data/local/tmp/blackopsarm-phase1-assetlist-20261011-220011306895/code_pre_gfx.ff /data/local/tmp/blackopsarm-phase1-assetlist-20261011-220011306895/code_pre_gfx.prefix"
+    ],
+    "exit": 0
+  },
+  {
+    "label": "honor_arm64-code_pre_gfx-prefix-sha",
+    "argv": [
+      "D:\\Android\\Sdk\\platform-tools\\adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "sha256sum /data/local/tmp/blackopsarm-phase1-assetlist-20261011-220011306895/code_pre_gfx.prefix"
+    ],
+    "exit": 0
+  },
+  {
+    "label": "honor_arm64-zombie_pentagon-decode",
+    "argv": [
+      "D:\\Android\\Sdk\\platform-tools\\adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "/data/local/tmp/blackopsarm-phase1-assetlist-20261011-220011306895/probe decode /data/local/tmp/blackopsarm-phase1-assetlist-20261011-220011306895/zombie_pentagon.ff /data/local/tmp/blackopsarm-phase1-assetlist-20261011-220011306895/zombie_pentagon.prefix"
+    ],
+    "exit": 0
+  },
+  {
+    "label": "honor_arm64-zombie_pentagon-prefix-sha",
+    "argv": [
+      "D:\\Android\\Sdk\\platform-tools\\adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "sha256sum /data/local/tmp/blackopsarm-phase1-assetlist-20261011-220011306895/zombie_pentagon.prefix"
+    ],
+    "exit": 0
+  },
+  {
+    "label": "honor_arm64-envelope",
+    "argv": [
+      "D:\\Android\\Sdk\\platform-tools\\adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "/data/local/tmp/blackopsarm-phase1-assetlist-20261011-220011306895/probe gate /data/local/tmp/blackopsarm-phase1-assetlist-20261011-220011306895/code_pre_gfx.prefix 49593 /data/local/tmp/blackopsarm-phase1-assetlist-20261011-220011306895/zombie_pentagon.prefix 108009041"
+    ],
+    "exit": 0
+  }
+]

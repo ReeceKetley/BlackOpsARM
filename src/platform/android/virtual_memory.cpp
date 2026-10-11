@@ -71,7 +71,12 @@ void *Z_VirtualReserve(int size)
     void *ptr = mmap(nullptr, bytes, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
     if (ptr == MAP_FAILED) fail("mmap reserve");
     std::lock_guard<std::mutex> lock(reservationMutex);
-    if (!reservations.emplace(reinterpret_cast<std::uintptr_t>(ptr), Reservation{bytes}).second) fail("duplicate reservation");
+    try {
+        if (!reservations.emplace(reinterpret_cast<std::uintptr_t>(ptr), Reservation{bytes}).second) fail("duplicate reservation");
+    } catch (...) {
+        if (munmap(ptr, bytes)) fail("failed reservation registration cleanup");
+        throw;
+    }
     return ptr;
 }
 void Z_VirtualCommit(char *ptr, int size, int type)

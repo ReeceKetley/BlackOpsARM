@@ -36,24 +36,7 @@ struct XZoneInfoInternal // sizeof=0x44
     int flags;                          // XREF: DB_LoadXZone+12D/w
 };
 
-struct XAsset // sizeof=0x8
-{                                       // XREF: XAssetEntry/r
-    XAssetType type;                    // XREF: DB_CreateDefaultEntry+7B/w
-    XAssetHeader header;                // XREF: DB_CreateDefaultEntry+19/w
-};
-
-struct ScriptStringList // sizeof=0x8
-{                                       // XREF: XAssetList/r
-    int count;
-    const char **strings;
-};
-
-struct XAssetList // sizeof=0x10
-{                                       // XREF: .data:g_varXAssetList/r
-    ScriptStringList stringList;
-    int assetCount;
-    XAsset *assets;
-};
+#include "db_assetlist_types.h"
 
 struct PhysConstraints;
 struct PhysPreset;

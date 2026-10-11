@@ -1,0 +1,89 @@
+Device test directory: /data/local/tmp/blackopsarm-phase1-20261011-220330627
+NDL-L09
+arm64-v8a,armeabi-v7a,armeabi
+36
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\build-android-audit\assetlist_pass2\inflate-fixtures\: 18 files pushed, 0 skipped. 21.3 MB/s (1677192 bytes in 0.075s)
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\build-android-audit\assetlist_pass2\bo1_win32_compat_tests: 1 file pushed, 0 skipped. 128.7 MB/s (1526192 bytes in 0.011s)
+PASS: initial error, full DWORD round trip, 8-thread isolation, 80000 concurrent updates
+PASS: frequency/null failure, preserved error, zero/finite/EINTR/infinite Sleep
+bo1_win32_compat_tests: exit=0
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\build-android-audit\assetlist_pass2\bo1_arm64_narrow_tests: 1 file pushed, 0 skipped. 172.1 MB/s (1516872 bytes in 0.008s)
+Bo1_NarrowFail: region table exhausted for 0x60db000000
+PASS: pointer=8 narrow=4 align=4; null/roundtrip/raw-slot/high-address/concurrency/exhaustion checks as applicable
+bo1_arm64_narrow_tests: exit=0
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\build-android-audit\assetlist_pass2\bo1_script_slot_tests: 1 file pushed, 0 skipped. 143.8 MB/s (1379496 bytes in 0.009s)
+PASS production declarations: VariableUnion=4 sval_u=4 VariableValue=8 internal=28 stack.buf=13; handles and FF sentinels roundtrip
+bo1_script_slot_tests: exit=0
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\build-android-audit\assetlist_pass2\bo1_script_headers_tests: 1 file pushed, 0 skipped. 100.8 MB/s (1394760 bytes in 0.013s)
+PASS actual script headers and cscr_instance.cpp: VM/parse slots=4, fixed records retained; both instance pointer reset/clear paths
+bo1_script_headers_tests: exit=0
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\build-android-audit\assetlist_pass2\bo1_profile_tests: 1 file pushed, 0 skipped. 158.0 MB/s (1685960 bytes in 0.010s)
+PASS real profile.cpp: monotonic/native ticks, thread filtering, nested/exclusive/builtin scopes, 80000 atomic adds, 10000 deduplicated keys, registration and bounded names
+bo1_profile_tests: exit=0
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\build-android-audit\assetlist_pass2\bo1_math_axis_tests: 1 file pushed, 0 skipped. 62.5 MB/s (37992 bytes in 0.001s)
+PASS actual axis maths: 5845 angle/axis roundtrips (0.002 degree tolerance)
+bo1_math_axis_tests: exit=0
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\build-android-audit\assetlist_pass2\bo1_rng_tests: 1 file pushed, 0 skipped. 58.8 MB/s (33504 bytes in 0.001s)
+PASS production RNG bodies: captured Windows streams, [0,1) / [-1,1) ranges, mixed raw/normalized draws; unchanged scaling and Windows legacy entry point
+bo1_rng_tests: exit=0
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\build-android-audit\assetlist_pass2\bo1_engine_rng_tests: 1 file pushed, 0 skipped. 137.5 MB/s (1462920 bytes in 0.010s)
+PASS Windows-captured RNG vectors: 12 edge seeds x 128 draws, default/reseed, eight independent threads x 64 vector cycles, parent-stream isolation, 15-bit range
+bo1_engine_rng_tests: exit=0
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\build-android-audit\assetlist_pass2\bo1_script_lookup_tests: 1 file pushed, 0 skipped. 126.4 MB/s (440872 bytes in 0.003s)
+PASS unchanged cscr_readwrite.cpp: 33 lookup checks; direct/collision/miss/empty/sibling/remapped-ID paths, both instances and expanded server pool, four-byte slots
+bo1_script_lookup_tests: exit=0
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\build-android-audit\assetlist_pass2\bo1_parsetree_tests: 1 file pushed, 0 skipped. 131.0 MB/s (1623096 bytes in 0.012s)
+PASS actual parse-tree: node0..8, raw values, lists, 10000 retained nodes, instance ownership, 4-byte slots/handles
+bo1_parsetree_tests: exit=0
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\build-android-audit\assetlist_pass2\bo1_hunk_tests: 1 file pushed, 0 skipped. 142.6 MB/s (1698736 bytes in 0.011s)
+Android virtual memory failure: range outside reservation
+Android virtual memory failure: invalid release
+Android virtual memory failure: allocation type mismatch
+Hunk_UserAlloc OOM: name=full type=7 flags=4 size=1 maxSize=65536 pos=538596413440 end=538596413440Unsupported gate service: diagnostic stack
+Android HunkUser: invalid or unsupported configurationEngine assertion C:\projects_pc\cod\codsrc\src\universal\mem_userhunk.cpp:110
+Native page size: 4096; protection/discard/bounds/failures verified
+PASS actual HunkUser: 2000 payloads, alignments 1..4096, growth/reset, caller ownership, 800 independent threaded arenas
+Android HunkUser: invalid allocationAndroid HunkUser: invalid allocationAndroid HunkUser: invalid allocation
+bo1_hunk_tests: exit=0
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\build-android-audit\assetlist_pass2\bo1_debugger_tests: 1 file pushed, 0 skipped. 86.6 MB/s (2258120 bytes in 0.025s)
+Android zone heap failure: allocation type mismatch
+Android zone heap failure: unowned or already released allocation
+Android zone heap failure: unowned or already released allocation
+Android zone heap failure: invalid allocation
+Engine assertion D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_parsetree.cpp:428
+PASS actual debugger/evaluator: node0..4, prepend, aligned buffers/strings, both instance cleanup/canonical/literal paths, normal-to-debugger int/float/minus/bool compile+eval and bool-or/and/binary/not compile-only, 8000 zeroed owned heap allocations, four-byte handles
+bo1_debugger_tests: exit=0
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\build-android-audit\assetlist_pass2\bo1_firstfit_tests: 1 file pushed, 0 skipped. 183.0 MB/s (1899504 bytes in 0.010s)
+Engine assertion D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/mem_firstfit.cpp:208
+Engine assertion C:\projects_pc\cod\codsrc\src\universal\mem_firstfit.cpp:173
+Hunk main thread already registered by another thread
+Engine assertion C:\projects_pc\cod\codsrc\src\universal\mem_userhunk.cpp:157
+PASS actual first-fit/debug HunkUser: 400 odd payloads, native headers, alignments 1..4096, coalescing/exhaustion, 8000 shared-pool operations, thread identity/ownership
+bo1_firstfit_tests: exit=0
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\build-android-audit\assetlist_pass2\bo1_fastfile_tests: 1 file pushed, 0 skipped. 162.9 MB/s (1003520 bytes in 0.006s)
+PASS bounded FastFile preamble: retail/unsigned magic, version 473, XFile header fields, fixture roundtrip, explicit missing/short/bad errors
+bo1_fastfile_tests: exit=0
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\build-android-audit\assetlist_pass2\bo1_zone_tests: 1 file pushed, 0 skipped. 135.0 MB/s (2751768 bytes in 0.019s)
+Native zone memory: no active zone
+Native zone memory: unknown or open zone release
+Native zone memory: allocation outside matching named zone
+Native zone memory: invalid begin
+Native zone memory: unknown or open zone release
+Native zone memory: unsupported allocation request
+Hunk_UserDebugAlloc: out of memory (196623 requested, 48 used, 65504 capacity)Native zone memory: main thread not registered or wrong owner
+[] Native zone gate diagnostic
+used 0.53 MB memory in DB alloc
+STACK zone gate: 63d698ab64 63d694e5d0 63d6979974 7bc955c044
+used 0.00 MB memory in DB alloc
+used 0.13 MB memory in DB alloc
+used 0.13 MB memory in DB alloc
+used 2.06 MB memory in DB alloc
+used 1.96 MB memory in DB alloc
+used 60.86 MB memory in DB alloc
+used 43.26 MB memory in DB alloc
+PASS actual zone bootstrap: 7 blocks/all memory types, unchanged 36-byte XFile, native size factors, zero/sparse/Z paths, aligned pointers, real first-fit named lifetime, stream init/cursors/alias reset, explicit invalid ownership failures
+bo1_zone_tests: exit=0
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\build-android-audit\assetlist_pass2\bo1_inflate_tests: 1 file pushed, 0 skipped. 126.7 MB/s (1792616 bytes in 0.013s)
+codec=1.2.3 streamBytes=104 unsignedLongBytes=8
+PASS bounded inflate: independent fixtures, wrapped checksum/end, disk36, exact budgets, corrupt/truncated/dictionary/size/trailing failures, byte/chunk boundaries, atomic output publication
+bo1_inflate_tests: exit=0

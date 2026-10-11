@@ -8,6 +8,9 @@
 #include <memory>
 #include <string>
 #include <utility>
+#if defined(BO1_CHECKED_ZONE_GATE)
+bool Bo1_TestZoneRegistrationFailure(); // Standalone fault injection, never APK.
+#endif
 #if defined(__ANDROID__)
 #include "hunk_services.h"
 #elif defined(BO1_ZONE_MEMORY_HOST_TEST)
@@ -39,7 +42,16 @@ void bo1::android::ZoneMemoryBegin(const char *name, unsigned type, int capacity
     auto zone = std::make_unique<Zone>();
     zone->name = name; zone->type = type; zone->open = true;
     zone->hunk = Hunk_UserCreate(capacity, HU_SCHEME_DEBUG, 0, nullptr, zone->name.c_str(), TRACK_FASTFILE);
-    active = zone.get(); zones.emplace(std::move(key), std::move(zone));
+    HunkUser *created = zone->hunk;
+    try {
+#if defined(BO1_CHECKED_ZONE_GATE)
+        if (Bo1_TestZoneRegistrationFailure()) throw std::bad_alloc();
+#endif
+        auto entry = zones.emplace(std::move(key), std::move(zone));
+        active = entry.first->second.get();
+    } catch (...) {
+        Hunk_UserDestroy(created); throw;
+    }
 }
 void bo1::android::ZoneMemoryEnd()
 {
@@ -49,7 +61,9 @@ void bo1::android::ZoneMemoryEnd()
 void bo1::android::ZoneMemoryRelease(const char *name, unsigned type)
 {
     mainThread(); if (!name) fail("null release");
-    auto it = zones.find(Key{name, type});
+    // Rollback after metadata bad_alloc must not allocate another string key.
+    auto it = zones.begin();
+    while (it != zones.end() && (it->first.second != type || it->first.first != name)) ++it;
     if (it == zones.end() || it->second->open) fail("unknown or open zone release");
     Hunk_UserDestroy(it->second->hunk); zones.erase(it);
 }
@@ -62,6 +76,11 @@ std::size_t bo1::android::ZoneMemoryRequestedBytes()
 {
     mainThread(); std::size_t result = 0; for (const auto &entry : zones) result += entry.second->bytes; return result;
 }
+bool bo1::android::ZoneMemoryContains(const char *name, unsigned type)
+{
+    mainThread(); return name && zones.count(Key{name, type}) != 0;
+}
+bool bo1::android::ZoneMemoryHasOpenOwner() { mainThread(); return active != nullptr; }
 unsigned __int8 *_PMem_AllocNamed(unsigned size, unsigned alignment, int type,
     unsigned allocType, const char *name, EMemTrack track)
 {

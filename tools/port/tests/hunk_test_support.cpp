@@ -11,8 +11,10 @@
 #include <cstdlib>
 #include <cstring>
 [[noreturn]] static void unsupported(const char *name) { std::fprintf(stderr, "Unsupported gate service: %s\n", name); std::abort(); }
+#if !defined(BO1_CHECKED_ZONE_GATE)
 bool Assert_MyHandler(const char *file, int line, int, const char *, ...) { std::fprintf(stderr,"Engine assertion %s:%d\n",file,line); std::abort(); }
 void Com_Error(errorParm_t, const char *fmt, ...) { va_list a; va_start(a,fmt); std::vfprintf(stderr,fmt,a); va_end(a); std::abort(); }
+#endif
 char *va(const char *fmt, ...) { static thread_local char b[512]; va_list a; va_start(a,fmt); std::vsnprintf(b,sizeof(b),fmt,a); va_end(a); return b; }
 #if !defined(BO1_ZONE_GATE)
 void Bo1_Diag(const char *fmt, ...) { va_list a; va_start(a,fmt); std::vfprintf(stderr,fmt,a); va_end(a); }

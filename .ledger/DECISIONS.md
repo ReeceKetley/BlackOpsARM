@@ -142,3 +142,70 @@ Record stable, high-level decisions here. Use Ledger entries for searchable deta
   Verify archived byte hashes through staging/commit and clean durable status.
   docs/port/android_checkpoint.md and its pre-commit manifest identify the scope;
   ignored post-commit verification records the final ID without another commit.
+
+## TASK-0011 checked genuine allocation — 2026-10-11
+
+- DEC-0021 supersedes earlier TASK-0011 bootstrap scope: no new DB_InitStreams,
+  zone initialization, assets/fixups/rendering. Two read-only agents; lead owns
+  integration. No commit/push or Windows/DXVK/root Ledger writes.
+- DEC-0022: use genuine full-decode header/oracle SHA provenance, real production
+  expansion/additive requests and exact first-fit capacity, uint64 preflight and
+  atomic ownership rollback. No arbitrary multipliers or allocator rewrite.
+- Native Begin/mmap registration exceptions release resources; rollback release
+  allocates no temporary string key. End/Release nonthrowing; fatal engine OOM
+  remains fatal, distinct from controlled transactional fixtures.
+- FACT-0032/0033:67 HONOR/66 each Windows fixtures, genuine low/high production
+  parity,83 AArch64 artifacts, prior16 device and Windows zone/four-byte tests.
+  Separate decoder/allocation processes,31 warm+20 process-cold retained samples,
+  actual VA/accessibility/touch/RSS and Windows committed-pool contracts recorded.
+- FAIL-0006 preserves initial linkage/runtime/macros and measurement corrections.
+  WARN-0011 bounds genuine next stream/init, multi-owner PMem/native diagnostics,
+  full VM/asset/backend and hardware gaps. TASK-0012 remains recommended only.
+- FACT-0034 verifies protected state/index/763 prior archives. Current report
+  docs/port/arm64_checked_zone.md; all TASK-0011 changes remain uncommitted.
+
+## TASK-0012 genuine stream initialization — 2026-10-11
+
+- DEC-0023: user continuation authorizes actual DB_InitStreams on checked genuine
+  blocks, cursor/reset/detach/free/release only. No payload/assets/fixups/zone
+  initialization, commit/push or protected-checkout writes.
+- FACT-0035:12 cycles/61 Init calls,6 preflight and6 partial failures per ABI;
+  genuine fresh decode/header provenance, all7 cursors/zero blocks, independent
+  pending size/stride and alias/drift reset, exact logical baseline pass.
+- No shared engine/allocator code changes. Static lifetime detached descriptors
+  prevent dangling stream descriptor globals; detach before descriptor clear and
+  named release. Inactive stack bytes/vector capacity/diagnostics can remain.
+- Two passing builds/runs retained; final strengthens unequal-size stride reset
+  observability. Prior16 HONOR tests,67/66 allocation fixtures, Windows zone and
+  Narrow32/declaration/483 guards pass;91 AArch64 artifacts verified.
+- WARN-0012 supersedes WARN-0011; next TASK-0013 is only the16-byte asset-list
+  envelope, before strings/assets/fixups, not started. FACT-0036 records final
+  preservation/uncommitted inventory. Current report arm64_stream_init.md.
+
+## TASK-0013 genuine asset-list envelope — 2026-10-11
+
+- DEC-0024: user authorizes next bounded16-byte envelope and two read-only audits.
+- DEC-0025: actual envelope/helper bytes unchanged;3 declarations moved once
+  into lightweight production header, actual pointer-width/field ABI asserted.
+  Standalone source selection excludes other expanders; normal Windows unchanged.
+- Checked policy is additional preflight, not a legacy behavior claim: negative
+  counts rejected, present-only uint64 minimum disk/native table footprints
+  checked against genuine decoded length/block4. Null-positive counts retained.
+- Finite validated byte-reader fixture is substantive but not async/refill loader;
+  persistent destination prevents copied-temporary alias bugs. Preflight/read
+  failures snapshot aliases/cursors/output/owners before reset (review correction).
+- FACT-0037: both genuine files/3 ABIs,72 fixtures/12 cycles, exact16 consumption,
+  no cursor commits/fixups, full source/field/prefix provenance and regressions.
+- FAIL-0007 retains network-table linkage and heavy legacy-off graphics assertions
+  plus LF/CRLF verification correction. Full normal Windows expander and selected
+  layout tests pass; no guard disabled. WARN-0013 supersedes WARN-0012.
+- FACT-0038 records102 AArch64 artifacts, protected state/frozen997 prior files
+  and uncommitted inventory. TASK-0014 pointer-table recommendation not started.
+
+## Approved overnight milestone
+
+DEC-0026: user selects required structural front end plus interning stretch.
+Pointer tables -> bounded raw strings -> actual asset directory, all3 ABIs/both
+files, before dispatch. Local verified checkpoint commits now authorized, no
+push. Preserve archives/protected state. Lead integration plus3 read-only audits.
+Exact acceptance/stop conditions in docs/port/overnight_frontend.md.

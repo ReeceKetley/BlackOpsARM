@@ -1,0 +1,13 @@
+TASK-0013 retained verification attempts
+assetlist_pass1/pass2/pass3: NDK builds passed,0 compiler/link errors,2495 warnings.
+assetlist_host_pass1/pass2/pass3: Windows x86/x64 builds passed.
+assetlist_run1/run2/run3: genuine both-file gates passed72 fixtures/12 cycles per ABI.
+Final strengthens pre-reset state evidence and exact trailing fixture extent.
+assetlist_headers1: x86 link failed20 missing unused NetField data tables. Existing checked_zone_support data fixtures added, no engine success stubs.
+assetlist_headers2: x86/x64 full registry passed; heavy x64 legacy flag off compilation hit unchanged r_font.h32/r_material.h237,401 static layout assertions.
+assetlist_headers3: full registry x86/x64 passed; legacy-off light envelope header passed; full normal x64 expander without gate compiled.
+assetlist_headers4: same checks pass with explicit full-registry/light-header output labels.
+No existing graphics layout guard disabled or broader legacy selector changed.
+Preliminary inline source proof raised AssertionError when comparing Git normalized LF SHA with checkout CRLF SHA; verify_assetlist_source.py reconstructs checked baseline CRLF and proves exact helper/envelope/declaration bytes unchanged.
+Original header compile/link diagnostics retained separately. Source proof passes.
+All original/current scratch/device/evidence files retained, no deletion/reset.

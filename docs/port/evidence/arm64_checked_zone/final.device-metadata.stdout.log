@@ -1,0 +1,49 @@
+NDL-L09
+36
+Linux localhost 5.15.180-android13-8-00018-g9b2308ac0ad6-ab14563692 #1 SMP PREEMPT Sun Nov 30 12:19:45 UTC 2025 aarch64 Toybox
+MemTotal:        3799840 kB
+MemFree:          160560 kB
+MemAvailable:    1975040 kB
+Buffers:            3220 kB
+Cached:          1605620 kB
+SwapCached:        64852 kB
+Active:           920064 kB
+Inactive:        1303012 kB
+Active(anon):     177696 kB
+Inactive(anon):   445204 kB
+Active(file):     742368 kB
+Inactive(file):   857808 kB
+Unevictable:        6164 kB
+Mlocked:            6160 kB
+SwapTotal:       6291452 kB
+SwapFree:        5230844 kB
+Dirty:                72 kB
+Writeback:             0 kB
+AnonPages:        619136 kB
+Mapped:           453304 kB
+Shmem:              6316 kB
+KReclaimable:     247072 kB
+Slab:             485248 kB
+SReclaimable:     199680 kB
+SUnreclaim:       285568 kB
+KernelStack:       62500 kB
+ShadowCallStack:   15648 kB
+PageTables:        90344 kB
+NFS_Unstable:          0 kB
+Bounce:                0 kB
+WritebackTmp:          0 kB
+CommitLimit:     8191372 kB
+Committed_AS:   178638656 kB
+VmallocTotal:   259653632 kB
+VmallocUsed:      175860 kB
+VmallocChunk:          0 kB
+Percpu:            10368 kB
+AnonHugePages:         0 kB
+ShmemHugePages:        0 kB
+ShmemPmdMapped:        0 kB
+FileHugePages:         0 kB
+FilePmdMapped:         0 kB
+CmaTotal:         335872 kB
+CmaFree:               0 kB
+Protected:        263880 kB
+walt

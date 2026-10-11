@@ -9,4 +9,6 @@ void ZoneMemoryRelease(const char *name, unsigned allocType);
 std::size_t ZoneMemoryCount();
 std::size_t ZoneMemoryAllocationCount();
 std::size_t ZoneMemoryRequestedBytes();
+bool ZoneMemoryContains(const char *name, unsigned allocType);
+bool ZoneMemoryHasOpenOwner();
 }

@@ -52,32 +52,42 @@ Update `.ledger/STATE.md`, run `ledger status` and `ledger doctor` at handoff.
 Keep `docs/port/android_arm64.md` build/test steps reproducible and distinguish
 toolchain/APK checks from engine, renderer and on-device gameplay evidence.
 
-Current milestone: TASK-0010 bounded deflate isolation complete. Twelve actual
-T5 units and six unchanged bundled zlib C units compile; sixteen HONOR probes
-and both Windows host ABIs pass. Current handoff: docs/port/arm64_inflate.md,
-FACT-0029/0030, DEC-0019 and WARN-0010. Older reports preserve earlier milestones.
-T5 zlib removes stream.reserved; use matching bundled sources and native sizeof,
-never link engine stream headers to system libz. Disk XFile stays36; size counts
-payload after the header, external/block sizes have separate meanings. Isolated
-decoder validates whole wrapped stream/checksum/end and exact output before
-publishing fields. Optional bounded0..31 trailing-zero policy is measured on
-two files only. Decoded length cap is not an exact heap/capacity budget.
-Next TASK-0011 connects genuine decoded headers to actual zone bootstrap only
-after checked uint64 native expansion/backend/per-block/aggregate preflight.
-Do not pass arbitrary header block sizes to the existing allocation arithmetic.
-Native zones use real debug HunkUser/first-fit named ownership; register main
-thread first, then Begin -> allocations -> End -> detach streams/clear blocks ->
-Release. This is not legacy PMem pool/tracker/full API. Ordinary DB_FreeXBlocks
-clears metadata, not ownership. Keep zero slots, owner-thread and handle lifetime
-rules explicit; mixed Z/physical flags remain unvalidated. First-fit reset/destroy
-requires quiescence; hosts using native ownership do not certify Windows PMem.
-Missing test-only VM/over-allocation/compressed-byte callbacks abort and cannot
-ship; dependent stream tracing stays disabled. Preserve all earlier evidence.
-Stop before asset-list/string/payload deserialization or async integration. No
-full engine launch, Zombies, DXVK/audio/input, restructuring or gameplay work.
-Original assets stay outside Git/APK. Actual16KB Android/S25 remains untested.
-User authorized two read-only audit agents for this gate; root owned writes and
-builds. TASK-0010 is complete; further work follows user direction. User now
-authorizes one local checkpoint through TASK-0010 (DEC-0020); no push or later
-commit is authorized. See docs/port/android_checkpoint.md. Windows checkout,
-DXVK and root Ledger stay intact.
+Current milestone: TASK-0013 genuine16-byte asset-list envelope complete.
+Read docs/port/arm64_assetlist.md and assetlist_handoff.md, .ledger/STATE.md:
+DEC-0024/0025, FACT-0037/0038, FAIL-0007, WARN-0013. Actual native envelope/helper
+bodies and moved3 declarations remain unchanged; lightweight types assert actual
+pointer width independently of legacy Windows selector. BO1_ASSETLIST_GATE is
+standalone compile selection, not full Android expander support. Normal Windows
+expander/full registry x86/x64 pass; light legacy-off header passes while old
+heavy legacy-off graphics guards remain. Never disable layout assertions.
+Use genuine validated complete-decode prefix/header provenance. PlanAssetList
+checks signed counts and present-array uint64 disk/native minimum footprints
+against genuine remaining/block4 capacities; no arbitrary limits or tag-address
+dereference. Root tags mean presence; null-positive counts retain legacy meaning.
+Finite checked reader adapter is fixture-only, not engine async/refill integration.
+Keep envelope alias destination persistent; detach streams before reuse/owner
+release. Side-buffer alias registration is verified, later fixup conversion is
+not. No post-read bad_alloc or initializer/fatal OOM recovery certification.
+TASK-0011 checked production policies/main-thread ownership and atomic Begin/
+nonthrowing End/Release remain required. DB_FreeXBlocks alone does not free owner.
+Windows retained PMem/Android touched mappings and historical timing/RSS baseline
+stay distinct. Native multi-owner PMem stride and diagnostic freeTot remain gaps.
+Next recommended TASK-0014: block4 script-string pointer table reservation and
+packed4-byte tag expansion only, before string loop/bytes/interning, assets/
+fixups/registry/zone init/async/rendering. Not started; await next continuation.
+Prior regressions pass; actual16KB/S25/full engine/backend remain deferred.
+Two user-authorized read-only agents audited source/policy and adversarial cases;
+lead owns all edits/tests/Ledger. No commit/push; HEAD6f0787ab. Preserve protected
+checkouts/root and997 prior archive/report/handoff files. Exact current inventory
+is docs/port/arm64_assetlist_changes.md. Historical source/evidence stays intact.
+
+## Current overnight milestone authorization
+
+User approved docs/port/overnight_frontend.md (DEC-0026): pointer tables, bounded
+raw string data and asset directory for both genuine files/3 ABIs, before asset
+dispatch. Real production interning is conditional stretch with genuine memory
+pool/synchronization/ARM64 atomics; never fabricate IDs. Lead owns integration;
+three read-only reviews run independently. Local checkpoint commits after verified
+milestones are now explicitly authorized; no push. This overrides historical
+no-commit statements above. Preserve protected checkouts and all prior evidence.
+TASK-0014 is the first implementation boundary. Stop at the approved finish line.

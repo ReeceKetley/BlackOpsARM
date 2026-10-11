@@ -1,0 +1,110 @@
+Project: BlackOpsARM
+
+Goal
+----
+Native Android ARM64 port of the original T5 Zombies engine. Windows x64 is the
+functional reference implementation; the original Win32 path remains a behavior
+and serialization oracle. This Git worktree shares BlackOps64 history and sources.
+
+Current Milestone
+-----------------
+TASK-0012 genuine checked allocations -> actual DB_InitStreams is complete.
+Both original FastFiles/HONOR/Windows x86/x64 pass seven cursors, zero slots,
+pending alias/stride/size/drift reset, repeated detach/free/release and controlled
+preflight/partial failures. No shared engine edits or payload deserialization.
+See docs/port/arm64_stream_init.md and FACT-0035/0036, WARN-0012. TASK-0011 timing/
+memory baseline remains frozen. Next recommended TASK-0013 is the16-byte asset-list
+envelope read/expansion only, before strings/assets/fixups. Not started.
+
+Current State
+-------------
+# Current State
+
+Updated 2026-10-11: TASK-0012 complete. Current report/reproduction:
+docs/port/arm64_stream_init.md; current handoff stream_init_handoff.md. DEC-0023,
+FACT-0035/0036 and WARN-0012. TASK-0013 recommended only, not started.
+
+## Completed boundaries
+
+- Android android-arm64 at6f0787ab; Windows main76edfd5 reference shares history,
+  independent directory/index. DXVK independent master0e271c6; root Ledger owns
+  shared Windows history. All TASK-0011/0012 changes remain uncommitted.
+- Prior native-width/four-byte ABI, script/thread/profile/RNG, parse/debug Hunk,
+  first-fit/Z, expression, raw FastFile, fixture zone/stream and full wrapped
+  decode gates remain complete. Earlier reports and failed diagnostics preserved.
+- TASK-0011 genuine header checked production allocations complete; original
+  36-byte metadata/oracle provenance, unchanged200/190/135+65536/+15 policy,
+  uint64 bounds/layout-derived capacity and transactional ownership. Frozen
+  warm/cold timings and separate decode/allocation/RSS evidence remain baseline.
+- TASK-0012 actual DB_InitStreams on both genuine checked allocations passes
+  HONOR/actual Windows PMem x86/x64.12 alternating low/high cycles and61 Init calls
+  per ABI; all7 initial cursors/zero slots and push/pop, shadow positions, exact/
+  alias maps/nonzero drift and independent pending size/stride reset verified.
+- Persistent static detached descriptor array before actual DB_FreeXBlocks then
+  named release; descriptor clear alone leaves owner live. Native counts/bytes/
+  reservations and Windows positions/lists return to baseline. Windows pool stays.
+-6 preflight rejections/6 genuine-block controlled partial failures per ABI never
+  reach Init or publish descriptors. Separate fresh full decode/checksum/length/
+  Adler/header SHA process before each asset's header-only gate; no duplicate
+  decompressed buffer, payload read/write, asset parsing/fixups/zone init/rendering.
+- No shared engine/platform allocator edits in this gate, source duplication,
+  broad refactor, arbitrary expansion or changed Windows production behavior.
+
+## Verification
+
+- Final stream_init_pass2 NDK30/Clang21/API28 Debug:12 actual T5+6 custom codec C
+  units;0 compiler/linker errors,2129 retained warnings,91 AArch64 artifacts and
+  18 test executables. Actual Init/Free/MemAlloc/Inc symbols present; later asset/
+  pointer insert/decode/zone-init functions absent in the new ELF.
+- Initial passing build/run retained; final independently tests unequal-size
+  stride reset and drift at nonzero offset. No failed tests this gate. All tests
+  complete; passing instrumented paths show no UBSan finding.
+- Prior16 HONOR regressions,67 device/66 each Windows checked allocation fixtures,
+  MSVC x86/x64 zone and four-byte Narrow32/declaration/483 guard probes pass.
+  Full exact commands/logs/results/artifact/source provenance frozen in
+  docs/port/evidence/arm64_stream_init; original assets remain local/read-only.
+- Windows2528 files/index/status/HEAD, DXVK2552, root Ledger15, Android index/HEAD
+  and847 prior archive/handoff files verified unchanged. Historical reports and
+  all failed/reference evidence retained. No scratch deletion/APK install/build.
+  Scaffold APK SHA remainsDFA4C3BD6C8FDDF121CF87EE9B5847367FB6C29CDB5EAD8FC164F3A31F1135B5.
+  Exact current delta/cumulative status: docs/port/arm64_stream_init_changes.md
+  and evidence file_inventory.json. No commit/push.
+
+## Active limits — WARN-0012
+
+Actual asset-list envelope/string/asset deserialization and fixups untested.
+Unsigned synchronous decoder remains separate from engine async/authentication.
+DB_InitStreams void/vector bad_alloc and real fatal OOM not made recoverable.
+Inactive stack entries/vector capacity/cumulative drift diagnostics may remain;
+logical reset is certified, not zeroing storage or immediate RSS recovery.
+Native owner differs from Windows retained PMem; legacy native64 multi-owner
+PMem_FreeIndex previous-entry stride unvalidated. Single-owner reference with
+fixture-only freeTot diagnostic reset. Full Windows Z heap, VM/string/callable/
+nonliteral/vendor/profiler/math callers,16KB/S25 and full backend remain deferred.
+TASK-0011 timing is different-work allocator comparison, not CPU/gameplay ratio.
+
+## Recommended TASK-0013
+
+Read exactly16-byte XAssetList envelope at decoded offset36 using actual native64
+DB_ExpandLoad_XAssetList and Win32 equivalent with a validated bounded source.
+Both genuine files/HONOR/x86/x64; disk counts/tags intact, exact consumption,
+independent provenance, reject truncated/inconsistent/count-invalid before
+publication, no duplicate decoded buffer, repeated cleanup/regressions.
+Do not call Load_XAssetListCustom (it loads strings). Stop before strings/assets/
+fixups/registry/zone init/APC/rendering. Await next continuation. No commit/push.
+
+Recent Progress
+---------------
+- FACT-0036 Stream gate preservation and uncommitted handoff
+- TASK-0013 TASK-0013 bounded asset-list envelope read
+- WARN-0012 Remaining production asset read and platform boundaries
+- FACT-0035 Genuine stream initialization and release verified
+- DEC-0023 Bounded genuine stream initialization gate
+
+Current Warnings
+----------------
+- WARN-0012 Remaining production asset read and platform boundaries
+
+Open Tasks
+----------
+- TASK-0013 TASK-0013 bounded asset-list envelope read
