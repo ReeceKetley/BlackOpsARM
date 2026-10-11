@@ -1976,11 +1976,11 @@ void __cdecl R_StreamUpdateDynamicModels(
             R_StreamUpdateForBModel(
                 viewPos,
                 frame,
-                *(unsigned __int16 *)&scene.glassBrushVisData[40 * entIndexd - 40924],
-                *(const GfxBrushModel **)&scene.glassBrushVisData[40 * entIndexd - 40932],
-                (const float *)&scene.glassBrushVisData[40 * entIndexd - 40944],
+                scene.glassBrush[entIndexd].info.surfId,
+                scene.glassBrush[entIndexd].bmodel,
+                scene.glassBrush[entIndexd].placement.origin,
                 maxDistSq,
-                *(Material **)&scene.glassBrushVisData[40 * entIndexd - 40928],
+                scene.glassBrush[entIndexd].altStreamingMaterial,
                 1,
                 distanceScale);
     }

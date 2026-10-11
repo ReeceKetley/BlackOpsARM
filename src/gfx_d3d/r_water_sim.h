@@ -402,7 +402,7 @@ void R_WaterSimulationUpdateConfig();
 void __cdecl R_RenderWaterModel(unsigned int viewIndex);
 char *__cdecl R_SurfaceAlloc(unsigned int size);
 void __cdecl R_WaterSimulationSwitchOff();
-void *FlushBuffers();
+void FlushBuffers();
 void    R_WaterSimulationUpdateFrame(const WaterSimulationCmd *cmd);
 void __cdecl Float4LoadFloats(unsigned int x, unsigned int y, unsigned int z, unsigned int w, float4 *result);
 void *__cdecl Water_AllocVertexBuffer(IDirect3DVertexBuffer9 **vb, unsigned int buffersize);

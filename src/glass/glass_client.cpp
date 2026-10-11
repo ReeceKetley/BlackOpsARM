@@ -63,7 +63,7 @@ GlassesClient::GlassesClient(const Glasses *glss)
 
     this->numGlasses = glss->numGlasses;
     this->glasses = (GlassClient *)GlassesClient::Allocate(
-                                                                     12 * this->numGlasses,
+                                                                     sizeof(*this->glasses) * this->numGlasses,
                                                                      "C:\\projects_pc\\cod\\codsrc\\src\\glass\\glass_client.cpp",
                                                                      80);
 
@@ -729,7 +729,7 @@ int __cdecl GlassClient::Outlines::CalcMemorySize(const GlassShard **shards, int
     numVerts = 0;
     for ( i = 0; i < numShards; ++i )
         numVerts += shards[i]->outline.numVerts;
-    return 12 * numShards + 8 * numVerts + 8;
+    return (int)(sizeof(Outlines) + sizeof(Outline) * numShards + sizeof(float[2]) * numVerts);
 }
 
 GlassClient::Outlines::Outlines(
@@ -824,12 +824,6 @@ void __cdecl GlassCl_AllocateMemory()
     GlassesClient *v1; // [esp+4h] [ebp-8h]
     Glasses *glasses; // [esp+8h] [ebp-4h]
 
-#if defined(BO1_PORT_X64)
-    // TODO(x64): the client glass renderer (std::list on a 12-byte-node SmallAllocator, Allocator::Memory headers with 4-byte
-    // pointers, ...) is not ported yet; breakable glass stays inert on the client until it is.
-    if ( !getenv("BO1_X64_GLASS") )
-        return;
-#endif
     if ( !clGlasses )
     {
         glasses = GetGlasses();
@@ -874,9 +868,9 @@ void __cdecl GlassCl_Update(int localClientNum)
 }
 
 #if defined(BO1_PORT_X64)
-// With the client glass renderer disabled on x64 the glass section of the gamestate and of every snapshot must still be
-// consumed, or the rest of the message (custom game mode, entities, ...) is read from the wrong bit position and the
-// local client never reaches CA_ACTIVE. Same wire format as GlassesClient::ParseSnapshot, without applying any state.
+// If no client renderer is present, still consume the glass snapshot section so the following fields retain their
+// bit positions. The renderer now uses the regular allocation path on x64. This fallback uses the same wire format
+// as GlassesClient::ParseSnapshot without applying state.
 static void GlassCl_SkipSnapshot(msg_t *msg)
 {
     // The server emits no glass section when the map has no glasses.

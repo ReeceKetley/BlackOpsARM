@@ -1,9 +1,12 @@
 import re, collections, sys
+from pathlib import Path
 log = sys.argv[1]
 codes = ['C4311', 'C4312', 'C4302']
 pat = re.compile(r'BlackOps64\\(?:src|tl)\\(.*?)\((\d+),\d+\): warning (C43(?:11|12|02))')
 seen = {}
-for line in open(log, encoding='utf-8', errors='replace'):
+raw = Path(log).read_bytes()
+encoding = 'utf-16' if raw.startswith((b'\xff\xfe', b'\xfe\xff')) else 'utf-8-sig'
+for line in raw.decode(encoding, errors='replace').splitlines():
     m = pat.search(line)
     if m:
         f = m.group(1).replace('\\', '/')

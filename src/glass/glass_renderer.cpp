@@ -369,14 +369,15 @@ GlassRenderer::~GlassRenderer()
     unsigned __int8 i; // [esp+27h] [ebp-1h]
 
     GlassesClient::Free((char *)this->groupsAllocator->memory);
-    GlassesClient::Free((char *)this->groupsAllocator);
+    delete this->groupsAllocator;
     GlassesClient::Free((char *)this->shardsAllocator->memory);
-    GlassesClient::Free((char *)this->shardsAllocator);
+    delete this->shardsAllocator;
     GlassesClient::Free((char *)this->physicsAllocator->memory);
-    GlassesClient::Free((char *)this->physicsAllocator);
+    delete this->physicsAllocator;
+    // Lists must return their nodes before the shared small pool is freed.
+    delete this->colidingShards;
+    delete this->tempShardsList;
     GlassesClient::Free((char *)this->smallAllocator.memory);
-    GlassesClient::Free((char *)this->colidingShards);
-    GlassesClient::Free((char *)this->tempShardsList);
     GlassesClient::Free((char *)this->shardMemoryAllocator.buffer);
     for ( i = 0; i < 0x16u; ++i )
         GlassesClient::Free((char *)this->vertexList[i]);

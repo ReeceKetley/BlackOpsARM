@@ -7,6 +7,8 @@
 #include "r_debug.h"
 #include "r_workercmds.h"
 #include "r_warn.h"
+#include "rb_tess.h"
+#include <cstdint>
 #include <qcommon/threads.h>
 
 float max_plop_size = 5.0;
@@ -19,8 +21,18 @@ float debrisheight = 1.0;
 int water_rand_seed = 3;
 
 float4 g_255 = { { 255.0, 255.0, 255.0, 255.0 } };
-float4 g_swizzleXZYW = { 66051u, 134810123u, 67438087u, 202182159u };
-float4 g_swizzleXYAB = { 66051u, 67438087u, 269554195u, 336926231u };
+// These are packed byte indices, not floating-point values.
+static float4 WaterSwizzle(unsigned int x, unsigned int y, unsigned int z, unsigned int w)
+{
+    float4 result;
+    result.u[0] = x;
+    result.u[1] = y;
+    result.u[2] = z;
+    result.u[3] = w;
+    return result;
+}
+float4 g_swizzleXZYW = WaterSwizzle(66051u, 134810123u, 67438087u, 202182159u);
+float4 g_swizzleXYAB = WaterSwizzle(66051u, 67438087u, 269554195u, 336926231u);
 
 unsigned __int16 tessTable_0000[25] =
 {
@@ -1320,87 +1332,78 @@ void R_WaterSimulationUpdateConfig()
 
 void __cdecl R_RenderWaterModel(unsigned int viewIndex)
 {
-    float v1; // [esp+24h] [ebp-4Ch]
-    float v2; // [esp+28h] [ebp-48h]
-    unsigned int surfId; // [esp+30h] [ebp-40h]
-    tilemesh_t *mesh1; // [esp+34h] [ebp-3Ch]
-    tile_t *tile; // [esp+38h] [ebp-38h]
-    tilemesh_t *mesh0; // [esp+3Ch] [ebp-34h]
-    GfxDrawSurf drawSurf; // [esp+40h] [ebp-30h]
-    float dist; // [esp+48h] [ebp-28h]
-    float interpolate; // [esp+4Ch] [ebp-24h]
-    bool lod; // [esp+50h] [ebp-20h]
-    char *modelSurf; // [esp+54h] [ebp-1Ch]
-    unsigned int n; // [esp+5Ch] [ebp-14h]
-    float lodOrigin[3]; // [esp+64h] [ebp-Ch] BYREF
+    if (!s_world.waterMaterial)
+        return;
 
-    if ( s_world.waterMaterial )
+    float lodOrigin[3];
+    for (unsigned int axis = 0; axis < 3; ++axis)
+        lodOrigin[axis] = rg.correctedLodParms[viewIndex].origin[axis];
+    lodOrigin[0] -= 8.0f * config.gridScale;
+    lodOrigin[1] -= 8.0f * config.gridScale;
+
+    for (unsigned int n = 0; n < 256; ++n)
     {
-        lodOrigin[0] = rg.correctedLodParms[viewIndex].origin[0];
-        lodOrigin[1] = rg.correctedLodParms[viewIndex].origin[1];
-        lodOrigin[2] = rg.correctedLodParms[viewIndex].origin[2];
-        lodOrigin[0] = lodOrigin[0] - (float)((float)(16.0 * config.gridScale) / 2.0);
-        lodOrigin[1] = lodOrigin[1] - (float)((float)(16.0 * config.gridScale) / 2.0);
-        for ( n = 0; n < 0x100; ++n )
-        {
-            tile = &data.tiles[n];
-            if ( tile->occupied
-                && ((tile->meshes.tail - tile->meshes.head) & 3) >= 2
-                && !R_CullBoxCurDpvs(tile->minMax[0], viewIndex) )
-            {
-                mesh0 = &tile->meshes.data[tile->meshes.head];
-                mesh1 = &tile->meshes.data[((unsigned __int8)tile->meshes.head + 1) & 3];
-                modelSurf = R_SurfaceAlloc(0x2Cu);
-                if ( !modelSurf )
-                    return;
-                interpolate = (double)(data.frame - mesh1->lastSkinTime) / 16.0;
-                *((float *)modelSurf + 5) = interpolate;
-                *((unsigned int *)modelSurf + 1) = (unsigned int)data.vertexBuffer;
-                *((unsigned int *)modelSurf + 2) = (unsigned int)data.vertexBuffer;
-                *((unsigned int *)modelSurf + 3) = mesh0->baseVertex;
-                *((unsigned int *)modelSurf + 4) = mesh1->baseVertex;
-                v1 = (float)tile->worldY * config.gridScale;
-                v2 = (float)tile->worldZ * config.gridScale;
-                *((float *)modelSurf + 8) = (float)tile->worldX * config.gridScale;
-                *((float *)modelSurf + 9) = v1;
-                *((float *)modelSurf + 10) = v2;
-                dist = Vec3DistanceSq((const float *)modelSurf + 8, lodOrigin);
-                lod = dist >= 2250000.0;
-                *(unsigned int *)modelSurf = (unsigned int)data.indexBuffer[lod];
-                *((unsigned int *)modelSurf + 6) = 289;
-                *((unsigned int *)modelSurf + 7) = data.tileTriCount[lod];
-                surfId = modelSurf - (char *)frontEndDataOut;
-                if ( (((_BYTE)modelSurf - (_BYTE)frontEndDataOut) & 3) != 0
-                    && !Assert_MyHandler(
-                                "C:\\projects_pc\\cod\\codsrc\\src\\gfx_d3d\\r_water_sim.cpp",
-                                1374,
-                                0,
-                                "%s",
-                                "!(surfId & 3)") )
-                {
-                    __debugbreak();
-                }
-                HIDWORD(drawSurf.packed) = ((((s_world.waterMaterial->info.drawSurf.packed >> 58) & 0x3F) - 1) << 26)
-                                                                 | HIDWORD(s_world.waterMaterial->info.drawSurf.packed) & 0x38007FF
-                                                                 | 0x500000;
-                *(unsigned int *)&drawSurf.fields = (unsigned __int16)(surfId >> 2)
-                                                                        | *(unsigned int *)&s_world.waterMaterial->info.drawSurf.fields & 0xF00F0000
-                                                                        | 0x100000;
-                scene.drawSurfs[1][scene.drawSurfCount[1]++] = drawSurf;
-            }
-        }
+        tile_t *tile = &data.tiles[n];
+        if (!tile->occupied || ((tile->meshes.tail - tile->meshes.head) & 3) < 2
+            || R_CullBoxCurDpvs(tile->minMax[0], viewIndex))
+            continue;
+
+        const tilemesh_t *mesh0 = &tile->meshes.data[tile->meshes.head];
+        const tilemesh_t *mesh1 = &tile->meshes.data[(tile->meshes.head + 1) & 3];
+        GfxModelWaterSurface *modelSurf = reinterpret_cast<GfxModelWaterSurface *>(
+            R_SurfaceAlloc(sizeof(GfxModelWaterSurface)));
+        if (!modelSurf)
+            return;
+
+        modelSurf->interpolate = (double)(data.frame - mesh1->lastSkinTime) / 16.0;
+        modelSurf->vb0 = data.vertexBuffer;
+        modelSurf->vb1 = data.vertexBuffer;
+        modelSurf->baseVertex0 = mesh0->baseVertex;
+        modelSurf->baseVertex1 = mesh1->baseVertex;
+        modelSurf->origin[0] = tile->worldX * config.gridScale;
+        modelSurf->origin[1] = tile->worldY * config.gridScale;
+        modelSurf->origin[2] = tile->worldZ * config.gridScale;
+        const bool lod = Vec3DistanceSq(modelSurf->origin, lodOrigin) >= 2250000.0f;
+        modelSurf->ib = data.indexBuffer[lod];
+        modelSurf->vertCount = 289;
+        modelSurf->triCount = data.tileTriCount[lod];
+
+        // The draw key stores a bounded arena offset in four-byte units, not a pointer.
+        const unsigned int surfId = static_cast<unsigned int>(
+            reinterpret_cast<char *>(modelSurf) - reinterpret_cast<char *>(frontEndDataOut));
+        iassert(!(surfId & 3));
+        GfxDrawSurf drawSurf;
+        HIDWORD(drawSurf.packed) = ((((s_world.waterMaterial->info.drawSurf.packed >> 58) & 0x3F) - 1) << 26)
+            | HIDWORD(s_world.waterMaterial->info.drawSurf.packed) & 0x38007FF | 0x500000;
+        LODWORD(drawSurf.packed) = (unsigned __int16)(surfId >> 2)
+            | LODWORD(s_world.waterMaterial->info.drawSurf.packed) & 0xF00F0000 | 0x100000;
+        scene.drawSurfs[1][scene.drawSurfCount[1]++] = drawSurf;
     }
 }
 
 char *__cdecl R_SurfaceAlloc(unsigned int size)
 {
-    unsigned int startSurfPos; // [esp+4h] [ebp-4h]
-
-    startSurfPos = _InterlockedExchangeAdd(&frontEndDataOut->surfPos, size);
-    if ( size + startSurfPos <= 0x40000 )
-        return (char *)frontEndDataOut + startSurfPos;
+    // Other surface producers can leave a four-byte boundary. Water surfaces contain
+    // native COM pointers, so reserve padding and the object together atomically.
+    const unsigned int alignment = alignof(GfxModelWaterSurface);
+    const unsigned int capacity = sizeof(frontEndDataOut->surfsBuffer);
+    unsigned int previous = frontEndDataOut->surfPos;
+    for (;;)
+    {
+        if (previous > capacity || size > capacity)
+            break;
+        const unsigned int start = (previous + alignment - 1) & ~(alignment - 1);
+        if (start > capacity || size > capacity - start)
+            break;
+        const unsigned int next = start + size;
+        const unsigned int observed = _InterlockedCompareExchange(
+            &frontEndDataOut->surfPos, next, previous);
+        if (observed == previous)
+            return reinterpret_cast<char *>(frontEndDataOut->surfsBuffer) + start;
+        previous = observed;
+    }
     R_WarnOncePerFrame(R_WARN_MAX_SCENE_SURFS_SIZE);
-    return 0;
+    return nullptr;
 }
 
 void __cdecl R_WaterSimulationSwitchOff()
@@ -1408,49 +1411,17 @@ void __cdecl R_WaterSimulationSwitchOff()
     data.enabled = 0;
 }
 
-void *FlushBuffers()
+void FlushBuffers()
 {
-    void *result; // eax
-    unsigned int ii; // [esp+Ch] [ebp-24h]
-    unsigned int n; // [esp+1Ch] [ebp-14h]
-    unsigned int m; // [esp+20h] [ebp-10h]
-    unsigned int k; // [esp+24h] [ebp-Ch]
-    unsigned int j; // [esp+28h] [ebp-8h]
-    unsigned int i; // [esp+2Ch] [ebp-4h]
-
-    for ( i = 0; i < 4; ++i )
+    for (unsigned int i = 0; i < 4; ++i)
     {
-        //channel_t<float4>::Cache(data.buffer, 0, 0, 1);
         data.buffer[0].Cache(0, false, true);
-        result = (void *)(i + 1);
-    }
-    for (j = 0; j < 4; ++j)
-    {
-        //result = channel_t<float4>::Cache(&data.buffer[1], 0, 0, 1);
-        result = data.buffer[1].Cache(0, false, true);
-    }
-    for (k = 0; k < 4; ++k)
-    {
-        //result = channel_t<short>::Cache(&data.waterheight, 0, 0, 1);
-        result = data.waterheight.Cache(0, false, true);
-    }
-    for ( m = 0; m < 4; ++m )
-    {
-        //channel_t<char>::Cache(&data.flooroffset, 0, 0, 1);
+        data.buffer[1].Cache(0, false, true);
+        data.waterheight.Cache(0, false, true);
         data.flooroffset.Cache(0, false, true);
-        result = (void *)(m + 1);
+        data.shoredist.Cache(0, false, true);
+        data.colors.Cache(0, false, true);
     }
-    for (n = 0; n < 4; ++n)
-    {
-        //result = channel_t<char>::Cache(&data.shoredist, 0, 0, 1);
-        result = data.shoredist.Cache(0, false, true);
-    }
-    for (ii = 0; ii < 4; ++ii)
-    {
-        //result = channel_t<GfxColor>::Cache(&data.colors, 0, 0, 1);
-        result = data.colors.Cache(0, false, true);
-    }
-    return result;
 }
 
 #if 0
@@ -2605,714 +2576,100 @@ bool UnlockUpdateMutex()
     return ReleaseMutex(waterUpdateMutex);
 }
 
-// local variable allocation has failed, the output may be wrong!
-void    R_WaterSimulationSkinMesh(const WaterSimulationCmd *cmd)
+// Pack the shader's byte format after rounding, with saturation at each end.
+static unsigned char WaterSkinPackByte(float value)
 {
-    float v2; // xmm0_4
-    float v3; // xmm0_4
-    float v4; // xmm0_4
-    unsigned int v5; // xmm0_4
-    unsigned int v6; // xmm0_4
-    unsigned int v7; // xmm0_4
-    unsigned int v8; // xmm0_4
-    unsigned int v9; // xmm0_4
-    float v10; // xmm0_4
-    float v11; // xmm0_4
-    float v12; // xmm0_4
-    float v13; // xmm0_4
-    float v14; // xmm0_4
-    float v15; // xmm0_4
-    float v16; // xmm0_4
-    float v17; // xmm0_4
-    float v18; // xmm0_4
-    unsigned int v19; // xmm0_4
-    unsigned int v20; // xmm0_4
-    float v21; // xmm0_4
-    unsigned int x; // [esp+0h] [ebp-5D0h]
-    unsigned int y; // [esp+4h] [ebp-5CCh]
-    float v24; // [esp+18h] [ebp-5B8h]
-    float v25; // [esp+1Ch] [ebp-5B4h]
-    float v26; // [esp+20h] [ebp-5B0h]
-    float v27; // [esp+2Ch] [ebp-5A4h]
-    float v28; // [esp+30h] [ebp-5A0h]
-    float v29; // [esp+34h] [ebp-59Ch]
-    float v30; // [esp+38h] [ebp-598h]
-    float v31; // [esp+3Ch] [ebp-594h]
-    float v32; // [esp+40h] [ebp-590h]
-    float v33; // [esp+44h] [ebp-58Ch]
-    float v34; // [esp+48h] [ebp-588h]
-    float v35; // [esp+4Ch] [ebp-584h]
-    _BYTE *v36; // [esp+50h] [ebp-580h]
-    float v37; // [esp+8Ch] [ebp-544h]
-    float v38; // [esp+B4h] [ebp-51Ch]
-    _BYTE *v39; // [esp+B8h] [ebp-518h]
-    float v40; // [esp+C0h] [ebp-510h]
-    float v41; // [esp+C0h] [ebp-510h]
-    float v42; // [esp+C4h] [ebp-50Ch]
-    float v43; // [esp+C4h] [ebp-50Ch]
-    float v44; // [esp+C8h] [ebp-508h]
-    float v45; // [esp+D0h] [ebp-500h]
-    float v46; // [esp+D4h] [ebp-4FCh]
-    float v47; // [esp+D8h] [ebp-4F8h]
-    float finalNormal; // [esp+DCh] [ebp-4F4h]
-    __int64 v49; // [esp+F0h] [ebp-4E0h]
-    unsigned int v50; // [esp+F8h] [ebp-4D8h]
-    unsigned int v51; // [esp+FCh] [ebp-4D4h]
-    __int64 v52; // [esp+100h] [ebp-4D0h]
-    unsigned int v53; // [esp+108h] [ebp-4C8h]
-    unsigned int v54; // [esp+10Ch] [ebp-4C4h]
-    float4 v55; // [esp+110h] [ebp-4C0h]
-    float v56; // [esp+120h] [ebp-4B0h]
-    float v57; // [esp+124h] [ebp-4ACh]
-    float v58; // [esp+128h] [ebp-4A8h]
-    float v59; // [esp+12Ch] [ebp-4A4h]
-    float v60; // [esp+130h] [ebp-4A0h]
-    unsigned int v61; // [esp+134h] [ebp-49Ch]
-    float v62; // [esp+138h] [ebp-498h]
-    float v63; // [esp+13Ch] [ebp-494h]
-    unsigned int v64; // [esp+140h] [ebp-490h]
-    float v65; // [esp+144h] [ebp-48Ch]
-    float v66; // [esp+148h] [ebp-488h]
-    unsigned int v67; // [esp+14Ch] [ebp-484h]
-    float v68; // [esp+150h] [ebp-480h]
-    float v69; // [esp+154h] [ebp-47Ch]
-    float v70; // [esp+158h] [ebp-478h]
-    unsigned int v71; // [esp+15Ch] [ebp-474h]
-    float v72; // [esp+160h] [ebp-470h]
-    float v73; // [esp+164h] [ebp-46Ch]
-    unsigned int v74; // [esp+168h] [ebp-468h]
-    float v75; // [esp+16Ch] [ebp-464h]
-    float v76; // [esp+170h] [ebp-460h]
-    unsigned int v77; // [esp+174h] [ebp-45Ch]
-    float v78; // [esp+178h] [ebp-458h]
-    float v79; // [esp+17Ch] [ebp-454h]
-    float v80; // [esp+180h] [ebp-450h]
-    float v81; // [esp+184h] [ebp-44Ch]
-    float v82; // [esp+188h] [ebp-448h]
-    float v83; // [esp+18Ch] [ebp-444h]
-    float v84; // [esp+190h] [ebp-440h]
-    float v85; // [esp+194h] [ebp-43Ch]
-    float v86; // [esp+198h] [ebp-438h]
-    float4 foamW; // [esp+19Ch] [ebp-434h]
-    float v88; // [esp+1ACh] [ebp-424h]
-    unsigned __int8 v89; // [esp+1B3h] [ebp-41Dh]
-    bool v90; // [esp+1B4h] [ebp-41Ch]
-    unsigned __int8 v91; // [esp+1BBh] [ebp-415h]
-    bool v92; // [esp+1BCh] [ebp-414h] OVERLAPPED
-    float v93; // [esp+1C0h] [ebp-410h]
-    float v94; // [esp+1C4h] [ebp-40Ch] OVERLAPPED
-    float v95; // [esp+1C8h] [ebp-408h]
-    float4 finalPos; // [esp+1CCh] [ebp-404h] BYREF
-    float4 zOffset; // [esp+1DCh] [ebp-3F4h] BYREF
-    float4 binormal; // [esp+1ECh] [ebp-3E4h] BYREF
-    float4 tangent; // [esp+1FCh] [ebp-3D4h]
-    unsigned int v100; // [esp+20Ch] [ebp-3C4h]
-    float v101; // [esp+210h] [ebp-3C0h]
-    unsigned int v102; // [esp+214h] [ebp-3BCh]
-    unsigned int v103; // [esp+218h] [ebp-3B8h]
-    float v104; // [esp+21Ch] [ebp-3B4h]
-    unsigned int v105; // [esp+220h] [ebp-3B0h]
-    unsigned int v106; // [esp+224h] [ebp-3ACh]
-    unsigned int v107; // [esp+228h] [ebp-3A8h]
-    unsigned int v108; // [esp+22Ch] [ebp-3A4h]
-    unsigned int v109; // [esp+230h] [ebp-3A0h]
-    float v110; // [esp+234h] [ebp-39Ch]
-    float v111; // [esp+238h] [ebp-398h]
-    float v112; // [esp+23Ch] [ebp-394h]
-    float v113; // [esp+240h] [ebp-390h]
-    float v114; // [esp+244h] [ebp-38Ch]
-    float v115; // [esp+248h] [ebp-388h]
-    float v116; // [esp+24Ch] [ebp-384h]
-    float v117; // [esp+250h] [ebp-380h]
-    float v118; // [esp+254h] [ebp-37Ch]
-    float v119; // [esp+258h] [ebp-378h]
-    float4 worldPos; // [esp+25Ch] [ebp-374h]
-    float4 zoffset; // [esp+26Ch] [ebp-364h]
-    float4 tilePos; // [esp+27Ch] [ebp-354h]
-    float avgfoam; // [esp+28Ch] [ebp-344h]
-    float4 foam; // [esp+290h] [ebp-340h]
-    _BYTE avgpos[20]; // [esp+2A0h] [ebp-330h] OVERLAPPED
-    float waterheight; // [esp+2B4h] [ebp-31Ch] OVERLAPPED
-    _BYTE i[20]; // [esp+2B8h] [ebp-318h] OVERLAPPED
-    float4 v128; // [esp+2CCh] [ebp-304h] BYREF
-    __int64 v129; // [esp+2DCh] [ebp-2F4h]
-    float v130; // [esp+2E4h] [ebp-2ECh]
-    _BYTE h[20]; // [esp+2E8h] [ebp-2E8h] OVERLAPPED
-    float4 v132; // [esp+2FCh] [ebp-2D4h] BYREF
-    __int64 v133; // [esp+30Ch] [ebp-2C4h]
-    float v134; // [esp+314h] [ebp-2BCh]
-    _BYTE g[20]; // [esp+318h] [ebp-2B8h] OVERLAPPED
-    float4 v136; // [esp+32Ch] [ebp-2A4h] BYREF
-    __int64 v137; // [esp+33Ch] [ebp-294h]
-    float v138; // [esp+344h] [ebp-28Ch]
-    _BYTE f[20]; // [esp+348h] [ebp-288h] OVERLAPPED
-    float4 v140; // [esp+35Ch] [ebp-274h] BYREF
-    __int64 v141; // [esp+36Ch] [ebp-264h]
-    float v142; // [esp+374h] [ebp-25Ch]
-    _BYTE e[20]; // [esp+378h] [ebp-258h] OVERLAPPED
-    float4 v144; // [esp+38Ch] [ebp-244h] BYREF
-    __int64 v145; // [esp+39Ch] [ebp-234h]
-    float v146; // [esp+3A4h] [ebp-22Ch]
-    _BYTE d[20]; // [esp+3A8h] [ebp-228h] OVERLAPPED
-    float4 v148; // [esp+3BCh] [ebp-214h] BYREF
-    __int64 v149; // [esp+3CCh] [ebp-204h]
-    float v150; // [esp+3D4h] [ebp-1FCh]
-    _BYTE c[20]; // [esp+3D8h] [ebp-1F8h] OVERLAPPED
-    float4 v152; // [esp+3ECh] [ebp-1E4h] BYREF
-    __int64 v153; // [esp+3FCh] [ebp-1D4h]
-    float v154; // [esp+404h] [ebp-1CCh]
-    _BYTE b[20]; // [esp+408h] [ebp-1C8h] OVERLAPPED
-    float4 v156; // [esp+41Ch] [ebp-1B4h] BYREF
-    __int64 v157; // [esp+42Ch] [ebp-1A4h]
-    float v158; // [esp+434h] [ebp-19Ch]
-    _BYTE a[20]; // [esp+438h] [ebp-198h] OVERLAPPED
-    float4 v160; // [esp+44Ch] [ebp-184h] BYREF
-    __int64 v161; // [esp+45Ch] [ebp-174h]
-    __int64 v162; // [esp+464h] [ebp-16Ch]
-    float v163[3]; // [esp+46Ch] [ebp-164h] BYREF
-    float4 tileUV; // [esp+478h] [ebp-158h] BYREF
-    float4 worldUV; // [esp+488h] [ebp-148h]
-    int worldV; // [esp+498h] [ebp-138h]
-    int worldU; // [esp+49Ch] [ebp-134h]
-    int v; // [esp+4A0h] [ebp-130h]
-    __int64 u; // [esp+4A4h] [ebp-12Ch] OVERLAPPED
-    unsigned int tv; // [esp+4ACh] [ebp-124h]
-    float zdata[4]; // [esp+4B0h] [ebp-120h]
-    float4 minBox; // [esp+4C0h] [ebp-110h]
-    float4 maxBox; // [esp+4D0h] [ebp-100h]
-    int tilev; // [esp+4E0h] [ebp-F0h]
-    int tileu; // [esp+4E4h] [ebp-ECh]
-    GfxWaterVertex *dest; // [esp+4E8h] [ebp-E8h]
-    tilemesh_t *mesh; // [esp+4ECh] [ebp-E4h]
-    unsigned int tilenum; // [esp+4F0h] [ebp-E0h]
-    unsigned int srcBuf; // [esp+4F4h] [ebp-DCh]
-    float4 normalOffset; // [esp+4F8h] [ebp-D8h]
-    float4 normalScale; // [esp+508h] [ebp-C8h]
-    float4 posOffset; // [esp+518h] [ebp-B8h]
-    float4 posScale; // [esp+528h] [ebp-A8h]
-    float4 dv; // [esp+538h] [ebp-98h]
-    float4 du; // [esp+548h] [ebp-88h] BYREF
-    float4 zero; // [esp+558h] [ebp-78h]
-    float4 half; // [esp+568h] [ebp-68h]
-    float4 one; // [esp+578h] [ebp-58h]
-    float4 inv_4; // [esp+588h] [ebp-48h]
-    float4 scale; // [esp+598h] [ebp-38h]
-    int v191; // [esp+5A8h] [ebp-28h]
-    float dv_data[4]; // [esp+5ACh] [ebp-24h]
-    float du_data[5]; // [esp+5BCh] [ebp-14h]
-    //float retaddr; // [esp+5D0h] [ebp+0h]
-
-    //du_data[2] = a1;
-    //du_data[3] = retaddr;
-    dv_data[1] = 4.0f;
-    dv_data[2] = 0.0f;
-    dv_data[3] = 0.0f;
-    du_data[0] = 0.0f;
-    scale.v[3] = 4.0f;
-    v191 = 0;
-    dv_data[0] = 0.0f;
-    *(_QWORD *)&scale.unitVec[1].packed = __PAIR64__(0, LODWORD(config.gridScale));
-    inv_4.u[2] = LODWORD(config.gridScale);
-    inv_4.u[3] = LODWORD(config.gridScale);
-    scale.u[0] = LODWORD(config.gridScale);
-    one.v[2] = 0.25f;
-    one.v[3] = 0.25f;
-    //*(_QWORD *)inv_4.v = __PAIR64__(LODWORD(config.gridScale), LODWORD(0.25f));
-    inv_4.v[0] = 0.25f;
-    inv_4.v[1] = config.gridScale;
-
-    half.v[2] = 1.0f;
-    half.v[3] = 1.0f;
-    //*(_QWORD *)one.v = __PAIR64__(LODWORD(0.25f), LODWORD(1.0f));
-    one.v[0] = 1.0f;
-    one.v[1] = 0.25f;
-    zero.v[2] = 0.5f;
-    zero.v[3] = 0.5f;
-    //*(_QWORD *)half.v = __PAIR64__(LODWORD(1.0f), LODWORD(0.5f));
-    half.v[0] = 0.5f;
-    half.v[1] = 1.0f;
-    //*(_QWORD *)zero.v = __PAIR64__(LODWORD(0.5f), 0);
-    zero.v[0] = 0;
-    zero.v[0] = 0.5f;
-
-    dv.u[2] = 0;
-    dv.u[3] = 0;
-    memset(&du, 0, sizeof(du));
-    //*(_QWORD *)&posScale.unitVec[2].packed = __PAIR64__(0, LODWORD(4.0f));
-    posScale.unitVec[2].packed = (int)4.0f;
-    posScale.unitVec[2].packed = (int)0;
-    //*(_QWORD *)dv.v = __PAIR64__(LODWORD(4.0f), 0);
-    dv.v[0] = 0;
-    dv.v[1] = 4.0f;
-    posOffset.v[2] = 8.0f;
-    posOffset.v[3] = 8.0f;
-    //*(_QWORD *)posScale.v = __PAIR64__(0, LODWORD(8.0f));
-    posScale.v[0] = 8.0f;
-    posScale.v[1] = 0.0f;
-    normalScale.v[2] = 64.0f;
-    normalScale.v[3] = 64.0f;
-    //*(_QWORD *)posOffset.v = __PAIR64__(LODWORD(8.0f), LODWORD(64.0f));
-    posOffset.v[0] = 64.0f;
-    posOffset.v[1] = 8.0f;
-
-    normalOffset.v[2] = 127.0f;
-    normalOffset.v[3] = 127.0f;
-    //*(_QWORD *)normalScale.v = __PAIR64__(LODWORD(64.0f), LODWORD(127.0f));
-    normalScale.v[0] = 127.0f;
-    normalScale.v[1] = 64.0f;
-    *(float *)&mesh = 128.0f;
-    *(float *)&tilenum = 128.0f;
-    *(float *)&srcBuf = 128.0f;
-    //*(_QWORD *)normalOffset.v = __PAIR64__(LODWORD(127.0f), LODWORD(128.0f));
-    normalOffset.v[0] = 128.0f;
-    normalOffset.v[1] = 127.0f;
-
-    dest = (GfxWaterVertex *)cmd->skin.srcBuf;
-    for ( tileu = 0; (unsigned int)tileu < 0x10; ++tileu )
-    {
-        tilev = (int)cmd->skin.meshesEA[tileu];
-        if ( tilev )
-        {
-            if ( !Sys_QueryD3DDeviceOKEvent() )
-                return;
-            maxBox.u[3] = (unsigned int)R_LockVertexBuffer(data.vertexBuffer, 0, 0, 0x1000u);
-            if ( !maxBox.u[3] )
-                return;
-            maxBox.u[3] += 16 * *(unsigned int *)(tilev + 24);
-            maxBox.u[2] = *(unsigned int *)tilev;
-            maxBox.u[1] = *(unsigned int *)(tilev + 4);
-            minBox.v[2] = -FLT_MAX;
-            minBox.v[3] = -FLT_MAX;
-            maxBox.v[0] = -FLT_MAX;
-            zdata[1] = FLT_MAX;
-            zdata[2] = FLT_MAX;
-            zdata[3] = FLT_MAX;
-            //*(_QWORD *)minBox.v = __PAIR64__(LODWORD(-FLT_MAX), LODWORD(FLT_MAX));
-            minBox.v[0] = FLT_MAX;
-            minBox.v[1] = -FLT_MAX;
-            LODWORD(u) = 0;
-            HIDWORD(u) = 0;
-            tv = 0;
-            zdata[0] = 0.0f;
-            for ( v = 0; (unsigned int)v < 0x11; ++v )
-            {
-                for ( worldU = 0; (unsigned int)worldU < 0x11; ++worldU )
-                {
-                    worldV = worldU + maxBox.u[2];
-                    worldUV.u[3] = v + maxBox.u[1];
-                    worldUV.u[2] = worldU + *(unsigned int *)(tilev + 8);
-                    worldUV.u[1] = v + *(unsigned int *)(tilev + 12);
-                    Float4LoadFloats(
-                        ((float)(int)worldUV.u[2]),
-                        ((float)(int)worldUV.u[1]),
-                        (0.0),
-                        (0.0),
-                        (float4 *)&tileUV.unitVec[1]);
-                    v162 = (unsigned int)v;
-                    *(float *)&y = (float)(unsigned int)v;
-                    v161 = (unsigned int)worldU;
-                    *(float *)&x = (float)(unsigned int)worldU;
-                    Float4LoadFloats(x, y, (0.0), (0.0), (float4 *)v163);
-                    *(float4 *)&a[4] = *ReadValue(&v160, worldV - 1, worldUV.u[3] - 1, (unsigned int)dest);
-                    v157 = *(_QWORD *)&a[4];
-                    v158 = *(float *)&a[12];
-                    *(unsigned int *)a = *(unsigned int *)&a[16];
-                    *(float4 *)&b[4] = *ReadValue(&v156, worldV, worldUV.u[3] - 1, (unsigned int)dest);
-                    v153 = *(_QWORD *)&b[4];
-                    v154 = *(float *)&b[12];
-                    *(unsigned int *)b = *(unsigned int *)&b[16];
-                    *(float4 *)&c[4] = *ReadValue(&v152, worldV + 1, worldUV.u[3] - 1, (unsigned int)dest);
-                    v149 = *(_QWORD *)&c[4];
-                    v150 = *(float *)&c[12];
-                    *(unsigned int *)c = *(unsigned int *)&c[16];
-                    *(float4 *)&d[4] = *ReadValue(&v148, worldV - 1, worldUV.u[3], (unsigned int)dest);
-                    v145 = *(_QWORD *)&d[4];
-                    v146 = *(float *)&d[12];
-                    *(unsigned int *)d = *(unsigned int *)&d[16];
-                    *(float4 *)&e[4] = *ReadValue(&v144, worldV, worldUV.u[3], (unsigned int)dest);
-                    v141 = *(_QWORD *)&e[4];
-                    v142 = *(float *)&e[12];
-                    *(unsigned int *)e = *(unsigned int *)&e[16];
-                    *(float4 *)&f[4] = *ReadValue(&v140, worldV + 1, worldUV.u[3], (unsigned int)dest);
-                    v137 = *(_QWORD *)&f[4];
-                    v138 = *(float *)&f[12];
-                    *(unsigned int *)f = *(unsigned int *)&f[16];
-                    *(float4 *)&g[4] = *ReadValue(&v136, worldV - 1, worldUV.u[3] + 1, (unsigned int)dest);
-                    v133 = *(_QWORD *)&g[4];
-                    v134 = *(float *)&g[12];
-                    *(unsigned int *)g = *(unsigned int *)&g[16];
-                    *(float4 *)&h[4] = *ReadValue(&v132, worldV, worldUV.u[3] + 1, (unsigned int)dest);
-                    v129 = *(_QWORD *)&h[4];
-                    v130 = *(float *)&h[12];
-                    *(unsigned int *)h = *(unsigned int *)&h[16];
-                    *(float4 *)&i[4] = *ReadValue(&v128, worldV + 1, worldUV.u[3] + 1, (unsigned int)dest);
-                    *(_QWORD *)&avgpos[12] = *(_QWORD *)&i[4];
-                    waterheight = *(float *)&i[12];
-                    *(unsigned int *)i = *(unsigned int *)&i[16];
-                    *(_WORD *)&avgpos[8] = data.waterheight.v[256 * worldUV.unitVec[3].array[0] + (unsigned __int8)worldV];
-                    avgpos[7] = data.shoredist.v[256 * worldUV.unitVec[3].array[0] + (unsigned __int8)worldV];
-                    foam.v[1] = *(float *)&v129 + (float)(*(float *)&v141 + *(float *)&v137);
-                    foam.v[2] = *((float *)&v129 + 1) + (float)(*((float *)&v141 + 1) + *((float *)&v137 + 1));
-                    foam.v[3] = v130 + (float)(v142 + v138);
-                    *(float *)avgpos = *(float *)h + (float)(*(float *)e + *(float *)f);
-                    foam.v[1] = *(float *)&i[4] + foam.v[1];
-                    foam.v[2] = *(float *)&i[8] + foam.v[2];
-                    foam.v[3] = *(float *)&i[12] + foam.v[3];
-                    *(float *)avgpos = *(float *)&i[16] + *(float *)avgpos;
-                    foam.v[1] = foam.v[1] * one.v[1];
-                    foam.v[2] = foam.v[2] * one.v[2];
-                    foam.v[3] = foam.v[3] * one.v[3];
-                    *(float *)avgpos = *(float *)avgpos * inv_4.v[0];
-                    tilePos.u[2] = *(unsigned int *)avgpos;
-                    tilePos.u[3] = *(unsigned int *)avgpos;
-                    avgfoam = *(float *)avgpos;
-                    foam.u[0] = *(unsigned int *)avgpos;
-                    tilePos.u[1] = *(unsigned int *)avgpos;
-                    zoffset.v[1] = foam.v[1] + v163[0];
-                    zoffset.v[2] = foam.v[2] + v163[1];
-                    zoffset.v[3] = foam.v[3] + v163[2];
-                    tilePos.v[0] = *(float *)avgpos + tileUV.v[0];
-                    foam.v[1] = foam.v[1] + tileUV.v[1];
-                    foam.v[2] = foam.v[2] + tileUV.v[2];
-                    foam.v[3] = foam.v[3] + tileUV.v[3];
-                    *(float *)avgpos = *(float *)avgpos + worldUV.v[0];
-                    foam.v[1] = foam.v[1] * inv_4.v[1];
-                    foam.v[2] = foam.v[2] * inv_4.v[2];
-                    foam.v[3] = foam.v[3] * inv_4.v[3];
-                    *(float *)avgpos = *(float *)avgpos * scale.v[0];
-                    *(float *)&tv = (float)*(__int16 *)&avgpos[8];
-                    *(_QWORD *)&worldPos.unitVec[1].packed = u;
-                    worldPos.v[3] = *(float *)&tv;
-                    zoffset.v[0] = zdata[0];
-                    v117 = *(float *)&u + foam.v[1];
-                    v118 = *((float *)&u + 1) + foam.v[2];
-                    v119 = *(float *)&tv + foam.v[3];
-                    worldPos.v[0] = zdata[0] + *(float *)avgpos;
-                    if ( (float)((float)(*(float *)&u + foam.v[1]) - zdata[1]) < 0.0 )
-                        v2 = v117;
-                    else
-                        v2 = zdata[1];
-                    v116 = v2;
-                    zdata[1] = v2;
-                    v115 = zdata[2];
-                    v114 = v118;
-                    if ( (float)(v118 - zdata[2]) < 0.0 )
-                        v3 = v114;
-                    else
-                        v3 = v115;
-                    v113 = v3;
-                    zdata[2] = v3;
-                    v112 = zdata[3];
-                    v111 = v119;
-                    if ( (float)(v119 - zdata[3]) < 0.0 )
-                        v4 = v111;
-                    else
-                        v4 = v112;
-                    v110 = v4;
-                    zdata[3] = v4;
-                    v109 = minBox.u[0];
-                    v108 = worldPos.u[0];
-                    if ( (float)(worldPos.v[0] - minBox.v[0]) < 0.0 )
-                        v5 = v108;
-                    else
-                        v5 = v109;
-                    v107 = v5;
-                    minBox.u[0] = v5;
-                    if ( (float)(minBox.v[1] - v117) < 0.0 )
-                        v6 = LODWORD(v117);
-                    else
-                        v6 = minBox.u[1];
-                    v106 = v6;
-                    minBox.u[1] = v6;
-                    v105 = minBox.u[2];
-                    v104 = v118;
-                    if ( (float)(minBox.v[2] - v118) < 0.0 )
-                        v7 = LODWORD(v104);
-                    else
-                        v7 = v105;
-                    v103 = v7;
-                    minBox.u[2] = v7;
-                    v102 = minBox.u[3];
-                    v101 = v119;
-                    if ( (float)(minBox.v[3] - v119) < 0.0 )
-                        v8 = LODWORD(v101);
-                    else
-                        v8 = v102;
-                    v100 = v8;
-                    minBox.u[3] = v8;
-                    *(_QWORD *)&tangent.unitVec[2].packed = __PAIR64__(maxBox.u[0], worldPos.u[0]);
-                    if ( (float)(maxBox.v[0] - worldPos.v[0]) < 0.0 )
-                        v9 = tangent.u[2];
-                    else
-                        v9 = tangent.u[3];
-                    tangent.u[1] = v9;
-                    maxBox.u[0] = v9;
-                    binormal.v[1] = (float)(*(float *)&v149 + *(float *)&avgpos[12]) - *(float *)&v157;
-                    binormal.v[2] = (float)(*((float *)&v149 + 1) + *(float *)&avgpos[16]) - *((float *)&v157 + 1);
-                    binormal.v[3] = (float)(v150 + waterheight) - v158;
-                    tangent.v[0] = (float)(*(float *)c + *(float *)i) - *(float *)a;
-                    binormal.v[1] = binormal.v[1] - *(float *)&v133;
-                    binormal.v[2] = binormal.v[2] - *((float *)&v133 + 1);
-                    binormal.v[3] = binormal.v[3] - v134;
-                    tangent.v[0] = tangent.v[0] - *(float *)g;
-                    binormal.v[1] = binormal.v[1] * zero.v[1];
-                    binormal.v[2] = binormal.v[2] * zero.v[2];
-                    binormal.v[3] = binormal.v[3] * zero.v[3];
-                    tangent.v[0] = tangent.v[0] * half.v[0];
-                    binormal.v[1] = binormal.v[1] + *(float *)&v137;
-                    binormal.v[2] = binormal.v[2] + *((float *)&v137 + 1);
-                    binormal.v[3] = binormal.v[3] + v138;
-                    tangent.v[0] = tangent.v[0] + *(float *)f;
-                    binormal.v[1] = binormal.v[1] - *(float *)&v145;
-                    binormal.v[2] = binormal.v[2] - *((float *)&v145 + 1);
-                    binormal.v[3] = binormal.v[3] - v146;
-                    tangent.v[0] = tangent.v[0] - *(float *)d;
-                    zOffset.v[1] = (float)(*(float *)&avgpos[12] + *(float *)&v133) - *(float *)&v157;
-                    zOffset.v[2] = (float)(*(float *)&avgpos[16] + *((float *)&v133 + 1)) - *((float *)&v157 + 1);
-                    zOffset.v[3] = (float)(waterheight + v134) - v158;
-                    binormal.v[0] = (float)(*(float *)i + *(float *)g) - *(float *)a;
-                    zOffset.v[1] = zOffset.v[1] - *(float *)&v149;
-                    zOffset.v[2] = zOffset.v[2] - *((float *)&v149 + 1);
-                    zOffset.v[3] = zOffset.v[3] - v150;
-                    binormal.v[0] = binormal.v[0] - *(float *)c;
-                    zOffset.v[1] = zOffset.v[1] * zero.v[1];
-                    zOffset.v[2] = zOffset.v[2] * zero.v[2];
-                    zOffset.v[3] = zOffset.v[3] * zero.v[3];
-                    binormal.v[0] = binormal.v[0] * half.v[0];
-                    zOffset.v[1] = zOffset.v[1] + *(float *)&v129;
-                    zOffset.v[2] = zOffset.v[2] + *((float *)&v129 + 1);
-                    zOffset.v[3] = zOffset.v[3] + v130;
-                    binormal.v[0] = binormal.v[0] + *(float *)h;
-                    zOffset.v[1] = zOffset.v[1] - *(float *)&v153;
-                    zOffset.v[2] = zOffset.v[2] - *((float *)&v153 + 1);
-                    zOffset.v[3] = zOffset.v[3] - v154;
-                    binormal.v[0] = binormal.v[0] - *(float *)b;
-                    binormal.v[1] = binormal.v[1] + dv.v[1];
-                    binormal.v[2] = binormal.v[2] + dv.v[2];
-                    binormal.v[3] = binormal.v[3] + dv.v[3];
-                    tangent.v[0] = tangent.v[0] + du.v[0];
-                    zOffset.v[1] = zOffset.v[1] + posScale.v[1];
-                    zOffset.v[2] = zOffset.v[2] + posScale.v[2];
-                    zOffset.v[3] = zOffset.v[3] + posScale.v[3];
-                    binormal.v[0] = binormal.v[0] + dv.v[0];
-                    Vec3NormalizeTo(&binormal.v[1], &binormal.v[1]);
-                    tangent.u[0] = 0;
-                    Vec3NormalizeTo(&zOffset.v[1], &zOffset.v[1]);
-                    binormal.u[0] = 0;
-                    Float4LoadFloats(
-                        (0.0),
-                        (0.0),
-                        ((float)((float)*(__int16 *)&avgpos[8] / config.gridScale) - (float)*(int *)(tilev + 16)),
-                        (0.0),
-                        (float4 *)&finalPos.unitVec[1]);
-                    v93 = (float)((float)(zoffset.v[1] + finalPos.v[1]) * posOffset.v[1]) + normalScale.v[1];
-                    v94 = (float)((float)(zoffset.v[2] + finalPos.v[2]) * posOffset.v[2]) + normalScale.v[2];
-                    v95 = (float)((float)(zoffset.v[3] + finalPos.v[3]) * posOffset.v[3]) + normalScale.v[3];
-                    finalPos.v[0] = (float)((float)(tilePos.v[0] + zOffset.v[0]) * posScale.v[0]) + posOffset.v[0];
-                    v92 = worldU == 16 && !worldUV.unitVec[2].array[0];
-                    v91 = v92;
-                    v90 = v == 16 && !worldUV.unitVec[1].array[0];
-                    v89 = v90;
-                    v88 = tilePos.v[1] * 63.0;
-                    if ( (float)((float)(tilePos.v[1] * 63.0) - 62.0) < 0.0 )
-                        foamW.v[3] = v88;
-                    else
-                        foamW.v[3] = 62.0f;
-                    if ( (float)(0.0 - v88) < 0.0 )
-                        foamW.u[2] = foamW.u[3];
-                    else
-                        foamW.u[2] = 0;
-                    foamW.v[1] = (float)((float)(v91 << 6) + foamW.v[2]) + (float)(v89 << 7);
-                    v84 = foamW.v[1];
-                    v85 = foamW.v[1];
-                    v86 = foamW.v[1];
-                    foamW.v[0] = foamW.v[1];
-                    finalPos.v[0] = foamW.v[1];
-                    v80 = v93 + 0.5;
-                    v81 = v94 + 0.5;
-                    v82 = v95 + 0.5;
-                    v83 = foamW.v[1] + 0.5;
-                    if ( (float)((float)(v93 + 0.5) - 0.0) < 0.0 )
-                        v79 = g_zero.v[0];
-                    else
-                        v79 = v80;
-                    v80 = v79;
-                    v78 = v81;
-                    v77 = g_zero.u[1];
-                    if ( (float)(v81 - 0.0) < 0.0 )
-                        v10 = *(float *)&v77;
-                    else
-                        v10 = v78;
-                    v76 = v10;
-                    v81 = v10;
-                    v75 = v82;
-                    v74 = g_zero.u[2];
-                    if ( (float)(v82 - 0.0) < 0.0 )
-                        v11 = *(float *)&v74;
-                    else
-                        v11 = v75;
-                    v73 = v11;
-                    v82 = v11;
-                    v72 = v83;
-                    v71 = g_zero.u[3];
-                    if ( (float)(v83 - 0.0) < 0.0 )
-                        v12 = *(float *)&v71;
-                    else
-                        v12 = v72;
-                    v70 = v12;
-                    v83 = v12;
-                    if ( (float)(255.0 - v80) < 0.0 )
-                        v69 = g_255.v[0];
-                    else
-                        v69 = v80;
-                    v80 = v69;
-                    v68 = v81;
-                    v67 = g_255.u[1];
-                    if ( (float)(255.0 - v81) < 0.0 )
-                        v13 = *(float *)&v67;
-                    else
-                        v13 = v68;
-                    v66 = v13;
-                    v81 = v13;
-                    v65 = v82;
-                    v64 = g_255.u[2];
-                    if ( (float)(255.0 - v82) < 0.0 )
-                        v14 = *(float *)&v64;
-                    else
-                        v14 = v65;
-                    v63 = v14;
-                    v82 = v14;
-                    v62 = v83;
-                    v61 = g_255.u[3];
-                    if ( (float)(255.0 - v83) < 0.0 )
-                        v15 = *(float *)&v61;
-                    else
-                        v15 = v62;
-                    v60 = v15;
-                    v83 = v15;
-                    v56 = v80;
-                    v57 = v81;
-                    v58 = v82;
-                    v59 = v15;
-                    *(_BYTE *)maxBox.u[3] = (int)v80;
-                    *(_BYTE *)(maxBox.u[3] + 1) = (int)v57;
-                    *(_BYTE *)(maxBox.u[3] + 2) = (int)v58;
-                    *(_BYTE *)(maxBox.u[3] + 3) = (int)v59;
-                    v55 = g_swizzleXYAB;
-                    v49 = *(_QWORD *)&binormal.unitVec[1].packed;
-                    v50 = binormal.u[3];
-                    v51 = tangent.u[0];
-                    v52 = *(_QWORD *)&zOffset.unitVec[1].packed;
-                    v53 = zOffset.u[3];
-                    v54 = binormal.u[0];
-                    LOBYTE(v45) = *((_BYTE *)&v49 + g_swizzleXYAB.unitVec[0].array[3]);
-                    BYTE1(v45) = *((_BYTE *)&v49 + g_swizzleXYAB.unitVec[0].array[2]);
-                    BYTE2(v45) = *((_BYTE *)&v49 + g_swizzleXYAB.unitVec[0].array[1]);
-                    HIBYTE(v45) = *((_BYTE *)&v49 + g_swizzleXYAB.unitVec[0].array[0]);
-                    LOBYTE(v46) = *((_BYTE *)&v49 + g_swizzleXYAB.unitVec[1].array[3]);
-                    BYTE1(v46) = *((_BYTE *)&v49 + g_swizzleXYAB.unitVec[1].array[2]);
-                    BYTE2(v46) = *((_BYTE *)&v49 + g_swizzleXYAB.unitVec[1].array[1]);
-                    HIBYTE(v46) = *((_BYTE *)&v49 + g_swizzleXYAB.unitVec[1].array[0]);
-                    LOBYTE(v47) = *((_BYTE *)&v49 + g_swizzleXYAB.unitVec[2].array[3]);
-                    BYTE1(v47) = *((_BYTE *)&v49 + g_swizzleXYAB.unitVec[2].array[2]);
-                    BYTE2(v47) = *((_BYTE *)&v49 + g_swizzleXYAB.unitVec[2].array[1]);
-                    HIBYTE(v47) = *((_BYTE *)&v49 + g_swizzleXYAB.unitVec[2].array[0]);
-                    LOBYTE(finalNormal) = *((_BYTE *)&v49 + g_swizzleXYAB.unitVec[3].array[3]);
-                    BYTE1(finalNormal) = *((_BYTE *)&v49 + g_swizzleXYAB.unitVec[3].array[2]);
-                    BYTE2(finalNormal) = *((_BYTE *)&v49 + g_swizzleXYAB.unitVec[3].array[1]);
-                    HIBYTE(finalNormal) = *((_BYTE *)&v49 + g_swizzleXYAB.unitVec[3].array[0]);
-                    v39 = (_BYTE *)(maxBox.u[3] + 4);
-                    if ( (float)((float)((float)((float)(v45 * normalOffset.v[1]) + *(float *)&mesh) + 0.5) - 0.0) < 0.0 )
-                        v38 = g_zero.v[0];
-                    else
-                        v38 = (float)((float)(v45 * normalOffset.v[1]) + *(float *)&mesh) + 0.5;
-                    if ( (float)((float)((float)((float)(v46 * normalOffset.v[2]) + *(float *)&tilenum) + 0.5) - 0.0) < 0.0 )
-                        v16 = g_zero.v[1];
-                    else
-                        v16 = (float)((float)(v46 * normalOffset.v[2]) + *(float *)&tilenum) + 0.5;
-                    v40 = v16;
-                    if ( (float)((float)((float)((float)(v47 * normalOffset.v[3]) + *(float *)&srcBuf) + 0.5) - 0.0) < 0.0 )
-                        v17 = g_zero.v[2];
-                    else
-                        v17 = (float)((float)(v47 * normalOffset.v[3]) + *(float *)&srcBuf) + 0.5;
-                    v42 = v17;
-                    if ( (float)((float)((float)((float)(finalNormal * normalScale.v[0]) + normalOffset.v[0]) + 0.5) - 0.0) < 0.0 )
-                        v18 = g_zero.v[3];
-                    else
-                        v18 = (float)((float)(finalNormal * normalScale.v[0]) + normalOffset.v[0]) + 0.5;
-                    v44 = v18;
-                    if ( (float)(255.0 - v38) < 0.0 )
-                        v37 = g_255.v[0];
-                    else
-                        v37 = v38;
-                    if ( (float)(255.0 - v40) < 0.0 )
-                        v19 = g_255.u[1];
-                    else
-                        *(float *)&v19 = v40;
-                    v41 = *(float *)&v19;
-                    if ( (float)(255.0 - v42) < 0.0 )
-                        v20 = g_255.u[2];
-                    else
-                        *(float *)&v20 = v42;
-                    v43 = *(float *)&v20;
-                    if ( (float)(255.0 - v44) < 0.0 )
-                        v21 = g_255.v[3];
-                    else
-                        v21 = v44;
-                    *v39 = (int)v37;
-                    v39[1] = (int)v41;
-                    v39[2] = (int)v43;
-                    v39[3] = (int)v21;
-                    *(unsigned int *)(maxBox.u[3] + 8) = data.colors.v[256 * worldUV.unitVec[3].array[0] + (unsigned __int8)worldV].packed;
-                    v36 = (_BYTE *)(maxBox.u[3] + 12);
-                    v35 = (float)worldUV.unitVec[2].array[0] + 0.5;
-                    if ( (float)(v35 - 255.0) < 0.0 )
-                        v34 = (float)worldUV.unitVec[2].array[0] + 0.5;
-                    else
-                        v34 = 255.0f;
-                    if ( (float)(0.0 - v35) < 0.0 )
-                        v33 = v34;
-                    else
-                        v33 = 0.0f;
-                    *v36 = (int)v33;
-                    v32 = (float)worldUV.unitVec[1].array[0] + 0.5;
-                    if ( (float)(v32 - 255.0) < 0.0 )
-                        v31 = (float)worldUV.unitVec[1].array[0] + 0.5;
-                    else
-                        v31 = 255.0f;
-                    if ( (float)(0.0 - v32) < 0.0 )
-                        v30 = v31;
-                    else
-                        v30 = 0.0f;
-                    v36[1] = (int)v30;
-                    v29 = (float)(avgpos[7] + 128) + 0.5;
-                    if ( (float)(v29 - 255.0) < 0.0 )
-                        v28 = (float)(avgpos[7] + 128) + 0.5;
-                    else
-                        v28 = 255.0f;
-                    if ( (float)(0.0 - v29) < 0.0 )
-                        v27 = v28;
-                    else
-                        v27 = 0.0f;
-                    v36[2] = (int)v27;
-                    v26 = (double)(unsigned int)(2 * v + 112) + 0.5;
-                    if ( (float)(v26 - 255.0) < 0.0 )
-                        v25 = (double)(unsigned int)(2 * v + 112) + 0.5;
-                    else
-                        v25 = 255.0f;
-                    if ( (float)(0.0 - v26) < 0.0 )
-                        v24 = v25;
-                    else
-                        v24 = 0.0f;
-                    v36[3] = (int)v24;
-                    maxBox.u[3] += 16;
-                }
-            }
-            R_UnlockVertexBuffer(data.vertexBuffer);
-        }
-    }
+    value += 0.5f;
+    if (value < 0.0f) value = 0.0f;
+    if (value > 255.0f) value = 255.0f;
+    return static_cast<unsigned char>(static_cast<int>(value));
 }
 
+static void WaterSkinNormalize(float4 *value)
+{
+    // Preserve the retail summation order (X, Z, Y) before the square root.
+    const float lengthSq = (value->v[0] * value->v[0] + value->v[2] * value->v[2])
+                         + value->v[1] * value->v[1];
+    const float length = sqrtf(lengthSq);
+    const float inverseLength = 1.0f / (length > 0.0f ? length : 1.0f);
+    for (unsigned c = 0; c < 3; ++c)
+        value->v[c] *= inverseLength;
+}
+
+void R_WaterSimulationSkinMesh(const WaterSimulationCmd *cmd)
+{
+    // Each mesh is a 17x17 grid. ReadValue wraps the 256-cell channels and
+    // swaps simulation Y/Z to the position convention used by the water shader.
+    for (unsigned tile = 0; tile < 16; ++tile)
+    {
+        const tilemesh_t *mesh = cmd->skin.meshesEA[tile];
+        if (!mesh) continue;
+        if (!Sys_QueryD3DDeviceOKEvent()) return;
+        GfxWaterVertex *output = static_cast<GfxWaterVertex *>(
+            R_LockVertexBuffer(data.vertexBuffer, 0, 0, 0x1000u));
+        if (!output) return;
+        output += mesh->baseVertex;
+        const float inverseGridScale = 1.0f / config.gridScale;
+
+        for (unsigned v = 0; v <= 16; ++v)
+        {
+            const int sourceV = mesh->srcV + static_cast<int>(v);
+            const int worldV = mesh->worldY + static_cast<int>(v);
+            for (unsigned u = 0; u <= 16; ++u, ++output)
+            {
+                const int sourceU = mesh->srcU + static_cast<int>(u);
+                const int worldU = mesh->worldX + static_cast<int>(u);
+                float4 samples[3][3];
+                for (int y = -1; y <= 1; ++y)
+                    for (int x = -1; x <= 1; ++x)
+                        ReadValue(&samples[y + 1][x + 1],
+                            static_cast<unsigned char>(sourceU + x), sourceV + y, cmd->skin.srcBuf);
+                const float4 &a = samples[0][0], &b = samples[0][1], &c = samples[0][2];
+                const float4 &d = samples[1][0], &e = samples[1][1], &f = samples[1][2];
+                const float4 &g = samples[2][0], &h = samples[2][1], &i = samples[2][2];
+                float4 average{}, derivativeU{}, derivativeV{};
+                for (unsigned lane = 0; lane < 4; ++lane)
+                    average.v[lane] = (h.v[lane] + (f.v[lane] + e.v[lane]) + i.v[lane]) * 0.25f;
+                for (unsigned lane = 0; lane < 3; ++lane)
+                {
+                    derivativeU.v[lane] = (((c.v[lane] + i.v[lane]) - a.v[lane]) - g.v[lane])
+                                         * 0.5f + f.v[lane] - d.v[lane];
+                    derivativeV.v[lane] = (((g.v[lane] + i.v[lane]) - a.v[lane]) - c.v[lane])
+                                         * 0.5f + h.v[lane] - b.v[lane];
+                }
+                derivativeU.v[0] += 4.0f;
+                derivativeV.v[1] += 4.0f;
+                WaterSkinNormalize(&derivativeU);
+                WaterSkinNormalize(&derivativeV);
+
+                const unsigned sourceIndex = 256u * static_cast<unsigned char>(sourceV)
+                                           + static_cast<unsigned char>(sourceU);
+                const float heightOffset = inverseGridScale * static_cast<float>(data.waterheight.v[sourceIndex])
+                                         - static_cast<float>(mesh->worldZ);
+                output->pos[0] = WaterSkinPackByte((average.v[0] + static_cast<float>(u)) * 8.0f + 64.0f);
+                output->pos[1] = WaterSkinPackByte((average.v[1] + static_cast<float>(v)) * 8.0f + 64.0f);
+                output->pos[2] = WaterSkinPackByte((average.v[2] + heightOffset) * 8.0f + 64.0f);
+                float foam = average.v[3] * 63.0f;
+                if (foam < 0.0f) foam = 0.0f;
+                if (foam > 62.0f) foam = 62.0f;
+                const unsigned seamU = u == 16 && static_cast<unsigned char>(worldU) == 0 ? 64 : 0;
+                const unsigned seamV = v == 16 && static_cast<unsigned char>(worldV) == 0 ? 128 : 0;
+                output->pos[3] = WaterSkinPackByte(static_cast<float>(seamV + seamU) + foam);
+                // XYAB packs the horizontal components of the two normalized derivatives.
+                output->normal[0] = WaterSkinPackByte(derivativeU.v[0] * 127.0f + 128.0f);
+                output->normal[1] = WaterSkinPackByte(derivativeU.v[1] * 127.0f + 128.0f);
+                output->normal[2] = WaterSkinPackByte(derivativeV.v[0] * 127.0f + 128.0f);
+                output->normal[3] = WaterSkinPackByte(derivativeV.v[1] * 127.0f + 128.0f);
+                output->color = data.colors.v[sourceIndex];
+                output->texCoord[0] = WaterSkinPackByte(static_cast<float>(static_cast<unsigned char>(worldU)));
+                output->texCoord[1] = WaterSkinPackByte(static_cast<float>(static_cast<unsigned char>(worldV)));
+                output->texCoord[2] = WaterSkinPackByte(static_cast<float>(static_cast<signed char>(data.shoredist.v[sourceIndex])) + 128.0f);
+                output->texCoord[3] = WaterSkinPackByte(static_cast<float>(2 * v + 112));
+            }
+        }
+        R_UnlockVertexBuffer(data.vertexBuffer);
+    }
+}
 
 float4 *__cdecl ReadValue(float4 *result, unsigned __int8 u, int v, unsigned int bufnum)
 {

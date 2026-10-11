@@ -32,4 +32,24 @@ $godArg = if ($God) { '+set bo1_testclient_god 1' } else { '' }
 $args = "+set fs_b `"$root\build\Release`" +set fs_h `"$run`" +set bo1_headless 1 +set bo1_zombies 1 +set net_ip 127.0.0.1 +set logfile 2 +set bo1_autoquit $AutoquitMs +set QuitOnError 1 +set developer_script 1 +set bo1_testclient 1 +set bo1_testclient_fight 1 $godArg +set bo1_testclient_score $Score +set bo1_testclient_quitdone $QuitDone +set bo1_testclient_plan `"$Plan`" $Extra +devmap zombie_pentagon"
 $p = Start-Process -FilePath "$run\BO1Zombies.exe" -ArgumentList $args -WorkingDirectory $run -WindowStyle Hidden -PassThru
 "started pid $($p.Id) in $run"
-if ($Wait) { $p.WaitForExit(); "exit code $($p.ExitCode)" }
+if ($Wait) {
+    $retainedHandle = $p.Handle
+    $runWatch = [Diagnostics.Stopwatch]::StartNew()
+    while (!$p.WaitForExit(1000)) {
+        $emergency = "$run\main\bo1_emergency.log"
+        $crashed = (Test-Path -LiteralPath $emergency) -and
+            (Select-String -LiteralPath $emergency -Pattern '^BO1_HEADLESS CRASH:' -Quiet)
+        if ($crashed -or $runWatch.ElapsedMilliseconds -gt ($AutoquitMs + 60000)) {
+            if ($p.Path -ne "$run\BO1Zombies.exe") { throw 'Unexpected route process path' }
+            "Ending failed route process: crash=$crashed elapsed=$($runWatch.ElapsedMilliseconds)"
+            $p.Kill()
+            $p.WaitForExit()
+            break
+        }
+    }
+    $p.WaitForExit()
+    $p.Refresh()
+    [IO.File]::WriteAllText("$run\exitcode.txt", [string]$p.ExitCode)
+    "exit code $($p.ExitCode)"
+    if ($p.ExitCode -ne 0) { throw "Route failed: $Name, exit $($p.ExitCode)" }
+}
