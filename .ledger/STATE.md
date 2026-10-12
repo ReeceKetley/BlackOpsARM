@@ -13,7 +13,8 @@ optimized0errors756warnings44ELF inclchecks. FAIL24/25 toolingerrors retained/fi
 Alltestscompleted,129records+metadatafrozen. Windows2528/DXVK2552/root15/APK/
 originals and3018 olderfrozen unchanged. No newtiming/RSS/graphics. Read
 arm64_stringtable_normalization.md/_changes.md/stringtable_normalization_handoff.md,
-FACT76/77/WARN25/DEC40. Git suppliescurrentpending; checkpoint recordedafterproof.
+FACT76/77/WARN25/DEC40. TASK25 checkpoint0ecbd4c verified (FACT78); allsource/evidence committed.
+Next persistent pool-header ownership; Git supplies subsequent pending changes.
 AutonomousDEC29/localverifiedcommitsDEC26/no push. Next3: TASK26 realpoolheader/
 cloneownership survivesTEMP overwrite; original-evidence TEMPshadow/maps/aliases
 reuse beforeasset2; smallestrealregistryboundary/services. Borrowedliveness remains
