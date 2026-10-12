@@ -241,7 +241,7 @@ void DB_ExpandLoad_StringTable(StringTable *dst)
 
 #endif // normal engine or bounded first StringTable header
 
-#if !defined(BO1_ASSETLIST_GATE)
+#if !defined(BO1_ASSETLIST_GATE) || defined(BO1_STRINGTABLE_CELLS_GATE)
 void DB_ExpandLoad_StringTableCellArray(StringTableCell *dst, int count)
 {
     iassert(dst == reinterpret_cast<StringTableCell *>(DB_GetStreamPos()));
@@ -261,6 +261,9 @@ void DB_ExpandLoad_StringTableCellArray(StringTableCell *dst, int count)
     DB_Expand_Commit(static_cast<int>(sizeof(StringTableCell) * static_cast<size_t>(count)), count);
 }
 
+#endif // normal engine or bounded cell records
+
+#if !defined(BO1_ASSETLIST_GATE)
 void DB_ExpandLoad_GfxImage(GfxImage *dst)
 {
     iassert(dst == reinterpret_cast<GfxImage *>(DB_GetStreamPos()));

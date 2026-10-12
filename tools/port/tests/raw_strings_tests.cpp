@@ -142,9 +142,15 @@ static void decode(const char*path,const char*out){Bo1InflatedFastFile f;require
     const auto directory=directoryPlan(plan,f.decoded.data(),f.decoded.size());
 #if defined(BO1_STRINGTABLE_HEADER_GATE)
     const auto header=headerPlan(plan,directory,f.decoded.data(),f.decoded.size(),f.decoded.size());require(header.present,"genuine header exists");
+#if defined(BO1_STRINGTABLE_CELLS_GATE)
+    const auto payload=payloadPlan(plan,directory,header,f.decoded.data(),f.decoded.size());plan.end=payload.end;
+#else
     plan.end+=20;
 #endif
+#endif
+#if !defined(BO1_STRINGTABLE_CELLS_GATE)
     plan.end+=static_cast<std::size_t>(directory.diskBytes);
+#endif
 #endif
     const auto bytes=f.decoded.size(),capacity=f.decoded.capacity();const auto adler=adler32(1,f.decoded.data(),static_cast<unsigned>(bytes));
     std::ofstream file(out,std::ios::binary|std::ios::trunc);file.write(reinterpret_cast<char*>(f.decoded.data()),static_cast<std::streamsize>(plan.end));file.close();require(bool(file),"small validated string prefix output");
@@ -241,7 +247,11 @@ int main(int argc,char**argv){require(argc>=2,"decode/gate mode");if(!std::strcm
     auto ad=directoryPlan(ap,a.data(),a.size()),bd=directoryPlan(bp,b.data(),b.size());
 #if defined(BO1_STRINGTABLE_HEADER_GATE)
     auto ah=headerPlan(ap,ad,a.data(),a.size(),std::strtoull(argv[3],nullptr,10)),bh=headerPlan(bp,bd,b.data(),b.size(),std::strtoull(argv[5],nullptr,10));
+#if defined(BO1_STRINGTABLE_CELLS_GATE)
+    auto ac=payloadPlan(ap,ad,ah,a.data(),a.size()),bc=payloadPlan(bp,bd,bh,b.data(),b.size());require(ac.end==a.size()&&bc.end==b.size(),"prefix stops after cells before their strings/index");
+#else
     require(ap.end+ad.diskBytes+20==a.size()&&bp.end+bd.diskBytes+20==b.size(),"prefix stops exactly after first numeric header");
+#endif
 #else
     require(ap.end+ad.diskBytes==a.size()&&bp.end+bd.diskBytes==b.size(),"prefix stops exactly after directory before dispatch");
 #endif
@@ -253,6 +263,9 @@ int main(int argc,char**argv){require(argc>=2,"decode/gate mode");if(!std::strcm
     tested+=directoryFixtures(ap.envelope.zone);
 #if defined(BO1_STRINGTABLE_HEADER_GATE)
     tested+=headerFixtures(ap.envelope.zone);
+#if defined(BO1_STRINGTABLE_CELLS_GATE)
+    tested+=cellsFixtures(ap.envelope.zone);
+#endif
 #endif
 #endif
     unsigned cycles=0;
@@ -268,7 +281,12 @@ int main(int argc,char**argv){require(argc>=2,"decode/gate mode");if(!std::strcm
 #if defined(BO1_ASSET_DIRECTORY_GATE)
         const auto&directory=asset?bd:ad;executeDirectory(f,directory,r,blocks,round==0&&type==0);
 #if defined(BO1_STRINGTABLE_HEADER_GATE)
-        const auto&header=asset?bh:ah;executeHeader(header,r,blocks,&envelope,round==0&&type==0);
+        const auto&header=asset?bh:ah;
+#if defined(BO1_STRINGTABLE_CELLS_GATE)
+        const auto&payload=asset?bc:ac;DB_PushStreamPos(4);executeHeader(header,r,blocks,&envelope,round==0&&type==0,&payload);DB_PopStreamPos();require(g_streamPosIndex==0&&!g_streamPosStackIndex&&DB_GetStreamPos()==blocks[0].data,"actual caller/header/child scopes balanced before detach");
+#else
+        executeHeader(header,r,blocks,&envelope,round==0&&type==0);
+#endif
 #endif
 #endif
 #if defined(BO1_FRONTEND_INTERN_GATE)
@@ -284,6 +302,9 @@ int main(int argc,char**argv){require(argc>=2,"decode/gate mode");if(!std::strcm
 #if BO1_NATIVE_64BIT
 #if defined(BO1_STRINGTABLE_HEADER_GATE)
         for(unsigned w:{0u,4u,12u,16u})require(!DB_StreamAliasSlotLookup(0,w)&&!DB_StreamExactLookup(0,w),"all header/envelope mappings detached before owner release");
+#if defined(BO1_STRINGTABLE_CELLS_GATE)
+        for(int i=0;i<payload.cells.count;++i){const auto w=static_cast<unsigned>(payload.cells.diskStart+8*std::uint64_t(i));require(!DB_StreamAliasSlotLookup(4,w)&&!DB_StreamExactLookup(4,w),"all cell mappings detached before owner release");}
+#endif
 #endif
         for(int i=0;i<f.table.count;++i)require(!DB_StreamAliasSlotLookup(4,unsigned(4*i)),"all table aliases detached before owner release");
 #if defined(BO1_ASSET_DIRECTORY_GATE)
@@ -294,6 +315,8 @@ int main(int argc,char**argv){require(argc>=2,"decode/gate mode");if(!std::strcm
 #if defined(BO1_FRONTEND_INTERN_GATE)
         std::printf("{\"asset_index\":%u,\"round\":%u,\"alloc_type\":%u,\"inline_string_count\":%zu,\"raw_string_bytes\":%llu,\"source_consumed_bytes\":%zu,\"decoded_source_end\":%zu,\"block4_disk_cursor\":%llu,\"block4_native_cursor\":%llu,\"unique_interned_strings\":%zu,\"pool_live_allocations\":%d,\"pool_live_buckets\":%d,\"pool_debug_refs\":%u,\"pool_released\":true,\"hash_free_list_restored\":true,\"all_aliases_match\":true,\"reset_and_release_pass\":true,\"strings_used_after_release\":[",asset,round,type,f.strings.size()-f.nulls,(unsigned long long)(f.end-52-f.table.diskBytes),r.Position(),f.end,(unsigned long long)f.diskEnd,(unsigned long long)f.nativeEnd,uniqueIds.size(),poolAllocations,poolBuckets,poolReferences);
         for(unsigned i=0;i<32;++i)std::printf("%s%d",i?",":"",diagnostics[i]);std::printf("]}\n");
+#elif defined(BO1_STRINGTABLE_CELLS_GATE)
+        std::printf("{\"asset_index\":%u,\"round\":%u,\"alloc_type\":%u,\"source_consumed_bytes\":%zu,\"decoded_source_end\":%zu,\"block4_disk_cursor\":%llu,\"block4_native_cursor\":%llu,\"name_bytes\":%llu,\"name_source_start\":%zu,\"name_disk_start\":%llu,\"name_native_start\":%llu,\"cell_count\":%d,\"cell_source_start\":%zu,\"cell_disk_start\":%llu,\"cell_native_start\":%llu,\"cell_disk_bytes\":%llu,\"cell_native_bytes\":%llu,\"block0_native_after_pop\":0,\"block0_shadow_after_pop\":%u,\"all_cell_tags_hashes_match\":true,\"cell_padding_zero\":true,\"exact_cell_mappings\":true,\"all_aliases_match\":true,\"live_header_scope_verified\":true,\"prior_block4_preserved\":true,\"reset_and_release_pass\":true}\n",asset,round,type,r.Position(),bytes.size(),(unsigned long long)payload.cells.diskEnd,(unsigned long long)payload.cells.nativeEnd,(unsigned long long)payload.name.bytes,payload.nameSource,(unsigned long long)payload.name.diskStart,(unsigned long long)payload.name.nativeStart,payload.cells.count,payload.cellSource,(unsigned long long)payload.cells.diskStart,(unsigned long long)payload.cells.nativeStart,(unsigned long long)payload.cells.diskBytes,(unsigned long long)payload.cells.nativeBytes,BO1_NATIVE_64BIT?20u:0u);
 #elif defined(BO1_STRINGTABLE_HEADER_GATE)
         std::printf("{\"asset_index\":%u,\"round\":%u,\"alloc_type\":%u,\"source_consumed_bytes\":%zu,\"decoded_source_end\":%zu,\"block4_disk_cursor\":%llu,\"block4_native_cursor\":%llu,\"column_count\":%d,\"row_count\":%d,\"cell_count\":%llu,\"header_disk_bytes\":20,\"header_native_bytes\":%zu,\"block0_native_before_pop\":%llu,\"block0_native_after_pop\":0,\"block0_shadow_after_pop\":%llu,\"child_tags_preserved\":true,\"exact_header_mapping\":true,\"all_aliases_match\":true,\"prior_block4_preserved\":true,\"reset_and_release_pass\":true}\n",asset,round,type,r.Position(),bytes.size(),(unsigned long long)directory.diskEnd,(unsigned long long)directory.nativeEnd,header.columns,header.rows,(unsigned long long)header.cells,sizeof(StringTable),(unsigned long long)header.nativeEnd,(unsigned long long)(BO1_NATIVE_64BIT?header.diskEnd:0));
 #elif defined(BO1_ASSET_DIRECTORY_GATE)
@@ -305,6 +328,8 @@ int main(int argc,char**argv){require(argc>=2,"decode/gate mode");if(!std::strcm
     const char*schema=
 #if defined(BO1_FRONTEND_INTERN_GATE)
         "BlackOpsARM.TASK-0017.intern-strings.v1";
+#elif defined(BO1_STRINGTABLE_CELLS_GATE)
+        "BlackOpsARM.TASK-0019.stringtable-cells.v1";
 #elif defined(BO1_STRINGTABLE_HEADER_GATE)
         "BlackOpsARM.TASK-0018.stringtable-header.v1";
 #elif defined(BO1_ASSET_DIRECTORY_GATE)
