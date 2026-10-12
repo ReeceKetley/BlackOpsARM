@@ -50,7 +50,7 @@ void __cdecl Load_vec4_tArray(bool atStreamStart, int count);
 void __cdecl Load_DObjAnimMatArray(bool atStreamStart, int count);
 void __cdecl Load_shared_vec3_t(bool atStreamStart);
 void __cdecl Load_shared_vec3_tArray(bool atStreamStart, int count);
-void __cdecl Load_shortArray(bool atStreamStart, int count);
+#include "db_scalar_load.h"
 void __cdecl Load_ushortArray(bool atStreamStart, int count);
 void __cdecl Load_XQuat2(bool atStreamStart);
 void __cdecl Load_XQuat2Array(bool atStreamStart, int count);

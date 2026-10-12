@@ -1,0 +1,668 @@
+{
+  "schema": "BlackOpsARM.TASK-0018.source-preservation.v1",
+  "checkpoint": "a859d7713e268b9a4ef63b2384476a1f5e7c2923",
+  "functions": {
+    "DB_Expand_ClampCount": {
+      "unchanged": true,
+      "sha256": "fb79bcaf0d0f962aba4af47a8cb918fc760b0fe4debb56f08e28581f8a853f5c"
+    },
+    "DB_Expand_ReadFile": {
+      "unchanged": true,
+      "sha256": "3d6a20c4e1d9a5f667f5925b916d854b533d07f08706bfd45554a748e76c906a"
+    },
+    "DB_ExpandPtrStore": {
+      "unchanged": true,
+      "sha256": "0a7c01f59c8d84e39f082187bf2ea6fbb5dd935db86545a1d507408062c23412"
+    },
+    "DB_Expand_Commit": {
+      "unchanged": true,
+      "sha256": "a0638d8bf82c7811222c05f10165349d8c915abd412507d94266c8f724c15342"
+    },
+    "DB_ExpandLoad_XAssetList": {
+      "unchanged": true,
+      "sha256": "9940fd94a64376c9897d8f43bd0f6c0a1d65ead4170ab9f596911cecd2427d98"
+    },
+    "DB_ExpandLoad_XAssetArray": {
+      "unchanged": true,
+      "sha256": "7f6d1db4e95c613009006ce1be9e5147fbc6ba1e39abe954ba1478181e1d186b"
+    },
+    "DB_ExpandLoad_Ptr32Array": {
+      "unchanged": true,
+      "sha256": "4e66cb3c473e20ce530a5dfe2eadcb02e8facac2272b15c866bc53ff04eeb873"
+    },
+    "DB_ExpandLoad_StringTable": {
+      "unchanged": true,
+      "sha256": "3810b0e0917086a4e5ccd984a897c3775a9ab5f7c5b94df0b960d28890a0c4d6"
+    },
+    "DB_ExpandLoad_StringTableCellArray": {
+      "unchanged": true,
+      "sha256": "11b567de54ee7464aedaa3293eb9b872fe6edb8925700ce924f79d8dad0d2551"
+    },
+    "DB_ExpandLoad_GfxImage": {
+      "unchanged": true,
+      "sha256": "813bdb767891d3ba30891fb285fb0d617f23f5c4a3e272514780711a58b97629"
+    },
+    "DB_Expand_MaterialInfo": {
+      "unchanged": true,
+      "sha256": "00620820e35df8f6fcb96f6b6b7269298f2f198fd3ff13ee9d71bb1a73440827"
+    },
+    "DB_ExpandLoad_Material": {
+      "unchanged": true,
+      "sha256": "f8a029ce64d6e20cbeabeb67ca9cddcb8caaa040a1d91f5c2de891933cfde28b"
+    },
+    "DB_ExpandLoad_MaterialTextureDefArray": {
+      "unchanged": true,
+      "sha256": "3dbe866576e50e0abdb3cd0f339bd08600b50619a555622ed690fbf012b40cae"
+    },
+    "DB_ExpandLoad_MaterialTechniqueSet": {
+      "unchanged": true,
+      "sha256": "9bd8c76a28c6a7130da81c0ad90e54559e2caf8947447c46b49e94f4af540f76"
+    },
+    "DB_ExpandLoad_MaterialTechnique": {
+      "unchanged": true,
+      "sha256": "af45aefc345dbc32495397b64debdf2a170dc667e9bf93c9f66cc08ac64bc21f"
+    },
+    "DB_ExpandLoad_MaterialPassArray": {
+      "unchanged": true,
+      "sha256": "7a94076ab03ee5ea66885519a42ec5a0ed209dcd4b8525ba2beafe980fddae24"
+    },
+    "DB_ExpandLoad_MaterialShaderArgumentArray": {
+      "unchanged": true,
+      "sha256": "d6428a4b2e7d9efc0b3e7708e42f04bf13b5e97ce53a64d440c43c975031a37c"
+    },
+    "DB_ExpandLoad_MaterialVertexShader": {
+      "unchanged": true,
+      "sha256": "838b520d07205549fe4307a181e823cda7854d88b8d67b088713f3551136e7d8"
+    },
+    "DB_ExpandLoad_MaterialPixelShader": {
+      "unchanged": true,
+      "sha256": "570d317a91b0866ab3eea20b93ca865c89ceae5a2b7229b1174e631f5698e605"
+    },
+    "DB_ExpandLoad_MaterialVertexDeclaration": {
+      "unchanged": true,
+      "sha256": "d721072dccad84f9061c48b5d43372d880d112ac03bfa02df2fe4f8c0bae56db"
+    },
+    "DB_ExpandLoad_water_t": {
+      "unchanged": true,
+      "sha256": "e476baf5152e3fb3bb0355af67a93c59e8308f66bc9dd2aeea3dd4410ae799cf"
+    },
+    "DB_Expand_PhysConstraint": {
+      "unchanged": true,
+      "sha256": "8101af00dbdb13fb5cc3e40d7692d4bfa206b0e64b11ae43e909c4d5f781d1ff"
+    },
+    "DB_ExpandLoad_XModel": {
+      "unchanged": true,
+      "sha256": "1d38c8d751c3d01930fff839ebd2109efb9dafe54519699886bf5abd82acae0e"
+    },
+    "DB_ExpandLoad_XSurfaceArray": {
+      "unchanged": true,
+      "sha256": "486f18681c225a51aff3f365329e62def60d436182048deea53c63208c75d1bb"
+    },
+    "DB_ExpandLoad_XRigidVertListArray": {
+      "unchanged": true,
+      "sha256": "b2128f4cf2d496a2754c7b9b95ce8dffd6e8ee7cc36bba961b49a48fef175b4e"
+    },
+    "DB_ExpandLoad_XSurfaceCollisionTree": {
+      "unchanged": true,
+      "sha256": "55824bf079d4b3152027d6b85e15f98eed038615bf6f49e13d6724c261332edf"
+    },
+    "DB_ExpandLoad_XModelCollSurfArray": {
+      "unchanged": true,
+      "sha256": "41751921aea2d71ab43d2deddca8429c2870424828d18ad744e5c090bb36a92d"
+    },
+    "DB_ExpandLoad_CollmapArray": {
+      "unchanged": true,
+      "sha256": "54b415734dcd2cf96436696786c16651e5cc4226f6b64a869443dc9cd22a1ef3"
+    },
+    "DB_ExpandLoad_PhysGeomList": {
+      "unchanged": true,
+      "sha256": "ac4f4dfbeff1fedfef9aad73e7095616de88128825ed507743b1a291a311c620"
+    },
+    "DB_ExpandLoad_PhysGeomInfoArray": {
+      "unchanged": true,
+      "sha256": "db908ddc0b92f4e46ac3545bbf67af5fe68f8f74bf63e2669c46e1e33ebba6cc"
+    },
+    "DB_ExpandLoad_BrushWrapper": {
+      "unchanged": true,
+      "sha256": "121d9b1b49f7188804eb68b9bbfa4e4458dbd4dd6cd978de47e43fc7069c5d34"
+    },
+    "DB_ExpandLoad_cbrushside_tArray": {
+      "unchanged": true,
+      "sha256": "07e1a25d12415ef3447a3af5a95a0f1fff65b7cef6f65d12790c5cca83ca4694"
+    },
+    "DB_ExpandLoad_PhysPreset": {
+      "unchanged": true,
+      "sha256": "2f53f1b606afa8ff10b3f87a8bedf75603994e51d4a7dbbe22d6063cce0b3850"
+    },
+    "DB_ExpandLoad_PhysConstraintArray": {
+      "unchanged": true,
+      "sha256": "1198ea2c15c08430451c757ddc6e9c2ead6b940341fb48ad9eebe8dc615f59ca"
+    },
+    "DB_ExpandLoad_PhysConstraints": {
+      "unchanged": true,
+      "sha256": "73463b70504418595ddb16f086acb767f68f9bafb7b319723b589d1a1af4bcba"
+    },
+    "DB_ExpandLoad_cStaticModel_tArray": {
+      "unchanged": true,
+      "sha256": "ea1a87bbc379d08ed0dafe469d301e878c30593f165b4366d4a6363237c50589"
+    },
+    "DB_ExpandLoad_cNode_tArray": {
+      "unchanged": true,
+      "sha256": "968116b5a26dcf2224a89bbb8d5b59bf96199c70ef3d01bc692c8158934ae091"
+    },
+    "DB_ExpandLoad_cLeafBrushNode_tArray": {
+      "unchanged": true,
+      "sha256": "5fe856b69939f6964e87a8a8a0a608b0cd89541b6c708f3f5bc6189959719481"
+    },
+    "DB_ExpandLoad_CollisionPartitionArray": {
+      "unchanged": true,
+      "sha256": "88144b208018bcbde3faee507b8cdbc42d24e97970d3c0b903b936a7bcc54fb7"
+    },
+    "DB_ExpandLoad_cbrush_tArray": {
+      "unchanged": true,
+      "sha256": "c1d7db98928d12521e37531c8ad14afb4800e1b25032f16a89dc0345a9cdaeaa"
+    },
+    "DB_ExpandLoad_MapEnts": {
+      "unchanged": true,
+      "sha256": "ced5167d077acf2379266188b61d8441634c7c9863e89596c0c09075e9ad83f8"
+    },
+    "DB_ExpandLoad_DynEntityDefArray": {
+      "unchanged": true,
+      "sha256": "03a44b83a15ac7e3c03ff039dc7d6651533aab69ef4161600e0c90202614059f"
+    },
+    "DB_ExpandLoad_rope_tArray": {
+      "unchanged": true,
+      "sha256": "395923b1dbab3d7a873ec4651bac98918d777faae977d5ce3ceebf7fb704b4ba"
+    },
+    "DB_Expand_cmodel": {
+      "unchanged": true,
+      "sha256": "6557bc30a4a67293ed846521c41d314532ea7e95fc68a374c103f0ee458bcb58"
+    },
+    "DB_ExpandLoad_clipMap_t": {
+      "unchanged": true,
+      "sha256": "a9eb60f52beb6dcf0f26356491c65570e00fdf886014ef546a52ed9658aba299"
+    },
+    "DB_Expand_StreamInfo": {
+      "unchanged": true,
+      "sha256": "54f20c0049a6f6fcfaa3448639c5845ec0933d60c2bd5ff5ef11e692875d898b"
+    },
+    "DB_Expand_WorldDraw": {
+      "unchanged": true,
+      "sha256": "0a32c69c5236c913d2770f9234a488459285e6fc7f313fa703b3bd50f079ba2c"
+    },
+    "DB_Expand_LightGrid": {
+      "unchanged": true,
+      "sha256": "99e96e357962497c1283da38b5539ae3c82028c57201413f764a1a18968fefd4"
+    },
+    "DB_Expand_DpvsPlanes": {
+      "unchanged": true,
+      "sha256": "9745fa95ecd7d07b43d7f24a0e7948d45553e7e417af3dc615cca4d8017ce2d2"
+    },
+    "DB_Expand_DpvsStatic": {
+      "unchanged": true,
+      "sha256": "48d42e27d47830a1e9dbf0b90a048875bdce8728589cb3e8e5cd640d90bd2948"
+    },
+    "DB_Expand_DpvsDynamic": {
+      "unchanged": true,
+      "sha256": "17a33fb0a772d9ed9e61596c9ba72d8be3a5587e65db7446f3cb5f45b8640e3c"
+    },
+    "DB_Expand_sunflare": {
+      "unchanged": true,
+      "sha256": "830c74165d8b44cf76a04ca4a32fe6b9f3a77ec565acd7168cea6dc2f50c3759"
+    },
+    "DB_Expand_WaterBuffer": {
+      "unchanged": true,
+      "sha256": "8783f49980dd6d3d082e394031cb64d30c47d5b0481bfa587e521e08c260a27d"
+    },
+    "DB_ExpandLoad_GfxWorld": {
+      "unchanged": true,
+      "sha256": "54a8ebff86e31fa832e5a0f0a49cacf8e7257cfbc7d709ceec93e684d1001db2"
+    },
+    "DB_ExpandLoad_GfxCellArray": {
+      "unchanged": true,
+      "sha256": "04090053dd676863368a5c26ba3019c9ac3be97217395ce6b5481e52cea3e3d4"
+    },
+    "DB_ExpandLoad_GfxAabbTreeArray": {
+      "unchanged": true,
+      "sha256": "e788a3034eabf5e6f471f8111b5e43b620d8f384ba6e5fd84f582626b2da5599"
+    },
+    "DB_ExpandLoad_GfxPortalArray": {
+      "unchanged": true,
+      "sha256": "8fc75b3f11d1089f9f047de6b9fcafbd20e4afaf99b5f4ba5969a340056b8f0c"
+    },
+    "DB_ExpandLoad_GfxSurfaceArray": {
+      "unchanged": true,
+      "sha256": "c3c25c0584f98d3283ee20abf9bced04231c9f5c432aee0a4dc46629da84ef0e"
+    },
+    "DB_ExpandLoad_GfxStaticModelDrawInstArray": {
+      "unchanged": true,
+      "sha256": "7926dbb4f0d3c69d01a03a77827a424a2a04999b7e4d71de30f5bf84a789ece0"
+    },
+    "DB_ExpandLoad_GfxLightmapArrayArray": {
+      "unchanged": true,
+      "sha256": "c47ca992f6d03f6b38f191d4f22c4d1d84e97712ca07d64b65f9e7780bc7f78e"
+    },
+    "DB_ExpandLoad_GfxReflectionProbeArray": {
+      "unchanged": true,
+      "sha256": "c4f1aec4accf51ba00eb5b91d416d30d70d03aa5ef6f8ca04e7c3cae1c0d42c9"
+    },
+    "DB_ExpandLoad_MaterialMemoryArray": {
+      "unchanged": true,
+      "sha256": "2d9eb69f722e13a3b98dd1ae7a7a71442d9a30376be48a3608821662bec8fef4"
+    },
+    "DB_ExpandLoad_GfxShadowGeometryArray": {
+      "unchanged": true,
+      "sha256": "db037b34344534f75a5e0df88624cb7c707ff90095c1156e9e19c6894b698b75"
+    },
+    "DB_ExpandLoad_GfxLightRegionArray": {
+      "unchanged": true,
+      "sha256": "261e41539892bf9e232deae7b208f32e4898a69e763f104787a96127e90130e1"
+    },
+    "DB_ExpandLoad_GfxLightRegionHullArray": {
+      "unchanged": true,
+      "sha256": "8239f823502aa712d5c514067d4ec357cc12c9230f5b325cfc0a84ea3247f128"
+    },
+    "DB_ExpandLoad_sunflare_t": {
+      "unchanged": true,
+      "sha256": "46d84f18b5dd7c707125b77aba6e0262cc3569940b39eaa604e93da4cddd460b"
+    },
+    "DB_ExpandLoad_GfxLight": {
+      "unchanged": true,
+      "sha256": "1db435f1e3095c3113c0642872215512c1ae5677ff6082a69edeeb9bde95dd6a"
+    },
+    "DB_Expand_PathData": {
+      "unchanged": true,
+      "sha256": "ad065ba540a69e0728e43ad1b8d09f7841aa69da28370a2b7838fb000419e0a2"
+    },
+    "DB_ExpandLoad_ComWorld": {
+      "unchanged": true,
+      "sha256": "a96effb0fe5c3d77be17b6d2d625ea38809f5040a42e3ee6afe53d75eab21388"
+    },
+    "DB_ExpandLoad_ComPrimaryLightArray": {
+      "unchanged": true,
+      "sha256": "11ce85241e222648d0dfe46d8b0ec858bb9022f185c80fa66b10e68c5d48467c"
+    },
+    "DB_ExpandLoad_ComBurnableCellArray": {
+      "unchanged": true,
+      "sha256": "7e29ff5522c82969c57445027b87977e52834a2e9060019fb8bf700065176456"
+    },
+    "DB_ExpandLoad_GameWorldSp": {
+      "unchanged": true,
+      "sha256": "5592261a4d3934822b99b539d5203699adbfddddf14164a3e97df5c6d943e7e0"
+    },
+    "DB_ExpandLoad_GameWorldMp": {
+      "unchanged": true,
+      "sha256": "8814f0d2dcc883c525447288381193c049561d30262c1b5f7e707ce41c13e98d"
+    },
+    "DB_ExpandLoad_pathnode_tArray": {
+      "unchanged": true,
+      "sha256": "0f76f15e748f5109da598c15594b1ef5b608cfede5de03dd2deade85d2a0415f"
+    },
+    "DB_ExpandLoad_pathnode_tree_tArray": {
+      "unchanged": true,
+      "sha256": "17bf7e2209960db38e811498db77e158e4e36500da8cb1637229ea91a49504a5"
+    },
+    "DB_ExpandLoad_pathnode_tree_nodes_t": {
+      "unchanged": true,
+      "sha256": "db5c756ab3d98979d9d357f81613acadccddaa4883433b7c11227762fbd91227"
+    },
+    "DB_ExpandLoad_Glasses": {
+      "unchanged": true,
+      "sha256": "045fde5c72e4e6cf3888ec91f45240dca0035ac1d454533daf17d570ee27959e"
+    },
+    "DB_ExpandLoad_GlassArray": {
+      "unchanged": true,
+      "sha256": "dc6815b2ab606a52b0527b728a1ec1f0cd3a4a1daa499ad2452f0465744dae9a"
+    },
+    "DB_ExpandLoad_GlassDef": {
+      "unchanged": true,
+      "sha256": "e83a30fbcc0399beaa88617038d586e1d35746e1d72eef15d9d781fb39c323f7"
+    },
+    "DB_ExpandLoad_GfxLightDef": {
+      "unchanged": true,
+      "sha256": "6fabd3fc8d355e107b7d4fda35610b504a4b32099664dc0a862597f49dde3e71"
+    },
+    "DB_ExpandLoad_Font": {
+      "unchanged": true,
+      "sha256": "59d8e5adc510c345a7911937692dc791143c11a0e2a451212b0dbb8afcbb24bb"
+    },
+    "DB_ExpandLoad_LocalizeEntry": {
+      "unchanged": true,
+      "sha256": "250bcf5ce5afae3d66a93769ec9322db5859fa1aed41e786e042dc242ea26438"
+    },
+    "DB_ExpandLoad_RawFile": {
+      "unchanged": true,
+      "sha256": "0746d2348e2a7cbe4688904c25429dca6977c9545dc894572a7c9ef8d536d758"
+    },
+    "DB_Expand_snd_asset": {
+      "unchanged": true,
+      "sha256": "5db22b2d93af90e245d6b51af1ea3f5f09adc83237ef5c7a03c46fefcabf3fe4"
+    },
+    "DB_Expand_DestructibleStage": {
+      "unchanged": true,
+      "sha256": "deb95b7a94b29fe10ab3ca9986367f1cca3a92456a4adc197b0f5e0a62832be1"
+    },
+    "DB_ExpandLoad_XAnimParts": {
+      "unchanged": true,
+      "sha256": "34c4242eb1956150de4f43a0c20cd65646bebdffcbce087c51dc455fd06b7c75"
+    },
+    "DB_ExpandLoad_XAnimDeltaPart": {
+      "unchanged": true,
+      "sha256": "40aee7e1157b91d2d09f56d1975b529312362fd8f71cb06295eb9c10a4c1ff1a"
+    },
+    "DB_ExpandLoad_XAnimPartTrans": {
+      "unchanged": true,
+      "sha256": "85c7a2322ba8512923708ef2bd59893fe3e96fc56d98ff60df7462cbe4b6ab79"
+    },
+    "DB_ExpandLoad_XAnimDeltaPartQuat": {
+      "unchanged": true,
+      "sha256": "909a398f163340268238628f07e85c50fa29843a172d17d65f79a0de4306e660"
+    },
+    "DB_ExpandLoad_XAnimPartTransFrames": {
+      "unchanged": true,
+      "sha256": "abc05b6e7e297ba02a0955708a4dc9a230ff93ebcb7205f60a67e6cb87ee72fa"
+    },
+    "DB_ExpandLoad_XAnimDeltaPartQuatDataFrames": {
+      "unchanged": true,
+      "sha256": "d3f748fcc248de5b4ea573682525605ef72cd31d020fabfbc0188e4414a7b76b"
+    },
+    "DB_ExpandLoad_SndBank": {
+      "unchanged": true,
+      "sha256": "36358370afff83c802d8b3f69c4ec31120211459773cfa0d890e1229999350d9"
+    },
+    "DB_ExpandLoad_SndPatch": {
+      "unchanged": true,
+      "sha256": "c0c44739e4265f21d77b1f9a7e451ca14ad0ccb9edcd8092cfc5376d1c795c9a"
+    },
+    "DB_ExpandLoad_snd_alias_t": {
+      "unchanged": true,
+      "sha256": "9f1e7dc67b547f6ddf66431c1e3021bfb2c8b4bd7fcae00cc268a30e51fe4628"
+    },
+    "DB_ExpandLoad_snd_alias_tArray": {
+      "unchanged": true,
+      "sha256": "77a171c121db99361118c8ec4fc5bdff67a43ff425be54dc7763381ed066bc64"
+    },
+    "DB_ExpandLoad_snd_alias_list_t": {
+      "unchanged": true,
+      "sha256": "0eec76374f1ea7e3ce228dc022766ca807e0631b1f371793ea58b616f1d7b408"
+    },
+    "DB_ExpandLoad_snd_alias_list_tArray": {
+      "unchanged": true,
+      "sha256": "430d3cd6609aeec761b4593a27fb556f96564d39ef18ad0a35e3a5c528146939"
+    },
+    "DB_ExpandLoad_SoundFile": {
+      "unchanged": true,
+      "sha256": "ab5fc1ec4312931b8bd8b805bc39b11861c7126f03c1ea397402422a361b0c57"
+    },
+    "DB_ExpandLoad_SoundFileArray": {
+      "unchanged": true,
+      "sha256": "01e917b91b9f30621d9ec706ebad0a21b25c669bbb5771e68c480c25741e95b9"
+    },
+    "DB_ExpandLoad_snd_asset": {
+      "unchanged": true,
+      "sha256": "aab4140d4129dd6249953495ee1c8c3e3c9eae6f06409cd23ee1c1a5ac3c6ac5"
+    },
+    "DB_ExpandLoad_LoadedSound": {
+      "unchanged": true,
+      "sha256": "78c092ba5413c8a7a3c34d7a3596da8f262448326affcd3e733040e8e5495292"
+    },
+    "DB_ExpandLoad_StreamedSound": {
+      "unchanged": true,
+      "sha256": "6e357759b70d9199f837e60edbee6875584bfb80ceef98e972a9626671b67cf3"
+    },
+    "DB_ExpandLoad_PrimedSound": {
+      "unchanged": true,
+      "sha256": "2058a164624d171dcad7cf4c372ff40c054e20c9fb6534f338dc9a4b5d9d5662"
+    },
+    "DB_ExpandLoad_FxEffectDef": {
+      "unchanged": true,
+      "sha256": "736350e271ad585fb0cf9a991341cfbc617562fc34d8fce5fc0f855d3cc884b7"
+    },
+    "DB_Expand_FxElemDef": {
+      "unchanged": true,
+      "sha256": "80a066c1b85ae6fa60d1e5afaabf0c8cabf08dc96afa1372843cd41bba23db94"
+    },
+    "DB_ExpandLoad_FxElemDef": {
+      "unchanged": true,
+      "sha256": "57f069faa5f83cda790f247f6304b28354b3e5230230fce8f9989ca9c2e93bf5"
+    },
+    "DB_ExpandLoad_FxElemDefArray": {
+      "unchanged": true,
+      "sha256": "75dafc03acd65e52e4701a738a0845b538f94f84e41bcbb6cdab0338a5e88d98"
+    },
+    "DB_ExpandLoad_FxTrailDef": {
+      "unchanged": true,
+      "sha256": "41b383e6b8995b908f05892ffd3547a92c4872c5b8a6fd569dc73f7f9a33f03d"
+    },
+    "DB_ExpandLoad_FxElemMarkVisuals": {
+      "unchanged": true,
+      "sha256": "cf863aff05308047f6df477c11abf379c7d9fce8fe4e37ae87b833730fb004d6"
+    },
+    "DB_ExpandLoad_FxElemMarkVisualsArray": {
+      "unchanged": true,
+      "sha256": "2079097bb2cc73259a4cd661f6d99c13bee3434167bfb16a5584a42c199ccc3a"
+    },
+    "DB_ExpandLoad_DestructibleStageArray": {
+      "unchanged": true,
+      "sha256": "ef3a06acdc9c935ba3c3c2e2a878a14ec0694e0ed7b66748b39c666981f9c8c9"
+    },
+    "DB_ExpandLoad_DestructiblePieceArray": {
+      "unchanged": true,
+      "sha256": "ea7f4d33b58df5c4bf9abda30de8eac012f2e980a4f50b64205aa029027ade28"
+    },
+    "DB_ExpandLoad_DestructibleDef": {
+      "unchanged": true,
+      "sha256": "14a662192c5efc258fdbbdfc683c56ce5281f9f4382e578fdd680377374f91b1"
+    },
+    "DB_Expand_ExpressionStatement": {
+      "unchanged": true,
+      "sha256": "9f5c04bb7a609086d2184e69c8914899b0ac4cb54846c13fa5fef8a8e1b887bf"
+    },
+    "DB_Expand_windowDef": {
+      "unchanged": true,
+      "sha256": "356c1b8316292b4c5186a2627266da6ac53413bbc76c92ba5d95ee53edcb3b24"
+    },
+    "DB_ExpandLoad_WeaponVariantDef": {
+      "unchanged": true,
+      "sha256": "8f70b643fdb9e837d341aa48ad4375802d64bda81161246e417c91786ae3aef6"
+    },
+    "DB_ExpandLoad_ExpressionStatement": {
+      "unchanged": true,
+      "sha256": "be1e586557e7763f86cbcb661f6d9859b606895a64c0f9066dad782db3412ff9"
+    },
+    "DB_ExpandLoad_expressionRpnArray": {
+      "unchanged": true,
+      "sha256": "48b98e18a1bb5863c3e43f5c3c05c46d1fda80be2a6b76e02689f57d4e47ae7a"
+    },
+    "DB_ExpandLoad_windowDef_t": {
+      "unchanged": true,
+      "sha256": "ee7c91751a78d88ea3cf72752a846d971543adb51bea96ee4b6abf5e0002adc5"
+    },
+    "DB_ExpandLoad_MenuList": {
+      "unchanged": true,
+      "sha256": "9534b63e786eff56b0b607f18fa497622f9740f216f102633a669eb8a2b54144"
+    },
+    "DB_ExpandLoad_menuDef_t": {
+      "unchanged": true,
+      "sha256": "d25c0f19863f699f1e023e0c90738f5db4be0fc228d8d16cc89cc9e0e3acec98"
+    },
+    "DB_ExpandLoad_itemDef_t": {
+      "unchanged": true,
+      "sha256": "a2810bf7baedb3fa31fee6b3a2893e221734cc9d16ccdffecd6fcc29d9061490"
+    },
+    "DB_ExpandLoad_MenuCell": {
+      "unchanged": true,
+      "sha256": "e365fc1d5aca66bc203eae1c9ce1edb8397aa45b5f3d1982e2632b3ee8d41642"
+    },
+    "DB_ExpandLoad_MenuCellArray": {
+      "unchanged": true,
+      "sha256": "f66982493e8752af873ca27be9ed66ae8fea348c05a49a189850b50bd86557aa"
+    },
+    "DB_ExpandLoad_MenuRow": {
+      "unchanged": true,
+      "sha256": "fd653652c9b536998fed026efaa68577a1c01ce6050e1c2393ae7e6986b00a2a"
+    },
+    "DB_ExpandLoad_MenuRowArray": {
+      "unchanged": true,
+      "sha256": "f928f11dda18256705b972c0d67c886e30facd6ed0174a9e79f3d0168cb23c35"
+    },
+    "DB_ExpandLoad_ScriptCondition": {
+      "unchanged": true,
+      "sha256": "14fefe05e89be7849849dd80ab6ec01546fa8121cc014b0bbc3fc2fad9c0dfa4"
+    },
+    "DB_ExpandLoad_GenericEventHandler": {
+      "unchanged": true,
+      "sha256": "21615c060495c3ea207f1c0e17a59bc16eff1ce275e7571894439f2c3aefd667"
+    },
+    "DB_ExpandLoad_ItemKeyHandler": {
+      "unchanged": true,
+      "sha256": "3e33892cdcf55058013131407a326c33d8d4a24af7a9fb491d7cf88d20c6b626"
+    },
+    "DB_ExpandLoad_GenericEventScript": {
+      "unchanged": true,
+      "sha256": "60fbdcb6a6d46673d82c58c43e4c0e3cec535a645604e6f108534c606015ddcb"
+    },
+    "DB_ExpandLoad_SndDriverGlobals": {
+      "unchanged": true,
+      "sha256": "a82c2badff5a990cf0210a918adf51c4b68ea31ca54349684fed6995bb379704"
+    },
+    "DB_ExpandLoad_PackIndex": {
+      "unchanged": true,
+      "sha256": "fda978fe392669056ec77104528436b2c1702c73497acad157a1295968fea773"
+    },
+    "DB_ExpandLoad_XGlobals": {
+      "unchanged": true,
+      "sha256": "444b7c516539910f631b197302c17d52d5c08692b945b42b014297b376a5d614"
+    },
+    "DB_ExpandLoad_ddlMemberDef_tArray": {
+      "unchanged": true,
+      "sha256": "b8f07b06540f6cce9fb37476202b570aa5f6db67ab437a42ffe212effe9392e0"
+    },
+    "DB_ExpandLoad_ddlStructDef_t": {
+      "unchanged": true,
+      "sha256": "ee10b49ef76ac1319d6f1d9ddccd1b20722913bc2ff1d6a60cff4ea811580710"
+    },
+    "DB_ExpandLoad_ddlStructDef_tArray": {
+      "unchanged": true,
+      "sha256": "52012587e4fc6df70814eb919fbbe7b1a07f63c11b779306f40e1b0e08cc4a1e"
+    },
+    "DB_ExpandLoad_ddlEnumDef_t": {
+      "unchanged": true,
+      "sha256": "c492b87677197fc16aa2f02880f582366b617807f7807370a7375cb3c417957c"
+    },
+    "DB_ExpandLoad_ddlEnumDef_tArray": {
+      "unchanged": true,
+      "sha256": "9b67b62eb91613f6184bbd8724456716a2708ed8cbf9f3727ed0feee3c4f92d3"
+    },
+    "DB_ExpandLoad_ddlDef_t": {
+      "unchanged": true,
+      "sha256": "3511b7b8f65ed5877e931223350e1fc155dd9dfeed07f3304f7b62bf937deceb"
+    },
+    "DB_ExpandLoad_ddlRoot_t": {
+      "unchanged": true,
+      "sha256": "122569014553c75b5bc526d4b1f60ea5b30e1360cd37ae3ea688f9f6d8a795c8"
+    },
+    "DB_ExpandLoad_EmblemCategory": {
+      "unchanged": true,
+      "sha256": "4783418fd367652bee3d08b820797ca3975b8fdd520f957a8d0f6448ff2cbfed"
+    },
+    "DB_ExpandLoad_EmblemCategoryArray": {
+      "unchanged": true,
+      "sha256": "a2f61557b228538b90f964965276cd1a47a77b58b55ba35e5344f32940929b45"
+    },
+    "DB_ExpandLoad_EmblemIcon": {
+      "unchanged": true,
+      "sha256": "f31215d530597222c49f3600a0fdba92d99cde2367c20f9da196130d0f481f94"
+    },
+    "DB_ExpandLoad_EmblemIconArray": {
+      "unchanged": true,
+      "sha256": "56d67f960ff841b6dd4686a7897fe9723d5fe3c04b7c427f2eabe61f227aa7ea"
+    },
+    "DB_ExpandLoad_EmblemBackground": {
+      "unchanged": true,
+      "sha256": "68588f126110f523c5abace5a639f7d1834abdcd82c06a294bcf266cd48df7ae"
+    },
+    "DB_ExpandLoad_EmblemBackgroundArray": {
+      "unchanged": true,
+      "sha256": "288566a2239d7b9220c238e61d0e407bcb05a8c4bbfb542f771bff3f5fb04824"
+    },
+    "DB_ExpandLoad_EmblemSet": {
+      "unchanged": true,
+      "sha256": "a5716696e6ff450d5a9bf1c16ea0ca39a04f7481c16f9ee8b4501d24d1f8a019"
+    },
+    "DB_ExpandLoad_FxImpactTable": {
+      "unchanged": true,
+      "sha256": "3cba0634d6e58fcdc59d148e688549f835f6e6cd26c9488e54b094e1ea32e306"
+    },
+    "DB_ExpandLoad_FxImpactEntry": {
+      "unchanged": true,
+      "sha256": "821800c3025b1edd93402ef812fe5951f77a6a26344d5300dc16b6e2f8bc2b0e"
+    },
+    "DB_ExpandLoad_FxImpactEntryArray": {
+      "unchanged": true,
+      "sha256": "1a8a619980fe33f626ad17bd399b05b26aaa234a829141a21dc7e839d306a287"
+    },
+    "DB_ExpandLoad_flameTable": {
+      "unchanged": true,
+      "sha256": "0b10b47fb842c4c1835363ce56f828a57d5d63d67e7f16129db824d3aa3f260d"
+    },
+    "DB_ExpandLoad_WeaponDef": {
+      "unchanged": true,
+      "sha256": "0fd7d6c911effdaaabd0d4265fb146b37a063495aa86583ae9ba8af7a8187be2"
+    },
+    "DB_ExpandLoad_rectData_t": {
+      "unchanged": true,
+      "sha256": "e0392c1373b5184f54a7a6cafd4f4077217345d7f7b6b903e803be6074bf8f3d"
+    },
+    "DB_ExpandLoad_imageDef_t": {
+      "unchanged": true,
+      "sha256": "488ae7d50e118047c18409bb8445f391dc5b0020f7552374777820e8a0752661"
+    },
+    "DB_ExpandLoad_ownerDrawDef_t": {
+      "unchanged": true,
+      "sha256": "be547bd839d7e5d35e1fca200c7dd421908a830524ec46a80ca8eede48168725"
+    },
+    "DB_ExpandLoad_textDef_t": {
+      "unchanged": true,
+      "sha256": "48575d61fc6f5402d5998b43c3d2a10484045068aff02ac438b658ba3dd7445b"
+    },
+    "DB_ExpandLoad_focusItemDef_t": {
+      "unchanged": true,
+      "sha256": "2add635b24804fb0f3e571d28883e1eb8e4db9ca78ff19aa65cbbc3ada9b6565"
+    },
+    "DB_Expand_animParams": {
+      "unchanged": true,
+      "sha256": "dce245507a22b9205fade07078c5a6d0d83c9cbb7b9f9ae6c4ee81af3c1a0abb"
+    },
+    "DB_ExpandLoad_animParamsDef_t": {
+      "unchanged": true,
+      "sha256": "c40a99d0ad756abc080eddde673c5f7089687911d8cef4d252d3afc8cc895ecb"
+    },
+    "DB_ExpandLoad_UIAnimInfo": {
+      "unchanged": true,
+      "sha256": "eb18a1552e41e0747a7534105b74616c930a4ab0d0398372f016996318d91154"
+    },
+    "DB_ExpandLoad_listBoxDef_t": {
+      "unchanged": true,
+      "sha256": "b11dc6fb8af9d1ccbdee38ae0ba33194e4cd8b767ab3d4e16ddb5bc85beffee1"
+    },
+    "DB_ExpandLoad_multiDef_t": {
+      "unchanged": true,
+      "sha256": "c8c9723a6d5e27526a79beac37aacfef8cc43c5f9a750dafd1559730fd77bfb5"
+    },
+    "DB_ExpandLoad_enumDvarDef_t": {
+      "unchanged": true,
+      "sha256": "5628b8ab87158d13ecde213a627b8496882588cced3462da5408be649f3ff88e"
+    }
+  },
+  "declarations": {
+    "src/universal/com_stringtable.h": {
+      "unchanged": true,
+      "sha256": "92015d95827ec19284732c908c7d5deb9fcdf1c5eb16dfe18e15d5ef2b6145b3"
+    },
+    "src/database/db_assetlist_types.h": {
+      "unchanged": true,
+      "sha256": "3ca06894d09bf95679b5230888f7acc3e3448bf52a92ceb20aea82e5b3ecc28d"
+    }
+  }
+}

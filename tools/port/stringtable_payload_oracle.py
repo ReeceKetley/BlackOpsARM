@@ -143,7 +143,7 @@ def reference(source, oracle):
     if any(index < 0 or index >= count for index in indices):
         raise RuntimeError('Genuine signed16 indices fall outside the first table')
     index_disk_start, index_native_start = (disk_cursor + 1) & ~1, (native_cursor + 7) & ~7
-    index_metadata = {'count': count, 'source_start': index_start, 'source_end': index_end,
+    index_metadata = {'count': count, 'values': list(indices), 'source_start': index_start, 'source_end': index_end,
                       'disk_bytes': count * 2, 'native_bytes': count * 2,
                       'sha256': hashlib.sha256(memoryview(prefix)[index_start:index_end]).hexdigest(),
                       'adler32': zlib.adler32(memoryview(prefix)[index_start:index_end]),

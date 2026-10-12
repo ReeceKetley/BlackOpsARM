@@ -2,6 +2,13 @@
 
 ## Current Milestone
 
+TASK-0021 original StringTable indices complete. Actual payload leaves through
+index arrays pass HONOR/Windows; real hash/lookup next before registry. Read
+STATE, arm64_stringtable_indices.md and FACT-0064/0065/WARN-0021. Autonomous
+objective DEC-0029 continues; local verified checkpoints DEC-0026, no push.
+
+## Historical milestone
+
 TASK-0020 actual initialized StringTable strings/offset conversion complete
 (FACT-0060/0061). Approved core front end and actual interning are complete;
 DEC-0029 continues bounded native engine/assets progress. Next: original index

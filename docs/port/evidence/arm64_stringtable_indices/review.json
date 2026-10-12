@@ -1,0 +1,11 @@
+{
+  "reviewer": "envelope_review",
+  "remaining_blockers": [],
+  "corrected_before_authoritative_build": "Index plan extends payload.end; string execution now uses indexSource under INDEX_GATE and previous end otherwise",
+  "test_strengthening": "Earlier successful scalar byte maps and persistent envelope alias seeded, saved and compared before failed-read reset",
+  "failure": "FAIL-0017 fixture forward-declaration ordering; failed compile logs preserved",
+  "source": "Default db_load.cpp text/global order/body unchanged after exact selection reversal; sole prototype moved to canonical light header; original scalar wrapper is actual selected leaf",
+  "bounds": "Pure guard validates signed count/commit/domain/source/2-byte disk and minimum native alignment/capacities/uint32 endpoints/full signed16 permutation before owner allocation",
+  "order": "Original retail bytes/order preserved, no signed or unsigned hash sorting prerequisite",
+  "limits": "Finite fixture reader, not asynchronous production refill; full asset dispatch/registry/hash/lookup not executed"
+}

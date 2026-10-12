@@ -297,3 +297,14 @@ are permutations but not ordinarysigned/unsigned hash-sorted. Preserve bytes/ord
 do not reject/resort original data to satisfy the earlier plan. Modelmisses are
 not yet native execution. Continue DEC-0029, verified local commits DEC-0026;
 no push. Protected repos/assets/frozen evidence remain unchanged, graphics absent.
+
+
+TASK-0021 complete: original signed16 indices preserve every byte/order and
+stride2 on HONOR/Windows,162 cases/12 cycles each plus optimized ARM UBSan.
+Read arm64_stringtable_indices.md, FACT64/65, WARN21/FAIL17. Actual Load_shortArray
+body/defaultWindowsglobalorder remain unchanged; varshort invalid before reset/
+owner release. No ordinary hash sorting prerequisite. Next3: real modulo32 hash,
+actual lookup/reference investigation on original arrays, then smallest real
+registration/next-asset boundary. Finite reader/full async distinction persists.
+Continue autonomously DEC29; local verified commits DEC26/no push. Preserve all
+prior evidence/protected checkouts/original assets. No game-owned graphics yet.
