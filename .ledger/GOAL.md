@@ -1,5 +1,12 @@
 ## Current Milestone
 
+TASK39 complete genuine default CPUgraph registered on3ABIs/O0/O3; next actual
+bootstrap default services/liveSL ownership, true MP-first initialization and
+mapmodel/script prerequisites. Read STATE/arm64_bootstrap_default.md; standing
+DEC47 and verified-x64-stub policyDEC56 active. Noengineboot/playableclaim.
+
+## Current Milestone
+
 TASK38 genuine TechniqueSet deserialization/default-dependency diagnostic verified
 on x86/x64/HONOR O0/O3; successful type7 registration remains blocked by real
 bootstrap dependencies. TASK37 all37 assets still passes. Read latest STATE and

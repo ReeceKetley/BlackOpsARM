@@ -3,6 +3,9 @@
 #include "db_scalar_load.h"
 #if defined(BO1_TECHSET_GATE)
 #include "db_techset_load.h"
+#if defined(BO1_MATERIAL_GRAPH_GATE)
+#include "db_material_graph_load.h"
+#endif
 #endif
 #if defined(BO1_REGISTRY_ADD_GATE)
 #include "db_asset_entry_types.h"
@@ -72,6 +75,11 @@ float (*varvec3_t)[3];
 float (*varvec4_t)[4];
 DObjAnimMat *varDObjAnimMat;
 float (*varshared_vec3_t)[3];
+#endif
+#if defined(BO1_STRINGTABLE_INDEX_GATE) && defined(BO1_MATERIAL_GRAPH_GATE)
+void *varDWORD;
+void *varuint;
+float *varfloat;
 #endif
 __int16 *varshort;
 #if !defined(BO1_STRINGTABLE_INDEX_GATE)
@@ -159,6 +167,8 @@ GfxImage *varGfxImage;
 GfxImage **varGfxImagePtr;
 GfxTexture *varGfxRawTexture;
 water_t *varwater_t;
+#endif
+#if !defined(BO1_STRINGTABLE_INDEX_GATE) || defined(BO1_MATERIAL_GRAPH_GATE)
 GfxVertexShaderLoadDef *varGfxVertexShaderLoadDef;
 GfxPixelShaderLoadDef *varGfxPixelShaderLoadDef;
 MaterialVertexShaderProgram *varMaterialVertexShaderProgram;
@@ -171,8 +181,10 @@ MaterialVertexDeclaration *varMaterialVertexDeclaration;
 MaterialArgumentCodeConst *varMaterialArgumentCodeConst;
 MaterialShaderArgument *varMaterialShaderArgument;
 MaterialArgumentDef *varMaterialArgumentDef;
-GfxStateBits *varGfxStateBits;
 MaterialVertexDeclaration **varMaterialPass;
+#endif
+#if !defined(BO1_STRINGTABLE_INDEX_GATE)
+GfxStateBits *varGfxStateBits;
 #endif
 #if !defined(BO1_STRINGTABLE_INDEX_GATE) || defined(BO1_TECHSET_GATE)
 MaterialTechnique *varMaterialTechnique;
@@ -445,6 +457,8 @@ void __cdecl Load_unsignedArray(bool atStreamStart, int count)
     Load_Stream(atStreamStart, (unsigned __int8 *)varunsigned, 4 * count);
 }
 
+#endif
+#if !defined(BO1_STRINGTABLE_INDEX_GATE) || defined(BO1_MATERIAL_GRAPH_GATE)
 void __cdecl Load_DWORDArray(bool atStreamStart, int count)
 {
     Load_Stream(atStreamStart, (unsigned __int8 *)varDWORD, 4 * count);
@@ -455,6 +469,8 @@ void __cdecl Load_uint(bool atStreamStart)
     Load_Stream(atStreamStart, (unsigned __int8 *)varuint, 4);
 }
 
+#endif
+#if !defined(BO1_STRINGTABLE_INDEX_GATE)
 void __cdecl Load_uintArray(bool atStreamStart, int count)
 {
     Load_Stream(atStreamStart, (unsigned __int8 *)varuint, 4 * count);
@@ -465,11 +481,15 @@ void __cdecl Load_float(bool atStreamStart)
     Load_Stream(atStreamStart, (unsigned __int8 *)varfloat, 4);
 }
 
+#endif
+#if !defined(BO1_STRINGTABLE_INDEX_GATE) || defined(BO1_MATERIAL_GRAPH_GATE)
 void __cdecl Load_floatArray(bool atStreamStart, int count)
 {
     Load_Stream(atStreamStart, (unsigned __int8 *)varfloat, 4 * count);
 }
 
+#endif
+#if !defined(BO1_STRINGTABLE_INDEX_GATE)
 void __cdecl Load_raw_uintArray(bool atStreamStart, int count)
 {
     Load_Stream(atStreamStart, (unsigned __int8 *)varraw_uint, 4 * count);
@@ -2413,6 +2433,8 @@ void __cdecl Mark_water_t()
     Mark_GfxImagePtr();
 }
 
+#endif
+#if !defined(BO1_STRINGTABLE_INDEX_GATE) || defined(BO1_MATERIAL_GRAPH_GATE)
 void __cdecl Load_GfxVertexShaderLoadDef(bool atStreamStart)
 {
 #if BO1_NATIVE_64BIT
@@ -2652,11 +2674,15 @@ void __cdecl Load_MaterialShaderArgumentArray(bool atStreamStart, int count)
     }
 }
 
+#endif
+#if !defined(BO1_STRINGTABLE_INDEX_GATE)
 void __cdecl Load_GfxStateBitsArray(bool atStreamStart, int count)
 {
     Load_Stream(atStreamStart, (unsigned __int8 *)varGfxStateBits, 8 * count);
 }
 
+#endif
+#if !defined(BO1_STRINGTABLE_INDEX_GATE) || defined(BO1_MATERIAL_GRAPH_GATE)
 void __cdecl Load_MaterialPass(bool atStreamStart)
 {
 #if BO1_NATIVE_64BIT
@@ -2766,6 +2792,8 @@ void __cdecl Load_MaterialTechnique(bool atStreamStart)
     Load_XString(0);
 }
 
+#endif
+#if !defined(BO1_STRINGTABLE_INDEX_GATE)
 void __cdecl Load_MaterialTextureDefInfo(bool atStreamStart)
 {
     if ( varMaterialTextureDef->semantic == 11 )

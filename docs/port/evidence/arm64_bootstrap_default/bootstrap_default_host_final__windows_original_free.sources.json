@@ -1,0 +1,12 @@
+{
+  "schema": "BlackOpsARM.TASK-0026.original-windows-free-reference.v1",
+  "original_commit": "fa27a73eee7042aef8a81fbb4d7207ec13f985c8",
+  "original_source": "src/database/db_registry.cpp",
+  "original_git_blob_sha256": "2ba0aeeeed8b617a2a1be1e178bf676a4b7a366bf56994755a8b5db14e8e06a1",
+  "original_function_sha256": "eef33b9eb78a9bb7221d62e035e7c6dd3cc06b30f6be7ef272844f7fe3826968",
+  "generated_source_sha256": "96cec616e3f12d69285e15b01e8c6f6ba956f0bc6869d53ed28d7ded2e048b00",
+  "original_function_bytes": 317,
+  "only_function_name_changed": true,
+  "compiler_contract": "MSVC Windows x86/x64 /O2; exact historical typed-alias free body",
+  "scope": "Ignored standalone control only; no tracked engine fork or Android implementation"
+}

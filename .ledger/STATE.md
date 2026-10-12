@@ -1,3 +1,27 @@
+# Current state - TASK39 genuine bootstrap default verified
+
+Real first MP/SP postgfx default TechniqueSets register on HONOR/x86/x64 via actual
+root loader/fullCPUgraph/Add/Link/Find. Perzone:2techniques/2passes/2decls/4shader
+programs/3args,112null+16techniquealiases/2shader-name refs. Fullbytecode/pointers
+survive TEMP reuse; actual renderer-off bodies retaincode/clearGPU/setloaded.
+O0/O3rootcollectors,36oraclecontrols and fullold TASK36/37 prerequisites pass;
+all2048pool+32752entrynodes/counts/owners restore beforefree. Renderer-on explicit
+fixturedeath3Win/134HONOR; no fakeGPU. Normal5TUs/ABI and42body/layout proofs pass.
+414 metadata/log archive records (losslessgzip logs), noassets/binaries. Protected
+19512 prior hashes exact;1 authorized scope file unchanged againstpreTASK39d789e13;
+referenceGit exact. See arm64_bootstrap_default.md, DEC57/FACT117-119/WARN40/FAIL37.
+All builds/tests ended; root owns returned edits. Git supplies exact checkpoint.
+
+Next3: actual defaultlookup/clone/setname withrealSL/MT user4 and retainedprovider;
+actual MP-first bootstrap/scriptIDs before map; complete genuine mapXModel then
+widerengineinit. Agent bootstrap_default is read-only researching TASK40 design;
+noimplementation started. Fullengine startup/async/APK/game-ownedgraphics/playable
+notcertified. Verified x64intentionalstubs expected perDEC56; DOAexcludedDEC55.
+StandingDEC47 continues autonomously/localcommits/no push. No protectedcheckout,
+retailfile or priorfrozenevidence modified.
+
+# Historical checkpoint (preserved)
+
 # Latest scope clarification - DEC56
 
 
