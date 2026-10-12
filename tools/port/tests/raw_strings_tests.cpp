@@ -276,6 +276,9 @@ int main(int argc,char**argv){require(argc>=2,"decode/gate mode");if(!std::strcm
 #if defined(BO1_STRINGTABLE_NORMALIZATION_GATE)
     normalizationFixtures();
 #endif
+#if defined(BO1_STRINGTABLE_OWNER_GATE)
+    owner_fixture::fixtures();
+#endif
 #endif
 #endif
 #endif
@@ -315,6 +318,9 @@ int main(int argc,char**argv){require(argc>=2,"decode/gate mode");if(!std::strcm
 #endif
 #if defined(BO1_STRINGTABLE_INDEX_GATE)
         require(!varshort,"scalar loader global invalid before reset/release");
+#endif
+#if defined(BO1_STRINGTABLE_OWNER_GATE)
+        owner_fixture::finish();
 #endif
         DB_InitStreams(detached);
 #if BO1_NATIVE_64BIT

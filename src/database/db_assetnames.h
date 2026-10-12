@@ -1,4 +1,5 @@
 #pragma once
+#include "db_asset_pool.h"
 
 union XAssetHeader;
 struct XModelPiece;
@@ -14,7 +15,6 @@ const char *__cdecl DB_GetEmblemSetName(const XAssetHeader *header);
 const char *__cdecl DB_GetXAssetHeaderName(int type, const XAssetHeader *header);
 const char *__cdecl DB_GetXAssetName(const XAsset *asset);
 void __cdecl DB_SetXAssetName(XAsset *asset, const char *name);
-int __cdecl DB_GetXAssetTypeSize(int type);
 const char *__cdecl DB_GetXAssetTypeName(unsigned int type);
 
 extern const char *g_assetNames[43];

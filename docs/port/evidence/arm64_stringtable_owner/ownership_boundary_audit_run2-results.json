@@ -1,0 +1,203 @@
+{
+  "schema": "BlackOpsARM.TASK-0026.original-ownership-primitives.readonly.v1",
+  "exe_path": "D:\\Games\\Call of Duty - Black Ops\\BlackOps.exe",
+  "exe_sha256": "2ba4a04e81de2b60582da0e4489efde21e6cb07904a223bae633b6ccaebbf759",
+  "objdump_path": "D:\\Android\\Sdk\\ndk\\30.0.16248370\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\llvm-objdump.exe",
+  "objdump_sha256": "9e01139f5ef855a0104b4b0960ac8bd8e3a2f937ba886f5aa0ec904b3f867a20",
+  "functions": {
+    "type_size_dispatch": {
+      "va": 5326912,
+      "va_hex": "0x514840",
+      "rva": 1132608,
+      "file_offset": 1129536,
+      "section": ".text",
+      "end_va_exclusive": 5326925,
+      "function_bytes": 13,
+      "sha256": "d51088eb2006719dbf38d230717e21574e97d845232d1562f0a42b5a63dbdca5"
+    },
+    "stringtable_size20": {
+      "va": 8004640,
+      "va_hex": "0x7a2420",
+      "rva": 3810336,
+      "file_offset": 3807264,
+      "section": ".text",
+      "end_va_exclusive": 8004646,
+      "function_bytes": 6,
+      "sha256": "b5e246fbf558c442548ccb78aa6a03d48027a6f91f15c02d7dc661bd43aaaab1"
+    },
+    "stringtable_pool_pop": {
+      "va": 8013792,
+      "va_hex": "0x7a47e0",
+      "rva": 3819488,
+      "file_offset": 3816416,
+      "section": ".text",
+      "end_va_exclusive": 8013810,
+      "function_bytes": 18,
+      "sha256": "2db945c1c919a8bf1399f0d14fae4828684ea0f3e37057f1ab5e382b3dac7016"
+    },
+    "stringtable_pool_push": {
+      "va": 8013824,
+      "va_hex": "0x7a4800",
+      "rva": 3819520,
+      "file_offset": 3816448,
+      "section": ".text",
+      "end_va_exclusive": 8013839,
+      "function_bytes": 15,
+      "sha256": "cf9c30142130fbeb30a3248fab7ac7e11a29ad3b38a5569902e3c8b8444cf871"
+    },
+    "alloc_header_wrapper": {
+      "va": 8005488,
+      "va_hex": "0x7a2770",
+      "rva": 3811184,
+      "file_offset": 3808112,
+      "section": ".text",
+      "end_va_exclusive": 8005671,
+      "function_bytes": 183,
+      "sha256": "624caebd906c1537e59af2c96300ed55292c3639d8a99ecf20d7e20e23e24eaf"
+    },
+    "link_asset_entry": {
+      "va": 8007440,
+      "va_hex": "0x7a2f10",
+      "rva": 3813136,
+      "file_offset": 3810064,
+      "section": ".text",
+      "end_va_exclusive": 8008487,
+      "function_bytes": 1047,
+      "sha256": "2c375da41601859aecf5c8511fa74cd73c5431ae88eee71dfe7d0a536b8ea139"
+    },
+    "add_asset_wrapper": {
+      "va": 8008496,
+      "va_hex": "0x7a3330",
+      "rva": 3814192,
+      "file_offset": 3811120,
+      "section": ".text",
+      "end_va_exclusive": 8008587,
+      "function_bytes": 91,
+      "sha256": "6a7ce0d5954fd7992f30275173617069f11e36ccae2f12501370cc127a766c35"
+    }
+  },
+  "stringtable_original_table_entries": {
+    "size_handler": {
+      "va": 12009044,
+      "va_hex": "0xb73e54",
+      "rva": 7814740,
+      "file_offset": 7808596,
+      "section": ".data",
+      "type": 37,
+      "value": 8004640,
+      "table_base_va": 12008896,
+      "slot_bytes": 4,
+      "slot_sha256": "7544fa83a7195e5c8d719e5ebc643d3bbbf1d7188938f6defde967b91d363011"
+    },
+    "alloc_handler": {
+      "va": 12009708,
+      "va_hex": "0xb740ec",
+      "rva": 7815404,
+      "file_offset": 7809260,
+      "section": ".data",
+      "type": 37,
+      "value": 8013792,
+      "table_base_va": 12009560,
+      "slot_bytes": 4,
+      "slot_sha256": "77cf66b722f3b1017db378374769d742e641038c9fa6a01a91127c90ea055c27"
+    },
+    "pool_storage": {
+      "va": 12010060,
+      "va_hex": "0xb7424c",
+      "rva": 7815756,
+      "file_offset": 7809612,
+      "section": ".data",
+      "type": 37,
+      "value": 15885960,
+      "table_base_va": 12009912,
+      "slot_bytes": 4,
+      "slot_sha256": "f5565712c5eccc13761116a6c476b5ef6515e0b93a145c4d59f64e360b92b3b0"
+    },
+    "free_handler": {
+      "va": 12009884,
+      "va_hex": "0xb7419c",
+      "rva": 7815580,
+      "file_offset": 7809436,
+      "section": ".data",
+      "type": 37,
+      "value": 8013824,
+      "table_base_va": 12009736,
+      "slot_bytes": 4,
+      "slot_sha256": "45ba1f900dbf2f958f5e3fc2f6ed3e52b714efec5c4bb402969d792d26978e87"
+    },
+    "pool_count": {
+      "va": 12009356,
+      "va_hex": "0xb73f8c",
+      "rva": 7815052,
+      "file_offset": 7808908,
+      "section": ".data",
+      "type": 37,
+      "value": 80,
+      "table_base_va": 12009208,
+      "slot_bytes": 4,
+      "slot_sha256": "29374cfdd45d8433713bb3252954e48841401c4ee254a651cfffd2287f5360de"
+    },
+    "dynamic_clone_handler": {
+      "va": 12010588,
+      "va_hex": "0xb7445c",
+      "rva": 7816284,
+      "file_offset": 7810140,
+      "section": ".data",
+      "type": 37,
+      "value": 0,
+      "table_base_va": 12010440,
+      "slot_bytes": 4,
+      "slot_sha256": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119"
+    }
+  },
+  "first_link_instruction_boundary": {
+    "begin_va": 8007727,
+    "end_va_exclusive": 8007910,
+    "alloc_header_call_va": 8007812,
+    "type_size_call_va": 8007844,
+    "memcpy_call_va": 8007859,
+    "memcpy_target_va": 9860960,
+    "input_header_source": "temporary from input XAsset.header",
+    "destination": "actual allocated typed pool header",
+    "copy_size": "actual type-size dispatcher returns20 for StringTable",
+    "hash_bucket_link_begin_va": 8007875,
+    "returned_owner": "pooled asset-entry.header"
+  },
+  "dynamic_clone": "original StringTable handler NULL; children are shallow-retained pointers, not copied allocations",
+  "production_policy": {
+    "source": "src/database/db_registry.cpp",
+    "normal_count": 576,
+    "mod_count": 768,
+    "physical_capacity": 768,
+    "retail_original_count": 80,
+    "recommendation": "Retain existing production counts; original80 is reference evidence, not new port capacity"
+  },
+  "native_layout": {
+    "StringTable": 32,
+    "alignment": 8,
+    "pool_entry": 32,
+    "pointer_width": 8,
+    "physical_pool_bytes": 24584
+  },
+  "win32_layout": {
+    "StringTable": 20,
+    "alignment": 4,
+    "pool_entry": 20,
+    "pointer_width": 4,
+    "physical_pool_bytes": 15364
+  },
+  "original_dbhash_service_argument": 70,
+  "canonical_production_dbhash_identifier": 74,
+  "service_policy": "Route canonical production CRITSECT_DBHASH; original executable numeric IDs are a different enum layout, not an instruction to duplicate/copy enum values.",
+  "source_dependencies": {
+    "DB_GetXAssetTypeSize": "unchanged body dispatches global43-entry function pointer table after assertion; no range guard",
+    "size_table": "db_assetnames.cpp:501 all43 production handlers require many full class declarations",
+    "StringTable_size_leaf": "db_assetnames.cpp:340 uses real sizeof(StringTable) on native64,20 onWin32",
+    "DB_CloneXAssetInternal": "db_registry.cpp:2111 invokes actual type-size service then memcpy native header bytes",
+    "XAssetPoolEntry": "db_registry.h:113 union actual T header with native next pointer",
+    "pool_init": "db_registry.cpp:3708 links exactly configured count, starting entries0",
+    "pool_alloc": "db_registry.cpp:164 returns NULL on exhaustion",
+    "pool_free": "db_registry.cpp:1032 current generic free callback is declared with EmblemSet specialization; pointer-width unchanged but typed extraction should preserve source provenance"
+  },
+  "scope": "Read-only static source/instruction audit. No original exe launch, instruction runtime, native builds, DB_Add emulation, or registry implementation."
+}

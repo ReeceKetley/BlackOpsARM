@@ -484,3 +484,5 @@ x64_diag.log
 !/docs/port/evidence/arm64_original_query/*.log
 
 !/docs/port/evidence/arm64_stringtable_normalization/*.log
+
+!/docs/port/evidence/arm64_stringtable_owner/*.log

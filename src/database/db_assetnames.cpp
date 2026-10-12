@@ -1,4 +1,8 @@
-﻿#include <platform/bo1_native_width.h>
+﻿#if defined(BO1_STRINGTABLE_OWNER_GATE)
+#include "db_asset_pool.h"
+#include <universal/assertive.h>
+#else
+#include <platform/bo1_native_width.h>
 #include "db_assetnames.h"
 #include "db_registry.h"
 
@@ -31,6 +35,8 @@
 #include <qcommon/cm_load_obj.h>
 #include <cgame/cg_effects_load_obj.h>
 
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE)
 const char *(__cdecl *DB_XAssetGetNameHandler[43])(const XAssetHeader *) =
 {
   &DB_DDLGetName,
@@ -334,6 +340,8 @@ int __cdecl DB_SizeofXAsset_XGlobals_()
 #endif
 }
 
+
+#endif
 #if !BO1_NATIVE_64BIT
 static_assert(sizeof(StringTable) == 20);
 #endif
@@ -345,6 +353,8 @@ int __cdecl DB_SizeofXAsset_StringTable_()
     return 20;
 #endif
 }
+#if !defined(BO1_STRINGTABLE_OWNER_GATE)
+
 
 #if !BO1_NATIVE_64BIT
 static_assert(sizeof(clipMap_t) == 332);
@@ -498,8 +508,49 @@ int __cdecl DB_SizeofXAsset_GameWorldMp_() { return BO1_ASSET_SIZE(GameWorldMp, 
 int __cdecl DB_SizeofXAsset_MapEnts_() { return BO1_ASSET_SIZE(MapEnts, 12); }
 int __cdecl DB_SizeofXAsset_FxImpactTable_() { return BO1_ASSET_SIZE(FxImpactTable, 8); }
 
+
+#endif
 int(__cdecl *DB_GetXAssetSizeHandler[43])() =
 {
+#if defined(BO1_STRINGTABLE_OWNER_GATE)
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+#else
   &DB_SizeofXAsset_XModelPieces_,
   &DB_SizeofXAsset_PhysPreset_,
   &DB_SizeofXAsset_PhysConstraints_,
@@ -538,13 +589,18 @@ int(__cdecl *DB_GetXAssetSizeHandler[43])() =
   NULL,
   NULL,
   &DB_SizeofXAsset_RawFile_,
+#endif
   &DB_SizeofXAsset_StringTable_,
+#if !defined(BO1_STRINGTABLE_OWNER_GATE)
   &DB_SizeofXAsset_PackIndex_,
   &DB_SizeofXAsset_XGlobals_,
   &DB_SizeofXAsset_ddlRoot_t_,
   &DB_SizeofXAsset_Glasses_,
   &DB_SizeofXAsset_EmblemSet_
+#endif
 };
+#if !defined(BO1_STRINGTABLE_OWNER_GATE)
+
 
 
 
@@ -668,6 +724,8 @@ void __cdecl DB_SetXAssetName(XAsset *asset, const char *name)
     DB_XAssetSetNameHandler[asset->type](&asset->header, name);
 }
 
+
+#endif
 int __cdecl DB_GetXAssetTypeSize(int type)
 {
     if ( !DB_GetXAssetSizeHandler[type]
@@ -682,6 +740,8 @@ int __cdecl DB_GetXAssetTypeSize(int type)
     }
     return DB_GetXAssetSizeHandler[type]();
 }
+#if !defined(BO1_STRINGTABLE_OWNER_GATE)
+
 
 const char *__cdecl DB_GetXAssetTypeName(unsigned int type)
 {
@@ -698,3 +758,5 @@ const char *__cdecl DB_GetXAssetTypeName(unsigned int type)
     return g_assetNames[type];
 }
 
+
+#endif // !BO1_STRINGTABLE_OWNER_GATE

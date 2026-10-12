@@ -283,3 +283,16 @@ tiebreak. Actualfullregistry notcertified; no fabricated registration success.
 Next TASK26 realpoolheader/cloneownership survivesTEMPoverwrite, then original
 shadow/map/alias reuseaudit andsmallestrealregistryboundary. ContinueDEC29,
 localverifiedcommitsDEC26/no push. Preserve allprior evidence/repos/assets.
+
+
+TASK26 complete: arm64_stringtable_owner.md, FACT79/80/WARN26/DEC41/NOTE6.
+Actualpool/init/alloc/clone/size/free leaves surviveTEMPoverwrite/genuine1994queries
+on3ABIs/optimized; preserve576/768 policy/native32-Win3220 header/zonechildren.
+Normalizeexactlyonce afterpoolclone; freepoolheaderbeforezone, noretargetedTEMP
+aliases/fullregistryclaim. Genericfree4qualified pointer-copy correction retains
+historicalWindows semantics; defaultsource/BOM/order/canonicaltypes proved.
+Next TASK27 originalTEMP physical/shadow/maps/aliases reuse beforeasset2, then real
+DBHASH/asset-entry ownership/init andregistryboundary. No fakeDB_Addsuccess or
+arbitrarycaprelaxation. ContinueDEC29/localverifiedcommitsDEC26/no push; preserve
+all prior evidence/protectedrepos/assets. Invalidcaller guards arefixturecontracts,
+notuncheckedrawleaf recovery/concurrency certification.

@@ -32,6 +32,9 @@ struct StringTablePayloadPlan{
 #if defined(BO1_STRINGTABLE_NORMALIZATION_GATE)
 #include "stringtable_normalization_fixture.h"
 #endif
+#if defined(BO1_STRINGTABLE_OWNER_GATE)
+#include "stringtable_owner_fixture.h"
+#endif
 static StringTablePayloadPlan payloadPlan(const Front&f,const AssetDirectoryPlan&d,const StringTableHeaderPlan&h,const unsigned char*data,std::size_t bytes){
     StringTablePayloadPlan p;p.nameSource=f.end+static_cast<std::size_t>(d.diskBytes)+20;require(p.nameSource<=bytes,"name follows checked numeric header");
     require(PlanRawString(h.nameTag,data+p.nameSource,bytes-p.nameSource,f.envelope.zone.file.blockSize[4],f.envelope.zone.logical[4],d.diskEnd,d.nativeEnd,p.name)==RawStringResult::Ok,"checked genuine name capacity/source before allocation");
@@ -96,10 +99,15 @@ static void executePayload(const StringTablePayloadPlan&p,StringTable*header,Dec
     executeCellHashes(p,header,measurement);
 #endif
 #if defined(BO1_STRINGTABLE_LOOKUP_GATE)
-#if defined(BO1_STRINGTABLE_NORMALIZATION_GATE)
-    executeNormalization(p,header,blocks,measurement);
+#if defined(BO1_STRINGTABLE_OWNER_GATE)
+    auto* queryHeader=owner_fixture::prepare(header);
+#else
+    auto* queryHeader=header;
 #endif
-    executeLookups(p,header,measurement);
+#if defined(BO1_STRINGTABLE_NORMALIZATION_GATE)
+    executeNormalization(p,queryHeader,blocks,measurement);
+#endif
+    executeLookups(p,queryHeader,measurement);
 #endif
     if(measurement)std::printf("{\"name_measurements\":{\"source_start\":%zu,\"length\":%llu,\"adler32\":%lu,\"disk_start\":%llu,\"disk_end\":%llu,\"native_start\":%llu,\"native_end\":%llu}}\n",p.nameSource,(unsigned long long)p.name.bytes,p.name.present?adler32(1,blocks[4].data+p.name.nativeStart,static_cast<unsigned>(p.name.bytes)):1ul,(unsigned long long)p.name.diskStart,(unsigned long long)p.name.diskEnd,(unsigned long long)p.name.nativeStart,(unsigned long long)p.name.nativeEnd);
     DB_PopStreamPos();require(g_streamPosIndex==0&&DB_GetStreamPos()==headerCursor,"child scope retains live header end before outer TEMP pop");
