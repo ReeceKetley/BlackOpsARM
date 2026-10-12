@@ -57,3 +57,11 @@ Not started. TASK-0011 timing/RSS and all older evidence remain frozen.
 - Independent engine fork/source duplication or changes to the Windows branch.
 - Changes to DXVK-Native, commits or pushes without explicit authorization.
 - T6 compatibility work before native T5 bring-up.
+
+
+## Current Milestone
+
+TASK-0017 is complete: real pool lifecycle and859 genuine IDs match Windows and
+HONOR, including optimized ARM validation. TASK-0018 is the next bounded first
+StringTable header, before name/cells/fixups/registration. The broader autonomous
+objective continues; no game-owned graphics yet. See current STATE/report.

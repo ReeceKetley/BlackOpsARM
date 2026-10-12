@@ -17,6 +17,12 @@
 #include <vector>
 #include <stdexcept>
 #include <limits>
+#if defined(BO1_FRONTEND_INTERN_GATE)
+#include "string_pool_fixture.h"
+#include <platform/script_pool_services.h>
+#include <platform/android/script_string_services.h>
+#include <set>
+#endif
 using namespace bo1::fastfile;
 using frontend_fixture::require;
 #if defined(__ANDROID__)
@@ -152,9 +158,17 @@ static void execute(const Front&f,DecodedSource&r,XBlock(&b)[7],bool measurement
         require(tag==(p.present?0xffffffffu:0u),"table preserves raw tag until successful load");
         require(r.Position()+52==entry.source,"each string follows genuine FILE sequence");
         if(p.present){const char*loaded=reinterpret_cast<const char*>(DB_AllocStreamPos(0));require(loaded==reinterpret_cast<const char*>(b[4].data+p.nativeStart),"native raw alignment independent of FILE");
+#if defined(BO1_FRONTEND_INTERN_GATE)
+            Load_TempStringCustom(&loaded);value=reinterpret_cast<uintptr_t>(loaded);require(value&&value<65536,"actual TempStringCustom returns fixed pool ID");
+            const auto*interned=SL_ConvertToString(static_cast<unsigned>(value),SCRIPTINSTANCE_SERVER);
+            require(interned&&!std::memcmp(interned,r.Current()-p.bytes,static_cast<std::size_t>(p.bytes))&&SL_GetStringLen(SCRIPTINSTANCE_SERVER,static_cast<unsigned>(value))==static_cast<int>(p.bytes-1),"every actual pool ID roundtrip matches genuine source");
+            require(!std::memcmp(b[4].data+p.nativeStart,r.Current()-p.bytes,static_cast<std::size_t>(p.bytes)),"raw owned bytes preserved before ID publication");
+            std::memcpy(slot,&value,sizeof(value));
+#else
             Load_XStringCustom(&loaded);require(loaded==reinterpret_cast<const char*>(b[4].data+p.nativeStart),"actual raw leaf retains native pointer");
             require(!std::memcmp(loaded,r.Current()-p.bytes,static_cast<std::size_t>(p.bytes)),"each loaded byte including NUL matches validated source");
             value=reinterpret_cast<uintptr_t>(loaded);std::memcpy(slot,&value,sizeof(value));
+#endif
 #if BO1_NATIVE_64BIT
             for(unsigned d=0;d<p.bytes;++d)require(DB_StreamExactLookup(4,static_cast<unsigned>(p.diskStart+d))==b[4].data+p.nativeStart+d,"all loaded character offsets map exactly");
 #endif
@@ -164,7 +178,13 @@ static void execute(const Front&f,DecodedSource&r,XBlock(&b)[7],bool measurement
         require(DB_StreamWin32Pos(4)==p.diskEnd,"raw leaf shadow bytes plus zero disk alignment");
 #endif
         require(DB_GetStreamPos()==b[4].data+p.nativeEnd,"raw leaf native cursor exact");
-        if(measurements){if(comma)std::printf(",");comma=true;std::printf("{\"index\":%u,\"length\":%llu,\"adler32\":%lu}",entry.index,(unsigned long long)p.bytes,p.present?adler32(1,b[4].data+p.nativeStart,static_cast<unsigned>(p.bytes)):1ul);}
+        if(measurements){if(comma)std::printf(",");comma=true;
+#if defined(BO1_FRONTEND_INTERN_GATE)
+            std::printf("{\"index\":%u,\"length\":%llu,\"adler32\":%lu,\"id\":%llu}",entry.index,(unsigned long long)p.bytes,p.present?adler32(1,b[4].data+p.nativeStart,static_cast<unsigned>(p.bytes)):1ul,(unsigned long long)value);
+#else
+            std::printf("{\"index\":%u,\"length\":%llu,\"adler32\":%lu}",entry.index,(unsigned long long)p.bytes,p.present?adler32(1,b[4].data+p.nativeStart,static_cast<unsigned>(p.bytes)):1ul);
+#endif
+        }
     }
     if(measurements)std::printf("]}\n");reader=nullptr;DB_PopStreamPos();
     require(readCalls==(f.table.diskBytes?1u:0u)+f.strings.size()-f.nulls,"actual calls count inclusive NUL strings");
@@ -203,7 +223,11 @@ static unsigned fixtures(const ZonePlan&zone){unsigned count=0;const auto baseli
     DB_InitStreams(detached);DB_FreeXBlocks(b,0);frontend_fixture::release(&owner);require(frontend_fixture::counts()==baseline,"failure detach and release baseline");return count;
 }
 int main(int argc,char**argv){require(argc>=2,"decode/gate mode");if(!std::strcmp(argv[1],"decode")){require(argc==4,"decode input output");decode(argv[2],argv[3]);return 0;}
-    require(argc==6&&!std::strcmp(argv[1],"gate"),"gate prefix1 decoded1 prefix2 decoded2");frontend_fixture::startup();DB_InitStreams(detached);const auto baseline=frontend_fixture::counts();
+    require(argc==6&&!std::strcmp(argv[1],"gate"),"gate prefix1 decoded1 prefix2 decoded2");frontend_fixture::startup();
+#if defined(BO1_FRONTEND_INTERN_GATE)
+    Sys_InitializeCriticalSections();bo1::script::RegisterServerThread();
+#endif
+    DB_InitStreams(detached);const auto baseline=frontend_fixture::counts();
     auto a=readPrefix(argv[2]),b=readPrefix(argv[4]);auto ap=preflight(a.data(),a.size(),std::strtoull(argv[3],nullptr,10)),bp=preflight(b.data(),b.size(),std::strtoull(argv[5],nullptr,10));
 #if defined(BO1_ASSET_DIRECTORY_GATE)
     auto ad=directoryPlan(ap,a.data(),a.size()),bd=directoryPlan(bp,b.data(),b.size());require(ap.end+ad.diskBytes==a.size()&&bp.end+bd.diskBytes==b.size(),"prefix stops exactly after directory before dispatch");
@@ -216,9 +240,22 @@ int main(int argc,char**argv){require(argc>=2,"decode/gate mode");if(!std::strcm
 #endif
     unsigned cycles=0;
     for(unsigned round=0;round<3;++round)for(unsigned type=0;type<2;++type)for(unsigned asset=0;asset<2;++asset){auto&f=asset?bp:ap;auto&bytes=asset?b:a;auto zone=f.envelope.zone;zone.limits.allocType=type;frontend_fixture::Owner owner;owner.type=type;XBlock blocks[7]{};unsigned failed;
-        require(AllocateZonePlan(zone,frontend_fixture::page(),frontend_fixture::backend(owner),blocks,failed)==ZoneResult::Ok,"genuine actual allocator policy");DB_InitStreams(blocks);DecodedSource r(bytes.data()+52,bytes.size()-52);execute(f,r,blocks,asset&&round==0&&type==0);
+        require(AllocateZonePlan(zone,frontend_fixture::page(),frontend_fixture::backend(owner),blocks,failed)==ZoneResult::Ok,"genuine actual allocator policy");DB_InitStreams(blocks);
+#if defined(BO1_FRONTEND_INTERN_GATE)
+        SL_Init(SCRIPTINSTANCE_SERVER);pool_fixture::baseline(SCRIPTINSTANCE_SERVER);
+#endif
+        DecodedSource r(bytes.data()+52,bytes.size()-52);execute(f,r,blocks,asset&&round==0&&type==0);
 #if defined(BO1_ASSET_DIRECTORY_GATE)
         const auto&directory=asset?bd:ad;executeDirectory(f,directory,r,blocks,round==0&&type==0);
+#endif
+#if defined(BO1_FRONTEND_INTERN_GATE)
+        std::set<unsigned>uniqueIds;
+        for(const auto&e:f.strings){uintptr_t id;std::memcpy(&id,blocks[4].data+sizeof(void*)*e.index,sizeof(id));if(id)uniqueIds.insert(static_cast<unsigned>(id));}
+        const auto poolAllocations=gScrMemTreeGlob[0].totalAlloc,poolBuckets=gScrMemTreeGlob[0].totalAllocBuckets;const auto poolReferences=bo1::atomic32::AtomicLoad32(&gScrStringDebugGlob[0]->totalRefCount);
+        require(poolAllocations==static_cast<int>(uniqueIds.size())&&poolReferences==uniqueIds.size(),"genuine duplicates retain one user4 reference per unique ID");
+        for(auto id:uniqueIds)require(SL_GetUser(id,SCRIPTINSTANCE_SERVER)==4&&GetRefString(SCRIPTINSTANCE_SERVER,id)->refCount==1,"all genuine IDs have exact user4 ownership");
+        SL_ShutdownSystem(SCRIPTINSTANCE_SERVER,4);pool_fixture::baseline(SCRIPTINSTANCE_SERVER);
+        std::array<int,32>diagnostics{};std::memcpy(diagnostics.data(),gScrStringGlob[0].stringsUsed,sizeof(diagnostics));SL_Shutdown(SCRIPTINSTANCE_SERVER);require(!gScrStringDebugGlob[0]&&!gScrStringGlob[0].inited,"genuine pool shutdown clears init and debug");
 #endif
         DB_InitStreams(detached);
 #if BO1_NATIVE_64BIT
@@ -228,14 +265,19 @@ int main(int argc,char**argv){require(argc>=2,"decode/gate mode");if(!std::strcm
 #endif
 #endif
         DB_FreeXBlocks(blocks,0);frontend_fixture::release(&owner);require(frontend_fixture::counts()==baseline,"logical baseline after each genuine cycle");++cycles;
-#if defined(BO1_ASSET_DIRECTORY_GATE)
+#if defined(BO1_FRONTEND_INTERN_GATE)
+        std::printf("{\"asset_index\":%u,\"round\":%u,\"alloc_type\":%u,\"inline_string_count\":%zu,\"raw_string_bytes\":%llu,\"source_consumed_bytes\":%zu,\"decoded_source_end\":%zu,\"block4_disk_cursor\":%llu,\"block4_native_cursor\":%llu,\"unique_interned_strings\":%zu,\"pool_live_allocations\":%d,\"pool_live_buckets\":%d,\"pool_debug_refs\":%u,\"pool_released\":true,\"hash_free_list_restored\":true,\"all_aliases_match\":true,\"reset_and_release_pass\":true,\"strings_used_after_release\":[",asset,round,type,f.strings.size()-f.nulls,(unsigned long long)(f.end-52-f.table.diskBytes),r.Position(),f.end,(unsigned long long)f.diskEnd,(unsigned long long)f.nativeEnd,uniqueIds.size(),poolAllocations,poolBuckets,poolReferences);
+        for(unsigned i=0;i<32;++i)std::printf("%s%d",i?",":"",diagnostics[i]);std::printf("]}\n");
+#elif defined(BO1_ASSET_DIRECTORY_GATE)
         std::printf("{\"asset_index\":%u,\"round\":%u,\"alloc_type\":%u,\"inline_string_count\":%zu,\"raw_string_bytes\":%llu,\"directory_count\":%d,\"directory_disk_bytes\":%llu,\"directory_native_bytes\":%llu,\"directory_source_start\":%zu,\"directory_disk_start\":%llu,\"directory_native_start\":%llu,\"decoded_source_end\":%zu,\"source_consumed_bytes\":%zu,\"block4_disk_cursor\":%llu,\"block4_native_cursor\":%llu,\"directory_types_match\":true,\"header_tags_match\":true,\"padding_zero\":true,\"exact_element_mappings\":true,\"all_aliases_match\":true,\"reset_and_release_pass\":true}\n",asset,round,type,f.strings.size()-f.nulls,(unsigned long long)(f.end-52-f.table.diskBytes),directory.count,(unsigned long long)directory.diskBytes,(unsigned long long)directory.nativeBytes,f.end,(unsigned long long)directory.diskStart,(unsigned long long)directory.nativeStart,f.end+static_cast<std::size_t>(directory.diskBytes),r.Position(),(unsigned long long)directory.diskEnd,(unsigned long long)directory.nativeEnd);
 #else
         std::printf("{\"asset_index\":%u,\"round\":%u,\"alloc_type\":%u,\"inline_string_count\":%zu,\"raw_string_bytes\":%llu,\"max_string_bytes\":%u,\"null_slots\":%u,\"empty_slots\":%u,\"source_consumed_bytes\":%zu,\"decoded_source_end\":%zu,\"block4_disk_cursor\":%llu,\"block4_native_cursor\":%llu,\"native_padding_bytes\":%llu,\"per_string_lengths_match\":true,\"raw_bytes_match\":true,\"mappings_match\":true,\"all_aliases_match\":true,\"reset_and_release_pass\":true}\n",asset,round,type,f.strings.size()-f.nulls,(unsigned long long)(f.end-52-f.table.diskBytes),f.max,f.nulls,f.empty,r.Position(),f.end,(unsigned long long)f.diskEnd,(unsigned long long)f.nativeEnd,(unsigned long long)f.padding);
 #endif
     }
     const char*schema=
-#if defined(BO1_ASSET_DIRECTORY_GATE)
+#if defined(BO1_FRONTEND_INTERN_GATE)
+        "BlackOpsARM.TASK-0017.intern-strings.v1";
+#elif defined(BO1_ASSET_DIRECTORY_GATE)
         "BlackOpsARM.TASK-0016.asset-directory.v1";
 #else
         "BlackOpsARM.TASK-0015.raw-strings.v1";

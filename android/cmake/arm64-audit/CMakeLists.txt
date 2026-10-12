@@ -395,6 +395,32 @@ if(BO1_ARM64_COMPAT)
         target_link_libraries(bo1_raw_strings_tests PRIVATE bo1_arm64_narrow bo1_android_virtual_memory
             bo1_android_hunk_services bo1_fastfile_zlib)
         target_link_options(bo1_raw_strings_tests PRIVATE -Wl,--gc-sections -fsanitize=undefined)
+        add_executable(bo1_intern_strings_tests "${BO1_ROOT}/tools/port/tests/raw_strings_tests.cpp"
+            "${BO1_ROOT}/tools/port/tests/stream_init_support.cpp"
+            "${BO1_ROOT}/tools/port/tests/string_pool_support.cpp"
+            "${SRC_DIR}/clientscript/cscr_stringlist.cpp" "${SRC_DIR}/clientscript/cscr_memorytree.cpp"
+            "${SRC_DIR}/clientscript/cscr_instance.cpp" "${SRC_DIR}/platform/android/script_pool_bridge.cpp"
+            "${SRC_DIR}/platform/android/script_string_services.cpp"
+            "${BO1_ROOT}/tools/port/tests/checked_zone_support.cpp"
+            "${BO1_ROOT}/tools/port/tests/hunk_test_support.cpp"
+            "${SRC_DIR}/database/db_expand.cpp" "${SRC_DIR}/platform/fastfile_script_table.cpp"
+            "${SRC_DIR}/platform/fastfile_raw_string.cpp" "${SRC_DIR}/database/db_stream_load.cpp"
+            "${SRC_DIR}/platform/fastfile_assetlist.cpp" "${SRC_DIR}/platform/fastfile_zone.cpp"
+            "${SRC_DIR}/platform/fastfile_inflate.cpp" "${SRC_DIR}/platform/android/zone_memory.cpp"
+            "${SRC_DIR}/platform/android/database_diagnostics.cpp"
+            $<TARGET_OBJECTS:bo1_zone_compile> $<TARGET_OBJECTS:bo1_parsetree_compile>
+            $<TARGET_OBJECTS:bo1_firstfit_compile>)
+        target_compile_features(bo1_intern_strings_tests PRIVATE cxx_std_20)
+        target_compile_definitions(bo1_intern_strings_tests PRIVATE _DEBUG=1 BO1_ZONE_GATE=1
+            BO1_REAL_FIRSTFIT_GATE=1 BO1_DEBUGGER_GATE=1 BO1_CHECKED_ZONE_GATE=1
+            BO1_ASSETLIST_GATE=1 BO1_FRONTEND_TABLES_GATE=1 BO1_FRONTEND_TRACE_LOGS=1 BO1_RAW_STRING_GATE=1 BO1_STRING_POOL_GATE=1 BO1_FRONTEND_INTERN_GATE=1)
+        target_compile_options(bo1_intern_strings_tests PRIVATE -Wall -Wextra -Wpedantic -Werror=return-type
+            -fms-extensions -fsigned-char -ffunction-sections -fdata-sections
+            -fsanitize=undefined -fno-sanitize-recover=all
+            -include "${SRC_DIR}/platform/win32_compat/msvc_compat.h")
+        target_link_libraries(bo1_intern_strings_tests PRIVATE bo1_arm64_narrow bo1_android_virtual_memory
+            bo1_android_hunk_services bo1_fastfile_zlib)
+        target_link_options(bo1_intern_strings_tests PRIVATE -Wl,--gc-sections -fsanitize=undefined)
         add_executable(bo1_asset_directory_tests "${BO1_ROOT}/tools/port/tests/raw_strings_tests.cpp"
             "${BO1_ROOT}/tools/port/tests/stream_init_support.cpp"
             "${BO1_ROOT}/tools/port/tests/checked_zone_support.cpp"
@@ -438,3 +464,17 @@ target_include_directories(bo1_script_string_services_tests PRIVATE "${SRC_DIR}"
 target_compile_features(bo1_script_string_services_tests PRIVATE cxx_std_20)
 target_compile_options(bo1_script_string_services_tests PRIVATE -Wall -Wextra -Wpedantic -Werror -fsanitize=undefined -fno-sanitize-recover=all)
 target_link_options(bo1_script_string_services_tests PRIVATE -fsanitize=undefined)
+
+# Actual SL/MT algorithms, isolated before VM/asset dispatch.
+add_executable(bo1_string_pool_tests "${BO1_ROOT}/tools/port/tests/string_pool_tests.cpp"
+    "${BO1_ROOT}/tools/port/tests/string_pool_support.cpp"
+    "${SRC_DIR}/clientscript/cscr_stringlist.cpp" "${SRC_DIR}/clientscript/cscr_memorytree.cpp"
+    "${SRC_DIR}/clientscript/cscr_instance.cpp" "${SRC_DIR}/platform/android/script_pool_bridge.cpp"
+    "${SRC_DIR}/platform/android/script_string_services.cpp")
+target_include_directories(bo1_string_pool_tests PRIVATE "${SRC_DIR}" "${BO1_ROOT}")
+target_compile_features(bo1_string_pool_tests PRIVATE cxx_std_20)
+target_compile_definitions(bo1_string_pool_tests PRIVATE _DEBUG=1 BO1_STRING_POOL_GATE=1)
+target_compile_options(bo1_string_pool_tests PRIVATE -Wall -Wextra -Wpedantic -Werror=return-type
+    -fms-extensions -fsigned-char -ffunction-sections -fdata-sections -fsanitize=undefined
+    -fno-sanitize-recover=all -include "${SRC_DIR}/platform/win32_compat/msvc_compat.h")
+target_link_options(bo1_string_pool_tests PRIVATE -Wl,--gc-sections -fsanitize=undefined)

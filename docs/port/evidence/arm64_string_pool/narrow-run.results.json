@@ -1,0 +1,7 @@
+{
+  "task": "TASK-0017 independent Windows Narrow32/declaration/guard regression",
+  "exit": 0,
+  "output_directory": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\host-narrow-20261012-001508114",
+  "all_tests_completed": true,
+  "no_adb": true
+}

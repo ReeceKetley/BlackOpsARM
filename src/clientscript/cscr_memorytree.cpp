@@ -1,10 +1,16 @@
 #include "cscr_memorytree.h"
 #include <cstring>
-#include <qcommon/common.h>
 #include "cscr_stringlist.h"
+#if defined(__ANDROID__) || defined(BO1_STRING_POOL_GATE)
+#include <platform/script_pool_services.h>
+#else
+#include <qcommon/common.h>
 #include <win32/win_common.h>
 #include <qcommon/threads.h>
+#endif
+#if !defined(__ANDROID__) && !defined(BO1_STRING_POOL_GATE)
 #include "cscr_vm.h"
+#endif
 
 const char *mt_type_names[23] =
 {

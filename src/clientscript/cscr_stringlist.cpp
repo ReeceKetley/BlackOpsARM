@@ -2,12 +2,18 @@
 #include <universal/assertive.h>
 #include "cscr_memorytree.h"
 #include <ctype.h>
+#if defined(__ANDROID__) || defined(BO1_STRING_POOL_GATE)
+#include <platform/script_pool_services.h>
+#else
 #include <win32/win_common.h>
+#endif
 #include <cstring>
 #include "cscr_instance.h"
+#if !defined(__ANDROID__) && !defined(BO1_STRING_POOL_GATE)
 #include <qcommon/common.h>
-
 #include <Windows.h>
+#endif
+#include <platform/atomic32.h>
 #include "cscr_variable.h"
 
 // server: 0x8000
@@ -484,20 +490,20 @@ void __cdecl SL_AddUserInternal(scriptInstance_t inst, RefString *refStr, unsign
                     SL_DebugConvertToString(str, inst)) )
                     __debugbreak();
             }
-            _InterlockedExchangeAdd(&gScrStringDebugGlob[inst]->totalRefCount, 1u);
-            _InterlockedExchangeAdd(&gScrStringDebugGlob[inst]->refCount[str], 1u);
+            bo1::atomic32::ExchangeAdd32(&gScrStringDebugGlob[inst]->totalRefCount, 1u);
+            bo1::atomic32::ExchangeAdd32(&gScrStringDebugGlob[inst]->refCount[str], 1u);
         }
 
         //do
         //    v5 = (signed __int32)refStr->0;
-        //while ( _InterlockedCompareExchange((volatile signed __int32 *)refStr, v5 | (user << 16), v5) != v5 );
-        //_InterlockedExchangeAdd((volatile signed __int32 *)refStr, 1u);
+        //while ( _bo1::atomic32::CmpExchange32((volatile signed __int32 *)refStr, v5 | (user << 16), v5) != v5 );
+        //bo1::atomic32::ExchangeAdd32((volatile signed __int32 *)refStr, 1u);
 
-        volatile int Comperand;
+        std::uint32_t Comperand;
         do
-            Comperand = refStr->data;
-        while (InterlockedCompareExchange(&refStr->data, Comperand | (user << 16), Comperand) != Comperand);
-        InterlockedIncrement(&refStr->data);
+            Comperand = bo1::atomic32::AtomicLoad32(&refStr->data);
+        while (bo1::atomic32::CmpExchange32(&refStr->data, Comperand | (user << 16), Comperand) != Comperand);
+        bo1::atomic32::Increment32(&refStr->data);
     }
 }
 
@@ -776,8 +782,8 @@ unsigned int __cdecl SL_GetStringOfSize(
 
     if ( gScrStringDebugGlob[inst] )
     {
-        _InterlockedExchangeAdd(&gScrStringDebugGlob[inst]->totalRefCount, 1u);
-        _InterlockedExchangeAdd(&gScrStringDebugGlob[inst]->refCount[stringValue], 1u);
+        bo1::atomic32::ExchangeAdd32(&gScrStringDebugGlob[inst]->totalRefCount, 1u);
+        bo1::atomic32::ExchangeAdd32(&gScrStringDebugGlob[inst]->refCount[stringValue], 1u);
     }
     if ( (entry->status_next & 0x30000) == 0
         && !Assert_MyHandler(
@@ -876,7 +882,7 @@ void __cdecl SL_TransferRefToUser(scriptInstance_t inst, unsigned int stringValu
     char *v4; // eax
     signed __int32 v5; // [esp+4h] [ebp-14h]
     RefString *refStr; // [esp+14h] [ebp-4h]
-    volatile LONG Comperand; // [esp+20h] [ebp-28h]
+    std::uint32_t Comperand; // [esp+20h] [ebp-28h]
 
     refStr = GetRefString(inst, stringValue);
     //if ( ((unsigned __int8)user & (unsigned __int8)BYTE2(*(unsigned int *)&refStr->0)) != 0 )
@@ -888,19 +894,19 @@ void __cdecl SL_TransferRefToUser(scriptInstance_t inst, unsigned int stringValu
         {
             iassert((gScrStringDebugGlob[inst]->refCount[stringValue]));
 
-            _InterlockedExchangeAdd(&gScrStringDebugGlob[inst]->totalRefCount, 0xFFFFFFFF);
-            _InterlockedExchangeAdd(&gScrStringDebugGlob[inst]->refCount[stringValue], 0xFFFFFFFF);
+            bo1::atomic32::ExchangeAdd32(&gScrStringDebugGlob[inst]->totalRefCount, 0xFFFFFFFF);
+            bo1::atomic32::ExchangeAdd32(&gScrStringDebugGlob[inst]->refCount[stringValue], 0xFFFFFFFF);
         }
-        _InterlockedExchangeAdd(&refStr->data, 0xFFFFFFFF);
+        bo1::atomic32::ExchangeAdd32(&refStr->data, 0xFFFFFFFF);
     }
     else
     {
         //do
         //    v5 = (signed __int32)refStr->0;
-        //while ( _InterlockedCompareExchange((volatile signed __int32 *)refStr, v5 | (user << 16), v5) != v5 );
+        //while ( _bo1::atomic32::CmpExchange32((volatile signed __int32 *)refStr, v5 | (user << 16), v5) != v5 );
         do
-            Comperand = refStr->data;
-        while (InterlockedCompareExchange(&refStr->data, Comperand | (user << 16), Comperand) != Comperand);
+            Comperand = bo1::atomic32::AtomicLoad32(&refStr->data);
+        while (bo1::atomic32::CmpExchange32(&refStr->data, Comperand | (user << 16), Comperand) != Comperand);
     }
 }
 
@@ -961,11 +967,11 @@ void __cdecl SL_AddRefToString(unsigned int stringValue, scriptInstance_t inst)
                             v4) )
                 __debugbreak();
         }
-        _InterlockedExchangeAdd(&gScrStringDebugGlob[inst]->totalRefCount, 1u);
-        _InterlockedExchangeAdd(&gScrStringDebugGlob[inst]->refCount[stringValue], 1u);
+        bo1::atomic32::ExchangeAdd32(&gScrStringDebugGlob[inst]->totalRefCount, 1u);
+        bo1::atomic32::ExchangeAdd32(&gScrStringDebugGlob[inst]->refCount[stringValue], 1u);
     }
     refStr = GetRefString(inst, stringValue);
-    _InterlockedExchangeAdd(&refStr->data, 1u);
+    bo1::atomic32::ExchangeAdd32(&refStr->data, 1u);
 
     iassert(refStr->refCount);
 }
@@ -991,7 +997,7 @@ void __cdecl SL_RemoveRefToStringOfSize(scriptInstance_t inst, unsigned int stri
     RefString *refStr; // [esp+10h] [ebp-4h]
 
     refStr = GetRefString(inst, stringValue);
-    if ( _InterlockedDecrement(&refStr->data) << 16 )
+    if ( bo1::atomic32::Decrement32(&refStr->data) << 16 )
     {
         if ( gScrStringDebugGlob[inst] )
         {
@@ -1026,8 +1032,8 @@ void __cdecl SL_RemoveRefToStringOfSize(scriptInstance_t inst, unsigned int stri
                                 v5) )
                     __debugbreak();
             }
-            _InterlockedExchangeAdd(&gScrStringDebugGlob[inst]->totalRefCount, 0xFFFFFFFF);
-            _InterlockedExchangeAdd(&gScrStringDebugGlob[inst]->refCount[stringValue], 0xFFFFFFFF);
+            bo1::atomic32::ExchangeAdd32(&gScrStringDebugGlob[inst]->totalRefCount, 0xFFFFFFFF);
+            bo1::atomic32::ExchangeAdd32(&gScrStringDebugGlob[inst]->refCount[stringValue], 0xFFFFFFFF);
         }
     }
     else
@@ -1066,8 +1072,8 @@ void __cdecl SL_RemoveRefToStringOfSize(scriptInstance_t inst, unsigned int stri
                                 v8) )
                     __debugbreak();
             }
-            _InterlockedExchangeAdd(&gScrStringDebugGlob[inst]->totalRefCount, 0xFFFFFFFF);
-            _InterlockedExchangeAdd(&gScrStringDebugGlob[inst]->refCount[stringValue], 0xFFFFFFFF);
+            bo1::atomic32::ExchangeAdd32(&gScrStringDebugGlob[inst]->totalRefCount, 0xFFFFFFFF);
+            bo1::atomic32::ExchangeAdd32(&gScrStringDebugGlob[inst]->refCount[stringValue], 0xFFFFFFFF);
         }
     }
 }
@@ -1201,6 +1207,7 @@ void __cdecl SL_FreeString(scriptInstance_t inst, unsigned int stringValue, RefS
     }
 }
 
+#if !defined(BO1_STRING_POOL_GATE)
 void __cdecl Scr_SetStringLiveUpdateSafe(unsigned __int16 *to, char *value, scriptInstance_t inst)
 {
     int substrLen; // [esp+0h] [ebp-94h]
@@ -1238,6 +1245,8 @@ void __cdecl Scr_SetStringLiveUpdateSafe(unsigned __int16 *to, char *value, scri
         *to = SL_GetString(value, 0, inst);
     }
 }
+
+#endif // unrelated string utility, retained in normal engine builds
 
 void __cdecl Scr_SetString(unsigned __int16 *to, unsigned int from, scriptInstance_t inst)
 {
@@ -1278,6 +1287,7 @@ unsigned int __cdecl SL_GetStringForFloat(float f, scriptInstance_t inst)
     return SL_GetString_(inst, tempString, 0, 15);
 }
 
+#if !defined(BO1_STRING_POOL_GATE)
 unsigned int __cdecl SL_GetStringForInt(scriptInstance_t inst, int i)
 {
     char tempString[132]; // [esp+0h] [ebp-88h] BYREF
@@ -1285,6 +1295,8 @@ unsigned int __cdecl SL_GetStringForInt(scriptInstance_t inst, int i)
     I_itoa(i, tempString, 128);
     return SL_GetString_(inst, tempString, 0, 15);
 }
+
+#endif // unrelated string utility, retained in normal engine builds
 
 unsigned int __cdecl SL_GetStringForVector(scriptInstance_t inst, const float *v)
 {
@@ -1319,7 +1331,7 @@ void __cdecl SL_ShutdownSystem(scriptInstance_t inst, unsigned int user)
             if (((unsigned __int8)user & refStr->user) == 0)
                 break;
             //refStr->0 = ($119B815E6C15BED54461C272BD343858)(((unsigned __int8)(~(_BYTE)user & HIWORD(*(unsigned int *)&refStr->0)) << 16) | *(unsigned int *)&refStr->0 & 0xFF00FFFF);
-            refStr->data = ((unsigned __int8)(~(BYTE)user & HIWORD(refStr->data)) << 16) | refStr->data & 0xFF00FFFF;
+            refStr->data = ((unsigned __int8)(~(std::uint8_t)user & HIWORD(refStr->data)) << 16) | refStr->data & 0xFF00FFFF;
 
             gScrStringGlob[inst].nextFreeEntry = 0;
             SL_RemoveRefToString(inst, entry->u.prev);
@@ -1360,7 +1372,7 @@ void __cdecl SL_TransferSystem(unsigned int from, unsigned int to, scriptInstanc
             if (((unsigned __int8)from & refStr->user) != 0)
             {
                 //refStr->0 = ($119B815E6C15BED54461C272BD343858)(((unsigned __int8)(~(_BYTE)from & HIWORD(*(unsigned int *)&refStr->0)) << 16) | *(unsigned int *)&refStr->0 & 0xFF00FFFF);
-                refStr->data = ((unsigned __int8)(~(BYTE)from & HIWORD(refStr->data)) << 16) | refStr->data & 0xFF00FFFF;
+                refStr->data = ((unsigned __int8)(~(std::uint8_t)from & HIWORD(refStr->data)) << 16) | refStr->data & 0xFF00FFFF;
                 //refStr->0 = ($119B815E6C15BED54461C272BD343858)(((unsigned __int8)(to | HIWORD(*(unsigned int *)&refStr->0)) << 16) | *(unsigned int *)&refStr->0 & 0xFF00FFFF);
                 refStr->data = ((unsigned __int8)(to | HIWORD(refStr->data)) << 16) | refStr->data & 0xFF00FFFF;
             }
