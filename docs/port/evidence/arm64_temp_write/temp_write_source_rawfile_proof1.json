@@ -1,0 +1,124 @@
+{
+  "schema": "BlackOpsARM.TASK-0028.temp-write-source-preservation.v1",
+  "parent": "3f7dc567e7b2d82977d38cfa820bd5591ea6cace",
+  "verifier_sha256": "b0cf4c34fa41faf0da9adf046e721a7de6d5a66ed21da4681520f3696fc948d4",
+  "helper_sha256": {
+    "verify_temp_cursor_source.py": "c593c90885b45b24c4e75c8eb95a0ddfe3f7d24713e03e2a85afdbe3d82e96fb",
+    "verify_string_pool_source.py": "a11879d229eba5af42108c3b00e801c5e8a5e5d68a48243b0fbb1ca1ea55367f"
+  },
+  "comparison": "LF-normalized bytes; native guards false only for Win32 comparisons",
+  "win32_functions": {
+    "DB_InitStreams": {
+      "body_unchanged": true,
+      "lf_sha256": "49cd6f21a8c67a06967b0aee23e39ae1f3b954bbf28fa46c7ecadb1e34ac9e8e"
+    },
+    "DB_PushStreamPos": {
+      "body_unchanged": true,
+      "lf_sha256": "775b2e4fbe93ec024da0d9ce118eff221bb6b6e3a0d74ae2f2197cafc195f9ea"
+    },
+    "DB_SetStreamIndex": {
+      "body_unchanged": true,
+      "lf_sha256": "1594df96604713c54448ce3d38b2d6f5f8684070dfb1bf3ad6a8b759851ba53b"
+    },
+    "DB_PopStreamPos": {
+      "body_unchanged": true,
+      "lf_sha256": "fa9e15c58641fcf52a477eed93656b3be1fd84dc893368c1d6578186149e42f8"
+    },
+    "DB_AllocStreamPos": {
+      "body_unchanged": true,
+      "lf_sha256": "2be2b0f04e071ec5cb2645b12271299cb642c9332737e85ed596ba0c7bbe83b3"
+    },
+    "DB_IncStreamPos": {
+      "body_unchanged": true,
+      "lf_sha256": "41d980af1a4c541a28ccf7434a0f5ee9ff5728d32d40774e3062decdd06591ea"
+    },
+    "Load_Stream": {
+      "body_unchanged": true,
+      "lf_sha256": "c1f6ee9cbc5e7802fdf58f53268f06c06ebdba56a10867e026c9f647bc134b75"
+    },
+    "Load_XStringCustom": {
+      "body_unchanged": true,
+      "lf_sha256": "e35727ae89e6194af40e95509e26dc96581c7cacba728ed4c9d1c379e43cd9ae"
+    },
+    "DB_ConvertOffsetToAlias": {
+      "body_unchanged": true,
+      "lf_sha256": "7e455518b078f89506c735d71c9317bb229c3ee80909533570b5b63bbd6a0fb6"
+    },
+    "DB_ConvertOffsetToPointer": {
+      "body_unchanged": true,
+      "lf_sha256": "64760b6044c14026ac8a3cef9c91b674d59fc9eaa36a1dfa6f1bf34734cab824"
+    }
+  },
+  "files": {
+    "src/database/db_stream.cpp": {
+      "current_sha256": "98d626f50bd421e09cedfd388b2a9859ecb5625524fffe591a070e997388b43c",
+      "win32_selected_functions_unchanged": 6
+    },
+    "src/database/db_stream_load.cpp": {
+      "current_sha256": "53b056435a94a714a5c94e8186d7893a2646597a9ae33accce00b71e0dfb2420",
+      "win32_selected_functions_unchanged": 4
+    },
+    "src/database/db_stream.h": {
+      "win32_native_guards_removed_bytes_unchanged": true,
+      "current_sha256": "f73dfad87282aa55ab51e7ed415e74e28eb1e9b7317fb094b9ac98b04ad59503"
+    },
+    "src/database/db_expand.cpp": {
+      "current_sha256": "66bc38869f61b7b69a866c75a5e3090c80342880c0a7587a9a9ef727a14e0d71",
+      "functions_total": 163,
+      "functions_byte_unchanged": 161,
+      "function_order_unchanged": true,
+      "intentional_body_changes": {
+        "DB_Expand_ReadFile": {
+          "before_lf_sha256": "551edc1ddda0234e90222783f9de1d07f06795f56ff4e1264449b558b9152ebe",
+          "after_lf_sha256": "8075abbae667bbf3b899633ac7cf8520e7580c9148d725c227aede37afe79b29",
+          "scope": "Native scratch-reader staging, explicit interleaved-read rejection and exception cleanup"
+        },
+        "DB_ExpandLoad_XAssetList": {
+          "only_exact_cancel_line_added": true
+        }
+      },
+      "all_other_source_restored_exact": true,
+      "rawfile_body_byte_unchanged": true,
+      "rawfile_packed_definition_uniquely_moved": true
+    },
+    "src/database/db_registry.h": {
+      "only_canonical_rawfile_include_move": true
+    },
+    "src/database/db_rawfile_types.h": {
+      "canonical_definition_byte_unchanged": true,
+      "exact_native_width_offset_assertions": true,
+      "current_sha256": "51226815e230041e294488c433668273bba3647fe75874c2a84492856086f648"
+    },
+    "src/platform/fastfile_rawfile_header.cpp": {
+      "new_checked_plan_source": true,
+      "semantic_behavior_certified": false,
+      "current_sha256": "6892529ab9868a9c42e99c87fab5fa4a85f3fee4b4f3bc113241cda49228e3e6"
+    },
+    "src/platform/fastfile_rawfile_header.h": {
+      "new_checked_plan_source": true,
+      "semantic_behavior_certified": false,
+      "current_sha256": "af14dece656bc34365228124fc145d8b1cf08367a9e824368a29369b84b892ce"
+    }
+  },
+  "status": "passed",
+  "tracked_engine_change_paths": [
+    "src/database/db_expand.cpp",
+    "src/database/db_registry.h",
+    "src/database/db_stream.cpp",
+    "src/database/db_stream.h",
+    "src/database/db_stream_load.cpp"
+  ],
+  "untracked_engine_change_paths": [
+    "src/database/db_rawfile_types.h",
+    "src/platform/fastfile_rawfile_header.cpp",
+    "src/platform/fastfile_rawfile_header.h"
+  ],
+  "new_engine_file_scope": [
+    "src/database/db_rawfile_types.h",
+    "src/platform/fastfile_rawfile_header.cpp",
+    "src/platform/fastfile_rawfile_header.h"
+  ],
+  "native_behavior_certified": false,
+  "compiler_preprocessing_certified": false,
+  "registry_execution_certified": false
+}

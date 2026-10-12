@@ -86,8 +86,8 @@ static void cursors(XBlock(&b)[7]){
     for(unsigned i=0;i<7;++i){if(i)check(g_streamPosArray[i]==b[i].data,"all seven initial positions including zero slots");
 #if BO1_NATIVE_64BIT
         check(DB_StreamWin32Pos(i)==0,"shadow cursor zero");check(!DB_StreamExactLookup(i,0)&&!DB_StreamAliasSlotLookup(i,0),"no stale commit/alias maps");
-        check(DB_StreamMapLookup(i,0)==b[i].data,"initial drift identity");
-        if(b[i].data)check(DB_StreamMapLookup(i,8)==b[i].data+8,"no stale nonzero drift");
+        check(DB_StreamMapLookup(i,0)==(i?b[i].data:nullptr),"TEMP requires an exact commit; other blocks keep drift identity");
+        if(b[i].data)check(DB_StreamMapLookup(i,8)==(i?b[i].data+8:nullptr),"no stale TEMP extrapolation or nonzero drift");
 #endif
     }
 }

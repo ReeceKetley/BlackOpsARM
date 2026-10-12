@@ -1,0 +1,71 @@
+{
+  "executables": [
+    {
+      "name": "bo1_win32_compat_tests",
+      "exit": 0
+    },
+    {
+      "name": "bo1_arm64_narrow_tests",
+      "exit": 0
+    },
+    {
+      "name": "bo1_script_slot_tests",
+      "exit": 0
+    },
+    {
+      "name": "bo1_script_headers_tests",
+      "exit": 0
+    },
+    {
+      "name": "bo1_profile_tests",
+      "exit": 0
+    },
+    {
+      "name": "bo1_math_axis_tests",
+      "exit": 0
+    },
+    {
+      "name": "bo1_rng_tests",
+      "exit": 0
+    },
+    {
+      "name": "bo1_engine_rng_tests",
+      "exit": 0
+    },
+    {
+      "name": "bo1_script_lookup_tests",
+      "exit": 0
+    },
+    {
+      "name": "bo1_parsetree_tests",
+      "exit": 0
+    },
+    {
+      "name": "bo1_hunk_tests",
+      "exit": 0
+    },
+    {
+      "name": "bo1_debugger_tests",
+      "exit": 0
+    },
+    {
+      "name": "bo1_firstfit_tests",
+      "exit": 0
+    },
+    {
+      "name": "bo1_fastfile_tests",
+      "exit": 0
+    },
+    {
+      "name": "bo1_zone_tests",
+      "exit": 0
+    },
+    {
+      "name": "bo1_inflate_tests",
+      "exit": 0
+    }
+  ],
+  "all_completed": true,
+  "scope": "Sixteen original regression executables including four-byte Narrow32/production VM layouts; expected child diagnostics retained verbatim",
+  "original_mixed_encoding_log_preserved": true
+}

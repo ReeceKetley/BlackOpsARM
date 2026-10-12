@@ -1,0 +1,5 @@
+{
+  "error_type": "RuntimeError",
+  "error": "Native full decode/prefix metadata differs or emits original bytes",
+  "traceback": "Traceback (most recent call last):\n  File \"D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\tools\\port\\run_rawfile_header_gate.py\", line 247, in main\n    raise RuntimeError('Native full decode/prefix metadata differs or emits original bytes')\nRuntimeError: Native full decode/prefix metadata differs or emits original bytes\n"
+}

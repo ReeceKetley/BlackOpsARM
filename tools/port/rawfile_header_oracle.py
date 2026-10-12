@@ -98,11 +98,11 @@ def reference(source, previous):
         'rawfile_disk_alignment_request_mask': 3, 'rawfile_native64_alignment_bytes': 8,
         'rawfile_native64_padding_offsets': [12, 13, 14, 15],
         'rawfile_future_buffer_bytes': length + 1,
-        'rawfile_future_buffer_length_origin': 'Actual Load_RawFile requests signed len+1, no flags field',
+        'rawfile_future_buffer_length_origin': 'Actual Load_RawFile nonzero-buffer branch requests signed len+1, no flags field',
         'rawfile_tag_contract': {
             'asset': 'inline -1; no inserted-pointer reservation',
             'name': 'inline -1; not loaded at this header-only boundary',
-            'buffer': 'nonzero presence tag; actual Load_RawFile unconditionally allocates len+1 bytes',
+            'buffer': 'nonzero presence tag; actual Load_RawFile allocates len+1 only when buffer is present',
             'native64_special_tag_value': 0xffffffffffffffff,
         },
         'rawfile_children_unread': True, 'no_next_asset_skipped': True,

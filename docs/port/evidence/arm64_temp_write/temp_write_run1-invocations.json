@@ -1,0 +1,215 @@
+[
+  {
+    "label": "device-state",
+    "argv": [
+      "D:\\Android\\Sdk\\platform-tools\\adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "get-state"
+    ],
+    "cwd": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\temp_write_run1",
+    "timeout_seconds": 60,
+    "exit": 0,
+    "timed_out": false,
+    "elapsed_seconds": 0.031999999890103936
+  },
+  {
+    "label": "device-metadata",
+    "argv": [
+      "D:\\Android\\Sdk\\platform-tools\\adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "getprop ro.product.model; getprop ro.product.device; getprop ro.build.version.sdk; uname -a"
+    ],
+    "cwd": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\temp_write_run1",
+    "timeout_seconds": 60,
+    "exit": 0,
+    "timed_out": false,
+    "elapsed_seconds": 0.17100000008940697
+  },
+  {
+    "label": "device-create",
+    "argv": [
+      "D:\\Android\\Sdk\\platform-tools\\adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "mkdir /data/local/tmp/blackopsarm-temp-write-92992cf8efb84f5ab46a3a826fcf7a96"
+    ],
+    "cwd": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\temp_write_run1",
+    "timeout_seconds": 60,
+    "exit": 0,
+    "timed_out": false,
+    "elapsed_seconds": 0.07899999991059303
+  },
+  {
+    "label": "device-push",
+    "argv": [
+      "D:\\Android\\Sdk\\platform-tools\\adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "push",
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\temp_write_arm64_pass2\\bo1_temp_write_tests",
+      "/data/local/tmp/blackopsarm-temp-write-92992cf8efb84f5ab46a3a826fcf7a96/probe"
+    ],
+    "cwd": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\temp_write_run1",
+    "timeout_seconds": 60,
+    "exit": 0,
+    "timed_out": false,
+    "elapsed_seconds": 0.0779999999795109
+  },
+  {
+    "label": "device-chmod",
+    "argv": [
+      "D:\\Android\\Sdk\\platform-tools\\adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "chmod 700 /data/local/tmp/blackopsarm-temp-write-92992cf8efb84f5ab46a3a826fcf7a96/probe"
+    ],
+    "cwd": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\temp_write_run1",
+    "timeout_seconds": 60,
+    "exit": 0,
+    "timed_out": false,
+    "elapsed_seconds": 0.0779999999795109
+  },
+  {
+    "label": "device-sha",
+    "argv": [
+      "D:\\Android\\Sdk\\platform-tools\\adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "sha256sum /data/local/tmp/blackopsarm-temp-write-92992cf8efb84f5ab46a3a826fcf7a96/probe"
+    ],
+    "cwd": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\temp_write_run1",
+    "timeout_seconds": 60,
+    "exit": 0,
+    "timed_out": false,
+    "elapsed_seconds": 0.07899999991059303
+  },
+  {
+    "label": "windows_x86-0",
+    "argv": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\temp_write_host_pass2\\x86\\temp_write.exe"
+    ],
+    "cwd": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\temp_write_run1",
+    "timeout_seconds": 60,
+    "exit": 0,
+    "timed_out": false,
+    "elapsed_seconds": 0.01600000006146729
+  },
+  {
+    "label": "windows_x86-1",
+    "argv": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\temp_write_host_pass2\\x86\\temp_write.exe"
+    ],
+    "cwd": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\temp_write_run1",
+    "timeout_seconds": 60,
+    "exit": 0,
+    "timed_out": false,
+    "elapsed_seconds": 0.0
+  },
+  {
+    "label": "windows_x86-2",
+    "argv": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\temp_write_host_pass2\\x86\\temp_write.exe"
+    ],
+    "cwd": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\temp_write_run1",
+    "timeout_seconds": 60,
+    "exit": 0,
+    "timed_out": false,
+    "elapsed_seconds": 0.01500000013038516
+  },
+  {
+    "label": "windows_x64-0",
+    "argv": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\temp_write_host_pass2\\x64\\temp_write.exe"
+    ],
+    "cwd": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\temp_write_run1",
+    "timeout_seconds": 60,
+    "exit": 0,
+    "timed_out": false,
+    "elapsed_seconds": 0.0
+  },
+  {
+    "label": "windows_x64-1",
+    "argv": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\temp_write_host_pass2\\x64\\temp_write.exe"
+    ],
+    "cwd": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\temp_write_run1",
+    "timeout_seconds": 60,
+    "exit": 0,
+    "timed_out": false,
+    "elapsed_seconds": 0.015999999828636646
+  },
+  {
+    "label": "windows_x64-2",
+    "argv": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\temp_write_host_pass2\\x64\\temp_write.exe"
+    ],
+    "cwd": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\temp_write_run1",
+    "timeout_seconds": 60,
+    "exit": 0,
+    "timed_out": false,
+    "elapsed_seconds": 0.0
+  },
+  {
+    "label": "honor_arm64-0",
+    "argv": [
+      "D:\\Android\\Sdk\\platform-tools\\adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "/data/local/tmp/blackopsarm-temp-write-92992cf8efb84f5ab46a3a826fcf7a96/probe"
+    ],
+    "cwd": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\temp_write_run1",
+    "timeout_seconds": 60,
+    "exit": 0,
+    "timed_out": false,
+    "elapsed_seconds": 0.0779999999795109
+  },
+  {
+    "label": "honor_arm64-1",
+    "argv": [
+      "D:\\Android\\Sdk\\platform-tools\\adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "/data/local/tmp/blackopsarm-temp-write-92992cf8efb84f5ab46a3a826fcf7a96/probe"
+    ],
+    "cwd": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\temp_write_run1",
+    "timeout_seconds": 60,
+    "exit": 0,
+    "timed_out": false,
+    "elapsed_seconds": 0.0940000000409782
+  },
+  {
+    "label": "honor_arm64-2",
+    "argv": [
+      "D:\\Android\\Sdk\\platform-tools\\adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "/data/local/tmp/blackopsarm-temp-write-92992cf8efb84f5ab46a3a826fcf7a96/probe"
+    ],
+    "cwd": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\temp_write_run1",
+    "timeout_seconds": 60,
+    "exit": 0,
+    "timed_out": false,
+    "elapsed_seconds": 0.0779999999795109
+  },
+  {
+    "label": "windows_x64-invalid-alias",
+    "argv": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\temp_write_host_pass2\\x64\\temp_write.exe",
+      "--invalid-alias"
+    ],
+    "cwd": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\temp_write_run1",
+    "timeout_seconds": 60,
+    "exit": null,
+    "timed_out": true,
+    "elapsed_seconds": 60.03099999995902
+  }
+]

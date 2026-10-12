@@ -1,0 +1,15 @@
+{
+  "facts": [
+    "FACT-0089",
+    "FACT-0090"
+  ],
+  "failure": "FAIL-0028",
+  "warning": "WARN-0029",
+  "decision": "DEC-0043",
+  "task": "TASK-0028",
+  "completed_task_archived": true,
+  "pause_resume_history": [
+    "NOTE-0007",
+    "NOTE-0008"
+  ]
+}

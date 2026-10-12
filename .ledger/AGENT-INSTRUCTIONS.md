@@ -314,3 +314,15 @@ then genuine codeRawFile numericheader12->24 atTEMP0; zombie nextTechniqueSet7
 deferredwithoutskipping. No nextasset/registry/render successclaim. Alltestsended;
 strictcurrentrunners expect observed0postPop while frozenold20evidence preserved.
 ContinueDEC29, localverifiedmilestone commitsDEC26 authorized; no push.
+
+
+TASK28 complete: read arm64_temp_write.md/temp_write_handoff.md and currentLedger.
+TEMP aliases retain current VALUES when logicallyuntouched/nativeoverwritten;
+never expose their overwrittenaddresses. Newstagedfields must becompleteactual
+logical4/native slots. Missing/invalid/external TEMP converterroutes failexplicitly;
+no stale driftfallback. Single-read stagedmetadata andfinite C++throw adapter
+verified; realCom_Errorlongjmp/async recovery NOTcertified. OriginalRawFilebody/
+order andcanonical12/24 layout preserved; codeheaderends10419, zombie nexttype7
+deferredat65678withoutskip. NextTASK29 actualname/presentbuffer141bytes, preserve
+allfirsttablequeries/block4/ownership, stopbeforeDBAdd. NoRawchildren/registry/
+render claimyet. UserresumedfullgoalDEC29/localverifiedcommitsDEC26, no push.

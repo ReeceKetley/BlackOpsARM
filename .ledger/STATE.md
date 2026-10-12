@@ -1,3 +1,70 @@
+# Current State — TASK28 complete, 12 October 2026
+
+TEMP successful-write mappings and next genuine code RawFile numeric header
+verified. Current typed values captured before overwrite; exact address maps and
+retained values stay distinct, invalid latest records cannot revive old slots.
+New fields require complete actual committed logical/native footprints. Pop keeps
+maps/bytes, both TEMP cursors rewind; external envelope/block4 preserved.
+Final controlledRun4/pass6 all3ABIs/O3UBSan:9normalprocs,18cases/12shortreads,
+native78matrix +opaque6/stagedmask/Cstring2/3expectedfatalmodes pernativeABI.
+Genuine debugRun2/optimizedRun1 all3ABIs186cases/12cycles/all1994queries afterreal
+nextheader/A5; code source10419 (RawFile12->24/TEMP0/len140/tagsFFF), zombie65678
+actualnextTechniqueSet7deferredwithoutskip. No RawFile children/registry/render.
+Sourceproof_rawfile3 10Win32bodies/161unchangedexpander/twoexceptions/canonicalRaw
+move; fullARM0errors8640warnings+fixedprefixrebuild, normalWindows16objects and
+16oldHONOR regressionsincl4-byteNarrow32 pass. All tests completed; failures kept.
+
+Read arm64_temp_write.md/temp_write_handoff.md/frozenarchive/inventory. TASK28
+source/evidence checkpoint follows; Git supplies currentHEAD/pendingpaths. Original
+Windows2528/DXVK2552/root15/assets/APK and3652priorfrozen protected. Localverified
+milestone commitsDEC26 authorized, no push. User resumed; fullgoalDEC29 remains
+active. Nextthree: TASK29 actual RawFile name/presentbuffer141bytes beforeDBAdd;
+realregistry/assetentry ownership/init services; smallestactualregistration.
+Async/refill/Com_Errorlongjmp/SEH/postreadOOM/caller-contract/concurrency recovery,
+generalTEMPpointees/registry/zoneinit/graphics/multiownerPMem/retainedpages/16KB/S25/
+hashlocale unverified. No newlatency/RSS/benchmark. Allscratch/originals preserved.
+
+# Historical state (preserved)
+
+# Resumed by user — 12 October 2026
+
+User resumed porting and the goal (NOTE-0008). TASK28 remains active and
+uncommitted: finish controlled TEMP success/failure/opaque-value probes, then
+the genuine code RawFile numeric header before children. Full Windows, HONOR,
+optimized, source and preservation checks are running or pending. A focused
+probe exposed unchecked newly staged aliases; commit now requires complete
+logical words and native slots inside the actual write before live authority.
+Preserve all failures and scratch. Last verified checkpoint remains3f7dc56;
+local verified milestone commits are authorized, no push.
+
+# Historical pause — 12 October 2026 morning
+
+The user stopped overnight work for an update. Goal is paused; all agents are
+stopped and no project build/test process remains live locally or on HONOR.
+Last verified committed gate: TEMP cursor/alias prerequisite ee13677, Ledger
+checkpoint3f7dc56 (FACT88). Frontend/interner/firstStringTable queries/ownership
+already verified. No genuine menu, rendering or full engine startup yet.
+
+TASK28 is INCOMPLETE and UNCOMMITTED. Staged TEMP mappings, typed retained alias
+values, canonical RawFile layout/checked planner and probe/tool drafts exist.
+temp_write_run1 normal3processes/ABI passed, but the whole runner FAILED at a
+Windowsx64 intentional-abort child timeout60sec (CRT reporting setup). Diagnostics
+retained. Probe subsequently suppresses reporting and strengthens coverage;
+pass3 compiled binaries exist, but the final rerun was not completed. Sourceproof2
+predates latest planner additions; rerun after integration. New genuine RawFile
+fixture/CMake/collector integration is unfinished: genuine header has NOT run.
+
+Resume: finishTASK28 controlled success/failure tests, then genuine codeRawFile
+12->24 header atTEMP0 preserving firsttablequeries; zombie nextTechniqueSet7 is
+deferred without skipping. Run complete source/Windows/HONOR/optimized/owner/
+preservation checks and freeze evidence before any milestone commit. Then real
+registry services and next actual loading boundary. No new commit or push made
+at pause. Exact pending paths/hashes recorded in ignored morning_handoff_20261012.
+Windows2528/DXVK2552/root15 match fresh morning preservation; no protected writes.
+See NOTE-0007 for stopped-state details; historical evidence preserved below.
+
+# Historical state (preserved)
+
 TASK27 source/evidence checkpoint ee13677 verified (FACT-0088); all352durablepaths committed,
 3325priorfrozen/3586archiveGitblobs preserved, alltestsfinished, protectedunchanged.
 NextTASK28 write-aware TEMP mapping beforeasset2; Git supplies latestpendingstate.
