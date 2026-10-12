@@ -249,3 +249,12 @@ CurrentTASK16structuralcorecomplete: arm64_asset_directory.md, FACT46/WARN16.
 RealpoolprerequisitesverifiedFACT48/FAIL11(correctedliveworker), actualSLMTnext.
 Next3 TASK17intern/user4release, TASK18firstStringTableheader, boundedcells/index
 beforefixups/registry. ContinueautonomouslyDEC29, localverifiedcommitsDEC26/no push.
+
+
+TASK-0017 complete: actual pool and genuine859 interned IDs match HONOR/Windows,
+including optimized ARM assertions/UBSan. Read arm64_string_pool.md, FACT-0051/
+0052 and WARN-0017; failures preserved. Only serial pool lifecycle certified.
+Next TASK-0018 first genuine StringTable header; TASK19 name/cell array, then
+real encoded cell-string fixups before registry. Block0 Pop rewind/transient
+alias lifetime must be preserved. Continue autonomously DEC-0029, local verified
+checkpoints DEC-0026; no push. Protected checkouts/assets/evidence unchanged.

@@ -1,0 +1,13 @@
+{"round":0,"instance":0,"ids":[1,2,2,3,32,64,128,192,256,4096],"unique_strings":9,"live_allocations":9,"live_buckets":4419}
+{"release":true,"round":0,"instance":0,"strings_used":[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"live_allocations":0,"live_buckets":0,"debug_refs":0}
+{"round":0,"instance":1,"ids":[1,2,2,3,32,64,128,192,256,4096],"unique_strings":9,"live_allocations":9,"live_buckets":4419}
+{"release":true,"round":0,"instance":1,"strings_used":[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"live_allocations":0,"live_buckets":0,"debug_refs":0}
+{"round":1,"instance":0,"ids":[1,2,2,3,32,64,128,192,256,4096],"unique_strings":9,"live_allocations":9,"live_buckets":4419}
+{"release":true,"round":1,"instance":0,"strings_used":[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"live_allocations":0,"live_buckets":0,"debug_refs":0}
+{"round":1,"instance":1,"ids":[1,2,2,3,32,64,128,192,256,4096],"unique_strings":9,"live_allocations":9,"live_buckets":4419}
+{"release":true,"round":1,"instance":1,"strings_used":[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"live_allocations":0,"live_buckets":0,"debug_refs":0}
+{"round":2,"instance":0,"ids":[1,2,2,3,32,64,128,192,256,4096],"unique_strings":9,"live_allocations":9,"live_buckets":4419}
+{"release":true,"round":2,"instance":0,"strings_used":[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"live_allocations":0,"live_buckets":0,"debug_refs":0}
+{"round":2,"instance":1,"ids":[1,2,2,3,32,64,128,192,256,4096],"unique_strings":9,"live_allocations":9,"live_buckets":4419}
+{"release":true,"round":2,"instance":1,"strings_used":[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"live_allocations":0,"live_buckets":0,"debug_refs":0}
+{"schema":"BlackOpsARM.TASK-0017.string-pool.v1","pointer_bytes":8,"cycles_passed":6,"strings_per_cycle":10,"transfer_cases":6,"user0_cases":6,"max_text_bytes":65530,"pool_baseline_restored":true,"ref_string_bytes":8,"ref_data_bytes":4,"ref_string_offset":4,"memory_node_bytes":16,"hash_entry_bytes":8,"hash_free_list_restored":true}

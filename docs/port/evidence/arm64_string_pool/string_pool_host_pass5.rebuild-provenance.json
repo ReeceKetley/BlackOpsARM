@@ -1,0 +1,39 @@
+{
+  "schema": "BlackOpsARM.TASK-0017.fixture-rebuild.v1",
+  "results": [
+    {
+      "arch": "x86",
+      "argv": [
+        "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\string_pool_host_pass5\\x86\\string_pool.exe",
+        "fixtures"
+      ],
+      "exit": 0,
+      "binary_sha256": "15d92aeeaf6401c7f78436b7565677dceb58be9dd2bc4f87fdd3edc8386e135e",
+      "identical_to_verified_windows4_records": true
+    },
+    {
+      "arch": "x64",
+      "argv": [
+        "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\string_pool_host_pass5\\x64\\string_pool.exe",
+        "fixtures"
+      ],
+      "exit": 0,
+      "binary_sha256": "2e88f397c138caf793b014fe0dba7d1d188a25c6f536ecd4aff37ef9bd6513af",
+      "identical_to_verified_windows4_records": true
+    }
+  ],
+  "source_sha256": {
+    "tools/port/tests/string_pool_tests.cpp": "981bd8beba445c68f900b44802fe2698522c5db97ae955665bcc796e62fbba4b",
+    "tools/port/tests/string_pool_fixture.h": "0a34773742deeeb9135b59155a5e5d17e73ec00ca3d4d7f422770824df259f4a",
+    "tools/port/tests/string_pool_support.cpp": "8ffa6ec69d2d66835edaaddaf371fce3a05e8445cbbe3d8fdf0694bd326541ec",
+    "src/clientscript/cscr_stringlist.cpp": "315279dcb6cf1c6c66892a56a6e0fdb9ecf9361e8d73ed5527d4a3fb3fcec6b4",
+    "src/clientscript/cscr_memorytree.cpp": "4b5f4e2dad50e89bab6a20852d44fdd058a0335b05c85d352f7ed4d6c271c321",
+    "src/clientscript/cscr_instance.cpp": "537b323fdd2dbe40d173fa7bd2bcd6817e8d1c3459fdff8bbe49571513d2974e",
+    "src/platform/android/script_pool_bridge.cpp": "8397e7ce3cb705134fb4749ff3fbe2e1bfd237ea4657712f30659f464173b80e",
+    "src/platform/android/script_string_services.cpp": "1fd8c6195e75bfd7be3fb1460605c3c05cb35fc387e3328cb424fe621398ab47",
+    "src/platform/script_pool_services.h": "aa80bbac98867db1303ccd629d6c6a5eb50832ab0e13a89f83ac4b02dea4fa93",
+    "src/platform/atomic32.h": "62a90a29703b7ac9ae6e2ad4a457f8803fb72776def9e97c071141f9d1f90e1d",
+    "src/universal/critical_sections.h": "7d3eaedc487325a9fb52a9dadf45858ae0028c6d612a7314789d5ad3e7b928b3"
+  },
+  "qualification": "Original full run1 references Windows4 before test-only baseline-header extraction. Fresh Windows5 compiles current shared baseline and emits identical full fixture/release/summary records. No current test source hash attributed to old Windows4 binary."
+}

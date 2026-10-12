@@ -1,9 +1,50 @@
+# Current State
+
+Updated 12 October 2026: core and interning stretch complete.
+
+The user's objective DEC-0029 remains active; continue bounded milestones
+without fabricated gameplay or output. Local verified commits approved DEC-0026,
+no push. Prior checkpoint7cfc24c (FACT-0050); TASK-0017 checkpoint follows final
+preservation. Git gives the exact current HEAD/status.
+
+Actual SL/MT code and Load_TempStringCustom execute on HONOR and Windows x86/x64.
+All859 genuine strings yield859 identical real IDs,1665 buckets/26640 bytes,
+859 user4 refs. Null0 versus empty12 verified. Six lifecycle cycles,24 reader
+fixtures/12 genuine zone cycles perABI pass; all ownership/debug references and
+complete hash free list clear BEFORE shutdown/reinit/zone release. Diagnostics
+stringsUsed retain1fixture/13genuine exactly asWindows; no counter reset or leak
+claim. -O3 ARM assertions/UBSan also pass. Full normal Windows three TUs, four-byte
+Narrow32/declarations/483guards and old16 HONOR probes pass. FACT51/52, WARN17,
+FAIL12/13/14; arm64_string_pool.md. All tests completed, evidence/scratch preserved.
+
+Debug build:0errors4764warnings,174 AArch64 artifacts/25exes; optimized2targets44
+artifacts. Exact enum move/67body boundedchanges and6unchanged loaderbodies proved.
+Shared fixed32 atomics/two real recursive locks preserveWindows bits. Remaining
+plain accesses mean only serial/quiescent pool certified; serveridentity requires
+live stable thread. Real standalone diagnostic/memory providers, unavailableVM
+recovery aborts explicitly. Finite reader notfullasync/refill/APC; no assetpayload
+or graphics. Earlier full decode/zone/envelope/table/directory gates remain intact.
+
+Next3: TASK18 genuinefirstStringTable20->32headerblock0; TASK19name+packedcellarray;
+realcell-string offset conversion/bytes then signed16index before registry. First
+assets type37, dimensions1x400/2x797, source348/27245. Block0 Pop rewinds native
+workspace while native64 shadow retains20; aliases transientuntilreuse. Cells
+have2/49realencodedblock4offsets, so initialized-range checks are mandatory.
+
+Windows/DXVK/root and1696 older report/archive/handoff files protected. No asset
+buffers/binaries inGit, APKinstall or new timing/RSSclaim. Current exact delta is
+arm64_string_pool_changes.md. Active limits WARN17: threadedpool/fullasync/OOM
+transaction/VM/Z/registry/backend/16KB/S25 and PMem caching/freeTot/multiowner.
+
+# Historical state (preserved)
+
 # Current overnight state — structural front end complete, 12 October 2026
 
 The user's objective in DEC-0029 remains active. Continue bounded milestones
 autonomously. Local verified commits are authorized by DEC-0026; never push.
 Pointer-table checkpoint: 583b976. Raw-string checkpoint: da7f496 (FACT-0045).
-TASK-0016 is verified and awaiting its local checkpoint; Git gives the exact HEAD.
+TASK-0016 checkpoint 7cfc24c is verified (FACT-0050). TASK-0017 starts next;
+Git gives the exact HEAD and pending files.
 
 Actual production decoding, checked zone/stream/envelope allocation, pointer
 expansion, Load_XStringCustom and native XAssetArray / Win32 Load_Stream now

@@ -8,6 +8,9 @@
 #if defined(BO1_RAW_STRING_GATE)
 void DB_LoadXFileData(unsigned __int8 *, int);
 int DB_LoadXFileDataNullTerminated(unsigned __int8 *);
+#if defined(BO1_FRONTEND_INTERN_GATE)
+#include <clientscript/cscr_stringlist.h>
+#endif
 #else
 #include "db_file_load.h"
 #include <clientscript/cscr_stringlist.h>
@@ -168,7 +171,7 @@ void __cdecl Load_XStringCustom(const char **str)
     DB_IncStreamPos(numBytesLoaded);
 }
 
-#if !defined(BO1_RAW_STRING_GATE)
+#if !defined(BO1_RAW_STRING_GATE) || defined(BO1_FRONTEND_INTERN_GATE)
 void __cdecl Load_TempStringCustom(const char **str)
 {
     const char *String; // [esp+0h] [ebp-4h]
