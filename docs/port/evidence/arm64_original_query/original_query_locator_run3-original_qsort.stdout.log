@@ -1,0 +1,239 @@
+
+D:\Games\Call of Duty - Black Ops\BlackOps.exe:	file format coff-i386
+
+Disassembly of section .text:
+
+00401000 <.text>:
+  967090:      	mov	edi, edi
+  967092:      	push	ebp
+  967093:      	mov	ebp, esp
+  967095:      	sub	esp, 0x100
+  96709b:      	push	ebx
+  96709c:      	mov	ebx, dword ptr [ebp + 0x8]
+  96709f:      	push	esi
+  9670a0:      	mov	esi, dword ptr [ebp + 0xc]
+  9670a3:      	test	ebx, ebx
+  9670a5:      	jne	0x9670ce <.text+0x5660ce>
+  9670a7:      	test	esi, esi
+  9670a9:      	je	0x9670ce <.text+0x5660ce>
+  9670ab:      	call	0x96b04e <.text+0x56a04e>
+  9670b0:      	push	0x0
+  9670b2:      	push	0x0
+  9670b4:      	push	0x0
+  9670b6:      	push	0x0
+  9670b8:      	push	0x0
+  9670ba:      	mov	dword ptr [eax], 0x16
+  9670c0:      	call	0x96c0d4 <.text+0x56b0d4>
+  9670c5:      	add	esp, 0x14
+  9670c8:      	pop	esi
+  9670c9:      	pop	ebx
+  9670ca:      	mov	esp, ebp
+  9670cc:      	pop	ebp
+  9670cd:      	ret
+  9670ce:      	push	edi
+  9670cf:      	mov	edi, dword ptr [ebp + 0x10]
+  9670d2:      	test	edi, edi
+  9670d4:      	jbe	0x9670dc <.text+0x5660dc>
+  9670d6:      	cmp	dword ptr [ebp + 0x14], 0x0
+  9670da:      	jne	0x967100 <.text+0x566100>
+  9670dc:      	call	0x96b04e <.text+0x56a04e>
+  9670e1:      	push	0x0
+  9670e3:      	push	0x0
+  9670e5:      	push	0x0
+  9670e7:      	push	0x0
+  9670e9:      	push	0x0
+  9670eb:      	mov	dword ptr [eax], 0x16
+  9670f1:      	call	0x96c0d4 <.text+0x56b0d4>
+  9670f6:      	add	esp, 0x14
+  9670f9:      	pop	edi
+  9670fa:      	pop	esi
+  9670fb:      	pop	ebx
+  9670fc:      	mov	esp, ebp
+  9670fe:      	pop	ebp
+  9670ff:      	ret
+  967100:      	cmp	esi, 0x2
+  967103:      	jb	0x9670f9 <.text+0x5660f9>
+  967105:      	dec	esi
+  967106:      	imul	esi, edi
+  967109:      	add	esi, ebx
+  96710b:      	mov	dword ptr [ebp - 0xc], 0x0
+  967112:      	mov	dword ptr [ebp - 0x4], ebx
+  967115:      	mov	dword ptr [ebp - 0x8], esi
+  967118:      	mov	eax, esi
+  96711a:      	sub	eax, ebx
+  96711c:      	xor	edx, edx
+  96711e:      	div	edi
+  967120:      	inc	eax
+  967121:      	cmp	eax, 0x8
+  967124:      	ja	0x96713b <.text+0x56613b>
+  967126:      	mov	eax, dword ptr [ebp + 0x14]
+  967129:      	push	eax
+  96712a:      	push	edi
+  96712b:      	push	ebx
+  96712c:      	mov	eax, esi
+  96712e:      	call	0x967000 <.text+0x566000>
+  967133:      	add	esp, 0xc
+  967136:      	jmp	0x9672b1 <.text+0x5662b1>
+  96713b:      	shr	eax
+  96713d:      	imul	eax, edi
+  967140:      	add	eax, ebx
+  967142:      	mov	edi, eax
+  967144:      	push	edi
+  967145:      	push	ebx
+  967146:      	call	dword ptr [ebp + 0x14]
+  967149:      	add	esp, 0x8
+  96714c:      	test	eax, eax
+  96714e:      	jle	0x96715c <.text+0x56615c>
+  967150:      	mov	edx, dword ptr [ebp + 0x10]
+  967153:      	mov	ecx, edi
+  967155:      	mov	eax, ebx
+  967157:      	call	0x966fd0 <.text+0x565fd0>
+  96715c:      	push	esi
+  96715d:      	push	ebx
+  96715e:      	call	dword ptr [ebp + 0x14]
+  967161:      	add	esp, 0x8
+  967164:      	test	eax, eax
+  967166:      	jle	0x967174 <.text+0x566174>
+  967168:      	mov	edx, dword ptr [ebp + 0x10]
+  96716b:      	mov	ecx, esi
+  96716d:      	mov	eax, ebx
+  96716f:      	call	0x966fd0 <.text+0x565fd0>
+  967174:      	push	esi
+  967175:      	push	edi
+  967176:      	call	dword ptr [ebp + 0x14]
+  967179:      	add	esp, 0x8
+  96717c:      	test	eax, eax
+  96717e:      	jle	0x967190 <.text+0x566190>
+  967180:      	mov	edx, dword ptr [ebp + 0x10]
+  967183:      	mov	ecx, esi
+  967185:      	mov	eax, edi
+  967187:      	call	0x966fd0 <.text+0x565fd0>
+  96718c:      	lea	esp, [esp]
+  967190:      	cmp	edi, ebx
+  967192:      	jbe	0x9671b0 <.text+0x5661b0>
+  967194:      	add	ebx, dword ptr [ebp + 0x10]
+  967197:      	cmp	ebx, edi
+  967199:      	jae	0x9671b0 <.text+0x5661b0>
+  96719b:      	push	edi
+  96719c:      	push	ebx
+  96719d:      	call	dword ptr [ebp + 0x14]
+  9671a0:      	add	esp, 0x8
+  9671a3:      	test	eax, eax
+  9671a5:      	jle	0x967194 <.text+0x566194>
+  9671a7:      	cmp	edi, ebx
+  9671a9:      	ja	0x9671c4 <.text+0x5661c4>
+  9671ab:      	jmp	0x9671b0 <.text+0x5661b0>
+  9671ad:      	lea	ecx, [ecx]
+  9671b0:      	add	ebx, dword ptr [ebp + 0x10]
+  9671b3:      	cmp	ebx, dword ptr [ebp - 0x8]
+  9671b6:      	ja	0x9671c4 <.text+0x5661c4>
+  9671b8:      	push	edi
+  9671b9:      	push	ebx
+  9671ba:      	call	dword ptr [ebp + 0x14]
+  9671bd:      	add	esp, 0x8
+  9671c0:      	test	eax, eax
+  9671c2:      	jle	0x9671b0 <.text+0x5661b0>
+  9671c4:      	sub	esi, dword ptr [ebp + 0x10]
+  9671c7:      	cmp	esi, edi
+  9671c9:      	jbe	0x9671d7 <.text+0x5661d7>
+  9671cb:      	push	edi
+  9671cc:      	push	esi
+  9671cd:      	call	dword ptr [ebp + 0x14]
+  9671d0:      	add	esp, 0x8
+  9671d3:      	test	eax, eax
+  9671d5:      	jg	0x9671c4 <.text+0x5661c4>
+  9671d7:      	cmp	ebx, esi
+  9671d9:      	ja	0x96720d <.text+0x56620d>
+  9671db:      	mov	edx, dword ptr [ebp + 0x10]
+  9671de:      	mov	eax, esi
+  9671e0:      	je	0x967205 <.text+0x566205>
+  9671e2:      	mov	ecx, ebx
+  9671e4:      	sub	ecx, esi
+  9671e6:      	dec	edx
+  9671e7:      	mov	dword ptr [ebp - 0x10], edx
+  9671ea:      	movzx	edx, byte ptr [ecx + eax]
+  9671ee:      	mov	byte ptr [ebp + 0xb], dl
+  9671f1:      	movzx	edx, byte ptr [eax]
+  9671f4:      	mov	byte ptr [ecx + eax], dl
+  9671f7:      	movzx	edx, byte ptr [ebp + 0xb]
+  9671fb:      	mov	byte ptr [eax], dl
+  9671fd:      	mov	edx, dword ptr [ebp - 0x10]
+  967200:      	inc	eax
+  967201:      	test	edx, edx
+  967203:      	jne	0x9671e6 <.text+0x5661e6>
+  967205:      	cmp	edi, esi
+  967207:      	jne	0x967190 <.text+0x566190>
+  967209:      	mov	edi, ebx
+  96720b:      	jmp	0x967190 <.text+0x566190>
+  96720d:      	add	esi, dword ptr [ebp + 0x10]
+  967210:      	cmp	edi, esi
+  967212:      	jae	0x967230 <.text+0x566230>
+  967214:      	sub	esi, dword ptr [ebp + 0x10]
+  967217:      	cmp	esi, edi
+  967219:      	jbe	0x967230 <.text+0x566230>
+  96721b:      	push	edi
+  96721c:      	push	esi
+  96721d:      	call	dword ptr [ebp + 0x14]
+  967220:      	add	esp, 0x8
+  967223:      	test	eax, eax
+  967225:      	je	0x967214 <.text+0x566214>
+  967227:      	cmp	edi, esi
+  967229:      	jb	0x967246 <.text+0x566246>
+  96722b:      	jmp	0x967230 <.text+0x566230>
+  96722d:      	lea	ecx, [ecx]
+  967230:      	sub	esi, dword ptr [ebp + 0x10]
+  967233:      	mov	eax, dword ptr [ebp - 0x4]
+  967236:      	cmp	esi, eax
+  967238:      	jbe	0x967249 <.text+0x566249>
+  96723a:      	push	edi
+  96723b:      	push	esi
+  96723c:      	call	dword ptr [ebp + 0x14]
+  96723f:      	add	esp, 0x8
+  967242:      	test	eax, eax
+  967244:      	je	0x967230 <.text+0x566230>
+  967246:      	mov	eax, dword ptr [ebp - 0x4]
+  967249:      	mov	edx, dword ptr [ebp - 0x8]
+  96724c:      	mov	ecx, edx
+  96724e:      	mov	edi, esi
+  967250:      	sub	ecx, ebx
+  967252:      	sub	edi, eax
+  967254:      	cmp	edi, ecx
+  967256:      	jl	0x967283 <.text+0x566283>
+  967258:      	cmp	eax, esi
+  96725a:      	jae	0x967271 <.text+0x566271>
+  96725c:      	mov	ecx, dword ptr [ebp - 0xc]
+  96725f:      	mov	dword ptr [ebp + 4*ecx - 0x88], eax
+  967266:      	mov	dword ptr [ebp + 4*ecx - 0x100], esi
+  96726d:      	inc	ecx
+  96726e:      	mov	dword ptr [ebp - 0xc], ecx
+  967271:      	cmp	ebx, edx
+  967273:      	jae	0x9672ae <.text+0x5662ae>
+  967275:      	mov	esi, dword ptr [ebp - 0x8]
+  967278:      	mov	edi, dword ptr [ebp + 0x10]
+  96727b:      	mov	dword ptr [ebp - 0x4], ebx
+  96727e:      	jmp	0x967118 <.text+0x566118>
+  967283:      	cmp	ebx, edx
+  967285:      	jae	0x96729c <.text+0x56629c>
+  967287:      	mov	ecx, dword ptr [ebp - 0xc]
+  96728a:      	mov	dword ptr [ebp + 4*ecx - 0x88], ebx
+  967291:      	mov	dword ptr [ebp + 4*ecx - 0x100], edx
+  967298:      	inc	ecx
+  967299:      	mov	dword ptr [ebp - 0xc], ecx
+  96729c:      	cmp	eax, esi
+  96729e:      	jae	0x9672ae <.text+0x5662ae>
+  9672a0:      	mov	ebx, dword ptr [ebp - 0x4]
+  9672a3:      	mov	edi, dword ptr [ebp + 0x10]
+  9672a6:      	mov	dword ptr [ebp - 0x8], esi
+  9672a9:      	jmp	0x967118 <.text+0x566118>
+  9672ae:      	mov	edi, dword ptr [ebp + 0x10]
+  9672b1:      	mov	eax, dword ptr [ebp - 0xc]
+  9672b4:      	sub	eax, 0x1
+  9672b7:      	mov	dword ptr [ebp - 0xc], eax
+  9672ba:      	js	0x9670f9 <.text+0x5660f9>
+  9672c0:      	mov	edx, dword ptr [ebp + 4*eax - 0x88]
+  9672c7:      	mov	eax, dword ptr [ebp + 4*eax - 0x100]
+  9672ce:      	mov	dword ptr [ebp - 0x4], edx
+  9672d1:      	mov	dword ptr [ebp - 0x8], eax
+  9672d4:      	mov	ebx, edx
+  9672d6:      	mov	esi, eax
+  9672d8:      	jmp	0x967118 <.text+0x566118>

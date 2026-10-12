@@ -1,5 +1,28 @@
 # Current State
 
+Updated12 October2026: TASK-0024 original registration/sort audit complete.
+Original signed FirstHashIndex agrees with reconstruction. Inline FF pointer
+loader loads body -> type37 DB_AddXAsset -> replaced returned header -> signed
+hash/column sort -> inserted alias -> TEMP Pop. Reconstructed registration wrapper
+omits that sort. Six SHA-pinned original instruction ranges execute in bounded
+host reference analysis; row/registry not executed. Sorted original400/1594
+indices remove modeled24/796 misses. Actual Windows CRT exact original order;
+actual HONOR CRT6/14 differing equal-key positions and modeled rows (FAIL23).
+No engine source changes or native query restoration yet. All tests completed:
+locator3/reference3/CRTbuild2allrun2. FAIL22 toolseed fixed; collectors resumed
+without overwriting evidence. Read arm64_original_query.md/original_query_handoff.md
+and exact inventory. Protected Windows2528/DXVK2552/root15/APK/originals/2722 older
+frozen files unchanged. No new timing/RSS/graphics. AutonomousDEC29, localverified
+commitsDEC26/no push. Next3: TASK25 bounded original signed normalization/actual
+query parity; TASK26 persistent registration/TEMP lifetime; next genuine asset
+with original workspace/shadow reuse. Fullasync/dispatch/registry/init/graphics,
+multiowner/retainedpages/16KB/S25/hashlocale remain unverified. Git is pending
+inventory authority; verified checkpoint will be recorded after commit proof.
+
+# Historical state (preserved)
+
+# Current State
+
 Updated 12 October2026: TASK-0023 actual lookup parity audit complete.
 Six original query/comparison bodies execute HONOR/Windows unchanged. Genuine
 row misses24/400 and796/1594 vslinear existing-values onall3ABIs/optimizedARM;
@@ -19,7 +42,8 @@ postloadweapons/images only, sortLoadObjqsort. OriginalBlackOps.exe SHA2ba4a04e.
 matchesoldreference/x86/base400000/noCOFFsymbols; noverifiedqueryfunctionaddresses
 orGhidrainstance, no game/debugger/import launched. Readarm64_stringtable_lookup.md/
 _changes.md/stringtable_lookup_handoff.md; FACT70/71, WARN23/FAIL19/20/21, DEC38.
-Parent60b3765; Git suppliescheckpoint/pendingfiles. Paritygatecomplete, functional
+TASK-0023 checkpoint454ff32 verified (FACT-0072); TASK-0024 original audit active.
+Git supplies current pending files. Paritygatecomplete, functional
 rowdiscrepancy stillopen. Next3: SHA/addressoriginalinstructions/loadingpath audit;
 smallest evidence-backed correction ifdifferent; actualfirstassetownership/
 registration withTEMP lifetime. AutonomousDEC29 active, localverifiedcheckpoints

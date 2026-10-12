@@ -1,0 +1,110 @@
+
+D:\Games\Call of Duty - Black Ops\BlackOps.exe:	file format coff-i386
+
+Disassembly of section .text:
+
+00401000 <.text>:
+  41102e:      	jmp	0x63e7f0 <.text+0x23d7f0>
+  411033:      	cmp	eax, 0xe
+  411036:      	jne	0x411049 <.text+0x10049>
+  411038:      	mov	edx, dword ptr [0xc81658]
+  41103e:      	mov	dword ptr [0xc813f4], edx
+  411044:      	jmp	0x6273d0 <.text+0x2263d0>
+  411049:      	cmp	eax, 0xf
+  41104c:      	jne	0x41105f <.text+0x1005f>
+  41104e:      	mov	ecx, dword ptr [0xc81658]
+  411054:      	mov	dword ptr [0xc81968], ecx
+  41105a:      	jmp	0x5dd9f0 <.text+0x1dc9f0>
+  41105f:      	cmp	eax, 0x10
+  411062:      	jne	0x411073 <.text+0x10073>
+  411064:      	mov	eax, dword ptr [0xc81658]
+  411069:      	mov	dword ptr [0xc81a40], eax
+  41106e:      	jmp	0x5ffe80 <.text+0x1fee80>
+  411073:      	cmp	eax, 0x11
+  411076:      	jne	0x411089 <.text+0x10089>
+  411078:      	mov	edx, dword ptr [0xc81658]
+  41107e:      	mov	dword ptr [0xc81970], edx
+  411084:      	jmp	0x675880 <.text+0x274880>
+  411089:      	cmp	eax, 0x12
+  41108c:      	jne	0x41109f <.text+0x1009f>
+  41108e:      	mov	ecx, dword ptr [0xc81658]
+  411094:      	mov	dword ptr [0xc813e8], ecx
+  41109a:      	jmp	0x66e800 <.text+0x26d800>
+  41109f:      	cmp	eax, 0x14
+  4110a2:      	jne	0x4110b3 <.text+0x100b3>
+  4110a4:      	mov	eax, dword ptr [0xc81658]
+  4110a9:      	mov	dword ptr [0xc816dc], eax
+  4110ae:      	jmp	0x5a08f0 <.text+0x19f8f0>
+  4110b3:      	cmp	eax, 0x15
+  4110b6:      	jne	0x4110c9 <.text+0x100c9>
+  4110b8:      	mov	edx, dword ptr [0xc81658]
+  4110be:      	mov	dword ptr [0xc81480], edx
+  4110c4:      	jmp	0x46dd90 <.text+0x6cd90>
+  4110c9:      	cmp	eax, 0x16
+  4110cc:      	jne	0x4110df <.text+0x100df>
+  4110ce:      	mov	ecx, dword ptr [0xc81658]
+  4110d4:      	mov	dword ptr [0xc81780], ecx
+  4110da:      	jmp	0x5c6e80 <.text+0x1c5e80>
+  4110df:      	cmp	eax, 0x17
+  4110e2:      	jne	0x4110f3 <.text+0x100f3>
+  4110e4:      	mov	eax, dword ptr [0xc81658]
+  4110e9:      	mov	dword ptr [0xc81af8], eax
+  4110ee:      	jmp	0x5689d0 <.text+0x1679d0>
+  4110f3:      	cmp	eax, 0x18
+  4110f6:      	jne	0x411109 <.text+0x10109>
+  4110f8:      	mov	edx, dword ptr [0xc81658]
+  4110fe:      	mov	dword ptr [0xc81a94], edx
+  411104:      	jmp	0x404ce0 <.text+0x3ce0>
+  411109:      	cmp	eax, 0x1b
+  41110c:      	jne	0x41111f <.text+0x1011f>
+  41110e:      	mov	ecx, dword ptr [0xc81658]
+  411114:      	mov	dword ptr [0xc818f0], ecx
+  41111a:      	jmp	0x4f8980 <.text+0xf7980>
+  41111f:      	cmp	eax, 0x1c
+  411122:      	jne	0x411133 <.text+0x10133>
+  411124:      	mov	eax, dword ptr [0xc81658]
+  411129:      	mov	dword ptr [0xc816a0], eax
+  41112e:      	jmp	0x54bf10 <.text+0x14af10>
+  411133:      	cmp	eax, 0x1d
+  411136:      	jne	0x411149 <.text+0x10149>
+  411138:      	mov	edx, dword ptr [0xc81658]
+  41113e:      	mov	dword ptr [0xc81558], edx
+  411144:      	jmp	0x4aa290 <.text+0xa9290>
+  411149:      	cmp	eax, 0x24
+  41114c:      	jne	0x41115f <.text+0x1015f>
+  41114e:      	mov	ecx, dword ptr [0xc81658]
+  411154:      	mov	dword ptr [0xc813e0], ecx
+  41115a:      	jmp	0x5f1220 <.text+0x1f0220>
+  41115f:      	cmp	eax, 0x25
+  411162:      	jne	0x411173 <.text+0x10173>
+  411164:      	mov	eax, dword ptr [0xc81658]
+  411169:      	mov	dword ptr [0xc81620], eax
+  41116e:      	jmp	0x604f50 <.text+0x203f50>
+  411173:      	cmp	eax, 0x26
+  411176:      	jne	0x411189 <.text+0x10189>
+  411178:      	mov	edx, dword ptr [0xc81658]
+  41117e:      	mov	dword ptr [0xc81778], edx
+  411184:      	jmp	0x472150 <.text+0x71150>
+  411189:      	cmp	eax, 0x27
+  41118c:      	jne	0x41119f <.text+0x1019f>
+  41118e:      	mov	ecx, dword ptr [0xc81658]
+  411194:      	mov	dword ptr [0xc818d4], ecx
+  41119a:      	jmp	0x5a1de0 <.text+0x1a0de0>
+  41119f:      	cmp	eax, 0x28
+  4111a2:      	jne	0x4111b3 <.text+0x101b3>
+  4111a4:      	mov	eax, dword ptr [0xc81658]
+  4111a9:      	mov	dword ptr [0xc81a0c], eax
+  4111ae:      	jmp	0x665cf0 <.text+0x264cf0>
+  4111b3:      	cmp	eax, 0x29
+  4111b6:      	jne	0x4111c9 <.text+0x101c9>
+  4111b8:      	mov	edx, dword ptr [0xc81658]
+  4111be:      	mov	dword ptr [0xc815fc], edx
+  4111c4:      	jmp	0x5a4ed0 <.text+0x1a3ed0>
+  4111c9:      	cmp	eax, 0x2a
+  4111cc:      	jne	0x4111ee <.text+0x101ee>
+  4111ce:      	mov	ecx, dword ptr [0xc81658]
+  4111d4:      	mov	dword ptr [0xc814c4], ecx
+  4111da:      	jmp	0x58a490 <.text+0x189490>
+  4111df:      	mov	eax, dword ptr [0xc81658]
+  4111e4:      	mov	dword ptr [0xc814ec], eax
+  4111e9:      	jmp	0x4177f0 <.text+0x167f0>

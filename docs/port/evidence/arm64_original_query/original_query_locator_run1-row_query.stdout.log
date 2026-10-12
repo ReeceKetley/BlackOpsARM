@@ -1,0 +1,86 @@
+
+D:\Games\Call of Duty - Black Ops\BlackOps.exe:	file format coff-i386
+
+Disassembly of section .text:
+
+00401000 <.text>:
+  6207d0:      	push	esi
+  6207d1:      	mov	esi, dword ptr [esp + 0x8]
+  6207d5:      	mov	eax, dword ptr [esi + 0x4]
+  6207d8:      	test	eax, eax
+  6207da:      	je	0x6207f5 <.text+0x21f7f5>
+  6207dc:      	mov	ecx, dword ptr [esp + 0xc]
+  6207e0:      	cmp	ecx, eax
+  6207e2:      	jl	0x6207fa <.text+0x21f7fa>
+  6207e4:      	push	eax
+  6207e5:      	push	ecx
+  6207e6:      	push	0x9f2550
+  6207eb:      	push	0xd
+  6207ed:      	call	0x5dfc40 <.text+0x1dec40>
+  6207f2:      	add	esp, 0x10
+  6207f5:      	or	eax, -0x1
+  6207f8:      	pop	esi
+  6207f9:      	ret
+  6207fa:      	mov	eax, dword ptr [esp + 0x10]
+  6207fe:      	push	ebp
+  6207ff:      	push	edi
+  620800:      	push	eax
+  620801:      	call	0x5f4650 <.text+0x1f3650>
+  620806:      	mov	ebp, dword ptr [esi + 0x8]
+  620809:      	imul	ebp, dword ptr [esi + 0x4]
+  62080d:      	mov	dword ptr [esp + 0x14], eax
+  620811:      	push	eax
+  620812:      	mov	eax, esi
+  620814:      	call	0x8604b0 <.text+0x45f4b0>
+  620819:      	mov	edi, eax
+  62081b:      	add	esp, 0x8
+  62081e:      	test	edi, edi
+  620820:      	jge	0x620829 <.text+0x21f829>
+  620822:      	pop	edi
+  620823:      	pop	ebp
+  620824:      	or	eax, -0x1
+  620827:      	pop	esi
+  620828:      	ret
+  620829:      	cmp	edi, ebp
+  62082b:      	push	ebx
+  62082c:      	jge	0x620870 <.text+0x21f870>
+  62082e:      	mov	edi, edi
+  620830:      	mov	ecx, dword ptr [esi + 0x10]
+  620833:      	movsx	ebx, word ptr [ecx + 2*edi]
+  620837:      	mov	edx, dword ptr [esi + 0xc]
+  62083a:      	mov	eax, dword ptr [esp + 0x14]
+  62083e:      	cmp	dword ptr [edx + 8*ebx + 0x4], eax
+  620842:      	lea	ecx, [edx + 8*ebx]
+  620845:      	jne	0x620870 <.text+0x21f870>
+  620847:      	mov	eax, ebx
+  620849:      	cdq
+  62084a:      	idiv	dword ptr [esi + 0x4]
+  62084d:      	cmp	edx, dword ptr [esp + 0x18]
+  620851:      	jne	0x62086b <.text+0x21f86b>
+  620853:      	mov	ecx, dword ptr [ecx]
+  620855:      	test	ecx, ecx
+  620857:      	je	0x62086b <.text+0x21f86b>
+  620859:      	push	ecx
+  62085a:      	mov	ecx, dword ptr [esp + 0x20]
+  62085e:      	push	ecx
+  62085f:      	call	0x552bf0 <.text+0x151bf0>
+  620864:      	add	esp, 0x8
+  620867:      	test	eax, eax
+  620869:      	je	0x620878 <.text+0x21f878>
+  62086b:      	inc	edi
+  62086c:      	cmp	edi, ebp
+  62086e:      	jl	0x620830 <.text+0x21f830>
+  620870:      	pop	ebx
+  620871:      	pop	edi
+  620872:      	pop	ebp
+  620873:      	or	eax, -0x1
+  620876:      	pop	esi
+  620877:      	ret
+  620878:      	mov	eax, ebx
+  62087a:      	pop	ebx
+  62087b:      	pop	edi
+  62087c:      	cdq
+  62087d:      	idiv	dword ptr [esi + 0x4]
+  620880:      	pop	ebp
+  620881:      	pop	esi
+  620882:      	ret

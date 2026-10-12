@@ -1,0 +1,32 @@
+
+D:\Games\Call of Duty - Black Ops\BlackOps.exe:	file format coff-i386
+
+Disassembly of section .text:
+
+00401000 <.text>:
+  860560:      	mov	eax, dword ptr [esp + 0x4]
+  860564:      	movzx	eax, word ptr [eax]
+  860567:      	mov	ecx, dword ptr [esp + 0x8]
+  86056b:      	movzx	ecx, word ptr [ecx]
+  86056e:      	push	esi
+  86056f:      	push	edi
+  860570:      	mov	edi, dword ptr [0x26050dc]
+  860576:      	movsx	edx, ax
+  860579:      	movsx	esi, cx
+  86057c:      	mov	ecx, dword ptr [edi + 0xc]
+  86057f:      	mov	eax, dword ptr [ecx + 8*edx + 0x4]
+  860583:      	sub	eax, dword ptr [ecx + 8*esi + 0x4]
+  860587:      	jne	0x86059c <.text+0x45f59c>
+  860589:      	mov	ecx, dword ptr [edi + 0x4]
+  86058c:      	mov	eax, edx
+  86058e:      	cdq
+  86058f:      	idiv	ecx
+  860591:      	mov	eax, esi
+  860593:      	mov	edi, edx
+  860595:      	cdq
+  860596:      	idiv	ecx
+  860598:      	sub	edi, edx
+  86059a:      	mov	eax, edi
+  86059c:      	pop	edi
+  86059d:      	pop	esi
+  86059e:      	ret

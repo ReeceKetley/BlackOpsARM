@@ -1,0 +1,198 @@
+
+D:\Games\Call of Duty - Black Ops\BlackOps.exe:	file format coff-i386
+
+Disassembly of section .text:
+
+00401000 <.text>:
+  42d8e4:      	mov	bl, byte ptr [eax]
+  42d8e6:      	cmp	ecx, 0x7ff8
+  42d8ec:      	jb	0x42d8f7 <.text+0x2c8f7>
+  42d8ee:      	push	esi
+  42d8ef:      	call	0x653160 <.text+0x252160>
+  42d8f4:      	add	esp, 0x4
+  42d8f7:      	mov	edx, dword ptr [esi + 0xc]
+  42d8fa:      	mov	byte ptr [edx + esi + 0x2c], bl
+  42d8fe:      	inc	dword ptr [esi + 0xc]
+  42d901:      	pop	ebx
+  42d902:      	pop	esi
+  42d903:      	ret
+  42d904:      	lea	eax, [esp + 0x8]
+  42d908:      	push	eax
+  42d909:      	push	0x1
+  42d90b:      	push	esi
+  42d90c:      	call	0x473420 <.text+0x72420>
+  42d911:      	mov	ecx, dword ptr [esp + 0x18]
+  42d915:      	mov	dl, byte ptr [esp + 0x14]
+  42d919:      	add	esp, 0xc
+  42d91c:      	mov	byte ptr [ecx], dl
+  42d91e:      	pop	esi
+  42d91f:      	ret
+  42d920:      	mov	eax, dword ptr [0x1d04ba0]
+  42d925:      	mov	ecx, dword ptr [0x1d04ba4]
+  42d92b:      	mov	dword ptr [0x1d04ba4], eax
+  42d930:      	mov	dword ptr [0x1d04ba0], ecx
+  42d936:      	mov	dword ptr [ecx + 0x10048], 0x3
+  42d940:      	mov	eax, dword ptr [0x1d04ba4]
+  42d945:      	mov	dword ptr [eax + 0x10048], 0x0
+  42d94f:      	ret
+  42d950:      	push	ecx
+  42d951:      	push	esi
+  42d952:      	mov	esi, dword ptr [esp + 0xc]
+  42d956:      	mov	eax, dword ptr [esi + 0x4]
+  42d959:      	push	edi
+  42d95a:      	xor	edi, edi
+  42d95c:      	cmp	eax, edi
+  42d95e:      	jne	0x42d966 <.text+0x2c966>
+  42d960:      	pop	edi
+  42d961:      	xor	eax, eax
+  42d963:      	pop	esi
+  42d964:      	pop	ecx
+  42d965:      	ret
+  42d966:      	mov	ecx, dword ptr [esp + 0x1c]
+  42d96a:      	cmp	ecx, eax
+  42d96c:      	push	ebx
+  42d96d:      	mov	ebx, dword ptr [esp + 0x28]
+  42d971:      	jge	0x42da5b <.text+0x2ca5b>
+  42d977:      	cmp	ebx, eax
+  42d979:      	jge	0x42da5b <.text+0x2ca5b>
+  42d97f:      	mov	eax, dword ptr [esp + 0x24]
+  42d983:      	push	eax
+  42d984:      	call	0x5f4650 <.text+0x1f3650>
+  42d989:      	mov	dword ptr [esp + 0x10], eax
+  42d98d:      	mov	eax, dword ptr [esp + 0x30]
+  42d991:      	add	esp, 0x4
+  42d994:      	mov	dword ptr [esp + 0x14], edi
+  42d998:      	cmp	eax, edi
+  42d99a:      	je	0x42d9a9 <.text+0x2c9a9>
+  42d99c:      	push	eax
+  42d99d:      	call	0x5f4650 <.text+0x1f3650>
+  42d9a2:      	add	esp, 0x4
+  42d9a5:      	mov	dword ptr [esp + 0x14], eax
+  42d9a9:      	push	ebp
+  42d9aa:      	xor	ebp, ebp
+  42d9ac:      	cmp	dword ptr [esi + 0x8], edi
+  42d9af:      	jg	0x42d9c4 <.text+0x2c9c4>
+  42d9b1:      	mov	eax, ebp
+  42d9b3:      	pop	ebp
+  42d9b4:      	pop	ebx
+  42d9b5:      	pop	edi
+  42d9b6:      	pop	esi
+  42d9b7:      	pop	ecx
+  42d9b8:      	ret
+  42d9b9:      	lea	esp, [esp]
+  42d9c0:      	mov	ebx, dword ptr [esp + 0x2c]
+  42d9c4:      	mov	eax, dword ptr [esi + 0x4]
+  42d9c7:      	mov	ecx, dword ptr [esp + 0x24]
+  42d9cb:      	imul	eax, edi
+  42d9ce:      	mov	edx, dword ptr [esi + 0xc]
+  42d9d1:      	add	ecx, eax
+  42d9d3:      	add	ebx, eax
+  42d9d5:      	lea	eax, [edx + 8*ecx]
+  42d9d8:      	mov	ecx, dword ptr [esp + 0x10]
+  42d9dc:      	cmp	dword ptr [eax + 0x4], ecx
+  42d9df:      	jne	0x42da35 <.text+0x2ca35>
+  42d9e1:      	mov	eax, dword ptr [eax]
+  42d9e3:      	test	eax, eax
+  42d9e5:      	je	0x42da35 <.text+0x2ca35>
+  42d9e7:      	mov	edx, dword ptr [esp + 0x28]
+  42d9eb:      	push	eax
+  42d9ec:      	push	edx
+  42d9ed:      	call	0x552bf0 <.text+0x151bf0>
+  42d9f2:      	add	esp, 0x8
+  42d9f5:      	test	eax, eax
+  42d9f7:      	jne	0x42da35 <.text+0x2ca35>
+  42d9f9:      	mov	ecx, dword ptr [esp + 0x30]
+  42d9fd:      	test	ecx, ecx
+  42d9ff:      	je	0x42da25 <.text+0x2ca25>
+  42da01:      	mov	eax, dword ptr [esi + 0xc]
+  42da04:      	mov	edx, dword ptr [esp + 0x18]
+  42da08:      	cmp	dword ptr [eax + 8*ebx + 0x4], edx
+  42da0c:      	lea	eax, [eax + 8*ebx]
+  42da0f:      	jne	0x42da35 <.text+0x2ca35>
+  42da11:      	mov	eax, dword ptr [eax]
+  42da13:      	test	eax, eax
+  42da15:      	je	0x42da35 <.text+0x2ca35>
+  42da17:      	push	eax
+  42da18:      	push	ecx
+  42da19:      	call	0x552bf0 <.text+0x151bf0>
+  42da1e:      	add	esp, 0x8
+  42da21:      	test	eax, eax
+  42da23:      	jne	0x42da35 <.text+0x2ca35>
+  42da25:      	mov	ebx, dword ptr [esp + 0x20]
+  42da29:      	cmp	ebp, ebx
+  42da2b:      	je	0x42da43 <.text+0x2ca43>
+  42da2d:      	mov	eax, dword ptr [esp + 0x1c]
+  42da31:      	mov	dword ptr [eax + 4*ebp], edi
+  42da34:      	inc	ebp
+  42da35:      	inc	edi
+  42da36:      	cmp	edi, dword ptr [esi + 0x8]
+  42da39:      	jl	0x42d9c0 <.text+0x2c9c0>
+  42da3b:      	mov	eax, ebp
+  42da3d:      	pop	ebp
+  42da3e:      	pop	ebx
+  42da3f:      	pop	edi
+  42da40:      	pop	esi
+  42da41:      	pop	ecx
+  42da42:      	ret
+  42da43:      	push	ebx
+  42da44:      	push	0xa2fc1c
+  42da49:      	push	0xd
+  42da4b:      	call	0x5dfc40 <.text+0x1dec40>
+  42da50:      	add	esp, 0xc
+  42da53:      	pop	ebp
+  42da54:      	mov	eax, ebx
+  42da56:      	pop	ebx
+  42da57:      	pop	edi
+  42da58:      	pop	esi
+  42da59:      	pop	ecx
+  42da5a:      	ret
+  42da5b:      	cmp	ecx, ebx
+  42da5d:      	jge	0x42da61 <.text+0x2ca61>
+  42da5f:      	mov	ecx, ebx
+  42da61:      	push	eax
+  42da62:      	push	ecx
+  42da63:      	push	0x9f2550
+  42da68:      	push	0xd
+  42da6a:      	call	0x5dfc40 <.text+0x1dec40>
+  42da6f:      	add	esp, 0x10
+  42da72:      	pop	ebx
+  42da73:      	pop	edi
+  42da74:      	xor	eax, eax
+  42da76:      	pop	esi
+  42da77:      	pop	ecx
+  42da78:      	ret
+  42da79:      	int3
+  42da7a:      	int3
+  42da7b:      	int3
+  42da7c:      	int3
+  42da7d:      	int3
+  42da7e:      	int3
+  42da7f:      	int3
+  42da80:      	mov	eax, 0x10e4
+  42da85:      	call	0x965f00 <.text+0x564f00>
+  42da8a:      	mov	eax, dword ptr [esp + 0x10ec]
+  42da91:      	mov	ecx, eax
+  42da93:      	sub	ecx, dword ptr [esp + 0x1100]
+  42da9a:      	push	ebp
+  42da9b:      	mov	ebp, dword ptr [esp + 0x10ec]
+  42daa2:      	mov	dword ptr [esp + 0x4], ecx
+  42daa6:      	jne	0x42dacd <.text+0x2cacd>
+  42daa8:      	mov	eax, dword ptr [esp + 0x10f8]
+  42daaf:      	mov	ecx, dword ptr [esp + 0x10f4]
+  42dab6:      	push	eax
+  42dab7:      	push	ecx
+  42dab8:      	mov	ecx, ebp
+  42daba:      	call	0x661450 <.text+0x260450>
+  42dabf:      	mov	ecx, ebp
+  42dac1:      	pop	ebp
+  42dac2:      	add	esp, 0x10e4
+  42dac8:      	jmp	0x5a8960 <.text+0x1a7960>
+  42dacd:      	mov	edx, dword ptr [esp + 0x10f8]
+  42dad4:      	push	ebx
+  42dad5:      	push	esi
+  42dad6:      	push	edi
+  42dad7:      	push	eax
+  42dad8:      	mov	eax, dword ptr [esp + 0x1104]
+  42dadf:      	lea	ecx, [eax + edx]
+  42dae2:      	push	ecx
+  42dae3:      	push	eax
