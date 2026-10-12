@@ -478,3 +478,5 @@ x64_diag.log
 !/docs/port/evidence/arm64_stringtable_indices/*.log
 
 !/docs/port/evidence/arm64_stringtable_hash/*.log
+
+!/docs/port/evidence/arm64_stringtable_lookup/*.log

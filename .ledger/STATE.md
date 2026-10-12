@@ -1,5 +1,36 @@
 # Current State
 
+Updated 12 October2026: TASK-0023 actual lookup parity audit complete.
+Six original query/comparison bodies execute HONOR/Windows unchanged. Genuine
+row misses24/400 and796/1594 vslinear existing-values onall3ABIs/optimizedARM;
+all1994columnqueriesagree. This issharedreconstruction behavior FAIL20, notyet
+retailinstruction verification. Everyquery/firstindex/row/col/linearresult/casefold
+andpercyclemisscounter frozen; noresort/algorithmfix/falsefunctionalpass.162loader
+cases12cycles/12857hash7974overflow +262180comparisons22controlledlookupcases pass
+perABI. Valid liveNUL data/permutation/header owner; negative-row unsafecolumn/
+nullcomparison/negativeprefix paths excluded. Sourcewholedefaultorder/sixbodies
+unchanged, normalWindows4TUsx86/x64 compile8objects. Debugpass2/host2/run1 and
+optimizedpass1/run1 allcomplete. FullARM0errors7312warnings291artifacts31exes,
+optimized40/1. FAIL19oldfixtureCRTduplicateI_stricmp fixedgateonly; FAIL21proof
+endingassumption fixedproof2; alldiagnosticsretained. No newtiming/RSS/graphics.
+Windows2528/DXVK2552/root15/APK and2601olderfrozenpaths unchanged. Sourceaudit
+findsnoFFindexnormalization; registrygenericheadercopy/StringTablecloneNULL,
+postloadweapons/images only, sortLoadObjqsort. OriginalBlackOps.exe SHA2ba4a04e...
+matchesoldreference/x86/base400000/noCOFFsymbols; noverifiedqueryfunctionaddresses
+orGhidrainstance, no game/debugger/import launched. Readarm64_stringtable_lookup.md/
+_changes.md/stringtable_lookup_handoff.md; FACT70/71, WARN23/FAIL19/20/21, DEC38.
+Parent60b3765; Git suppliescheckpoint/pendingfiles. Paritygatecomplete, functional
+rowdiscrepancy stillopen. Next3: SHA/addressoriginalinstructions/loadingpath audit;
+smallest evidence-backed correction ifdifferent; actualfirstassetownership/
+registration withTEMP lifetime. AutonomousDEC29 active, localverifiedcheckpoints
+DEC26/no push. Fullasync/dispatch/wrapper/registry/init/graphics, postreadOOM,
+generaloffset/pool/Windowsretainedpages/multiowner/16KB/S25 andhashlocale remainopen.
+All previousproofs/originalassets/ignoredscratch preserved, noAPKinstall.
+
+# Historical state (preserved)
+
+# Current State
+
 Updated 12 October 2026: TASK-0022 canonical hash complete.
 Actual Com_HashString and unchanged StringTable wrapper now execute on HONOR.
 Unique function/declaration moved to universal/com_hash, sourceList added once;
@@ -18,7 +49,8 @@ no nativehash failure or timing/RSS/graphics claim. All tests/processes finished
 Windows2528/DXVK2552/root15/APK and2397 prior frozen files preserved. Read
 arm64_stringtable_hash.md/_changes.md, stringtable_hash_handoff.md, FACT67/68,
 WARN22/FAIL18, DEC37. Localverifiedcommits DEC26/no push; autonomousDEC29active.
-Parent1874245; Git supplies resulting checkpoint and pending files. No hashgate
+TASK-0022 checkpoint60b3765 verified (FACT-0069); TASK-0023 lookup active.
+Git supplies current pending files. No hashgate
 work incomplete. Next3: actual FirstHashIndex/row/column with real I_stricmp and
 original retail indices on3ABIs; original-evidence lookup/order investigation;
 smallest genuine asset ownership/registration boundary. Modelmisses FACT62 remain

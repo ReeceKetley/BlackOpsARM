@@ -176,3 +176,14 @@ Next3: actualhash-index/row/column andrealI_stricmp onoriginalindices; provenanc
 backed sharedordering investigation; smallest actualregistration/ownership gate.
 No resort/sortingreject/fallback/fakequery success. ContinueautonomousDEC29,
 localverifiedcheckpointsDEC26/no push. Protectedrepos/assets/olderproofs intact.
+
+
+TASK-0023 actualqueryparity audit complete: sixoriginal bodies HONOR/Windows,
+262180comparison/22controlledlookup +162loadercases12cycles/12857hash pass.
+Actualsharedrowmisses24/400 and796/1594 FAIL20 retained, allcolumnqueriesagree;
+notoriginalretailinstruction proof. Read arm64_stringtable_lookup.md, FACT70/71,
+WARN23/FAIL19/20/21. Preserveoriginalindices/Windowsbehavior, noresort/fallback.
+Next3: originalSHA/addressinstruction+loadingpath audit; smallestverifiedbehavior
+correction ifdifferent; actualfirstassetownership/registration. Unsafe negative
+row/nullcompare/negativeprefix paths excludedpendingseparatefix. ContinueDEC29,
+localverifiedcheckpointsDEC26/no push, protectedrepos/assets/oldproofs intact.

@@ -154,6 +154,66 @@ def reference(source, oracle):
                       'native64_alignment_padding': index_native_start - native_cursor}
     if index_metadata['disk_end'] > result['xfile_fields'][6]:
         raise RuntimeError('Genuine first-asset block4 footprint exceeds original XFile metadata')
+    # Exact ephemeral byte spans, never strings/hex in returned evidence. Offset
+    # cells borrow the already initialized earlier inline cell's folded bytes.
+    folded = []
+    for entry in cells:
+        record = entry['string']
+        if record['kind'] == 'offset':
+            value = folded[record['target_cell_index']]
+        elif record['kind'] == 'cell':
+            data = memoryview(prefix)[record['source_start']:record['source_end'] - 1]
+            if any(byte >= 128 for byte in data):
+                raise RuntimeError('Non-ASCII genuine lookup bytes need a separately audited locale contract')
+            value = bytes(data).lower()
+        else:
+            raise RuntimeError('An absent cell cannot provide a genuine lookup query')
+        folded.append(value)
+        record['lowercase_sha256'] = hashlib.sha256(value).hexdigest()
+    hashes = [entry['signed_hash'] for entry in cells]
+    columns = header['column_count']
+    lookup_records = []
+    for index, value in enumerate(folded):
+        query_hash = 5381
+        for byte in value:
+            query_hash = (byte + 33 * query_hash) & 0xffffffff
+        if query_hash & 0x80000000:
+            query_hash -= 1 << 32
+        if query_hash != hashes[index]:
+            raise RuntimeError('Genuine stored hash disagrees with independent ASCII wrapping hash')
+        begin, end = 0, count
+        while begin < end:
+            middle = (end + begin) // 2
+            if hashes[indices[middle]] >= query_hash:
+                end = middle
+            else:
+                begin = middle + 1
+        first_hash_index = begin
+        row = -1
+        while begin < count:
+            candidate = indices[begin]
+            if hashes[candidate] != query_hash:
+                break
+            if candidate % columns == index % columns and folded[candidate] == value:
+                row = candidate // columns
+                break
+            begin += 1
+        # Independent linear retail-index reference: no binary ordering assumed.
+        linear_row = next((candidate // columns for candidate in indices
+                           if candidate % columns == index % columns and hashes[candidate] == query_hash
+                           and folded[candidate] == value), -1)
+        column = -1
+        for candidate_column in range(columns - 1, -1, -1):
+            candidate = candidate_column + columns * (index // columns)
+            if hashes[candidate] == query_hash and folded[candidate] == value:
+                column = candidate_column
+                break
+        matching_columns = [candidate % columns for candidate in range((index // columns) * columns,
+                                                                       (index // columns + 1) * columns)
+                            if hashes[candidate] == query_hash and folded[candidate] == value]
+        linear_column = max(matching_columns, default=-1)
+        lookup_records.append({'index': index, 'hash': query_hash, 'first_hash_index': first_hash_index,
+                               'row': row, 'linear_row': linear_row, 'column': column, 'linear_column': linear_column})
     result.update({'schema': 'BlackOpsARM.stringtable-payload-oracle.v1',
                    'header_prefix_bytes': result['prefix_bytes'], 'header_prefix_sha256': result['prefix_sha256'],
                    'prefix_bytes': wanted, 'prefix_sha256': hashlib.sha256(prefix).hexdigest(),
@@ -167,6 +227,10 @@ def reference(source, oracle):
                    'stringtable_name': name, 'stringtable_cell_array': array, 'stringtable_cells': cells,
                    'inline_cell_string_count': inline_count, 'offset_cell_string_count': offset_count,
                    'stringtable_indices': index_metadata,
+                   'stringtable_lookup_records': lookup_records,
+                   'stringtable_lookup_source_model_misses': sum(record['row'] < 0 for record in lookup_records),
+                   'stringtable_lookup_row_disagreements': sum(record['row'] != record['linear_row'] for record in lookup_records),
+                   'stringtable_lookup_column_disagreements': sum(record['column'] != record['linear_column'] for record in lookup_records),
                    'block4_disk_cursor': index_metadata['disk_end'],
                    'block4_native64_cursor': index_metadata['native64_end'], 'oracle_passes': 4,
                    'retained_decoded_buffer_limit': wanted,
