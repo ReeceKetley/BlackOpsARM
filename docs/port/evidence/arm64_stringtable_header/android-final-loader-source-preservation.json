@@ -1,0 +1,30 @@
+{
+  "schema": "BlackOpsARM.TASK-0015.source-preservation.v1",
+  "checkpoint": "c51db37697c70dc1607ae10272109b56073de6fe",
+  "bodies": {
+    "Load_Stream": {
+      "unchanged": true,
+      "sha256": "2a0e33843e5c3d146f8d2f6fbf6ed27282fa792f790a0077df884a39ffbbb6f8"
+    },
+    "Load_DelayStream": {
+      "unchanged": true,
+      "sha256": "51902e02f9954c3f834e8886a139f41d744146025c6e384c30e5ef7eb33f2d75"
+    },
+    "DB_ConvertOffsetToPointer": {
+      "unchanged": true,
+      "sha256": "958264c37c0a683fcae806b1ca3c0c1ef3b116f04a2e1ba3548b48a274523460"
+    },
+    "DB_ConvertOffsetToAlias": {
+      "unchanged": true,
+      "sha256": "dfeb38e1f13ac7842f8eb72d7b39158376a89e25fae126a8db9f6a8df0c5ebec"
+    },
+    "Load_XStringCustom": {
+      "unchanged": true,
+      "sha256": "3ee9e7985d6351a35bbc3605be91578911b12e02ef40cb176f9ddc65add4650f"
+    },
+    "Load_TempStringCustom": {
+      "unchanged": true,
+      "sha256": "0214795cd4301b1e37e19ee32d65fb2a6f6b29fe2fdb61973b0d6bdc53a01dec"
+    }
+  }
+}

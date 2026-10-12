@@ -1,0 +1,8 @@
+{
+  "reviewer": "envelope_review",
+  "scope": "numeric first StringTable header",
+  "remaining_blockers_in_scope": [],
+  "corrected_gap": "Block0 aliases0/4/12/16 and exact0 compared immediately after short-read failure before reset, with live side-envelope seeded",
+  "alias_scope": "Specific small current envelope12 replacement/header values and4 retention tested; duplicate-key std::sort ordering not claimed generally",
+  "future_limits": "TEMP workspace is not registered persistent asset; block4 name/cell/index capacities and initialized-string fixups remain future gates"
+}
