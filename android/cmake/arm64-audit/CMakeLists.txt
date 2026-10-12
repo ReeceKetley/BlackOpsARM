@@ -923,3 +923,26 @@ target_link_options(bo1_entry_alloc_tests PRIVATE -Wl,--gc-sections -fsanitize=u
         target_link_libraries(bo1_bootstrap_default_tests PRIVATE bo1_arm64_narrow bo1_android_virtual_memory
             bo1_android_hunk_services bo1_fastfile_zlib)
         target_link_options(bo1_bootstrap_default_tests PRIVATE -Wl,--gc-sections -fsanitize=undefined)
+        add_executable(bo1_default_resolution_tests "${BO1_ROOT}/tools/port/tests/default_resolution_tests.cpp" "${BO1_ROOT}/tools/port/tests/entry_owner_support.cpp" "${BO1_ROOT}/tools/port/tests/material_shader_load_support.cpp" "${BO1_ROOT}/tools/port/tests/default_resolution_pool_support.cpp" "${SRC_DIR}/clientscript/cscr_stringlist.cpp" "${SRC_DIR}/clientscript/cscr_memorytree.cpp" "${SRC_DIR}/clientscript/cscr_instance.cpp" "${SRC_DIR}/platform/android/script_pool_bridge.cpp" "${SRC_DIR}/platform/android/script_string_services.cpp"
+            "${BO1_ROOT}/tools/port/tests/stream_init_support.cpp"
+            "${BO1_ROOT}/tools/port/tests/checked_zone_support.cpp"
+            "${BO1_ROOT}/tools/port/tests/hunk_test_support.cpp"
+            "${SRC_DIR}/platform/fastfile_rawfile_payload.cpp" "${SRC_DIR}/platform/fastfile_rawfile_header.cpp" "${SRC_DIR}/database/db_expand.cpp" "${SRC_DIR}/platform/fastfile_script_table.cpp"
+            "${SRC_DIR}/platform/fastfile_asset_directory.cpp" "${SRC_DIR}/platform/fastfile_stringtable_header.cpp" "${SRC_DIR}/platform/fastfile_stringtable_cells.cpp" "${SRC_DIR}/platform/fastfile_initialized_strings.cpp" "${SRC_DIR}/platform/fastfile_stringtable_indices.cpp" "${SRC_DIR}/database/db_load.cpp" "${SRC_DIR}/database/db_registry.cpp" "${SRC_DIR}/database/db_assetnames.cpp" "${SRC_DIR}/universal/com_hash.cpp" "${SRC_DIR}/universal/com_stringtable_sort.cpp" "${SRC_DIR}/platform/win32_compat/sort16.cpp" "${SRC_DIR}/universal/com_stringtable_obj.cpp" "${SRC_DIR}/universal/com_stringtable.cpp" "${SRC_DIR}/universal/q_shared.cpp"
+            "${SRC_DIR}/platform/fastfile_raw_string.cpp" "${SRC_DIR}/database/db_stream_load.cpp"
+            "${SRC_DIR}/platform/fastfile_assetlist.cpp" "${SRC_DIR}/platform/fastfile_zone.cpp"
+            "${SRC_DIR}/platform/fastfile_inflate.cpp" "${SRC_DIR}/platform/android/zone_memory.cpp"
+            "${SRC_DIR}/platform/android/database_diagnostics.cpp"
+            $<TARGET_OBJECTS:bo1_zone_compile> $<TARGET_OBJECTS:bo1_parsetree_compile>
+            $<TARGET_OBJECTS:bo1_firstfit_compile>)
+        target_compile_features(bo1_default_resolution_tests PRIVATE cxx_std_20)
+        target_compile_definitions(bo1_default_resolution_tests PRIVATE _DEBUG=1 BO1_ZONE_GATE=1
+            BO1_REAL_FIRSTFIT_GATE=1 BO1_DEBUGGER_GATE=1 BO1_CHECKED_ZONE_GATE=1
+            BO1_STRING_POOL_GATE=1 BO1_REGISTRY_DEFAULT_GATE=1 BO1_MATERIAL_GRAPH_GATE=1 BO1_TECHSET_GATE=1 BO1_ASSETLIST_GATE=1 BO1_FRONTEND_TABLES_GATE=1 BO1_FRONTEND_TRACE_LOGS=1 BO1_RAW_STRING_GATE=1 BO1_ASSET_DIRECTORY_GATE=1 BO1_STRINGTABLE_HEADER_GATE=1 BO1_STRINGTABLE_CELLS_GATE=1 BO1_STRINGTABLE_STRINGS_GATE=1 BO1_STRINGTABLE_INDEX_GATE=1 BO1_STRINGTABLE_HASH_GATE=1 BO1_STRINGTABLE_LOOKUP_GATE=1 BO1_STRINGTABLE_NORMALIZATION_GATE=1 BO1_STRINGTABLE_OWNER_GATE=1 BO1_RAWFILE_HEADER_GATE=1 BO1_RAWFILE_PAYLOAD_GATE=1 BO1_RAWFILE_OWNER_GATE=1 BO1_ASSET_ENTRY_GATE=1 BO1_ENTRY_ALLOC_GATE=1 BO1_ENTRY_GENUINE_GATE=1 BO1_REGISTRY_LOOKUP_GATE=1 BO1_REGISTRY_INSERT_GATE=1 BO1_REGISTRY_ADD_GATE=1)
+        target_compile_options(bo1_default_resolution_tests PRIVATE -Wall -Wextra -Wpedantic -Werror=return-type
+            -fms-extensions -fsigned-char -ffunction-sections -fdata-sections
+            -fsanitize=undefined -fno-sanitize-recover=all
+            -include "${SRC_DIR}/platform/win32_compat/msvc_compat.h")
+        target_link_libraries(bo1_default_resolution_tests PRIVATE bo1_arm64_narrow bo1_android_virtual_memory
+            bo1_android_hunk_services bo1_fastfile_zlib)
+        target_link_options(bo1_default_resolution_tests PRIVATE -Wl,--gc-sections -fsanitize=undefined)

@@ -1,5 +1,11 @@
 ## Current Milestone
 
+TASK40 corrected actualdefault/SLownership verified3ABIs/O0/O3. Next complete
+production first71assetMPstartupzone, nativeDB/core startup, genuineheadless
+Zombiessimulation beforegraphics. DEC47/56/59 active; nofullenginebootclaim.
+
+## Current Milestone
+
 TASK39 complete genuine default CPUgraph registered on3ABIs/O0/O3; next actual
 bootstrap default services/liveSL ownership, true MP-first initialization and
 mapmodel/script prerequisites. Read STATE/arm64_bootstrap_default.md; standing

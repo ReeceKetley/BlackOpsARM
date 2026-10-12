@@ -57,3 +57,9 @@ testing and gameplay. Intentional stubs matching that reference, including futur
 discoveries, are accepted content and require no separate repair/implementation
 milestone. Preserve x64 reference handling; focus on actual Android startup and
 Zombies dependencies. Dead Ops Arcade remains excluded. See DEC56.
+
+
+User validation guidance: prioritize genuine headless startup and Zombies gameplay
+simulation before rendered gameplay. Actual server/game/script/map execution with
+real assets is the milestone; asset-loader or VM unit harnesses do not prove it.
+Current bootstrap ownership prerequisites continue first. See DEC59.

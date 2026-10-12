@@ -23,12 +23,14 @@ _set_abort_behavior(0,_WRITE_ABORT_MSG|_CALL_REPORTFAULT);
 #endif
 std::fprintf(stderr,"Explicit unsupported standalone registration dependency: %s\n",name);std::fflush(stderr);std::abort();}
 const char *Dvar_GetString(const char*){registrationUnavailable("Dvar_GetString");}
+#if !defined(BO1_REGISTRY_DEFAULT_GATE)
 XAssetEntry *DB_CreateDefaultEntry(XAssetType type,const char*){
 #if defined(BO1_TECHSET_GATE)
 extern void ReportTechniqueSetDefaultUnavailable();
 if(type==ASSET_TYPE_TECHNIQUE_SET)ReportTechniqueSetDefaultUnavailable();
 #endif
 registrationUnavailable("DB_CreateDefaultEntry");}
+#endif
 bool DB_OverrideAsset(unsigned int,unsigned int){registrationUnavailable("DB_OverrideAsset");}
 void DB_DelayedCloneXAsset(XAssetEntry*){registrationUnavailable("DB_DelayedCloneXAsset");}
 void DB_SwapXAsset(XAsset*,XAsset*){registrationUnavailable("DB_SwapXAsset");}

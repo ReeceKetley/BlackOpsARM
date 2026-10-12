@@ -394,3 +394,34 @@ noimplementation started. Fullengine startup/async/APK/game-ownedgraphics/playab
 notcertified. Verified x64intentionalstubs expected perDEC56; DOAexcludedDEC55.
 StandingDEC47 continues autonomously/localcommits/no push. No protectedcheckout,
 retailfile or priorfrozenevidence modified.
+
+
+User validation guidance: prioritize genuine headless startup and Zombies gameplay
+simulation before rendered gameplay. Actual server/game/script/map execution with
+real assets is the milestone; asset-loader or VM unit harnesses do not prove it.
+Current bootstrap ownership prerequisites continue first. See DEC59.
+
+
+# Current state - TASK40 real default ownership verified
+
+Correctedhost/O0/O3 passall3ABIs: genuineMPprovider + mapfirsttable + intentional
+reference resolveviaactualdefaultlookup/create/setname,3entrieszones1/2/0. RealSL/MT
+user4 nameID2/ref1/allocation1; fullprovidergraph survivesmapstreamreset/TEMPoverwrite,
+repeatAddsameclone/all1594queries. ActualFreeDefaults afterfixture nondefaultdetach,
+reverseheaders/twoSAMEprimowners thenSLuser4 shutdown restorefullbaselines. Missing
+provideractualfatal exact3Win/134HONOR beforeallocation. PriorTASK36/37 andfullTASK39
+MP/SP graphs/GPUrefusal passagain. Five normalWindowsTUs/ABI pass. Sourceproof46
+unchangedbodies+1explicitgenericsetter2memcpy correction removesaliasing; unnecessary
+XModelPiecesmove removed. PMem/SL/MT/material/XModel sourcepolicy unchanged.
+
+19930protectedhashes/referenceGit exact;689records+inventory archived losslessly,
+noassets/binaries. Read arm64_default_resolution.md, DEC58/59, FACT121-123/WARN41/
+FAIL38. Alltests ended, rootownsallreturnededits; Git supplies exactcheckpoint.
+NativePMemthird+recordstride remainsuncertified; currenttwo-case contained.
+
+Next3: reusableproductionreader/owner+actualrootdispatch entirecode_pre_gfx_mp71
+assets (3tables+68rawfiles,150108bytes); actualDBfile/zone workers+realAndroid
+Com_Init/Com_Frame services; genuineZombiesworld/script/server simulation before
+rendering. No fullengineboot/headlessgameplay/APKgraphics claim. Actualpostgfx
+nexttype8Image. x64intentionalstubsacceptedDEC56/DOAexcluded; DEC47standinggoalactive,
+localverifiedcommits/no push. Don'tshipfixtureDvars or successstubs innewcomponent.

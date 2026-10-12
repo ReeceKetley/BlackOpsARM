@@ -7,6 +7,9 @@
 #include "db_registry_lookup_api.h"
 #if defined(BO1_REGISTRY_ADD_GATE)
 #include "db_registry_add_api.h"
+#if defined(BO1_REGISTRY_DEFAULT_GATE)
+#include "db_registry_default_api.h"
+#endif
 #endif
 #endif
 #endif
@@ -198,11 +201,56 @@ const char *g_assetNames[43] =
   "emblemset"
 };
 #endif
-#if !defined(BO1_STRINGTABLE_OWNER_GATE)
+#if !defined(BO1_STRINGTABLE_OWNER_GATE) || defined(BO1_REGISTRY_DEFAULT_GATE)
 
 
 void(__cdecl *DB_XAssetSetNameHandler[43])(XAssetHeader *, const char *) =
 {
+#if defined(BO1_REGISTRY_DEFAULT_GATE)
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  &DB_DDLSetname,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+#else
   &DB_DDLSetname,
   &DB_DDLSetname,
   &DB_DDLSetname,
@@ -246,6 +294,7 @@ void(__cdecl *DB_XAssetSetNameHandler[43])(XAssetHeader *, const char *) =
   &DB_DDLSetname,
   NULL,
   NULL
+#endif
 };
 
 #endif
@@ -717,10 +766,15 @@ void __cdecl DB_LocalizeEntrySetName(XAssetHeader *header, const char *name)
     header->localize->name = name;
 }
 
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE) || defined(BO1_REGISTRY_DEFAULT_GATE)
 void __cdecl DB_DDLSetname(XAssetHeader *header, const char *name)
 {
-    // Used as a stub name setter for many asset types whose first field is `const char *name`.
-    header->xmodelPieces->name = name;
+    // Generic assets carry their native-width name pointer in the first word.
+    // Copy representations without accessing an unrelated payload structure.
+    void *payload;
+    ::memcpy(&payload, header, sizeof(payload));
+    ::memcpy(payload, &name, sizeof(name));
 }
 
 #endif
@@ -813,7 +867,7 @@ const char *__cdecl DB_GetXAssetName(const XAsset *asset)
     return DB_GetXAssetHeaderName(asset->type, &asset->header);
 }
 #endif
-#if !defined(BO1_STRINGTABLE_OWNER_GATE)
+#if !defined(BO1_STRINGTABLE_OWNER_GATE) || defined(BO1_REGISTRY_DEFAULT_GATE)
 
 
 void __cdecl DB_SetXAssetName(XAsset *asset, const char *name)

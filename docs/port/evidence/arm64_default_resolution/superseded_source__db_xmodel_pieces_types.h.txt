@@ -1,0 +1,15 @@
+#pragma once
+#include <platform/bo1_native_width.h>
+#include <cstddef>
+struct XModelPiece;
+struct XModelPieces // sizeof=0xC
+{                                       // XREF: XAssetPoolEntry<XModelPieces>/r
+    const char *name;
+    int numpieces;
+    XModelPiece *pieces;
+};
+
+static_assert(sizeof(XModelPieces)==(BO1_NATIVE_64BIT?24:12));
+static_assert(offsetof(XModelPieces,name)==0);
+static_assert(offsetof(XModelPieces,numpieces)==sizeof(void*));
+static_assert(offsetof(XModelPieces,pieces)==(BO1_NATIVE_64BIT?16:8));
