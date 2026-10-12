@@ -1,3 +1,25 @@
+# Current state — TASK33 complete; standing goal continues
+
+Genuine StringTable/RawFile headers now use actual DB_AllocXAssetEntry/clone/free
+through codec/checkedzone/finite loader. Code owns2 entries/zombie1 without skipping
+TechniqueSet7. Header pairs/children/all1994queries surviveTEMP reuse; source10577/
+65678 unchanged. Actual reverse entry frees restore32752ascending chain/bothpools
+beforezone, count0/highwater2 retained. Private serial ownership only, hash0/noDBAdd.
+Finalhost2/debug2/O3pass2 +debugrun2/O3run2 pass215priorcases/12cycles perABI,
+12typed entryrows/4new malformedcontrols, assertions/UBSan. Production src/tl/
+DemonWare unchanged; exactfixture/source/protected17393 paths/Git checks pass.
+Alltests ended; duplicate-va link failure/finalfix/old evidence preserved.
+Read arm64_entry_owned_genuine.md, DEC49/FACT101/102/WARN34/FAIL32. Local checkpoint
+covers this gate; Git supplies exact HEAD. Autonomous DEC47/no push remains active.
+
+Next actual name/hash lookup, smallest real registration/returned-header path,
+then next genuine asset deserialization. No fullDB_Init/Dvar registration/DBAdd/
+publication/game boot/render claim. Finite fixture reader/private clone/error
+endpoints not async/refill/concurrent publication/longjmp/OOM recovery. Keep
+zombie TechniqueSet7 and protected original assets/repos/root/evidence intact.
+
+# Historical state (preserved)
+
 # Current state — TASK32 complete; standing autonomous goal active
 
 Actual header dispatch and entry alloc/free verified on Windowsx86/x64/HONOR O0/O3.

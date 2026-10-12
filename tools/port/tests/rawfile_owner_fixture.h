@@ -37,12 +37,24 @@ static void fixtures(){
  require(clone(from,to,sizeof(RawFile),sizeof(RawFile))&&!std::memcmp(a.data,&foreign,sizeof(RawFile))&&release(a),"RawFile actual shallow clone");reject([&]{return clone(from,to,sizeof(RawFile),sizeof(RawFile));});require(freeCount(true)==2&&init(POOLSIZE_RAWFILE)&&freeCount(true)==POOLSIZE_RAWFILE,"RawFile normal production baseline");
  std::printf("{\"rawfile_owner_fixtures\":{\"active_sizes\":[1,2,1024,2048],\"allocated_nodes\":%u,\"exhaustions\":4,\"invalid_caller_preconditions\":%u,\"header_bytes\":%zu,\"pool_bytes\":%zu,\"baseline_restored\":true,\"lifo_verified\":true,\"full_registry_executed\":false}}\n",allocated,invalid,sizeof(RawFile),sizeof(g_RawFilePool));
 }
-static void prepare(RawFile*temp){require(!persistent&&!live.any()&&freeCount(true)==POOLSIZE_RAWFILE,"RawFile genuine pool starts baseline");XAsset from{},to{};from.type=to.type=ASSET_TYPE_RAWFILE;from.header.data=temp;to.header=alloc();require(clone(from,to,sizeof(RawFile),sizeof(RawFile)),"RawFile actual clone before TEMP pop");persistent=static_cast<RawFile*>(to.header.data);std::memcpy(saved.data(),temp,sizeof(RawFile));require(persistent!=temp&&!std::memcmp(persistent,temp,sizeof(RawFile)),"RawFile persistent exact native header");}
+static void prepare(RawFile*temp){require(!persistent&&!live.any()&&freeCount(true)==POOLSIZE_RAWFILE,"RawFile genuine pool starts baseline");XAsset from{},to{};from.type=to.type=ASSET_TYPE_RAWFILE;from.header.data=temp;
+#if defined(BO1_ENTRY_GENUINE_GATE)
+ to.header=entry_owner_fixture::acquire(ASSET_TYPE_RAWFILE);const auto id=index(to.header.data);require(id<active&&!live[id],"actual RawFile entry header unique in pool");live[id]=true;
+#else
+ to.header=alloc();
+#endif
+require(clone(from,to,sizeof(RawFile),sizeof(RawFile)),"RawFile actual clone before TEMP pop");persistent=static_cast<RawFile*>(to.header.data);std::memcpy(saved.data(),temp,sizeof(RawFile));require(persistent!=temp&&!std::memcmp(persistent,temp,sizeof(RawFile)),"RawFile persistent exact native header");}
 static void verify(RawFile*temp,XBlock(&blocks)[7],const RawFilePayloadPlan&p,const StringTablePayloadPlan&first,bool measurement){
  require(persistent&&live[index(persistent)]&&!std::memcmp(persistent,saved.data(),sizeof(RawFile)),"RawFile persistent survives Pop");auto state=frontend_fixture::streamState();auto owners=frontend_fixture::counts();std::vector<unsigned char> children(static_cast<std::size_t>(p.nativeEnd));std::memcpy(children.data(),blocks[4].data,children.size());
  require(persistent->name==reinterpret_cast<char*>(blocks[4].data+p.name.nativeStart)&&persistent->buffer==reinterpret_cast<char*>(blocks[4].data+p.bufferNativeStart)&&persistent->len==140&&p.name.bytes==17&&p.bufferBytes==141,"RawFile genuine child ownership and original length");
  std::memset(temp,0xa5,sizeof(RawFile));require(!std::memcmp(persistent,saved.data(),sizeof(RawFile))&&!std::memcmp(children.data(),blocks[4].data,children.size()),"RawFile complete child bytes survive TEMP overwrite");executeLookups(first,owner_fixture::persistent,false);require(!lastLookup.rowMisses&&!lastLookup.rowDisagreements&&!lastLookup.columnDisagreements&&state==frontend_fixture::streamState()&&owners==frontend_fixture::counts(),"RawFile TEMP overwrite preserves first-table queries/cursors/owners");
  if(measurement)std::printf("{\"rawfile_owner_measurements\":{\"header_bytes\":%zu,\"name_bytes\":17,\"buffer_bytes\":141,\"temp_overwritten_bytes\":%zu,\"persistent_header_unchanged\":true,\"children_unchanged\":true,\"first_table_queries\":%u,\"full_registry_executed\":false}}\n",sizeof(RawFile),sizeof(RawFile),lastLookup.queries);
 }
-static void finish(){const bool had=persistent!=nullptr;std::printf("{\"rawfile_owner_release\":{\"allocated\":%s,\"baseline_restored\":true,\"before_zone_release\":true}}\n",had?"true":"false");if(!persistent){require(!live.any()&&freeCount(true)==POOLSIZE_RAWFILE,"deferred asset has no RawFile owner");return;}XAssetHeader h(persistent);persistent=nullptr;require(release(h)&&!live.any()&&freeCount(true)==POOLSIZE_RAWFILE,"RawFile header released before zone children; baseline restored");saved={};}
+static void finish(){const bool had=persistent!=nullptr;std::printf("{\"rawfile_owner_release\":{\"allocated\":%s,\"baseline_restored\":true,\"before_zone_release\":true}}\n",had?"true":"false");if(!persistent){require(!live.any()&&freeCount(true)==POOLSIZE_RAWFILE,"deferred asset has no RawFile owner");return;}XAssetHeader h(persistent);persistent=nullptr;
+#if defined(BO1_ENTRY_GENUINE_GATE)
+ auto id=index(h.data);require(id<active&&live[id],"actual RawFile entry-owned release precondition");entry_owner_fixture::release(h.data);live[id]=false;require(!live.any()&&freeCount(true)==POOLSIZE_RAWFILE,
+#else
+ require(release(h)&&!live.any()&&freeCount(true)==POOLSIZE_RAWFILE,
+#endif
+"RawFile header released before zone children; baseline restored");saved={};}
 }

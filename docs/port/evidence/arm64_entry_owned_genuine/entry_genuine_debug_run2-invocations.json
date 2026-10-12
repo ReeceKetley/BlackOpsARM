@@ -1,0 +1,271 @@
+[
+  {
+    "label": "code_pre_gfx-reused-device-sha",
+    "argv": [
+      "D:\\Android\\Sdk\\platform-tools\\adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "sha256sum /data/local/tmp/blackopsarm-phase1-string-table-20261011-225356426113/code_pre_gfx.ff"
+    ],
+    "cwd": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\entry_genuine_debug_run2",
+    "exit": 0,
+    "timed_out": false,
+    "launch_error": null,
+    "elapsed_seconds": 0.08999709994532168
+  },
+  {
+    "label": "zombie_pentagon-reused-device-sha",
+    "argv": [
+      "D:\\Android\\Sdk\\platform-tools\\adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "sha256sum /data/local/tmp/blackopsarm-phase1-string-table-20261011-225356426113/zombie_pentagon.ff"
+    ],
+    "cwd": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\entry_genuine_debug_run2",
+    "exit": 0,
+    "timed_out": false,
+    "launch_error": null,
+    "elapsed_seconds": 0.15247309999540448
+  },
+  {
+    "label": "device-create",
+    "argv": [
+      "D:\\Android\\Sdk\\platform-tools\\adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "mkdir /data/local/tmp/blackopsarm-phase1-rawfile-payload-20261012-092110838623"
+    ],
+    "cwd": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\entry_genuine_debug_run2",
+    "exit": 0,
+    "timed_out": false,
+    "launch_error": null,
+    "elapsed_seconds": 0.08432739996351302
+  },
+  {
+    "label": "device-metadata",
+    "argv": [
+      "D:\\Android\\Sdk\\platform-tools\\adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "getprop ro.product.model; getprop ro.build.version.sdk; uname -a; cat /proc/meminfo"
+    ],
+    "cwd": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\entry_genuine_debug_run2",
+    "exit": 0,
+    "timed_out": false,
+    "launch_error": null,
+    "elapsed_seconds": 0.184194500092417
+  },
+  {
+    "label": "device-probe-push",
+    "argv": [
+      "D:\\Android\\Sdk\\platform-tools\\adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "push",
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\entry_genuine_debug_pass2\\bo1_entry_genuine_tests",
+      "/data/local/tmp/blackopsarm-phase1-rawfile-payload-20261012-092110838623/probe"
+    ],
+    "cwd": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\entry_genuine_debug_run2",
+    "exit": 0,
+    "timed_out": false,
+    "launch_error": null,
+    "elapsed_seconds": 0.12645260011777282
+  },
+  {
+    "label": "device-probe-chmod",
+    "argv": [
+      "D:\\Android\\Sdk\\platform-tools\\adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "chmod 700 /data/local/tmp/blackopsarm-phase1-rawfile-payload-20261012-092110838623/probe"
+    ],
+    "cwd": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\entry_genuine_debug_run2",
+    "exit": 0,
+    "timed_out": false,
+    "launch_error": null,
+    "elapsed_seconds": 0.08654670021496713
+  },
+  {
+    "label": "device-probe-sha",
+    "argv": [
+      "D:\\Android\\Sdk\\platform-tools\\adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "sha256sum /data/local/tmp/blackopsarm-phase1-rawfile-payload-20261012-092110838623/probe"
+    ],
+    "cwd": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\entry_genuine_debug_run2",
+    "exit": 0,
+    "timed_out": false,
+    "launch_error": null,
+    "elapsed_seconds": 0.10205959994345903
+  },
+  {
+    "label": "windows_x86-code_pre_gfx-decode",
+    "argv": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\entry_genuine_host_pass2\\x86\\entry_genuine.exe",
+      "decode",
+      "D:\\Games\\Call of Duty - Black Ops\\zone\\common\\code_pre_gfx.ff",
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\entry_genuine_debug_run2\\windows_x86-code_pre_gfx.prefix"
+    ],
+    "cwd": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\entry_genuine_debug_run2",
+    "exit": 0,
+    "timed_out": false,
+    "launch_error": null,
+    "elapsed_seconds": 0.011066100094467402
+  },
+  {
+    "label": "windows_x86-zombie_pentagon-decode",
+    "argv": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\entry_genuine_host_pass2\\x86\\entry_genuine.exe",
+      "decode",
+      "D:\\Games\\Call of Duty - Black Ops\\zone\\common\\zombie_pentagon.ff",
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\entry_genuine_debug_run2\\windows_x86-zombie_pentagon.prefix"
+    ],
+    "cwd": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\entry_genuine_debug_run2",
+    "exit": 0,
+    "timed_out": false,
+    "launch_error": null,
+    "elapsed_seconds": 0.5912822999525815
+  },
+  {
+    "label": "windows_x86-rawfile-payload",
+    "argv": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\entry_genuine_host_pass2\\x86\\entry_genuine.exe",
+      "gate",
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\entry_genuine_debug_run2\\windows_x86-code_pre_gfx.prefix",
+      "49593",
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\entry_genuine_debug_run2\\windows_x86-zombie_pentagon.prefix",
+      "108009041"
+    ],
+    "cwd": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\entry_genuine_debug_run2",
+    "exit": 0,
+    "timed_out": false,
+    "launch_error": null,
+    "elapsed_seconds": 0.21338009997271
+  },
+  {
+    "label": "windows_x64-code_pre_gfx-decode",
+    "argv": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\entry_genuine_host_pass2\\x64\\entry_genuine.exe",
+      "decode",
+      "D:\\Games\\Call of Duty - Black Ops\\zone\\common\\code_pre_gfx.ff",
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\entry_genuine_debug_run2\\windows_x64-code_pre_gfx.prefix"
+    ],
+    "cwd": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\entry_genuine_debug_run2",
+    "exit": 0,
+    "timed_out": false,
+    "launch_error": null,
+    "elapsed_seconds": 0.006914899917319417
+  },
+  {
+    "label": "windows_x64-zombie_pentagon-decode",
+    "argv": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\entry_genuine_host_pass2\\x64\\entry_genuine.exe",
+      "decode",
+      "D:\\Games\\Call of Duty - Black Ops\\zone\\common\\zombie_pentagon.ff",
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\entry_genuine_debug_run2\\windows_x64-zombie_pentagon.prefix"
+    ],
+    "cwd": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\entry_genuine_debug_run2",
+    "exit": 0,
+    "timed_out": false,
+    "launch_error": null,
+    "elapsed_seconds": 0.5492670000530779
+  },
+  {
+    "label": "windows_x64-rawfile-payload",
+    "argv": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\entry_genuine_host_pass2\\x64\\entry_genuine.exe",
+      "gate",
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\entry_genuine_debug_run2\\windows_x64-code_pre_gfx.prefix",
+      "49593",
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\entry_genuine_debug_run2\\windows_x64-zombie_pentagon.prefix",
+      "108009041"
+    ],
+    "cwd": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\entry_genuine_debug_run2",
+    "exit": 0,
+    "timed_out": false,
+    "launch_error": null,
+    "elapsed_seconds": 0.220626600086689
+  },
+  {
+    "label": "honor_arm64-code_pre_gfx-decode",
+    "argv": [
+      "D:\\Android\\Sdk\\platform-tools\\adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "/data/local/tmp/blackopsarm-phase1-rawfile-payload-20261012-092110838623/probe decode /data/local/tmp/blackopsarm-phase1-string-table-20261011-225356426113/code_pre_gfx.ff /data/local/tmp/blackopsarm-phase1-rawfile-payload-20261012-092110838623/code_pre_gfx.prefix"
+    ],
+    "cwd": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\entry_genuine_debug_run2",
+    "exit": 0,
+    "timed_out": false,
+    "launch_error": null,
+    "elapsed_seconds": 0.09495920012705028
+  },
+  {
+    "label": "honor_arm64-code_pre_gfx-prefix-sha",
+    "argv": [
+      "D:\\Android\\Sdk\\platform-tools\\adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "sha256sum /data/local/tmp/blackopsarm-phase1-rawfile-payload-20261012-092110838623/code_pre_gfx.prefix"
+    ],
+    "cwd": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\entry_genuine_debug_run2",
+    "exit": 0,
+    "timed_out": false,
+    "launch_error": null,
+    "elapsed_seconds": 0.08167330012656748
+  },
+  {
+    "label": "honor_arm64-zombie_pentagon-decode",
+    "argv": [
+      "D:\\Android\\Sdk\\platform-tools\\adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "/data/local/tmp/blackopsarm-phase1-rawfile-payload-20261012-092110838623/probe decode /data/local/tmp/blackopsarm-phase1-string-table-20261011-225356426113/zombie_pentagon.ff /data/local/tmp/blackopsarm-phase1-rawfile-payload-20261012-092110838623/zombie_pentagon.prefix"
+    ],
+    "cwd": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\entry_genuine_debug_run2",
+    "exit": 0,
+    "timed_out": false,
+    "launch_error": null,
+    "elapsed_seconds": 7.661293900106102
+  },
+  {
+    "label": "honor_arm64-zombie_pentagon-prefix-sha",
+    "argv": [
+      "D:\\Android\\Sdk\\platform-tools\\adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "sha256sum /data/local/tmp/blackopsarm-phase1-rawfile-payload-20261012-092110838623/zombie_pentagon.prefix"
+    ],
+    "cwd": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\entry_genuine_debug_run2",
+    "exit": 0,
+    "timed_out": false,
+    "launch_error": null,
+    "elapsed_seconds": 0.09337439993396401
+  },
+  {
+    "label": "honor_arm64-rawfile-payload",
+    "argv": [
+      "D:\\Android\\Sdk\\platform-tools\\adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "/data/local/tmp/blackopsarm-phase1-rawfile-payload-20261012-092110838623/probe gate /data/local/tmp/blackopsarm-phase1-rawfile-payload-20261012-092110838623/code_pre_gfx.prefix 49593 /data/local/tmp/blackopsarm-phase1-rawfile-payload-20261012-092110838623/zombie_pentagon.prefix 108009041"
+    ],
+    "cwd": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\entry_genuine_debug_run2",
+    "exit": 0,
+    "timed_out": false,
+    "launch_error": null,
+    "elapsed_seconds": 2.8472813998814672
+  }
+]

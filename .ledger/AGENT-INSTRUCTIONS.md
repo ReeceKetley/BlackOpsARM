@@ -378,3 +378,12 @@ namegetter representation memcpy; source/policy/Windows/genuine owner parity pas
 Next genuine entry-owned headers/zone children, hash lookup, smallest publication.
 Logging/error/dvar controls are fixtures; LoadObj explicitly unsupported; no full
 engine/registry or rollback claim. Continue toward actual production integration.
+
+
+TASK33 genuine entry-owned headers complete: arm64_entry_owned_genuine.md,
+DEC49/FACT101/102/WARN34/FAIL32. Actual alloc/clone/free owns2 code/1 zombie headers,
+allchildren/queries/TEMP integrity and entry/pool release baseline verified3ABIs/
+O0/O3. Production trees unchanged. Serial/private/nohash/noDBAdd boundary only;
+finite reader/error inputs not fullengine/async/recovery. Next actualname/hash
+lookup, smallest publication/returned-header, nextgenuineasset. Continue autonomous
+DEC47/localverifiedcommits/no push; preserve TechniqueSet7 and all old evidence.

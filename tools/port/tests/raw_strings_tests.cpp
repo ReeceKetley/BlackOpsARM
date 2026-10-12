@@ -321,6 +321,9 @@ int main(int argc,char**argv){require(argc>=2,"decode/gate mode");if(!std::strcm
 #endif
 #endif
 #endif
+#if defined(BO1_ENTRY_GENUINE_GATE)
+    entry_owner_fixture::begin();
+#endif
     unsigned cycles=0;
     for(unsigned round=0;round<3;++round)for(unsigned type=0;type<2;++type)for(unsigned asset=0;asset<2;++asset){auto&f=asset?bp:ap;auto&bytes=asset?b:a;auto zone=f.envelope.zone;zone.limits.allocType=type;frontend_fixture::Owner owner;owner.type=type;XBlock blocks[7]{};unsigned failed;
         require(AllocateZonePlan(zone,frontend_fixture::page(),frontend_fixture::backend(owner),blocks,failed)==ZoneResult::Ok,"genuine actual allocator policy");DB_InitStreams(blocks);
@@ -360,9 +363,16 @@ int main(int argc,char**argv){require(argc>=2,"decode/gate mode");if(!std::strcm
         require(!varshort,"scalar loader global invalid before reset/release");
 #endif
 #if defined(BO1_STRINGTABLE_OWNER_GATE)
+#if defined(BO1_ENTRY_GENUINE_GATE)
+        entry_owner_fixture::verifyLive(asset);
+        rawfile_owner_fixture::finish();
+        owner_fixture::finish();
+        entry_owner_fixture::finish(asset);
+#else
         owner_fixture::finish();
 #if defined(BO1_RAWFILE_OWNER_GATE)
         rawfile_owner_fixture::finish();
+#endif
 #endif
 #endif
         DB_InitStreams(detached);
@@ -409,7 +419,9 @@ int main(int argc,char**argv){require(argc>=2,"decode/gate mode");if(!std::strcm
 #endif
     }
     const char*schema=
-#if defined(BO1_RAWFILE_OWNER_GATE)
+#if defined(BO1_ENTRY_GENUINE_GATE)
+        "BlackOpsARM.TASK-0033.entry-owned-genuine.v1";
+#elif defined(BO1_RAWFILE_OWNER_GATE)
         "BlackOpsARM.TASK-0030.rawfile-owner.v1";
 #elif defined(BO1_RAWFILE_PAYLOAD_GATE)
         "BlackOpsARM.TASK-0029.rawfile-payload.v1";
