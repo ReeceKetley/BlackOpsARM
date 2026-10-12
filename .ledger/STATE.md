@@ -1,3 +1,7 @@
+TASK27 source/evidence checkpoint ee13677 verified (FACT-0088); all352durablepaths committed,
+3325priorfrozen/3586archiveGitblobs preserved, alltestsfinished, protectedunchanged.
+NextTASK28 write-aware TEMP mapping beforeasset2; Git supplies latestpendingstate.
+
 # Current State — 12 October 2026
 
 TASK27 TEMP cursor/alias prerequisite complete. Actual native-only target-entry
