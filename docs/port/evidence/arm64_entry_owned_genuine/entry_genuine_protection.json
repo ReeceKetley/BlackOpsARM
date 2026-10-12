@@ -1,0 +1,7 @@
+{
+  "schema": "BlackOpsARM.TASK33.protection.v1",
+  "checked_files": 17393,
+  "changed_protected_paths": [],
+  "protected_git_matches": true,
+  "passed": true
+}

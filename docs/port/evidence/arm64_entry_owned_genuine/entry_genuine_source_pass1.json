@@ -1,0 +1,32 @@
+{
+  "schema": "BlackOpsARM.TASK33.source.v1",
+  "status": "passed",
+  "parent": "4f2d4bd",
+  "production_trees_unchanged": [
+    "src",
+    "tl",
+    "DemonWare"
+  ],
+  "tree_sha": {
+    "src": "e26691661d808c2f6bb1a59b9451ffd4501d2f49",
+    "tl": "73d23ea3e387ee41239601c0277e668ea3786a36",
+    "DemonWare": "edbbf6dfc04caca896af99771c8c7407281f4639"
+  },
+  "fixture_files": {
+    "tools/port/tests/stringtable_owner_fixture.h": {
+      "exact_named_fixture_hooks_only": true,
+      "sha256": "510df7e4703054d6c147cdbaa3402e2d1825971b82070157ee18affb195f532b"
+    },
+    "tools/port/tests/rawfile_owner_fixture.h": {
+      "exact_named_fixture_hooks_only": true,
+      "sha256": "d7b484f32573c3598ab18a6027061bbff4ce3344b6ee9f2e42f1c16b1da6156a"
+    },
+    "tools/port/tests/raw_strings_tests.cpp": {
+      "exact_named_fixture_hooks_only": true,
+      "sha256": "4c6a1a2a157d2c752bca8aa8618097347e6f2aa9eff0a2d4ac9123c933e44a07"
+    }
+  },
+  "existing_cmake_targets_unchanged": true,
+  "no_db_add_or_hash_publication_added": true,
+  "serial_private_ownership_scope": true
+}

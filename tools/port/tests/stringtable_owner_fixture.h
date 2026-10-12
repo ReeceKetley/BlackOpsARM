@@ -1,5 +1,8 @@
 #pragma once
 #include <database/db_asset_pool.h>
+#if defined(BO1_ENTRY_GENUINE_GATE)
+#include "entry_owner_fixture.h"
+#endif
 #include <bitset>
 #include <array>
 #if !defined(__ANDROID__)
@@ -98,7 +101,12 @@ static void fixtures(){
 }
 static StringTable* prepare(StringTable* temp){
     require(!persistent&&!live.any()&&freeCount(true)==POOLSIZE_STRINGTABLE,"genuine clone starts at pool baseline");
-    XAsset from{},to{};from.type=to.type=ASSET_TYPE_STRINGTABLE;from.header.data=temp;to.header=allocate();
+    XAsset from{},to{};from.type=to.type=ASSET_TYPE_STRINGTABLE;from.header.data=temp;
+#if defined(BO1_ENTRY_GENUINE_GATE)
+    to.header=entry_owner_fixture::acquire(ASSET_TYPE_STRINGTABLE);const auto id=indexOf(to.header.data);require(id<active&&!live[id],"actual entry header unique in StringTable pool");live[id]=true;
+#else
+    to.header=allocate();
+#endif
     require(clone(from,to,sizeof(StringTable),sizeof(StringTable)),"actual production pool allocation and clone before TEMP pop");
     persistent=to.header.stringTable;std::memcpy(copiedHeader.data(),temp,sizeof(StringTable));
     require(persistent!=temp&&!std::memcmp(persistent,temp,sizeof(StringTable)),"exact native-width persistent shallow header");return persistent;
@@ -113,6 +121,12 @@ static void verifyAfterPop(const StringTableHeaderPlan& header,const StringTable
     if(measurement)std::printf("{\"owner_measurements\":{\"header_bytes\":%zu,\"pool_address\":%llu,\"pool_above_u32\":%s,\"temp_overwritten_bytes\":%zu,\"row_queries_after_overwrite\":%u,\"row_misses_after_overwrite\":0,\"row_disagreements_after_overwrite\":0,\"column_disagreements_after_overwrite\":0,\"children_unchanged\":true,\"persistent_header_unchanged\":true,\"normalized_once\":true,\"full_registry_executed\":false}}\n",sizeof(StringTable),static_cast<unsigned long long>(reinterpret_cast<std::uintptr_t>(persistent)),reinterpret_cast<std::uintptr_t>(persistent)>UINT32_MAX?"true":"false",sizeof(StringTable),lastLookup.queries);
 }
 static void finish(){
-    require(persistent,"genuine pool header release before zone child release");XAssetHeader header(persistent);persistent=nullptr;require(release(header)&&!live.any()&&freeCount(true)==POOLSIZE_STRINGTABLE,"actual pool header freed; complete original chain restored before zone free");copiedHeader={};
+    require(persistent,"genuine pool header release before zone child release");XAssetHeader header(persistent);persistent=nullptr;
+#if defined(BO1_ENTRY_GENUINE_GATE)
+    const auto id=indexOf(header.data);require(id<active&&live[id],"actual StringTable entry-owned release precondition");entry_owner_fixture::release(header.data);live[id]=false;require(!live.any()&&freeCount(true)==POOLSIZE_STRINGTABLE,
+#else
+    require(release(header)&&!live.any()&&freeCount(true)==POOLSIZE_STRINGTABLE,
+#endif
+"actual pool header freed; complete original chain restored before zone free");copiedHeader={};
 }
 }
