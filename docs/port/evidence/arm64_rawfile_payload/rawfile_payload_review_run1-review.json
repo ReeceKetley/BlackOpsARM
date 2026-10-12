@@ -1,0 +1,44 @@
+{
+  "schema": "BlackOpsARM.TASK-0029.independent-payload-review.v1",
+  "status": "no_blocker_found",
+  "source_proof_path": "source_proof1.json",
+  "source_proof_sha256": "4d4385bd24d9f44f2fbe04fea67de98fcf6e82e404b454d4600a72cb65646cb8",
+  "current_source_proof_hashes_match": true,
+  "reviewed_source_sha256": {
+    "src/platform/fastfile_rawfile_payload.cpp": "e3bd0ab6283fd2a0fe7d5b6e0b465164097b12a4f499d3c4d6c17d4a1e0d9098",
+    "src/platform/fastfile_rawfile_payload.h": "0f57d23c8ee4a425b934d2b2341a503adffd76f96f0f4ba9d8c31582a85ee2be",
+    "tools/port/tests/rawfile_payload_fixture.h": "8603229ecd68ff7ecd3ac3b8a3d4ca8f6295517a8809a62e1501882e073d1979",
+    "tools/port/tests/rawfile_header_fixture.h": "9ec106bf7b30119f1caee27c30316513facee459a5854d8007be5af3f4691f99",
+    "tools/port/verify_rawfile_payload_source.py": "de981faa09259d178c2221ae5d24b3db2ef6cc6195c179b29101c8925266b294"
+  },
+  "planner_review": {
+    "signed_len_plus_one_checked_only_when_buffer_present": true,
+    "null_buffer_skips_child_source_and_unused_length": true,
+    "all_nonzero_buffer_tags_are_presence": true,
+    "name_absent_or_inline_only": true,
+    "source_native_disk_capacities_checked": true,
+    "uint64_arithmetic_and_uint32_commit_domains_checked": true,
+    "buffer_extra_nul_requirement_added": false
+  },
+  "fixture_review": {
+    "planner_cases": 24,
+    "actual_wrapper_cases": 5,
+    "actual_binary_and_nonzero_extra_byte_copy_verified": true,
+    "controlled_short_read_claims_atomicity": false,
+    "genuine_actual_Load_RawFile_false_followup": true,
+    "post_child_current_and_retained_alias_converters_checked": true,
+    "alignment_gap_bytes_snapshotted_and_preserved": true,
+    "loader_globals_cleared_before_detach": true
+  },
+  "limits": [
+    "Borrowed source/destination liveness remains a caller contract",
+    "Controlled short buffer leaves previously loaded header/name and stream work; fixture unwind is not production recovery",
+    "Finite fixture reader does not certify asynchronous refill, longjmp/SEH, OOM or concurrent loading",
+    "First RawFile TEMP header has no persistent registry ownership certificate",
+    "Name offsets other than absent/inline remain unsupported by the checked plan",
+    "No full DB_AddXAsset or registry execution, asset3 dispatch, rendering or original-game process"
+  ],
+  "builds_run_by_reviewer": false,
+  "device_tests_run_by_reviewer": false,
+  "shared_source_or_ledger_edits_by_reviewer": false
+}

@@ -1,3 +1,47 @@
+# Current State — TASK29 complete, 12 October 2026
+
+Genuine code RawFile name17 and present buffer141 load through original wrapper
+and leaves on HONOR/Windows x86/x64; source end10577, disk10496/native15357
+(Win32 native10496), actual seven-byte alignment gap preserved. Original header
+12/24 and buffer presence/binary count semantics remain unchanged. Current and
+retained aliases and all first-table queries/children survive complete loading.
+Zombie actual nexttype7 defers65678 without skipping. Debug/O3 gates pass each
+215cases/12cycles/3ABIs, native assertions/UBSan and logical cleanup baseline.
+Sourceproof1 restores all542 original bodies/order; gates-disabled Windows loader
+compiles. Full first ARM build0errors/9135 retained warnings; final fresh builds
+have complete fixture-header manifests. No native/compiler failure this gate.
+Partial buffer failure is deliberately recorded; fixture unwind is not production
+error recovery. All tests completed; original diagnostics/scratch preserved.
+
+Read arm64_rawfile_payload.md/rawfile_payload_handoff.md/new frozen archive.
+Ledger FACT-0092/FACT-0093/WARN-0030/DEC44. Source checkpoint follows; Git gives exact
+HEAD/pending files. Windows2528/DXVK2552/root15/originals/APK and4014 older frozen
+paths protected, local verified commitsDEC26 authorized/no push. Full goal active.
+Next three: TASK30 real RawFile pool1024/init/alloc/clone/free and genuine child
+lifetime before TEMP reuse; registry-entry and DBHASH initialization services;
+smallest real registration/lookup boundary. Full gameplay/startup/render not yet.
+
+# Historical state (preserved)
+
+# Active task — TASK29 genuine RawFile children
+
+TASK28 checkpoints acd48e5 / 7f7f005 are verified locally; no push.
+TASK29 selects the unchanged canonical RawFile wrapper, XString, byte allocator
+and ConstCharArray leaves. New checked planner certifies name/len+1 extent and
+actual disk/native capacities before writes. Buffer remains any-nonzero presence
+and a binary exact-count copy; no arbitrary NUL requirement.
+Independent streaming oracle confirms name17 bytes and buffer141, decoded end
+10577; zombie actual next type7 remains deferred at65678. Genuine execution and
+final tests are pending. Initial full ARM build0errors/9135retained warnings and
+normal Windows gates-disabled DB loader x86/x64 compile passed. Fresh bounded
+builders include all fixture header hashes; final O0/O3/Windows tests running or
+pending. Source/proof/frozen evidence and final checkpoint remain incomplete.
+Preserve all scratch and diagnostics. Protected baseline rawfile_payload-baseline
+captures clean7f7f005 and4014 frozen paths. No registration or graphics claim.
+Next: finish TASK29, real registry ownership/init services, actual registration.
+
+# Historical state (preserved)
+
 TASK28 source/evidence checkpoint acd48e5 verified (FACT-0091); all392 durable paths committed.
 3652 prior frozen/3945 archive Git blobs preserved, tests completed, protected unchanged.
 Next TASK29 genuine RawFile name and present buffer before registration; full goal active.

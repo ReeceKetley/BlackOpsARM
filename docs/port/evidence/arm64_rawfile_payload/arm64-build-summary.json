@@ -1,0 +1,20 @@
+{
+  "rawfile_payload_full_pass1": {
+    "errors": 0,
+    "retained_warnings": 9135,
+    "actual_executable_sha256": "8B958BCC3506E0E726A61F9DEC90D1636F6787997C4C0E0E106C739930825816",
+    "scope": "Full first build retained; final debug/O3 source-manifest builds execute the post-review fixtures"
+  },
+  "rawfile_payload_debug_pass2": {
+    "errors": 0,
+    "retained_warnings": 815,
+    "actual_executable_sha256": "C4D67963A67D811694204119CB4F0FCED74EC37AB862BF29FDFDFB363CF98B0C",
+    "scope": "Full first build retained; final debug/O3 source-manifest builds execute the post-review fixtures"
+  },
+  "rawfile_payload_optimized_pass3": {
+    "errors": 0,
+    "retained_warnings": 815,
+    "actual_executable_sha256": "91AD830FBFB306BB1DAE9366255F0F223049E1014FDF49236956DDA2BE4DD0DC",
+    "scope": "Full first build retained; final debug/O3 source-manifest builds execute the post-review fixtures"
+  }
+}

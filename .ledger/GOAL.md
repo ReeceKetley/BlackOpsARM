@@ -1,5 +1,13 @@
 ## Current Milestone
 
+TASK29 genuine RawFile name/buffer and first StringTable queries verified.
+TASK30 actual RawFile persistent pool ownership before TEMP reuse is next, then
+registry-entry/DBHASH init services and real registration. Full native engine
+objective remains active; local verified checkpoints authorized/no push.
+Read STATE and arm64_rawfile_payload.md. No engine-owned graphics yet.
+
+## Historical milestone
+
 TASK28 TEMP write/value maps and genuine next codeRawFileheader verified.
 TASK29 actual RawFile name/presentbuffer bytes beforeDBAdd next. Core front end,
 interning and firsttablequeries/poolownership verified; actualgameboot/graphics

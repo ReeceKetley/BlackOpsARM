@@ -1,6 +1,11 @@
 #include <platform/bo1_native_width.h>
 #if defined(BO1_STRINGTABLE_INDEX_GATE)
 #include "db_scalar_load.h"
+#if defined(BO1_RAWFILE_PAYLOAD_GATE)
+#include "db_rawfile_load.h"
+#include "db_stream.h"
+#include "db_expand.hpp"
+#endif
 #include "db_stream_load.h"
 #else
 #include "db_load.h"
@@ -68,9 +73,17 @@ unsigned __int16 *varushort;
 __int16 (*varXQuat2)[2];
 unsigned __int16 *varUnsignedShort;
 unsigned __int16 *varScriptString;
+#endif
+#if !defined(BO1_STRINGTABLE_INDEX_GATE) || defined(BO1_RAWFILE_PAYLOAD_GATE)
 const char *varConstChar;
+#endif
+#if !defined(BO1_STRINGTABLE_INDEX_GATE)
 const char **varTempString;
+#endif
+#if !defined(BO1_STRINGTABLE_INDEX_GATE) || defined(BO1_RAWFILE_PAYLOAD_GATE)
 const char **varXString;
+#endif
+#if !defined(BO1_STRINGTABLE_INDEX_GATE)
 ScriptStringList *varScriptStringList;
 complex_s *varcomplex_t;
 dmaterial_t *vardmaterial_t;
@@ -316,7 +329,11 @@ EmblemLayer *varEmblemLayer;
 EmblemCategory *varEmblemCategory;
 EmblemSet *varEmblemSet;
 EmblemSet **varEmblemSetPtr;
+#endif
+#if !defined(BO1_STRINGTABLE_INDEX_GATE) || defined(BO1_RAWFILE_PAYLOAD_GATE)
 RawFile *varRawFile;
+#endif
+#if !defined(BO1_STRINGTABLE_INDEX_GATE)
 RawFile **varRawFilePtr;
 XGlobals *varXGlobals;
 XGlobals **varXGlobalsPtr;
@@ -548,6 +565,8 @@ void __cdecl Load_ScriptStringArray(bool atStreamStart, int count)
     }
 }
 
+#endif
+#if !defined(BO1_STRINGTABLE_INDEX_GATE) || defined(BO1_RAWFILE_PAYLOAD_GATE)
 unsigned char *__cdecl AllocLoad_raw_byte()
 {
     return DB_AllocStreamPos(0);
@@ -558,6 +577,8 @@ void __cdecl Load_ConstCharArray(bool atStreamStart, int count)
     Load_Stream(atStreamStart, (unsigned __int8 *)varConstChar, count);
 }
 
+#endif
+#if !defined(BO1_STRINGTABLE_INDEX_GATE)
 void __cdecl Load_TempString(bool atStreamStart)
 {
     Load_Stream(atStreamStart, (unsigned __int8 *)varTempString, 4);
@@ -599,6 +620,8 @@ void __cdecl Load_TempStringArray(bool atStreamStart, int count)
     }
 }
 
+#endif
+#if !defined(BO1_STRINGTABLE_INDEX_GATE) || defined(BO1_RAWFILE_PAYLOAD_GATE)
 void __cdecl Load_XString(bool atStreamStart)
 {
     // Keep Load_Stream(4) even on x64: atStart=1 is rare and usually embeds in an
@@ -623,6 +646,8 @@ void __cdecl Load_XString(bool atStreamStart)
     }
 }
 
+#endif
+#if !defined(BO1_STRINGTABLE_INDEX_GATE)
 void __cdecl Load_XStringArray(bool atStreamStart, int count)
 {
     const char **var; // [esp+0h] [ebp-8h]
@@ -8742,6 +8767,8 @@ void __cdecl Mark_EmblemSetPtr()
     }
 }
 
+#endif
+#if !defined(BO1_STRINGTABLE_INDEX_GATE) || defined(BO1_RAWFILE_PAYLOAD_GATE)
 void __cdecl Load_RawFile(bool atStreamStart)
 {
 #if BO1_NATIVE_64BIT
@@ -8764,6 +8791,8 @@ void __cdecl Load_RawFile(bool atStreamStart)
     DB_PopStreamPos();
 }
 
+#endif
+#if !defined(BO1_STRINGTABLE_INDEX_GATE)
 void __cdecl Load_RawFilePtr(bool atStreamStart)
 {
     const void **inserted; // [esp+0h] [ebp-Ch]

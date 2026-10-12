@@ -53,6 +53,9 @@ void __cdecl DB_LoadXFileData(unsigned __int8*dst,int n){
     const auto capacity=tableReadBytes?tableReadBytes:destinationCapacity(dst);
     if(tableReadBytes&&n!=static_cast<int>(tableReadBytes))throw std::runtime_error("unexpected table scratch read size");
     if(!reader||failRead||!reader->Read(dst,capacity,n))throw std::runtime_error("bounded decoded read failed");++readCalls;
+#if defined(BO1_RAWFILE_PAYLOAD_GATE)
+    if(tableReadBytes==12&&g_streamPosIndex==0)tableReadBytes=0; // Exactly one canonical RawFile header scratch read.
+#endif
 }
 int DB_LoadXFileDataNullTerminated(unsigned __int8*dst){
     int n=0;if(!reader||failRead||reader->ReadCString(dst,destinationCapacity(dst),n)!=RawStringResult::Ok)throw std::runtime_error("bounded decoded string read failed");++readCalls;return n;
@@ -303,6 +306,9 @@ int main(int argc,char**argv){require(argc>=2,"decode/gate mode");if(!std::strcm
     owner_fixture::fixtures();
 #if defined(BO1_RAWFILE_HEADER_GATE)
     tested+=rawfile_fixture::fixtures();
+#if defined(BO1_RAWFILE_PAYLOAD_GATE)
+    tested+=rawfile_payload_fixture::fixtures();
+#endif
 #endif
 #endif
 #endif
@@ -371,8 +377,12 @@ int main(int argc,char**argv){require(argc>=2,"decode/gate mode");if(!std::strcm
         std::printf("{\"asset_index\":%u,\"round\":%u,\"alloc_type\":%u,\"inline_string_count\":%zu,\"raw_string_bytes\":%llu,\"source_consumed_bytes\":%zu,\"decoded_source_end\":%zu,\"block4_disk_cursor\":%llu,\"block4_native_cursor\":%llu,\"unique_interned_strings\":%zu,\"pool_live_allocations\":%d,\"pool_live_buckets\":%d,\"pool_debug_refs\":%u,\"pool_released\":true,\"hash_free_list_restored\":true,\"all_aliases_match\":true,\"reset_and_release_pass\":true,\"strings_used_after_release\":[",asset,round,type,f.strings.size()-f.nulls,(unsigned long long)(f.end-52-f.table.diskBytes),r.Position(),f.end,(unsigned long long)f.diskEnd,(unsigned long long)f.nativeEnd,uniqueIds.size(),poolAllocations,poolBuckets,poolReferences);
         for(unsigned i=0;i<32;++i)std::printf("%s%d",i?",":"",diagnostics[i]);std::printf("]}\n");
 #elif defined(BO1_STRINGTABLE_LOOKUP_GATE)
+        auto cycleDisk=payload.indices.diskEnd,cycleNative=payload.indices.nativeEnd;
+#if defined(BO1_RAWFILE_PAYLOAD_GATE)
+        const auto&next=asset?br:ar;if(next.header.present){cycleDisk=next.payload.diskEnd;cycleNative=next.payload.nativeEnd;}
+#endif
         unsigned inlineCells=0,offsetCells=0;std::uint64_t inlineBytes=0;for(const auto&e:payload.strings){if(e.offset)++offsetCells;else if(e.tag){++inlineCells;inlineBytes+=e.bytes;}}
-        std::printf("{\"asset_index\":%u,\"round\":%u,\"alloc_type\":%u,\"source_consumed_bytes\":%zu,\"decoded_source_end\":%zu,\"block4_disk_cursor\":%llu,\"block4_native_cursor\":%llu,\"name_bytes\":%llu,\"cell_count\":%d,\"inline_cell_strings\":%u,\"offset_cell_strings\":%u,\"inline_cell_bytes\":%llu,\"block0_native_after_pop\":0,\"block0_shadow_after_pop\":%u,\"every_cell_string_matches\":true,\"exact_initialized_targets\":true,\"actual_owned_slot_conversion\":true,\"provenance_cleared_before_reset\":true,\"actual_lookup_executed\":true,\"actual_casefold_queries_agree\":true,\"actual_hash_matches\":true,\"indices_loaded\":true,\"original_index_order_preserved\":true,\"scalar_stride_two\":true,\"scalar_loader_cleared\":true,\"all_aliases_match\":true,\"live_header_scope_verified\":true,\"prior_block4_preserved\":true,\"reset_and_release_pass\":true,\"row_queries\":%u,\"row_query_misses\":%u,\"row_query_disagreements\":%u,\"column_queries\":%u,\"column_query_disagreements\":%u}\n",asset,round,type,r.Position(),bytes.size(),(unsigned long long)payload.indices.diskEnd,(unsigned long long)payload.indices.nativeEnd,(unsigned long long)payload.name.bytes,payload.cells.count,inlineCells,offsetCells,(unsigned long long)inlineBytes,tempDiskCursor(),lastLookup.queries,lastLookup.rowMisses,lastLookup.rowDisagreements,lastLookup.queries,lastLookup.columnDisagreements);
+        std::printf("{\"asset_index\":%u,\"round\":%u,\"alloc_type\":%u,\"source_consumed_bytes\":%zu,\"decoded_source_end\":%zu,\"block4_disk_cursor\":%llu,\"block4_native_cursor\":%llu,\"name_bytes\":%llu,\"cell_count\":%d,\"inline_cell_strings\":%u,\"offset_cell_strings\":%u,\"inline_cell_bytes\":%llu,\"block0_native_after_pop\":0,\"block0_shadow_after_pop\":%u,\"every_cell_string_matches\":true,\"exact_initialized_targets\":true,\"actual_owned_slot_conversion\":true,\"provenance_cleared_before_reset\":true,\"actual_lookup_executed\":true,\"actual_casefold_queries_agree\":true,\"actual_hash_matches\":true,\"indices_loaded\":true,\"original_index_order_preserved\":true,\"scalar_stride_two\":true,\"scalar_loader_cleared\":true,\"all_aliases_match\":true,\"live_header_scope_verified\":true,\"prior_block4_preserved\":true,\"reset_and_release_pass\":true,\"row_queries\":%u,\"row_query_misses\":%u,\"row_query_disagreements\":%u,\"column_queries\":%u,\"column_query_disagreements\":%u}\n",asset,round,type,r.Position(),bytes.size(),(unsigned long long)cycleDisk,(unsigned long long)cycleNative,(unsigned long long)payload.name.bytes,payload.cells.count,inlineCells,offsetCells,(unsigned long long)inlineBytes,tempDiskCursor(),lastLookup.queries,lastLookup.rowMisses,lastLookup.rowDisagreements,lastLookup.queries,lastLookup.columnDisagreements);
 #elif defined(BO1_STRINGTABLE_HASH_GATE)
         unsigned inlineCells=0,offsetCells=0;std::uint64_t inlineBytes=0;for(const auto&e:payload.strings){if(e.offset)++offsetCells;else if(e.tag){++inlineCells;inlineBytes+=e.bytes;}}
         std::printf("{\"asset_index\":%u,\"round\":%u,\"alloc_type\":%u,\"source_consumed_bytes\":%zu,\"decoded_source_end\":%zu,\"block4_disk_cursor\":%llu,\"block4_native_cursor\":%llu,\"name_bytes\":%llu,\"cell_count\":%d,\"inline_cell_strings\":%u,\"offset_cell_strings\":%u,\"inline_cell_bytes\":%llu,\"block0_native_after_pop\":0,\"block0_shadow_after_pop\":%u,\"every_cell_string_matches\":true,\"exact_initialized_targets\":true,\"actual_owned_slot_conversion\":true,\"provenance_cleared_before_reset\":true,\"actual_hash_matches\":true,\"indices_loaded\":true,\"original_index_order_preserved\":true,\"scalar_stride_two\":true,\"scalar_loader_cleared\":true,\"all_aliases_match\":true,\"live_header_scope_verified\":true,\"prior_block4_preserved\":true,\"reset_and_release_pass\":true}\n",asset,round,type,r.Position(),bytes.size(),(unsigned long long)payload.indices.diskEnd,(unsigned long long)payload.indices.nativeEnd,(unsigned long long)payload.name.bytes,payload.cells.count,inlineCells,offsetCells,(unsigned long long)inlineBytes,tempDiskCursor());
@@ -393,7 +403,9 @@ int main(int argc,char**argv){require(argc>=2,"decode/gate mode");if(!std::strcm
 #endif
     }
     const char*schema=
-#if defined(BO1_RAWFILE_HEADER_GATE)
+#if defined(BO1_RAWFILE_PAYLOAD_GATE)
+        "BlackOpsARM.TASK-0029.rawfile-payload.v1";
+#elif defined(BO1_RAWFILE_HEADER_GATE)
         "BlackOpsARM.TASK-0028.rawfile-header.v1";
 #elif defined(BO1_FRONTEND_INTERN_GATE)
         "BlackOpsARM.TASK-0017.intern-strings.v1";
