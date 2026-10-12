@@ -367,3 +367,14 @@ Normal Windows/source/script-service/SLMT/protected17014 checks pass. No fullDB_
 or entry alloc/free/publication claim. Next actual header dispatch/entry alloc/free
 and failure/partial-progress semantics, then lookup and smallest real registration.
 Local verified checkpoints allowed/no push; all evidence/protected repos preserved.
+
+
+Standing autonomous goal DEC47 applies: do not stop on gate completion. Preserve
+protected repos/assets/evidence, local verified commits remain allowed/no push;
+read standing_development_goal.md for resources and intentional stop conditions.
+TASK32 actual entry/header dispatch/free/FF diagnostics complete (arm64_entry_allocation,
+DEC48/FACT99/100/WARN33/FAIL31). Genericfree now exactvoid*, typed printcallback,
+namegetter representation memcpy; source/policy/Windows/genuine owner parity pass.
+Next genuine entry-owned headers/zone children, hash lookup, smallest publication.
+Logging/error/dvar controls are fixtures; LoadObj explicitly unsupported; no full
+engine/registry or rollback claim. Continue toward actual production integration.

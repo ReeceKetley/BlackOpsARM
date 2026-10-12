@@ -1,0 +1,1072 @@
+com_stringtable.cpp
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal/com_math.h(63): warning C4201: nonstandard extension used: nameless struct/union
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal\q_shared.h(385): warning C4100: 'fakearg': unreferenced parameter
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon\ent.h(79): warning C4359: 'LerpEntityStateVehicle': Alignment specifier is less than actual alignment (4), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon\ent.h(228): warning C4201: nonstandard extension used: nameless struct/union
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon\msg_mp.h(105): warning C4359: 'usercmd_s': Alignment specifier is less than actual alignment (4), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\ui\ui_shared.h(55): warning C4369: 'itemGroup_t':  enumerator value '4294967295' cannot be represented as 'int', value is '4294967295'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cmd.h(39): warning C4359: 'cmd_function_s': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d\r_gfx.h(197): warning C4359: 'GfxLightImage': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d\r_gfx.h(261): warning C4324: 'GfxLight': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d/r_material.h(37): warning C4369: 'surfaceType_t':  enumerator value '4294967295' cannot be represented as 'int', value is '4294967295'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d/r_material.h(45): warning C4369: 'GfxDepthRangeType':  enumerator value '4294967295' cannot be represented as 'int', value is '4294967295'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d/r_material.h(132): warning C4359: 'GfxVertexShaderLoadDef': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d/r_material.h(152): warning C4359: 'GfxPixelShaderLoadDef': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\clientscript/cscr_main.h(46): warning C4201: nonstandard extension used: nameless struct/union
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\clientscript/cscr_main.h(191): warning C4324: 'scrStringGlob_t': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\xanim\dobj.h(114): warning C4359: 'DObjModel_s': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1228): warning C4002: too many arguments for function-like macro invocation 'iassert'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1240): warning C4002: too many arguments for function-like macro invocation 'iassert'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1271): warning C4002: too many arguments for function-like macro invocation 'iassert'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1278): warning C4002: too many arguments for function-like macro invocation 'iassert'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1285): warning C4002: too many arguments for function-like macro invocation 'iassert'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1292): warning C4002: too many arguments for function-like macro invocation 'iassert'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1314): warning C4002: too many arguments for function-like macro invocation 'iassert'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1316): warning C4002: too many arguments for function-like macro invocation 'iassert'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1335): warning C4002: too many arguments for function-like macro invocation 'iassert'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1354): warning C4002: too many arguments for function-like macro invocation 'iassert'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1402): warning C4002: too many arguments for function-like macro invocation 'iassert'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1415): warning C4002: too many arguments for function-like macro invocation 'iassert'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1487): warning C4359: 'geom_plane': Alignment specifier is less than actual alignment (16), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1761): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1762): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1763): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1764): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1765): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1766): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1782): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1783): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1784): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1785): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1786): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1787): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1751): warning C4101: 'savedregs': unreferenced local variable
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1876): warning C4305: 'initializing': truncation from 'double' to 'float'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1877): warning C4305: 'initializing': truncation from 'double' to 'float'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(69): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(70): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(71): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(72): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(74): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(75): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(76): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(77): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(79): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(80): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(81): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(82): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(447): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(448): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(449): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(450): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(451): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(452): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(453): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(454): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(455): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(456): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(457): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(458): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(459): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(460): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(461): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(462): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(463): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(464): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(466): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(467): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(469): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(470): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(471): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(472): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(475): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(476): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(477): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(478): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(480): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(481): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(482): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(483): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_colgeom.h(126): warning C4324: 'gjk_base_t': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_colgeom.h(348): warning C4359: 'gjk_brush_t': Alignment specifier is less than actual alignment (16), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_colgeom.h(631): warning C4359: 'gjk_polygon_cylinder_t': Alignment specifier is less than actual alignment (16), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_gjk.h(392): warning C4100: 'gjk_geom': unreferenced parameter
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_gjk.h(425): warning C4324: 'gjk_physics_collision_visitor': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_gjk.h(486): warning C4100: 'no_error': unreferenced parameter
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_gjk.h(486): warning C4100: 'alignment': unreferenced parameter
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_gjk.h(486): warning C4100: 'size': unreferenced parameter
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_gjk.h(494): warning C4100: 'geom': unreferenced parameter
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_gjk.h(526): warning C4324: 'gjk_query_output': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_gjk.h(614): warning C4373: 'gjk_query_output::allocate': virtual function overrides 'gjk_collision_visitor::allocate', previous versions of the compiler did not override when parameters only differed by const/volatile qualifiers
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_gjk.h(377): note: see declaration of 'gjk_collision_visitor::allocate'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_gjk.h(788): warning C4359: 'gjkcc_info_database_t': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_gjk.h(873): warning C4359: 'gjk_slide_move_input_t': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_gjk.h(926): warning C4100: 'gto': unreferenced parameter
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_gjk.h(964): warning C4359: 'phys_gjk_input': Alignment specifier is less than actual alignment (16), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_gjk_collision_detection.h(66): warning C4359: 'gjk_entity_info_t': Alignment specifier is less than actual alignment (16), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\rigid_body.h(26): warning C4324: 'rigid_body_constraint_point': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\rigid_body.h(52): warning C4324: 'rigid_body_constraint_hinge': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\rigid_body.h(91): warning C4324: 'rigid_body_constraint_distance': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\rigid_body.h(127): warning C4359: 'ragdoll_joint_limit_info': Alignment specifier is less than actual alignment (16), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\rigid_body.h(149): warning C4324: 'rigid_body_constraint_ragdoll': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\rigid_body.h(157): warning C4324: 'rigid_body_constraint_ragdoll': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\rigid_body.h(197): warning C4324: 'rigid_body_constraint_wheel': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\rigid_body.h(296): warning C4324: 'rigid_body_constraint_upright': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\rigid_body.h(367): warning C4099: 'rigid_body': type name first seen using 'struct' now seen using 'class'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\rigid_body.h(367): note: see declaration of 'rigid_body'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\rigid_body.h(534): warning C4099: 'rigid_body': type name first seen using 'class' now seen using 'struct'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\rigid_body.h(367): note: see declaration of 'rigid_body'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\rigid_body.h(535): warning C4099: 'rigid_body': type name first seen using 'class' now seen using 'struct'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\rigid_body.h(367): note: see declaration of 'rigid_body'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\tl/jobqueue/jobqueue_all.h(144): warning C4201: nonstandard extension used: nameless struct/union
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\tl/jobqueue/jobqueue_all.h(215): warning C4324: 'jqBatch': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\tl/jobqueue/jobqueue_all.h(390): warning C4359: '_jqWorker': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\tl/base/tl_thread.h(40): warning C4458: declaration of 'ThisPtr' hides class member
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\tl/base/tl_thread.h(13): note: see declaration of 'tlAtomicReadWriteMutex::ThisPtr'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\tl/base/tl_thread.h(45): warning C4389: '==': signed/unsigned mismatch
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\tl/base/tl_thread.h(60): warning C4389: '!=': signed/unsigned mismatch
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\tl/base/tl_thread.h(77): warning C4458: declaration of 'ThisPtr' hides class member
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\tl/base/tl_thread.h(13): note: see declaration of 'tlAtomicReadWriteMutex::ThisPtr'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\tl/base/tl_thread.h(82): warning C4389: '==': signed/unsigned mismatch
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\tl/base/tl_thread.h(100): warning C4389: '!=': signed/unsigned mismatch
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\tl/base/tl_thread.h(120): warning C4389: '!=': signed/unsigned mismatch
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_broad_phase.h(27): warning C4359: 'broad_phase_base': Alignment specifier is less than actual alignment (16), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_broad_phase.h(120): warning C4324: 'rb_vehicle_model': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_broad_phase.h(334): warning C4359: 'broad_phase_info': Alignment specifier is less than actual alignment (16), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_main.h(86): warning C4099: 'rigid_body': type name first seen using 'class' now seen using 'struct'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\rigid_body.h(367): note: see declaration of 'rigid_body'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_main.h(194): warning C4099: 'rigid_body': type name first seen using 'class' now seen using 'struct'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\rigid_body.h(367): note: see declaration of 'rigid_body'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\flame/flame_system.h(69): warning C4359: 'flameSource_t': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\xanim/xanim.h(47): warning C4359: 'XAnimPartTransFrames': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\xanim/xanim.h(71): warning C4359: 'XAnimDeltaPartQuatDataFrames': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\xanim/xanim.h(306): warning C4359: 'XAnimInfo': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal\com_stringtable.cpp(361): warning C4267: 'argument': conversion from 'size_t' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal\com_stringtable.cpp(367): warning C4267: 'argument': conversion from 'size_t' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal\q_shared.h(354): warning C4127: conditional expression is constant
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal\q_shared.h(354): note: consider using 'if constexpr' statement instead
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal\q_shared.h(354): note: the template instantiation context (the oldest one first) is
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal\q_shared.h(369): note: see reference to function template instantiation 'T __ROL__<uint8>(T,int)' being compiled
+        with
+        [
+            T=uint8
+        ]
+com_hash.cpp
+com_stringtable_obj.cpp
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\clientscript/cscr_main.h(46): warning C4201: nonstandard extension used: nameless struct/union
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\clientscript/cscr_main.h(191): warning C4324: 'scrStringGlob_t': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1228): warning C4002: too many arguments for function-like macro invocation 'iassert'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1240): warning C4002: too many arguments for function-like macro invocation 'iassert'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1271): warning C4002: too many arguments for function-like macro invocation 'iassert'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1278): warning C4002: too many arguments for function-like macro invocation 'iassert'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1285): warning C4002: too many arguments for function-like macro invocation 'iassert'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1292): warning C4002: too many arguments for function-like macro invocation 'iassert'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1314): warning C4002: too many arguments for function-like macro invocation 'iassert'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1316): warning C4002: too many arguments for function-like macro invocation 'iassert'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1335): warning C4002: too many arguments for function-like macro invocation 'iassert'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1354): warning C4002: too many arguments for function-like macro invocation 'iassert'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1402): warning C4002: too many arguments for function-like macro invocation 'iassert'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1415): warning C4002: too many arguments for function-like macro invocation 'iassert'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1487): warning C4359: 'geom_plane': Alignment specifier is less than actual alignment (16), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1761): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1762): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1763): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1764): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1765): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1766): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1782): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1783): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1784): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1785): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1786): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1787): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1751): warning C4101: 'savedregs': unreferenced local variable
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1876): warning C4305: 'initializing': truncation from 'double' to 'float'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1877): warning C4305: 'initializing': truncation from 'double' to 'float'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal/com_math.h(63): warning C4201: nonstandard extension used: nameless struct/union
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal/q_shared.h(385): warning C4100: 'fakearg': unreferenced parameter
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon\ent.h(79): warning C4359: 'LerpEntityStateVehicle': Alignment specifier is less than actual alignment (4), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon\ent.h(228): warning C4201: nonstandard extension used: nameless struct/union
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon\msg_mp.h(105): warning C4359: 'usercmd_s': Alignment specifier is less than actual alignment (4), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\game/pathnode.h(366): warning C4324: 'pathlocal_t': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\server_mp/sv_bot_mp.h(20): warning C4359: 'bot_info_t': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\xanim\dobj.h(114): warning C4359: 'DObjModel_s': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d\r_gfx.h(197): warning C4359: 'GfxLightImage': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d\r_gfx.h(261): warning C4324: 'GfxLight': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d/r_material.h(37): warning C4369: 'surfaceType_t':  enumerator value '4294967295' cannot be represented as 'int', value is '4294967295'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d/r_material.h(45): warning C4369: 'GfxDepthRangeType':  enumerator value '4294967295' cannot be represented as 'int', value is '4294967295'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d/r_material.h(132): warning C4359: 'GfxVertexShaderLoadDef': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d/r_material.h(152): warning C4359: 'GfxPixelShaderLoadDef': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(69): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(70): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(71): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(72): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(74): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(75): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(76): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(77): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(79): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(80): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(81): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(82): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(447): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(448): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(449): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(450): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(451): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(452): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(453): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(454): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(455): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(456): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(457): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(458): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(459): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(460): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(461): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(462): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(463): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(464): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(466): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(467): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(469): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(470): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(471): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(472): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(475): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(476): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(477): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(478): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(480): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(481): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(482): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(483): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_colgeom.h(126): warning C4324: 'gjk_base_t': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_colgeom.h(348): warning C4359: 'gjk_brush_t': Alignment specifier is less than actual alignment (16), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_colgeom.h(631): warning C4359: 'gjk_polygon_cylinder_t': Alignment specifier is less than actual alignment (16), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_gjk.h(392): warning C4100: 'gjk_geom': unreferenced parameter
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_gjk.h(425): warning C4324: 'gjk_physics_collision_visitor': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_gjk.h(486): warning C4100: 'no_error': unreferenced parameter
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_gjk.h(486): warning C4100: 'alignment': unreferenced parameter
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_gjk.h(486): warning C4100: 'size': unreferenced parameter
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_gjk.h(494): warning C4100: 'geom': unreferenced parameter
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_gjk.h(526): warning C4324: 'gjk_query_output': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_gjk.h(614): warning C4373: 'gjk_query_output::allocate': virtual function overrides 'gjk_collision_visitor::allocate', previous versions of the compiler did not override when parameters only differed by const/volatile qualifiers
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_gjk.h(377): note: see declaration of 'gjk_collision_visitor::allocate'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_gjk.h(788): warning C4359: 'gjkcc_info_database_t': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_gjk.h(873): warning C4359: 'gjk_slide_move_input_t': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_gjk.h(926): warning C4100: 'gto': unreferenced parameter
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_gjk.h(964): warning C4359: 'phys_gjk_input': Alignment specifier is less than actual alignment (16), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_gjk_collision_detection.h(66): warning C4359: 'gjk_entity_info_t': Alignment specifier is less than actual alignment (16), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\rigid_body.h(26): warning C4324: 'rigid_body_constraint_point': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\rigid_body.h(52): warning C4324: 'rigid_body_constraint_hinge': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\rigid_body.h(91): warning C4324: 'rigid_body_constraint_distance': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\rigid_body.h(127): warning C4359: 'ragdoll_joint_limit_info': Alignment specifier is less than actual alignment (16), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\rigid_body.h(149): warning C4324: 'rigid_body_constraint_ragdoll': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\rigid_body.h(157): warning C4324: 'rigid_body_constraint_ragdoll': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\rigid_body.h(197): warning C4324: 'rigid_body_constraint_wheel': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\rigid_body.h(296): warning C4324: 'rigid_body_constraint_upright': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\rigid_body.h(367): warning C4099: 'rigid_body': type name first seen using 'struct' now seen using 'class'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\rigid_body.h(367): note: see declaration of 'rigid_body'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\rigid_body.h(534): warning C4099: 'rigid_body': type name first seen using 'class' now seen using 'struct'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\rigid_body.h(367): note: see declaration of 'rigid_body'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\rigid_body.h(535): warning C4099: 'rigid_body': type name first seen using 'class' now seen using 'struct'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\rigid_body.h(367): note: see declaration of 'rigid_body'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\tl/jobqueue/jobqueue_all.h(144): warning C4201: nonstandard extension used: nameless struct/union
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\tl/jobqueue/jobqueue_all.h(215): warning C4324: 'jqBatch': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\tl/jobqueue/jobqueue_all.h(390): warning C4359: '_jqWorker': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\tl/base/tl_thread.h(40): warning C4458: declaration of 'ThisPtr' hides class member
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\tl/base/tl_thread.h(13): note: see declaration of 'tlAtomicReadWriteMutex::ThisPtr'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\tl/base/tl_thread.h(45): warning C4389: '==': signed/unsigned mismatch
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\tl/base/tl_thread.h(60): warning C4389: '!=': signed/unsigned mismatch
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\tl/base/tl_thread.h(77): warning C4458: declaration of 'ThisPtr' hides class member
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\tl/base/tl_thread.h(13): note: see declaration of 'tlAtomicReadWriteMutex::ThisPtr'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\tl/base/tl_thread.h(82): warning C4389: '==': signed/unsigned mismatch
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\tl/base/tl_thread.h(100): warning C4389: '!=': signed/unsigned mismatch
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\tl/base/tl_thread.h(120): warning C4389: '!=': signed/unsigned mismatch
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_broad_phase.h(27): warning C4359: 'broad_phase_base': Alignment specifier is less than actual alignment (16), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_broad_phase.h(120): warning C4324: 'rb_vehicle_model': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_broad_phase.h(334): warning C4359: 'broad_phase_info': Alignment specifier is less than actual alignment (16), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_main.h(86): warning C4099: 'rigid_body': type name first seen using 'class' now seen using 'struct'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\rigid_body.h(367): note: see declaration of 'rigid_body'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_main.h(194): warning C4099: 'rigid_body': type name first seen using 'class' now seen using 'struct'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\rigid_body.h(367): note: see declaration of 'rigid_body'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\flame/flame_system.h(69): warning C4359: 'flameSource_t': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\xanim/xanim.h(47): warning C4359: 'XAnimPartTransFrames': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\xanim/xanim.h(71): warning C4359: 'XAnimDeltaPartQuatDataFrames': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\xanim/xanim.h(306): warning C4359: 'XAnimInfo': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal/com_memory.h(7): warning C4359: 'fileData_s': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\stringed/stringed_ingame.h(32): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal\com_stringtable_obj.cpp(53): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal\com_stringtable_obj.cpp(94): warning C4244: '=': conversion from 'int' to 'short', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal\com_stringtable_obj.cpp(107): warning C4018: '>=': signed/unsigned mismatch
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal\com_stringtable_obj.cpp(145): warning C4018: '>=': signed/unsigned mismatch
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal/q_shared.h(354): warning C4127: conditional expression is constant
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal/q_shared.h(354): note: consider using 'if constexpr' statement instead
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal/q_shared.h(354): note: the template instantiation context (the oldest one first) is
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal/q_shared.h(369): note: see reference to function template instantiation 'T __ROL__<uint8>(T,int)' being compiled
+        with
+        [
+            T=uint8
+        ]
+q_shared.cpp
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal/com_math.h(63): warning C4201: nonstandard extension used: nameless struct/union
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal\q_shared.h(385): warning C4100: 'fakearg': unreferenced parameter
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon\ent.h(79): warning C4359: 'LerpEntityStateVehicle': Alignment specifier is less than actual alignment (4), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon\ent.h(228): warning C4201: nonstandard extension used: nameless struct/union
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/msg_mp.h(105): warning C4359: 'usercmd_s': Alignment specifier is less than actual alignment (4), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/threads.h(26): warning C4369: 'ThreadContext_t':  enumerator value '4294967295' cannot be represented as 'int', value is '4294967295'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(69): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(70): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(71): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(72): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(74): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(75): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(76): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(77): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(79): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(80): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(81): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(82): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(447): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(448): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(449): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(450): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(451): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(452): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(453): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(454): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(455): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(456): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(457): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(458): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(459): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(460): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(461): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(462): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(463): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(464): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(466): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(467): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(469): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(470): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(471): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(472): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(475): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(476): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(477): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(478): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(480): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(481): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(482): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(483): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\ui\ui_shared.h(55): warning C4369: 'itemGroup_t':  enumerator value '4294967295' cannot be represented as 'int', value is '4294967295'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cmd.h(39): warning C4359: 'cmd_function_s': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d\r_gfx.h(197): warning C4359: 'GfxLightImage': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d\r_gfx.h(261): warning C4324: 'GfxLight': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d/r_material.h(37): warning C4369: 'surfaceType_t':  enumerator value '4294967295' cannot be represented as 'int', value is '4294967295'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d/r_material.h(45): warning C4369: 'GfxDepthRangeType':  enumerator value '4294967295' cannot be represented as 'int', value is '4294967295'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d/r_material.h(132): warning C4359: 'GfxVertexShaderLoadDef': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d/r_material.h(152): warning C4359: 'GfxPixelShaderLoadDef': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\xanim/dobj.h(114): warning C4359: 'DObjModel_s': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d\r_material_load_obj.h(167): warning C4359: 'ShaderUniformDef': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d\r_init.h(642): warning C4324: 'r_global_permanent_t': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\sound\snd_radverb.h(154): warning C4324: 'snd_rv_state': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\sound\snd_driver_xaudio2_dsp.h(20): warning C4324: 'SDXA2Effect': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\sound\snd_driver_xaudio2_dsp.h(128): warning C4324: 'snd_dsp_dynamo_state': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\sound\snd_driver_xaudio2_dsp.h(205): warning C4324: 'SDXA2RadverbEffect': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\sound/snd.h(131): warning C4359: 'SoundFile': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\sound/snd.h(141): warning C4359: 'snd_alias_t': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\clientscript\cscr_main.h(46): warning C4201: nonstandard extension used: nameless struct/union
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\clientscript\cscr_main.h(191): warning C4324: 'scrStringGlob_t': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\clientscript\cscr_variable.h(196): warning C4244: '=': conversion from 'int' to 'unsigned short', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\clientscript\cscr_variable.h(197): warning C4244: '=': conversion from 'int' to 'unsigned short', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\clientscript\cscr_variable.h(272): warning C4359: 'scrVarDebugPub_t': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\clientscript\cscr_variable.h(413): warning C4324: 'scrVarGlob_t': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\clientscript/cscr_animtree.h(26): warning C4201: nonstandard extension used: nameless struct/union
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\clientscript/cscr_animtree.h(77): warning C4359: 'scrAnimPub_t': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\bgame\bg_animation.h(17): warning C4100: 'i': unreferenced parameter
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1228): warning C4002: too many arguments for function-like macro invocation 'iassert'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1240): warning C4002: too many arguments for function-like macro invocation 'iassert'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1271): warning C4002: too many arguments for function-like macro invocation 'iassert'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1278): warning C4002: too many arguments for function-like macro invocation 'iassert'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1285): warning C4002: too many arguments for function-like macro invocation 'iassert'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1292): warning C4002: too many arguments for function-like macro invocation 'iassert'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1314): warning C4002: too many arguments for function-like macro invocation 'iassert'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1316): warning C4002: too many arguments for function-like macro invocation 'iassert'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1335): warning C4002: too many arguments for function-like macro invocation 'iassert'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1354): warning C4002: too many arguments for function-like macro invocation 'iassert'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1402): warning C4002: too many arguments for function-like macro invocation 'iassert'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1415): warning C4002: too many arguments for function-like macro invocation 'iassert'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1487): warning C4359: 'geom_plane': Alignment specifier is less than actual alignment (16), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1761): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1762): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1763): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1764): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1765): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1766): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1782): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1783): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1784): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1785): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1786): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1787): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1751): warning C4101: 'savedregs': unreferenced local variable
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1876): warning C4305: 'initializing': truncation from 'double' to 'float'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1877): warning C4305: 'initializing': truncation from 'double' to 'float'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/graph.h(13): warning C4359: 'DevGraph': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_colgeom.h(126): warning C4324: 'gjk_base_t': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_colgeom.h(348): warning C4359: 'gjk_brush_t': Alignment specifier is less than actual alignment (16), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_colgeom.h(631): warning C4359: 'gjk_polygon_cylinder_t': Alignment specifier is less than actual alignment (16), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_gjk.h(392): warning C4100: 'gjk_geom': unreferenced parameter
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_gjk.h(425): warning C4324: 'gjk_physics_collision_visitor': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_gjk.h(486): warning C4100: 'no_error': unreferenced parameter
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_gjk.h(486): warning C4100: 'alignment': unreferenced parameter
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_gjk.h(486): warning C4100: 'size': unreferenced parameter
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_gjk.h(494): warning C4100: 'geom': unreferenced parameter
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_gjk.h(526): warning C4324: 'gjk_query_output': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_gjk.h(614): warning C4373: 'gjk_query_output::allocate': virtual function overrides 'gjk_collision_visitor::allocate', previous versions of the compiler did not override when parameters only differed by const/volatile qualifiers
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_gjk.h(377): note: see declaration of 'gjk_collision_visitor::allocate'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_gjk.h(788): warning C4359: 'gjkcc_info_database_t': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_gjk.h(873): warning C4359: 'gjk_slide_move_input_t': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_gjk.h(926): warning C4100: 'gto': unreferenced parameter
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_gjk.h(964): warning C4359: 'phys_gjk_input': Alignment specifier is less than actual alignment (16), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_gjk_collision_detection.h(66): warning C4359: 'gjk_entity_info_t': Alignment specifier is less than actual alignment (16), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/rigid_body.h(26): warning C4324: 'rigid_body_constraint_point': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/rigid_body.h(52): warning C4324: 'rigid_body_constraint_hinge': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/rigid_body.h(91): warning C4324: 'rigid_body_constraint_distance': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/rigid_body.h(127): warning C4359: 'ragdoll_joint_limit_info': Alignment specifier is less than actual alignment (16), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/rigid_body.h(149): warning C4324: 'rigid_body_constraint_ragdoll': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/rigid_body.h(157): warning C4324: 'rigid_body_constraint_ragdoll': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/rigid_body.h(197): warning C4324: 'rigid_body_constraint_wheel': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/rigid_body.h(296): warning C4324: 'rigid_body_constraint_upright': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/rigid_body.h(367): warning C4099: 'rigid_body': type name first seen using 'struct' now seen using 'class'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/rigid_body.h(367): note: see declaration of 'rigid_body'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/rigid_body.h(534): warning C4099: 'rigid_body': type name first seen using 'class' now seen using 'struct'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/rigid_body.h(367): note: see declaration of 'rigid_body'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/rigid_body.h(535): warning C4099: 'rigid_body': type name first seen using 'class' now seen using 'struct'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/rigid_body.h(367): note: see declaration of 'rigid_body'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\vehicle\nitrous_vehicle_controller.h(28): warning C4324: 'NitrousVehicleController': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\vehicle/nitrous_vehicle.h(474): warning C4324: 'NitrousVehicle': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\game\g_vehicle_path.h(88): warning C4359: 'vn_field_t': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/destructible.h(87): warning C4359: 'Destructible': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d\rb_state.h(239): warning C4324: 'GfxCmdBufInput': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\bgame/bg_local.h(50): warning C4359: 'CEntTurretInfo': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\bgame/bg_local.h(364): warning C4201: nonstandard extension used: nameless struct/union
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\bgame/bg_local.h(763): warning C4359: 'clientInfo_t': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\tl/jobqueue/jobqueue_all.h(144): warning C4201: nonstandard extension used: nameless struct/union
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\tl/jobqueue/jobqueue_all.h(215): warning C4324: 'jqBatch': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\tl/jobqueue/jobqueue_all.h(390): warning C4359: '_jqWorker': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\tl/base/tl_thread.h(40): warning C4458: declaration of 'ThisPtr' hides class member
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\tl/base/tl_thread.h(13): note: see declaration of 'tlAtomicReadWriteMutex::ThisPtr'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\tl/base/tl_thread.h(45): warning C4389: '==': signed/unsigned mismatch
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\tl/base/tl_thread.h(60): warning C4389: '!=': signed/unsigned mismatch
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\tl/base/tl_thread.h(77): warning C4458: declaration of 'ThisPtr' hides class member
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\tl/base/tl_thread.h(13): note: see declaration of 'tlAtomicReadWriteMutex::ThisPtr'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\tl/base/tl_thread.h(82): warning C4389: '==': signed/unsigned mismatch
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\tl/base/tl_thread.h(100): warning C4389: '!=': signed/unsigned mismatch
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\tl/base/tl_thread.h(120): warning C4389: '!=': signed/unsigned mismatch
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_broad_phase.h(27): warning C4359: 'broad_phase_base': Alignment specifier is less than actual alignment (16), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_broad_phase.h(120): warning C4324: 'rb_vehicle_model': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_broad_phase.h(334): warning C4359: 'broad_phase_info': Alignment specifier is less than actual alignment (16), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_main.h(86): warning C4099: 'rigid_body': type name first seen using 'class' now seen using 'struct'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/rigid_body.h(367): note: see declaration of 'rigid_body'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_main.h(194): warning C4099: 'rigid_body': type name first seen using 'class' now seen using 'struct'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/rigid_body.h(367): note: see declaration of 'rigid_body'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\flame/flame_system.h(69): warning C4359: 'flameSource_t': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\xanim/xanim.h(47): warning C4359: 'XAnimPartTransFrames': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\xanim/xanim.h(71): warning C4359: 'XAnimDeltaPartQuatDataFrames': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\xanim/xanim.h(306): warning C4359: 'XAnimInfo': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\bgame\bg_weapons_attachment.h(93): warning C4359: 'AttachmentTableEntry': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\bgame\bg_weapons_attachment.h(110): warning C4359: 'AttachmentPointTableEntry': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\bgame\bg_weapons_attachment.h(121): warning C4359: 'WeaponOptionTableEntry': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d/r_screenshot.h(25): warning C4100: 'i': unreferenced parameter
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\DemonWare\bdCore\bdContainers\bdBitBuffer.h(34): warning C4359: 'bdBitBuffer': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\DemonWare/bdCore/bdContainers/bdByteBuffer.h(6): warning C4359: 'bdByteBuffer': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\libs\libtomcrypt-1.17\src\headers\tomcrypt_cfg.h(26): warning C4565: 'malloc': redefinition; the symbol was previously declared with __declspec(restrict)
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\libs\libtomcrypt-1.17\src\headers\tomcrypt_cfg.h(27): warning C4565: 'realloc': redefinition; the symbol was previously declared with __declspec(restrict)
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\libs\libtomcrypt-1.17\src\headers\tomcrypt_cfg.h(28): warning C4565: 'calloc': redefinition; the symbol was previously declared with __declspec(restrict)
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\server_mp/sv_voice_mp.h(6): warning C4359: 'VoicePacket_t': Alignment specifier is less than actual alignment (4), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\server_mp/sv_main_mp.h(55): warning C4359: 'challenge_t': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\server_mp/sv_main_mp.h(288): warning C4324: 'serverStatic_t': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\server_mp/sv_main_mp.h(391): warning C4359: 'server_t': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\DemonWare/bdCore/bdSocket/bdAddr.h(473): warning C4359: 'bdCommonAddr': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\demo/demo_common.h(363): warning C4359: 'demoHeader': Alignment specifier is less than actual alignment (4), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\demo/demo_common.h(484): warning C4324: 'MatchState': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\demo/demo_common.h(530): warning C4359: 'demoPlayback': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\demo/demo_common.h(688): warning C4324: 'demoMain': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d/fxprimitives.h(318): warning C4201: nonstandard extension used: nameless struct/union
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d/fxprimitives.h(332): warning C4201: nonstandard extension used: nameless struct/union
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d/fxprimitives.h(384): warning C4324: 'FxEffect': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d/fxprimitives.h(568): warning C4324: 'FxSystemShared': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\client_mp/cl_main_mp.h(254): warning C4324: 'clientActive_t': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\client_mp/cl_main_mp.h(397): warning C4359: 'serverInfo_t': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\cgame_mp/cg_local_mp.h(291): warning C4324: 'refdef_s': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\cgame_mp/cg_local_mp.h(958): warning C4324: 'cg_s': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d/r_scene.h(18): warning C4359: 'GfxSceneBrush': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d/r_scene.h(76): warning C4359: 'GfxSceneEntity': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d/r_scene.h(102): warning C4359: 'GfxSceneModel': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d/r_scene.h(120): warning C4359: 'GfxSceneGlassBrush': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d/r_scene.h(219): warning C4324: 'GfxScene': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\EffectsCore/fx_load_obj.h(275): warning C4459: declaration of 'name' hides global declaration
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\client_mp/cl_main_mp.h(1283): note: see declaration of 'name'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal\q_shared.cpp(160): warning C4244: '=': conversion from 'int' to 'unsigned char', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal\q_shared.cpp(299): warning C4244: 'return': conversion from '__int64' to 'int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal\q_shared.cpp(333): warning C4244: 'return': conversion from '__int64' to 'int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal\q_shared.cpp(482): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal\q_shared.cpp(556): warning C4996: '_vsnprintf': This function or variable may be unsafe. Consider using _vsnprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal\q_shared.cpp(575): warning C4389: '==': signed/unsigned mismatch
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal\q_shared.cpp(573): warning C4996: '_vsnprintf': This function or variable may be unsafe. Consider using _vsnprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal\q_shared.cpp(585): warning C4101: 'stackArray': unreferenced local variable
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal\q_shared.cpp(664): warning C4996: '_vsnprintf': This function or variable may be unsafe. Consider using _vsnprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal\q_shared.cpp(1099): warning C4996: 'strcat': This function or variable may be unsafe. Consider using strcat_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal\q_shared.cpp(1139): warning C4459: declaration of 'name' hides global declaration
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\client_mp/cl_main_mp.h(1283): note: see declaration of 'name'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal\q_shared.cpp(1194): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal\q_shared.cpp(1226): warning C4244: '=': conversion from 'unsigned int' to 'uint16', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal\q_shared.cpp(1358): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal\q_shared.cpp(1371): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal\q_shared.cpp(1446): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal\q_shared.cpp(1447): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal\q_shared.cpp(1448): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal\q_shared.cpp(1457): warning C4459: declaration of 'name' hides global declaration
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\client_mp/cl_main_mp.h(1283): note: see declaration of 'name'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal\q_shared.h(354): warning C4127: conditional expression is constant
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal\q_shared.h(354): note: consider using 'if constexpr' statement instead
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal\q_shared.h(354): note: the template instantiation context (the oldest one first) is
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal\q_shared.h(369): note: see reference to function template instantiation 'T __ROL__<uint8>(T,int)' being compiled
+        with
+        [
+            T=uint8
+        ]
+db_registry.cpp
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal/com_math.h(63): warning C4201: nonstandard extension used: nameless struct/union
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal/q_shared.h(385): warning C4100: 'fakearg': unreferenced parameter
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\ui\ui_shared.h(55): warning C4369: 'itemGroup_t':  enumerator value '4294967295' cannot be represented as 'int', value is '4294967295'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cmd.h(39): warning C4359: 'cmd_function_s': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon\ent.h(79): warning C4359: 'LerpEntityStateVehicle': Alignment specifier is less than actual alignment (4), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon\ent.h(228): warning C4201: nonstandard extension used: nameless struct/union
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/msg_mp.h(105): warning C4359: 'usercmd_s': Alignment specifier is less than actual alignment (4), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d\r_gfx.h(197): warning C4359: 'GfxLightImage': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d\r_gfx.h(261): warning C4324: 'GfxLight': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d/r_material.h(37): warning C4369: 'surfaceType_t':  enumerator value '4294967295' cannot be represented as 'int', value is '4294967295'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d/r_material.h(45): warning C4369: 'GfxDepthRangeType':  enumerator value '4294967295' cannot be represented as 'int', value is '4294967295'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d/r_material.h(132): warning C4359: 'GfxVertexShaderLoadDef': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d/r_material.h(152): warning C4359: 'GfxPixelShaderLoadDef': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\clientscript\cscr_main.h(46): warning C4201: nonstandard extension used: nameless struct/union
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\clientscript\cscr_main.h(191): warning C4324: 'scrStringGlob_t': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\clientscript\cscr_variable.h(196): warning C4244: '=': conversion from 'int' to 'unsigned short', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\clientscript\cscr_variable.h(197): warning C4244: '=': conversion from 'int' to 'unsigned short', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\clientscript\cscr_variable.h(272): warning C4359: 'scrVarDebugPub_t': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\clientscript\cscr_variable.h(413): warning C4324: 'scrVarGlob_t': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon\cm_trace.h(69): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon\cm_trace.h(70): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon\cm_trace.h(71): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon\cm_trace.h(72): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon\cm_trace.h(74): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon\cm_trace.h(75): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon\cm_trace.h(76): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon\cm_trace.h(77): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon\cm_trace.h(79): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon\cm_trace.h(80): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon\cm_trace.h(81): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon\cm_trace.h(82): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon\cm_trace.h(447): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon\cm_trace.h(448): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon\cm_trace.h(449): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon\cm_trace.h(450): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon\cm_trace.h(451): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon\cm_trace.h(452): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon\cm_trace.h(453): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon\cm_trace.h(454): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon\cm_trace.h(455): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon\cm_trace.h(456): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon\cm_trace.h(457): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon\cm_trace.h(458): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon\cm_trace.h(459): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon\cm_trace.h(460): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon\cm_trace.h(461): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon\cm_trace.h(462): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon\cm_trace.h(463): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon\cm_trace.h(464): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon\cm_trace.h(466): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon\cm_trace.h(467): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon\cm_trace.h(469): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon\cm_trace.h(470): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon\cm_trace.h(471): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon\cm_trace.h(472): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon\cm_trace.h(475): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon\cm_trace.h(476): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon\cm_trace.h(477): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon\cm_trace.h(478): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon\cm_trace.h(480): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon\cm_trace.h(481): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon\cm_trace.h(482): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon\cm_trace.h(483): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\tl/jobqueue/jobqueue_all.h(144): warning C4201: nonstandard extension used: nameless struct/union
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\tl/jobqueue/jobqueue_all.h(215): warning C4324: 'jqBatch': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\tl/jobqueue/jobqueue_all.h(390): warning C4359: '_jqWorker': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d/r_stream.h(91): warning C4324: 'StreamFrontendGlob': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d/r_stream.h(123): warning C4359: 'pendingRequest': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d/r_stream.h(156): warning C4359: 'StreamSortCmd': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\xanim\dobj.h(114): warning C4359: 'DObjModel_s': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1228): warning C4002: too many arguments for function-like macro invocation 'iassert'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1240): warning C4002: too many arguments for function-like macro invocation 'iassert'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1271): warning C4002: too many arguments for function-like macro invocation 'iassert'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1278): warning C4002: too many arguments for function-like macro invocation 'iassert'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1285): warning C4002: too many arguments for function-like macro invocation 'iassert'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1292): warning C4002: too many arguments for function-like macro invocation 'iassert'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1314): warning C4002: too many arguments for function-like macro invocation 'iassert'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1316): warning C4002: too many arguments for function-like macro invocation 'iassert'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1335): warning C4002: too many arguments for function-like macro invocation 'iassert'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1354): warning C4002: too many arguments for function-like macro invocation 'iassert'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1402): warning C4002: too many arguments for function-like macro invocation 'iassert'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1415): warning C4002: too many arguments for function-like macro invocation 'iassert'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1487): warning C4359: 'geom_plane': Alignment specifier is less than actual alignment (16), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1761): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1762): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1763): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1764): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1765): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1766): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1782): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1783): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1784): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1785): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1786): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1787): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1751): warning C4101: 'savedregs': unreferenced local variable
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1876): warning C4305: 'initializing': truncation from 'double' to 'float'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1877): warning C4305: 'initializing': truncation from 'double' to 'float'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_colgeom.h(126): warning C4324: 'gjk_base_t': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_colgeom.h(348): warning C4359: 'gjk_brush_t': Alignment specifier is less than actual alignment (16), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_colgeom.h(631): warning C4359: 'gjk_polygon_cylinder_t': Alignment specifier is less than actual alignment (16), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_gjk.h(392): warning C4100: 'gjk_geom': unreferenced parameter
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_gjk.h(425): warning C4324: 'gjk_physics_collision_visitor': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_gjk.h(486): warning C4100: 'no_error': unreferenced parameter
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_gjk.h(486): warning C4100: 'alignment': unreferenced parameter
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_gjk.h(486): warning C4100: 'size': unreferenced parameter
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_gjk.h(494): warning C4100: 'geom': unreferenced parameter
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_gjk.h(526): warning C4324: 'gjk_query_output': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_gjk.h(614): warning C4373: 'gjk_query_output::allocate': virtual function overrides 'gjk_collision_visitor::allocate', previous versions of the compiler did not override when parameters only differed by const/volatile qualifiers
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_gjk.h(377): note: see declaration of 'gjk_collision_visitor::allocate'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_gjk.h(788): warning C4359: 'gjkcc_info_database_t': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_gjk.h(873): warning C4359: 'gjk_slide_move_input_t': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_gjk.h(926): warning C4100: 'gto': unreferenced parameter
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_gjk.h(964): warning C4359: 'phys_gjk_input': Alignment specifier is less than actual alignment (16), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_gjk_collision_detection.h(66): warning C4359: 'gjk_entity_info_t': Alignment specifier is less than actual alignment (16), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\rigid_body.h(26): warning C4324: 'rigid_body_constraint_point': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\rigid_body.h(52): warning C4324: 'rigid_body_constraint_hinge': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\rigid_body.h(91): warning C4324: 'rigid_body_constraint_distance': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\rigid_body.h(127): warning C4359: 'ragdoll_joint_limit_info': Alignment specifier is less than actual alignment (16), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\rigid_body.h(149): warning C4324: 'rigid_body_constraint_ragdoll': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\rigid_body.h(157): warning C4324: 'rigid_body_constraint_ragdoll': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\rigid_body.h(197): warning C4324: 'rigid_body_constraint_wheel': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\rigid_body.h(296): warning C4324: 'rigid_body_constraint_upright': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\rigid_body.h(367): warning C4099: 'rigid_body': type name first seen using 'struct' now seen using 'class'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\rigid_body.h(367): note: see declaration of 'rigid_body'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\rigid_body.h(534): warning C4099: 'rigid_body': type name first seen using 'class' now seen using 'struct'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\rigid_body.h(367): note: see declaration of 'rigid_body'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\rigid_body.h(535): warning C4099: 'rigid_body': type name first seen using 'class' now seen using 'struct'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\rigid_body.h(367): note: see declaration of 'rigid_body'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\tl/base/tl_thread.h(40): warning C4458: declaration of 'ThisPtr' hides class member
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\tl/base/tl_thread.h(13): note: see declaration of 'tlAtomicReadWriteMutex::ThisPtr'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\tl/base/tl_thread.h(45): warning C4389: '==': signed/unsigned mismatch
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\tl/base/tl_thread.h(60): warning C4389: '!=': signed/unsigned mismatch
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\tl/base/tl_thread.h(77): warning C4458: declaration of 'ThisPtr' hides class member
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\tl/base/tl_thread.h(13): note: see declaration of 'tlAtomicReadWriteMutex::ThisPtr'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\tl/base/tl_thread.h(82): warning C4389: '==': signed/unsigned mismatch
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\tl/base/tl_thread.h(100): warning C4389: '!=': signed/unsigned mismatch
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\tl/base/tl_thread.h(120): warning C4389: '!=': signed/unsigned mismatch
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_broad_phase.h(27): warning C4359: 'broad_phase_base': Alignment specifier is less than actual alignment (16), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_broad_phase.h(120): warning C4324: 'rb_vehicle_model': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_broad_phase.h(334): warning C4359: 'broad_phase_info': Alignment specifier is less than actual alignment (16), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_main.h(86): warning C4099: 'rigid_body': type name first seen using 'class' now seen using 'struct'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\rigid_body.h(367): note: see declaration of 'rigid_body'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_main.h(194): warning C4099: 'rigid_body': type name first seen using 'class' now seen using 'struct'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\rigid_body.h(367): note: see declaration of 'rigid_body'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\flame/flame_system.h(69): warning C4359: 'flameSource_t': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\xanim/xanim.h(47): warning C4359: 'XAnimPartTransFrames': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\xanim/xanim.h(71): warning C4359: 'XAnimDeltaPartQuatDataFrames': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\xanim/xanim.h(306): warning C4359: 'XAnimInfo': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal/com_memory.h(7): warning C4359: 'fileData_s': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/threads.h(26): warning C4369: 'ThreadContext_t':  enumerator value '4294967295' cannot be represented as 'int', value is '4294967295'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d\r_material_load_obj.h(167): warning C4359: 'ShaderUniformDef': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d\rb_state.h(239): warning C4324: 'GfxCmdBufInput': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d\r_init.h(642): warning C4324: 'r_global_permanent_t': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\sound\snd_radverb.h(154): warning C4324: 'snd_rv_state': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\sound\snd_driver_xaudio2_dsp.h(20): warning C4324: 'SDXA2Effect': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\sound\snd_driver_xaudio2_dsp.h(128): warning C4324: 'snd_dsp_dynamo_state': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\sound\snd_driver_xaudio2_dsp.h(205): warning C4324: 'SDXA2RadverbEffect': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\sound/snd.h(131): warning C4359: 'SoundFile': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\sound/snd.h(141): warning C4359: 'snd_alias_t': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\clientscript/cscr_animtree.h(26): warning C4201: nonstandard extension used: nameless struct/union
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\clientscript/cscr_animtree.h(77): warning C4359: 'scrAnimPub_t': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\bgame\bg_animation.h(17): warning C4100: 'i': unreferenced parameter
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/graph.h(13): warning C4359: 'DevGraph': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\vehicle\nitrous_vehicle_controller.h(28): warning C4324: 'NitrousVehicleController': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\vehicle/nitrous_vehicle.h(474): warning C4324: 'NitrousVehicle': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\game\g_vehicle_path.h(88): warning C4359: 'vn_field_t': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/destructible.h(87): warning C4359: 'Destructible': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\bgame/bg_local.h(50): warning C4359: 'CEntTurretInfo': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\bgame/bg_local.h(364): warning C4201: nonstandard extension used: nameless struct/union
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\bgame/bg_local.h(763): warning C4359: 'clientInfo_t': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\bgame\bg_weapons_attachment.h(93): warning C4359: 'AttachmentTableEntry': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\bgame\bg_weapons_attachment.h(110): warning C4359: 'AttachmentPointTableEntry': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\bgame\bg_weapons_attachment.h(121): warning C4359: 'WeaponOptionTableEntry': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d/r_screenshot.h(25): warning C4100: 'i': unreferenced parameter
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\DemonWare\bdCore\bdContainers\bdBitBuffer.h(34): warning C4359: 'bdBitBuffer': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\DemonWare/bdCore/bdContainers/bdByteBuffer.h(6): warning C4359: 'bdByteBuffer': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\libs\libtomcrypt-1.17\src\headers\tomcrypt_cfg.h(26): warning C4565: 'malloc': redefinition; the symbol was previously declared with __declspec(restrict)
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\libs\libtomcrypt-1.17\src\headers\tomcrypt_cfg.h(27): warning C4565: 'realloc': redefinition; the symbol was previously declared with __declspec(restrict)
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\libs\libtomcrypt-1.17\src\headers\tomcrypt_cfg.h(28): warning C4565: 'calloc': redefinition; the symbol was previously declared with __declspec(restrict)
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\server_mp/sv_voice_mp.h(6): warning C4359: 'VoicePacket_t': Alignment specifier is less than actual alignment (4), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\server_mp/sv_main_mp.h(55): warning C4359: 'challenge_t': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\server_mp/sv_main_mp.h(288): warning C4324: 'serverStatic_t': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\server_mp/sv_main_mp.h(391): warning C4359: 'server_t': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\DemonWare/bdCore/bdSocket/bdAddr.h(473): warning C4359: 'bdCommonAddr': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\demo/demo_common.h(363): warning C4359: 'demoHeader': Alignment specifier is less than actual alignment (4), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\demo/demo_common.h(484): warning C4324: 'MatchState': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\demo/demo_common.h(530): warning C4359: 'demoPlayback': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\demo/demo_common.h(688): warning C4324: 'demoMain': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d/fxprimitives.h(318): warning C4201: nonstandard extension used: nameless struct/union
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d/fxprimitives.h(332): warning C4201: nonstandard extension used: nameless struct/union
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d/fxprimitives.h(384): warning C4324: 'FxEffect': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d/fxprimitives.h(568): warning C4324: 'FxSystemShared': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\client_mp/cl_main_mp.h(254): warning C4324: 'clientActive_t': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\client_mp/cl_main_mp.h(397): warning C4359: 'serverInfo_t': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\cgame_mp/cg_local_mp.h(291): warning C4324: 'refdef_s': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\cgame_mp/cg_local_mp.h(958): warning C4324: 'cg_s': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d\r_scene.h(18): warning C4359: 'GfxSceneBrush': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d\r_scene.h(76): warning C4359: 'GfxSceneEntity': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d\r_scene.h(102): warning C4359: 'GfxSceneModel': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d\r_scene.h(120): warning C4359: 'GfxSceneGlassBrush': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d\r_scene.h(219): warning C4324: 'GfxScene': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d\r_buffers.h(49): warning C4359: 'GfxBuffers': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d\r_rendercmds.h(191): warning C4359: 'GfxDrawSurfListInfo': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d\r_rendercmds.h(313): warning C4201: nonstandard extension used: nameless struct/union
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d\r_rendercmds.h(352): warning C4324: 'GfxViewInfo': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d\r_rendercmds.h(506): warning C4324: 'GfxSunShadowPartition': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d\r_rendercmds.h(525): warning C4324: 'GfxSunShadow': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d\r_rendercmds.h(669): warning C4324: 'GfxBackEndData': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d\r_rendercmds.h(680): warning C4324: 'GfxBackEndData': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d\r_rendercmds.h(702): warning C4324: 'GfxBackEndData': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d\r_rendercmds.h(723): warning C4359: 'GfxCmdDrawText2D': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d\r_rendertarget.h(35): warning C4359: 'GfxRenderTarget': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d\r_dobj_skin.h(15): warning C4201: nonstandard extension used: nameless struct/union
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d\r_dobj_skin.h(53): warning C4359: 'GfxModelSurfaceInfo': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\sound/snd_bank.h(51): warning C4459: declaration of 'name' hides global declaration
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\client_mp/cl_main_mp.h(1283): note: see declaration of 'name'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\glass/glass.h(21): warning C4201: nonstandard extension used: nameless struct/union
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\game\pathnode.h(366): warning C4324: 'pathlocal_t': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\database\db_registry.cpp(771): warning C4100: 'pool': unreferenced parameter
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\database\db_registry.cpp(927): warning C4459: declaration of 'comWorld' hides global declaration
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/com_bsp.h(81): note: see declaration of 'comWorld'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\database\db_registry.cpp(932): warning C4459: declaration of 'comWorld' hides global declaration
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/com_bsp.h(81): note: see declaration of 'comWorld'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\database\db_registry.cpp(952): warning C4459: declaration of 'gameWorldMp' hides global declaration
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\game/g_bsp.h(42): note: see declaration of 'gameWorldMp'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\database\db_registry.cpp(957): warning C4459: declaration of 'gameWorldMp' hides global declaration
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\game/g_bsp.h(42): note: see declaration of 'gameWorldMp'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\database\db_registry.cpp(1052): warning C4459: declaration of 'name' hides global declaration
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\client_mp/cl_main_mp.h(1283): note: see declaration of 'name'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\database\db_registry.cpp(1064): warning C4100: '_formal': unreferenced parameter
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\database\db_registry.cpp(1167): warning C4459: declaration of 'name' hides global declaration
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\client_mp/cl_main_mp.h(1283): note: see declaration of 'name'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\database\db_registry.cpp(1318): warning C4100: 'inData': unreferenced parameter
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\database\db_registry.cpp(1415): warning C4459: declaration of 'name' hides global declaration
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\client_mp/cl_main_mp.h(1283): note: see declaration of 'name'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\database\db_registry.cpp(1432): warning C4459: declaration of 'name' hides global declaration
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\client_mp/cl_main_mp.h(1283): note: see declaration of 'name'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\database\db_registry.cpp(1457): warning C4244: 'argument': conversion from '__int64' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\database\db_registry.cpp(1522): warning C4459: declaration of 'name' hides global declaration
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\client_mp/cl_main_mp.h(1283): note: see declaration of 'name'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\database\db_registry.cpp(1553): warning C4459: declaration of 'name' hides global declaration
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\client_mp/cl_main_mp.h(1283): note: see declaration of 'name'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\database\db_registry.cpp(1582): warning C4459: declaration of 'name' hides global declaration
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\client_mp/cl_main_mp.h(1283): note: see declaration of 'name'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\database\db_registry.cpp(1621): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\database\db_registry.cpp(1623): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\database\db_registry.cpp(1624): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\database\db_registry.cpp(1625): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\database\db_registry.cpp(2123): warning C4244: '=': conversion from 'unsigned int' to 'unsigned char', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\database\db_registry.cpp(2200): warning C4459: declaration of 'name' hides global declaration
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\client_mp/cl_main_mp.h(1283): note: see declaration of 'name'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\database\db_registry.cpp(2231): warning C4459: declaration of 'name' hides global declaration
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\client_mp/cl_main_mp.h(1283): note: see declaration of 'name'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\database\db_registry.cpp(2254): warning C4459: declaration of 'name' hides global declaration
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\client_mp/cl_main_mp.h(1283): note: see declaration of 'name'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\database\db_registry.cpp(2371): warning C4459: declaration of 'name' hides global declaration
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\client_mp/cl_main_mp.h(1283): note: see declaration of 'name'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\database\db_registry.cpp(2406): warning C4459: declaration of 'name' hides global declaration
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\client_mp/cl_main_mp.h(1283): note: see declaration of 'name'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\database\db_registry.cpp(2445): warning C4459: declaration of 'name' hides global declaration
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\client_mp/cl_main_mp.h(1283): note: see declaration of 'name'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\database\db_registry.cpp(2878): warning C4459: declaration of 'name' hides global declaration
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\client_mp/cl_main_mp.h(1283): note: see declaration of 'name'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\database\db_registry.cpp(3019): warning C4244: 'argument': conversion from 'unsigned int' to 'unsigned char', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\database\db_registry.cpp(3393): warning C4459: declaration of 'name' hides global declaration
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\client_mp/cl_main_mp.h(1283): note: see declaration of 'name'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\database\db_registry.cpp(3600): warning C4459: declaration of 'name' hides global declaration
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\client_mp/cl_main_mp.h(1283): note: see declaration of 'name'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\database\db_registry.cpp(3677): warning C4459: declaration of 'name' hides global declaration
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\client_mp/cl_main_mp.h(1283): note: see declaration of 'name'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\database\db_registry.cpp(3819): warning C4018: '>=': signed/unsigned mismatch
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\database\db_registry.cpp(4327): warning C4611: interaction between '_setjmp' and C++ object destruction is non-portable
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\database\db_registry.cpp(4364): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\database\db_registry.cpp(4506): warning C4244: '=': conversion from 'unsigned int' to 'unsigned short', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\database\db_registry.cpp(4739): warning C4245: '=': conversion from 'int' to 'unsigned int', signed/unsigned mismatch
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\database\db_registry.cpp(4897): warning C4459: declaration of 'name' hides global declaration
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\client_mp/cl_main_mp.h(1283): note: see declaration of 'name'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\database\db_registry.cpp(5373): warning C4459: declaration of 'name' hides global declaration
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\client_mp/cl_main_mp.h(1283): note: see declaration of 'name'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\database\db_registry.cpp(5554): warning C4267: 'initializing': conversion from 'size_t' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\database\db_registry.cpp(5567): warning C4267: 'initializing': conversion from 'size_t' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\database\db_registry.cpp(5580): warning C4267: 'initializing': conversion from 'size_t' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\database\db_registry.cpp(5618): warning C4996: '_itoa': This function or variable may be unsafe. Consider using _itoa_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal/q_shared.h(354): warning C4127: conditional expression is constant
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal/q_shared.h(354): note: consider using 'if constexpr' statement instead
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal/q_shared.h(354): note: the template instantiation context (the oldest one first) is
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal/q_shared.h(369): note: see reference to function template instantiation 'T __ROL__<uint8>(T,int)' being compiled
+        with
+        [
+            T=uint8
+        ]
+com_stringtable_sort.cpp
+sort16.cpp
+db_assetnames.cpp
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal/com_math.h(63): warning C4201: nonstandard extension used: nameless struct/union
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal/q_shared.h(385): warning C4100: 'fakearg': unreferenced parameter
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\ui\ui_shared.h(55): warning C4369: 'itemGroup_t':  enumerator value '4294967295' cannot be represented as 'int', value is '4294967295'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cmd.h(39): warning C4359: 'cmd_function_s': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon\ent.h(79): warning C4359: 'LerpEntityStateVehicle': Alignment specifier is less than actual alignment (4), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon\ent.h(228): warning C4201: nonstandard extension used: nameless struct/union
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/msg_mp.h(105): warning C4359: 'usercmd_s': Alignment specifier is less than actual alignment (4), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d\r_gfx.h(197): warning C4359: 'GfxLightImage': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d\r_gfx.h(261): warning C4324: 'GfxLight': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d/r_material.h(37): warning C4369: 'surfaceType_t':  enumerator value '4294967295' cannot be represented as 'int', value is '4294967295'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d/r_material.h(45): warning C4369: 'GfxDepthRangeType':  enumerator value '4294967295' cannot be represented as 'int', value is '4294967295'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d/r_material.h(132): warning C4359: 'GfxVertexShaderLoadDef': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d/r_material.h(152): warning C4359: 'GfxPixelShaderLoadDef': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d/fxprimitives.h(318): warning C4201: nonstandard extension used: nameless struct/union
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d/fxprimitives.h(332): warning C4201: nonstandard extension used: nameless struct/union
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d/fxprimitives.h(384): warning C4324: 'FxEffect': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d/fxprimitives.h(568): warning C4324: 'FxSystemShared': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\glass/glass.h(21): warning C4201: nonstandard extension used: nameless struct/union
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\sound\snd_radverb.h(154): warning C4324: 'snd_rv_state': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\sound\snd_driver_xaudio2_dsp.h(20): warning C4324: 'SDXA2Effect': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\sound\snd_driver_xaudio2_dsp.h(128): warning C4324: 'snd_dsp_dynamo_state': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\sound\snd_driver_xaudio2_dsp.h(205): warning C4324: 'SDXA2RadverbEffect': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\sound/snd.h(131): warning C4359: 'SoundFile': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\sound/snd.h(141): warning C4359: 'snd_alias_t': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\clientscript\cscr_main.h(46): warning C4201: nonstandard extension used: nameless struct/union
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\clientscript\cscr_main.h(191): warning C4324: 'scrStringGlob_t': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\clientscript\cscr_variable.h(196): warning C4244: '=': conversion from 'int' to 'unsigned short', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\clientscript\cscr_variable.h(197): warning C4244: '=': conversion from 'int' to 'unsigned short', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\clientscript\cscr_variable.h(272): warning C4359: 'scrVarDebugPub_t': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\clientscript\cscr_variable.h(413): warning C4324: 'scrVarGlob_t': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\clientscript/cscr_animtree.h(26): warning C4201: nonstandard extension used: nameless struct/union
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\clientscript/cscr_animtree.h(77): warning C4359: 'scrAnimPub_t': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\bgame\bg_animation.h(17): warning C4100: 'i': unreferenced parameter
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1228): warning C4002: too many arguments for function-like macro invocation 'iassert'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1240): warning C4002: too many arguments for function-like macro invocation 'iassert'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1271): warning C4002: too many arguments for function-like macro invocation 'iassert'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1278): warning C4002: too many arguments for function-like macro invocation 'iassert'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1285): warning C4002: too many arguments for function-like macro invocation 'iassert'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1292): warning C4002: too many arguments for function-like macro invocation 'iassert'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1314): warning C4002: too many arguments for function-like macro invocation 'iassert'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1316): warning C4002: too many arguments for function-like macro invocation 'iassert'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1335): warning C4002: too many arguments for function-like macro invocation 'iassert'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1354): warning C4002: too many arguments for function-like macro invocation 'iassert'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1402): warning C4002: too many arguments for function-like macro invocation 'iassert'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1415): warning C4002: too many arguments for function-like macro invocation 'iassert'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1487): warning C4359: 'geom_plane': Alignment specifier is less than actual alignment (16), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1761): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1762): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1763): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1764): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1765): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1766): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1782): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1783): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1784): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1785): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1786): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1787): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1751): warning C4101: 'savedregs': unreferenced local variable
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1876): warning C4305: 'initializing': truncation from 'double' to 'float'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_local.h(1877): warning C4305: 'initializing': truncation from 'double' to 'float'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/graph.h(13): warning C4359: 'DevGraph': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(69): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(70): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(71): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(72): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(74): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(75): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(76): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(77): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(79): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(80): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(81): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(82): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(447): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(448): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(449): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(450): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(451): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(452): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(453): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(454): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(455): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(456): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(457): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(458): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(459): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(460): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(461): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(462): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(463): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(464): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(466): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(467): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(469): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(470): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(471): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(472): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(475): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(476): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(477): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(478): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(480): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(481): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(482): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\qcommon/cm_trace.h(483): warning C4244: '=': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_colgeom.h(126): warning C4324: 'gjk_base_t': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_colgeom.h(348): warning C4359: 'gjk_brush_t': Alignment specifier is less than actual alignment (16), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_colgeom.h(631): warning C4359: 'gjk_polygon_cylinder_t': Alignment specifier is less than actual alignment (16), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_gjk.h(392): warning C4100: 'gjk_geom': unreferenced parameter
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_gjk.h(425): warning C4324: 'gjk_physics_collision_visitor': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_gjk.h(486): warning C4100: 'no_error': unreferenced parameter
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_gjk.h(486): warning C4100: 'alignment': unreferenced parameter
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_gjk.h(486): warning C4100: 'size': unreferenced parameter
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_gjk.h(494): warning C4100: 'geom': unreferenced parameter
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_gjk.h(526): warning C4324: 'gjk_query_output': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_gjk.h(614): warning C4373: 'gjk_query_output::allocate': virtual function overrides 'gjk_collision_visitor::allocate', previous versions of the compiler did not override when parameters only differed by const/volatile qualifiers
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_gjk.h(377): note: see declaration of 'gjk_collision_visitor::allocate'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_gjk.h(788): warning C4359: 'gjkcc_info_database_t': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_gjk.h(873): warning C4359: 'gjk_slide_move_input_t': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_gjk.h(926): warning C4100: 'gto': unreferenced parameter
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_gjk.h(964): warning C4359: 'phys_gjk_input': Alignment specifier is less than actual alignment (16), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_gjk_collision_detection.h(66): warning C4359: 'gjk_entity_info_t': Alignment specifier is less than actual alignment (16), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/rigid_body.h(26): warning C4324: 'rigid_body_constraint_point': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/rigid_body.h(52): warning C4324: 'rigid_body_constraint_hinge': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/rigid_body.h(91): warning C4324: 'rigid_body_constraint_distance': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/rigid_body.h(127): warning C4359: 'ragdoll_joint_limit_info': Alignment specifier is less than actual alignment (16), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/rigid_body.h(149): warning C4324: 'rigid_body_constraint_ragdoll': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/rigid_body.h(157): warning C4324: 'rigid_body_constraint_ragdoll': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/rigid_body.h(197): warning C4324: 'rigid_body_constraint_wheel': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/rigid_body.h(296): warning C4324: 'rigid_body_constraint_upright': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/rigid_body.h(367): warning C4099: 'rigid_body': type name first seen using 'struct' now seen using 'class'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/rigid_body.h(367): note: see declaration of 'rigid_body'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/rigid_body.h(534): warning C4099: 'rigid_body': type name first seen using 'class' now seen using 'struct'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/rigid_body.h(367): note: see declaration of 'rigid_body'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/rigid_body.h(535): warning C4099: 'rigid_body': type name first seen using 'class' now seen using 'struct'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/rigid_body.h(367): note: see declaration of 'rigid_body'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\vehicle\nitrous_vehicle_controller.h(28): warning C4324: 'NitrousVehicleController': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\vehicle/nitrous_vehicle.h(474): warning C4324: 'NitrousVehicle': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\game\g_vehicle_path.h(88): warning C4359: 'vn_field_t': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/destructible.h(87): warning C4359: 'Destructible': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d\r_material_load_obj.h(167): warning C4359: 'ShaderUniformDef': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d\rb_state.h(239): warning C4324: 'GfxCmdBufInput': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\bgame/bg_local.h(50): warning C4359: 'CEntTurretInfo': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\bgame/bg_local.h(364): warning C4201: nonstandard extension used: nameless struct/union
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\bgame/bg_local.h(763): warning C4359: 'clientInfo_t': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d\r_init.h(642): warning C4324: 'r_global_permanent_t': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\xanim\dobj.h(114): warning C4359: 'DObjModel_s': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\tl/jobqueue/jobqueue_all.h(144): warning C4201: nonstandard extension used: nameless struct/union
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\tl/jobqueue/jobqueue_all.h(215): warning C4324: 'jqBatch': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\tl/jobqueue/jobqueue_all.h(390): warning C4359: '_jqWorker': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\tl/base/tl_thread.h(40): warning C4458: declaration of 'ThisPtr' hides class member
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\tl/base/tl_thread.h(13): note: see declaration of 'tlAtomicReadWriteMutex::ThisPtr'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\tl/base/tl_thread.h(45): warning C4389: '==': signed/unsigned mismatch
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\tl/base/tl_thread.h(60): warning C4389: '!=': signed/unsigned mismatch
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\tl/base/tl_thread.h(77): warning C4458: declaration of 'ThisPtr' hides class member
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\tl/base/tl_thread.h(13): note: see declaration of 'tlAtomicReadWriteMutex::ThisPtr'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\tl/base/tl_thread.h(82): warning C4389: '==': signed/unsigned mismatch
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\tl/base/tl_thread.h(100): warning C4389: '!=': signed/unsigned mismatch
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\tl/base/tl_thread.h(120): warning C4389: '!=': signed/unsigned mismatch
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_broad_phase.h(27): warning C4359: 'broad_phase_base': Alignment specifier is less than actual alignment (16), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_broad_phase.h(120): warning C4324: 'rb_vehicle_model': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics\phys_broad_phase.h(334): warning C4359: 'broad_phase_info': Alignment specifier is less than actual alignment (16), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_main.h(86): warning C4099: 'rigid_body': type name first seen using 'class' now seen using 'struct'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/rigid_body.h(367): note: see declaration of 'rigid_body'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/phys_main.h(194): warning C4099: 'rigid_body': type name first seen using 'class' now seen using 'struct'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\physics/rigid_body.h(367): note: see declaration of 'rigid_body'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\flame/flame_system.h(69): warning C4359: 'flameSource_t': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\xanim/xanim.h(47): warning C4359: 'XAnimPartTransFrames': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\xanim/xanim.h(71): warning C4359: 'XAnimDeltaPartQuatDataFrames': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\xanim/xanim.h(306): warning C4359: 'XAnimInfo': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\bgame\bg_weapons_attachment.h(93): warning C4359: 'AttachmentTableEntry': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\bgame\bg_weapons_attachment.h(110): warning C4359: 'AttachmentPointTableEntry': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\bgame\bg_weapons_attachment.h(121): warning C4359: 'WeaponOptionTableEntry': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d/r_screenshot.h(25): warning C4100: 'i': unreferenced parameter
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\DemonWare\bdCore\bdContainers\bdBitBuffer.h(34): warning C4359: 'bdBitBuffer': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\DemonWare/bdCore/bdContainers/bdByteBuffer.h(6): warning C4359: 'bdByteBuffer': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\libs\libtomcrypt-1.17\src\headers\tomcrypt_cfg.h(26): warning C4565: 'malloc': redefinition; the symbol was previously declared with __declspec(restrict)
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\libs\libtomcrypt-1.17\src\headers\tomcrypt_cfg.h(27): warning C4565: 'realloc': redefinition; the symbol was previously declared with __declspec(restrict)
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\libs\libtomcrypt-1.17\src\headers\tomcrypt_cfg.h(28): warning C4565: 'calloc': redefinition; the symbol was previously declared with __declspec(restrict)
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\server_mp/sv_voice_mp.h(6): warning C4359: 'VoicePacket_t': Alignment specifier is less than actual alignment (4), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\server_mp/sv_main_mp.h(55): warning C4359: 'challenge_t': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\server_mp/sv_main_mp.h(288): warning C4324: 'serverStatic_t': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\server_mp/sv_main_mp.h(391): warning C4359: 'server_t': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\DemonWare/bdCore/bdSocket/bdAddr.h(473): warning C4359: 'bdCommonAddr': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\demo/demo_common.h(363): warning C4359: 'demoHeader': Alignment specifier is less than actual alignment (4), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\demo/demo_common.h(484): warning C4324: 'MatchState': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\demo/demo_common.h(530): warning C4359: 'demoPlayback': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\demo/demo_common.h(688): warning C4324: 'demoMain': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\client_mp/cl_main_mp.h(254): warning C4324: 'clientActive_t': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\client_mp/cl_main_mp.h(397): warning C4359: 'serverInfo_t': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\cgame_mp/cg_local_mp.h(291): warning C4324: 'refdef_s': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\cgame_mp/cg_local_mp.h(958): warning C4324: 'cg_s': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d\r_scene.h(18): warning C4359: 'GfxSceneBrush': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d\r_scene.h(76): warning C4359: 'GfxSceneEntity': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d\r_scene.h(102): warning C4359: 'GfxSceneModel': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d\r_scene.h(120): warning C4359: 'GfxSceneGlassBrush': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d\r_scene.h(219): warning C4324: 'GfxScene': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d\r_buffers.h(49): warning C4359: 'GfxBuffers': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d\r_rendercmds.h(191): warning C4359: 'GfxDrawSurfListInfo': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d\r_rendercmds.h(313): warning C4201: nonstandard extension used: nameless struct/union
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d\r_rendercmds.h(352): warning C4324: 'GfxViewInfo': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d\r_rendercmds.h(506): warning C4324: 'GfxSunShadowPartition': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d\r_rendercmds.h(525): warning C4324: 'GfxSunShadow': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d\r_rendercmds.h(669): warning C4324: 'GfxBackEndData': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d\r_rendercmds.h(680): warning C4324: 'GfxBackEndData': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d\r_rendercmds.h(702): warning C4324: 'GfxBackEndData': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\gfx_d3d\r_rendercmds.h(723): warning C4359: 'GfxCmdDrawText2D': Alignment specifier is less than actual alignment (8), and will be ignored.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\sound/snd_bank.h(51): warning C4459: declaration of 'name' hides global declaration
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\client_mp/cl_main_mp.h(1283): note: see declaration of 'name'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\game\pathnode.h(366): warning C4324: 'pathlocal_t': structure was padded due to alignment specifier
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\database\db_assetnames.cpp(684): warning C4459: declaration of 'name' hides global declaration
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\client_mp/cl_main_mp.h(1283): note: see declaration of 'name'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\database\db_assetnames.cpp(697): warning C4459: declaration of 'name' hides global declaration
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\client_mp/cl_main_mp.h(1283): note: see declaration of 'name'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\database\db_assetnames.cpp(702): warning C4459: declaration of 'name' hides global declaration
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\client_mp/cl_main_mp.h(1283): note: see declaration of 'name'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\database\db_assetnames.cpp(713): warning C4459: declaration of 'name' hides global declaration
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\client_mp/cl_main_mp.h(1283): note: see declaration of 'name'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\database\db_assetnames.cpp(722): warning C4100: 'header': unreferenced parameter
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\database\db_assetnames.cpp(732): warning C4459: declaration of 'name' hides global declaration
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\client_mp/cl_main_mp.h(1283): note: see declaration of 'name'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\database\db_assetnames.cpp(731): warning C4101: 'v2': unreferenced local variable
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\database\db_assetnames.cpp(796): warning C4459: declaration of 'name' hides global declaration
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\client_mp/cl_main_mp.h(1283): note: see declaration of 'name'
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal/q_shared.h(354): warning C4127: conditional expression is constant
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal/q_shared.h(354): note: consider using 'if constexpr' statement instead
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal/q_shared.h(354): note: the template instantiation context (the oldest one first) is
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal/q_shared.h(369): note: see reference to function template instantiation 'T __ROL__<uint8>(T,int)' being compiled
+        with
+        [
+            T=uint8
+        ]
+Generating Code...
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\universal\q_shared.cpp(119) : warning C4717: 'LittleLong64': recursive on all control paths, function will cause runtime stack overflow

@@ -1,0 +1,261 @@
+{
+  "schema": "BlackOpsARM.TASK32.entry-alloc-gate.v1",
+  "utc": "2026-10-12T08:58:27.675125+00:00",
+  "platforms": {
+    "windows_x86": {
+      "rows": [
+        {
+          "schema": "BlackOpsARM.TASK32.entry-alloc.v1",
+          "pointer_bytes": 4,
+          "header_entry_allocations": 1600,
+          "invalid_caller_guards": 6,
+          "high_count_after_release": 0,
+          "high_water_retained": 1600,
+          "free_entry_nodes": 32752,
+          "raw_free": 1024,
+          "table_free": 576,
+          "lifo_verified": true,
+          "registry_publication_executed": false
+        }
+      ],
+      "binary_sha256": "bf4e326373aaf2b584f814a620489c7c84466e27185214aa19219060dc22dfe5",
+      "source_manifest": {
+        "path": "build-android-audit\\entry_alloc_host_pass1\\x86\\source-manifest.json",
+        "sha256": "a0c43ad6f15699be12f7f04141d84cfc290ef6eb645e4d699c59b79b35d92e72",
+        "files": {
+          "src/platform/android/script_string_services.cpp": "032EE1F2A362284483EAD49497EDDF5E71BD07AD696B744FE5D6B55F89AAE843",
+          "src/universal/com_errors.h": "A1018D7ED124D4573992BD65625DF428B79BD23D5C088CD77CFBE4E003AB9B7D",
+          "src/database/db_asset_pool.h": "7CD3F6FE1510858C0F73091065AC66ED75E73A2999A58390521E07D7D6E9A824",
+          "src/database/db_asset_entry_types.h": "43DE977E5E40BF2E2FBD0F2F725B4792F0F08BCC85CBDADFF19DA808D0279FCC",
+          "src/platform/bo1_native_width.h": "13F5ADE3F337F20CEE353F5BC4ABCCC17620A0DB938FB7404F332D408370F204",
+          "src/universal/dvar.h": "2AEC66F7D1504AF3F661457DD60CC91EEF1182817028587A86E3F28DD0306B10",
+          "src/database/database.h": "71A79090B0A3643AF107B0F395599B6DE65F8F5FE7B002F84D87FF6838118BC0",
+          "tools/port/tests/entry_alloc_tests.cpp": "2F64613FB7814E582164E35EEC359F6AB1B334B6DB8CD05B6157AE45AA0F7987",
+          "src/universal/critical_sections.h": "7D3EAEDC487325A9FB52A9DADF45858AE0028C6D612A7314789D5AD3E7B928B3",
+          "src/database/db_assetlist_types.h": "3CA06894D09BF95679B5230888F7ACC3E3448BF52A92CEB20AEA82E5B3ECC28D",
+          "src/platform/critical_section_services.h": "FC1AC63806C3D02383B75BC79A0565916C1E8A5F543A0B595FE77EE39416D46D",
+          "src/database/db_assetnames.cpp": "B3423869314DC387479B3524911C1A46CB7EAB9B0F3B6F896FC8986D97722791",
+          "src/database/db_entry_alloc_api.h": "C5412004CF0ECA8DE0960BD32510140FCD048E211210FF0B508C75F0F4904072",
+          "src/universal/com_stringtable.h": "92015D95827EC19284732C908C7D5DEB9FCDF1C5EB16DFE18E15D5EF2B6145B3",
+          "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\tools\\port\\build_entry_alloc_host.ps1": "650DDB696F67E78132FFD0C424F7449520ED7E6DEE84C6BC27EC23021C105679",
+          "src/database/db_registry.cpp": "928C9FBDA4ED7D0B06A2DDE3BABF6DB86FC334597C80AA1477F8262BAF49EE6C",
+          "src/database/db_rawfile_types.h": "51226815E230041E294488C433668273BBA3647FE75874C2A84492856086F648",
+          "src/platform/android/script_pool_bridge.cpp": "311FFAD0C02B005C33B75259193C5647B765F1AC64FEC7829357A408C5EC397D",
+          "src/platform/android/script_string_services.h": "8C4077F85765FADE48597C81739DDEB81BB19A65589344EC50487B1155716861",
+          "src/universal/assertive.h": "B4771DBADDCDF0B892F7AE7F6E91B0364125F2AC4F8E1BC4A24396AB7F72966D",
+          "src/database/db_zone_name_types.h": "CECCBEAE14E3A775D349A73116723E3860EE393EF6099913C48F48A246D79494",
+          "src/platform/win32_compat/msvc_compat.h": "701A1CF3D389AE99D9A9113EB2E6ABFC921978BC3ABCCFAF9928476B786BA312"
+        },
+        "build_tools": [],
+        "build_tool_currency_scope": "Build-time tool hashes retained; compiled source/API currency required; historical builder edits do not invalidate unchanged compiled source",
+        "scope": "Selected translation units and bounded relevant API/config headers; not all transitive headers"
+      },
+      "diagnostic": [
+        {
+          "diagnostic": {
+            "primary_override_nonmatching_inputs": true,
+            "actual_ff_traversal": true,
+            "typed_callback_executed": true,
+            "logical_baseline_restored": true
+          }
+        }
+      ],
+      "fatal_controls": {
+        "--empty-entry": {
+          "exit": 3,
+          "high_count": 0,
+          "required_diagnostic": "Could not allocate asset - increase XASSET_ENTRY_POOL_SIZE"
+        },
+        "--raw-limit": {
+          "exit": 3,
+          "high_count": 1026,
+          "required_diagnostic": "Exceeded limit of 1024 'rawfile' assets."
+        },
+        "--table-limit": {
+          "exit": 3,
+          "high_count": 578,
+          "required_diagnostic": "Exceeded limit of 576 'stringtable' assets."
+        },
+        "--loadobj-unavailable": {
+          "exit": 3,
+          "high_count": null,
+          "required_diagnostic": "Explicit unsupported standalone LoadObj diagnostic"
+        }
+      }
+    },
+    "windows_x64": {
+      "rows": [
+        {
+          "schema": "BlackOpsARM.TASK32.entry-alloc.v1",
+          "pointer_bytes": 8,
+          "header_entry_allocations": 1600,
+          "invalid_caller_guards": 6,
+          "high_count_after_release": 0,
+          "high_water_retained": 1600,
+          "free_entry_nodes": 32752,
+          "raw_free": 1024,
+          "table_free": 576,
+          "lifo_verified": true,
+          "registry_publication_executed": false
+        }
+      ],
+      "binary_sha256": "f87cd715242c3ae440718d0eb6a3113d7b93720259b170422e68ea2c0e184cce",
+      "source_manifest": {
+        "path": "build-android-audit\\entry_alloc_host_pass1\\x64\\source-manifest.json",
+        "sha256": "a0c43ad6f15699be12f7f04141d84cfc290ef6eb645e4d699c59b79b35d92e72",
+        "files": {
+          "src/platform/android/script_string_services.cpp": "032EE1F2A362284483EAD49497EDDF5E71BD07AD696B744FE5D6B55F89AAE843",
+          "src/universal/com_errors.h": "A1018D7ED124D4573992BD65625DF428B79BD23D5C088CD77CFBE4E003AB9B7D",
+          "src/database/db_asset_pool.h": "7CD3F6FE1510858C0F73091065AC66ED75E73A2999A58390521E07D7D6E9A824",
+          "src/database/db_asset_entry_types.h": "43DE977E5E40BF2E2FBD0F2F725B4792F0F08BCC85CBDADFF19DA808D0279FCC",
+          "src/platform/bo1_native_width.h": "13F5ADE3F337F20CEE353F5BC4ABCCC17620A0DB938FB7404F332D408370F204",
+          "src/universal/dvar.h": "2AEC66F7D1504AF3F661457DD60CC91EEF1182817028587A86E3F28DD0306B10",
+          "src/database/database.h": "71A79090B0A3643AF107B0F395599B6DE65F8F5FE7B002F84D87FF6838118BC0",
+          "tools/port/tests/entry_alloc_tests.cpp": "2F64613FB7814E582164E35EEC359F6AB1B334B6DB8CD05B6157AE45AA0F7987",
+          "src/universal/critical_sections.h": "7D3EAEDC487325A9FB52A9DADF45858AE0028C6D612A7314789D5AD3E7B928B3",
+          "src/database/db_assetlist_types.h": "3CA06894D09BF95679B5230888F7ACC3E3448BF52A92CEB20AEA82E5B3ECC28D",
+          "src/platform/critical_section_services.h": "FC1AC63806C3D02383B75BC79A0565916C1E8A5F543A0B595FE77EE39416D46D",
+          "src/database/db_assetnames.cpp": "B3423869314DC387479B3524911C1A46CB7EAB9B0F3B6F896FC8986D97722791",
+          "src/database/db_entry_alloc_api.h": "C5412004CF0ECA8DE0960BD32510140FCD048E211210FF0B508C75F0F4904072",
+          "src/universal/com_stringtable.h": "92015D95827EC19284732C908C7D5DEB9FCDF1C5EB16DFE18E15D5EF2B6145B3",
+          "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\tools\\port\\build_entry_alloc_host.ps1": "650DDB696F67E78132FFD0C424F7449520ED7E6DEE84C6BC27EC23021C105679",
+          "src/database/db_registry.cpp": "928C9FBDA4ED7D0B06A2DDE3BABF6DB86FC334597C80AA1477F8262BAF49EE6C",
+          "src/database/db_rawfile_types.h": "51226815E230041E294488C433668273BBA3647FE75874C2A84492856086F648",
+          "src/platform/android/script_pool_bridge.cpp": "311FFAD0C02B005C33B75259193C5647B765F1AC64FEC7829357A408C5EC397D",
+          "src/platform/android/script_string_services.h": "8C4077F85765FADE48597C81739DDEB81BB19A65589344EC50487B1155716861",
+          "src/universal/assertive.h": "B4771DBADDCDF0B892F7AE7F6E91B0364125F2AC4F8E1BC4A24396AB7F72966D",
+          "src/database/db_zone_name_types.h": "CECCBEAE14E3A775D349A73116723E3860EE393EF6099913C48F48A246D79494",
+          "src/platform/win32_compat/msvc_compat.h": "701A1CF3D389AE99D9A9113EB2E6ABFC921978BC3ABCCFAF9928476B786BA312"
+        },
+        "build_tools": [],
+        "build_tool_currency_scope": "Build-time tool hashes retained; compiled source/API currency required; historical builder edits do not invalidate unchanged compiled source",
+        "scope": "Selected translation units and bounded relevant API/config headers; not all transitive headers"
+      },
+      "diagnostic": [
+        {
+          "diagnostic": {
+            "primary_override_nonmatching_inputs": true,
+            "actual_ff_traversal": true,
+            "typed_callback_executed": true,
+            "logical_baseline_restored": true
+          }
+        }
+      ],
+      "fatal_controls": {
+        "--empty-entry": {
+          "exit": 3,
+          "high_count": 0,
+          "required_diagnostic": "Could not allocate asset - increase XASSET_ENTRY_POOL_SIZE"
+        },
+        "--raw-limit": {
+          "exit": 3,
+          "high_count": 1026,
+          "required_diagnostic": "Exceeded limit of 1024 'rawfile' assets."
+        },
+        "--table-limit": {
+          "exit": 3,
+          "high_count": 578,
+          "required_diagnostic": "Exceeded limit of 576 'stringtable' assets."
+        },
+        "--loadobj-unavailable": {
+          "exit": 3,
+          "high_count": null,
+          "required_diagnostic": "Explicit unsupported standalone LoadObj diagnostic"
+        }
+      }
+    },
+    "honor_arm64": {
+      "rows": [
+        {
+          "schema": "BlackOpsARM.TASK32.entry-alloc.v1",
+          "pointer_bytes": 8,
+          "header_entry_allocations": 1600,
+          "invalid_caller_guards": 6,
+          "high_count_after_release": 0,
+          "high_water_retained": 1600,
+          "free_entry_nodes": 32752,
+          "raw_free": 1024,
+          "table_free": 576,
+          "lifo_verified": true,
+          "registry_publication_executed": false
+        }
+      ],
+      "binary_sha256": "5732d08dd1da924e8cb90d7c8d7c52bdc03e709ad8c04b42967a15dc41367bd9",
+      "source_manifest": {
+        "path": "build-android-audit\\entry_alloc_optimized_pass1\\source-manifest.json",
+        "sha256": "3cd373c3a281deed2f868bbb0095a8bb55b3168094e49abb4baaa3badb963860",
+        "files": {
+          "src/database/db_registry.cpp": "928C9FBDA4ED7D0B06A2DDE3BABF6DB86FC334597C80AA1477F8262BAF49EE6C",
+          "src/platform/critical_section_services.h": "FC1AC63806C3D02383B75BC79A0565916C1E8A5F543A0B595FE77EE39416D46D",
+          "src/universal/com_errors.h": "A1018D7ED124D4573992BD65625DF428B79BD23D5C088CD77CFBE4E003AB9B7D",
+          "src/database/database.h": "71A79090B0A3643AF107B0F395599B6DE65F8F5FE7B002F84D87FF6838118BC0",
+          "src/platform/android/script_string_services.h": "8C4077F85765FADE48597C81739DDEB81BB19A65589344EC50487B1155716861",
+          "src/platform/bo1_native_width.h": "13F5ADE3F337F20CEE353F5BC4ABCCC17620A0DB938FB7404F332D408370F204",
+          "src/database/db_assetnames.cpp": "B3423869314DC387479B3524911C1A46CB7EAB9B0F3B6F896FC8986D97722791",
+          "src/universal/com_stringtable.h": "92015D95827EC19284732C908C7D5DEB9FCDF1C5EB16DFE18E15D5EF2B6145B3",
+          "src/database/db_asset_entry_types.h": "43DE977E5E40BF2E2FBD0F2F725B4792F0F08BCC85CBDADFF19DA808D0279FCC",
+          "src/platform/android/script_string_services.cpp": "032EE1F2A362284483EAD49497EDDF5E71BD07AD696B744FE5D6B55F89AAE843",
+          "src/database/db_assetlist_types.h": "3CA06894D09BF95679B5230888F7ACC3E3448BF52A92CEB20AEA82E5B3ECC28D",
+          "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\tools\\port\\build_entry_alloc_arm64.ps1": "C49213D3E2D282A7AA7D6197922A65AAB9F71AA9896B4D0E23F3AFA708571992",
+          "src/platform/win32_compat/msvc_compat.h": "701A1CF3D389AE99D9A9113EB2E6ABFC921978BC3ABCCFAF9928476B786BA312",
+          "src/universal/critical_sections.h": "7D3EAEDC487325A9FB52A9DADF45858AE0028C6D612A7314789D5AD3E7B928B3",
+          "src/universal/dvar.h": "2AEC66F7D1504AF3F661457DD60CC91EEF1182817028587A86E3F28DD0306B10",
+          "src/database/db_asset_pool.h": "7CD3F6FE1510858C0F73091065AC66ED75E73A2999A58390521E07D7D6E9A824",
+          "src/database/db_entry_alloc_api.h": "C5412004CF0ECA8DE0960BD32510140FCD048E211210FF0B508C75F0F4904072",
+          "src/database/db_zone_name_types.h": "CECCBEAE14E3A775D349A73116723E3860EE393EF6099913C48F48A246D79494",
+          "src/universal/assertive.h": "B4771DBADDCDF0B892F7AE7F6E91B0364125F2AC4F8E1BC4A24396AB7F72966D",
+          "src/database/db_rawfile_types.h": "51226815E230041E294488C433668273BBA3647FE75874C2A84492856086F648",
+          "src/platform/android/script_pool_bridge.cpp": "311FFAD0C02B005C33B75259193C5647B765F1AC64FEC7829357A408C5EC397D",
+          "tools/port/tests/entry_alloc_tests.cpp": "2F64613FB7814E582164E35EEC359F6AB1B334B6DB8CD05B6157AE45AA0F7987",
+          "android/cmake/arm64-audit/CMakeLists.txt": "08FF08FF2180FFE218B8D43457C327EACAE0B09151674290CCB200CC977BBF67"
+        },
+        "build_tools": [],
+        "build_tool_currency_scope": "Build-time tool hashes retained; compiled source/API currency required; historical builder edits do not invalidate unchanged compiled source",
+        "scope": "Selected translation units and bounded relevant API/config headers; not all transitive headers"
+      },
+      "diagnostic": [
+        {
+          "diagnostic": {
+            "primary_override_nonmatching_inputs": true,
+            "actual_ff_traversal": true,
+            "typed_callback_executed": true,
+            "logical_baseline_restored": true
+          }
+        }
+      ],
+      "fatal_controls": {
+        "--empty-entry": {
+          "exit": 134,
+          "high_count": 0,
+          "required_diagnostic": "Could not allocate asset - increase XASSET_ENTRY_POOL_SIZE"
+        },
+        "--raw-limit": {
+          "exit": 134,
+          "high_count": 1026,
+          "required_diagnostic": "Exceeded limit of 1024 'rawfile' assets."
+        },
+        "--table-limit": {
+          "exit": 134,
+          "high_count": 578,
+          "required_diagnostic": "Exceeded limit of 576 'stringtable' assets."
+        },
+        "--loadobj-unavailable": {
+          "exit": 134,
+          "high_count": null,
+          "required_diagnostic": "Explicit unsupported standalone LoadObj diagnostic"
+        }
+      }
+    }
+  },
+  "all_tests_completed": true,
+  "scope": "Actual header dispatch,entry allocation/free,FF diagnostic traversal and fatal partial progress; no registry publication or engine startup",
+  "tools": {
+    "tools\\port\\run_entry_alloc_gate.py": "8590c2304183fab183394471672c401afebac0171411c24990e55ed20f529146",
+    "tools\\port\\run_rawfile_payload_gate.py": "3bb26e84f8c1ada3a3f9e461cddf1126b327ca29929d704404e9e60f4ee85731",
+    "tools\\port\\run_asset_entry_init_gate.py": "13c0f543c5357bdd7692192baec499d99dc8a28f0b9522fdcca49e6d6ee7bc09",
+    "tools\\port\\verify_entry_alloc_source.py": "9b32d0c757960fee6bec2188f98adcfb4220ab0caf501b1b5cddc20327c18763"
+  },
+  "device_metadata": "NDL-L09\n36\n4096\n",
+  "malformed_records_rejected": 8,
+  "status": "passed"
+}

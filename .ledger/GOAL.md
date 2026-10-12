@@ -1,3 +1,10 @@
+## Standing autonomous goal — TASK32 complete
+
+Continue successive verified native engine milestones without waiting after each.
+Read docs/port/standing_development_goal.md (DEC47). Actual entry allocation/free
+verified; next genuine entry-owned headers, lookup, minimal publication. Local
+verified commits allowed/no push. No fullengine startup/render yet.
+
 ## Current milestone — TASK31 complete, 12 October 2026
 
 Actual entry-list init and native recursive DBHASH verified on3ABIs/O0/O3.

@@ -1,0 +1,1146 @@
+{
+  "schema": "BlackOpsARM.TASK32.archive.v1",
+  "files": [
+    {
+      "source": "build-android-audit\\entry_alloc_host_pass1\\x64\\build-result.json",
+      "archive": "entry_alloc_host_pass1-x64-build-result.json",
+      "sha256": "6b25ba7eb80f4a27e20508062232fd252806d1f752562ea1b1781ce6391e9aab",
+      "bytes": 67
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_host_pass1\\x64\\command.txt",
+      "archive": "entry_alloc_host_pass1-x64-command.txt",
+      "sha256": "b33d3f86f6ae053d3793e9e046aefcc596a74c4b45286c7bf9d7df41291022e7",
+      "bytes": 978
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_host_pass1\\x64\\compile.log",
+      "archive": "entry_alloc_host_pass1-x64-compile.log",
+      "sha256": "a681eca643cf0e7c30fdf7bf60cee1095ceee21772163daa6dd47f640e56a02a",
+      "bytes": 927
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_host_pass1\\x64\\source-manifest.json",
+      "archive": "entry_alloc_host_pass1-x64-source-manifest.json",
+      "sha256": "a0c43ad6f15699be12f7f04141d84cfc290ef6eb645e4d699c59b79b35d92e72",
+      "bytes": 2433
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_host_pass1\\x86\\build-result.json",
+      "archive": "entry_alloc_host_pass1-x86-build-result.json",
+      "sha256": "b9a712207cd372cbf323f0108680b8ba79f2b00b70289de0a098f78034855996",
+      "bytes": 67
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_host_pass1\\x86\\command.txt",
+      "archive": "entry_alloc_host_pass1-x86-command.txt",
+      "sha256": "4b9eb20c5f4aef7d8b3e2c51911685380c97a0d57a3dd59509c19ef93e1203b1",
+      "bytes": 961
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_host_pass1\\x86\\compile.log",
+      "archive": "entry_alloc_host_pass1-x86-compile.log",
+      "sha256": "06ebb674ed942b395b268ee182e64c1027ce1a08efc6ed29c037fd95c6028c69",
+      "bytes": 797
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_host_pass1\\x86\\source-manifest.json",
+      "archive": "entry_alloc_host_pass1-x86-source-manifest.json",
+      "sha256": "a0c43ad6f15699be12f7f04141d84cfc290ef6eb645e4d699c59b79b35d92e72",
+      "bytes": 2433
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_debug_pass1\\build-result.json",
+      "archive": "entry_alloc_debug_pass1-build-result.json",
+      "sha256": "482fffac426b5a8fd27dd87e9e1ee572e9662904e5f251816289fa84dcc10a49",
+      "bytes": 71
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_debug_pass1\\build.log",
+      "archive": "entry_alloc_debug_pass1-build.log",
+      "sha256": "6140e19a9f9d8d3a458aca42b9dfc5fa592108224dea19311652eee1078d6349",
+      "bytes": 44503
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_debug_pass1\\commands.json",
+      "archive": "entry_alloc_debug_pass1-commands.json",
+      "sha256": "97de6c6f0cbd80d3c0095098e20221d624b80c68289d4f4f9bcfecbc2c89609e",
+      "bytes": 1260
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_debug_pass1\\compile_commands.json",
+      "archive": "entry_alloc_debug_pass1-compile_commands.json",
+      "sha256": "ed88f10fd8713bda28848008df03e5ae73175d2d34bc9d146aeed1c9e478fe9f",
+      "bytes": 612862
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_debug_pass1\\configure.log",
+      "archive": "entry_alloc_debug_pass1-configure.log",
+      "sha256": "1b53109319e1e71f823ed6ccf224efa56dc61a955f9b834cc08cc77852895f9b",
+      "bytes": 1065
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_debug_pass1\\source-manifest.json",
+      "archive": "entry_alloc_debug_pass1-source-manifest.json",
+      "sha256": "ba16a6628b2d3fb705066e8ac810f8bd10251fac6ca85a6b05a947647919bd0e",
+      "bytes": 2549
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_debug_pass1\\CMakeFiles\\CMakeOutput.log",
+      "archive": "entry_alloc_debug_pass1-CMakeFiles-CMakeOutput.log",
+      "sha256": "892a9a885cabfae7f13725b5a3dd6b1124fad37052ad69724cd98118557a9b84",
+      "bytes": 40900
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_debug_pass1\\CMakeFiles\\TargetDirectories.txt",
+      "archive": "entry_alloc_debug_pass1-CMakeFiles-TargetDirectories.txt",
+      "sha256": "f5bd96ca38ef8308614f5a1420fd7eb768c1eb6cc1382b4d26e9704c484a1cb2",
+      "bytes": 7142
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_optimized_pass1\\build-result.json",
+      "archive": "entry_alloc_optimized_pass1-build-result.json",
+      "sha256": "056d612110d2eac62ea38ece70ae80ee7a0a33eccab4ef3fac4dfc434f1f075f",
+      "bytes": 71
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_optimized_pass1\\build.log",
+      "archive": "entry_alloc_optimized_pass1-build.log",
+      "sha256": "e7dde008df298b33bec3d6e6f912ba98df25b8614a1d2636997c81e73ecdb303",
+      "bytes": 44503
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_optimized_pass1\\commands.json",
+      "archive": "entry_alloc_optimized_pass1-commands.json",
+      "sha256": "c5d2e91e8ada180591e426cd6f08c78d88cf56bb240890e538a182201b8f181c",
+      "bytes": 1268
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_optimized_pass1\\compile_commands.json",
+      "archive": "entry_alloc_optimized_pass1-compile_commands.json",
+      "sha256": "85c3829eb6492ff8f3a4f587fc2ae7c637563178f1540d38bf0f4376361759ba",
+      "bytes": 614514
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_optimized_pass1\\configure.log",
+      "archive": "entry_alloc_optimized_pass1-configure.log",
+      "sha256": "0285f59463b1541672421375c1c9a69bb9f44cd21a376fad21fe427e8939f561",
+      "bytes": 1069
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_optimized_pass1\\source-manifest.json",
+      "archive": "entry_alloc_optimized_pass1-source-manifest.json",
+      "sha256": "3cd373c3a281deed2f868bbb0095a8bb55b3168094e49abb4baaa3badb963860",
+      "bytes": 2549
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_optimized_pass1\\CMakeFiles\\CMakeOutput.log",
+      "archive": "entry_alloc_optimized_pass1-CMakeFiles-CMakeOutput.log",
+      "sha256": "ff388ba1182b9c3bbfaff0e77c7a8d09c45267676bb89c915886525b7e77061b",
+      "bytes": 40956
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_optimized_pass1\\CMakeFiles\\TargetDirectories.txt",
+      "archive": "entry_alloc_optimized_pass1-CMakeFiles-TargetDirectories.txt",
+      "sha256": "606c76e5129c540744c76e59cc132cc3ce6a804f970e16ffc496fe5e71bb0538",
+      "bytes": 7370
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_normal_windows_pass1\\x64\\command.txt",
+      "archive": "entry_alloc_normal_windows_pass1-x64-command.txt",
+      "sha256": "eb4cb47892556b6e369703ab8f131f95068984695335ab8184078ec677590f83",
+      "bytes": 1033
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_normal_windows_pass1\\x64\\compile.log",
+      "archive": "entry_alloc_normal_windows_pass1-x64-compile.log",
+      "sha256": "b43ba3761fb183a1c2af0e14d806d30b2b8743652de78be8be9614a3ebff471c",
+      "bytes": 165092
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_normal_windows_pass1\\x86\\command.txt",
+      "archive": "entry_alloc_normal_windows_pass1-x86-command.txt",
+      "sha256": "8520c647cc0e235af7c949f32ea0d3e7adf1fde67824b541ae6709c048b2114b",
+      "bytes": 1017
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_normal_windows_pass1\\x86\\compile.log",
+      "archive": "entry_alloc_normal_windows_pass1-x86-compile.log",
+      "sha256": "0dde93d525ff8605b7a9e6f4bad748d47cd5175ac10d18c6b07b7a9f9c60e991",
+      "bytes": 150895
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_debug_run3\\device-create.stderr.log",
+      "archive": "entry_alloc_debug_run3-device-create.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_debug_run3\\device-create.stdout.log",
+      "archive": "entry_alloc_debug_run3-device-create.stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_debug_run3\\device-metadata.stderr.log",
+      "archive": "entry_alloc_debug_run3-device-metadata.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_debug_run3\\device-metadata.stdout.log",
+      "archive": "entry_alloc_debug_run3-device-metadata.stdout.log",
+      "sha256": "10fbbdcdf44b6e8323d11033d42fa74a46d59f0fd7c709fd66222c0f7e09b481",
+      "bytes": 19
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_debug_run3\\devices.stderr.log",
+      "archive": "entry_alloc_debug_run3-devices.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_debug_run3\\devices.stdout.log",
+      "archive": "entry_alloc_debug_run3-devices.stdout.log",
+      "sha256": "5d285f6672943346d2921694288fc9e8761ec63fa60c755a930846f3ecbf7c57",
+      "bytes": 53
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_debug_run3\\honor_arm64-diagnostic.stderr.log",
+      "archive": "entry_alloc_debug_run3-honor_arm64-diagnostic.stderr.log",
+      "sha256": "cba4e9011de64dfd0ae5ddb7addf9f58be159aa5ce7efb46e0151154acb16972",
+      "bytes": 79
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_debug_run3\\honor_arm64-diagnostic.stdout.log",
+      "archive": "entry_alloc_debug_run3-honor_arm64-diagnostic.stdout.log",
+      "sha256": "b40f7420ad1f0800ea9d474eae5587715908f64b35ee62c6372eda2d7b043799",
+      "bytes": 152
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_debug_run3\\honor_arm64-empty-entry.stderr.log",
+      "archive": "entry_alloc_debug_run3-honor_arm64-empty-entry.stderr.log",
+      "sha256": "1261500a153f3dfe2ff1da806e8503866a093a9c2dd17aef4e6bba41c9c9e81f",
+      "bytes": 127
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_debug_run3\\honor_arm64-empty-entry.stdout.log",
+      "archive": "entry_alloc_debug_run3-honor_arm64-empty-entry.stdout.log",
+      "sha256": "1a8010c3dfadc2d203752ec378271c4f7bea6cf9451a8bc4ad4d567ea6ae1c54",
+      "bytes": 112
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_debug_run3\\honor_arm64-loadobj-unavailable.stderr.log",
+      "archive": "entry_alloc_debug_run3-honor_arm64-loadobj-unavailable.stderr.log",
+      "sha256": "67be529f17f5b162cc13176c03938f29736116ed4467be74f6f7da1e2955cf99",
+      "bytes": 52
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_debug_run3\\honor_arm64-loadobj-unavailable.stdout.log",
+      "archive": "entry_alloc_debug_run3-honor_arm64-loadobj-unavailable.stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_debug_run3\\honor_arm64-normal.stderr.log",
+      "archive": "entry_alloc_debug_run3-honor_arm64-normal.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_debug_run3\\honor_arm64-normal.stdout.log",
+      "archive": "entry_alloc_debug_run3-honor_arm64-normal.stdout.log",
+      "sha256": "6a4f64efc77bee6724bf00230ece29a8e70753aaedeaeec904e3f76ca4e71d9d",
+      "bytes": 297
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_debug_run3\\honor_arm64-raw-limit.stderr.log",
+      "archive": "entry_alloc_debug_run3-honor_arm64-raw-limit.stderr.log",
+      "sha256": "4d907aed902887a1422e76cb2373efdcd79eedac818ca3f4344aca8ee2de522d",
+      "bytes": 199
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_debug_run3\\honor_arm64-raw-limit.stdout.log",
+      "archive": "entry_alloc_debug_run3-honor_arm64-raw-limit.stdout.log",
+      "sha256": "762cde6b91a4844c6124b20292637d9da251a2f68fe1747ebeb9965eda4d7a89",
+      "bytes": 116
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_debug_run3\\honor_arm64-table-limit.stderr.log",
+      "archive": "entry_alloc_debug_run3-honor_arm64-table-limit.stderr.log",
+      "sha256": "3dd1696f618ea004d37c67defc606921776c65fe5666729ae49a762beff95554",
+      "bytes": 205
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_debug_run3\\honor_arm64-table-limit.stdout.log",
+      "archive": "entry_alloc_debug_run3-honor_arm64-table-limit.stdout.log",
+      "sha256": "634895c83dfe4bad7a96f87f769b64790cc291a97a1c024efddec50c30583d75",
+      "bytes": 115
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_debug_run3\\invocations.json",
+      "archive": "entry_alloc_debug_run3-invocations.json",
+      "sha256": "5d4e7a24c2e1148d9fbd0aef1e7c089ba7c611b96313679d4952bd62ca43af7c",
+      "bytes": 6950
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_debug_run3\\probe-chmod.stderr.log",
+      "archive": "entry_alloc_debug_run3-probe-chmod.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_debug_run3\\probe-chmod.stdout.log",
+      "archive": "entry_alloc_debug_run3-probe-chmod.stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_debug_run3\\probe-push.stderr.log",
+      "archive": "entry_alloc_debug_run3-probe-push.stderr.log",
+      "sha256": "022e9f70ba91bbfe3642a24c69187829268a6ca7d000b6a554a9bcdfd8a4d6e0",
+      "bytes": 174
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_debug_run3\\probe-push.stdout.log",
+      "archive": "entry_alloc_debug_run3-probe-push.stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_debug_run3\\probe-sha.stderr.log",
+      "archive": "entry_alloc_debug_run3-probe-sha.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_debug_run3\\probe-sha.stdout.log",
+      "archive": "entry_alloc_debug_run3-probe-sha.stdout.log",
+      "sha256": "1ef8cd2689e521bb0f04fdfd8ef84cd8a199541a4f868369e37e8688d8da4c78",
+      "bytes": 137
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_debug_run3\\results.json",
+      "archive": "entry_alloc_debug_run3-results.json",
+      "sha256": "5840579ce20a998be48421f7e64baac4ea7711f71a55149b88e9eb8ae0944134",
+      "bytes": 15487
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_debug_run3\\windows_x64-diagnostic.stderr.log",
+      "archive": "entry_alloc_debug_run3-windows_x64-diagnostic.stderr.log",
+      "sha256": "cba4e9011de64dfd0ae5ddb7addf9f58be159aa5ce7efb46e0151154acb16972",
+      "bytes": 79
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_debug_run3\\windows_x64-diagnostic.stdout.log",
+      "archive": "entry_alloc_debug_run3-windows_x64-diagnostic.stdout.log",
+      "sha256": "b40f7420ad1f0800ea9d474eae5587715908f64b35ee62c6372eda2d7b043799",
+      "bytes": 152
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_debug_run3\\windows_x64-empty-entry.stderr.log",
+      "archive": "entry_alloc_debug_run3-windows_x64-empty-entry.stderr.log",
+      "sha256": "1261500a153f3dfe2ff1da806e8503866a093a9c2dd17aef4e6bba41c9c9e81f",
+      "bytes": 127
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_debug_run3\\windows_x64-empty-entry.stdout.log",
+      "archive": "entry_alloc_debug_run3-windows_x64-empty-entry.stdout.log",
+      "sha256": "1a8010c3dfadc2d203752ec378271c4f7bea6cf9451a8bc4ad4d567ea6ae1c54",
+      "bytes": 112
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_debug_run3\\windows_x64-loadobj-unavailable.stderr.log",
+      "archive": "entry_alloc_debug_run3-windows_x64-loadobj-unavailable.stderr.log",
+      "sha256": "67be529f17f5b162cc13176c03938f29736116ed4467be74f6f7da1e2955cf99",
+      "bytes": 52
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_debug_run3\\windows_x64-loadobj-unavailable.stdout.log",
+      "archive": "entry_alloc_debug_run3-windows_x64-loadobj-unavailable.stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_debug_run3\\windows_x64-normal.stderr.log",
+      "archive": "entry_alloc_debug_run3-windows_x64-normal.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_debug_run3\\windows_x64-normal.stdout.log",
+      "archive": "entry_alloc_debug_run3-windows_x64-normal.stdout.log",
+      "sha256": "6a4f64efc77bee6724bf00230ece29a8e70753aaedeaeec904e3f76ca4e71d9d",
+      "bytes": 297
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_debug_run3\\windows_x64-raw-limit.stderr.log",
+      "archive": "entry_alloc_debug_run3-windows_x64-raw-limit.stderr.log",
+      "sha256": "4d907aed902887a1422e76cb2373efdcd79eedac818ca3f4344aca8ee2de522d",
+      "bytes": 199
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_debug_run3\\windows_x64-raw-limit.stdout.log",
+      "archive": "entry_alloc_debug_run3-windows_x64-raw-limit.stdout.log",
+      "sha256": "762cde6b91a4844c6124b20292637d9da251a2f68fe1747ebeb9965eda4d7a89",
+      "bytes": 116
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_debug_run3\\windows_x64-table-limit.stderr.log",
+      "archive": "entry_alloc_debug_run3-windows_x64-table-limit.stderr.log",
+      "sha256": "3dd1696f618ea004d37c67defc606921776c65fe5666729ae49a762beff95554",
+      "bytes": 205
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_debug_run3\\windows_x64-table-limit.stdout.log",
+      "archive": "entry_alloc_debug_run3-windows_x64-table-limit.stdout.log",
+      "sha256": "634895c83dfe4bad7a96f87f769b64790cc291a97a1c024efddec50c30583d75",
+      "bytes": 115
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_debug_run3\\windows_x86-diagnostic.stderr.log",
+      "archive": "entry_alloc_debug_run3-windows_x86-diagnostic.stderr.log",
+      "sha256": "cba4e9011de64dfd0ae5ddb7addf9f58be159aa5ce7efb46e0151154acb16972",
+      "bytes": 79
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_debug_run3\\windows_x86-diagnostic.stdout.log",
+      "archive": "entry_alloc_debug_run3-windows_x86-diagnostic.stdout.log",
+      "sha256": "b40f7420ad1f0800ea9d474eae5587715908f64b35ee62c6372eda2d7b043799",
+      "bytes": 152
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_debug_run3\\windows_x86-empty-entry.stderr.log",
+      "archive": "entry_alloc_debug_run3-windows_x86-empty-entry.stderr.log",
+      "sha256": "1261500a153f3dfe2ff1da806e8503866a093a9c2dd17aef4e6bba41c9c9e81f",
+      "bytes": 127
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_debug_run3\\windows_x86-empty-entry.stdout.log",
+      "archive": "entry_alloc_debug_run3-windows_x86-empty-entry.stdout.log",
+      "sha256": "1a8010c3dfadc2d203752ec378271c4f7bea6cf9451a8bc4ad4d567ea6ae1c54",
+      "bytes": 112
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_debug_run3\\windows_x86-loadobj-unavailable.stderr.log",
+      "archive": "entry_alloc_debug_run3-windows_x86-loadobj-unavailable.stderr.log",
+      "sha256": "67be529f17f5b162cc13176c03938f29736116ed4467be74f6f7da1e2955cf99",
+      "bytes": 52
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_debug_run3\\windows_x86-loadobj-unavailable.stdout.log",
+      "archive": "entry_alloc_debug_run3-windows_x86-loadobj-unavailable.stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_debug_run3\\windows_x86-normal.stderr.log",
+      "archive": "entry_alloc_debug_run3-windows_x86-normal.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_debug_run3\\windows_x86-normal.stdout.log",
+      "archive": "entry_alloc_debug_run3-windows_x86-normal.stdout.log",
+      "sha256": "fa06530c66dd10528d26b80fdfed3a166532c3fc41933b45ae814a6b54601130",
+      "bytes": 297
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_debug_run3\\windows_x86-raw-limit.stderr.log",
+      "archive": "entry_alloc_debug_run3-windows_x86-raw-limit.stderr.log",
+      "sha256": "4d907aed902887a1422e76cb2373efdcd79eedac818ca3f4344aca8ee2de522d",
+      "bytes": 199
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_debug_run3\\windows_x86-raw-limit.stdout.log",
+      "archive": "entry_alloc_debug_run3-windows_x86-raw-limit.stdout.log",
+      "sha256": "762cde6b91a4844c6124b20292637d9da251a2f68fe1747ebeb9965eda4d7a89",
+      "bytes": 116
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_debug_run3\\windows_x86-table-limit.stderr.log",
+      "archive": "entry_alloc_debug_run3-windows_x86-table-limit.stderr.log",
+      "sha256": "3dd1696f618ea004d37c67defc606921776c65fe5666729ae49a762beff95554",
+      "bytes": 205
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_debug_run3\\windows_x86-table-limit.stdout.log",
+      "archive": "entry_alloc_debug_run3-windows_x86-table-limit.stdout.log",
+      "sha256": "634895c83dfe4bad7a96f87f769b64790cc291a97a1c024efddec50c30583d75",
+      "bytes": 115
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_optimized_run2\\device-create.stderr.log",
+      "archive": "entry_alloc_optimized_run2-device-create.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_optimized_run2\\device-create.stdout.log",
+      "archive": "entry_alloc_optimized_run2-device-create.stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_optimized_run2\\device-metadata.stderr.log",
+      "archive": "entry_alloc_optimized_run2-device-metadata.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_optimized_run2\\device-metadata.stdout.log",
+      "archive": "entry_alloc_optimized_run2-device-metadata.stdout.log",
+      "sha256": "10fbbdcdf44b6e8323d11033d42fa74a46d59f0fd7c709fd66222c0f7e09b481",
+      "bytes": 19
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_optimized_run2\\devices.stderr.log",
+      "archive": "entry_alloc_optimized_run2-devices.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_optimized_run2\\devices.stdout.log",
+      "archive": "entry_alloc_optimized_run2-devices.stdout.log",
+      "sha256": "5d285f6672943346d2921694288fc9e8761ec63fa60c755a930846f3ecbf7c57",
+      "bytes": 53
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_optimized_run2\\honor_arm64-diagnostic.stderr.log",
+      "archive": "entry_alloc_optimized_run2-honor_arm64-diagnostic.stderr.log",
+      "sha256": "cba4e9011de64dfd0ae5ddb7addf9f58be159aa5ce7efb46e0151154acb16972",
+      "bytes": 79
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_optimized_run2\\honor_arm64-diagnostic.stdout.log",
+      "archive": "entry_alloc_optimized_run2-honor_arm64-diagnostic.stdout.log",
+      "sha256": "b40f7420ad1f0800ea9d474eae5587715908f64b35ee62c6372eda2d7b043799",
+      "bytes": 152
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_optimized_run2\\honor_arm64-empty-entry.stderr.log",
+      "archive": "entry_alloc_optimized_run2-honor_arm64-empty-entry.stderr.log",
+      "sha256": "1261500a153f3dfe2ff1da806e8503866a093a9c2dd17aef4e6bba41c9c9e81f",
+      "bytes": 127
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_optimized_run2\\honor_arm64-empty-entry.stdout.log",
+      "archive": "entry_alloc_optimized_run2-honor_arm64-empty-entry.stdout.log",
+      "sha256": "1a8010c3dfadc2d203752ec378271c4f7bea6cf9451a8bc4ad4d567ea6ae1c54",
+      "bytes": 112
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_optimized_run2\\honor_arm64-loadobj-unavailable.stderr.log",
+      "archive": "entry_alloc_optimized_run2-honor_arm64-loadobj-unavailable.stderr.log",
+      "sha256": "67be529f17f5b162cc13176c03938f29736116ed4467be74f6f7da1e2955cf99",
+      "bytes": 52
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_optimized_run2\\honor_arm64-loadobj-unavailable.stdout.log",
+      "archive": "entry_alloc_optimized_run2-honor_arm64-loadobj-unavailable.stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_optimized_run2\\honor_arm64-normal.stderr.log",
+      "archive": "entry_alloc_optimized_run2-honor_arm64-normal.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_optimized_run2\\honor_arm64-normal.stdout.log",
+      "archive": "entry_alloc_optimized_run2-honor_arm64-normal.stdout.log",
+      "sha256": "6a4f64efc77bee6724bf00230ece29a8e70753aaedeaeec904e3f76ca4e71d9d",
+      "bytes": 297
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_optimized_run2\\honor_arm64-raw-limit.stderr.log",
+      "archive": "entry_alloc_optimized_run2-honor_arm64-raw-limit.stderr.log",
+      "sha256": "4d907aed902887a1422e76cb2373efdcd79eedac818ca3f4344aca8ee2de522d",
+      "bytes": 199
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_optimized_run2\\honor_arm64-raw-limit.stdout.log",
+      "archive": "entry_alloc_optimized_run2-honor_arm64-raw-limit.stdout.log",
+      "sha256": "762cde6b91a4844c6124b20292637d9da251a2f68fe1747ebeb9965eda4d7a89",
+      "bytes": 116
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_optimized_run2\\honor_arm64-table-limit.stderr.log",
+      "archive": "entry_alloc_optimized_run2-honor_arm64-table-limit.stderr.log",
+      "sha256": "3dd1696f618ea004d37c67defc606921776c65fe5666729ae49a762beff95554",
+      "bytes": 205
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_optimized_run2\\honor_arm64-table-limit.stdout.log",
+      "archive": "entry_alloc_optimized_run2-honor_arm64-table-limit.stdout.log",
+      "sha256": "634895c83dfe4bad7a96f87f769b64790cc291a97a1c024efddec50c30583d75",
+      "bytes": 115
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_optimized_run2\\invocations.json",
+      "archive": "entry_alloc_optimized_run2-invocations.json",
+      "sha256": "6a9554dd40d4990836599818e8f4a44a7dbd7a2f262da7ef72b6a36dd5b361c2",
+      "bytes": 6994
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_optimized_run2\\probe-chmod.stderr.log",
+      "archive": "entry_alloc_optimized_run2-probe-chmod.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_optimized_run2\\probe-chmod.stdout.log",
+      "archive": "entry_alloc_optimized_run2-probe-chmod.stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_optimized_run2\\probe-push.stderr.log",
+      "archive": "entry_alloc_optimized_run2-probe-push.stderr.log",
+      "sha256": "7615d4c3fde05ed2332457d94420a912ffacae8305275f222e1324444b19a449",
+      "bytes": 178
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_optimized_run2\\probe-push.stdout.log",
+      "archive": "entry_alloc_optimized_run2-probe-push.stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_optimized_run2\\probe-sha.stderr.log",
+      "archive": "entry_alloc_optimized_run2-probe-sha.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_optimized_run2\\probe-sha.stdout.log",
+      "archive": "entry_alloc_optimized_run2-probe-sha.stdout.log",
+      "sha256": "670b83b37d71eed28ff39cf4e276bc9719bb6029e3b96652d21493962c411d56",
+      "bytes": 141
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_optimized_run2\\results.json",
+      "archive": "entry_alloc_optimized_run2-results.json",
+      "sha256": "88f582fc84c7743ffa10533c7de34b51c036d91f99395abff5f0b791d993fc89",
+      "bytes": 15491
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_optimized_run2\\windows_x64-diagnostic.stderr.log",
+      "archive": "entry_alloc_optimized_run2-windows_x64-diagnostic.stderr.log",
+      "sha256": "cba4e9011de64dfd0ae5ddb7addf9f58be159aa5ce7efb46e0151154acb16972",
+      "bytes": 79
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_optimized_run2\\windows_x64-diagnostic.stdout.log",
+      "archive": "entry_alloc_optimized_run2-windows_x64-diagnostic.stdout.log",
+      "sha256": "b40f7420ad1f0800ea9d474eae5587715908f64b35ee62c6372eda2d7b043799",
+      "bytes": 152
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_optimized_run2\\windows_x64-empty-entry.stderr.log",
+      "archive": "entry_alloc_optimized_run2-windows_x64-empty-entry.stderr.log",
+      "sha256": "1261500a153f3dfe2ff1da806e8503866a093a9c2dd17aef4e6bba41c9c9e81f",
+      "bytes": 127
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_optimized_run2\\windows_x64-empty-entry.stdout.log",
+      "archive": "entry_alloc_optimized_run2-windows_x64-empty-entry.stdout.log",
+      "sha256": "1a8010c3dfadc2d203752ec378271c4f7bea6cf9451a8bc4ad4d567ea6ae1c54",
+      "bytes": 112
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_optimized_run2\\windows_x64-loadobj-unavailable.stderr.log",
+      "archive": "entry_alloc_optimized_run2-windows_x64-loadobj-unavailable.stderr.log",
+      "sha256": "67be529f17f5b162cc13176c03938f29736116ed4467be74f6f7da1e2955cf99",
+      "bytes": 52
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_optimized_run2\\windows_x64-loadobj-unavailable.stdout.log",
+      "archive": "entry_alloc_optimized_run2-windows_x64-loadobj-unavailable.stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_optimized_run2\\windows_x64-normal.stderr.log",
+      "archive": "entry_alloc_optimized_run2-windows_x64-normal.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_optimized_run2\\windows_x64-normal.stdout.log",
+      "archive": "entry_alloc_optimized_run2-windows_x64-normal.stdout.log",
+      "sha256": "6a4f64efc77bee6724bf00230ece29a8e70753aaedeaeec904e3f76ca4e71d9d",
+      "bytes": 297
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_optimized_run2\\windows_x64-raw-limit.stderr.log",
+      "archive": "entry_alloc_optimized_run2-windows_x64-raw-limit.stderr.log",
+      "sha256": "4d907aed902887a1422e76cb2373efdcd79eedac818ca3f4344aca8ee2de522d",
+      "bytes": 199
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_optimized_run2\\windows_x64-raw-limit.stdout.log",
+      "archive": "entry_alloc_optimized_run2-windows_x64-raw-limit.stdout.log",
+      "sha256": "762cde6b91a4844c6124b20292637d9da251a2f68fe1747ebeb9965eda4d7a89",
+      "bytes": 116
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_optimized_run2\\windows_x64-table-limit.stderr.log",
+      "archive": "entry_alloc_optimized_run2-windows_x64-table-limit.stderr.log",
+      "sha256": "3dd1696f618ea004d37c67defc606921776c65fe5666729ae49a762beff95554",
+      "bytes": 205
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_optimized_run2\\windows_x64-table-limit.stdout.log",
+      "archive": "entry_alloc_optimized_run2-windows_x64-table-limit.stdout.log",
+      "sha256": "634895c83dfe4bad7a96f87f769b64790cc291a97a1c024efddec50c30583d75",
+      "bytes": 115
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_optimized_run2\\windows_x86-diagnostic.stderr.log",
+      "archive": "entry_alloc_optimized_run2-windows_x86-diagnostic.stderr.log",
+      "sha256": "cba4e9011de64dfd0ae5ddb7addf9f58be159aa5ce7efb46e0151154acb16972",
+      "bytes": 79
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_optimized_run2\\windows_x86-diagnostic.stdout.log",
+      "archive": "entry_alloc_optimized_run2-windows_x86-diagnostic.stdout.log",
+      "sha256": "b40f7420ad1f0800ea9d474eae5587715908f64b35ee62c6372eda2d7b043799",
+      "bytes": 152
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_optimized_run2\\windows_x86-empty-entry.stderr.log",
+      "archive": "entry_alloc_optimized_run2-windows_x86-empty-entry.stderr.log",
+      "sha256": "1261500a153f3dfe2ff1da806e8503866a093a9c2dd17aef4e6bba41c9c9e81f",
+      "bytes": 127
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_optimized_run2\\windows_x86-empty-entry.stdout.log",
+      "archive": "entry_alloc_optimized_run2-windows_x86-empty-entry.stdout.log",
+      "sha256": "1a8010c3dfadc2d203752ec378271c4f7bea6cf9451a8bc4ad4d567ea6ae1c54",
+      "bytes": 112
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_optimized_run2\\windows_x86-loadobj-unavailable.stderr.log",
+      "archive": "entry_alloc_optimized_run2-windows_x86-loadobj-unavailable.stderr.log",
+      "sha256": "67be529f17f5b162cc13176c03938f29736116ed4467be74f6f7da1e2955cf99",
+      "bytes": 52
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_optimized_run2\\windows_x86-loadobj-unavailable.stdout.log",
+      "archive": "entry_alloc_optimized_run2-windows_x86-loadobj-unavailable.stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_optimized_run2\\windows_x86-normal.stderr.log",
+      "archive": "entry_alloc_optimized_run2-windows_x86-normal.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_optimized_run2\\windows_x86-normal.stdout.log",
+      "archive": "entry_alloc_optimized_run2-windows_x86-normal.stdout.log",
+      "sha256": "fa06530c66dd10528d26b80fdfed3a166532c3fc41933b45ae814a6b54601130",
+      "bytes": 297
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_optimized_run2\\windows_x86-raw-limit.stderr.log",
+      "archive": "entry_alloc_optimized_run2-windows_x86-raw-limit.stderr.log",
+      "sha256": "4d907aed902887a1422e76cb2373efdcd79eedac818ca3f4344aca8ee2de522d",
+      "bytes": 199
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_optimized_run2\\windows_x86-raw-limit.stdout.log",
+      "archive": "entry_alloc_optimized_run2-windows_x86-raw-limit.stdout.log",
+      "sha256": "762cde6b91a4844c6124b20292637d9da251a2f68fe1747ebeb9965eda4d7a89",
+      "bytes": 116
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_optimized_run2\\windows_x86-table-limit.stderr.log",
+      "archive": "entry_alloc_optimized_run2-windows_x86-table-limit.stderr.log",
+      "sha256": "3dd1696f618ea004d37c67defc606921776c65fe5666729ae49a762beff95554",
+      "bytes": 205
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_optimized_run2\\windows_x86-table-limit.stdout.log",
+      "archive": "entry_alloc_optimized_run2-windows_x86-table-limit.stdout.log",
+      "sha256": "634895c83dfe4bad7a96f87f769b64790cc291a97a1c024efddec50c30583d75",
+      "bytes": 115
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_genuine_owner_host\\free-reference-generation.log",
+      "archive": "entry_alloc_genuine_owner_host-free-reference-generation.log",
+      "sha256": "b5ba9d2beb289ee91b7909dfacc1f615c92bae39c090165c51cf4bdcb30fd6e9",
+      "bytes": 175
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_genuine_owner_host\\reference-generation.log",
+      "archive": "entry_alloc_genuine_owner_host-reference-generation.log",
+      "sha256": "79cb481a900fa0ef11fbaadc1233c513e41b9147c33a27e282d7c6589889afa2",
+      "bytes": 175
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_genuine_owner_host\\windows_original_free.sources.json",
+      "archive": "entry_alloc_genuine_owner_host-windows_original_free.sources.json",
+      "sha256": "745bf361a306b423d94b77da2405f3bfe03220d2ea9319e36758dd6a273f5695",
+      "bytes": 757
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_genuine_owner_host\\windows_original_hash.sources.json",
+      "archive": "entry_alloc_genuine_owner_host-windows_original_hash.sources.json",
+      "sha256": "60747e2df17e9f0c7315543bbc24091f8fe7cc7648a1ef7235757cb1ace42939",
+      "bytes": 787
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_genuine_owner_host\\x64\\build-result.json",
+      "archive": "entry_alloc_genuine_owner_host-x64-build-result.json",
+      "sha256": "2e262e1e168624dcae564b87d04a0bf647e426e99035f8b59ccfc42f1d2b6f23",
+      "bytes": 67
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_genuine_owner_host\\x64\\command.txt",
+      "archive": "entry_alloc_genuine_owner_host-x64-command.txt",
+      "sha256": "95259264aedc8983759415a9b10967e3ef877eda381ff3a29c4d560f55560d51",
+      "bytes": 3991
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_genuine_owner_host\\x64\\compile.log",
+      "archive": "entry_alloc_genuine_owner_host-x64-compile.log",
+      "sha256": "488e42118a09be478c13f3671fc954e4ac4e503bf669555f6c1abefc4f0ab886",
+      "bytes": 52436
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_genuine_owner_host\\x64\\source-manifest.json",
+      "archive": "entry_alloc_genuine_owner_host-x64-source-manifest.json",
+      "sha256": "282eb1f29496b7df16c8b168caa868deee86919bc58c7653917c701f328b6bf3",
+      "bytes": 7181
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_genuine_owner_host\\x86\\build-result.json",
+      "archive": "entry_alloc_genuine_owner_host-x86-build-result.json",
+      "sha256": "6381e46c6dba2dd76cceca4a0d5c2dfc201c8248835ec72f1613ca5206fa0d7f",
+      "bytes": 67
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_genuine_owner_host\\x86\\command.txt",
+      "archive": "entry_alloc_genuine_owner_host-x86-command.txt",
+      "sha256": "2f94ba58956114e3d05980a84e422814476c23e23ffe6fe468df6d0be9bcae48",
+      "bytes": 3975
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_genuine_owner_host\\x86\\compile.log",
+      "archive": "entry_alloc_genuine_owner_host-x86-compile.log",
+      "sha256": "de331e14819902825438392a292739d6d5307c0690271b8c126ccb26178d2625",
+      "bytes": 50942
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_genuine_owner_host\\x86\\source-manifest.json",
+      "archive": "entry_alloc_genuine_owner_host-x86-source-manifest.json",
+      "sha256": "282eb1f29496b7df16c8b168caa868deee86919bc58c7653917c701f328b6bf3",
+      "bytes": 7181
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_genuine_owner_arm64\\build-result.json",
+      "archive": "entry_alloc_genuine_owner_arm64-build-result.json",
+      "sha256": "f086bff57368738f18c7cc1d99a27f429bfdcdc52dc9850c374cb9cda7f0f849",
+      "bytes": 71
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_genuine_owner_arm64\\build.log",
+      "archive": "entry_alloc_genuine_owner_arm64-build.log",
+      "sha256": "40c392c747c54ed1e56eaec4b542e0b6e037879c146a654eba12c7d380df4677",
+      "bytes": 295270
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_genuine_owner_arm64\\commands.json",
+      "archive": "entry_alloc_genuine_owner_arm64-commands.json",
+      "sha256": "a39eaf3d6bd10a810e9d1ebe332de31802757d41cea3d332612bf3cfb6180f8d",
+      "bytes": 1278
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_genuine_owner_arm64\\compile_commands.json",
+      "archive": "entry_alloc_genuine_owner_arm64-compile_commands.json",
+      "sha256": "b68f591006867c44e2531d1c690a83eae33175d648c48375065e0f5afd95b2a0",
+      "bytes": 616166
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_genuine_owner_arm64\\configure.log",
+      "archive": "entry_alloc_genuine_owner_arm64-configure.log",
+      "sha256": "2f9e258efb58aefcc6ea52808676009ccf47d13186817497d6c9aa40cee4123f",
+      "bytes": 1073
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_genuine_owner_arm64\\source-manifest.json",
+      "archive": "entry_alloc_genuine_owner_arm64-source-manifest.json",
+      "sha256": "90c4064a8d8b9b0fe7888a4bf6dc1006deda6e3978da7afff6f670d4e1a07f2e",
+      "bytes": 7417
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_genuine_owner_arm64\\CMakeFiles\\CMakeOutput.log",
+      "archive": "entry_alloc_genuine_owner_arm64-CMakeFiles-CMakeOutput.log",
+      "sha256": "606359bc6655d82841c517a13bf76c8e77b57461673d4561821b3cdef4f318ed",
+      "bytes": 41012
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_genuine_owner_arm64\\CMakeFiles\\TargetDirectories.txt",
+      "archive": "entry_alloc_genuine_owner_arm64-CMakeFiles-TargetDirectories.txt",
+      "sha256": "881d1c6431df9523690f53f3dcc2a6f6f5c3ee8337ba33eed2611068a3955ec9",
+      "bytes": 7598
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_genuine_owner_run\\code_pre_gfx-reused-device-sha.stderr.log",
+      "archive": "entry_alloc_genuine_owner_run-code_pre_gfx-reused-device-sha.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_genuine_owner_run\\code_pre_gfx-reused-device-sha.stdout.log",
+      "archive": "entry_alloc_genuine_owner_run-code_pre_gfx-reused-device-sha.stdout.log",
+      "sha256": "17a7681c7dd6a4b1f9d8f0afd74b5f942f01ab65008536f82442e4d00eb33d9e",
+      "bytes": 153
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_genuine_owner_run\\device-create.stderr.log",
+      "archive": "entry_alloc_genuine_owner_run-device-create.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_genuine_owner_run\\device-create.stdout.log",
+      "archive": "entry_alloc_genuine_owner_run-device-create.stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_genuine_owner_run\\device-metadata.stderr.log",
+      "archive": "entry_alloc_genuine_owner_run-device-metadata.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_genuine_owner_run\\device-metadata.stdout.log",
+      "archive": "entry_alloc_genuine_owner_run-device-metadata.stdout.log",
+      "sha256": "97c7d1e093b5caf102ab7768619c950378882adb6a2176cb27595d65fd62f593",
+      "bytes": 1448
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_genuine_owner_run\\device-probe-chmod.stderr.log",
+      "archive": "entry_alloc_genuine_owner_run-device-probe-chmod.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_genuine_owner_run\\device-probe-chmod.stdout.log",
+      "archive": "entry_alloc_genuine_owner_run-device-probe-chmod.stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_genuine_owner_run\\device-probe-push.stderr.log",
+      "archive": "entry_alloc_genuine_owner_run-device-probe-push.stderr.log",
+      "sha256": "31bd2e56d52548ecf41472c0a6bb71aeaa2647d3c6dd80f74dbf74667faaff45",
+      "bytes": 184
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_genuine_owner_run\\device-probe-push.stdout.log",
+      "archive": "entry_alloc_genuine_owner_run-device-probe-push.stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_genuine_owner_run\\device-probe-sha.stderr.log",
+      "archive": "entry_alloc_genuine_owner_run-device-probe-sha.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_genuine_owner_run\\device-probe-sha.stdout.log",
+      "archive": "entry_alloc_genuine_owner_run-device-probe-sha.stdout.log",
+      "sha256": "5e39459e300b91c7bc9040ce03ddc3b304a7caa6a4c3869b8c10440b0157ae98",
+      "bytes": 146
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_genuine_owner_run\\honor_arm64-code_pre_gfx-decode.stderr.log",
+      "archive": "entry_alloc_genuine_owner_run-honor_arm64-code_pre_gfx-decode.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_genuine_owner_run\\honor_arm64-code_pre_gfx-decode.stdout.log",
+      "archive": "entry_alloc_genuine_owner_run-honor_arm64-code_pre_gfx-decode.stdout.log",
+      "sha256": "4a0d4dbdd1032be1736f12a4707f024ac7effac43148a4b1d0146a015149ff1b",
+      "bytes": 136
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_genuine_owner_run\\honor_arm64-code_pre_gfx-prefix-sha.stderr.log",
+      "archive": "entry_alloc_genuine_owner_run-honor_arm64-code_pre_gfx-prefix-sha.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_genuine_owner_run\\honor_arm64-code_pre_gfx-prefix-sha.stdout.log",
+      "archive": "entry_alloc_genuine_owner_run-honor_arm64-code_pre_gfx-prefix-sha.stdout.log",
+      "sha256": "03e60927c05ab66b23fa3955aeb9b0c99aa48f1d3561d6b002ebdd3151bed564",
+      "bytes": 160
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_genuine_owner_run\\honor_arm64-rawfile-payload.stderr.log",
+      "archive": "entry_alloc_genuine_owner_run-honor_arm64-rawfile-payload.stderr.log",
+      "sha256": "c3cbb6b9806bf5c8c6de10e49047f2075d25353682d955ec1b1a789b7a1b57de",
+      "bytes": 129
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_genuine_owner_run\\honor_arm64-rawfile-payload.stdout.log",
+      "archive": "entry_alloc_genuine_owner_run-honor_arm64-rawfile-payload.stdout.log",
+      "sha256": "9b4c7dbf74aa9008676302a796268488375fdff5c34e821568f5149aa016d832",
+      "bytes": 812360
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_genuine_owner_run\\honor_arm64-zombie_pentagon-decode.stderr.log",
+      "archive": "entry_alloc_genuine_owner_run-honor_arm64-zombie_pentagon-decode.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_genuine_owner_run\\honor_arm64-zombie_pentagon-decode.stdout.log",
+      "archive": "entry_alloc_genuine_owner_run-honor_arm64-zombie_pentagon-decode.stdout.log",
+      "sha256": "108a82d9a98b80ea2858a737f1df78b3ff6d03a59004e0da929ae3fc6da2b405",
+      "bytes": 144
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_genuine_owner_run\\honor_arm64-zombie_pentagon-prefix-sha.stderr.log",
+      "archive": "entry_alloc_genuine_owner_run-honor_arm64-zombie_pentagon-prefix-sha.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_genuine_owner_run\\honor_arm64-zombie_pentagon-prefix-sha.stdout.log",
+      "archive": "entry_alloc_genuine_owner_run-honor_arm64-zombie_pentagon-prefix-sha.stdout.log",
+      "sha256": "b4461f62bde8d4ee6c60c60da74acfea1b9a5c19a747748825c83f46c0280717",
+      "bytes": 163
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_genuine_owner_run\\independent-oracles.json",
+      "archive": "entry_alloc_genuine_owner_run-independent-oracles.json",
+      "sha256": "73a6f89d13e97de1160ed6ff95ceb99fc0821399fa8f9d7057b03a1ba4e93ddd",
+      "bytes": 2569952
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_genuine_owner_run\\invocations.json",
+      "archive": "entry_alloc_genuine_owner_run-invocations.json",
+      "sha256": "c743a66043aa4941096ca20c6cc3243b37899a0ce3db48206d17f82d32c719ce",
+      "bytes": 11080
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_genuine_owner_run\\results.json",
+      "archive": "entry_alloc_genuine_owner_run-results.json",
+      "sha256": "6b0e46156872f339d2a5b51e0d238802bad025b0d6f6c5016dd71b17eae4d582",
+      "bytes": 8289771
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_genuine_owner_run\\windows_x64-code_pre_gfx-decode.stderr.log",
+      "archive": "entry_alloc_genuine_owner_run-windows_x64-code_pre_gfx-decode.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_genuine_owner_run\\windows_x64-code_pre_gfx-decode.stdout.log",
+      "archive": "entry_alloc_genuine_owner_run-windows_x64-code_pre_gfx-decode.stdout.log",
+      "sha256": "51d43b90aa20f0d26a82333d647fc01bdac19035d799b6857e59004671df1fb1",
+      "bytes": 136
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_genuine_owner_run\\windows_x64-rawfile-payload.stderr.log",
+      "archive": "entry_alloc_genuine_owner_run-windows_x64-rawfile-payload.stderr.log",
+      "sha256": "e894bdb75e5b4e1ea7a6b8b910d74c5e5f88945dd57ef91e425a03b9f8731825",
+      "bytes": 1863
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_genuine_owner_run\\windows_x64-rawfile-payload.stdout.log",
+      "archive": "entry_alloc_genuine_owner_run-windows_x64-rawfile-payload.stdout.log",
+      "sha256": "9e24d5975c4b26a15f12bb4722a0cbb82bcb04fe4bda7aa261ca944ec720a4bb",
+      "bytes": 812370
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_genuine_owner_run\\windows_x64-zombie_pentagon-decode.stderr.log",
+      "archive": "entry_alloc_genuine_owner_run-windows_x64-zombie_pentagon-decode.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_genuine_owner_run\\windows_x64-zombie_pentagon-decode.stdout.log",
+      "archive": "entry_alloc_genuine_owner_run-windows_x64-zombie_pentagon-decode.stdout.log",
+      "sha256": "a7253c08a96ffef800bc5310de3b8303da2900c6e680bae6cf3e6d354d2c0ae6",
+      "bytes": 144
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_genuine_owner_run\\windows_x86-code_pre_gfx-decode.stderr.log",
+      "archive": "entry_alloc_genuine_owner_run-windows_x86-code_pre_gfx-decode.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_genuine_owner_run\\windows_x86-code_pre_gfx-decode.stdout.log",
+      "archive": "entry_alloc_genuine_owner_run-windows_x86-code_pre_gfx-decode.stdout.log",
+      "sha256": "51d43b90aa20f0d26a82333d647fc01bdac19035d799b6857e59004671df1fb1",
+      "bytes": 136
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_genuine_owner_run\\windows_x86-rawfile-payload.stderr.log",
+      "archive": "entry_alloc_genuine_owner_run-windows_x86-rawfile-payload.stderr.log",
+      "sha256": "0c9fe8879cc7669d08cacdc252d224dfbcadd35d52676690a52df78a672c8ed3",
+      "bytes": 1863
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_genuine_owner_run\\windows_x86-rawfile-payload.stdout.log",
+      "archive": "entry_alloc_genuine_owner_run-windows_x86-rawfile-payload.stdout.log",
+      "sha256": "929721f68d93f08fd1f1632938544acacc59f646231c3feca64c00645dfee5c9",
+      "bytes": 812099
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_genuine_owner_run\\windows_x86-zombie_pentagon-decode.stderr.log",
+      "archive": "entry_alloc_genuine_owner_run-windows_x86-zombie_pentagon-decode.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_genuine_owner_run\\windows_x86-zombie_pentagon-decode.stdout.log",
+      "archive": "entry_alloc_genuine_owner_run-windows_x86-zombie_pentagon-decode.stdout.log",
+      "sha256": "a7253c08a96ffef800bc5310de3b8303da2900c6e680bae6cf3e6d354d2c0ae6",
+      "bytes": 144
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_genuine_owner_run\\zombie_pentagon-reused-device-sha.stderr.log",
+      "archive": "entry_alloc_genuine_owner_run-zombie_pentagon-reused-device-sha.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_genuine_owner_run\\zombie_pentagon-reused-device-sha.stdout.log",
+      "archive": "entry_alloc_genuine_owner_run-zombie_pentagon-reused-device-sha.stdout.log",
+      "sha256": "4164bf9f5ea83194f4ab5301d87be06695c8b49b91006aea1a563da1a9f7b42d",
+      "bytes": 156
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_source_pass1.json",
+      "archive": "entry_alloc_source_pass1.json",
+      "sha256": "8a0a4578e3a503a4c62b1e861bf0710a6e05970b8f7f2dbb30f82f1cd451d382",
+      "bytes": 2877
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_protection.json",
+      "archive": "entry_alloc_protection.json",
+      "sha256": "02b9c3e10928facc4aac80b8ec4807b78f067991efe6b5b5abb9ef4792620a2e",
+      "bytes": 166
+    },
+    {
+      "source": "build-android-audit\\entry_alloc_baseline\\hashes.json",
+      "archive": "baseline-hashes.json",
+      "sha256": "795bf42bf2c383f2975d92d2a90821f085c0296d5e0b428bb966ca281b4150e7",
+      "bytes": 3132614
+    }
+  ],
+  "assets_or_binaries_copied": false
+}

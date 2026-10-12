@@ -1,3 +1,25 @@
+# Current state — TASK32 complete; standing autonomous goal active
+
+Actual header dispatch and entry alloc/free verified on Windowsx86/x64/HONOR O0/O3.
+1600 allocations,6 fixtureguards/full baselines/LIFO/highwater pass. Actual FF
+primary/override/nonmatching diagnostic and typed callback execute. Injected entry
+head and real1024raw/576table exhaustion release DBHASH; counts1026/578 preserve
+partial progress, not rollback. Genericfree exactvoid*, typed callback and memcpy
+namegetter fix ABI issues without changing allocation/free bodies/policies.
+Source proof/normalWindows and current genuineowner regression all3ABIs/O3 pass;
+protected17199paths/Git unchanged. Alltests complete. Read arm64_entry_allocation.md,
+DEC47/48/FACT99/100/WARN33/FAIL31. Local checkpoint covers gate; Git supplies HEAD.
+
+Standing user goal (standing_development_goal.md) overrides milestone pauses:
+continue autonomously, local verified ARM64 commits authorized/no push. Next actual
+entry-owned genuine loadedheaders/zonechildren, then actualhashlookup, then smallest
+registration. No fullDB_Init/publication/game startup/render claim. Logging/dvar/
+Com_Error inputs are fixture endpoints; LoadObj diagnostic explicitly unsupported.
+Leaf lock/type/lifetime contracts and null/broaderhandlers/moddeferred/production
+recovery remain open. Preserve all prior evidence/protected repos/assets/root.
+
+# Historical state (preserved)
+
 # Current state — TASK31 complete, 12 October 2026
 
 Actual canonical entry-list initialization and native DBHASH prerequisite verified

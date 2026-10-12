@@ -65,7 +65,7 @@ void __cdecl DB_InitPool(void *arg, int32_t size)
 
 struct EmblemSet;
 extern XAssetPool<StringTable, POOLSIZE_STRINGTABLE_MOD> g_StringTablePool;
-void __cdecl DB_FreeXAssetHeader_EmblemSet_(XAssetPoolEntry<EmblemSet> **pool, XAssetHeader header);
+void __cdecl DB_FreeXAssetHeader_EmblemSet_(void *pool, XAssetHeader header);
 void __cdecl DB_CloneXAssetInternal(const XAsset *from, XAsset *to);
 int __cdecl DB_SizeofXAsset_StringTable_();
 int __cdecl DB_GetXAssetTypeSize(int type);

@@ -1,0 +1,506 @@
+[1/6] D:\Android\Sdk\ndk\30.0.16248370\toolchains\llvm\prebuilt\windows-x86_64\bin\clang++.exe --target=aarch64-none-linux-android28 --sysroot=D:/Android/Sdk/ndk/30.0.16248370/toolchains/llvm/prebuilt/windows-x86_64/sysroot -DBO1_ASSET_ENTRY_GATE=1 -DBO1_ENTRY_ALLOC_GATE=1 -DBO1_RAWFILE_OWNER_GATE=1 -DBO1_STRINGTABLE_OWNER_GATE=1 -D_DEBUG=1 -I"D:/Desktop/Black Ops 2 Android/BlackOpsARM/src" -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fno-limit-debug-info -O0 -g -fPIE -Wall -Wextra -Wpedantic -Werror=return-type -fms-extensions -fsigned-char -ffunction-sections -fdata-sections -fsanitize=undefined -fno-sanitize-recover=all -include "D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/win32_compat/msvc_compat.h" -std=gnu++20 -MD -MT CMakeFiles/bo1_entry_alloc_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/android/script_pool_bridge.cpp.o -MF CMakeFiles\bo1_entry_alloc_tests.dir\D_\Desktop\Black_Ops_2_Android\BlackOpsARM\src\platform\android\script_pool_bridge.cpp.o.d -o CMakeFiles/bo1_entry_alloc_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/android/script_pool_bridge.cpp.o -c "D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/android/script_pool_bridge.cpp"
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/android/script_pool_bridge.cpp:4:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/critical_section_services.h:2:
+
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/critical_sections.h:3:24: warning: extension used [-Wlanguage-extension-token]
+
+    3 | enum CriticalSection : __int32
+
+      |                        ^
+
+1 warning generated.
+
+[2/6] D:\Android\Sdk\ndk\30.0.16248370\toolchains\llvm\prebuilt\windows-x86_64\bin\clang++.exe --target=aarch64-none-linux-android28 --sysroot=D:/Android/Sdk/ndk/30.0.16248370/toolchains/llvm/prebuilt/windows-x86_64/sysroot -DBO1_ASSET_ENTRY_GATE=1 -DBO1_ENTRY_ALLOC_GATE=1 -DBO1_RAWFILE_OWNER_GATE=1 -DBO1_STRINGTABLE_OWNER_GATE=1 -D_DEBUG=1 -I"D:/Desktop/Black Ops 2 Android/BlackOpsARM/src" -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fno-limit-debug-info -O0 -g -fPIE -Wall -Wextra -Wpedantic -Werror=return-type -fms-extensions -fsigned-char -ffunction-sections -fdata-sections -fsanitize=undefined -fno-sanitize-recover=all -include "D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/win32_compat/msvc_compat.h" -std=gnu++20 -MD -MT CMakeFiles/bo1_entry_alloc_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/database/db_assetnames.cpp.o -MF CMakeFiles\bo1_entry_alloc_tests.dir\D_\Desktop\Black_Ops_2_Android\BlackOpsARM\src\database\db_assetnames.cpp.o.d -o CMakeFiles/bo1_entry_alloc_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/database/db_assetnames.cpp.o -c "D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_assetnames.cpp"
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_assetnames.cpp:2:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_asset_pool.h:5:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_assetlist_types.h:5:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/database.h:4:19: warning: extension used [-Wlanguage-extension-token]
+    4 | enum XAssetType : __int32
+      |                   ^
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_assetnames.cpp:2:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_asset_pool.h:6:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_stringtable.h:16:5: warning: extension used [-Wlanguage-extension-token]
+   16 |     __int16 *cellIndex;
+      |     ^
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_assetnames.cpp:5:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_entry_alloc_api.h:2:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_asset_entry_types.h:11:14: warning: extension used [-Wlanguage-extension-token]
+   11 |     unsigned __int8 zoneIndex;
+      |              ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_asset_entry_types.h:13:14: warning: extension used [-Wlanguage-extension-token]
+   13 |     unsigned __int16 nextHash;
+      |              ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_asset_entry_types.h:14:14: warning: extension used [-Wlanguage-extension-token]
+   14 |     unsigned __int16 nextOverride;
+      |              ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_asset_entry_types.h:15:14: warning: extension used [-Wlanguage-extension-token]
+   15 |     unsigned __int16 usageFrame;
+      |              ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_asset_entry_types.h:38:17: warning: extension used [-Wlanguage-extension-token]
+   38 | extern unsigned __int16 db_hashTable[0x8000];
+      |                 ^
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_assetnames.cpp:5:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_entry_alloc_api.h:4:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_zone_name_types.h:4:15: warning: extension used [-Wlanguage-extension-token]
+    4 | enum FF_DIR : __int32
+      |               ^
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_assetnames.cpp:5:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_entry_alloc_api.h:5:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/critical_section_services.h:2:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/critical_sections.h:3:24: warning: extension used [-Wlanguage-extension-token]
+    3 | enum CriticalSection : __int32
+      |                        ^
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_assetnames.cpp:5:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_entry_alloc_api.h:6:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_errors.h:3:20: warning: extension used [-Wlanguage-extension-token]
+    3 | enum errorParm_t : __int32
+      |                    ^
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_assetnames.cpp:5:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_entry_alloc_api.h:7:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:3:22: warning: extension used [-Wlanguage-extension-token]
+    3 | enum DvarSetSource : __int32
+      |                      ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:11:19: warning: extension used [-Wlanguage-extension-token]
+   11 | enum dvarType_t : __int32
+      |                   ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:35:9: warning: extension used [-Wlanguage-extension-token]
+   35 |         __int64 integer64;
+      |         ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:36:18: warning: extension used [-Wlanguage-extension-token]
+   36 |         unsigned __int64 unsignedInt64;
+      |                  ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:40:18: warning: extension used [-Wlanguage-extension-token]
+   40 |         unsigned __int8 color[4];
+      |                  ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:57:9: warning: extension used [-Wlanguage-extension-token]
+   57 |         __int64 min;
+      |         ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:58:9: warning: extension used [-Wlanguage-extension-token]
+   58 |         __int64 max;
+      |         ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:162:1: warning: extension used [-Wlanguage-extension-token]
+  162 | __int64 __cdecl Dvar_StringToInt64(const char *string);
+      | ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:170:62: warning: extension used [-Wlanguage-extension-token]
+  170 | void __cdecl Dvar_StringToColor(const char *string, unsigned __int8 *color);
+      |                                                              ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:199:85: warning: extension used [-Wlanguage-extension-token]
+  199 | const dvar_s *__cdecl _Dvar_RegisterBool(const char *dvarName, bool value, unsigned __int16 flags, const char *description);
+      |                                                                                     ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:203:26: warning: extension used [-Wlanguage-extension-token]
+  203 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:211:26: warning: extension used [-Wlanguage-extension-token]
+  211 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:219:26: warning: extension used [-Wlanguage-extension-token]
+  219 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:232:26: warning: extension used [-Wlanguage-extension-token]
+  232 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:241:26: warning: extension used [-Wlanguage-extension-token]
+  241 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:250:26: warning: extension used [-Wlanguage-extension-token]
+  250 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:254:17: warning: extension used [-Wlanguage-extension-token]
+  254 |                 __int64 value,
+      |                 ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:255:17: warning: extension used [-Wlanguage-extension-token]
+  255 |                 __int64 min,
+      |                 ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:256:17: warning: extension used [-Wlanguage-extension-token]
+  256 |                 __int64 max,
+      |                 ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:257:26: warning: extension used [-Wlanguage-extension-token]
+  257 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:264:26: warning: extension used [-Wlanguage-extension-token]
+  264 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:272:26: warning: extension used [-Wlanguage-extension-token]
+  272 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:281:26: warning: extension used [-Wlanguage-extension-token]
+  281 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:291:26: warning: extension used [-Wlanguage-extension-token]
+  291 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:296:26: warning: extension used [-Wlanguage-extension-token]
+  296 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:302:26: warning: extension used [-Wlanguage-extension-token]
+  302 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:310:26: warning: extension used [-Wlanguage-extension-token]
+  310 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:319:26: warning: extension used [-Wlanguage-extension-token]
+  319 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:328:26: warning: extension used [-Wlanguage-extension-token]
+  328 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:333:52: warning: extension used [-Wlanguage-extension-token]
+  333 | void __cdecl Dvar_SetInt64FromSource(dvar_s *dvar, __int64 value, DvarSetSource source);
+      |                                                    ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:347:42: warning: extension used [-Wlanguage-extension-token]
+  347 | void __cdecl Dvar_SetInt64(dvar_s *dvar, __int64 value);
+      |                                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:359:56: warning: extension used [-Wlanguage-extension-token]
+  359 | void __cdecl Dvar_SetInt64ByName(const char *dvarName, __int64 value);
+      |                                                        ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:370:26: warning: extension used [-Wlanguage-extension-token]
+  370 |                 unsigned __int16 flags);
+      |                          ^
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_assetnames.cpp:5:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_entry_alloc_api.h:15:72: warning: extension used [-Wlanguage-extension-token]
+   15 | XAssetEntryPoolEntry *__cdecl DB_AllocXAssetEntry(XAssetType, unsigned __int8);
+      |                                                                        ^
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_assetnames.cpp:7:
+
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/assertive.h:6:24: warning: extension used [-Wlanguage-extension-token]
+
+    6 | enum AssertOccurance : __int32
+
+      |                        ^
+
+45 warnings generated.
+
+[3/6] D:\Android\Sdk\ndk\30.0.16248370\toolchains\llvm\prebuilt\windows-x86_64\bin\clang++.exe --target=aarch64-none-linux-android28 --sysroot=D:/Android/Sdk/ndk/30.0.16248370/toolchains/llvm/prebuilt/windows-x86_64/sysroot -DBO1_ASSET_ENTRY_GATE=1 -DBO1_ENTRY_ALLOC_GATE=1 -DBO1_RAWFILE_OWNER_GATE=1 -DBO1_STRINGTABLE_OWNER_GATE=1 -D_DEBUG=1 -I"D:/Desktop/Black Ops 2 Android/BlackOpsARM/src" -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fno-limit-debug-info -O0 -g -fPIE -Wall -Wextra -Wpedantic -Werror=return-type -fms-extensions -fsigned-char -ffunction-sections -fdata-sections -fsanitize=undefined -fno-sanitize-recover=all -include "D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/win32_compat/msvc_compat.h" -std=gnu++20 -MD -MT CMakeFiles/bo1_entry_alloc_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/database/db_registry.cpp.o -MF CMakeFiles\bo1_entry_alloc_tests.dir\D_\Desktop\Black_Ops_2_Android\BlackOpsARM\src\database\db_registry.cpp.o.d -o CMakeFiles/bo1_entry_alloc_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/database/db_registry.cpp.o -c "D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_registry.cpp"
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_registry.cpp:2:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_asset_pool.h:5:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_assetlist_types.h:5:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/database.h:4:19: warning: extension used [-Wlanguage-extension-token]
+    4 | enum XAssetType : __int32
+      |                   ^
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_registry.cpp:2:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_asset_pool.h:6:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_stringtable.h:16:5: warning: extension used [-Wlanguage-extension-token]
+   16 |     __int16 *cellIndex;
+      |     ^
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_registry.cpp:3:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_asset_entry_types.h:11:14: warning: extension used [-Wlanguage-extension-token]
+   11 |     unsigned __int8 zoneIndex;
+      |              ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_asset_entry_types.h:13:14: warning: extension used [-Wlanguage-extension-token]
+   13 |     unsigned __int16 nextHash;
+      |              ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_asset_entry_types.h:14:14: warning: extension used [-Wlanguage-extension-token]
+   14 |     unsigned __int16 nextOverride;
+      |              ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_asset_entry_types.h:15:14: warning: extension used [-Wlanguage-extension-token]
+   15 |     unsigned __int16 usageFrame;
+      |              ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_asset_entry_types.h:38:17: warning: extension used [-Wlanguage-extension-token]
+   38 | extern unsigned __int16 db_hashTable[0x8000];
+      |                 ^
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_registry.cpp:5:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_entry_alloc_api.h:4:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_zone_name_types.h:4:15: warning: extension used [-Wlanguage-extension-token]
+    4 | enum FF_DIR : __int32
+      |               ^
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_registry.cpp:5:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_entry_alloc_api.h:5:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/critical_section_services.h:2:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/critical_sections.h:3:24: warning: extension used [-Wlanguage-extension-token]
+    3 | enum CriticalSection : __int32
+      |                        ^
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_registry.cpp:5:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_entry_alloc_api.h:6:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_errors.h:3:20: warning: extension used [-Wlanguage-extension-token]
+    3 | enum errorParm_t : __int32
+      |                    ^
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_registry.cpp:5:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_entry_alloc_api.h:7:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:3:22: warning: extension used [-Wlanguage-extension-token]
+    3 | enum DvarSetSource : __int32
+      |                      ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:11:19: warning: extension used [-Wlanguage-extension-token]
+   11 | enum dvarType_t : __int32
+      |                   ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:35:9: warning: extension used [-Wlanguage-extension-token]
+   35 |         __int64 integer64;
+      |         ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:36:18: warning: extension used [-Wlanguage-extension-token]
+   36 |         unsigned __int64 unsignedInt64;
+      |                  ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:40:18: warning: extension used [-Wlanguage-extension-token]
+   40 |         unsigned __int8 color[4];
+      |                  ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:57:9: warning: extension used [-Wlanguage-extension-token]
+   57 |         __int64 min;
+      |         ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:58:9: warning: extension used [-Wlanguage-extension-token]
+   58 |         __int64 max;
+      |         ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:162:1: warning: extension used [-Wlanguage-extension-token]
+  162 | __int64 __cdecl Dvar_StringToInt64(const char *string);
+      | ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:170:62: warning: extension used [-Wlanguage-extension-token]
+  170 | void __cdecl Dvar_StringToColor(const char *string, unsigned __int8 *color);
+      |                                                              ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:199:85: warning: extension used [-Wlanguage-extension-token]
+  199 | const dvar_s *__cdecl _Dvar_RegisterBool(const char *dvarName, bool value, unsigned __int16 flags, const char *description);
+      |                                                                                     ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:203:26: warning: extension used [-Wlanguage-extension-token]
+  203 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:211:26: warning: extension used [-Wlanguage-extension-token]
+  211 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:219:26: warning: extension used [-Wlanguage-extension-token]
+  219 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:232:26: warning: extension used [-Wlanguage-extension-token]
+  232 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:241:26: warning: extension used [-Wlanguage-extension-token]
+  241 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:250:26: warning: extension used [-Wlanguage-extension-token]
+  250 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:254:17: warning: extension used [-Wlanguage-extension-token]
+  254 |                 __int64 value,
+      |                 ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:255:17: warning: extension used [-Wlanguage-extension-token]
+  255 |                 __int64 min,
+      |                 ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:256:17: warning: extension used [-Wlanguage-extension-token]
+  256 |                 __int64 max,
+      |                 ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:257:26: warning: extension used [-Wlanguage-extension-token]
+  257 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:264:26: warning: extension used [-Wlanguage-extension-token]
+  264 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:272:26: warning: extension used [-Wlanguage-extension-token]
+  272 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:281:26: warning: extension used [-Wlanguage-extension-token]
+  281 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:291:26: warning: extension used [-Wlanguage-extension-token]
+  291 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:296:26: warning: extension used [-Wlanguage-extension-token]
+  296 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:302:26: warning: extension used [-Wlanguage-extension-token]
+  302 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:310:26: warning: extension used [-Wlanguage-extension-token]
+  310 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:319:26: warning: extension used [-Wlanguage-extension-token]
+  319 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:328:26: warning: extension used [-Wlanguage-extension-token]
+  328 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:333:52: warning: extension used [-Wlanguage-extension-token]
+  333 | void __cdecl Dvar_SetInt64FromSource(dvar_s *dvar, __int64 value, DvarSetSource source);
+      |                                                    ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:347:42: warning: extension used [-Wlanguage-extension-token]
+  347 | void __cdecl Dvar_SetInt64(dvar_s *dvar, __int64 value);
+      |                                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:359:56: warning: extension used [-Wlanguage-extension-token]
+  359 | void __cdecl Dvar_SetInt64ByName(const char *dvarName, __int64 value);
+      |                                                        ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:370:26: warning: extension used [-Wlanguage-extension-token]
+  370 |                 unsigned __int16 flags);
+      |                          ^
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_registry.cpp:5:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_entry_alloc_api.h:15:72: warning: extension used [-Wlanguage-extension-token]
+   15 | XAssetEntryPoolEntry *__cdecl DB_AllocXAssetEntry(XAssetType, unsigned __int8);
+      |                                                                        ^
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_registry.cpp:7:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/assertive.h:6:24: warning: extension used [-Wlanguage-extension-token]
+    6 | enum AssertOccurance : __int32
+      |                        ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_registry.cpp:702:10: warning: extension used [-Wlanguage-extension-token]
+  702 | unsigned __int16 db_hashTable[0x8000/*32768*/];
+      |          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_registry.cpp:1318:69: warning: unused parameter 'inData' [-Wunused-parameter]
+ 1318 | void __cdecl DB_PrintXAssetsForType_FastFile(XAssetType type, void *inData, bool includeOverride)
+      |                                                                     ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_registry.cpp:2320:77: warning: extension used [-Wlanguage-extension-token]
+ 2320 | XAssetEntryPoolEntry *__cdecl DB_AllocXAssetEntry(XAssetType type, unsigned __int8 zoneIndex)
+      |                                                                             ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_registry.cpp:2365:22: warning: extension used [-Wlanguage-extension-token]
+ 2365 |     memcpy((unsigned __int8 *)to->header.xmodelPieces, (unsigned __int8 *)from->header.xmodelPieces, size);
+      |                      ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_registry.cpp:2365:66: warning: extension used [-Wlanguage-extension-token]
+ 2365 |     memcpy((unsigned __int8 *)to->header.xmodelPieces, (unsigned __int8 *)from->header.xmodelPieces, size);
+      |                                                                  ^
+
+50 warnings generated.
+
+[4/6] D:\Android\Sdk\ndk\30.0.16248370\toolchains\llvm\prebuilt\windows-x86_64\bin\clang++.exe --target=aarch64-none-linux-android28 --sysroot=D:/Android/Sdk/ndk/30.0.16248370/toolchains/llvm/prebuilt/windows-x86_64/sysroot -DBO1_ASSET_ENTRY_GATE=1 -DBO1_ENTRY_ALLOC_GATE=1 -DBO1_RAWFILE_OWNER_GATE=1 -DBO1_STRINGTABLE_OWNER_GATE=1 -D_DEBUG=1 -I"D:/Desktop/Black Ops 2 Android/BlackOpsARM/src" -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fno-limit-debug-info -O0 -g -fPIE -Wall -Wextra -Wpedantic -Werror=return-type -fms-extensions -fsigned-char -ffunction-sections -fdata-sections -fsanitize=undefined -fno-sanitize-recover=all -include "D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/win32_compat/msvc_compat.h" -std=gnu++20 -MD -MT CMakeFiles/bo1_entry_alloc_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/android/script_string_services.cpp.o -MF CMakeFiles\bo1_entry_alloc_tests.dir\D_\Desktop\Black_Ops_2_Android\BlackOpsARM\src\platform\android\script_string_services.cpp.o.d -o CMakeFiles/bo1_entry_alloc_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/android/script_string_services.cpp.o -c "D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/android/script_string_services.cpp"
+[5/6] D:\Android\Sdk\ndk\30.0.16248370\toolchains\llvm\prebuilt\windows-x86_64\bin\clang++.exe --target=aarch64-none-linux-android28 --sysroot=D:/Android/Sdk/ndk/30.0.16248370/toolchains/llvm/prebuilt/windows-x86_64/sysroot -DBO1_ASSET_ENTRY_GATE=1 -DBO1_ENTRY_ALLOC_GATE=1 -DBO1_RAWFILE_OWNER_GATE=1 -DBO1_STRINGTABLE_OWNER_GATE=1 -D_DEBUG=1 -I"D:/Desktop/Black Ops 2 Android/BlackOpsARM/src" -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fno-limit-debug-info -O0 -g -fPIE -Wall -Wextra -Wpedantic -Werror=return-type -fms-extensions -fsigned-char -ffunction-sections -fdata-sections -fsanitize=undefined -fno-sanitize-recover=all -include "D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/win32_compat/msvc_compat.h" -std=gnu++20 -MD -MT CMakeFiles/bo1_entry_alloc_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/entry_alloc_tests.cpp.o -MF CMakeFiles\bo1_entry_alloc_tests.dir\D_\Desktop\Black_Ops_2_Android\BlackOpsARM\tools\port\tests\entry_alloc_tests.cpp.o.d -o CMakeFiles/bo1_entry_alloc_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/entry_alloc_tests.cpp.o -c "D:/Desktop/Black Ops 2 Android/BlackOpsARM/tools/port/tests/entry_alloc_tests.cpp"
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/tools/port/tests/entry_alloc_tests.cpp:1:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_entry_alloc_api.h:2:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_asset_entry_types.h:2:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_assetlist_types.h:5:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/database.h:4:19: warning: extension used [-Wlanguage-extension-token]
+    4 | enum XAssetType : __int32
+      |                   ^
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/tools/port/tests/entry_alloc_tests.cpp:1:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_entry_alloc_api.h:2:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_asset_entry_types.h:11:14: warning: extension used [-Wlanguage-extension-token]
+   11 |     unsigned __int8 zoneIndex;
+      |              ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_asset_entry_types.h:13:14: warning: extension used [-Wlanguage-extension-token]
+   13 |     unsigned __int16 nextHash;
+      |              ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_asset_entry_types.h:14:14: warning: extension used [-Wlanguage-extension-token]
+   14 |     unsigned __int16 nextOverride;
+      |              ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_asset_entry_types.h:15:14: warning: extension used [-Wlanguage-extension-token]
+   15 |     unsigned __int16 usageFrame;
+      |              ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_asset_entry_types.h:38:17: warning: extension used [-Wlanguage-extension-token]
+   38 | extern unsigned __int16 db_hashTable[0x8000];
+      |                 ^
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/tools/port/tests/entry_alloc_tests.cpp:1:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_entry_alloc_api.h:3:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_asset_pool.h:6:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_stringtable.h:16:5: warning: extension used [-Wlanguage-extension-token]
+   16 |     __int16 *cellIndex;
+      |     ^
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/tools/port/tests/entry_alloc_tests.cpp:1:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_entry_alloc_api.h:4:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_zone_name_types.h:4:15: warning: extension used [-Wlanguage-extension-token]
+    4 | enum FF_DIR : __int32
+      |               ^
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/tools/port/tests/entry_alloc_tests.cpp:1:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_entry_alloc_api.h:5:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/critical_section_services.h:2:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/critical_sections.h:3:24: warning: extension used [-Wlanguage-extension-token]
+    3 | enum CriticalSection : __int32
+      |                        ^
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/tools/port/tests/entry_alloc_tests.cpp:1:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_entry_alloc_api.h:6:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_errors.h:3:20: warning: extension used [-Wlanguage-extension-token]
+    3 | enum errorParm_t : __int32
+      |                    ^
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/tools/port/tests/entry_alloc_tests.cpp:1:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_entry_alloc_api.h:7:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:3:22: warning: extension used [-Wlanguage-extension-token]
+    3 | enum DvarSetSource : __int32
+      |                      ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:11:19: warning: extension used [-Wlanguage-extension-token]
+   11 | enum dvarType_t : __int32
+      |                   ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:35:9: warning: extension used [-Wlanguage-extension-token]
+   35 |         __int64 integer64;
+      |         ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:36:18: warning: extension used [-Wlanguage-extension-token]
+   36 |         unsigned __int64 unsignedInt64;
+      |                  ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:40:18: warning: extension used [-Wlanguage-extension-token]
+   40 |         unsigned __int8 color[4];
+      |                  ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:57:9: warning: extension used [-Wlanguage-extension-token]
+   57 |         __int64 min;
+      |         ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:58:9: warning: extension used [-Wlanguage-extension-token]
+   58 |         __int64 max;
+      |         ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:162:1: warning: extension used [-Wlanguage-extension-token]
+  162 | __int64 __cdecl Dvar_StringToInt64(const char *string);
+      | ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:170:62: warning: extension used [-Wlanguage-extension-token]
+  170 | void __cdecl Dvar_StringToColor(const char *string, unsigned __int8 *color);
+      |                                                              ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:199:85: warning: extension used [-Wlanguage-extension-token]
+  199 | const dvar_s *__cdecl _Dvar_RegisterBool(const char *dvarName, bool value, unsigned __int16 flags, const char *description);
+      |                                                                                     ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:203:26: warning: extension used [-Wlanguage-extension-token]
+  203 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:211:26: warning: extension used [-Wlanguage-extension-token]
+  211 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:219:26: warning: extension used [-Wlanguage-extension-token]
+  219 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:232:26: warning: extension used [-Wlanguage-extension-token]
+  232 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:241:26: warning: extension used [-Wlanguage-extension-token]
+  241 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:250:26: warning: extension used [-Wlanguage-extension-token]
+  250 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:254:17: warning: extension used [-Wlanguage-extension-token]
+  254 |                 __int64 value,
+      |                 ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:255:17: warning: extension used [-Wlanguage-extension-token]
+  255 |                 __int64 min,
+      |                 ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:256:17: warning: extension used [-Wlanguage-extension-token]
+  256 |                 __int64 max,
+      |                 ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:257:26: warning: extension used [-Wlanguage-extension-token]
+  257 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:264:26: warning: extension used [-Wlanguage-extension-token]
+  264 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:272:26: warning: extension used [-Wlanguage-extension-token]
+  272 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:281:26: warning: extension used [-Wlanguage-extension-token]
+  281 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:291:26: warning: extension used [-Wlanguage-extension-token]
+  291 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:296:26: warning: extension used [-Wlanguage-extension-token]
+  296 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:302:26: warning: extension used [-Wlanguage-extension-token]
+  302 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:310:26: warning: extension used [-Wlanguage-extension-token]
+  310 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:319:26: warning: extension used [-Wlanguage-extension-token]
+  319 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:328:26: warning: extension used [-Wlanguage-extension-token]
+  328 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:333:52: warning: extension used [-Wlanguage-extension-token]
+  333 | void __cdecl Dvar_SetInt64FromSource(dvar_s *dvar, __int64 value, DvarSetSource source);
+      |                                                    ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:347:42: warning: extension used [-Wlanguage-extension-token]
+  347 | void __cdecl Dvar_SetInt64(dvar_s *dvar, __int64 value);
+      |                                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:359:56: warning: extension used [-Wlanguage-extension-token]
+  359 | void __cdecl Dvar_SetInt64ByName(const char *dvarName, __int64 value);
+      |                                                        ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:370:26: warning: extension used [-Wlanguage-extension-token]
+  370 |                 unsigned __int16 flags);
+      |                          ^
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/tools/port/tests/entry_alloc_tests.cpp:1:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_entry_alloc_api.h:15:72: warning: extension used [-Wlanguage-extension-token]
+   15 | XAssetEntryPoolEntry *__cdecl DB_AllocXAssetEntry(XAssetType, unsigned __int8);
+      |                                                                        ^
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/tools/port/tests/entry_alloc_tests.cpp:2:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/assertive.h:6:24: warning: extension used [-Wlanguage-extension-token]
+
+    6 | enum AssertOccurance : __int32
+
+      |                        ^
+
+45 warnings generated.
+
+[6/6] cmd.exe /C "cd . && D:\Android\Sdk\ndk\30.0.16248370\toolchains\llvm\prebuilt\windows-x86_64\bin\clang++.exe --target=aarch64-none-linux-android28 --sysroot=D:/Android/Sdk/ndk/30.0.16248370/toolchains/llvm/prebuilt/windows-x86_64/sysroot -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fno-limit-debug-info -O0 -g -static-libstdc++ -Wl,--build-id=sha1 -Wl,--no-rosegment -Wl,--no-undefined-version -Wl,--fatal-warnings -Wl,--no-undefined -Qunused-arguments      -Wl,--gc-sections -fsanitize=undefined CMakeFiles/bo1_entry_alloc_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/entry_alloc_tests.cpp.o CMakeFiles/bo1_entry_alloc_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/database/db_registry.cpp.o CMakeFiles/bo1_entry_alloc_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/database/db_assetnames.cpp.o CMakeFiles/bo1_entry_alloc_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/android/script_pool_bridge.cpp.o CMakeFiles/bo1_entry_alloc_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/android/script_string_services.cpp.o -o bo1_entry_alloc_tests  -latomic -lm && cd ."
