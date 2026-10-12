@@ -464,4 +464,5 @@ require(argc>=2,"decode/gate mode");if(!std::strcmp(argv[1],"decode")){require(a
         "BlackOpsARM.TASK-0015.raw-strings.v1";
 #endif
     std::printf("{\"schema\":\"%s\",\"pointer_bytes\":%zu,\"fixtures_passed\":%u,\"genuine_cycles_passed\":%u,\"logical_baseline_restored\":true}\n",schema,sizeof(void*),tested,cycles);
+    return 0;
 }

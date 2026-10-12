@@ -1,3 +1,5 @@
+TASK37 complete codezone37assets verified3ABIs/O0/O3; next genuine firstTechniqueSet all130null through66226/type7registration, then XModel5 and wider coreinit. DEC53/FACT109/110/WARN38/FAIL35; standingDEC47active.
+
 TASK36 actual Add/completeLink new-name returnedheader registration verified3ABIs/O0/O3; next genuine asset deserialization then wider zone integration/core initialization. DEC52/FACT107/108/WARN37/FAIL34; standing DEC47 active.
 
 TASK35 production insertion/lookup passes3ABIs/O0/O3. FullAdd/Link unverified; next actual returned-header registration on liveTEMP before normalization/Pop then next genuine asset. DEC51/FACT105/106/WARN36; standing DEC47 active.
