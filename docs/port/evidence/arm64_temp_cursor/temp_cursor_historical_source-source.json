@@ -1,0 +1,6 @@
+{
+  "commit": "9a8534d56165bb86e8ac9fee4c7f499f9d68b259",
+  "source": "src/database/db_stream.cpp",
+  "sha256": "9b5aac9c6821d2db75925fb2511e9b1d761569572bae4125d51d4671d4ba5d56",
+  "scope": "Ignored historical negative-control source only"
+}

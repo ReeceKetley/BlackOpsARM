@@ -222,3 +222,16 @@ DBHASH/asset-entry ownership/init andregistryboundary. No fakeDB_Addsuccess or
 arbitrarycaprelaxation. ContinueDEC29/localverifiedcommitsDEC26/no push; preserve
 all prior evidence/protectedrepos/assets. Invalidcaller guards arefixturecontracts,
 notuncheckedrawleaf recovery/concurrency certification.
+
+
+TASK27 cursor/alias prerequisite complete; see arm64_temp_cursor.md/handoff,
+DEC42 and current Ledger evidence. Native block0 shadow must rewind with physical
+cursor to TARGET entry; nonzero streams keep advances. Keep maps on Pop until
+actual overwrite; latest equal-key alias ordering is stable. General TEMP reuse
+is NOT certified: retainedsegments may be unordered and native expansion may
+overwrite logically preserved Win32tails. Never hide this through driftfallback
+or wholemap rollback. NextTASK28 write-aware mappings/explicit suffix handling,
+then genuine codeRawFile numericheader12->24 atTEMP0; zombie nextTechniqueSet7
+deferredwithoutskipping. No nextasset/registry/render successclaim. Alltestsended;
+strictcurrentrunners expect observed0postPop while frozenold20evidence preserved.
+ContinueDEC29, localverifiedmilestone commitsDEC26 authorized; no push.

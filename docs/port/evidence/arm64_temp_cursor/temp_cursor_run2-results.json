@@ -1,0 +1,186 @@
+{
+  "schema": "BlackOpsARM.TASK-0027.temp-cursor-gate.v1",
+  "status": "passed",
+  "recorded_utc": "2026-10-12T05:35:34.075492+00:00",
+  "argv": [
+    "C:\\Users\\recox\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+    "tools/port/run_temp_cursor_gate.py",
+    "--host-build",
+    "build-android-audit/temp_cursor_host_pass1",
+    "--android-build",
+    "build-android-audit/temp_cursor_arm64_pass1",
+    "--historical-android-build",
+    "build-android-audit/temp_cursor_historical_arm64_pass1",
+    "--historical-source-json",
+    "build-android-audit/temp_cursor_historical_source/source.json",
+    "--output",
+    "build-android-audit/temp_cursor_run2"
+  ],
+  "runner_sha256": "c63c5266c136d67abab58e8607e9099d75e2e5236a281b1b6026626c3e8c92e2",
+  "device_serial": "AKWJ9X5116G04618",
+  "platforms": {
+    "windows_x86": {
+      "executable": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\temp_cursor_host_pass1\\x86\\temp_cursor.exe",
+      "sha256": "43b06495d1462edbbcc48845cf156884822afb226eb8ec2f4dea97b95d96ed9c",
+      "runs": [
+        {
+          "schema": "BlackOpsARM.TASK-0027.temp-cursor.v1",
+          "pointer_bytes": 4,
+          "native64": false,
+          "cycles": 8,
+          "cases": 40,
+          "alias_checks": 0,
+          "paired_restore": true,
+          "insert_pointer": true,
+          "no_write_maps_retained": true,
+          "reset": true,
+          "production_zone_allocation_claimed": false,
+          "asset2_loaded": false
+        },
+        {
+          "schema": "BlackOpsARM.TASK-0027.temp-cursor.v1",
+          "pointer_bytes": 4,
+          "native64": false,
+          "cycles": 8,
+          "cases": 40,
+          "alias_checks": 0,
+          "paired_restore": true,
+          "insert_pointer": true,
+          "no_write_maps_retained": true,
+          "reset": true,
+          "production_zone_allocation_claimed": false,
+          "asset2_loaded": false
+        },
+        {
+          "schema": "BlackOpsARM.TASK-0027.temp-cursor.v1",
+          "pointer_bytes": 4,
+          "native64": false,
+          "cycles": 8,
+          "cases": 40,
+          "alias_checks": 0,
+          "paired_restore": true,
+          "insert_pointer": true,
+          "no_write_maps_retained": true,
+          "reset": true,
+          "production_zone_allocation_claimed": false,
+          "asset2_loaded": false
+        }
+      ]
+    },
+    "windows_x64": {
+      "executable": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\temp_cursor_host_pass1\\x64\\temp_cursor.exe",
+      "sha256": "9485a5ca87c067e5f2f0eec469915f1b1e51b2bc2460a87085afeef7062b9068",
+      "runs": [
+        {
+          "schema": "BlackOpsARM.TASK-0027.temp-cursor.v1",
+          "pointer_bytes": 8,
+          "native64": true,
+          "cycles": 8,
+          "cases": 40,
+          "alias_checks": 112,
+          "paired_restore": true,
+          "insert_pointer": true,
+          "no_write_maps_retained": true,
+          "reset": true,
+          "production_zone_allocation_claimed": false,
+          "asset2_loaded": false
+        },
+        {
+          "schema": "BlackOpsARM.TASK-0027.temp-cursor.v1",
+          "pointer_bytes": 8,
+          "native64": true,
+          "cycles": 8,
+          "cases": 40,
+          "alias_checks": 112,
+          "paired_restore": true,
+          "insert_pointer": true,
+          "no_write_maps_retained": true,
+          "reset": true,
+          "production_zone_allocation_claimed": false,
+          "asset2_loaded": false
+        },
+        {
+          "schema": "BlackOpsARM.TASK-0027.temp-cursor.v1",
+          "pointer_bytes": 8,
+          "native64": true,
+          "cycles": 8,
+          "cases": 40,
+          "alias_checks": 112,
+          "paired_restore": true,
+          "insert_pointer": true,
+          "no_write_maps_retained": true,
+          "reset": true,
+          "production_zone_allocation_claimed": false,
+          "asset2_loaded": false
+        }
+      ]
+    },
+    "honor_arm64": {
+      "executable": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\temp_cursor_arm64_pass1\\bo1_temp_cursor_tests",
+      "sha256": "9d96e621223a92fbc3b082cab7fb1791e364de8c6de7e3c59f749a58fd009bd2",
+      "runs": [
+        {
+          "schema": "BlackOpsARM.TASK-0027.temp-cursor.v1",
+          "pointer_bytes": 8,
+          "native64": true,
+          "cycles": 8,
+          "cases": 40,
+          "alias_checks": 112,
+          "paired_restore": true,
+          "insert_pointer": true,
+          "no_write_maps_retained": true,
+          "reset": true,
+          "production_zone_allocation_claimed": false,
+          "asset2_loaded": false
+        },
+        {
+          "schema": "BlackOpsARM.TASK-0027.temp-cursor.v1",
+          "pointer_bytes": 8,
+          "native64": true,
+          "cycles": 8,
+          "cases": 40,
+          "alias_checks": 112,
+          "paired_restore": true,
+          "insert_pointer": true,
+          "no_write_maps_retained": true,
+          "reset": true,
+          "production_zone_allocation_claimed": false,
+          "asset2_loaded": false
+        },
+        {
+          "schema": "BlackOpsARM.TASK-0027.temp-cursor.v1",
+          "pointer_bytes": 8,
+          "native64": true,
+          "cycles": 8,
+          "cases": 40,
+          "alias_checks": 112,
+          "paired_restore": true,
+          "insert_pointer": true,
+          "no_write_maps_retained": true,
+          "reset": true,
+          "production_zone_allocation_claimed": false,
+          "asset2_loaded": false
+        }
+      ]
+    }
+  },
+  "scope": "Scratch-owned actual stream cursors/aliases only; no production zone-allocation claim, assets or conflicting-write map implementation",
+  "device_metadata": "NDL-L09\r\nHNNDL-Q\r\n36\r\nLinux localhost 5.15.180-android13-8-00018-g9b2308ac0ad6-ab14563692 #1 SMP PREEMPT Sun Nov 30 12:19:45 UTC 2025 aarch64 Toybox\r\n",
+  "device_directory": "/data/local/tmp/blackopsarm-temp-cursor-0f5fc0f140954c65aae59164cde92d16",
+  "historical_negative_control": {
+    "expected_failure": true,
+    "exit": 1,
+    "diagnostic": "FAIL TEMP cursor: paired shadow cursor",
+    "binary_sha256": "d2fb0d47d0634bb8232f57b9134f6aaa8d8aa75e0776449296c2eec8f262b937",
+    "source": {
+      "commit": "9a8534d56165bb86e8ac9fee4c7f499f9d68b259",
+      "source": "src/database/db_stream.cpp",
+      "sha256": "9b5aac9c6821d2db75925fb2511e9b1d761569572bae4125d51d4671d4ba5d56",
+      "scope": "Ignored historical negative-control source only"
+    },
+    "source_proof_sha256": "082b3618e5f20653e1daa505e80ae0be25d5f734ccbd25307fd3425cfa678c8f",
+    "current_test_failure": false
+  },
+  "all_tests_completed": true,
+  "native64_contract_matches": true
+}

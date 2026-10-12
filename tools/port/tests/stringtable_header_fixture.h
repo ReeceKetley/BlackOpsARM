@@ -81,13 +81,13 @@ static void executeHeader(const StringTableHeaderPlan&p,DecodedSource&r,XBlock(&
     require(DB_GetStreamPos()==blocks[0].data&&g_streamPosArray[0]==nullptr&&g_streamPosStackIndex==0&&g_streamPosIndex==0,"TEMP pop restores entry workspace cursor");
 #endif
 #if BO1_NATIVE_64BIT
-    require(DB_StreamWin32Pos(0)==p.diskEnd,"TEMP pop retains shadow and mappings");
+    require(DB_StreamWin32Pos(0)==0,"TEMP pop restores entry shadow while retaining mappings");
 #endif
 #if !defined(BO1_STRINGTABLE_CELLS_GATE)
     require(g_streamPosArray[4]==block4,"header-only block4 cursor preserved");
 #endif
     require(adler32(1,blocks[4].data,prefixBytes)==prefixAdler,"header/children preserve preceding block4 bytes");
-    if(measurement)std::printf("{\"header_measurements\":{\"source_start\":%zu,\"name_tag\":%u,\"column_count\":%d,\"row_count\":%d,\"values_tag\":%u,\"cell_index_tag\":%u,\"cell_count\":%llu,\"disk_start\":%llu,\"native_start\":%llu,\"disk_end\":%llu,\"native_end_before_pop\":%llu,\"native_cursor_after_pop\":0,\"shadow_after_pop\":%llu}}\n",sourceStart,p.nameTag,p.columns,p.rows,p.valuesTag,p.indexTag,(unsigned long long)p.cells,(unsigned long long)p.diskStart,(unsigned long long)p.nativeStart,(unsigned long long)p.diskEnd,(unsigned long long)p.nativeEnd,(unsigned long long)(BO1_NATIVE_64BIT?p.diskEnd:0));
+    if(measurement)std::printf("{\"header_measurements\":{\"source_start\":%zu,\"name_tag\":%u,\"column_count\":%d,\"row_count\":%d,\"values_tag\":%u,\"cell_index_tag\":%u,\"cell_count\":%llu,\"disk_start\":%llu,\"native_start\":%llu,\"disk_end\":%llu,\"native_end_before_pop\":%llu,\"native_cursor_after_pop\":0,\"shadow_after_pop\":%llu}}\n",sourceStart,p.nameTag,p.columns,p.rows,p.valuesTag,p.indexTag,(unsigned long long)p.cells,(unsigned long long)p.diskStart,(unsigned long long)p.nativeStart,(unsigned long long)p.diskEnd,(unsigned long long)p.nativeEnd,(unsigned long long)tempDiskCursor());
 #if defined(BO1_STRINGTABLE_OWNER_GATE)
     owner_fixture::verifyAfterPop(p,*payload,blocks,header,measurement);
 #endif
