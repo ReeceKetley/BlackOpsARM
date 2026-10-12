@@ -1,0 +1,10 @@
+{
+  "reviewer": "envelope_review",
+  "remaining_audit_blockers": [],
+  "original_scope": "Six pinned ranges only; bounded dispatch/writes/time/instructions, ABI/nonvolatile/table/hash/global preservation, no service stubs",
+  "ownership": "VerifiedactualFF pointer load -> body -> type37asset registration -> sort RETURNED header -> optionalinsertedalias -> pop",
+  "model_scope": "Original row leaf/registration not executed; source scan models explicitly labeled; FirstHashIndex and original sort/CRT/callback instructions actually execute",
+  "native_crt_scope": "Actual stdqsort x86/x64/HONOR only; query impact modeled, no engine execution or full pipeline claim",
+  "failures": "FAIL22 wrong tool hashseed inrun2 correctedrun3, allrawlogsretained; FAIL23 HONOR duplicate order variance retained",
+  "next": "Restore original normalization and bounded Microsoft ordering, no speculative FirstHash change or index tie-break"
+}

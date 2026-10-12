@@ -1,0 +1,1 @@
+{"kind":"collector_resume_ending_error","reason":"Existing newly written JSON metadata used Python Windows CRLF translation; the first resume compared its bytes to generated LF bytes. Semantic JSON validation now preserves the already copied metadata bytes exactly.","engine_failure":false,"existing_evidence_changed":false}

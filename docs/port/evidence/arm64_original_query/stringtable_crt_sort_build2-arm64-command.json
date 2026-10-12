@@ -1,0 +1,24 @@
+{
+  "android_api": 28,
+  "assertions": true,
+  "argv": [
+    "-std=c++20",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-O3",
+    "-g",
+    "-UNDEBUG",
+    "-fsanitize=undefined",
+    "-fno-sanitize-recover=all",
+    "-fno-omit-frame-pointer",
+    "-static-libstdc++",
+    "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\tools\\port\\tests\\stringtable_crt_sort_probe.cpp",
+    "-o",
+    "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\stringtable_crt_sort_build2\\arm64\\crt_sort"
+  ],
+  "compiler": "D:\\Android\\Sdk\\ndk\\30.0.16248370\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\aarch64-linux-android28-clang++.cmd",
+  "optimization": "O3",
+  "ubsan": true,
+  "abi": "arm64-v8a"
+}

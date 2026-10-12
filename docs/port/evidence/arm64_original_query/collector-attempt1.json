@@ -1,0 +1,7 @@
+{
+  "kind": "collector_path_error",
+  "reason": "Assumed standalone binary name crt_sort_probe instead of actual crt_sort; failed at assertion after partial new archive copies",
+  "engine_failure": false,
+  "initial_collector_sha256": "c5ac4f6cc4b01a0c4941a1af9c4bd4945c55474df390d8ffcc7697647cf79ef2",
+  "repair": "Resume new archive by validating every existing byte, no overwrite or deletion, fix only actual binary names"
+}

@@ -331,3 +331,14 @@ Next3: originalSHA/addressinstruction+loadingpath audit; smallestverifiedbehavio
 correction ifdifferent; actualfirstassetownership/registration. Unsafe negative
 row/nullcompare/negativeprefix paths excludedpendingseparatefix. ContinueDEC29,
 localverifiedcheckpointsDEC26/no push, protectedrepos/assets/oldproofs intact.
+
+
+TASK24 original registration/sort audit complete. Read arm64_original_query.md,
+FACT73/74 and WARN24. Original signed lower bound agrees; missing post-registration
+sort of RETURNED header is next TASK25. Preserve LoadObj wrapping comparator and
+equalhash/column equality zero. HONOR native CRT differs6/14 equal-key positions;
+bounded original-policy sorting and actual query parity required, no arbitrary
+row/index tie-break. Read-only original instruction oracle is analysis only,
+never Android implementation; registry/roworiginal not executed. Next persistent
+registry/TEMP lifetime, then actual next asset/workspace reuse. Continue DEC29,
+localverifiedcommitsDEC26/no push; protect all existing evidence/repos/assets.

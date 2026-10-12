@@ -1,0 +1,34 @@
+[
+  {
+    "label": "windows_x86-code_pre_gfx",
+    "argv": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\stringtable_crt_sort_build1\\x86\\crt_sort.exe",
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\stringtable_crt_sort_host_run1\\code_pre_gfx.numeric"
+    ],
+    "exit": 0
+  },
+  {
+    "label": "windows_x86-zombie_pentagon",
+    "argv": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\stringtable_crt_sort_build1\\x86\\crt_sort.exe",
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\stringtable_crt_sort_host_run1\\zombie_pentagon.numeric"
+    ],
+    "exit": 0
+  },
+  {
+    "label": "windows_x64-code_pre_gfx",
+    "argv": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\stringtable_crt_sort_build1\\x64\\crt_sort.exe",
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\stringtable_crt_sort_host_run1\\code_pre_gfx.numeric"
+    ],
+    "exit": 0
+  },
+  {
+    "label": "windows_x64-zombie_pentagon",
+    "argv": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\stringtable_crt_sort_build1\\x64\\crt_sort.exe",
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\stringtable_crt_sort_host_run1\\zombie_pentagon.numeric"
+    ],
+    "exit": 0
+  }
+]

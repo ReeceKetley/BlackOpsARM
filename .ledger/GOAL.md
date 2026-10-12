@@ -1,3 +1,12 @@
+# Current milestone,12 October2026
+
+TASK24 original audit complete: missing signed normalization after returned
+asset registration; Windows CRT exact, Android equal-key order differs6/14.
+TASK25 bounded original-policy normalizer/actual query parity next, then persistent
+registry/TEMP ownership and next asset. Read STATE/arm64_original_query.md. Core
+front end plus actual interning complete. AutonomousDEC29/localcommitsDEC26,
+no push; no game-owned graphics yet. Historical goal retained below.
+
 # Project Goal
 
 ## Current Milestone

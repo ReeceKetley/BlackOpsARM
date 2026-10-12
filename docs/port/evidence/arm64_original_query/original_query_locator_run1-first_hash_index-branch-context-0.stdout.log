@@ -1,0 +1,179 @@
+
+D:\Games\Call of Duty - Black Ops\BlackOps.exe:	file format coff-i386
+
+Disassembly of section .text:
+
+00401000 <.text>:
+  4ab55d:      	fld	dword ptr [esp + 0x4]
+  4ab561:      	ret
+  4ab562:      	int3
+  4ab563:      	int3
+  4ab564:      	int3
+  4ab565:      	int3
+  4ab566:      	int3
+  4ab567:      	int3
+  4ab568:      	int3
+  4ab569:      	int3
+  4ab56a:      	int3
+  4ab56b:      	int3
+  4ab56c:      	int3
+  4ab56d:      	int3
+  4ab56e:      	int3
+  4ab56f:      	int3
+  4ab570:      	sub	esp, 0xc
+  4ab573:      	push	ebp
+  4ab574:      	mov	ebp, ecx
+  4ab576:      	xor	eax, eax
+  4ab578:      	cmp	dword ptr [ebp + 0x38], eax
+  4ab57b:      	je	0x4ab5ee <.text+0xaa5ee>
+  4ab57d:      	mov	eax, dword ptr [ebp + 0x34]
+  4ab580:      	push	ebx
+  4ab581:      	push	esi
+  4ab582:      	lea	esi, [ebp + 0x20]
+  4ab585:      	push	edi
+  4ab586:      	mov	edi, dword ptr [eax]
+  4ab588:      	mov	eax, dword ptr [esi]
+  4ab58a:      	test	eax, eax
+  4ab58c:      	jne	0x4ab600 <.text+0xaa600>
+  4ab58e:      	call	0x96c0fa <.text+0x56b0fa>
+  4ab593:      	xor	eax, eax
+  4ab595:      	cmp	edi, dword ptr [eax + 0x14]
+  4ab598:      	jne	0x4ab59f <.text+0xaa59f>
+  4ab59a:      	call	0x96c0fa <.text+0x56b0fa>
+  4ab59f:      	mov	ecx, dword ptr [edi + 0x8]
+  4ab5a2:      	mov	edx, dword ptr [esi + 0x14]
+  4ab5a5:      	mov	eax, dword ptr [edx]
+  4ab5a7:      	mov	dword ptr [esp + 0x10], ecx
+  4ab5ab:      	mov	ecx, dword ptr [esi]
+  4ab5ad:      	push	eax
+  4ab5ae:      	push	ecx
+  4ab5af:      	lea	eax, [esp + 0x1c]
+  4ab5b3:      	push	eax
+  4ab5b4:      	mov	ecx, esi
+  4ab5b6:      	call	0x695be0 <.text+0x294be0>
+  4ab5bb:      	mov	ecx, dword ptr [ebp + 0x18]
+  4ab5be:      	mov	edi, dword ptr [ecx]
+  4ab5c0:      	mov	eax, dword ptr [edi + 0x4]
+  4ab5c3:      	lea	esi, [ebp + 0x4]
+  4ab5c6:      	lea	edx, [esp + 0x10]
+  4ab5ca:      	push	edx
+  4ab5cb:      	push	eax
+  4ab5cc:      	push	edi
+  4ab5cd:      	mov	ecx, esi
+  4ab5cf:      	call	0x648970 <.text+0x247970>
+  4ab5d4:      	push	0x1
+  4ab5d6:      	mov	ecx, esi
+  4ab5d8:      	mov	ebx, eax
+  4ab5da:      	call	0x4c16e0 <.text+0xc06e0>
+  4ab5df:      	mov	eax, dword ptr [esp + 0x10]
+  4ab5e3:      	mov	dword ptr [edi + 0x4], ebx
+  4ab5e6:      	mov	ecx, dword ptr [ebx + 0x4]
+  4ab5e9:      	pop	edi
+  4ab5ea:      	pop	esi
+  4ab5eb:      	mov	dword ptr [ecx], ebx
+  4ab5ed:      	pop	ebx
+  4ab5ee:      	mov	ecx, dword ptr [ebp + 0x1c]
+  4ab5f1:      	mov	edx, dword ptr [ebp + 0x3c]
+  4ab5f4:      	cmp	ecx, edx
+  4ab5f6:      	jl	0x4ab604 <.text+0xaa604>
+  4ab5f8:      	mov	dword ptr [ebp + 0x3c], ecx
+  4ab5fb:      	pop	ebp
+  4ab5fc:      	add	esp, 0xc
+  4ab5ff:      	ret
+  4ab600:      	mov	eax, dword ptr [eax]
+  4ab602:      	jmp	0x4ab595 <.text+0xaa595>
+  4ab604:      	mov	dword ptr [ebp + 0x3c], edx
+  4ab607:      	pop	ebp
+  4ab608:      	add	esp, 0xc
+  4ab60b:      	ret
+  4ab60c:      	int3
+  4ab60d:      	int3
+  4ab60e:      	int3
+  4ab60f:      	int3
+  4ab610:      	sub	esp, 0x14
+  4ab613:      	push	ebx
+  4ab614:      	push	esi
+  4ab615:      	mov	esi, dword ptr [esp + 0x20]
+  4ab619:      	mov	eax, dword ptr [esi + 0x4]
+  4ab61c:      	xor	ebx, ebx
+  4ab61e:      	cmp	eax, ebx
+  4ab620:      	je	0x4ab7ce <.text+0xaa7ce>
+  4ab626:      	mov	edx, dword ptr [esp + 0x24]
+  4ab62a:      	cmp	edx, eax
+  4ab62c:      	mov	ecx, dword ptr [esp + 0x2c]
+  4ab630:      	jge	0x4ab7ad <.text+0xaa7ad>
+  4ab636:      	cmp	ecx, eax
+  4ab638:      	jge	0x4ab7ad <.text+0xaa7ad>
+  4ab63e:      	cmp	dword ptr [esp + 0x34], eax
+  4ab642:      	jge	0x4ab7ad <.text+0xaa7ad>
+  4ab648:      	mov	eax, dword ptr [esp + 0x28]
+  4ab64c:      	push	edi
+  4ab64d:      	push	eax
+  4ab64e:      	call	0x5f4650 <.text+0x1f3650>
+  4ab653:      	mov	edi, eax
+  4ab655:      	mov	eax, dword ptr [esp + 0x38]
+  4ab659:      	add	esp, 0x4
+  4ab65c:      	mov	dword ptr [esp + 0x14], edi
+  4ab660:      	mov	dword ptr [esp + 0x24], ebx
+  4ab664:      	mov	dword ptr [esp + 0xc], ebx
+  4ab668:      	cmp	eax, ebx
+  4ab66a:      	je	0x4ab679 <.text+0xaa679>
+  4ab66c:      	push	eax
+  4ab66d:      	call	0x5f4650 <.text+0x1f3650>
+  4ab672:      	add	esp, 0x4
+  4ab675:      	mov	dword ptr [esp + 0x24], eax
+  4ab679:      	mov	eax, dword ptr [esp + 0x3c]
+  4ab67d:      	cmp	eax, ebx
+  4ab67f:      	je	0x4ab68e <.text+0xaa68e>
+  4ab681:      	push	eax
+  4ab682:      	call	0x5f4650 <.text+0x1f3650>
+  4ab687:      	add	esp, 0x4
+  4ab68a:      	mov	dword ptr [esp + 0xc], eax
+  4ab68e:      	push	ebp
+  4ab68f:      	mov	ebp, dword ptr [esi + 0x8]
+  4ab692:      	imul	ebp, dword ptr [esi + 0x4]
+  4ab696:      	push	edi
+  4ab697:      	mov	eax, esi
+  4ab699:      	mov	dword ptr [esp + 0x24], ebp
+  4ab69d:      	call	0x8604b0 <.text+0x45f4b0>
+  4ab6a2:      	mov	ecx, eax
+  4ab6a4:      	add	esp, 0x4
+  4ab6a7:      	cmp	ecx, ebx
+  4ab6a9:      	mov	dword ptr [esp + 0x14], eax
+  4ab6ad:      	jl	0x4ab798 <.text+0xaa798>
+  4ab6b3:      	cmp	ecx, ebp
+  4ab6b5:      	jge	0x4ab798 <.text+0xaa798>
+  4ab6bb:      	jmp	0x4ab6c0 <.text+0xaa6c0>
+  4ab6bd:      	lea	ecx, [ecx]
+  4ab6c0:      	mov	edx, dword ptr [esi + 0x10]
+  4ab6c3:      	movsx	edi, word ptr [edx + 2*ecx]
+  4ab6c7:      	mov	eax, dword ptr [esi + 0xc]
+  4ab6ca:      	mov	edx, dword ptr [esp + 0x18]
+  4ab6ce:      	cmp	dword ptr [eax + 8*edi + 0x4], edx
+  4ab6d2:      	lea	ebx, [eax + 8*edi]
+  4ab6d5:      	jne	0x4ab798 <.text+0xaa798>
+  4ab6db:      	mov	eax, edi
+  4ab6dd:      	cdq
+  4ab6de:      	idiv	dword ptr [esi + 0x4]
+  4ab6e1:      	cmp	edx, dword ptr [esp + 0x2c]
+  4ab6e5:      	jne	0x4ab78b <.text+0xaa78b>
+  4ab6eb:      	mov	ecx, dword ptr [esi + 0x4]
+  4ab6ee:      	mov	eax, edi
+  4ab6f0:      	cdq
+  4ab6f1:      	idiv	ecx
+  4ab6f3:      	mov	edx, dword ptr [esp + 0x3c]
+  4ab6f7:      	mov	ebp, eax
+  4ab6f9:      	mov	eax, ecx
+  4ab6fb:      	mov	ecx, dword ptr [esp + 0x34]
+  4ab6ff:      	imul	eax, ebp
+  4ab702:      	lea	edi, [eax + ecx]
+  4ab705:      	add	eax, edx
+  4ab707:      	mov	dword ptr [esp + 0x1c], eax
+  4ab70b:      	mov	eax, dword ptr [ebx]
+  4ab70d:      	test	eax, eax
+  4ab70f:      	je	0x4ab783 <.text+0xaa783>
+  4ab711:      	push	eax
+  4ab712:      	mov	eax, dword ptr [esp + 0x34]
+  4ab716:      	push	eax
+  4ab717:      	call	0x552bf0 <.text+0x151bf0>
+  4ab71c:      	add	esp, 0x8
