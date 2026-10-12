@@ -1,0 +1,824 @@
+{
+  "schema": "BlackOpsARM.TASK42.archive.v1",
+  "files": [
+    {
+      "source": "build-android-audit/native_startup_zone_pmem1/x64/build-result.json",
+      "archive": "native_startup_zone_pmem1__x64__build-result.json",
+      "sha256": "594f60c7620a62f52a0452e888d32077dd8fbd7b08f01ab3b1028e01d793ad4d",
+      "bytes": 67,
+      "original_sha256": "594f60c7620a62f52a0452e888d32077dd8fbd7b08f01ab3b1028e01d793ad4d",
+      "original_bytes": 67,
+      "gzip": false
+    },
+    {
+      "source": "build-android-audit/native_startup_zone_pmem1/x64/collector-result.json",
+      "archive": "native_startup_zone_pmem1__x64__collector-result.json",
+      "sha256": "99dfad9a570ca36bb82d23fb9f58d18ca1a42011125c22c2d0285f204d84aefe",
+      "bytes": 233,
+      "original_sha256": "99dfad9a570ca36bb82d23fb9f58d18ca1a42011125c22c2d0285f204d84aefe",
+      "original_bytes": 233,
+      "gzip": false
+    },
+    {
+      "source": "build-android-audit/native_startup_zone_pmem1/x64/command.txt",
+      "archive": "native_startup_zone_pmem1__x64__command.txt",
+      "sha256": "c84a9099c745404900ca853901f5887043871b9d33d6382294bd0c565781c672",
+      "bytes": 4221,
+      "original_sha256": "c84a9099c745404900ca853901f5887043871b9d33d6382294bd0c565781c672",
+      "original_bytes": 4221,
+      "gzip": false
+    },
+    {
+      "source": "build-android-audit/native_startup_zone_pmem1/x64/compile.log",
+      "archive": "native_startup_zone_pmem1__x64__compile.log.gz",
+      "sha256": "5eb79c631b2ff528d063b8c51060424cfbc047bed5621c76fe61e7ac1adabfbe",
+      "bytes": 3542,
+      "original_sha256": "b2f443edffd6d3c7e5fb4a00e6678f8ffeb5de30c1383b2b61a06235927b52ba",
+      "original_bytes": 55593,
+      "gzip": true
+    },
+    {
+      "source": "build-android-audit/native_startup_zone_pmem1/x64/run-result.json",
+      "archive": "native_startup_zone_pmem1__x64__run-result.json",
+      "sha256": "3bed2591497b89b762fbdeca5fc4da005cc8cb3bdede1fcb6de0d5e2c45f98d3",
+      "bytes": 19,
+      "original_sha256": "3bed2591497b89b762fbdeca5fc4da005cc8cb3bdede1fcb6de0d5e2c45f98d3",
+      "original_bytes": 19,
+      "gzip": false
+    },
+    {
+      "source": "build-android-audit/native_startup_zone_pmem1/x64/run.log",
+      "archive": "native_startup_zone_pmem1__x64__run.log.gz",
+      "sha256": "2dc1bfd3a83258f88c4aa4ecacda5d1776186c616a0daf7f67d48e99b3035dc1",
+      "bytes": 5487,
+      "original_sha256": "46a32e0318434038697903ef3ae75ca0edd420d295820a41786254cd87335bd4",
+      "original_bytes": 81668,
+      "gzip": true
+    },
+    {
+      "source": "build-android-audit/native_startup_zone_pmem1/x64/source-manifest.json",
+      "archive": "native_startup_zone_pmem1__x64__source-manifest.json",
+      "sha256": "2ef7a17ec665dcbc88e2ba89835905c13556404bc70651c9daac0a326c990a3d",
+      "bytes": 4534,
+      "original_sha256": "2ef7a17ec665dcbc88e2ba89835905c13556404bc70651c9daac0a326c990a3d",
+      "original_bytes": 4534,
+      "gzip": false
+    },
+    {
+      "source": "build-android-audit/native_startup_zone_pmem1/x86/build-result.json",
+      "archive": "native_startup_zone_pmem1__x86__build-result.json",
+      "sha256": "4bf32a0c9d160a3c20fa587e07ff9307059a2e93825fd69976a95a6b45dfae4e",
+      "bytes": 67,
+      "original_sha256": "4bf32a0c9d160a3c20fa587e07ff9307059a2e93825fd69976a95a6b45dfae4e",
+      "original_bytes": 67,
+      "gzip": false
+    },
+    {
+      "source": "build-android-audit/native_startup_zone_pmem1/x86/collector-result.json",
+      "archive": "native_startup_zone_pmem1__x86__collector-result.json",
+      "sha256": "a2f4c5d9b2797079860e349501dc3917befb766edbba290d9545aabb05def5d9",
+      "bytes": 233,
+      "original_sha256": "a2f4c5d9b2797079860e349501dc3917befb766edbba290d9545aabb05def5d9",
+      "original_bytes": 233,
+      "gzip": false
+    },
+    {
+      "source": "build-android-audit/native_startup_zone_pmem1/x86/command.txt",
+      "archive": "native_startup_zone_pmem1__x86__command.txt",
+      "sha256": "ef901e155f14f3bb0f1615100ae6e4eb279c165be7c05832be5076dd34ab624e",
+      "bytes": 4204,
+      "original_sha256": "ef901e155f14f3bb0f1615100ae6e4eb279c165be7c05832be5076dd34ab624e",
+      "original_bytes": 4204,
+      "gzip": false
+    },
+    {
+      "source": "build-android-audit/native_startup_zone_pmem1/x86/compile.log",
+      "archive": "native_startup_zone_pmem1__x86__compile.log.gz",
+      "sha256": "2707991107efc57cec53f33a6c3df113bd461cdfd86a090f10c0af75e3995b8a",
+      "bytes": 3519,
+      "original_sha256": "42644d1ac4f76d39cef4d563d1e3c91db2cb42aa28bcc87aa0ab9a8d32a32c26",
+      "original_bytes": 53516,
+      "gzip": true
+    },
+    {
+      "source": "build-android-audit/native_startup_zone_pmem1/x86/run-result.json",
+      "archive": "native_startup_zone_pmem1__x86__run-result.json",
+      "sha256": "3bed2591497b89b762fbdeca5fc4da005cc8cb3bdede1fcb6de0d5e2c45f98d3",
+      "bytes": 19,
+      "original_sha256": "3bed2591497b89b762fbdeca5fc4da005cc8cb3bdede1fcb6de0d5e2c45f98d3",
+      "original_bytes": 19,
+      "gzip": false
+    },
+    {
+      "source": "build-android-audit/native_startup_zone_pmem1/x86/run.log",
+      "archive": "native_startup_zone_pmem1__x86__run.log.gz",
+      "sha256": "9a7cee962d282707b182992ce8733ecdc6f1bb4e0a95f84d27fb3c2d23ffb100",
+      "bytes": 5420,
+      "original_sha256": "3c1d0a5236f6c0ebfe8e889a6737fa8bde5483bb76ae9d486e413f2548be173d",
+      "original_bytes": 81656,
+      "gzip": true
+    },
+    {
+      "source": "build-android-audit/native_startup_zone_pmem1/x86/source-manifest.json",
+      "archive": "native_startup_zone_pmem1__x86__source-manifest.json",
+      "sha256": "2ef7a17ec665dcbc88e2ba89835905c13556404bc70651c9daac0a326c990a3d",
+      "bytes": 4534,
+      "original_sha256": "2ef7a17ec665dcbc88e2ba89835905c13556404bc70651c9daac0a326c990a3d",
+      "original_bytes": 4534,
+      "gzip": false
+    },
+    {
+      "source": "build-android-audit/native_startup_zone_pmem_O0_1/build-result.json",
+      "archive": "native_startup_zone_pmem_O0_1__build-result.json",
+      "sha256": "387c462d1d09ff62ff278f303b73976d3b992107923f5e97d30b0daecaba7f37",
+      "bytes": 71,
+      "original_sha256": "387c462d1d09ff62ff278f303b73976d3b992107923f5e97d30b0daecaba7f37",
+      "original_bytes": 71,
+      "gzip": false
+    },
+    {
+      "source": "build-android-audit/native_startup_zone_pmem_O0_1/build.log",
+      "archive": "native_startup_zone_pmem_O0_1__build.log.gz",
+      "sha256": "610c8d2ae03c8e64dfcf32a873cf93181e1182e0ca456b87d94220ea983becaa",
+      "bytes": 16076,
+      "original_sha256": "8d9b75ba99dacfd5ff17d854916835068fdb9dcc4a8fc6b87ac505316afb92b4",
+      "original_bytes": 344504,
+      "gzip": true
+    },
+    {
+      "source": "build-android-audit/native_startup_zone_pmem_O0_1/CMakeCache.txt",
+      "archive": "native_startup_zone_pmem_O0_1__CMakeCache.txt",
+      "sha256": "11025bf678ffdc620c5c4fb24ea7d52a21667998f0ab1902f5c7a05594056731",
+      "bytes": 17148,
+      "original_sha256": "11025bf678ffdc620c5c4fb24ea7d52a21667998f0ab1902f5c7a05594056731",
+      "original_bytes": 17148,
+      "gzip": false
+    },
+    {
+      "source": "build-android-audit/native_startup_zone_pmem_O0_1/CMakeFiles/CMakeOutput.log",
+      "archive": "native_startup_zone_pmem_O0_1__CMakeFiles__CMakeOutput.log.gz",
+      "sha256": "f15d14066744f8350ac0e0c4b7f56e06fb6bc92ae8ef4480d1c9fa9568dd6508",
+      "bytes": 3111,
+      "original_sha256": "3c94e70cc57c21824ee0cbdb60a06b80255e0b0590788c8a830f8d03eed44cb3",
+      "original_bytes": 40984,
+      "gzip": true
+    },
+    {
+      "source": "build-android-audit/native_startup_zone_pmem_O0_1/CMakeFiles/TargetDirectories.txt",
+      "archive": "native_startup_zone_pmem_O0_1__CMakeFiles__TargetDirectories.txt",
+      "sha256": "465c6a13dd1b37124751808a9cc3bc6ad164d55c199cd69840864aac44d8b25d",
+      "bytes": 9457,
+      "original_sha256": "465c6a13dd1b37124751808a9cc3bc6ad164d55c199cd69840864aac44d8b25d",
+      "original_bytes": 9457,
+      "gzip": false
+    },
+    {
+      "source": "build-android-audit/native_startup_zone_pmem_O0_1/commands.json",
+      "archive": "native_startup_zone_pmem_O0_1__commands.json",
+      "sha256": "3cbdde8025ae31a47422baf7dbcc9df4e4b2dec65e9fd6e6301d8b2f8dc9c3d7",
+      "bytes": 1023,
+      "original_sha256": "3cbdde8025ae31a47422baf7dbcc9df4e4b2dec65e9fd6e6301d8b2f8dc9c3d7",
+      "original_bytes": 1023,
+      "gzip": false
+    },
+    {
+      "source": "build-android-audit/native_startup_zone_pmem_O0_1/compile_commands.json",
+      "archive": "native_startup_zone_pmem_O0_1__compile_commands.json.gz",
+      "sha256": "b835aaa23f2dc694206d0802b49ae35a9023a819f324bb44ed895c66d99e4565",
+      "bytes": 18965,
+      "original_sha256": "b5184c5e5355bd19ba08db82d4bbe4831868392070c054c25d56bbe2cf86301d",
+      "original_bytes": 1191623,
+      "gzip": true
+    },
+    {
+      "source": "build-android-audit/native_startup_zone_pmem_O0_1/configure.log",
+      "archive": "native_startup_zone_pmem_O0_1__configure.log.gz",
+      "sha256": "45baf74bd9fac5199042bcd84d525b546c363d6adafedab990762d5e0fb6ebbb",
+      "bytes": 481,
+      "original_sha256": "e64c8e4cf0245bdc25e28358921b62f65f89497ac6af6abd64c24badc4e0ef81",
+      "original_bytes": 1071,
+      "gzip": true
+    },
+    {
+      "source": "build-android-audit/native_startup_zone_pmem_O0_1/source-manifest.json",
+      "archive": "native_startup_zone_pmem_O0_1__source-manifest.json",
+      "sha256": "f865a7ac77115d6478fd3e025e552ada805f225ede8821821b1b816836d8f6d3",
+      "bytes": 10130,
+      "original_sha256": "f865a7ac77115d6478fd3e025e552ada805f225ede8821821b1b816836d8f6d3",
+      "original_bytes": 10130,
+      "gzip": false
+    },
+    {
+      "source": "build-android-audit/native_startup_zone_pmem_O0_run1/commands.json",
+      "archive": "native_startup_zone_pmem_O0_run1__commands.json.gz",
+      "sha256": "a1db4c3ca47b17c613ae7d8ca8fc9cbfb92451dabc05b9af94a3da1886af9837",
+      "bytes": 6171,
+      "original_sha256": "6aeec1990685985d36881e03615338d30cb26dfac7e1d53b7b9171510562349e",
+      "original_bytes": 91516,
+      "gzip": true
+    },
+    {
+      "source": "build-android-audit/native_startup_zone_pmem_O0_run1/result.json",
+      "archive": "native_startup_zone_pmem_O0_run1__result.json",
+      "sha256": "41f1c3b23cde23584d1166f697f9bd8f7240f89f5cf72af1e7f7f12e667e7e4e",
+      "bytes": 467,
+      "original_sha256": "41f1c3b23cde23584d1166f697f9bd8f7240f89f5cf72af1e7f7f12e667e7e4e",
+      "original_bytes": 467,
+      "gzip": false
+    },
+    {
+      "source": "build-android-audit/native_startup_zone_pmem_O0_run1/test.log",
+      "archive": "native_startup_zone_pmem_O0_run1__test.log.gz",
+      "sha256": "2dc1bfd3a83258f88c4aa4ecacda5d1776186c616a0daf7f67d48e99b3035dc1",
+      "bytes": 5487,
+      "original_sha256": "46a32e0318434038697903ef3ae75ca0edd420d295820a41786254cd87335bd4",
+      "original_bytes": 81668,
+      "gzip": true
+    },
+    {
+      "source": "build-android-audit/native_startup_zone_pmem_O3_1/build-result.json",
+      "archive": "native_startup_zone_pmem_O3_1__build-result.json",
+      "sha256": "387c462d1d09ff62ff278f303b73976d3b992107923f5e97d30b0daecaba7f37",
+      "bytes": 71,
+      "original_sha256": "387c462d1d09ff62ff278f303b73976d3b992107923f5e97d30b0daecaba7f37",
+      "original_bytes": 71,
+      "gzip": false
+    },
+    {
+      "source": "build-android-audit/native_startup_zone_pmem_O3_1/build.log",
+      "archive": "native_startup_zone_pmem_O3_1__build.log.gz",
+      "sha256": "5f1ccee82c9e4d0a05ddef9e3373505641e1a94cdf37cec8db9300dec02d1896",
+      "bytes": 16025,
+      "original_sha256": "d9b03c8938322e89e0d2842a59f9a748d38c62a844761f6b3ffb4c076dbfa434",
+      "original_bytes": 344498,
+      "gzip": true
+    },
+    {
+      "source": "build-android-audit/native_startup_zone_pmem_O3_1/CMakeCache.txt",
+      "archive": "native_startup_zone_pmem_O3_1__CMakeCache.txt",
+      "sha256": "3a69f8f4fa7b2a4e758be3335e413c569af3d473b82cc4ed189a756e42276eb2",
+      "bytes": 17148,
+      "original_sha256": "3a69f8f4fa7b2a4e758be3335e413c569af3d473b82cc4ed189a756e42276eb2",
+      "original_bytes": 17148,
+      "gzip": false
+    },
+    {
+      "source": "build-android-audit/native_startup_zone_pmem_O3_1/CMakeFiles/CMakeOutput.log",
+      "archive": "native_startup_zone_pmem_O3_1__CMakeFiles__CMakeOutput.log.gz",
+      "sha256": "5684253ddd87bcbdcd192a6970219482d3626b83b0021a9030b3e3ffc121275b",
+      "bytes": 3110,
+      "original_sha256": "09583fb4462f728fc7a9a418e0fb41a7cba5ab898ba22d5b54cfd417af1d1d39",
+      "original_bytes": 40984,
+      "gzip": true
+    },
+    {
+      "source": "build-android-audit/native_startup_zone_pmem_O3_1/CMakeFiles/TargetDirectories.txt",
+      "archive": "native_startup_zone_pmem_O3_1__CMakeFiles__TargetDirectories.txt",
+      "sha256": "549baecf1ba0fbb388400b520704767e4d3a55e9325d2c792b41965a6a4c9616",
+      "bytes": 9457,
+      "original_sha256": "549baecf1ba0fbb388400b520704767e4d3a55e9325d2c792b41965a6a4c9616",
+      "original_bytes": 9457,
+      "gzip": false
+    },
+    {
+      "source": "build-android-audit/native_startup_zone_pmem_O3_1/commands.json",
+      "archive": "native_startup_zone_pmem_O3_1__commands.json",
+      "sha256": "2e050b01959526588e1c1de16bf861db7e4718f45eb6eb30af23afec5ef2f29e",
+      "bytes": 1023,
+      "original_sha256": "2e050b01959526588e1c1de16bf861db7e4718f45eb6eb30af23afec5ef2f29e",
+      "original_bytes": 1023,
+      "gzip": false
+    },
+    {
+      "source": "build-android-audit/native_startup_zone_pmem_O3_1/compile_commands.json",
+      "archive": "native_startup_zone_pmem_O3_1__compile_commands.json.gz",
+      "sha256": "ff0795cfc54da3beb51c33ad9255ab74ab8322cbbb95e701c4a1156332c10502",
+      "bytes": 18966,
+      "original_sha256": "29ae85eaaf1a1e8ff579a29577f68a6b0ca602ee2fc18078059b5a0f0a5a56b5",
+      "original_bytes": 1191623,
+      "gzip": true
+    },
+    {
+      "source": "build-android-audit/native_startup_zone_pmem_O3_1/configure.log",
+      "archive": "native_startup_zone_pmem_O3_1__configure.log.gz",
+      "sha256": "64944c5faacb2a1825ebffbe90e5743617e876223fe8ffbb3115fb54f6aa07e0",
+      "bytes": 481,
+      "original_sha256": "fb973190d434744dbd6ac2718bf3e9da20d1c1be3eba4dccde46ad389b2b7202",
+      "original_bytes": 1071,
+      "gzip": true
+    },
+    {
+      "source": "build-android-audit/native_startup_zone_pmem_O3_1/source-manifest.json",
+      "archive": "native_startup_zone_pmem_O3_1__source-manifest.json",
+      "sha256": "f865a7ac77115d6478fd3e025e552ada805f225ede8821821b1b816836d8f6d3",
+      "bytes": 10130,
+      "original_sha256": "f865a7ac77115d6478fd3e025e552ada805f225ede8821821b1b816836d8f6d3",
+      "original_bytes": 10130,
+      "gzip": false
+    },
+    {
+      "source": "build-android-audit/native_startup_zone_pmem_O3_run1/commands.json",
+      "archive": "native_startup_zone_pmem_O3_run1__commands.json.gz",
+      "sha256": "987fcc51ce7a0c1de3c8fda602c12545c2d9c88d791c5c8498e29d56bc8e6c10",
+      "bytes": 6172,
+      "original_sha256": "ef63cd359a450fdd44407782a8800146d9e833199546ee28231d7f07ce008d51",
+      "original_bytes": 91515,
+      "gzip": true
+    },
+    {
+      "source": "build-android-audit/native_startup_zone_pmem_O3_run1/result.json",
+      "archive": "native_startup_zone_pmem_O3_run1__result.json",
+      "sha256": "affebf9953ba3ee5a7be3fdf6663add3b2696f791ef7c30450d34a4e9adaf8eb",
+      "bytes": 467,
+      "original_sha256": "affebf9953ba3ee5a7be3fdf6663add3b2696f791ef7c30450d34a4e9adaf8eb",
+      "original_bytes": 467,
+      "gzip": false
+    },
+    {
+      "source": "build-android-audit/native_startup_zone_pmem_O3_run1/test.log",
+      "archive": "native_startup_zone_pmem_O3_run1__test.log.gz",
+      "sha256": "2dc1bfd3a83258f88c4aa4ecacda5d1776186c616a0daf7f67d48e99b3035dc1",
+      "bytes": 5487,
+      "original_sha256": "46a32e0318434038697903ef3ae75ca0edd420d295820a41786254cd87335bd4",
+      "original_bytes": 81668,
+      "gzip": true
+    },
+    {
+      "source": "build-android-audit/native_zone_file_multiowner1/x64/build-result.json",
+      "archive": "native_zone_file_multiowner1__x64__build-result.json",
+      "sha256": "7e362bccab7606f6e1b0f0dbb67590b3383098cf371701b4c726205d28b27fbd",
+      "bytes": 73,
+      "original_sha256": "7e362bccab7606f6e1b0f0dbb67590b3383098cf371701b4c726205d28b27fbd",
+      "original_bytes": 73,
+      "gzip": false
+    },
+    {
+      "source": "build-android-audit/native_zone_file_multiowner1/x64/command.txt",
+      "archive": "native_zone_file_multiowner1__x64__command.txt",
+      "sha256": "e11bc42eb030d8c55e8e7e7ad50f70b1625007c4fb921e8a4287978d57d6592b",
+      "bytes": 1571,
+      "original_sha256": "e11bc42eb030d8c55e8e7e7ad50f70b1625007c4fb921e8a4287978d57d6592b",
+      "original_bytes": 1571,
+      "gzip": false
+    },
+    {
+      "source": "build-android-audit/native_zone_file_multiowner1/x64/compile.log",
+      "archive": "native_zone_file_multiowner1__x64__compile.log.gz",
+      "sha256": "60aa759ec9a75f36775e6ee1ab6e6a7342f0229479c797c516533426d0385727",
+      "bytes": 3095,
+      "original_sha256": "24834a8747b7f3fa5354d93285f0ca60dbff782beb77781046eabe585096caed",
+      "original_bytes": 41830,
+      "gzip": true
+    },
+    {
+      "source": "build-android-audit/native_zone_file_multiowner1/x64/source-manifest.json",
+      "archive": "native_zone_file_multiowner1__x64__source-manifest.json",
+      "sha256": "6199ff041caa90e5118554a83b6e8ef389f340562e2722a49e1f187194200574",
+      "bytes": 2279,
+      "original_sha256": "6199ff041caa90e5118554a83b6e8ef389f340562e2722a49e1f187194200574",
+      "original_bytes": 2279,
+      "gzip": false
+    },
+    {
+      "source": "build-android-audit/native_zone_file_multiowner1/x86/build-result.json",
+      "archive": "native_zone_file_multiowner1__x86__build-result.json",
+      "sha256": "b30656d5de3bf6aa9d1dc165c4792b8e05c46228f315e761f7e4ae40a957529b",
+      "bytes": 73,
+      "original_sha256": "b30656d5de3bf6aa9d1dc165c4792b8e05c46228f315e761f7e4ae40a957529b",
+      "original_bytes": 73,
+      "gzip": false
+    },
+    {
+      "source": "build-android-audit/native_zone_file_multiowner1/x86/command.txt",
+      "archive": "native_zone_file_multiowner1__x86__command.txt",
+      "sha256": "363fecd34e20b91bf78934a6bced1926698282424263b27e2598201de8f31e41",
+      "bytes": 1555,
+      "original_sha256": "363fecd34e20b91bf78934a6bced1926698282424263b27e2598201de8f31e41",
+      "original_bytes": 1555,
+      "gzip": false
+    },
+    {
+      "source": "build-android-audit/native_zone_file_multiowner1/x86/compile.log",
+      "archive": "native_zone_file_multiowner1__x86__compile.log.gz",
+      "sha256": "09edf483d66d53eb3d8f3740562ad40b013114d08feb9189fbba8e4188127ffb",
+      "bytes": 3163,
+      "original_sha256": "9404e9c35eaffc00ca6bdb4ef9ee27ba01d2ab88b64bb64de115c8eccc408f65",
+      "original_bytes": 42322,
+      "gzip": true
+    },
+    {
+      "source": "build-android-audit/native_zone_file_multiowner1/x86/source-manifest.json",
+      "archive": "native_zone_file_multiowner1__x86__source-manifest.json",
+      "sha256": "6199ff041caa90e5118554a83b6e8ef389f340562e2722a49e1f187194200574",
+      "bytes": 2279,
+      "original_sha256": "6199ff041caa90e5118554a83b6e8ef389f340562e2722a49e1f187194200574",
+      "original_bytes": 2279,
+      "gzip": false
+    },
+    {
+      "source": "build-android-audit/native_zone_file_multiowner2/x64/build-result.json",
+      "archive": "native_zone_file_multiowner2__x64__build-result.json",
+      "sha256": "3e5305a2f61fd92c54476dabb61d2ea3bbf48e37c11dd734660bcb3cd6d9ee72",
+      "bytes": 73,
+      "original_sha256": "3e5305a2f61fd92c54476dabb61d2ea3bbf48e37c11dd734660bcb3cd6d9ee72",
+      "original_bytes": 73,
+      "gzip": false
+    },
+    {
+      "source": "build-android-audit/native_zone_file_multiowner2/x64/command.txt",
+      "archive": "native_zone_file_multiowner2__x64__command.txt",
+      "sha256": "00ca21cedc1099ff06f133171db9891f421171d4657014a66a4c4c65dc888b74",
+      "bytes": 1571,
+      "original_sha256": "00ca21cedc1099ff06f133171db9891f421171d4657014a66a4c4c65dc888b74",
+      "original_bytes": 1571,
+      "gzip": false
+    },
+    {
+      "source": "build-android-audit/native_zone_file_multiowner2/x64/compile.log",
+      "archive": "native_zone_file_multiowner2__x64__compile.log.gz",
+      "sha256": "60aa759ec9a75f36775e6ee1ab6e6a7342f0229479c797c516533426d0385727",
+      "bytes": 3095,
+      "original_sha256": "24834a8747b7f3fa5354d93285f0ca60dbff782beb77781046eabe585096caed",
+      "original_bytes": 41830,
+      "gzip": true
+    },
+    {
+      "source": "build-android-audit/native_zone_file_multiowner2/x64/run-result.json",
+      "archive": "native_zone_file_multiowner2__x64__run-result.json",
+      "sha256": "3bed2591497b89b762fbdeca5fc4da005cc8cb3bdede1fcb6de0d5e2c45f98d3",
+      "bytes": 19,
+      "original_sha256": "3bed2591497b89b762fbdeca5fc4da005cc8cb3bdede1fcb6de0d5e2c45f98d3",
+      "original_bytes": 19,
+      "gzip": false
+    },
+    {
+      "source": "build-android-audit/native_zone_file_multiowner2/x64/run.log",
+      "archive": "native_zone_file_multiowner2__x64__run.log.gz",
+      "sha256": "a3d6734c17867448c71e1474ab96bf532898053240e1c8711f33fe671b68237f",
+      "bytes": 147,
+      "original_sha256": "f0441eeb5c93f457b782540a70df48ee61bfe10267cbbd8c50e5ff2320382753",
+      "original_bytes": 512,
+      "gzip": true
+    },
+    {
+      "source": "build-android-audit/native_zone_file_multiowner2/x64/source-manifest.json",
+      "archive": "native_zone_file_multiowner2__x64__source-manifest.json",
+      "sha256": "f7d31b0e3fa3c4cfd10e2acc0834b5aaf8f04b33039d7d75d0347038019d4449",
+      "bytes": 2279,
+      "original_sha256": "f7d31b0e3fa3c4cfd10e2acc0834b5aaf8f04b33039d7d75d0347038019d4449",
+      "original_bytes": 2279,
+      "gzip": false
+    },
+    {
+      "source": "build-android-audit/native_zone_file_multiowner2/x86/build-result.json",
+      "archive": "native_zone_file_multiowner2__x86__build-result.json",
+      "sha256": "f816f022e75c001a28309574897d64a8fecfa3c049baf9f9c62ade874a085caf",
+      "bytes": 73,
+      "original_sha256": "f816f022e75c001a28309574897d64a8fecfa3c049baf9f9c62ade874a085caf",
+      "original_bytes": 73,
+      "gzip": false
+    },
+    {
+      "source": "build-android-audit/native_zone_file_multiowner2/x86/command.txt",
+      "archive": "native_zone_file_multiowner2__x86__command.txt",
+      "sha256": "020cf589c175a69008cb7c14f5e7e01d3b4edae978a089f23a55ff7522bb615d",
+      "bytes": 1555,
+      "original_sha256": "020cf589c175a69008cb7c14f5e7e01d3b4edae978a089f23a55ff7522bb615d",
+      "original_bytes": 1555,
+      "gzip": false
+    },
+    {
+      "source": "build-android-audit/native_zone_file_multiowner2/x86/compile.log",
+      "archive": "native_zone_file_multiowner2__x86__compile.log.gz",
+      "sha256": "09edf483d66d53eb3d8f3740562ad40b013114d08feb9189fbba8e4188127ffb",
+      "bytes": 3163,
+      "original_sha256": "9404e9c35eaffc00ca6bdb4ef9ee27ba01d2ab88b64bb64de115c8eccc408f65",
+      "original_bytes": 42322,
+      "gzip": true
+    },
+    {
+      "source": "build-android-audit/native_zone_file_multiowner2/x86/run-result.json",
+      "archive": "native_zone_file_multiowner2__x86__run-result.json",
+      "sha256": "3bed2591497b89b762fbdeca5fc4da005cc8cb3bdede1fcb6de0d5e2c45f98d3",
+      "bytes": 19,
+      "original_sha256": "3bed2591497b89b762fbdeca5fc4da005cc8cb3bdede1fcb6de0d5e2c45f98d3",
+      "original_bytes": 19,
+      "gzip": false
+    },
+    {
+      "source": "build-android-audit/native_zone_file_multiowner2/x86/run.log",
+      "archive": "native_zone_file_multiowner2__x86__run.log.gz",
+      "sha256": "f587d96c05fb351ca35fa002db0c807cf584fd246c4fd74514d2c106e6d8b351",
+      "bytes": 147,
+      "original_sha256": "67a52f847b6430351d1f9298d2d76ce232af4f527a5281b49cddb48526592361",
+      "original_bytes": 512,
+      "gzip": true
+    },
+    {
+      "source": "build-android-audit/native_zone_file_multiowner2/x86/source-manifest.json",
+      "archive": "native_zone_file_multiowner2__x86__source-manifest.json",
+      "sha256": "f7d31b0e3fa3c4cfd10e2acc0834b5aaf8f04b33039d7d75d0347038019d4449",
+      "bytes": 2279,
+      "original_sha256": "f7d31b0e3fa3c4cfd10e2acc0834b5aaf8f04b33039d7d75d0347038019d4449",
+      "original_bytes": 2279,
+      "gzip": false
+    },
+    {
+      "source": "build-android-audit/native_zone_pmem_normal1/x64/build-result.json",
+      "archive": "native_zone_pmem_normal1__x64__build-result.json",
+      "sha256": "9fc09cb7bb6977a9e0c04a60f595eac1aee65c16051d3349b3a16c75cdfc461c",
+      "bytes": 96,
+      "original_sha256": "9fc09cb7bb6977a9e0c04a60f595eac1aee65c16051d3349b3a16c75cdfc461c",
+      "original_bytes": 96,
+      "gzip": false
+    },
+    {
+      "source": "build-android-audit/native_zone_pmem_normal1/x64/command.txt",
+      "archive": "native_zone_pmem_normal1__x64__command.txt",
+      "sha256": "c9b5efa1692d57048b08deb27b22eef19f837ace6be7cbf1536620c6dc63d6c8",
+      "bytes": 998,
+      "original_sha256": "c9b5efa1692d57048b08deb27b22eef19f837ace6be7cbf1536620c6dc63d6c8",
+      "original_bytes": 998,
+      "gzip": false
+    },
+    {
+      "source": "build-android-audit/native_zone_pmem_normal1/x64/compile.log",
+      "archive": "native_zone_pmem_normal1__x64__compile.log.gz",
+      "sha256": "9c4def435be5a837d2515fd300e9177795c947907e512590ea6ccfb82eb255b0",
+      "bytes": 17912,
+      "original_sha256": "f55338778ff25d2e35a4173e386fe9dd89fe9e878c841501e7b9d248d7998ac2",
+      "original_bytes": 226077,
+      "gzip": true
+    },
+    {
+      "source": "build-android-audit/native_zone_pmem_normal1/x64/source-manifest.json",
+      "archive": "native_zone_pmem_normal1__x64__source-manifest.json",
+      "sha256": "296c14f84f01564e29e9801fd43d94a657c9518801fb81942ba4fb75fa2b8e5c",
+      "bytes": 1717,
+      "original_sha256": "296c14f84f01564e29e9801fd43d94a657c9518801fb81942ba4fb75fa2b8e5c",
+      "original_bytes": 1717,
+      "gzip": false
+    },
+    {
+      "source": "build-android-audit/native_zone_pmem_normal1/x86/build-result.json",
+      "archive": "native_zone_pmem_normal1__x86__build-result.json",
+      "sha256": "24c988f1836378fa24c97a0b9c996cb018502e254ee023b1cb5794a7ea1ad0aa",
+      "bytes": 96,
+      "original_sha256": "24c988f1836378fa24c97a0b9c996cb018502e254ee023b1cb5794a7ea1ad0aa",
+      "original_bytes": 96,
+      "gzip": false
+    },
+    {
+      "source": "build-android-audit/native_zone_pmem_normal1/x86/command.txt",
+      "archive": "native_zone_pmem_normal1__x86__command.txt",
+      "sha256": "ee5fa3512e4b46c0d222a66f43ef4b646c47d0711f7ff49521570d261a044a18",
+      "bytes": 982,
+      "original_sha256": "ee5fa3512e4b46c0d222a66f43ef4b646c47d0711f7ff49521570d261a044a18",
+      "original_bytes": 982,
+      "gzip": false
+    },
+    {
+      "source": "build-android-audit/native_zone_pmem_normal1/x86/compile.log",
+      "archive": "native_zone_pmem_normal1__x86__compile.log.gz",
+      "sha256": "83bd4ccede7d215f9e33384d327be999b6f426f2d6132c0366714f90d96aa640",
+      "bytes": 12778,
+      "original_sha256": "9976866a160504e79012fa271120f708b3bf0e55cfeef474fb9249af8f02cb37",
+      "original_bytes": 173802,
+      "gzip": true
+    },
+    {
+      "source": "build-android-audit/native_zone_pmem_normal1/x86/source-manifest.json",
+      "archive": "native_zone_pmem_normal1__x86__source-manifest.json",
+      "sha256": "296c14f84f01564e29e9801fd43d94a657c9518801fb81942ba4fb75fa2b8e5c",
+      "bytes": 1717,
+      "original_sha256": "296c14f84f01564e29e9801fd43d94a657c9518801fb81942ba4fb75fa2b8e5c",
+      "original_bytes": 1717,
+      "gzip": false
+    },
+    {
+      "source": "build-android-audit/pmem_owner_stack_after1/x64/build-result.json",
+      "archive": "pmem_owner_stack_after1__x64__build-result.json",
+      "sha256": "7de6bfbf36f2043cbada23a8cf6770b31502e543a60db112f4789d16e9145bf7",
+      "bytes": 67,
+      "original_sha256": "7de6bfbf36f2043cbada23a8cf6770b31502e543a60db112f4789d16e9145bf7",
+      "original_bytes": 67,
+      "gzip": false
+    },
+    {
+      "source": "build-android-audit/pmem_owner_stack_after1/x64/command.txt",
+      "archive": "pmem_owner_stack_after1__x64__command.txt",
+      "sha256": "b424a664df9c04c1f1f1f45d5bfd2950a55cc4c88cc0af1f93a92cbd70664c82",
+      "bytes": 716,
+      "original_sha256": "b424a664df9c04c1f1f1f45d5bfd2950a55cc4c88cc0af1f93a92cbd70664c82",
+      "original_bytes": 716,
+      "gzip": false
+    },
+    {
+      "source": "build-android-audit/pmem_owner_stack_after1/x64/compile.log",
+      "archive": "pmem_owner_stack_after1__x64__compile.log.gz",
+      "sha256": "2eefb48393c3a65f154a11578bce045d3124ea1f391ef104079826339b3425f5",
+      "bytes": 769,
+      "original_sha256": "9311f44b0de93ef878297b4b8e2873c72b7c1d30192d52476ab19775a920e0e0",
+      "original_bytes": 3628,
+      "gzip": true
+    },
+    {
+      "source": "build-android-audit/pmem_owner_stack_after1/x64/run-result.json",
+      "archive": "pmem_owner_stack_after1__x64__run-result.json",
+      "sha256": "4a1fc57be33f9c0c4f8f7f38a19026b02f6a63e997ddc77cbe2eec6707e00994",
+      "bytes": 45,
+      "original_sha256": "4a1fc57be33f9c0c4f8f7f38a19026b02f6a63e997ddc77cbe2eec6707e00994",
+      "original_bytes": 45,
+      "gzip": false
+    },
+    {
+      "source": "build-android-audit/pmem_owner_stack_after1/x64/run.log",
+      "archive": "pmem_owner_stack_after1__x64__run.log.gz",
+      "sha256": "2e743e1dffb280a47d4d2de3d11c6ff52ae0007da56ca990ea204bb4eb11b466",
+      "bytes": 84,
+      "original_sha256": "c883a1262d304a0ca72bd5e271b360a2a308c7297d4557e03ee23df954ae60c7",
+      "original_bytes": 70,
+      "gzip": true
+    },
+    {
+      "source": "build-android-audit/pmem_owner_stack_after1/x64/source-manifest.json",
+      "archive": "pmem_owner_stack_after1__x64__source-manifest.json",
+      "sha256": "6941401ffc1a4b9135723dcda4feaa7ed933f482c33ceba3c2375f41d7d75066",
+      "bytes": 674,
+      "original_sha256": "6941401ffc1a4b9135723dcda4feaa7ed933f482c33ceba3c2375f41d7d75066",
+      "original_bytes": 674,
+      "gzip": false
+    },
+    {
+      "source": "build-android-audit/pmem_owner_stack_after1/x86/build-result.json",
+      "archive": "pmem_owner_stack_after1__x86__build-result.json",
+      "sha256": "2bfbdfab5fb6f1113e80b2b142436c715d69f1c42c500e7d73738844f8835e92",
+      "bytes": 67,
+      "original_sha256": "2bfbdfab5fb6f1113e80b2b142436c715d69f1c42c500e7d73738844f8835e92",
+      "original_bytes": 67,
+      "gzip": false
+    },
+    {
+      "source": "build-android-audit/pmem_owner_stack_after1/x86/command.txt",
+      "archive": "pmem_owner_stack_after1__x86__command.txt",
+      "sha256": "c60fc8173e3a0fed543637c616bdc5f3e3fdea689db82ac938d155c7f25a1346",
+      "bytes": 700,
+      "original_sha256": "c60fc8173e3a0fed543637c616bdc5f3e3fdea689db82ac938d155c7f25a1346",
+      "original_bytes": 700,
+      "gzip": false
+    },
+    {
+      "source": "build-android-audit/pmem_owner_stack_after1/x86/compile.log",
+      "archive": "pmem_owner_stack_after1__x86__compile.log.gz",
+      "sha256": "2eefb48393c3a65f154a11578bce045d3124ea1f391ef104079826339b3425f5",
+      "bytes": 769,
+      "original_sha256": "9311f44b0de93ef878297b4b8e2873c72b7c1d30192d52476ab19775a920e0e0",
+      "original_bytes": 3628,
+      "gzip": true
+    },
+    {
+      "source": "build-android-audit/pmem_owner_stack_after1/x86/run-result.json",
+      "archive": "pmem_owner_stack_after1__x86__run-result.json",
+      "sha256": "397ebe94500dfce4839c7684a9c5414c6059b62cc093a70907b9d9ba5701e1eb",
+      "bytes": 45,
+      "original_sha256": "397ebe94500dfce4839c7684a9c5414c6059b62cc093a70907b9d9ba5701e1eb",
+      "original_bytes": 45,
+      "gzip": false
+    },
+    {
+      "source": "build-android-audit/pmem_owner_stack_after1/x86/run.log",
+      "archive": "pmem_owner_stack_after1__x86__run.log.gz",
+      "sha256": "1016b024eaf3a985da2a4255184afbe1ad6c515e27ed9266857daa97a808c1d3",
+      "bytes": 85,
+      "original_sha256": "295fe5624d07b993b89d623f54e1039b87e366cb984f1b428a43fa88e17cd2a2",
+      "original_bytes": 70,
+      "gzip": true
+    },
+    {
+      "source": "build-android-audit/pmem_owner_stack_after1/x86/source-manifest.json",
+      "archive": "pmem_owner_stack_after1__x86__source-manifest.json",
+      "sha256": "6941401ffc1a4b9135723dcda4feaa7ed933f482c33ceba3c2375f41d7d75066",
+      "bytes": 674,
+      "original_sha256": "6941401ffc1a4b9135723dcda4feaa7ed933f482c33ceba3c2375f41d7d75066",
+      "original_bytes": 674,
+      "gzip": false
+    },
+    {
+      "source": "build-android-audit/pmem_owner_stack_before1/x64/build-result.json",
+      "archive": "pmem_owner_stack_before1__x64__build-result.json",
+      "sha256": "c18753086f90791c6e06de23a7d07cb17bffe62e679dadafe403a2008d107444",
+      "bytes": 67,
+      "original_sha256": "c18753086f90791c6e06de23a7d07cb17bffe62e679dadafe403a2008d107444",
+      "original_bytes": 67,
+      "gzip": false
+    },
+    {
+      "source": "build-android-audit/pmem_owner_stack_before1/x64/command.txt",
+      "archive": "pmem_owner_stack_before1__x64__command.txt",
+      "sha256": "a8468854b4705ea21b5f29d0744b2cb324661bf727a742b6abe8c4c92a101835",
+      "bytes": 718,
+      "original_sha256": "a8468854b4705ea21b5f29d0744b2cb324661bf727a742b6abe8c4c92a101835",
+      "original_bytes": 718,
+      "gzip": false
+    },
+    {
+      "source": "build-android-audit/pmem_owner_stack_before1/x64/compile.log",
+      "archive": "pmem_owner_stack_before1__x64__compile.log.gz",
+      "sha256": "a45092c13bb49a50f72da5278555e70ec434c6af6e9293bc951400ff8e195f8f",
+      "bytes": 769,
+      "original_sha256": "d4ec111daa19fdb70c5977a6296de393027f09af66eff56682d57d2bd48f7857",
+      "original_bytes": 3628,
+      "gzip": true
+    },
+    {
+      "source": "build-android-audit/pmem_owner_stack_before1/x64/run-result.json",
+      "archive": "pmem_owner_stack_before1__x64__run-result.json",
+      "sha256": "2e44833119bc1c5a59daab8c73b76907888f6fb8107956d3952099b7850156db",
+      "bytes": 45,
+      "original_sha256": "2e44833119bc1c5a59daab8c73b76907888f6fb8107956d3952099b7850156db",
+      "original_bytes": 45,
+      "gzip": false
+    },
+    {
+      "source": "build-android-audit/pmem_owner_stack_before1/x64/run.log",
+      "archive": "pmem_owner_stack_before1__x64__run.log.gz",
+      "sha256": "52b80a38884ad6a5096a145fe3ec989bfc85388cf66dcaec42989a006e9b7965",
+      "bytes": 50,
+      "original_sha256": "911fc175c30daf81a26dabdb0f4f637cae9e1d19273a4393d19af92e7a4c4783",
+      "original_bytes": 30,
+      "gzip": true
+    },
+    {
+      "source": "build-android-audit/pmem_owner_stack_before1/x64/source-manifest.json",
+      "archive": "pmem_owner_stack_before1__x64__source-manifest.json",
+      "sha256": "e99cec2e70b233d0e6bd32a59525b8683b5f9e9d09eb9b399899c77cd8db037e",
+      "bytes": 674,
+      "original_sha256": "e99cec2e70b233d0e6bd32a59525b8683b5f9e9d09eb9b399899c77cd8db037e",
+      "original_bytes": 674,
+      "gzip": false
+    },
+    {
+      "source": "build-android-audit/pmem_owner_stack_before1/x86/build-result.json",
+      "archive": "pmem_owner_stack_before1__x86__build-result.json",
+      "sha256": "8b7f304a4aaeb7e9f4d65239b35908eca11bdcdc348a5be6ba21cc3ae6dc34b8",
+      "bytes": 67,
+      "original_sha256": "8b7f304a4aaeb7e9f4d65239b35908eca11bdcdc348a5be6ba21cc3ae6dc34b8",
+      "original_bytes": 67,
+      "gzip": false
+    },
+    {
+      "source": "build-android-audit/pmem_owner_stack_before1/x86/command.txt",
+      "archive": "pmem_owner_stack_before1__x86__command.txt",
+      "sha256": "112b0e8b8f1a0973626bff6b81565718d5818b3f548ff833df47dd7a5b205a5f",
+      "bytes": 702,
+      "original_sha256": "112b0e8b8f1a0973626bff6b81565718d5818b3f548ff833df47dd7a5b205a5f",
+      "original_bytes": 702,
+      "gzip": false
+    },
+    {
+      "source": "build-android-audit/pmem_owner_stack_before1/x86/compile.log",
+      "archive": "pmem_owner_stack_before1__x86__compile.log.gz",
+      "sha256": "a45092c13bb49a50f72da5278555e70ec434c6af6e9293bc951400ff8e195f8f",
+      "bytes": 769,
+      "original_sha256": "d4ec111daa19fdb70c5977a6296de393027f09af66eff56682d57d2bd48f7857",
+      "original_bytes": 3628,
+      "gzip": true
+    },
+    {
+      "source": "build-android-audit/pmem_owner_stack_before1/x86/run-result.json",
+      "archive": "pmem_owner_stack_before1__x86__run-result.json",
+      "sha256": "808202350d5e4f455fe29c41f16caf8aa32473ed611d97016d77c313f290c484",
+      "bytes": 45,
+      "original_sha256": "808202350d5e4f455fe29c41f16caf8aa32473ed611d97016d77c313f290c484",
+      "original_bytes": 45,
+      "gzip": false
+    },
+    {
+      "source": "build-android-audit/pmem_owner_stack_before1/x86/run.log",
+      "archive": "pmem_owner_stack_before1__x86__run.log.gz",
+      "sha256": "1016b024eaf3a985da2a4255184afbe1ad6c515e27ed9266857daa97a808c1d3",
+      "bytes": 85,
+      "original_sha256": "295fe5624d07b993b89d623f54e1039b87e366cb984f1b428a43fa88e17cd2a2",
+      "original_bytes": 70,
+      "gzip": true
+    },
+    {
+      "source": "build-android-audit/pmem_owner_stack_before1/x86/source-manifest.json",
+      "archive": "pmem_owner_stack_before1__x86__source-manifest.json",
+      "sha256": "e99cec2e70b233d0e6bd32a59525b8683b5f9e9d09eb9b399899c77cd8db037e",
+      "bytes": 674,
+      "original_sha256": "e99cec2e70b233d0e6bd32a59525b8683b5f9e9d09eb9b399899c77cd8db037e",
+      "original_bytes": 674,
+      "gzip": false
+    },
+    {
+      "source": "build-android-audit/pmem_startup_verified1.json",
+      "archive": "pmem_startup_verified1.json",
+      "sha256": "af27be59a1593b70a3bc0196379bcfdf81060057d2cf46d015ec88f9e9b33106",
+      "bytes": 919,
+      "original_sha256": "af27be59a1593b70a3bc0196379bcfdf81060057d2cf46d015ec88f9e9b33106",
+      "original_bytes": 919,
+      "gzip": false
+    }
+  ]
+}

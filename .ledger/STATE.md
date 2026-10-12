@@ -1,4 +1,22 @@
-# Latest verified TASK41 - complete genuine MP startup assets
+# Latest verified TASK42 - native PMem owner stack
+
+Native-only PMem previous-record indexing repaired after reproduced x64 failure;
+Win32 branch unchanged. Actual low/high stacks tested independently at3/8/32,
+86 releases/ABI, retained payloads/names/independent cursors and baselines pass.
+Production reader third/32nd owners and33rd atomic capacity refusal pass. FullMP71
+Windowsx86/x64/HONORO0/O3 and8normalTUs/ABI pass; Android named backend unchanged.
+Exact2production deltas vs c297348,10currentbuildmanifests,19930protectedpaths,
+referenceGit and689+82+157priorfrozenrecords verified;91newrecords archived.
+Read FACT129/130/FAIL41, arm64_pmem_owner_stack.md. Root owns all current edits.
+Only quiescent LIFO domain certified; Android main-thread owner/DBworker closure
+still missing. No genuineCom_Init/Com_Frame/gameplay claim. Localcommit allowed,
+no push. Next safe isolated prerequisite: general recursivecriticalsections,
+preserving actual SL/MT/DBHASH lock identity; thenTLS/Dvar/Cmd integrated services.
+Read native_startup_services_plan.md for agent's additional harddependencies.
+User explicitly resumed useful work after context refresh; prior context-only
+handoff is resolved. Standing autonomous goal remains unfinished.
+
+# Historical verified TASK41 - complete genuine MP startup assets
 
 TASK41 finalhost1 x86/x64 +exactHONOR O0/O3final2 pass: reusableproductionlibrary,
 all71roots(3tables+68raw),357earlierstringrefs,1792queries/cycle,4cycles/full150108
