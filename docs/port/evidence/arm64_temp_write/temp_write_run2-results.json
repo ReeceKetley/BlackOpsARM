@@ -1,0 +1,158 @@
+{
+  "schema": "BlackOpsARM.TASK-0028.temp-write-gate.v1",
+  "status": "failed",
+  "recorded_utc": "2026-10-12T06:30:18.585099+00:00",
+  "argv": [
+    "C:\\Users\\recox\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+    "tools/port/run_temp_write_gate.py",
+    "--host-build",
+    "build-android-audit/temp_write_host_pass4",
+    "--android-build",
+    "build-android-audit/temp_write_arm64_pass4",
+    "--output",
+    "build-android-audit/temp_write_run2"
+  ],
+  "runner_sha256": "1485766c27f50029ba6415c7fa8868969ee918af8b62aca8fe030f9af8d0ecaf",
+  "device_serial": "AKWJ9X5116G04618",
+  "platforms": {
+    "windows_x86": {
+      "executable": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\temp_write_host_pass4\\x86\\temp_write.exe",
+      "sha256": "351b343400752545f1e8dff6d4171356a1534865f8de7577347215272c323bca",
+      "runs": [
+        {
+          "schema": "BlackOpsARM.TASK-0028.temp-write.v1",
+          "pointer_bytes": 4,
+          "native64": false,
+          "cycles": 6,
+          "cases": 18,
+          "short_reads": 12,
+          "matrix_cases": 0,
+          "controlled_fixtures": true,
+          "genuine_assets_loaded": false,
+          "payload_children_loaded": false
+        },
+        {
+          "schema": "BlackOpsARM.TASK-0028.temp-write.v1",
+          "pointer_bytes": 4,
+          "native64": false,
+          "cycles": 6,
+          "cases": 18,
+          "short_reads": 12,
+          "matrix_cases": 0,
+          "controlled_fixtures": true,
+          "genuine_assets_loaded": false,
+          "payload_children_loaded": false
+        },
+        {
+          "schema": "BlackOpsARM.TASK-0028.temp-write.v1",
+          "pointer_bytes": 4,
+          "native64": false,
+          "cycles": 6,
+          "cases": 18,
+          "short_reads": 12,
+          "matrix_cases": 0,
+          "controlled_fixtures": true,
+          "genuine_assets_loaded": false,
+          "payload_children_loaded": false
+        }
+      ]
+    },
+    "windows_x64": {
+      "executable": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\temp_write_host_pass4\\x64\\temp_write.exe",
+      "sha256": "7620d2f592256f92fa3552bfb53e40f52ec7cae1e9ffdc9be2f3f8bc1ccb2504",
+      "runs": [
+        {
+          "schema": "BlackOpsARM.TASK-0028.temp-write.v1",
+          "pointer_bytes": 8,
+          "native64": true,
+          "cycles": 6,
+          "cases": 18,
+          "short_reads": 12,
+          "matrix_cases": 78,
+          "controlled_fixtures": true,
+          "genuine_assets_loaded": false,
+          "payload_children_loaded": false
+        },
+        {
+          "schema": "BlackOpsARM.TASK-0028.temp-write.v1",
+          "pointer_bytes": 8,
+          "native64": true,
+          "cycles": 6,
+          "cases": 18,
+          "short_reads": 12,
+          "matrix_cases": 78,
+          "controlled_fixtures": true,
+          "genuine_assets_loaded": false,
+          "payload_children_loaded": false
+        },
+        {
+          "schema": "BlackOpsARM.TASK-0028.temp-write.v1",
+          "pointer_bytes": 8,
+          "native64": true,
+          "cycles": 6,
+          "cases": 18,
+          "short_reads": 12,
+          "matrix_cases": 78,
+          "controlled_fixtures": true,
+          "genuine_assets_loaded": false,
+          "payload_children_loaded": false
+        }
+      ],
+      "invalid_alias_failures": {
+        "--invalid-alias": {
+          "expected_failure": true,
+          "exit": 3,
+          "diagnostic": "Unsupported TEMP alias off=00000081 state=0"
+        }
+      }
+    },
+    "honor_arm64": {
+      "executable": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\temp_write_arm64_pass4\\bo1_temp_write_tests",
+      "sha256": "19d9d62ce6eb3cad383eae0a894b21fa38096f77863ffc5a62802033447f80c6",
+      "runs": [
+        {
+          "schema": "BlackOpsARM.TASK-0028.temp-write.v1",
+          "pointer_bytes": 8,
+          "native64": true,
+          "cycles": 6,
+          "cases": 18,
+          "short_reads": 12,
+          "matrix_cases": 78,
+          "controlled_fixtures": true,
+          "genuine_assets_loaded": false,
+          "payload_children_loaded": false
+        },
+        {
+          "schema": "BlackOpsARM.TASK-0028.temp-write.v1",
+          "pointer_bytes": 8,
+          "native64": true,
+          "cycles": 6,
+          "cases": 18,
+          "short_reads": 12,
+          "matrix_cases": 78,
+          "controlled_fixtures": true,
+          "genuine_assets_loaded": false,
+          "payload_children_loaded": false
+        },
+        {
+          "schema": "BlackOpsARM.TASK-0028.temp-write.v1",
+          "pointer_bytes": 8,
+          "native64": true,
+          "cycles": 6,
+          "cases": 18,
+          "short_reads": 12,
+          "matrix_cases": 78,
+          "controlled_fixtures": true,
+          "genuine_assets_loaded": false,
+          "payload_children_loaded": false
+        }
+      ]
+    }
+  },
+  "scope": "Scratch-owned actual stream cursors/aliases only; no production zone-allocation claim, genuine assets or payload children",
+  "device_metadata": "NDL-L09\r\nHNNDL-Q\r\n36\r\nLinux localhost 5.15.180-android13-8-00018-g9b2308ac0ad6-ab14563692 #1 SMP PREEMPT Sun Nov 30 12:19:45 UTC 2025 aarch64 Toybox\r\n",
+  "device_directory": "/data/local/tmp/blackopsarm-temp-write-9bf8d220fda84fd2b7ab803e2d084652",
+  "all_tests_completed": false,
+  "error": "windows_x64: required invalid-TEMP-alias diagnostic missing",
+  "traceback": "Traceback (most recent call last):\n  File \"D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\tools\\port\\run_temp_write_gate.py\", line 109, in main\n    raise RuntimeError(target+': required invalid-TEMP-alias diagnostic missing')\nRuntimeError: windows_x64: required invalid-TEMP-alias diagnostic missing\n"
+}

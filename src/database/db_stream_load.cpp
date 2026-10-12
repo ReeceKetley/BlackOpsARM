@@ -5,6 +5,10 @@
 #include <string.h>
 #include <cstdint>
 #include <cstdio>
+#if BO1_NATIVE_64BIT
+#include <universal/com_errors.h>
+void __cdecl Com_Error(errorParm_t code, const char *format, ...);
+#endif
 #if defined(BO1_RAW_STRING_GATE)
 void DB_LoadXFileData(unsigned __int8 *, int);
 int DB_LoadXFileDataNullTerminated(unsigned __int8 *);
@@ -49,6 +53,11 @@ void __cdecl Load_Stream(bool atStreamStart, unsigned __int8 *ptr, int size)
     }
     if (atStreamStart && size)
     {
+#if BO1_NATIVE_64BIT
+        DB_StreamPrepareWrite();
+        try
+        {
+#endif
         if (g_streamPosIndex - 1 < 3)
         {
             if (g_streamPosIndex == 1)
@@ -76,6 +85,14 @@ void __cdecl Load_Stream(bool atStreamStart, unsigned __int8 *ptr, int size)
         {
             DB_LoadXFileData(ptr, size);
         }
+#if BO1_NATIVE_64BIT
+        }
+        catch (...)
+        {
+            DB_StreamCancelWrite(true); // Direct reads may have changed owned bytes.
+            throw;
+        }
+#endif
         DB_IncStreamPos(size);
     }
 }
@@ -110,6 +127,18 @@ void __cdecl DB_ConvertOffsetToAlias(void *field)
     {
         const unsigned int blockIndex = (offset - 1) >> 29;
         const unsigned int within = (offset - 1) & 0x1FFFFFFFu;
+        if (blockIndex == 0)
+        {
+            uintptr_t value{};
+            const auto result = DB_StreamResolveAliasValue(blockIndex, within, &value);
+            if (result != DB_StreamAliasResult::Active && result != DB_StreamAliasResult::Retained)
+            {
+                Com_Error(ERR_DROP, "Unsupported TEMP alias off=%08X state=%u", offset, static_cast<unsigned>(result));
+                return;
+            }
+            *data = value; // Retained VALUE is not an address mapping to old storage.
+            return;
+        }
         unsigned __int8 *mapped = reinterpret_cast<unsigned __int8 *>(DB_StreamAliasSlotLookup(blockIndex, within));
         if (!mapped)
             mapped = DB_StreamExactLookup(blockIndex, within);
@@ -155,6 +184,11 @@ void __cdecl DB_ConvertOffsetToPointer(void *field)
         const unsigned int blockIndex = (offset - 1) >> 29;
         const unsigned int within = (offset - 1) & 0x1FFFFFFFu;
         unsigned __int8 *mapped = DB_StreamMapLookup(blockIndex, within);
+        if (blockIndex == 0 && !mapped)
+        {
+            Com_Error(ERR_DROP, "Unsupported TEMP object offset=%08X", offset);
+            return;
+        }
         *data = reinterpret_cast<uintptr_t>(mapped);
     }
 #else
@@ -167,7 +201,20 @@ void __cdecl Load_XStringCustom(const char **str)
 {
     int numBytesLoaded; // [esp+4h] [ebp-8h]
 
+#if BO1_NATIVE_64BIT
+    DB_StreamPrepareWrite();
+    try
+    {
+#endif
     numBytesLoaded = DB_LoadXFileDataNullTerminated((unsigned __int8 *)*str);
+#if BO1_NATIVE_64BIT
+    }
+    catch (...)
+    {
+        DB_StreamCancelWrite(true);
+        throw;
+    }
+#endif
     DB_IncStreamPos(numBytesLoaded);
 }
 

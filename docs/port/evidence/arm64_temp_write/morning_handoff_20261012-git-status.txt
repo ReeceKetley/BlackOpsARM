@@ -1,0 +1,20 @@
+M .ledger/STATE.md
+ M .ledger/ledger.jsonl
+ M src/database/db_expand.cpp
+ M src/database/db_registry.h
+ M src/database/db_stream.cpp
+ M src/database/db_stream.h
+ M src/database/db_stream_load.cpp
+ M tools/port/rawfile_header_oracle.py
+ M tools/port/tests/stream_init_tests.cpp
+?? src/database/db_rawfile_types.h
+?? src/platform/fastfile_rawfile_header.cpp
+?? src/platform/fastfile_rawfile_header.h
+?? tools/port/build_rawfile_header_host.ps1
+?? tools/port/build_rawfile_header_optimized_arm64.ps1
+?? tools/port/build_temp_write_arm64.ps1
+?? tools/port/build_temp_write_host.ps1
+?? tools/port/run_rawfile_header_gate.py
+?? tools/port/run_temp_write_gate.py
+?? tools/port/tests/temp_write_tests.cpp
+?? tools/port/verify_temp_write_source.py

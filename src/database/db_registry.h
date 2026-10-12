@@ -23,12 +23,7 @@ enum DBCloneMethod : __int32
     DB_CLONE_SWAP         = 0x2,
 };
 
-struct RawFile // sizeof=0xC
-{                                       // XREF: XAssetPoolEntry<RawFile>/r
-    const char *name;
-    int len;
-    const char *buffer;
-};
+#include "db_rawfile_types.h"
 
 struct XZoneInfoInternal // sizeof=0x44
 {                                       // XREF: .data:g_zoneInfo/r

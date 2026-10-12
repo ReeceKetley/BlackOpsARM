@@ -488,3 +488,5 @@ x64_diag.log
 !/docs/port/evidence/arm64_stringtable_owner/*.log
 
 !/docs/port/evidence/arm64_temp_cursor/*.log
+
+!/docs/port/evidence/arm64_temp_write/*.log

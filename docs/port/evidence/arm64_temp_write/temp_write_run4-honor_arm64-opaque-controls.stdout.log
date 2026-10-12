@@ -1,0 +1,1 @@
+{"schema":"BlackOpsARM.TASK-0028.opaque-controls.v1","pointer_bytes":8,"opaque_retained_tests":6,"latest_tombstone_tests":1,"c_string_tests":2,"cleanup_scope":"controlled_C++_throw_adapter_only","production_longjmp_recovery_certified":false}

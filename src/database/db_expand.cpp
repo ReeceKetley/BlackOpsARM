@@ -8,6 +8,9 @@
 // Normal engine builds retain the complete expander and existing includes.
 #if defined(BO1_ASSETLIST_GATE)
 #include "db_assetlist_types.h"
+#if defined(BO1_RAWFILE_HEADER_GATE)
+#include "db_rawfile_types.h"
+#endif
 #if defined(BO1_STRINGTABLE_HEADER_GATE)
 #include <universal/com_stringtable.h>
 #endif
@@ -35,6 +38,7 @@ void __cdecl DB_LoadXFileData(unsigned __int8 *pos, int size);
 #include <cstdlib>
 #include <cstdio>
 #include <vector>
+#include <stdexcept>
 
 extern int g_dbTopAssetType;
 
@@ -89,8 +93,15 @@ struct GfxImage_32
     uint32_t name;
     uint32_t hash;
 };
+struct RawFile_32
+{
+    uint32_t name;
+    int len;
+    uint32_t buffer;
+};
 #pragma pack(pop)
 
+static_assert(sizeof(RawFile_32) == 12, "Win32 RawFile");
 static_assert(sizeof(XAssetList_32) == 16, "Win32 XAssetList");
 static_assert(sizeof(XAsset_32) == 8, "Win32 XAsset");
 static_assert(sizeof(StringTable_32) == 20, "Win32 StringTable");
@@ -125,20 +136,39 @@ static void DB_Expand_ReadFile(void *dst, int fileBytes)
 {
     if (fileBytes > 0)
     {
+        // Audited loaders stage one complete disk image before native stores.
+        // Reserve metadata and snapshot ALL live TEMP slots before those stores;
+        // actual native extent comes from Commit, without an expansion guess.
+        try
+        {
+            if (g_expandReadAccum != 0)
+                throw std::logic_error("Interleaved multi-read expansion is unsupported");
+            DB_StreamPrepareWrite(static_cast<size_t>(fileBytes) / sizeof(uint32_t));
+            // Block 1 is zero-filled; delayed-stream support remains unchanged.
+            if (g_streamPosIndex == 1)
+                memset(dst, 0, static_cast<size_t>(fileBytes));
+            else
+            {
+                if (g_streamPosIndex - 1 < 3)
+                    Bo1_Diag("Expand ReadFile at delayed stream index %u (%d bytes) - not supported", g_streamPosIndex, fileBytes);
+                DB_LoadXFileData(static_cast<unsigned __int8 *>(dst), fileBytes);
+            }
+        }
+        catch (...)
+        {
+            // Scratch failure has not overwritten owned bytes in the audited
+            // single-read loaders. Do not leave stale disk provenance on retry.
+            DB_StreamCancelWrite(g_expandReadAccum != 0);
+            g_expandReadAccum = 0;
+            g_expandDiskBase = nullptr;
+            g_expandDiskBytes = 0;
+            g_expandDiskW = 0;
+            throw;
+        }
         g_expandDiskBase = static_cast<const unsigned __int8 *>(dst);
         g_expandDiskBytes = fileBytes;
-        g_expandDiskW = DB_StreamWin32Pos(g_streamPosIndex) + static_cast<unsigned int>(g_expandReadAccum);
-        // Same stream-index semantics as Load_Stream(atStreamStart=1): block 1 (runtime) is zero-filled and never read
-        // from the file; blocks 2/3 are delayed loads (DB_LoadXFileData runs later, in Load_DelayStream).
-        if (g_streamPosIndex == 1)
-            memset(dst, 0, static_cast<size_t>(fileBytes));
-        else
-        {
-            if (g_streamPosIndex - 1 < 3)
-                Bo1_Diag("Expand ReadFile at delayed stream index %u (%d bytes) - not supported", g_streamPosIndex, fileBytes);
-            DB_LoadXFileData(static_cast<unsigned __int8 *>(dst), fileBytes);
-        }
-        g_expandReadAccum += fileBytes;
+        g_expandDiskW = DB_StreamWin32Pos(g_streamPosIndex);
+        g_expandReadAccum = fileBytes;
     }
 }
 
@@ -171,6 +201,7 @@ void DB_ExpandLoad_XAssetList(XAssetList *dst)
     XAssetList_32 disk{};
     DB_Expand_ReadFile(&disk, sizeof(disk));
     g_expandReadAccum = 0; // side buffer, not an XBlock stream commit
+    DB_StreamCancelWrite(); // External envelope stores must not arm a TEMP commit.
     memset(dst, 0, sizeof(*dst));
     dst->stringList.count = disk.stringList_count;
     DB_ExpandPtrStore(reinterpret_cast<uintptr_t *>(&dst->stringList.strings), disk.stringList_strings);
@@ -2677,12 +2708,7 @@ struct LocalizeEntry_32
     uint32_t value;
     uint32_t name;
 };
-struct RawFile_32
-{
-    uint32_t name;
-    int len;
-    uint32_t buffer;
-};
+
 #pragma pack(pop)
 
 static_assert(sizeof(ComPrimaryLight_32) == 220, "Win32 ComPrimaryLight");
@@ -2700,7 +2726,7 @@ static_assert(sizeof(GlassDef_32) == 60, "Win32 GlassDef");
 static_assert(sizeof(GfxLightDef_32) == 16, "Win32 GfxLightDef");
 static_assert(sizeof(Font_32) == 24, "Win32 Font");
 static_assert(sizeof(LocalizeEntry_32) == 8, "Win32 LocalizeEntry");
-static_assert(sizeof(RawFile_32) == 12, "Win32 RawFile");
+
 
 static void DB_Expand_PathData(PathData *dst, const PathData_32 &s)
 {
@@ -2994,6 +3020,8 @@ void DB_ExpandLoad_LocalizeEntry(LocalizeEntry *dst)
     DB_Expand_Commit(static_cast<int>(sizeof(LocalizeEntry)));
 }
 
+#endif // normal engine preceding RawFile body
+#if !defined(BO1_ASSETLIST_GATE) || defined(BO1_RAWFILE_HEADER_GATE)
 void DB_ExpandLoad_RawFile(RawFile *dst)
 {
     iassert(dst == reinterpret_cast<RawFile *>(DB_GetStreamPos()));
@@ -3005,6 +3033,9 @@ void DB_ExpandLoad_RawFile(RawFile *dst)
     DB_ExpandPtrStore(reinterpret_cast<uintptr_t *>(&dst->buffer), disk.buffer);
     DB_Expand_Commit(static_cast<int>(sizeof(RawFile)));
 }
+#endif // normal engine or bounded RawFile numeric header
+#if !defined(BO1_ASSETLIST_GATE)
+
 
 
 

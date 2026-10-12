@@ -16,6 +16,7 @@ unsigned long long DB_XFileBytesLoaded();
 #include <vector>
 #include <algorithm>
 #include <unordered_map>
+#include <stdexcept>
 #include <cstdio>
 #endif
 
@@ -201,6 +202,9 @@ static int g_totalDriftDelta[7];
 
 static void DB_StreamNoteDrift(unsigned int blockIndex, unsigned int win32Off, int drift)
 {
+    // TEMP uses exact owned mappings only; rewind makes drift extrapolation unsafe.
+    if (blockIndex == 0)
+        return;
     std::vector<DriftMark> &marks = g_driftMarks[blockIndex];
     const int prev = marks.empty() ? 0 : marks.back().drift;
     if (!marks.empty() && marks.back().win32Off == win32Off)
@@ -237,11 +241,17 @@ struct StreamSeg
     unsigned int nElem;  // native element stride
 };
 std::vector<StreamSeg> g_streamSegs[7];
+static void DB_StreamCommitTempSegment(const StreamSeg &write);
 int g_segFallbackLogged;
 
 static void DB_StreamNoteSeg(unsigned int blockIndex, unsigned int w, unsigned int wSize, unsigned int n, unsigned int nSize,
                              unsigned int wElem, unsigned int nElem)
 {
+    if (blockIndex == 0)
+    {
+        DB_StreamCommitTempSegment(StreamSeg{w, wSize, n, nSize, wElem, nElem});
+        return;
+    }
     std::vector<StreamSeg> &segs = g_streamSegs[blockIndex];
     if (!segs.empty())
     {
@@ -273,13 +283,16 @@ struct AliasSlot
 {
     unsigned int w;
     uintptr_t *slot;
+    uint64_t serial{};
+    uintptr_t value{};
+    DB_StreamAliasResult state{DB_StreamAliasResult::Active};
 };
 std::vector<AliasSlot> g_aliasSlots[7];
 size_t g_aliasSorted[7];
 
 static bool AliasSlotLess(const AliasSlot &a, const AliasSlot &b)
 {
-    return a.w < b.w;
+    return a.w < b.w || (a.w == b.w && a.serial < b.serial);
 }
 
 static void DB_AliasMergeTail(unsigned int blockIndex)
@@ -288,19 +301,240 @@ static void DB_AliasMergeTail(unsigned int blockIndex)
     size_t &sorted = g_aliasSorted[blockIndex];
     if (sorted == v.size())
         return;
-    // Equal positions must retain registration order: the most recent slot wins.
-    // inplace_merge also keeps old prefix entries before equal new tail entries.
-    std::stable_sort(v.begin() + sorted, v.end(), AliasSlotLess);
+    // Serial tie-break preserves latest registration without allocating sort storage.
+    std::sort(v.begin() + sorted, v.end(), AliasSlotLess);
     std::inplace_merge(v.begin(), v.begin() + sorted, v.end(), AliasSlotLess);
     sorted = v.size();
 }
+
+// A pending TEMP write owns metadata only. Payload bytes remain owned by XBlock.
+// Snapshot every old live typed slot before stores; its final overwrite extent is
+// supplied by the ordinary stream commit, never inferred from disk byte ratios.
+struct TempWrite
+{
+    bool active{};
+    size_t oldAliases{};
+    std::vector<StreamSeg> segments;
+    std::vector<AliasSlot> aliases;
+};
+TempWrite g_tempWrite;
+uint64_t g_aliasSequence;
+
+static bool DB_TempOwnedSlot(const uintptr_t *slot)
+{
+    if (!g_streamBlocks || !g_streamBlocks[0].data || !slot)
+        return false;
+    const uintptr_t base = reinterpret_cast<uintptr_t>(g_streamBlocks[0].data);
+    const uintptr_t address = reinterpret_cast<uintptr_t>(slot);
+    return address >= base && address - base <= g_streamBlocks[0].size &&
+        sizeof(uintptr_t) <= g_streamBlocks[0].size - (address - base);
+}
+
+static bool DB_TempOverlap(uint64_t a, uint64_t bytes, uint64_t b, uint64_t otherBytes)
+{
+    return bytes && otherBytes && a < b + otherBytes && b < a + bytes;
+}
+
+static void DB_StreamCommitTempSegment(const StreamSeg &write)
+{
+    // Bare IncStreamPos also reserves arithmetic-only storage. Actual readers and
+    // expanders prepare before any owned bytes are changed.
+    if (!g_tempWrite.active)
+        DB_StreamPrepareWrite();
+    auto &out = g_tempWrite.segments;
+    out.clear();
+    for (const StreamSeg &old : g_streamSegs[0])
+    {
+        if (!DB_TempOverlap(old.w, old.wSize, write.w, write.wSize) &&
+            !DB_TempOverlap(old.n, old.nSize, write.n, write.nSize))
+        {
+            out.push_back(old);
+            continue;
+        }
+        // Byte ranges and complete array elements retain a precise affine map.
+        // A partially overwritten expanded opaque object has no surviving start.
+        const bool bytes = old.wSize == old.nSize;
+        if (!bytes && (!old.wElem || !old.nElem))
+            continue;
+        const uint64_t ws = bytes ? 1 : old.wElem, ns = bytes ? 1 : old.nElem;
+        if (old.wSize % ws || old.nSize % ns || old.wSize / ws != old.nSize / ns)
+            continue;
+        const uint64_t count = old.wSize / ws;
+        struct Range { uint64_t begin, end; } removed[2]{};
+        auto cut = [&](uint64_t start, uint64_t extent, uint64_t stride,
+                       uint64_t begin, uint64_t size) -> Range
+        {
+            if (!DB_TempOverlap(start, extent, begin, size))
+                return {count, count};
+            const uint64_t first = (std::max)(start, begin) - start;
+            const uint64_t last = (std::min)(start + extent, begin + size) - start;
+            return {first / stride, (last + stride - 1) / stride};
+        };
+        removed[0] = cut(old.w, old.wSize, ws, write.w, write.wSize);
+        removed[1] = cut(old.n, old.nSize, ns, write.n, write.nSize);
+        if (removed[1].begin < removed[0].begin)
+            std::swap(removed[0], removed[1]);
+        uint64_t from = 0;
+        auto keep = [&](uint64_t first, uint64_t end)
+        {
+            if (first >= end)
+                return;
+            out.push_back(StreamSeg{
+                static_cast<unsigned>(old.w + first * ws), static_cast<unsigned>((end - first) * ws),
+                static_cast<unsigned>(old.n + first * ns), static_cast<unsigned>((end - first) * ns),
+                old.wElem, old.nElem});
+        };
+        for (const Range &range : removed)
+        {
+            keep(from, range.begin);
+            from = (std::max)(from, range.end);
+        }
+        keep(from, count);
+    }
+    if (write.wSize)
+        out.push_back(write);
+    std::sort(out.begin(), out.end(), [](const StreamSeg &a, const StreamSeg &b) { return a.w < b.w; });
+    for (size_t i = 0; i < g_tempWrite.oldAliases; ++i)
+    {
+        AliasSlot &old = g_tempWrite.aliases[i];
+        if (old.state == DB_StreamAliasResult::Invalid)
+            continue;
+        // Side-envelope registrations describe external storage, not TEMP bytes.
+        if (old.state == DB_StreamAliasResult::Active && !DB_TempOwnedSlot(old.slot))
+            continue;
+        if (DB_TempOverlap(old.w, 4, write.w, write.wSize))
+        {
+            old.state = DB_StreamAliasResult::Invalid;
+            old.slot = nullptr;
+        }
+        else if (old.state == DB_StreamAliasResult::Active &&
+            DB_TempOverlap(reinterpret_cast<uintptr_t>(old.slot) -
+                           reinterpret_cast<uintptr_t>(g_streamBlocks[0].data), sizeof(uintptr_t),
+                           write.n, write.nSize))
+        {
+            old.state = DB_StreamAliasResult::Retained;
+            old.slot = nullptr; // saved current value is authoritative, no stale slot address.
+        }
+    }
+    // A new typed registration must describe one whole disk word and one whole
+    // native slot inside this actual commit. An incomplete new slot must not
+    // mask an old retained value with unsafe live-slot authority.
+    for (size_t i = g_tempWrite.oldAliases; i < g_tempWrite.aliases.size(); ++i)
+    {
+        AliasSlot &added = g_tempWrite.aliases[i];
+        const uint64_t nativeOffset = DB_TempOwnedSlot(added.slot) ?
+            reinterpret_cast<uintptr_t>(added.slot) - reinterpret_cast<uintptr_t>(g_streamBlocks[0].data) : UINT64_MAX;
+        const bool wholeDisk = added.w >= write.w && uint64_t(added.w) - write.w <= write.wSize &&
+            4 <= uint64_t(write.wSize) - (uint64_t(added.w) - write.w);
+        const bool wholeNative = nativeOffset >= write.n && nativeOffset - write.n <= write.nSize &&
+            sizeof(uintptr_t) <= uint64_t(write.nSize) - (nativeOffset - write.n);
+        if (!wholeDisk || !wholeNative)
+        {
+            added.state = DB_StreamAliasResult::Invalid;
+            added.slot = nullptr;
+        }
+    }
+    auto &aliases = g_tempWrite.aliases;
+    std::sort(aliases.begin(), aliases.end(), AliasSlotLess);
+    size_t used = 0;
+    for (size_t i = 0; i < aliases.size();)
+    {
+        size_t end = i + 1;
+        while (end < aliases.size() && aliases[end].w == aliases[i].w)
+            ++end;
+        aliases[used++] = aliases[end - 1]; // includes invalid tombstones; older slots never revive.
+        i = end;
+    }
+    aliases.resize(used);
+    g_streamSegs[0].swap(out);
+    g_aliasSlots[0].swap(aliases);
+    g_aliasSorted[0] = g_aliasSlots[0].size();
+    g_tempWrite.active = false;
+}
+} // namespace
+
+void DB_StreamPrepareWrite(size_t maxNewAliasSlots)
+{
+    if (g_streamPosIndex != 0)
+        return;
+    if (g_tempWrite.active)
+        throw std::logic_error("Nested TEMP write preparation");
+    const size_t count = g_streamSegs[0].size(), aliases = g_aliasSlots[0].size();
+    if (count > (g_tempWrite.segments.max_size() - 1) / 3 ||
+        maxNewAliasSlots > g_tempWrite.aliases.max_size() - aliases ||
+        maxNewAliasSlots > UINT64_MAX - g_aliasSequence)
+        throw std::length_error("TEMP write metadata size overflow");
+    g_tempWrite.segments.reserve(3 * count + 1);
+    g_tempWrite.aliases.reserve(aliases + maxNewAliasSlots);
+    g_tempWrite.aliases.assign(g_aliasSlots[0].begin(), g_aliasSlots[0].end());
+    for (AliasSlot &old : g_tempWrite.aliases)
+        if (old.state == DB_StreamAliasResult::Active && DB_TempOwnedSlot(old.slot))
+            std::memcpy(&old.value, old.slot, sizeof(old.value));
+    g_tempWrite.oldAliases = aliases;
+    g_tempWrite.active = true;
+}
+
+void DB_StreamCancelWrite(bool mayHaveTouched)
+{
+    if (g_streamPosIndex != 0 || !g_tempWrite.active)
+        return;
+    if (mayHaveTouched)
+    {
+        // A direct reader may have written a partial payload. Metadata rollback
+        // cannot restore those bytes: fail closed until a validated replacement or owner reset.
+        g_streamSegs[0].clear();
+        for (AliasSlot &old : g_aliasSlots[0])
+            if (old.state != DB_StreamAliasResult::Active || DB_TempOwnedSlot(old.slot))
+            {
+                old.state = DB_StreamAliasResult::Invalid;
+                old.slot = nullptr;
+            }
+    }
+    g_tempWrite.active = false;
+    g_tempWrite.segments.clear();
+    g_tempWrite.aliases.clear();
+    g_expandWin32Size = -1;
+    g_expandElemW = g_expandElemN = 0;
+}
+
+DB_StreamAliasResult DB_StreamResolveAliasValue(unsigned block, unsigned within, uintptr_t *value)
+{
+    if (block != 0 || !value)
+        return DB_StreamAliasResult::Missing;
+    DB_AliasMergeTail(block);
+    const auto &aliases = g_aliasSlots[block];
+    auto it = std::lower_bound(aliases.begin(), aliases.end(), AliasSlot{within, nullptr}, AliasSlotLess);
+    if (it == aliases.end() || it->w != within)
+        return DB_StreamAliasResult::Missing;
+    while (it + 1 != aliases.end() && (it + 1)->w == within)
+        ++it;
+    if (it->state == DB_StreamAliasResult::Retained)
+    {
+        *value = it->value;
+        return it->state;
+    }
+    if (it->state != DB_StreamAliasResult::Active)
+        return it->state;
+    if (!DB_TempOwnedSlot(it->slot))
+        return DB_StreamAliasResult::External;
+    std::memcpy(value, it->slot, sizeof(*value));
+    return DB_StreamAliasResult::Active;
 }
 
 void DB_StreamRegisterAliasSlot(unsigned int blockIndex, unsigned int win32Pos, uintptr_t *slot)
 {
     if (blockIndex >= 7)
         return;
-    g_aliasSlots[blockIndex].push_back(AliasSlot{win32Pos, slot});
+    if (g_aliasSequence == UINT64_MAX)
+        throw std::overflow_error("Alias registration sequence overflow");
+    if (blockIndex == 0 && g_tempWrite.active)
+    {
+        if (g_tempWrite.aliases.size() == g_tempWrite.aliases.capacity())
+            throw std::length_error("TEMP alias registrations exceed prepared disk-word budget");
+        g_tempWrite.aliases.push_back(AliasSlot{win32Pos, slot, ++g_aliasSequence});
+    }
+    else
+        g_aliasSlots[blockIndex].push_back(AliasSlot{win32Pos, slot, ++g_aliasSequence});
 }
 
 uintptr_t *DB_StreamAliasSlotLookup(unsigned int blockIndex, unsigned int win32Pos)
@@ -387,6 +621,8 @@ unsigned __int8 *DB_StreamMapLookup(unsigned int blockIndex, unsigned int win32W
 
     if (unsigned __int8 *exact = DB_StreamExactLookup(blockIndex, win32Within))
         return exact;
+    if (blockIndex == 0)
+        return nullptr; // No extrapolation into overwritten TEMP storage or object interiors.
     if (g_segFallbackLogged < 64)
     {
         ++g_segFallbackLogged;
@@ -440,6 +676,10 @@ void __cdecl DB_InitStreams(XBlock *blocks)
 #endif
     }
 #if BO1_NATIVE_64BIT
+    g_tempWrite.active = false;
+    g_tempWrite.segments.clear();
+    g_tempWrite.aliases.clear();
+    g_aliasSequence = 0;
     g_expandWin32Size = -1;
     g_expandElemW = g_expandElemN = 0; // No pending stride may cross a zone lifetime.
     for (int bi = 0; bi < 7; ++bi)

@@ -1,5 +1,13 @@
 ## Current Milestone
 
+TASK28 TEMP write/value maps and genuine next codeRawFileheader verified.
+TASK29 actual RawFile name/presentbuffer bytes beforeDBAdd next. Core front end,
+interning and firsttablequeries/poolownership verified; actualgameboot/graphics
+remainfuture. Continuefullnativeengine/assets/startup goalDEC29, localverified
+commitsDEC26 authorized; no push. Read STATE/arm64_temp_write.md.
+
+## Historical milestone
+
 Cursor/alias prerequisite verified; TEMP successful-write mapping is next TASK28,
 before genuine codeRawFile numericheader atTEMP0. No asset skipping or fullregistry
 claim. Corefront end and interning already complete. Continue DEC29; localverified

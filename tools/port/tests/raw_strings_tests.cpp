@@ -152,7 +152,14 @@ static void decode(const char*path,const char*out){Bo1InflatedFastFile f;require
 #if defined(BO1_STRINGTABLE_HEADER_GATE)
     const auto header=headerPlan(plan,directory,f.decoded.data(),f.decoded.size(),f.decoded.size());require(header.present,"genuine header exists");
 #if defined(BO1_STRINGTABLE_CELLS_GATE)
-    const auto payload=payloadPlan(plan,directory,header,f.decoded.data(),f.decoded.size());plan.end=payload.end;
+    const auto payload=payloadPlan(plan,directory,header,f.decoded.data(),f.decoded.size());
+#if defined(BO1_RAWFILE_HEADER_GATE)
+    // The front-end end still names the directory source here. Compute next
+    // record provenance before replacing it with the execution prefix endpoint.
+    plan.end=rawfile_fixture::plan(plan,directory,payload,f.decoded.data(),f.decoded.size(),f.decoded.size()).end;
+#else
+    plan.end=payload.end;
+#endif
 #else
     plan.end+=20;
 #endif
@@ -257,7 +264,14 @@ int main(int argc,char**argv){require(argc>=2,"decode/gate mode");if(!std::strcm
 #if defined(BO1_STRINGTABLE_HEADER_GATE)
     auto ah=headerPlan(ap,ad,a.data(),a.size(),std::strtoull(argv[3],nullptr,10)),bh=headerPlan(bp,bd,b.data(),b.size(),std::strtoull(argv[5],nullptr,10));
 #if defined(BO1_STRINGTABLE_CELLS_GATE)
-    auto ac=payloadPlan(ap,ad,ah,a.data(),a.size()),bc=payloadPlan(bp,bd,bh,b.data(),b.size());require(ac.end==a.size()&&bc.end==b.size(),"prefix stops at selected cell/strings boundary before index");
+    auto ac=payloadPlan(ap,ad,ah,a.data(),a.size()),bc=payloadPlan(bp,bd,bh,b.data(),b.size());
+#if defined(BO1_RAWFILE_HEADER_GATE)
+    auto ar=rawfile_fixture::plan(ap,ad,ac,a.data(),a.size(),std::strtoull(argv[3],nullptr,10));
+    auto br=rawfile_fixture::plan(bp,bd,bc,b.data(),b.size(),std::strtoull(argv[5],nullptr,10));
+    require(ar.end==a.size()&&br.end==b.size(),"prefix stops at the genuine next numeric header or deferred next type");
+#else
+    require(ac.end==a.size()&&bc.end==b.size(),"prefix stops at selected cell/strings boundary before index");
+#endif
 #else
     require(ap.end+ad.diskBytes+20==a.size()&&bp.end+bd.diskBytes+20==b.size(),"prefix stops exactly after first numeric header");
 #endif
@@ -287,6 +301,9 @@ int main(int argc,char**argv){require(argc>=2,"decode/gate mode");if(!std::strcm
 #endif
 #if defined(BO1_STRINGTABLE_OWNER_GATE)
     owner_fixture::fixtures();
+#if defined(BO1_RAWFILE_HEADER_GATE)
+    tested+=rawfile_fixture::fixtures();
+#endif
 #endif
 #endif
 #endif
@@ -310,7 +327,12 @@ int main(int argc,char**argv){require(argc>=2,"decode/gate mode");if(!std::strcm
 #if defined(BO1_STRINGTABLE_HEADER_GATE)
         const auto&header=asset?bh:ah;
 #if defined(BO1_STRINGTABLE_CELLS_GATE)
-        const auto&payload=asset?bc:ac;DB_PushStreamPos(4);executeHeader(header,r,blocks,&envelope,round==0&&type==0,&payload);DB_PopStreamPos();require(g_streamPosIndex==0&&!g_streamPosStackIndex&&DB_GetStreamPos()==blocks[0].data,"actual caller/header/child scopes balanced before detach");
+        const auto&payload=asset?bc:ac;DB_PushStreamPos(4);
+        executeHeader(header,r,blocks,&envelope,round==0&&type==0,&payload
+#if defined(BO1_RAWFILE_HEADER_GATE)
+            ,asset?&br:&ar
+#endif
+        );DB_PopStreamPos();require(g_streamPosIndex==0&&!g_streamPosStackIndex&&DB_GetStreamPos()==blocks[0].data,"actual caller/header/child scopes balanced before detach");
 #else
         executeHeader(header,r,blocks,&envelope,round==0&&type==0);
 #endif
@@ -371,7 +393,9 @@ int main(int argc,char**argv){require(argc>=2,"decode/gate mode");if(!std::strcm
 #endif
     }
     const char*schema=
-#if defined(BO1_FRONTEND_INTERN_GATE)
+#if defined(BO1_RAWFILE_HEADER_GATE)
+        "BlackOpsARM.TASK-0028.rawfile-header.v1";
+#elif defined(BO1_FRONTEND_INTERN_GATE)
         "BlackOpsARM.TASK-0017.intern-strings.v1";
 #elif defined(BO1_STRINGTABLE_LOOKUP_GATE)
         "BlackOpsARM.TASK-0023.stringtable-lookup.v1";

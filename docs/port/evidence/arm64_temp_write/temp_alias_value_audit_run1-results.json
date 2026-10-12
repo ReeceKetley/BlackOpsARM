@@ -1,0 +1,181 @@
+{
+  "schema": "BlackOpsARM.TASK-0028.temp-alias-value-readonly-audit.v1",
+  "head": "3f7dc567e7b2d82977d38cfa820bd5591ea6cace",
+  "audit_kind": "source and preserved pinned-original instruction evidence; no build/device/engine runtime tests",
+  "sources": {
+    "src/database/db_stream.cpp": "eb25c13111295c3540d11f937fe143db39ec3195403481389d01c21159dd3ded",
+    "src/database/db_stream.h": "c50df899c14bfcc436c40379167296b9f83057c5fce398e8e2fbd1ccd3b2ad8b",
+    "src/database/db_stream_load.cpp": "c74a716e71b2375eabc204d601e0b44e43c48bdc4cd869ca1e6fb6a0e924ba95",
+    "src/database/db_expand.cpp": "43bda9f92e609a6c04fc860732e3150d7d124440a788cb189f7983cb54d3b66a",
+    "src/database/db_expand.hpp": "c1640cae0b5e7f2f832b615423f77b59843376a5dc4e90d31ff9126234bcdab7",
+    "src/database/db_file_load.cpp": "5e10e90902ab300aff6c7ce1201f28d96e916effe1d2ae380d2e9a7f3b3fa852",
+    "src/database/db_load.cpp": "57428558fba01e0a49316ae5dc96478d0e9ac898a1b843f5ff1575b6ef20aa3a"
+  },
+  "original_alias": {
+    "schema": "BlackOpsARM.TASK-0027.original-alias-instruction-evidence.v1",
+    "exe_sha256": "2ba4a04e81de2b60582da0e4489efde21e6cb07904a223bae633b6ccaebbf759",
+    "va": 5881632,
+    "end_exclusive": 5881666,
+    "bytes": 34,
+    "file_offset": 1684256,
+    "range_sha256": "9106d1e3d7d09fc76d44898cba1f555650728ada56643386237122d8c77ee258",
+    "argv": [
+      "D:/Android/Sdk/ndk/30.0.16248370/toolchains/llvm/prebuilt/windows-x86_64/bin/llvm-objdump.exe",
+      "-d",
+      "--no-show-raw-insn",
+      "--x86-asm-syntax=intel",
+      "--start-address=0x59bf20",
+      "--stop-address=0x59bf42",
+      "D:\\Games\\Call of Duty - Black Ops\\BlackOps.exe"
+    ],
+    "exit": 0,
+    "semantics": "[field]=*(blocks[(offset-1)>>29].data+((offset-1)&0x1fffffff)); no TEMP scope/generation test; block0 is permitted. Actual caller source references this leaf at0x604f83 before any new TEMP overwrite."
+  },
+  "original_evidence": {
+    "build-android-audit\\temp_scope_audit_run1\\results.json": "47c0e28243926982e82d970543d9c16db342397f84eadd57bf8a58a8a58aa230",
+    "build-android-audit\\temp_scope_audit_run1\\original-alias.json": "94e41cdd9ab1dcc298ba899ee37b73b5feafc668dd06a0c94aa22c78710ffaf4"
+  },
+  "typed_reference_scope": {
+    "code_pre_gfx": {
+      "raw_sha256": "565f038d4a5a10912bda5741e80f31805f9c7c76fc18296f2a8591d58f1ee41f",
+      "decoded_sha256": "475463b349e00cee0989a17273c8ef8b2a4588b9556ca9c40ac399d9cf90b5fa",
+      "block0_disk_capacity": 36,
+      "groups": {
+        "directory": {
+          "count": 37,
+          "tag_counts": {
+            "minus1": 37
+          },
+          "encoded_block0_refs": []
+        },
+        "script_table": {
+          "count": 0,
+          "tag_counts": {},
+          "encoded_block0_refs": []
+        },
+        "first_stringtable_cells": {
+          "count": 400,
+          "tag_counts": {
+            "minus1": 398,
+            "encoded_block4": 2
+          },
+          "encoded_block0_refs": []
+        }
+      },
+      "next_directory_record": {
+        "index": 1,
+        "type": 36,
+        "tag": 4294967295
+      }
+    },
+    "zombie_pentagon": {
+      "raw_sha256": "70686402a689d5c575f18d2d76e6cec9f9a95ff70446372960f1b5c7f41d92e0",
+      "decoded_sha256": "67ea43264b91ebb70a5eafbb8bb9d49af016fb8a8a8f5fa035aeeea27ec6899b",
+      "block0_disk_capacity": 2098316,
+      "groups": {
+        "directory": {
+          "count": 1045,
+          "tag_counts": {
+            "minus1": 1045
+          },
+          "encoded_block0_refs": []
+        },
+        "script_table": {
+          "count": 860,
+          "tag_counts": {
+            "null": 1,
+            "minus1": 859
+          },
+          "encoded_block0_refs": []
+        },
+        "first_stringtable_cells": {
+          "count": 1594,
+          "tag_counts": {
+            "minus1": 1545,
+            "encoded_block4": 49
+          },
+          "encoded_block0_refs": []
+        }
+      },
+      "next_directory_record": {
+        "index": 1,
+        "type": 7,
+        "tag": 4294967295
+      }
+    }
+  },
+  "feasibility": "Opaque native-value retention is sufficient for a registered complete4-byte logical pointer word that is logically untouched but whose native pointer slot is physically overwritten. It is not general TEMP object lifetime or arbitrary offset reconstruction.",
+  "confirmed_source_references": {
+    "registration": "src/database/db_expand.cpp:145-152 (one production callsite; raw tag widened before child fixups)",
+    "registration_definition": "src/database/db_stream.cpp:299",
+    "alias_lookup": "src/database/db_stream.cpp:306",
+    "alias_conversion": "src/database/db_stream_load.cpp:91",
+    "address_conversion": "src/database/db_stream_load.cpp:149",
+    "expand_staging_read": "src/database/db_expand.cpp:124",
+    "expand_commit": "src/database/db_expand.cpp:155",
+    "side_envelope": "src/database/db_expand.cpp:169",
+    "stringtable_expand": "src/database/db_expand.cpp:224",
+    "rawfile_expand": "src/database/db_expand.cpp:2997",
+    "direct_stream_read": "src/database/db_stream_load.cpp:25",
+    "null_terminated_write": "src/database/db_file_load.cpp:149",
+    "string_read_commit": "src/database/db_stream_load.cpp:166",
+    "reservation_not_write": "src/database/db_stream.cpp:581",
+    "rawfile_pointer_loader": "src/database/db_load.cpp:8767",
+    "stringtable_pointer_loader": "src/database/db_load.cpp:8933"
+  },
+  "expander_source_scan": {
+    "function_regions": 163,
+    "multiple_staging_reads_per_function": 0,
+    "ordinary_reads_before_native_memset_or_pointerstore": true,
+    "read_without_commit": [
+      "DB_ExpandLoad_XAssetList"
+    ],
+    "staging_destinations": [
+      "&disk",
+      "&name32",
+      "disk",
+      "disk.data()"
+    ],
+    "scan_method": "anchored function signature and brace-depth scan plus selected manual body inspection; staging dst is not native destination"
+  },
+  "minimal_plan": [
+    "Keep original Win32 branch and disk ABI unchanged. Limit first native TEMP policy to typed registered whole-pointer aliases.",
+    "Represent latest coordinate authority as LiveSlot, RetainedValue, or Unsupported/Tombstone, with explicit found-status; valid null is found value0.",
+    "At successful staging-read/pre-native-store boundary capture current native words from checked live TEMP slots using memcpy, not initially registered raw tags. Previously retained words remain retained without rereading stale slots.",
+    "Skip side envelope and zero-byte/nonwrite paths; snapshot all eligible block0 live records if native footprint is not yet known. Include separate direct Load_Stream and Load_XStringCustom write transactions or explicitly reject unsupported TEMP writers before stores.",
+    "At Commit compare old logical4-byte intervals and native sizeof(uintptr_t) intervals against actual successful write. Logical overlap invalidates old records; full logical untouched/native overlap retains captured value; both untouched stays live. New generation registrations supersede old equal-coordinate records.",
+    "Resolution of retained word returns stored opaque value directly without pretending metadata is an XBlock slot. No recursive tag conversion, pointer-high-bit guess, low-address assumption, or null-as-missing fallback.",
+    "Unsupported historical coordinates must stop Alias/Exact/Drift fallback. TEMP address conversion and unregistered/interior alias coordinates remain a separate checked boundary.",
+    "Pop only restores cursors; it does not expire records. Init/reset/detach clears pending capture/value/tombstone lifetime and ownership.",
+    "Reserve all capture/publication capacity before native stores; no postwrite metadata allocation failure is certified. Abort/shortread handling must discard the zone or implement real partial-write validity, never resume with stale live slots."
+  ],
+  "risks": [
+    "Original alias copies current logical word, which may be null, unresolved sentinel/offset, interned ID, or pointer. Preserve opaque native bits; numeric classification is not reliable.",
+    "Partial logical overwrite produces a mixed Win32 word. Typed value policy cannot reconstruct that generally; report explicit unsupported until proved reconstruction exists.",
+    "Retaining pointer value does not retain pointed-to TEMP object bytes; persistent block4 child ownership is certified separately.",
+    "Native capture must occur before full native memset, including tail/padding. Commit alone is too late.",
+    "Common file-reader dst is staging buffer; converter registrations occur before Commit, requiring old/new generation separation.",
+    "Direct Load_Stream writes native memory and commits; null-terminated reader writes most bytes without DB_LoadXFileData. Generic reader-only hook is incomplete.",
+    "Production direct reader may write partial bytes before fatal/read failure; successful-only rollback cannot claim byte-level atomicity.",
+    "External envelope side aliases have logical block0 keys but point outside block0; distinguish them rather than range-capturing arbitrary external memory.",
+    "Cursor rewind yields out-of-order segments/drift marks; exact/drift address fallbacks can select stale physically overwritten mappings.",
+    "Delayed streams2/3 are written later; DB_InsertPointer is reservation plus later explicit publication, not an immediate data write.",
+    "A retained record cannot track later assignments made through a stale native pointer. Such a caller needs authoritative update routing or an explicit unsupported guard.",
+    "Global loader state is serial; retain that contract and reset generation state between zones rather than infer concurrent safety.",
+    "Validated directory/script/first StringTable metadata contains zero encoded-block0 references; unseen asset bodies remain unaudited."
+  ],
+  "acceptance_cases": [
+    "Old StringTable logical values12/current native16 persistent child4 pointer survives RawFile disk12/native24 physical overwrite.",
+    "Live cellIndex logical16/native24 survives untouched; new RawFile name0 and buffer8 aliases supersede old logical overlaps.",
+    "Null, sign-extended inline sentinels, ordinary offset word, pool pointer and native address aboveu32 retain exact current bits with explicit found status.",
+    "No-write Pop, nested Push0/Pop0 and repeated differently sized writes retain logical tail semantics and newest typed coordinate authority.",
+    "Partial logical overlap, unknown alias coordinate, stale address fallback, range/overflow/misalignment and unsupported prewrite writer reject explicitly.",
+    "Array full transaction snapshots before full memset; replacement records stay authoritative after Commit; failed staging read leaves both cursors and aliases unchanged.",
+    "Direct TEMP scalar/byte and null-terminated writes are hooked or blocked before mutation; reservation-only Inc does not count as data write.",
+    "Init/reset clears retained authority and counters; envelope side aliases/block4 persistent children stay separately owned; full existing owner regressions remain exact."
+  ],
+  "files_modified": [
+    "build-android-audit/temp_alias_value_audit_run1/results.json"
+  ],
+  "no_source_ledger_windows_asset_edits": true
+}

@@ -21,6 +21,12 @@ unsigned __int8 *__cdecl DB_GetStreamPos();
 unsigned __int8 *__cdecl DB_AllocStreamPos(int alignment);
 void __cdecl DB_IncStreamPos(int size);
 #if BO1_NATIVE_64BIT
+#include <cstddef>
+// TEMP alias values and object addresses have different lifetimes under expansion.
+enum class DB_StreamAliasResult { Missing, Active, Retained, Invalid, External };
+void DB_StreamPrepareWrite(size_t maxNewAliasSlots = 0);
+void DB_StreamCancelWrite(bool mayHaveTouched = false);
+DB_StreamAliasResult DB_StreamResolveAliasValue(unsigned block, unsigned within, uintptr_t *value);
 // Next DB_IncStreamPos(nativeSize) advances the Win32 cursor by win32Size (for baked-offset remap).
 void DB_SetExpandWin32Size(int win32Size);
 void DB_SetExpandElem(int wElem, int nElem);

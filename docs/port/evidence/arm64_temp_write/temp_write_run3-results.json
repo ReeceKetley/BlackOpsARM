@@ -1,0 +1,225 @@
+{
+  "schema": "BlackOpsARM.TASK-0028.temp-write-gate.v1",
+  "status": "failed",
+  "recorded_utc": "2026-10-12T06:37:06.590374+00:00",
+  "argv": [
+    "C:\\Users\\recox\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+    "tools/port/run_temp_write_gate.py",
+    "--host-build",
+    "build-android-audit/temp_write_host_pass5",
+    "--android-build",
+    "build-android-audit/temp_write_arm64_pass5",
+    "--output",
+    "build-android-audit/temp_write_run3"
+  ],
+  "runner_sha256": "93f565838728d107aeccdebd036941e06fe0df9c0b4dfaedfe4a3c1a762a2a53",
+  "device_serial": "AKWJ9X5116G04618",
+  "platforms": {
+    "windows_x86": {
+      "executable": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\temp_write_host_pass5\\x86\\temp_write.exe",
+      "sha256": "dc7fdbd8ad2478b5f1185990e17702dcd06e6b29f874ef130b71e77dba9f03e5",
+      "runs": [
+        {
+          "schema": "BlackOpsARM.TASK-0028.temp-write.v1",
+          "pointer_bytes": 4,
+          "native64": false,
+          "cycles": 6,
+          "cases": 18,
+          "short_reads": 12,
+          "matrix_cases": 0,
+          "controlled_fixtures": true,
+          "genuine_assets_loaded": false,
+          "payload_children_loaded": false
+        },
+        {
+          "schema": "BlackOpsARM.TASK-0028.temp-write.v1",
+          "pointer_bytes": 4,
+          "native64": false,
+          "cycles": 6,
+          "cases": 18,
+          "short_reads": 12,
+          "matrix_cases": 0,
+          "controlled_fixtures": true,
+          "genuine_assets_loaded": false,
+          "payload_children_loaded": false
+        },
+        {
+          "schema": "BlackOpsARM.TASK-0028.temp-write.v1",
+          "pointer_bytes": 4,
+          "native64": false,
+          "cycles": 6,
+          "cases": 18,
+          "short_reads": 12,
+          "matrix_cases": 0,
+          "controlled_fixtures": true,
+          "genuine_assets_loaded": false,
+          "payload_children_loaded": false
+        }
+      ]
+    },
+    "windows_x64": {
+      "executable": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\temp_write_host_pass5\\x64\\temp_write.exe",
+      "sha256": "2e4deeb6c6403b148367dc0b48fe59990985b5fa4f9963d48b3adcd310eba6b6",
+      "runs": [
+        {
+          "schema": "BlackOpsARM.TASK-0028.temp-write.v1",
+          "pointer_bytes": 8,
+          "native64": true,
+          "cycles": 6,
+          "cases": 18,
+          "short_reads": 12,
+          "matrix_cases": 78,
+          "controlled_fixtures": true,
+          "genuine_assets_loaded": false,
+          "payload_children_loaded": false
+        },
+        {
+          "schema": "BlackOpsARM.TASK-0028.temp-write.v1",
+          "pointer_bytes": 8,
+          "native64": true,
+          "cycles": 6,
+          "cases": 18,
+          "short_reads": 12,
+          "matrix_cases": 78,
+          "controlled_fixtures": true,
+          "genuine_assets_loaded": false,
+          "payload_children_loaded": false
+        },
+        {
+          "schema": "BlackOpsARM.TASK-0028.temp-write.v1",
+          "pointer_bytes": 8,
+          "native64": true,
+          "cycles": 6,
+          "cases": 18,
+          "short_reads": 12,
+          "matrix_cases": 78,
+          "controlled_fixtures": true,
+          "genuine_assets_loaded": false,
+          "payload_children_loaded": false
+        }
+      ]
+    },
+    "honor_arm64": {
+      "executable": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\temp_write_arm64_pass5\\bo1_temp_write_tests",
+      "sha256": "235c6737d7924fbdc41f079104367a44b7487f69b19ca12dce6abded29618aaf",
+      "runs": [
+        {
+          "schema": "BlackOpsARM.TASK-0028.temp-write.v1",
+          "pointer_bytes": 8,
+          "native64": true,
+          "cycles": 6,
+          "cases": 18,
+          "short_reads": 12,
+          "matrix_cases": 78,
+          "controlled_fixtures": true,
+          "genuine_assets_loaded": false,
+          "payload_children_loaded": false
+        },
+        {
+          "schema": "BlackOpsARM.TASK-0028.temp-write.v1",
+          "pointer_bytes": 8,
+          "native64": true,
+          "cycles": 6,
+          "cases": 18,
+          "short_reads": 12,
+          "matrix_cases": 78,
+          "controlled_fixtures": true,
+          "genuine_assets_loaded": false,
+          "payload_children_loaded": false
+        },
+        {
+          "schema": "BlackOpsARM.TASK-0028.temp-write.v1",
+          "pointer_bytes": 8,
+          "native64": true,
+          "cycles": 6,
+          "cases": 18,
+          "short_reads": 12,
+          "matrix_cases": 78,
+          "controlled_fixtures": true,
+          "genuine_assets_loaded": false,
+          "payload_children_loaded": false
+        }
+      ]
+    }
+  },
+  "read_failure_model": "bounded controlled C++ throw adapter",
+  "production_longjmp_recovery_certified": false,
+  "scope": "Scratch-owned actual stream cursors/aliases only; no production zone-allocation claim, genuine assets or payload children",
+  "source_manifests": {
+    "windows_x86": {
+      "path": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\temp_write_host_pass5\\x86\\source-manifest.json",
+      "sha256": "f4375e7362849a4d6304c07445b3800292a2f04e546c09f3cf721be9252a24b3",
+      "files": {
+        "src/database/db_rawfile_types.h": "51226815E230041E294488C433668273BBA3647FE75874C2A84492856086F648",
+        "tools/port/tests/temp_write_tests.cpp": "7C3C54DF9B1F5FDA9363E52652F2B34263DCFBB14347184D806A0555FA4833A0",
+        "src/database/db_stream.cpp": "98D626F50BD421E09CEDFD388B2A9859ECB5625524FFFE591A070E997388B43C",
+        "src/database/db_expand.hpp": "C1640CAE0B5E7F2F832B615423F77B59843376A5DC4E90D31FF9126234BCDAB7",
+        "src/database/db_zone_types.h": "688F1EA61D9CEB42C99BAEE3E957F0EE3EDBC7BC3721E8CE71A6251D8AE0B1B2",
+        "src/platform/bo1_native_width.h": "13F5ADE3F337F20CEE353F5BC4ABCCC17620A0DB938FB7404F332D408370F204",
+        "src/database/db_stream.h": "F73DFAD87282AA55AB51E7ED415E74E28EB1E9B7317FB094B9AC98B04AD59503",
+        "src/universal/physicalmemory.cpp": "22B38B185413B6D9889B4ECD683F2DD307073BE56E308888530ADBF615E313D6",
+        "src/database/db_memory.cpp": "408478839BA90C91B3EE82E093C6C7ED9D8A50E16BE09FC25C0ACDCA359BCEB2",
+        "src/platform/fastfile_zone.cpp": "B886C9B30DB21C31686EFDF72AD501FA97CE01F5CA2E82DA3D479365AAD42DD8",
+        "src/platform/win32_compat/msvc_compat.h": "701A1CF3D389AE99D9A9113EB2E6ABFC921978BC3ABCCFAF9928476B786BA312",
+        "tools/port/tests/checked_zone_support.cpp": "4509931E9191CC7929C9236F87AB012DBFC098DF7D2EBBCDB122F9524395C0DD",
+        "tools/port/tests/stream_init_support.cpp": "2027CFB3293708C70703EBCCC14293B383A0819BAF3B22D78BDDEF9AFE595F2E",
+        "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\tools\\port\\build_temp_write_host.ps1": "0957C9EBCA609CCBFDF91D7B2119E94A80A14E1473E5BC9D38FE71602CE8FABD",
+        "src/database/db_stream_load.h": "DD21E6CF474D1D3F4EBF4E10070161D25378F62AC2E53104AB6001C4773395F4",
+        "src/universal/com_stringtable.h": "92015D95827EC19284732C908C7D5DEB9FCDF1C5EB16DFE18E15D5EF2B6145B3",
+        "src/database/db_expand.cpp": "66BC38869F61B7B69A866C75A5E3090C80342880C0A7587A9A9EF727A14E0D71",
+        "src/database/db_stream_load.cpp": "53B056435A94A714A5C94E8186D7893A2646597A9AE33ACCCE00B71E0DFB2420"
+      }
+    },
+    "windows_x64": {
+      "path": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\temp_write_host_pass5\\x64\\source-manifest.json",
+      "sha256": "f4375e7362849a4d6304c07445b3800292a2f04e546c09f3cf721be9252a24b3",
+      "files": {
+        "src/database/db_rawfile_types.h": "51226815E230041E294488C433668273BBA3647FE75874C2A84492856086F648",
+        "tools/port/tests/temp_write_tests.cpp": "7C3C54DF9B1F5FDA9363E52652F2B34263DCFBB14347184D806A0555FA4833A0",
+        "src/database/db_stream.cpp": "98D626F50BD421E09CEDFD388B2A9859ECB5625524FFFE591A070E997388B43C",
+        "src/database/db_expand.hpp": "C1640CAE0B5E7F2F832B615423F77B59843376A5DC4E90D31FF9126234BCDAB7",
+        "src/database/db_zone_types.h": "688F1EA61D9CEB42C99BAEE3E957F0EE3EDBC7BC3721E8CE71A6251D8AE0B1B2",
+        "src/platform/bo1_native_width.h": "13F5ADE3F337F20CEE353F5BC4ABCCC17620A0DB938FB7404F332D408370F204",
+        "src/database/db_stream.h": "F73DFAD87282AA55AB51E7ED415E74E28EB1E9B7317FB094B9AC98B04AD59503",
+        "src/universal/physicalmemory.cpp": "22B38B185413B6D9889B4ECD683F2DD307073BE56E308888530ADBF615E313D6",
+        "src/database/db_memory.cpp": "408478839BA90C91B3EE82E093C6C7ED9D8A50E16BE09FC25C0ACDCA359BCEB2",
+        "src/platform/fastfile_zone.cpp": "B886C9B30DB21C31686EFDF72AD501FA97CE01F5CA2E82DA3D479365AAD42DD8",
+        "src/platform/win32_compat/msvc_compat.h": "701A1CF3D389AE99D9A9113EB2E6ABFC921978BC3ABCCFAF9928476B786BA312",
+        "tools/port/tests/checked_zone_support.cpp": "4509931E9191CC7929C9236F87AB012DBFC098DF7D2EBBCDB122F9524395C0DD",
+        "tools/port/tests/stream_init_support.cpp": "2027CFB3293708C70703EBCCC14293B383A0819BAF3B22D78BDDEF9AFE595F2E",
+        "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\tools\\port\\build_temp_write_host.ps1": "0957C9EBCA609CCBFDF91D7B2119E94A80A14E1473E5BC9D38FE71602CE8FABD",
+        "src/database/db_stream_load.h": "DD21E6CF474D1D3F4EBF4E10070161D25378F62AC2E53104AB6001C4773395F4",
+        "src/universal/com_stringtable.h": "92015D95827EC19284732C908C7D5DEB9FCDF1C5EB16DFE18E15D5EF2B6145B3",
+        "src/database/db_expand.cpp": "66BC38869F61B7B69A866C75A5E3090C80342880C0A7587A9A9EF727A14E0D71",
+        "src/database/db_stream_load.cpp": "53B056435A94A714A5C94E8186D7893A2646597A9AE33ACCCE00B71E0DFB2420"
+      }
+    },
+    "honor_arm64": {
+      "path": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\temp_write_arm64_pass5\\source-manifest.json",
+      "sha256": "5c742fb3920b5a7933b92fc0a620b463b5715b612c0792b7144423c907ca2411",
+      "files": {
+        "tools/port/tests/temp_write_tests.cpp": "7C3C54DF9B1F5FDA9363E52652F2B34263DCFBB14347184D806A0555FA4833A0",
+        "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\tools\\port\\build_temp_write_arm64.ps1": "7A15A8FF75B6980B44E8327B3964D1B0B951299CC63B8645E0F0AAF02BEE9C7F",
+        "src/database/db_stream_load.h": "DD21E6CF474D1D3F4EBF4E10070161D25378F62AC2E53104AB6001C4773395F4",
+        "src/platform/bo1_native_width.h": "13F5ADE3F337F20CEE353F5BC4ABCCC17620A0DB938FB7404F332D408370F204",
+        "src/database/db_stream.cpp": "98D626F50BD421E09CEDFD388B2A9859ECB5625524FFFE591A070E997388B43C",
+        "tools/port/tests/checked_zone_support.cpp": "4509931E9191CC7929C9236F87AB012DBFC098DF7D2EBBCDB122F9524395C0DD",
+        "src/database/db_stream_load.cpp": "53B056435A94A714A5C94E8186D7893A2646597A9AE33ACCCE00B71E0DFB2420",
+        "src/database/db_stream.h": "F73DFAD87282AA55AB51E7ED415E74E28EB1E9B7317FB094B9AC98B04AD59503",
+        "src/platform/android/database_diagnostics.cpp": "137AD0C36DB9373A26A2C5589DF5EACBBCE8A819689B3EAF9FC49699CB4CA318",
+        "src/database/db_expand.hpp": "C1640CAE0B5E7F2F832B615423F77B59843376A5DC4E90D31FF9126234BCDAB7",
+        "src/database/db_expand.cpp": "66BC38869F61B7B69A866C75A5E3090C80342880C0A7587A9A9EF727A14E0D71",
+        "src/platform/win32_compat/msvc_compat.h": "701A1CF3D389AE99D9A9113EB2E6ABFC921978BC3ABCCFAF9928476B786BA312",
+        "src/universal/com_stringtable.h": "92015D95827EC19284732C908C7D5DEB9FCDF1C5EB16DFE18E15D5EF2B6145B3",
+        "src/database/db_zone_types.h": "688F1EA61D9CEB42C99BAEE3E957F0EE3EDBC7BC3721E8CE71A6251D8AE0B1B2",
+        "tools/port/tests/stream_init_support.cpp": "2027CFB3293708C70703EBCCC14293B383A0819BAF3B22D78BDDEF9AFE595F2E",
+        "src/database/db_rawfile_types.h": "51226815E230041E294488C433668273BBA3647FE75874C2A84492856086F648"
+      }
+    }
+  },
+  "device_metadata": "NDL-L09\r\nHNNDL-Q\r\n36\r\nLinux localhost 5.15.180-android13-8-00018-g9b2308ac0ad6-ab14563692 #1 SMP PREEMPT Sun Nov 30 12:19:45 UTC 2025 aarch64 Toybox\r\n",
+  "device_directory": "/data/local/tmp/blackopsarm-temp-write-055c1d27e1bd44dd8eee7d34433a8897",
+  "all_tests_completed": false,
+  "error": "windows_x64-opaque-controls: invocation failed; diagnostics retained",
+  "traceback": "Traceback (most recent call last):\n  File \"D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\tools\\port\\run_temp_write_gate.py\", line 117, in main\n    focused=json.loads(run(label,argv))\n                       ^^^^^^^^^^^^^^^\n  File \"D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\tools\\port\\run_temp_write_gate.py\", line 69, in run\n    raise RuntimeError(label+': invocation failed; diagnostics retained')\nRuntimeError: windows_x64-opaque-controls: invocation failed; diagnostics retained\n"
+}

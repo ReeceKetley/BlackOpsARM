@@ -9,6 +9,9 @@ static_assert(offsetof(StringTable,cellIndex)==(BO1_NATIVE_64BIT?24:16));
 #if defined(BO1_STRINGTABLE_CELLS_GATE)
 #include "stringtable_cells_fixture.h"
 #endif
+#if defined(BO1_RAWFILE_HEADER_GATE)
+#include "rawfile_header_fixture.h"
+#endif
 static StringTableHeaderPlan headerPlan(const Front&f,const AssetDirectoryPlan&d,const unsigned char*data,std::size_t bytes,std::uint64_t decoded){
     require(d.present&&d.count>0,"first genuine directory record exists");
     const auto start=f.end+static_cast<std::size_t>(d.diskBytes);require(start<=bytes&&start<=decoded,"header source after directory");
@@ -29,6 +32,9 @@ static void seedEnvelope(const unsigned char*data,XAssetList&envelope){
 static void executeHeader(const StringTableHeaderPlan&p,DecodedSource&r,XBlock(&blocks)[7],XAssetList*envelope,bool measurement
 #if defined(BO1_STRINGTABLE_CELLS_GATE)
     ,const StringTablePayloadPlan*payload=nullptr
+#endif
+#if defined(BO1_RAWFILE_HEADER_GATE)
+    ,const rawfile_fixture::Next*next=nullptr
 #endif
 ){
     if(!p.present)return;
@@ -88,6 +94,9 @@ static void executeHeader(const StringTableHeaderPlan&p,DecodedSource&r,XBlock(&
 #endif
     require(adler32(1,blocks[4].data,prefixBytes)==prefixAdler,"header/children preserve preceding block4 bytes");
     if(measurement)std::printf("{\"header_measurements\":{\"source_start\":%zu,\"name_tag\":%u,\"column_count\":%d,\"row_count\":%d,\"values_tag\":%u,\"cell_index_tag\":%u,\"cell_count\":%llu,\"disk_start\":%llu,\"native_start\":%llu,\"disk_end\":%llu,\"native_end_before_pop\":%llu,\"native_cursor_after_pop\":0,\"shadow_after_pop\":%llu}}\n",sourceStart,p.nameTag,p.columns,p.rows,p.valuesTag,p.indexTag,(unsigned long long)p.cells,(unsigned long long)p.diskStart,(unsigned long long)p.nativeStart,(unsigned long long)p.diskEnd,(unsigned long long)p.nativeEnd,(unsigned long long)tempDiskCursor());
+#if defined(BO1_RAWFILE_HEADER_GATE)
+    if(next)rawfile_fixture::execute(*next,*payload,r,blocks,measurement);
+#endif
 #if defined(BO1_STRINGTABLE_OWNER_GATE)
     owner_fixture::verifyAfterPop(p,*payload,blocks,header,measurement);
 #endif
