@@ -1,3 +1,27 @@
+# Current state — TASK31 complete, 12 October 2026
+
+Actual canonical entry-list initialization and native DBHASH prerequisite verified
+on Windows x86/x64 and HONOR/O0/O3. Retail free32752/mod65520, head16/reserved0..15,
+16-bit links and stride16/24 preserved. Six controlled quiescent initializations
+leave hash buckets/tails/inactive slots unchanged; helper adds no resets or lock.
+Real third recursive native DBHASH74 passes8-thread initialization, depth3/partial
+release/independent script sections/16000 updates. Unsupported75 fatal diagnostics
+pass3ABIs; strict8 records and4 malformed controls. Full normal Windows8TUs eachABI,
+exact source proof, script services and actual SLMT fixture regressions pass.
+Protected17014 baseline paths plus Windows/DXVK Git unchanged; all tests ended.
+Read arm64_asset_entry_init.md, DEC46/FACT97/98/WARN32/FAIL30. Local checkpoint
+covers this gate; Git supplies exact HEAD. User authorizes local commits, no push.
+
+Next actual header-dispatch/entry allocation/free with real error/ownership/count
+semantics, then actual hash lookup, then smallest registration/returned-header
+boundary. No fullDB_Init/entry allocation/publication/startup/render claim. Helper
+requires startup/quiescence; fixture reinit is not live reset. Header exhaustion
+can follow pop/count mutation; never invent rollback. ZombieTechniqueSet7, async/
+longjmp/OOM/concurrency recovery/S25/16KB and memory/performance remain deferred.
+Previous RawFile/StringTable evidence, protected repos/assets/root remain intact.
+
+# Historical state (preserved)
+
 # Current state — TASK30 complete, 12 October 2026
 
 User handoff resumes work after NOTE-0009; follow-up explicitly authorizes local

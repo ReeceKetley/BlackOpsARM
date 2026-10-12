@@ -1,5 +1,6 @@
 #if defined(BO1_STRINGTABLE_OWNER_GATE)
 #include "db_asset_pool.h"
+#include "db_asset_entry_types.h"
 #include <universal/assertive.h>
 #include <cstring>
 #else
@@ -489,8 +490,12 @@ struct// $73C9AB3B505E60D629E435B147795978 // sizeof=0x8011C
 
 unsigned __int8 g_fileBuf[524288];
 
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE) || defined(BO1_ASSET_ENTRY_GATE)
 unsigned __int16 db_hashTable[0x8000/*32768*/];
 XAssetEntryPoolEntry g_assetEntryPool[65536]; // mod: 32768 in the exe; the upper half is chained only with bo1_mod_zones (DB_InitXAssets)
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE)
 // Win32 packed XAssetEntry was 16 bytes, so hash/override links used byte_offset >> 4.
 // On x64 the pool stride is sizeof(XAssetEntryPoolEntry); index via pointer arithmetic.
 static inline unsigned short DB_AssetEntryIndex(const void *entry)
@@ -513,7 +518,11 @@ int g_defaultAssetCount;
 int skipLoadingMaterialsHack;
 int g_missingAssetFile;
 int com_missingAssetOpenFailed;
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE) || defined(BO1_ASSET_ENTRY_GATE)
 XAssetEntryPoolEntry *g_freeAssetEntryHead;
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE)
 int XAssetEntryHighWaterMark;
 int XAssetEntryHighCount;
 
@@ -2105,6 +2114,7 @@ XAssetEntryPoolEntry *__cdecl DB_AllocXAssetEntry(XAssetType type, unsigned __in
 
 
 #endif
+#if !defined(BO1_ASSET_ENTRY_GATE)
 void __cdecl DB_CloneXAssetInternal(const XAsset *from, XAsset *to)
 {
     int size; // [esp+0h] [ebp-4h]
@@ -2122,6 +2132,7 @@ void __cdecl DB_CloneXAssetInternal(const XAsset *from, XAsset *to)
     size = DB_GetXAssetTypeSize(from->type);
     memcpy((unsigned __int8 *)to->header.xmodelPieces, (unsigned __int8 *)from->header.xmodelPieces, size);
 }
+#endif
 #if !defined(BO1_STRINGTABLE_OWNER_GATE)
 
 
@@ -3756,8 +3767,6 @@ void(__cdecl *DB_InitPoolHeaderHandler[43])(void *, int) =
 void DB_Init()
 {
     XAssetType type; // [esp+0h] [ebp-8h]
-    unsigned int i; // [esp+4h] [ebp-4h]
-
     db_xassetdebug = _Dvar_RegisterBool("db_xassetdebug", 0, 0, "debug assets loading");
     db_xassetdebugtype = _Dvar_RegisterInt(
         "db_xassetdebugtype",
@@ -3791,12 +3800,20 @@ void DB_Init()
     for (type = ASSET_TYPE_XMODELPIECES; type < ASSET_TYPE_COUNT; ++type)
         DB_InitPoolHeader(type);
 
+    DB_InitAssetEntryPool(I_stristr(GetCommandLineA(), "bo1_mod_zones") != NULL);
+}
+
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE) || defined(BO1_ASSET_ENTRY_GATE)
+void DB_InitAssetEntryPool(bool modZones)
+{
+    unsigned int i; // existing DB_Init freelist loop
     g_freeAssetEntryHead = g_assetEntryPool + 16;
 
     // mod: three or four bo1_mod_zones (mods/nightmare: temple + coast + moon, L60 f3) overflow the retail 32768 entries
     // ("increase XASSET_ENTRY_POOL_SIZE"); with bo1_mod_zones on the command line the free list runs to 0xFFFF, the
     // largest index the 16-bit nextHash / nextOverride / db_hashTable links hold. Without it the list is retail's.
-    unsigned int lastEntry = I_stristr(GetCommandLineA(), "bo1_mod_zones") ? 0xFFFF : 0x7FFF;
+    unsigned int lastEntry = modZones ? 0xFFFF : 0x7FFF;
     for (i = 1; i < lastEntry; ++i)
     {
         g_assetEntryPool[i].next = &g_assetEntryPool[i + 1];
@@ -3806,6 +3823,8 @@ void DB_Init()
     g_assetEntryPool[lastEntry].next = NULL;
     //g_assetEntryPool[0x7FFF].entry.asset.type = ASSET_TYPE_XMODELPIECES;
 }
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE)
 
 void __cdecl DB_InitPoolHeader(XAssetType type)
 {

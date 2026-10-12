@@ -1,3 +1,10 @@
+## Current milestone — TASK31 complete, 12 October 2026
+
+Actual entry-list init and native recursive DBHASH verified on3ABIs/O0/O3.
+Next actual header/entry allocation/free, hash lookup, smallest real registration.
+See STATE/arm64_asset_entry_init.md; local verified commits authorized/no push.
+No full DB_Init/registry publication/engine startup/rendering yet.
+
 ## Current milestone — TASK30 complete, 12 October 2026
 
 Actual persistent RawFile pool header/children lifetime verified on HONOR and

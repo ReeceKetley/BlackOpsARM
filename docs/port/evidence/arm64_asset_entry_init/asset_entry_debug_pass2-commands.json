@@ -1,0 +1,35 @@
+{
+  "optimization": "O0",
+  "assertions": true,
+  "configure": {
+    "argv": [
+      "-S",
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\android\\cmake\\arm64-audit",
+      "-B",
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\asset_entry_debug_pass2",
+      "-G",
+      "Ninja",
+      "-DCMAKE_MAKE_PROGRAM=D:\\Android\\Sdk\\cmake\\3.22.1\\bin\\ninja.exe",
+      "-DCMAKE_TOOLCHAIN_FILE=D:\\Android\\Sdk\\ndk\\30.0.16248370\\build\\cmake\\android.toolchain.cmake",
+      "-DPython3_EXECUTABLE=C:/Users/recox/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/python.exe",
+      "-DANDROID_ABI=arm64-v8a",
+      "-DANDROID_PLATFORM=android-28",
+      "-DCMAKE_BUILD_TYPE=Debug",
+      "-DBO1_ARM64_COMPAT=ON",
+      "-DCMAKE_C_FLAGS_DEBUG=-O0 -g",
+      "-DCMAKE_CXX_FLAGS_DEBUG=-O0 -g"
+    ],
+    "executable": "D:\\Android\\Sdk\\cmake\\3.22.1\\bin\\cmake.exe"
+  },
+  "ubsan": true,
+  "build": {
+    "argv": [
+      "--build",
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\asset_entry_debug_pass2",
+      "--target",
+      "bo1_asset_entry_init_tests",
+      "--verbose"
+    ],
+    "executable": "D:\\Android\\Sdk\\cmake\\3.22.1\\bin\\cmake.exe"
+  }
+}

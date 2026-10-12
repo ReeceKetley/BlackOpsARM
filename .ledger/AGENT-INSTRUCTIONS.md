@@ -356,3 +356,14 @@ proof/defaultWindows compile and protected16875 paths pass. No alias retargeting
 or DB_Add success. Unchecked raw leaf rejection remains fixture caller contracts.
 Next actual registry-entry/DBHASH init services, then real registration/lookup.
 Preserve zombie's actual TechniqueSet7 boundary and all previous evidence/repos.
+
+
+TASK31 complete: read arm64_asset_entry_init.md, DEC46/FACT97/98/WARN32/FAIL30.
+Actual canonical entry-list helper/real DBHASH74 recursion verified on3ABIs/O0/O3;
+head16/free32752-or65520 and native24/Win3216/fixed16 links preserved. Helper has
+startup/quiescence contract and no hash/counter resets/lock. Existing pool locks
+0/1 unchanged; internal Database lock2 means invalid-lock fixture now uses3.
+Normal Windows/source/script-service/SLMT/protected17014 checks pass. No fullDB_Init
+or entry alloc/free/publication claim. Next actual header dispatch/entry alloc/free
+and failure/partial-progress semantics, then lookup and smallest real registration.
+Local verified checkpoints allowed/no push; all evidence/protected repos preserved.

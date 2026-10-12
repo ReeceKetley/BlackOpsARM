@@ -731,3 +731,15 @@ target_compile_options(bo1_string_pool_tests PRIVATE -Wall -Wextra -Wpedantic -W
     -fms-extensions -fsigned-char -ffunction-sections -fdata-sections -fsanitize=undefined
     -fno-sanitize-recover=all -include "${SRC_DIR}/platform/win32_compat/msvc_compat.h")
 target_link_options(bo1_string_pool_tests PRIVATE -Wl,--gc-sections -fsanitize=undefined)
+
+# TASK31: actual canonical entry-list initialization and native DBHASH services.
+add_executable(bo1_asset_entry_init_tests "${BO1_ROOT}/tools/port/tests/asset_entry_init_tests.cpp"
+    "${SRC_DIR}/database/db_registry.cpp" "${SRC_DIR}/platform/android/script_pool_bridge.cpp"
+    "${SRC_DIR}/platform/android/script_string_services.cpp")
+target_include_directories(bo1_asset_entry_init_tests PRIVATE "${SRC_DIR}")
+target_compile_features(bo1_asset_entry_init_tests PRIVATE cxx_std_20)
+target_compile_definitions(bo1_asset_entry_init_tests PRIVATE BO1_STRINGTABLE_OWNER_GATE=1 BO1_ASSET_ENTRY_GATE=1)
+target_compile_options(bo1_asset_entry_init_tests PRIVATE -Wall -Wextra -Wpedantic -Werror=return-type
+    -fms-extensions -fsigned-char -ffunction-sections -fdata-sections -fsanitize=undefined -fno-sanitize-recover=all
+    -include "${SRC_DIR}/platform/win32_compat/msvc_compat.h")
+target_link_options(bo1_asset_entry_init_tests PRIVATE -Wl,--gc-sections -fsanitize=undefined)

@@ -1,0 +1,1087 @@
+[1/8] D:\Android\Sdk\ndk\30.0.16248370\toolchains\llvm\prebuilt\windows-x86_64\bin\clang++.exe --target=aarch64-none-linux-android28 --sysroot=D:/Android/Sdk/ndk/30.0.16248370/toolchains/llvm/prebuilt/windows-x86_64/sysroot -DBO1_STRING_POOL_GATE=1 -D_DEBUG=1 -I"D:/Desktop/Black Ops 2 Android/BlackOpsARM/src" -I"D:/Desktop/Black Ops 2 Android/BlackOpsARM" -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fno-limit-debug-info -O0 -g -fPIE -Wall -Wextra -Wpedantic -Werror=return-type -fms-extensions -fsigned-char -ffunction-sections -fdata-sections -fsanitize=undefined -fno-sanitize-recover=all -include "D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/win32_compat/msvc_compat.h" -std=gnu++20 -MD -MT CMakeFiles/bo1_string_pool_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/clientscript/cscr_instance.cpp.o -MF CMakeFiles\bo1_string_pool_tests.dir\D_\Desktop\Black_Ops_2_Android\BlackOpsARM\src\clientscript\cscr_instance.cpp.o.d -o CMakeFiles/bo1_string_pool_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/clientscript/cscr_instance.cpp.o -c "D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_instance.cpp"
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_instance.cpp:1:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_instance.h:2:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_main.h:7:25: warning: extension used [-Wlanguage-extension-token]
+    7 | enum scriptInstance_t : __int32
+      |                         ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_main.h:28:18: warning: extension used [-Wlanguage-extension-token]
+   28 |         unsigned __int16 filename;
+      |                  ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_main.h:34:20: warning: extension used [-Wlanguage-extension-token]
+   34 | enum fieldtype_t : __int32;
+      |                    ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_main.h:47:34: warning: extension used [-Wlanguage-extension-token]
+   47 |                         unsigned __int32 refCount : 16;
+      |                                  ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_main.h:48:34: warning: extension used [-Wlanguage-extension-token]
+   48 |                         unsigned __int32 user : 8;
+      |                                  ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_main.h:49:34: warning: extension used [-Wlanguage-extension-token]
+   49 |                         unsigned __int32 byteLen : 8;
+      |                                  ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_main.h:45:17: warning: anonymous structs are a GNU extension [-Wgnu-anonymous-struct]
+   45 |                 struct //$119B815E6C15BED54461C272BD343858 // sizeof=0x4
+      |                 ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_main.h:45:17: warning: anonymous types declared in an anonymous union are an extension [-Wnested-anon-types]
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_main.h:62:26: warning: extension used [-Wlanguage-extension-token]
+   62 |         enum MathTypes : __int32
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_main.h:71:28: warning: extension used [-Wlanguage-extension-token]
+   71 |         enum MathOpcodes : __int32
+      |                            ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_main.h:87:27: warning: extension used [-Wlanguage-extension-token]
+   87 |         enum ParamTypes : __int32
+      |                           ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_main.h:101:29: warning: extension used [-Wlanguage-extension-token]
+  101 | enum ExpressionParseTypes : __int32
+      |                             ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_main.h:138:1: warning: 'const' is not permitted on a declaration of a type [-Wmissing-declarations]
+  138 | const struct ParseValue // sizeof=0x8
+      | ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_main.h:212:62: warning: extension used [-Wlanguage-extension-token]
+  212 | void __cdecl Scr_FreeScripts(scriptInstance_t inst, unsigned __int8 sys);
+      |                                                              ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_main.h:214:26: warning: extension used [-Wlanguage-extension-token]
+  214 |                 unsigned __int8 *b,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_main.h:220:26: warning: extension used [-Wlanguage-extension-token]
+  220 |                 unsigned __int8 *b,
+      |                          ^
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_instance.cpp:5:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_stringlist.h:68:51: warning: extension used [-Wlanguage-extension-token]
+   68 | void __cdecl Scr_SetStringLiveUpdateSafe(unsigned __int16 *to, char *value, scriptInstance_t inst);
+      |                                                   ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_stringlist.h:69:37: warning: extension used [-Wlanguage-extension-token]
+   69 | void __cdecl Scr_SetString(unsigned __int16 *to, unsigned int from, scriptInstance_t inst);
+
+      |                                     ^
+
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_stringlist.h:70:51: warning: extension used [-Wlanguage-extension-token]
+
+   70 | void __cdecl Scr_SetStringFromCharString(unsigned __int16 *to, char *from, scriptInstance_t inst);
+
+      |                                                   ^
+
+19 warnings generated.
+
+[2/8] D:\Android\Sdk\ndk\30.0.16248370\toolchains\llvm\prebuilt\windows-x86_64\bin\clang++.exe --target=aarch64-none-linux-android28 --sysroot=D:/Android/Sdk/ndk/30.0.16248370/toolchains/llvm/prebuilt/windows-x86_64/sysroot -DBO1_STRING_POOL_GATE=1 -D_DEBUG=1 -I"D:/Desktop/Black Ops 2 Android/BlackOpsARM/src" -I"D:/Desktop/Black Ops 2 Android/BlackOpsARM" -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fno-limit-debug-info -O0 -g -fPIE -Wall -Wextra -Wpedantic -Werror=return-type -fms-extensions -fsigned-char -ffunction-sections -fdata-sections -fsanitize=undefined -fno-sanitize-recover=all -include "D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/win32_compat/msvc_compat.h" -std=gnu++20 -MD -MT CMakeFiles/bo1_string_pool_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/android/script_pool_bridge.cpp.o -MF CMakeFiles\bo1_string_pool_tests.dir\D_\Desktop\Black_Ops_2_Android\BlackOpsARM\src\platform\android\script_pool_bridge.cpp.o.d -o CMakeFiles/bo1_string_pool_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/android/script_pool_bridge.cpp.o -c "D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/android/script_pool_bridge.cpp"
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/android/script_pool_bridge.cpp:4:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/critical_section_services.h:2:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/critical_sections.h:3:24: warning: extension used [-Wlanguage-extension-token]
+
+    3 | enum CriticalSection : __int32
+
+      |                        ^
+
+1 warning generated.
+
+[3/8] D:\Android\Sdk\ndk\30.0.16248370\toolchains\llvm\prebuilt\windows-x86_64\bin\clang++.exe --target=aarch64-none-linux-android28 --sysroot=D:/Android/Sdk/ndk/30.0.16248370/toolchains/llvm/prebuilt/windows-x86_64/sysroot -DBO1_STRING_POOL_GATE=1 -D_DEBUG=1 -I"D:/Desktop/Black Ops 2 Android/BlackOpsARM/src" -I"D:/Desktop/Black Ops 2 Android/BlackOpsARM" -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fno-limit-debug-info -O0 -g -fPIE -Wall -Wextra -Wpedantic -Werror=return-type -fms-extensions -fsigned-char -ffunction-sections -fdata-sections -fsanitize=undefined -fno-sanitize-recover=all -include "D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/win32_compat/msvc_compat.h" -std=gnu++20 -MD -MT CMakeFiles/bo1_string_pool_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/string_pool_support.cpp.o -MF CMakeFiles\bo1_string_pool_tests.dir\D_\Desktop\Black_Ops_2_Android\BlackOpsARM\tools\port\tests\string_pool_support.cpp.o.d -o CMakeFiles/bo1_string_pool_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/string_pool_support.cpp.o -c "D:/Desktop/Black Ops 2 Android/BlackOpsARM/tools/port/tests/string_pool_support.cpp"
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/tools/port/tests/string_pool_support.cpp:3:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/script_pool_services.h:2:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/critical_sections.h:3:24: warning: extension used [-Wlanguage-extension-token]
+    3 | enum CriticalSection : __int32
+      |                        ^
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/tools/port/tests/string_pool_support.cpp:3:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/script_pool_services.h:3:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_errors.h:3:20: warning: extension used [-Wlanguage-extension-token]
+    3 | enum errorParm_t : __int32
+      |                    ^
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/tools/port/tests/string_pool_support.cpp:3:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/script_pool_services.h:4:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/q_shared.h:14:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:3:22: warning: extension used [-Wlanguage-extension-token]
+    3 | enum DvarSetSource : __int32
+      |                      ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:11:19: warning: extension used [-Wlanguage-extension-token]
+   11 | enum dvarType_t : __int32
+      |                   ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:35:9: warning: extension used [-Wlanguage-extension-token]
+   35 |         __int64 integer64;
+      |         ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:36:18: warning: extension used [-Wlanguage-extension-token]
+   36 |         unsigned __int64 unsignedInt64;
+      |                  ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:40:18: warning: extension used [-Wlanguage-extension-token]
+   40 |         unsigned __int8 color[4];
+      |                  ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:57:9: warning: extension used [-Wlanguage-extension-token]
+   57 |         __int64 min;
+      |         ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:58:9: warning: extension used [-Wlanguage-extension-token]
+   58 |         __int64 max;
+      |         ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:162:1: warning: extension used [-Wlanguage-extension-token]
+  162 | __int64 __cdecl Dvar_StringToInt64(const char *string);
+      | ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:170:62: warning: extension used [-Wlanguage-extension-token]
+  170 | void __cdecl Dvar_StringToColor(const char *string, unsigned __int8 *color);
+      |                                                              ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:199:85: warning: extension used [-Wlanguage-extension-token]
+  199 | const dvar_s *__cdecl _Dvar_RegisterBool(const char *dvarName, bool value, unsigned __int16 flags, const char *description);
+      |                                                                                     ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:203:26: warning: extension used [-Wlanguage-extension-token]
+  203 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:211:26: warning: extension used [-Wlanguage-extension-token]
+  211 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:219:26: warning: extension used [-Wlanguage-extension-token]
+  219 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:232:26: warning: extension used [-Wlanguage-extension-token]
+  232 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:241:26: warning: extension used [-Wlanguage-extension-token]
+  241 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:250:26: warning: extension used [-Wlanguage-extension-token]
+  250 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:254:17: warning: extension used [-Wlanguage-extension-token]
+  254 |                 __int64 value,
+      |                 ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:255:17: warning: extension used [-Wlanguage-extension-token]
+  255 |                 __int64 min,
+      |                 ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:256:17: warning: extension used [-Wlanguage-extension-token]
+  256 |                 __int64 max,
+      |                 ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:257:26: warning: extension used [-Wlanguage-extension-token]
+  257 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:264:26: warning: extension used [-Wlanguage-extension-token]
+  264 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:272:26: warning: extension used [-Wlanguage-extension-token]
+  272 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:281:26: warning: extension used [-Wlanguage-extension-token]
+  281 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:291:26: warning: extension used [-Wlanguage-extension-token]
+  291 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:296:26: warning: extension used [-Wlanguage-extension-token]
+  296 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:302:26: warning: extension used [-Wlanguage-extension-token]
+  302 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:310:26: warning: extension used [-Wlanguage-extension-token]
+  310 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:319:26: warning: extension used [-Wlanguage-extension-token]
+  319 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:328:26: warning: extension used [-Wlanguage-extension-token]
+  328 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:333:52: warning: extension used [-Wlanguage-extension-token]
+  333 | void __cdecl Dvar_SetInt64FromSource(dvar_s *dvar, __int64 value, DvarSetSource source);
+      |                                                    ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:347:42: warning: extension used [-Wlanguage-extension-token]
+  347 | void __cdecl Dvar_SetInt64(dvar_s *dvar, __int64 value);
+      |                                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:359:56: warning: extension used [-Wlanguage-extension-token]
+  359 | void __cdecl Dvar_SetInt64ByName(const char *dvarName, __int64 value);
+      |                                                        ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:370:26: warning: extension used [-Wlanguage-extension-token]
+  370 |                 unsigned __int16 flags);
+      |                          ^
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/tools/port/tests/string_pool_support.cpp:3:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/script_pool_services.h:4:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/q_shared.h:15:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_math.h:2:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/assertive.h:6:24: warning: extension used [-Wlanguage-extension-token]
+    6 | enum AssertOccurance : __int32
+      |                        ^
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/tools/port/tests/string_pool_support.cpp:3:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/script_pool_services.h:4:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/q_shared.h:15:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_math.h:5:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_pack.h:21:14: warning: extension used [-Wlanguage-extension-token]
+   21 |     unsigned __int8 array[4];
+      |              ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_pack.h:28:14: warning: extension used [-Wlanguage-extension-token]
+   28 |     unsigned __int8 array[4];
+      |              ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_pack.h:38:45: warning: extension used [-Wlanguage-extension-token]
+   38 | void __cdecl Byte4UnpackRgba(const unsigned __int8 *from, float *to);
+      |                                             ^
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/tools/port/tests/string_pool_support.cpp:3:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/script_pool_services.h:4:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/q_shared.h:15:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_math.h:29:18: warning: extension used [-Wlanguage-extension-token]
+   29 |         unsigned __int8 type;
+      |                  ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_math.h:30:18: warning: extension used [-Wlanguage-extension-token]
+   30 |         unsigned __int8 signbits;
+      |                  ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_math.h:31:18: warning: extension used [-Wlanguage-extension-token]
+   31 |         unsigned __int8 pad[2];
+      |                  ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_math.h:63:5: warning: anonymous structs are a GNU extension [-Wgnu-anonymous-struct]
+   63 |     struct {
+      |     ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_math.h:116:1: warning: extension used [-Wlanguage-extension-token]
+  116 | __int16 __cdecl ClampShort(int i);
+      | ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_math.h:117:10: warning: extension used [-Wlanguage-extension-token]
+  117 | unsigned __int8 __cdecl DirToByte(const float *dir);
+      |          ^
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/tools/port/tests/string_pool_support.cpp:3:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/script_pool_services.h:4:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/q_shared.h:91:89: warning: '&&' within '||' [-Wlogical-op-parentheses]
+   91 | inline bool EntNum_IsNetworked(int n) { return n < MAX_GENTITIES || n >= g_entNumCscEnd && n != ENTNUM_CSC_END; }
+      |                                                                  ~~ ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/q_shared.h:91:89: note: place parentheses around the '&&' expression to silence this warning
+   91 | inline bool EntNum_IsNetworked(int n) { return n < MAX_GENTITIES || n >= g_entNumCscEnd && n != ENTNUM_CSC_END; }
+      |                                                                     ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/q_shared.h:139:10: warning: extension used [-Wlanguage-extension-token]
+  139 | unsigned __int8 __cdecl I_CleanChar(unsigned __int8 character);
+      |          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/q_shared.h:139:46: warning: extension used [-Wlanguage-extension-token]
+  139 | unsigned __int8 __cdecl I_CleanChar(unsigned __int8 character);
+      |                                              ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/q_shared.h:385:33: warning: unused parameter 'fakearg' [-Wunused-parameter]
+  385 | inline void BLOPS_NULLSUB(void *fakearg = nullptr)
+      |                                 ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/q_shared.h:399:1: warning: extension used [-Wlanguage-extension-token]
+  399 | __forceinline static float COERCE_FLOAT(unsigned val) {
+      | ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/q_shared.h:407:1: warning: extension used [-Wlanguage-extension-token]
+  407 | __forceinline static unsigned int COERCE_UNSIGNED_INT(float val) {
+      | ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/q_shared.h:415:1: warning: extension used [-Wlanguage-extension-token]
+  415 | __forceinline static int COERCE_INT(float val) {
+      | ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/q_shared.h:693:1: warning: extension used [-Wlanguage-extension-token]
+  693 | __forceinline T _Pow_int(T base, int exp)
+      | ^
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/tools/port/tests/string_pool_support.cpp:3:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/script_pool_services.h:5:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_main.h:45:17: warning: anonymous structs are a GNU extension [-Wgnu-anonymous-struct]
+   45 |                 struct //$119B815E6C15BED54461C272BD343858 // sizeof=0x4
+      |                 ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_main.h:45:17: warning: anonymous types declared in an anonymous union are an extension [-Wnested-anon-types]
+
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_main.h:138:1: warning: 'const' is not permitted on a declaration of a type [-Wmissing-declarations]
+
+  138 | const struct ParseValue // sizeof=0x8
+
+      | ^
+
+56 warnings generated.
+
+[4/8] D:\Android\Sdk\ndk\30.0.16248370\toolchains\llvm\prebuilt\windows-x86_64\bin\clang++.exe --target=aarch64-none-linux-android28 --sysroot=D:/Android/Sdk/ndk/30.0.16248370/toolchains/llvm/prebuilt/windows-x86_64/sysroot -DBO1_STRING_POOL_GATE=1 -D_DEBUG=1 -I"D:/Desktop/Black Ops 2 Android/BlackOpsARM/src" -I"D:/Desktop/Black Ops 2 Android/BlackOpsARM" -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fno-limit-debug-info -O0 -g -fPIE -Wall -Wextra -Wpedantic -Werror=return-type -fms-extensions -fsigned-char -ffunction-sections -fdata-sections -fsanitize=undefined -fno-sanitize-recover=all -include "D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/win32_compat/msvc_compat.h" -std=gnu++20 -MD -MT CMakeFiles/bo1_string_pool_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/clientscript/cscr_memorytree.cpp.o -MF CMakeFiles\bo1_string_pool_tests.dir\D_\Desktop\Black_Ops_2_Android\BlackOpsARM\src\clientscript\cscr_memorytree.cpp.o.d -o CMakeFiles/bo1_string_pool_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/clientscript/cscr_memorytree.cpp.o -c "D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_memorytree.cpp"
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_memorytree.cpp:1:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_memorytree.h:2:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_main.h:7:25: warning: extension used [-Wlanguage-extension-token]
+    7 | enum scriptInstance_t : __int32
+      |                         ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_main.h:28:18: warning: extension used [-Wlanguage-extension-token]
+   28 |         unsigned __int16 filename;
+      |                  ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_main.h:34:20: warning: extension used [-Wlanguage-extension-token]
+   34 | enum fieldtype_t : __int32;
+      |                    ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_main.h:47:34: warning: extension used [-Wlanguage-extension-token]
+   47 |                         unsigned __int32 refCount : 16;
+      |                                  ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_main.h:48:34: warning: extension used [-Wlanguage-extension-token]
+   48 |                         unsigned __int32 user : 8;
+      |                                  ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_main.h:49:34: warning: extension used [-Wlanguage-extension-token]
+   49 |                         unsigned __int32 byteLen : 8;
+      |                                  ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_main.h:45:17: warning: anonymous structs are a GNU extension [-Wgnu-anonymous-struct]
+   45 |                 struct //$119B815E6C15BED54461C272BD343858 // sizeof=0x4
+      |                 ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_main.h:45:17: warning: anonymous types declared in an anonymous union are an extension [-Wnested-anon-types]
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_main.h:62:26: warning: extension used [-Wlanguage-extension-token]
+   62 |         enum MathTypes : __int32
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_main.h:71:28: warning: extension used [-Wlanguage-extension-token]
+   71 |         enum MathOpcodes : __int32
+      |                            ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_main.h:87:27: warning: extension used [-Wlanguage-extension-token]
+   87 |         enum ParamTypes : __int32
+      |                           ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_main.h:101:29: warning: extension used [-Wlanguage-extension-token]
+  101 | enum ExpressionParseTypes : __int32
+      |                             ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_main.h:138:1: warning: 'const' is not permitted on a declaration of a type [-Wmissing-declarations]
+  138 | const struct ParseValue // sizeof=0x8
+      | ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_main.h:212:62: warning: extension used [-Wlanguage-extension-token]
+  212 | void __cdecl Scr_FreeScripts(scriptInstance_t inst, unsigned __int8 sys);
+      |                                                              ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_main.h:214:26: warning: extension used [-Wlanguage-extension-token]
+  214 |                 unsigned __int8 *b,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_main.h:220:26: warning: extension used [-Wlanguage-extension-token]
+  220 |                 unsigned __int8 *b,
+      |                          ^
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_memorytree.cpp:1:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_memorytree.h:3:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/q_shared.h:14:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:3:22: warning: extension used [-Wlanguage-extension-token]
+    3 | enum DvarSetSource : __int32
+      |                      ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:11:19: warning: extension used [-Wlanguage-extension-token]
+   11 | enum dvarType_t : __int32
+      |                   ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:35:9: warning: extension used [-Wlanguage-extension-token]
+   35 |         __int64 integer64;
+      |         ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:36:18: warning: extension used [-Wlanguage-extension-token]
+   36 |         unsigned __int64 unsignedInt64;
+      |                  ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:40:18: warning: extension used [-Wlanguage-extension-token]
+   40 |         unsigned __int8 color[4];
+      |                  ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:57:9: warning: extension used [-Wlanguage-extension-token]
+   57 |         __int64 min;
+      |         ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:58:9: warning: extension used [-Wlanguage-extension-token]
+   58 |         __int64 max;
+      |         ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:162:1: warning: extension used [-Wlanguage-extension-token]
+  162 | __int64 __cdecl Dvar_StringToInt64(const char *string);
+      | ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:170:62: warning: extension used [-Wlanguage-extension-token]
+  170 | void __cdecl Dvar_StringToColor(const char *string, unsigned __int8 *color);
+      |                                                              ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:199:85: warning: extension used [-Wlanguage-extension-token]
+  199 | const dvar_s *__cdecl _Dvar_RegisterBool(const char *dvarName, bool value, unsigned __int16 flags, const char *description);
+      |                                                                                     ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:203:26: warning: extension used [-Wlanguage-extension-token]
+  203 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:211:26: warning: extension used [-Wlanguage-extension-token]
+  211 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:219:26: warning: extension used [-Wlanguage-extension-token]
+  219 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:232:26: warning: extension used [-Wlanguage-extension-token]
+  232 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:241:26: warning: extension used [-Wlanguage-extension-token]
+  241 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:250:26: warning: extension used [-Wlanguage-extension-token]
+  250 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:254:17: warning: extension used [-Wlanguage-extension-token]
+  254 |                 __int64 value,
+      |                 ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:255:17: warning: extension used [-Wlanguage-extension-token]
+  255 |                 __int64 min,
+      |                 ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:256:17: warning: extension used [-Wlanguage-extension-token]
+  256 |                 __int64 max,
+      |                 ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:257:26: warning: extension used [-Wlanguage-extension-token]
+  257 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:264:26: warning: extension used [-Wlanguage-extension-token]
+  264 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:272:26: warning: extension used [-Wlanguage-extension-token]
+  272 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:281:26: warning: extension used [-Wlanguage-extension-token]
+  281 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:291:26: warning: extension used [-Wlanguage-extension-token]
+  291 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:296:26: warning: extension used [-Wlanguage-extension-token]
+  296 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:302:26: warning: extension used [-Wlanguage-extension-token]
+  302 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:310:26: warning: extension used [-Wlanguage-extension-token]
+  310 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:319:26: warning: extension used [-Wlanguage-extension-token]
+  319 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:328:26: warning: extension used [-Wlanguage-extension-token]
+  328 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:333:52: warning: extension used [-Wlanguage-extension-token]
+  333 | void __cdecl Dvar_SetInt64FromSource(dvar_s *dvar, __int64 value, DvarSetSource source);
+      |                                                    ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:347:42: warning: extension used [-Wlanguage-extension-token]
+  347 | void __cdecl Dvar_SetInt64(dvar_s *dvar, __int64 value);
+      |                                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:359:56: warning: extension used [-Wlanguage-extension-token]
+  359 | void __cdecl Dvar_SetInt64ByName(const char *dvarName, __int64 value);
+      |                                                        ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:370:26: warning: extension used [-Wlanguage-extension-token]
+  370 |                 unsigned __int16 flags);
+      |                          ^
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_memorytree.cpp:1:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_memorytree.h:3:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/q_shared.h:15:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_math.h:2:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/assertive.h:6:24: warning: extension used [-Wlanguage-extension-token]
+    6 | enum AssertOccurance : __int32
+      |                        ^
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_memorytree.cpp:1:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_memorytree.h:3:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/q_shared.h:15:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_math.h:5:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_pack.h:21:14: warning: extension used [-Wlanguage-extension-token]
+   21 |     unsigned __int8 array[4];
+      |              ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_pack.h:28:14: warning: extension used [-Wlanguage-extension-token]
+   28 |     unsigned __int8 array[4];
+      |              ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_pack.h:38:45: warning: extension used [-Wlanguage-extension-token]
+   38 | void __cdecl Byte4UnpackRgba(const unsigned __int8 *from, float *to);
+      |                                             ^
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_memorytree.cpp:1:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_memorytree.h:3:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/q_shared.h:15:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_math.h:29:18: warning: extension used [-Wlanguage-extension-token]
+   29 |         unsigned __int8 type;
+      |                  ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_math.h:30:18: warning: extension used [-Wlanguage-extension-token]
+   30 |         unsigned __int8 signbits;
+      |                  ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_math.h:31:18: warning: extension used [-Wlanguage-extension-token]
+   31 |         unsigned __int8 pad[2];
+      |                  ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_math.h:63:5: warning: anonymous structs are a GNU extension [-Wgnu-anonymous-struct]
+   63 |     struct {
+      |     ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_math.h:116:1: warning: extension used [-Wlanguage-extension-token]
+  116 | __int16 __cdecl ClampShort(int i);
+      | ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_math.h:117:10: warning: extension used [-Wlanguage-extension-token]
+  117 | unsigned __int8 __cdecl DirToByte(const float *dir);
+      |          ^
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_memorytree.cpp:1:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_memorytree.h:3:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/q_shared.h:91:89: warning: '&&' within '||' [-Wlogical-op-parentheses]
+   91 | inline bool EntNum_IsNetworked(int n) { return n < MAX_GENTITIES || n >= g_entNumCscEnd && n != ENTNUM_CSC_END; }
+      |                                                                  ~~ ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/q_shared.h:91:89: note: place parentheses around the '&&' expression to silence this warning
+   91 | inline bool EntNum_IsNetworked(int n) { return n < MAX_GENTITIES || n >= g_entNumCscEnd && n != ENTNUM_CSC_END; }
+      |                                                                     ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/q_shared.h:139:10: warning: extension used [-Wlanguage-extension-token]
+  139 | unsigned __int8 __cdecl I_CleanChar(unsigned __int8 character);
+      |          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/q_shared.h:139:46: warning: extension used [-Wlanguage-extension-token]
+  139 | unsigned __int8 __cdecl I_CleanChar(unsigned __int8 character);
+      |                                              ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/q_shared.h:385:33: warning: unused parameter 'fakearg' [-Wunused-parameter]
+  385 | inline void BLOPS_NULLSUB(void *fakearg = nullptr)
+      |                                 ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/q_shared.h:399:1: warning: extension used [-Wlanguage-extension-token]
+  399 | __forceinline static float COERCE_FLOAT(unsigned val) {
+      | ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/q_shared.h:407:1: warning: extension used [-Wlanguage-extension-token]
+  407 | __forceinline static unsigned int COERCE_UNSIGNED_INT(float val) {
+      | ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/q_shared.h:415:1: warning: extension used [-Wlanguage-extension-token]
+  415 | __forceinline static int COERCE_INT(float val) {
+      | ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/q_shared.h:693:1: warning: extension used [-Wlanguage-extension-token]
+
+  693 | __forceinline T _Pow_int(T base, int exp)
+
+      | ^
+
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_memorytree.cpp:414:20: warning: comparison of integers of different signs: 'int' and 'unsigned int' [-Wsign-compare]
+
+  414 |     while (newSize != size)
+
+      |            ~~~~~~~ ^  ~~~~
+
+68 warnings generated.
+
+[5/8] D:\Android\Sdk\ndk\30.0.16248370\toolchains\llvm\prebuilt\windows-x86_64\bin\clang++.exe --target=aarch64-none-linux-android28 --sysroot=D:/Android/Sdk/ndk/30.0.16248370/toolchains/llvm/prebuilt/windows-x86_64/sysroot -DBO1_STRING_POOL_GATE=1 -D_DEBUG=1 -I"D:/Desktop/Black Ops 2 Android/BlackOpsARM/src" -I"D:/Desktop/Black Ops 2 Android/BlackOpsARM" -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fno-limit-debug-info -O0 -g -fPIE -Wall -Wextra -Wpedantic -Werror=return-type -fms-extensions -fsigned-char -ffunction-sections -fdata-sections -fsanitize=undefined -fno-sanitize-recover=all -include "D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/win32_compat/msvc_compat.h" -std=gnu++20 -MD -MT CMakeFiles/bo1_string_pool_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/clientscript/cscr_stringlist.cpp.o -MF CMakeFiles\bo1_string_pool_tests.dir\D_\Desktop\Black_Ops_2_Android\BlackOpsARM\src\clientscript\cscr_stringlist.cpp.o.d -o CMakeFiles/bo1_string_pool_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/clientscript/cscr_stringlist.cpp.o -c "D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_stringlist.cpp"
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_stringlist.cpp:1:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_stringlist.h:3:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_main.h:7:25: warning: extension used [-Wlanguage-extension-token]
+    7 | enum scriptInstance_t : __int32
+      |                         ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_main.h:28:18: warning: extension used [-Wlanguage-extension-token]
+   28 |         unsigned __int16 filename;
+      |                  ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_main.h:34:20: warning: extension used [-Wlanguage-extension-token]
+   34 | enum fieldtype_t : __int32;
+      |                    ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_main.h:47:34: warning: extension used [-Wlanguage-extension-token]
+   47 |                         unsigned __int32 refCount : 16;
+      |                                  ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_main.h:48:34: warning: extension used [-Wlanguage-extension-token]
+   48 |                         unsigned __int32 user : 8;
+      |                                  ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_main.h:49:34: warning: extension used [-Wlanguage-extension-token]
+   49 |                         unsigned __int32 byteLen : 8;
+      |                                  ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_main.h:45:17: warning: anonymous structs are a GNU extension [-Wgnu-anonymous-struct]
+   45 |                 struct //$119B815E6C15BED54461C272BD343858 // sizeof=0x4
+      |                 ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_main.h:45:17: warning: anonymous types declared in an anonymous union are an extension [-Wnested-anon-types]
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_main.h:62:26: warning: extension used [-Wlanguage-extension-token]
+   62 |         enum MathTypes : __int32
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_main.h:71:28: warning: extension used [-Wlanguage-extension-token]
+   71 |         enum MathOpcodes : __int32
+      |                            ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_main.h:87:27: warning: extension used [-Wlanguage-extension-token]
+   87 |         enum ParamTypes : __int32
+      |                           ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_main.h:101:29: warning: extension used [-Wlanguage-extension-token]
+  101 | enum ExpressionParseTypes : __int32
+      |                             ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_main.h:138:1: warning: 'const' is not permitted on a declaration of a type [-Wmissing-declarations]
+  138 | const struct ParseValue // sizeof=0x8
+      | ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_main.h:212:62: warning: extension used [-Wlanguage-extension-token]
+  212 | void __cdecl Scr_FreeScripts(scriptInstance_t inst, unsigned __int8 sys);
+      |                                                              ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_main.h:214:26: warning: extension used [-Wlanguage-extension-token]
+  214 |                 unsigned __int8 *b,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_main.h:220:26: warning: extension used [-Wlanguage-extension-token]
+  220 |                 unsigned __int8 *b,
+      |                          ^
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_stringlist.cpp:1:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_stringlist.h:68:51: warning: extension used [-Wlanguage-extension-token]
+   68 | void __cdecl Scr_SetStringLiveUpdateSafe(unsigned __int16 *to, char *value, scriptInstance_t inst);
+      |                                                   ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_stringlist.h:69:37: warning: extension used [-Wlanguage-extension-token]
+   69 | void __cdecl Scr_SetString(unsigned __int16 *to, unsigned int from, scriptInstance_t inst);
+      |                                     ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_stringlist.h:70:51: warning: extension used [-Wlanguage-extension-token]
+   70 | void __cdecl Scr_SetStringFromCharString(unsigned __int16 *to, char *from, scriptInstance_t inst);
+      |                                                   ^
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_stringlist.cpp:2:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/assertive.h:6:24: warning: extension used [-Wlanguage-extension-token]
+    6 | enum AssertOccurance : __int32
+      |                        ^
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_stringlist.cpp:3:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_memorytree.h:3:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/q_shared.h:14:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:3:22: warning: extension used [-Wlanguage-extension-token]
+    3 | enum DvarSetSource : __int32
+      |                      ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:11:19: warning: extension used [-Wlanguage-extension-token]
+   11 | enum dvarType_t : __int32
+      |                   ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:35:9: warning: extension used [-Wlanguage-extension-token]
+   35 |         __int64 integer64;
+      |         ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:36:18: warning: extension used [-Wlanguage-extension-token]
+   36 |         unsigned __int64 unsignedInt64;
+      |                  ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:40:18: warning: extension used [-Wlanguage-extension-token]
+   40 |         unsigned __int8 color[4];
+      |                  ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:57:9: warning: extension used [-Wlanguage-extension-token]
+   57 |         __int64 min;
+      |         ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:58:9: warning: extension used [-Wlanguage-extension-token]
+   58 |         __int64 max;
+      |         ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:162:1: warning: extension used [-Wlanguage-extension-token]
+  162 | __int64 __cdecl Dvar_StringToInt64(const char *string);
+      | ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:170:62: warning: extension used [-Wlanguage-extension-token]
+  170 | void __cdecl Dvar_StringToColor(const char *string, unsigned __int8 *color);
+      |                                                              ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:199:85: warning: extension used [-Wlanguage-extension-token]
+  199 | const dvar_s *__cdecl _Dvar_RegisterBool(const char *dvarName, bool value, unsigned __int16 flags, const char *description);
+      |                                                                                     ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:203:26: warning: extension used [-Wlanguage-extension-token]
+  203 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:211:26: warning: extension used [-Wlanguage-extension-token]
+  211 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:219:26: warning: extension used [-Wlanguage-extension-token]
+  219 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:232:26: warning: extension used [-Wlanguage-extension-token]
+  232 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:241:26: warning: extension used [-Wlanguage-extension-token]
+  241 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:250:26: warning: extension used [-Wlanguage-extension-token]
+  250 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:254:17: warning: extension used [-Wlanguage-extension-token]
+  254 |                 __int64 value,
+      |                 ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:255:17: warning: extension used [-Wlanguage-extension-token]
+  255 |                 __int64 min,
+      |                 ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:256:17: warning: extension used [-Wlanguage-extension-token]
+  256 |                 __int64 max,
+      |                 ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:257:26: warning: extension used [-Wlanguage-extension-token]
+  257 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:264:26: warning: extension used [-Wlanguage-extension-token]
+  264 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:272:26: warning: extension used [-Wlanguage-extension-token]
+  272 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:281:26: warning: extension used [-Wlanguage-extension-token]
+  281 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:291:26: warning: extension used [-Wlanguage-extension-token]
+  291 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:296:26: warning: extension used [-Wlanguage-extension-token]
+  296 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:302:26: warning: extension used [-Wlanguage-extension-token]
+  302 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:310:26: warning: extension used [-Wlanguage-extension-token]
+  310 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:319:26: warning: extension used [-Wlanguage-extension-token]
+  319 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:328:26: warning: extension used [-Wlanguage-extension-token]
+  328 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:333:52: warning: extension used [-Wlanguage-extension-token]
+  333 | void __cdecl Dvar_SetInt64FromSource(dvar_s *dvar, __int64 value, DvarSetSource source);
+      |                                                    ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:347:42: warning: extension used [-Wlanguage-extension-token]
+  347 | void __cdecl Dvar_SetInt64(dvar_s *dvar, __int64 value);
+      |                                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:359:56: warning: extension used [-Wlanguage-extension-token]
+  359 | void __cdecl Dvar_SetInt64ByName(const char *dvarName, __int64 value);
+      |                                                        ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:370:26: warning: extension used [-Wlanguage-extension-token]
+  370 |                 unsigned __int16 flags);
+      |                          ^
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_stringlist.cpp:3:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_memorytree.h:3:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/q_shared.h:15:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_math.h:5:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_pack.h:21:14: warning: extension used [-Wlanguage-extension-token]
+   21 |     unsigned __int8 array[4];
+      |              ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_pack.h:28:14: warning: extension used [-Wlanguage-extension-token]
+   28 |     unsigned __int8 array[4];
+      |              ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_pack.h:38:45: warning: extension used [-Wlanguage-extension-token]
+   38 | void __cdecl Byte4UnpackRgba(const unsigned __int8 *from, float *to);
+      |                                             ^
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_stringlist.cpp:3:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_memorytree.h:3:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/q_shared.h:15:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_math.h:29:18: warning: extension used [-Wlanguage-extension-token]
+   29 |         unsigned __int8 type;
+      |                  ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_math.h:30:18: warning: extension used [-Wlanguage-extension-token]
+   30 |         unsigned __int8 signbits;
+      |                  ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_math.h:31:18: warning: extension used [-Wlanguage-extension-token]
+   31 |         unsigned __int8 pad[2];
+      |                  ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_math.h:63:5: warning: anonymous structs are a GNU extension [-Wgnu-anonymous-struct]
+   63 |     struct {
+      |     ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_math.h:116:1: warning: extension used [-Wlanguage-extension-token]
+  116 | __int16 __cdecl ClampShort(int i);
+      | ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_math.h:117:10: warning: extension used [-Wlanguage-extension-token]
+  117 | unsigned __int8 __cdecl DirToByte(const float *dir);
+      |          ^
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_stringlist.cpp:3:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_memorytree.h:3:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/q_shared.h:91:89: warning: '&&' within '||' [-Wlogical-op-parentheses]
+   91 | inline bool EntNum_IsNetworked(int n) { return n < MAX_GENTITIES || n >= g_entNumCscEnd && n != ENTNUM_CSC_END; }
+      |                                                                  ~~ ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/q_shared.h:91:89: note: place parentheses around the '&&' expression to silence this warning
+   91 | inline bool EntNum_IsNetworked(int n) { return n < MAX_GENTITIES || n >= g_entNumCscEnd && n != ENTNUM_CSC_END; }
+      |                                                                     ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/q_shared.h:139:10: warning: extension used [-Wlanguage-extension-token]
+  139 | unsigned __int8 __cdecl I_CleanChar(unsigned __int8 character);
+      |          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/q_shared.h:139:46: warning: extension used [-Wlanguage-extension-token]
+  139 | unsigned __int8 __cdecl I_CleanChar(unsigned __int8 character);
+      |                                              ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/q_shared.h:385:33: warning: unused parameter 'fakearg' [-Wunused-parameter]
+  385 | inline void BLOPS_NULLSUB(void *fakearg = nullptr)
+      |                                 ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/q_shared.h:399:1: warning: extension used [-Wlanguage-extension-token]
+  399 | __forceinline static float COERCE_FLOAT(unsigned val) {
+      | ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/q_shared.h:407:1: warning: extension used [-Wlanguage-extension-token]
+  407 | __forceinline static unsigned int COERCE_UNSIGNED_INT(float val) {
+      | ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/q_shared.h:415:1: warning: extension used [-Wlanguage-extension-token]
+  415 | __forceinline static int COERCE_INT(float val) {
+      | ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/q_shared.h:693:1: warning: extension used [-Wlanguage-extension-token]
+  693 | __forceinline T _Pow_int(T base, int exp)
+      | ^
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_stringlist.cpp:17:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_variable.h:18:6: warning: '$' in identifier [-Wdollar-in-identifier-extension]
+   18 | enum $DC39398868F8F7F398F8DA27178506AD : __int32
+      |      ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_stringlist.cpp:25:31: warning: missing field 'inited' initializer [-Wmissing-field-initializers]
+   25 |     { &gScrStringHashTable[0] },        // SCRIPTINSTANCE_SERVER
+      |                               ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_stringlist.cpp:26:36: warning: missing field 'inited' initializer [-Wmissing-field-initializers]
+   26 |     { &gScrStringHashTable[0x8000] }    // SCRIPTINSTANCE_CLIENT
+      |                                    ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_stringlist.cpp:339:165: warning: '&' within '|' [-Wbitwise-op-parentheses]
+  339 |                                                                                                                  | gScrStringGlob[inst].hashTable[prev].status_next & 0x30000;
+      |                                                                                                                  ~ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_stringlist.cpp:339:165: note: place parentheses around the '&' expression to silence this warning
+  339 |                                                                                                                  | gScrStringGlob[inst].hashTable[prev].status_next & 0x30000;
+      |                                                                                                                                                                     ^        
+      |                                                                                                                    (                                                         )
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_stringlist.cpp:340:102: warning: '&' within '|' [-Wbitwise-op-parentheses]
+  340 |                 newEntry->status_next = (unsigned __int16)entry->status_next | newEntry->status_next & 0x30000;
+      |                                                                              ~ ~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_stringlist.cpp:340:102: note: place parentheses around the '&' expression to silence this warning
+  340 |                 newEntry->status_next = (unsigned __int16)entry->status_next | newEntry->status_next & 0x30000;
+      |                                                                                                      ^        
+      |                                                                                (                              )
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_stringlist.cpp:341:68: warning: '&' within '|' [-Wbitwise-op-parentheses]
+  341 |                 entry->status_next = newIndex | entry->status_next & 0x30000;
+      |                                               ~ ~~~~~~~~~~~~~~~~~~~^~~~~~~~~
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_stringlist.cpp:341:68: note: place parentheses around the '&' expression to silence this warning
+  341 |                 entry->status_next = newIndex | entry->status_next & 0x30000;
+      |                                                                    ^        
+      |                                                 (                           )
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_stringlist.cpp:461:11: warning: unused variable 'v4' [-Wunused-variable]
+  461 |     char *v4; // eax
+      |           ^~
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_stringlist.cpp:462:20: warning: unused variable 'v5' [-Wunused-variable]
+  462 |     signed __int32 v5; // [esp+4h] [ebp-14h]
+      |                    ^~
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_stringlist.cpp:603:165: warning: '&' within '|' [-Wbitwise-op-parentheses]
+  603 |                                                                                                                  | gScrStringGlob[inst].hashTable[prev].status_next & 0x30000;
+      |                                                                                                                  ~ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_stringlist.cpp:603:165: note: place parentheses around the '&' expression to silence this warning
+  603 |                                                                                                                  | gScrStringGlob[inst].hashTable[prev].status_next & 0x30000;
+      |                                                                                                                                                                     ^        
+      |                                                                                                                    (                                                         )
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_stringlist.cpp:604:102: warning: '&' within '|' [-Wbitwise-op-parentheses]
+  604 |                 newEntry->status_next = (unsigned __int16)entry->status_next | newEntry->status_next & 0x30000;
+      |                                                                              ~ ~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_stringlist.cpp:604:102: note: place parentheses around the '&' expression to silence this warning
+  604 |                 newEntry->status_next = (unsigned __int16)entry->status_next | newEntry->status_next & 0x30000;
+      |                                                                                                      ^        
+      |                                                                                (                              )
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_stringlist.cpp:605:68: warning: '&' within '|' [-Wbitwise-op-parentheses]
+  605 |                 entry->status_next = newIndex | entry->status_next & 0x30000;
+      |                                               ~ ~~~~~~~~~~~~~~~~~~~^~~~~~~~~
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_stringlist.cpp:605:68: note: place parentheses around the '&' expression to silence this warning
+  605 |                 entry->status_next = newIndex | entry->status_next & 0x30000;
+      |                                                                    ^        
+      |                                                 (                           )
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_stringlist.cpp:668:79: warning: '&' within '|' [-Wbitwise-op-parentheses]
+  668 |         entry->status_next = (unsigned __int16)newIndexa | entry->status_next & 0x30000;
+      |                                                          ~ ~~~~~~~~~~~~~~~~~~~^~~~~~~~~
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_stringlist.cpp:668:79: note: place parentheses around the '&' expression to silence this warning
+  668 |         entry->status_next = (unsigned __int16)newIndexa | entry->status_next & 0x30000;
+      |                                                                               ^        
+      |                                                            (                           )
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_stringlist.cpp:725:165: warning: '&' within '|' [-Wbitwise-op-parentheses]
+  725 |                                                                                                                 | gScrStringGlob[inst].hashTable[preva].status_next & 0x30000;
+      |                                                                                                                 ~ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_stringlist.cpp:725:165: note: place parentheses around the '&' expression to silence this warning
+  725 |                                                                                                                 | gScrStringGlob[inst].hashTable[preva].status_next & 0x30000;
+      |                                                                                                                                                                     ^        
+      |                                                                                                                   (                                                          )
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_stringlist.cpp:735:165: warning: '&' within '|' [-Wbitwise-op-parentheses]
+  735 |                                                                                                                 | gScrStringGlob[inst].hashTable[prevb].status_next & 0x30000;
+      |                                                                                                                 ~ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_stringlist.cpp:735:165: note: place parentheses around the '&' expression to silence this warning
+  735 |                                                                                                                 | gScrStringGlob[inst].hashTable[prevb].status_next & 0x30000;
+      |                                                                                                                                                                     ^        
+      |                                                                                                                   (                                                          )
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_stringlist.cpp:765:67: warning: '&' within '|' [-Wbitwise-op-parentheses]
+  765 |     refStrb->data = ((unsigned __int8)user << 16) | refStrb->data & 0xFF00FFFF;
+      |                                                   ~ ~~~~~~~~~~~~~~^~~~~~~~~~~~
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_stringlist.cpp:765:67: note: place parentheses around the '&' expression to silence this warning
+  765 |     refStrb->data = ((unsigned __int8)user << 16) | refStrb->data & 0xFF00FFFF;
+      |                                                                   ^           
+      |                                                     (                         )
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_stringlist.cpp:779:35: warning: '&' within '|' [-Wbitwise-op-parentheses]
+  779 |     refStrb->data = refStrb->data & 0xFFFF0000 | 1;
+      |                     ~~~~~~~~~~~~~~^~~~~~~~~~~~ ~
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_stringlist.cpp:779:35: note: place parentheses around the '&' expression to silence this warning
+  779 |     refStrb->data = refStrb->data & 0xFFFF0000 | 1;
+      |                                   ^
+      |                     (                         )
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_stringlist.cpp:781:66: warning: '&' within '|' [-Wbitwise-op-parentheses]
+  781 |     refStrb->data = ((unsigned __int8)len << 24) | refStrb->data & 0xFFFFFF;
+      |                                                  ~ ~~~~~~~~~~~~~~^~~~~~~~~~
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_stringlist.cpp:781:66: note: place parentheses around the '&' expression to silence this warning
+  781 |     refStrb->data = ((unsigned __int8)len << 24) | refStrb->data & 0xFFFFFF;
+      |                                                                  ^         
+      |                                                    (                       )
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_stringlist.cpp:881:11: warning: unused variable 'v3' [-Wunused-variable]
+  881 |     char *v3; // eax
+      |           ^~
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_stringlist.cpp:882:11: warning: unused variable 'v4' [-Wunused-variable]
+  882 |     char *v4; // eax
+      |           ^~
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_stringlist.cpp:883:20: warning: unused variable 'v5' [-Wunused-variable]
+  883 |     signed __int32 v5; // [esp+4h] [ebp-14h]
+      |                    ^~
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_stringlist.cpp:938:17: warning: unused variable 'v5' [-Wunused-variable]
+  938 |     const char *v5; // eax
+      |                 ^~
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_stringlist.cpp:939:17: warning: unused variable 'v6' [-Wunused-variable]
+  939 |     const char *v6; // eax
+      |                 ^~
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_stringlist.cpp:940:18: warning: unused variable 'v7' [-Wunused-variable]
+  940 |     volatile int v7; // [esp+0h] [ebp-10h]
+      |                  ^~
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_stringlist.cpp:1179:161: warning: '&' within '|' [-Wbitwise-op-parentheses]
+ 1179 |                                                                                                              | gScrStringGlob[inst].hashTable[prev].status_next & 0x30000;
+      |                                                                                                              ~ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_stringlist.cpp:1179:161: note: place parentheses around the '&' expression to silence this warning
+ 1179 |                                                                                                              | gScrStringGlob[inst].hashTable[prev].status_next & 0x30000;
+      |                                                                                                                                                                 ^        
+      |                                                                                                                (                                                         )
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_stringlist.cpp:1083:11: warning: unused variable 'v4' [-Wunused-variable]
+ 1083 |     char *v4; // eax
+      |           ^~
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_stringlist.cpp:1334:113: warning: '&' within '|' [-Wbitwise-op-parentheses]
+ 1334 |             refStr->data = ((unsigned __int8)(~(std::uint8_t)user & HIWORD(refStr->data)) << 16) | refStr->data & 0xFF00FFFF;
+      |                                                                                                  ~ ~~~~~~~~~~~~~^~~~~~~~~~~~
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_stringlist.cpp:1334:113: note: place parentheses around the '&' expression to silence this warning
+ 1334 |             refStr->data = ((unsigned __int8)(~(std::uint8_t)user & HIWORD(refStr->data)) << 16) | refStr->data & 0xFF00FFFF;
+      |                                                                                                                 ^           
+      |                                                                                                    (                        )
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_stringlist.cpp:1375:117: warning: '&' within '|' [-Wbitwise-op-parentheses]
+ 1375 |                 refStr->data = ((unsigned __int8)(~(std::uint8_t)from & HIWORD(refStr->data)) << 16) | refStr->data & 0xFF00FFFF;
+      |                                                                                                      ~ ~~~~~~~~~~~~~^~~~~~~~~~~~
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_stringlist.cpp:1375:117: note: place parentheses around the '&' expression to silence this warning
+ 1375 |                 refStr->data = ((unsigned __int8)(~(std::uint8_t)from & HIWORD(refStr->data)) << 16) | refStr->data & 0xFF00FFFF;
+      |                                                                                                                     ^           
+      |                                                                                                        (                        )
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_stringlist.cpp:1377:100: warning: '&' within '|' [-Wbitwise-op-parentheses]
+ 1377 |                 refStr->data = ((unsigned __int8)(to | HIWORD(refStr->data)) << 16) | refStr->data & 0xFF00FFFF;
+      |                                                                                     ~ ~~~~~~~~~~~~~^~~~~~~~~~~~
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_stringlist.cpp:1377:100: note: place parentheses around the '&' expression to silence this warning
+ 1377 |                 refStr->data = ((unsigned __int8)(to | HIWORD(refStr->data)) << 16) | refStr->data & 0xFF00FFFF;
+      |                                                                                                    ^           
+
+      |                                                                                       (                        )
+
+98 warnings generated.
+
+[6/8] D:\Android\Sdk\ndk\30.0.16248370\toolchains\llvm\prebuilt\windows-x86_64\bin\clang++.exe --target=aarch64-none-linux-android28 --sysroot=D:/Android/Sdk/ndk/30.0.16248370/toolchains/llvm/prebuilt/windows-x86_64/sysroot -DBO1_STRING_POOL_GATE=1 -D_DEBUG=1 -I"D:/Desktop/Black Ops 2 Android/BlackOpsARM/src" -I"D:/Desktop/Black Ops 2 Android/BlackOpsARM" -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fno-limit-debug-info -O0 -g -fPIE -Wall -Wextra -Wpedantic -Werror=return-type -fms-extensions -fsigned-char -ffunction-sections -fdata-sections -fsanitize=undefined -fno-sanitize-recover=all -include "D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/win32_compat/msvc_compat.h" -std=gnu++20 -MD -MT CMakeFiles/bo1_string_pool_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/android/script_string_services.cpp.o -MF CMakeFiles\bo1_string_pool_tests.dir\D_\Desktop\Black_Ops_2_Android\BlackOpsARM\src\platform\android\script_string_services.cpp.o.d -o CMakeFiles/bo1_string_pool_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/android/script_string_services.cpp.o -c "D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/android/script_string_services.cpp"
+[7/8] D:\Android\Sdk\ndk\30.0.16248370\toolchains\llvm\prebuilt\windows-x86_64\bin\clang++.exe --target=aarch64-none-linux-android28 --sysroot=D:/Android/Sdk/ndk/30.0.16248370/toolchains/llvm/prebuilt/windows-x86_64/sysroot -DBO1_STRING_POOL_GATE=1 -D_DEBUG=1 -I"D:/Desktop/Black Ops 2 Android/BlackOpsARM/src" -I"D:/Desktop/Black Ops 2 Android/BlackOpsARM" -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fno-limit-debug-info -O0 -g -fPIE -Wall -Wextra -Wpedantic -Werror=return-type -fms-extensions -fsigned-char -ffunction-sections -fdata-sections -fsanitize=undefined -fno-sanitize-recover=all -include "D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/win32_compat/msvc_compat.h" -std=gnu++20 -MD -MT CMakeFiles/bo1_string_pool_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/string_pool_tests.cpp.o -MF CMakeFiles\bo1_string_pool_tests.dir\D_\Desktop\Black_Ops_2_Android\BlackOpsARM\tools\port\tests\string_pool_tests.cpp.o.d -o CMakeFiles/bo1_string_pool_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/string_pool_tests.cpp.o -c "D:/Desktop/Black Ops 2 Android/BlackOpsARM/tools/port/tests/string_pool_tests.cpp"
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/tools/port/tests/string_pool_tests.cpp:1:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/script_pool_services.h:2:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/critical_sections.h:3:24: warning: extension used [-Wlanguage-extension-token]
+    3 | enum CriticalSection : __int32
+      |                        ^
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/tools/port/tests/string_pool_tests.cpp:1:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/script_pool_services.h:3:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_errors.h:3:20: warning: extension used [-Wlanguage-extension-token]
+    3 | enum errorParm_t : __int32
+      |                    ^
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/tools/port/tests/string_pool_tests.cpp:1:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/script_pool_services.h:4:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/q_shared.h:14:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:3:22: warning: extension used [-Wlanguage-extension-token]
+    3 | enum DvarSetSource : __int32
+      |                      ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:11:19: warning: extension used [-Wlanguage-extension-token]
+   11 | enum dvarType_t : __int32
+      |                   ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:35:9: warning: extension used [-Wlanguage-extension-token]
+   35 |         __int64 integer64;
+      |         ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:36:18: warning: extension used [-Wlanguage-extension-token]
+   36 |         unsigned __int64 unsignedInt64;
+      |                  ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:40:18: warning: extension used [-Wlanguage-extension-token]
+   40 |         unsigned __int8 color[4];
+      |                  ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:57:9: warning: extension used [-Wlanguage-extension-token]
+   57 |         __int64 min;
+      |         ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:58:9: warning: extension used [-Wlanguage-extension-token]
+   58 |         __int64 max;
+      |         ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:162:1: warning: extension used [-Wlanguage-extension-token]
+  162 | __int64 __cdecl Dvar_StringToInt64(const char *string);
+      | ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:170:62: warning: extension used [-Wlanguage-extension-token]
+  170 | void __cdecl Dvar_StringToColor(const char *string, unsigned __int8 *color);
+      |                                                              ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:199:85: warning: extension used [-Wlanguage-extension-token]
+  199 | const dvar_s *__cdecl _Dvar_RegisterBool(const char *dvarName, bool value, unsigned __int16 flags, const char *description);
+      |                                                                                     ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:203:26: warning: extension used [-Wlanguage-extension-token]
+  203 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:211:26: warning: extension used [-Wlanguage-extension-token]
+  211 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:219:26: warning: extension used [-Wlanguage-extension-token]
+  219 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:232:26: warning: extension used [-Wlanguage-extension-token]
+  232 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:241:26: warning: extension used [-Wlanguage-extension-token]
+  241 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:250:26: warning: extension used [-Wlanguage-extension-token]
+  250 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:254:17: warning: extension used [-Wlanguage-extension-token]
+  254 |                 __int64 value,
+      |                 ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:255:17: warning: extension used [-Wlanguage-extension-token]
+  255 |                 __int64 min,
+      |                 ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:256:17: warning: extension used [-Wlanguage-extension-token]
+  256 |                 __int64 max,
+      |                 ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:257:26: warning: extension used [-Wlanguage-extension-token]
+  257 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:264:26: warning: extension used [-Wlanguage-extension-token]
+  264 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:272:26: warning: extension used [-Wlanguage-extension-token]
+  272 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:281:26: warning: extension used [-Wlanguage-extension-token]
+  281 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:291:26: warning: extension used [-Wlanguage-extension-token]
+  291 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:296:26: warning: extension used [-Wlanguage-extension-token]
+  296 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:302:26: warning: extension used [-Wlanguage-extension-token]
+  302 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:310:26: warning: extension used [-Wlanguage-extension-token]
+  310 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:319:26: warning: extension used [-Wlanguage-extension-token]
+  319 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:328:26: warning: extension used [-Wlanguage-extension-token]
+  328 |                 unsigned __int16 flags,
+      |                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:333:52: warning: extension used [-Wlanguage-extension-token]
+  333 | void __cdecl Dvar_SetInt64FromSource(dvar_s *dvar, __int64 value, DvarSetSource source);
+      |                                                    ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:347:42: warning: extension used [-Wlanguage-extension-token]
+  347 | void __cdecl Dvar_SetInt64(dvar_s *dvar, __int64 value);
+      |                                          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:359:56: warning: extension used [-Wlanguage-extension-token]
+  359 | void __cdecl Dvar_SetInt64ByName(const char *dvarName, __int64 value);
+      |                                                        ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.h:370:26: warning: extension used [-Wlanguage-extension-token]
+  370 |                 unsigned __int16 flags);
+      |                          ^
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/tools/port/tests/string_pool_tests.cpp:1:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/script_pool_services.h:4:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/q_shared.h:15:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_math.h:2:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/assertive.h:6:24: warning: extension used [-Wlanguage-extension-token]
+    6 | enum AssertOccurance : __int32
+      |                        ^
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/tools/port/tests/string_pool_tests.cpp:1:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/script_pool_services.h:4:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/q_shared.h:15:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_math.h:5:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_pack.h:21:14: warning: extension used [-Wlanguage-extension-token]
+   21 |     unsigned __int8 array[4];
+      |              ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_pack.h:28:14: warning: extension used [-Wlanguage-extension-token]
+   28 |     unsigned __int8 array[4];
+      |              ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_pack.h:38:45: warning: extension used [-Wlanguage-extension-token]
+   38 | void __cdecl Byte4UnpackRgba(const unsigned __int8 *from, float *to);
+      |                                             ^
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/tools/port/tests/string_pool_tests.cpp:1:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/script_pool_services.h:4:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/q_shared.h:15:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_math.h:29:18: warning: extension used [-Wlanguage-extension-token]
+   29 |         unsigned __int8 type;
+      |                  ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_math.h:30:18: warning: extension used [-Wlanguage-extension-token]
+   30 |         unsigned __int8 signbits;
+      |                  ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_math.h:31:18: warning: extension used [-Wlanguage-extension-token]
+   31 |         unsigned __int8 pad[2];
+      |                  ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_math.h:63:5: warning: anonymous structs are a GNU extension [-Wgnu-anonymous-struct]
+   63 |     struct {
+      |     ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_math.h:116:1: warning: extension used [-Wlanguage-extension-token]
+  116 | __int16 __cdecl ClampShort(int i);
+      | ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_math.h:117:10: warning: extension used [-Wlanguage-extension-token]
+  117 | unsigned __int8 __cdecl DirToByte(const float *dir);
+      |          ^
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/tools/port/tests/string_pool_tests.cpp:1:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/script_pool_services.h:4:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/q_shared.h:91:89: warning: '&&' within '||' [-Wlogical-op-parentheses]
+   91 | inline bool EntNum_IsNetworked(int n) { return n < MAX_GENTITIES || n >= g_entNumCscEnd && n != ENTNUM_CSC_END; }
+      |                                                                  ~~ ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/q_shared.h:91:89: note: place parentheses around the '&&' expression to silence this warning
+   91 | inline bool EntNum_IsNetworked(int n) { return n < MAX_GENTITIES || n >= g_entNumCscEnd && n != ENTNUM_CSC_END; }
+      |                                                                     ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/q_shared.h:139:10: warning: extension used [-Wlanguage-extension-token]
+  139 | unsigned __int8 __cdecl I_CleanChar(unsigned __int8 character);
+      |          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/q_shared.h:139:46: warning: extension used [-Wlanguage-extension-token]
+  139 | unsigned __int8 __cdecl I_CleanChar(unsigned __int8 character);
+      |                                              ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/q_shared.h:385:33: warning: unused parameter 'fakearg' [-Wunused-parameter]
+  385 | inline void BLOPS_NULLSUB(void *fakearg = nullptr)
+      |                                 ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/q_shared.h:399:1: warning: extension used [-Wlanguage-extension-token]
+  399 | __forceinline static float COERCE_FLOAT(unsigned val) {
+      | ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/q_shared.h:407:1: warning: extension used [-Wlanguage-extension-token]
+  407 | __forceinline static unsigned int COERCE_UNSIGNED_INT(float val) {
+      | ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/q_shared.h:415:1: warning: extension used [-Wlanguage-extension-token]
+  415 | __forceinline static int COERCE_INT(float val) {
+      | ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/q_shared.h:693:1: warning: extension used [-Wlanguage-extension-token]
+  693 | __forceinline T _Pow_int(T base, int exp)
+      | ^
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/tools/port/tests/string_pool_tests.cpp:1:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/script_pool_services.h:5:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_main.h:45:17: warning: anonymous structs are a GNU extension [-Wgnu-anonymous-struct]
+   45 |                 struct //$119B815E6C15BED54461C272BD343858 // sizeof=0x4
+      |                 ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_main.h:45:17: warning: anonymous types declared in an anonymous union are an extension [-Wnested-anon-types]
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/clientscript/cscr_main.h:138:1: warning: 'const' is not permitted on a declaration of a type [-Wmissing-declarations]
+
+  138 | const struct ParseValue // sizeof=0x8
+
+      | ^
+
+56 warnings generated.
+
+[8/8] cmd.exe /C "cd . && D:\Android\Sdk\ndk\30.0.16248370\toolchains\llvm\prebuilt\windows-x86_64\bin\clang++.exe --target=aarch64-none-linux-android28 --sysroot=D:/Android/Sdk/ndk/30.0.16248370/toolchains/llvm/prebuilt/windows-x86_64/sysroot -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fno-limit-debug-info -O0 -g -static-libstdc++ -Wl,--build-id=sha1 -Wl,--no-rosegment -Wl,--no-undefined-version -Wl,--fatal-warnings -Wl,--no-undefined -Qunused-arguments      -Wl,--gc-sections -fsanitize=undefined CMakeFiles/bo1_string_pool_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/string_pool_tests.cpp.o CMakeFiles/bo1_string_pool_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/string_pool_support.cpp.o CMakeFiles/bo1_string_pool_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/clientscript/cscr_stringlist.cpp.o CMakeFiles/bo1_string_pool_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/clientscript/cscr_memorytree.cpp.o CMakeFiles/bo1_string_pool_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/clientscript/cscr_instance.cpp.o CMakeFiles/bo1_string_pool_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/android/script_pool_bridge.cpp.o CMakeFiles/bo1_string_pool_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/android/script_string_services.cpp.o -o bo1_string_pool_tests  -latomic -lm && cd ."

@@ -1,0 +1,8 @@
+{"locks":{"critical_section":74,"initialize_threads":8,"recursive_depth":3,"locked_updates":16000,"partial_release_excludes_worker":true,"script_sections_independent":true}}
+{"entry_init":{"round":0,"mod":false,"head_index":16,"last_index":32767,"free_nodes":32752,"stride":16,"reserved_sentinel_untouched":true,"payload_tails_unchanged":true,"hash_buckets_unchanged":true}}
+{"entry_init":{"round":0,"mod":true,"head_index":16,"last_index":65535,"free_nodes":65520,"stride":16,"reserved_sentinel_untouched":true,"payload_tails_unchanged":true,"hash_buckets_unchanged":true}}
+{"entry_init":{"round":0,"mod":false,"head_index":16,"last_index":32767,"free_nodes":32752,"stride":16,"reserved_sentinel_untouched":true,"payload_tails_unchanged":true,"hash_buckets_unchanged":true}}
+{"entry_init":{"round":1,"mod":false,"head_index":16,"last_index":32767,"free_nodes":32752,"stride":16,"reserved_sentinel_untouched":true,"payload_tails_unchanged":true,"hash_buckets_unchanged":true}}
+{"entry_init":{"round":1,"mod":true,"head_index":16,"last_index":65535,"free_nodes":65520,"stride":16,"reserved_sentinel_untouched":true,"payload_tails_unchanged":true,"hash_buckets_unchanged":true}}
+{"entry_init":{"round":1,"mod":false,"head_index":16,"last_index":32767,"free_nodes":32752,"stride":16,"reserved_sentinel_untouched":true,"payload_tails_unchanged":true,"hash_buckets_unchanged":true}}
+{"schema":"BlackOpsARM.TASK31.entry-init.v1","pointer_bytes":4,"entry_bytes":16,"pool_bytes":1048576,"hash_bytes":65536,"initializations":6,"full_db_init_executed":false,"entry_allocation_executed":false,"registry_publication_executed":false}

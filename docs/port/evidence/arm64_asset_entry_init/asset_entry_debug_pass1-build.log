@@ -1,0 +1,135 @@
+[1/5] D:\Android\Sdk\ndk\30.0.16248370\toolchains\llvm\prebuilt\windows-x86_64\bin\clang++.exe --target=aarch64-none-linux-android28 --sysroot=D:/Android/Sdk/ndk/30.0.16248370/toolchains/llvm/prebuilt/windows-x86_64/sysroot -DBO1_ASSET_ENTRY_GATE=1 -DBO1_STRINGTABLE_OWNER_GATE=1 -I"D:/Desktop/Black Ops 2 Android/BlackOpsARM/src" -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fno-limit-debug-info -O0 -g -fPIE -Wall -Wextra -Wpedantic -Werror=return-type -fms-extensions -ffunction-sections -fdata-sections -fsanitize=undefined -fno-sanitize-recover=all -include "D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/win32_compat/msvc_compat.h" -std=gnu++20 -MD -MT CMakeFiles/bo1_asset_entry_init_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/android/script_pool_bridge.cpp.o -MF CMakeFiles\bo1_asset_entry_init_tests.dir\D_\Desktop\Black_Ops_2_Android\BlackOpsARM\src\platform\android\script_pool_bridge.cpp.o.d -o CMakeFiles/bo1_asset_entry_init_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/android/script_pool_bridge.cpp.o -c "D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/android/script_pool_bridge.cpp"
+FAILED: CMakeFiles/bo1_asset_entry_init_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/android/script_pool_bridge.cpp.o 
+D:\Android\Sdk\ndk\30.0.16248370\toolchains\llvm\prebuilt\windows-x86_64\bin\clang++.exe --target=aarch64-none-linux-android28 --sysroot=D:/Android/Sdk/ndk/30.0.16248370/toolchains/llvm/prebuilt/windows-x86_64/sysroot -DBO1_ASSET_ENTRY_GATE=1 -DBO1_STRINGTABLE_OWNER_GATE=1 -I"D:/Desktop/Black Ops 2 Android/BlackOpsARM/src" -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fno-limit-debug-info -O0 -g -fPIE -Wall -Wextra -Wpedantic -Werror=return-type -fms-extensions -ffunction-sections -fdata-sections -fsanitize=undefined -fno-sanitize-recover=all -include "D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/win32_compat/msvc_compat.h" -std=gnu++20 -MD -MT CMakeFiles/bo1_asset_entry_init_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/android/script_pool_bridge.cpp.o -MF CMakeFiles\bo1_asset_entry_init_tests.dir\D_\Desktop\Black_Ops_2_Android\BlackOpsARM\src\platform\android\script_pool_bridge.cpp.o.d -o CMakeFiles/bo1_asset_entry_init_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/android/script_pool_bridge.cpp.o -c "D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/android/script_pool_bridge.cpp"
+In file included from <built-in>:1:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/win32_compat/msvc_compat.h:12:15: error: static assertion failed due to requirement 'static_cast<char>(-1) < 0': Compile this adapter with -fsigned-char.
+   12 | static_assert(static_cast<char>(-1) < 0, "Compile this adapter with -fsigned-char.");
+      |               ^~~~~~~~~~~~~~~~~~~~~~~~~
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/win32_compat/msvc_compat.h:12:37: note: expression evaluates to ''<FF>' (0xFF, 255) < 0'
+   12 | static_assert(static_cast<char>(-1) < 0, "Compile this adapter with -fsigned-char.");
+      |               ~~~~~~~~~~~~~~~~~~~~~~^~~
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/android/script_pool_bridge.cpp:4:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/critical_section_services.h:2:
+
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/critical_sections.h:3:24: warning: extension used [-Wlanguage-extension-token]
+
+    3 | enum CriticalSection : __int32
+
+      |                        ^
+
+1 warning and 1 error generated.
+
+[2/5] D:\Android\Sdk\ndk\30.0.16248370\toolchains\llvm\prebuilt\windows-x86_64\bin\clang++.exe --target=aarch64-none-linux-android28 --sysroot=D:/Android/Sdk/ndk/30.0.16248370/toolchains/llvm/prebuilt/windows-x86_64/sysroot -DBO1_ASSET_ENTRY_GATE=1 -DBO1_STRINGTABLE_OWNER_GATE=1 -I"D:/Desktop/Black Ops 2 Android/BlackOpsARM/src" -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fno-limit-debug-info -O0 -g -fPIE -Wall -Wextra -Wpedantic -Werror=return-type -fms-extensions -ffunction-sections -fdata-sections -fsanitize=undefined -fno-sanitize-recover=all -include "D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/win32_compat/msvc_compat.h" -std=gnu++20 -MD -MT CMakeFiles/bo1_asset_entry_init_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/database/db_registry.cpp.o -MF CMakeFiles\bo1_asset_entry_init_tests.dir\D_\Desktop\Black_Ops_2_Android\BlackOpsARM\src\database\db_registry.cpp.o.d -o CMakeFiles/bo1_asset_entry_init_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/database/db_registry.cpp.o -c "D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_registry.cpp"
+FAILED: CMakeFiles/bo1_asset_entry_init_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/database/db_registry.cpp.o 
+D:\Android\Sdk\ndk\30.0.16248370\toolchains\llvm\prebuilt\windows-x86_64\bin\clang++.exe --target=aarch64-none-linux-android28 --sysroot=D:/Android/Sdk/ndk/30.0.16248370/toolchains/llvm/prebuilt/windows-x86_64/sysroot -DBO1_ASSET_ENTRY_GATE=1 -DBO1_STRINGTABLE_OWNER_GATE=1 -I"D:/Desktop/Black Ops 2 Android/BlackOpsARM/src" -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fno-limit-debug-info -O0 -g -fPIE -Wall -Wextra -Wpedantic -Werror=return-type -fms-extensions -ffunction-sections -fdata-sections -fsanitize=undefined -fno-sanitize-recover=all -include "D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/win32_compat/msvc_compat.h" -std=gnu++20 -MD -MT CMakeFiles/bo1_asset_entry_init_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/database/db_registry.cpp.o -MF CMakeFiles\bo1_asset_entry_init_tests.dir\D_\Desktop\Black_Ops_2_Android\BlackOpsARM\src\database\db_registry.cpp.o.d -o CMakeFiles/bo1_asset_entry_init_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/database/db_registry.cpp.o -c "D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_registry.cpp"
+In file included from <built-in>:1:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/win32_compat/msvc_compat.h:12:15: error: static assertion failed due to requirement 'static_cast<char>(-1) < 0': Compile this adapter with -fsigned-char.
+   12 | static_assert(static_cast<char>(-1) < 0, "Compile this adapter with -fsigned-char.");
+      |               ^~~~~~~~~~~~~~~~~~~~~~~~~
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/win32_compat/msvc_compat.h:12:37: note: expression evaluates to ''<FF>' (0xFF, 255) < 0'
+   12 | static_assert(static_cast<char>(-1) < 0, "Compile this adapter with -fsigned-char.");
+      |               ~~~~~~~~~~~~~~~~~~~~~~^~~
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_registry.cpp:2:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_asset_pool.h:5:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_assetlist_types.h:5:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/database.h:4:19: warning: extension used [-Wlanguage-extension-token]
+    4 | enum XAssetType : __int32
+      |                   ^
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_registry.cpp:2:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_asset_pool.h:6:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/com_stringtable.h:16:5: warning: extension used [-Wlanguage-extension-token]
+   16 |     __int16 *cellIndex;
+      |     ^
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_registry.cpp:3:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_asset_entry_types.h:11:14: warning: extension used [-Wlanguage-extension-token]
+   11 |     unsigned __int8 zoneIndex;
+      |              ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_asset_entry_types.h:13:14: warning: extension used [-Wlanguage-extension-token]
+   13 |     unsigned __int16 nextHash;
+      |              ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_asset_entry_types.h:14:14: warning: extension used [-Wlanguage-extension-token]
+   14 |     unsigned __int16 nextOverride;
+      |              ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_asset_entry_types.h:15:14: warning: extension used [-Wlanguage-extension-token]
+   15 |     unsigned __int16 usageFrame;
+      |              ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_asset_entry_types.h:38:17: warning: extension used [-Wlanguage-extension-token]
+   38 | extern unsigned __int16 db_hashTable[0x8000];
+      |                 ^
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_registry.cpp:4:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/assertive.h:6:24: warning: extension used [-Wlanguage-extension-token]
+    6 | enum AssertOccurance : __int32
+      |                        ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_registry.cpp:495:10: warning: extension used [-Wlanguage-extension-token]
+  495 | unsigned __int16 db_hashTable[0x8000/*32768*/];
+      |          ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_registry.cpp:2132:22: warning: extension used [-Wlanguage-extension-token]
+ 2132 |     memcpy((unsigned __int8 *)to->header.xmodelPieces, (unsigned __int8 *)from->header.xmodelPieces, size);
+      |                      ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_registry.cpp:2132:66: warning: extension used [-Wlanguage-extension-token]
+ 2132 |     memcpy((unsigned __int8 *)to->header.xmodelPieces, (unsigned __int8 *)from->header.xmodelPieces, size);
+      |                                                                  ^
+
+11 warnings and 1 error generated.
+
+[3/5] D:\Android\Sdk\ndk\30.0.16248370\toolchains\llvm\prebuilt\windows-x86_64\bin\clang++.exe --target=aarch64-none-linux-android28 --sysroot=D:/Android/Sdk/ndk/30.0.16248370/toolchains/llvm/prebuilt/windows-x86_64/sysroot -DBO1_ASSET_ENTRY_GATE=1 -DBO1_STRINGTABLE_OWNER_GATE=1 -I"D:/Desktop/Black Ops 2 Android/BlackOpsARM/src" -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fno-limit-debug-info -O0 -g -fPIE -Wall -Wextra -Wpedantic -Werror=return-type -fms-extensions -ffunction-sections -fdata-sections -fsanitize=undefined -fno-sanitize-recover=all -include "D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/win32_compat/msvc_compat.h" -std=gnu++20 -MD -MT CMakeFiles/bo1_asset_entry_init_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/android/script_string_services.cpp.o -MF CMakeFiles\bo1_asset_entry_init_tests.dir\D_\Desktop\Black_Ops_2_Android\BlackOpsARM\src\platform\android\script_string_services.cpp.o.d -o CMakeFiles/bo1_asset_entry_init_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/android/script_string_services.cpp.o -c "D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/android/script_string_services.cpp"
+FAILED: CMakeFiles/bo1_asset_entry_init_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/android/script_string_services.cpp.o 
+D:\Android\Sdk\ndk\30.0.16248370\toolchains\llvm\prebuilt\windows-x86_64\bin\clang++.exe --target=aarch64-none-linux-android28 --sysroot=D:/Android/Sdk/ndk/30.0.16248370/toolchains/llvm/prebuilt/windows-x86_64/sysroot -DBO1_ASSET_ENTRY_GATE=1 -DBO1_STRINGTABLE_OWNER_GATE=1 -I"D:/Desktop/Black Ops 2 Android/BlackOpsARM/src" -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fno-limit-debug-info -O0 -g -fPIE -Wall -Wextra -Wpedantic -Werror=return-type -fms-extensions -ffunction-sections -fdata-sections -fsanitize=undefined -fno-sanitize-recover=all -include "D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/win32_compat/msvc_compat.h" -std=gnu++20 -MD -MT CMakeFiles/bo1_asset_entry_init_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/android/script_string_services.cpp.o -MF CMakeFiles\bo1_asset_entry_init_tests.dir\D_\Desktop\Black_Ops_2_Android\BlackOpsARM\src\platform\android\script_string_services.cpp.o.d -o CMakeFiles/bo1_asset_entry_init_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/android/script_string_services.cpp.o -c "D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/android/script_string_services.cpp"
+In file included from <built-in>:1:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/win32_compat/msvc_compat.h:12:15: error: static assertion failed due to requirement 'static_cast<char>(-1) < 0': Compile this adapter with -fsigned-char.
+   12 | static_assert(static_cast<char>(-1) < 0, "Compile this adapter with -fsigned-char.");
+
+      |               ^~~~~~~~~~~~~~~~~~~~~~~~~
+
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/win32_compat/msvc_compat.h:12:37: note: expression evaluates to ''<FF>' (0xFF, 255) < 0'
+
+   12 | static_assert(static_cast<char>(-1) < 0, "Compile this adapter with -fsigned-char.");
+
+      |               ~~~~~~~~~~~~~~~~~~~~~~^~~
+
+1 error generated.
+
+[4/5] D:\Android\Sdk\ndk\30.0.16248370\toolchains\llvm\prebuilt\windows-x86_64\bin\clang++.exe --target=aarch64-none-linux-android28 --sysroot=D:/Android/Sdk/ndk/30.0.16248370/toolchains/llvm/prebuilt/windows-x86_64/sysroot -DBO1_ASSET_ENTRY_GATE=1 -DBO1_STRINGTABLE_OWNER_GATE=1 -I"D:/Desktop/Black Ops 2 Android/BlackOpsARM/src" -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fno-limit-debug-info -O0 -g -fPIE -Wall -Wextra -Wpedantic -Werror=return-type -fms-extensions -ffunction-sections -fdata-sections -fsanitize=undefined -fno-sanitize-recover=all -include "D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/win32_compat/msvc_compat.h" -std=gnu++20 -MD -MT CMakeFiles/bo1_asset_entry_init_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/asset_entry_init_tests.cpp.o -MF CMakeFiles\bo1_asset_entry_init_tests.dir\D_\Desktop\Black_Ops_2_Android\BlackOpsARM\tools\port\tests\asset_entry_init_tests.cpp.o.d -o CMakeFiles/bo1_asset_entry_init_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/asset_entry_init_tests.cpp.o -c "D:/Desktop/Black Ops 2 Android/BlackOpsARM/tools/port/tests/asset_entry_init_tests.cpp"
+FAILED: CMakeFiles/bo1_asset_entry_init_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/asset_entry_init_tests.cpp.o 
+D:\Android\Sdk\ndk\30.0.16248370\toolchains\llvm\prebuilt\windows-x86_64\bin\clang++.exe --target=aarch64-none-linux-android28 --sysroot=D:/Android/Sdk/ndk/30.0.16248370/toolchains/llvm/prebuilt/windows-x86_64/sysroot -DBO1_ASSET_ENTRY_GATE=1 -DBO1_STRINGTABLE_OWNER_GATE=1 -I"D:/Desktop/Black Ops 2 Android/BlackOpsARM/src" -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fno-limit-debug-info -O0 -g -fPIE -Wall -Wextra -Wpedantic -Werror=return-type -fms-extensions -ffunction-sections -fdata-sections -fsanitize=undefined -fno-sanitize-recover=all -include "D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/win32_compat/msvc_compat.h" -std=gnu++20 -MD -MT CMakeFiles/bo1_asset_entry_init_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/asset_entry_init_tests.cpp.o -MF CMakeFiles\bo1_asset_entry_init_tests.dir\D_\Desktop\Black_Ops_2_Android\BlackOpsARM\tools\port\tests\asset_entry_init_tests.cpp.o.d -o CMakeFiles/bo1_asset_entry_init_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/asset_entry_init_tests.cpp.o -c "D:/Desktop/Black Ops 2 Android/BlackOpsARM/tools/port/tests/asset_entry_init_tests.cpp"
+In file included from <built-in>:1:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/win32_compat/msvc_compat.h:12:15: error: static assertion failed due to requirement 'static_cast<char>(-1) < 0': Compile this adapter with -fsigned-char.
+   12 | static_assert(static_cast<char>(-1) < 0, "Compile this adapter with -fsigned-char.");
+      |               ^~~~~~~~~~~~~~~~~~~~~~~~~
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/win32_compat/msvc_compat.h:12:37: note: expression evaluates to ''<FF>' (0xFF, 255) < 0'
+   12 | static_assert(static_cast<char>(-1) < 0, "Compile this adapter with -fsigned-char.");
+      |               ~~~~~~~~~~~~~~~~~~~~~~^~~
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/tools/port/tests/asset_entry_init_tests.cpp:1:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_asset_entry_types.h:2:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_assetlist_types.h:5:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/database.h:4:19: warning: extension used [-Wlanguage-extension-token]
+    4 | enum XAssetType : __int32
+      |                   ^
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/tools/port/tests/asset_entry_init_tests.cpp:1:
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_asset_entry_types.h:11:14: warning: extension used [-Wlanguage-extension-token]
+   11 |     unsigned __int8 zoneIndex;
+      |              ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_asset_entry_types.h:13:14: warning: extension used [-Wlanguage-extension-token]
+   13 |     unsigned __int16 nextHash;
+      |              ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_asset_entry_types.h:14:14: warning: extension used [-Wlanguage-extension-token]
+   14 |     unsigned __int16 nextOverride;
+      |              ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_asset_entry_types.h:15:14: warning: extension used [-Wlanguage-extension-token]
+   15 |     unsigned __int16 usageFrame;
+      |              ^
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_asset_entry_types.h:38:17: warning: extension used [-Wlanguage-extension-token]
+   38 | extern unsigned __int16 db_hashTable[0x8000];
+      |                 ^
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/tools/port/tests/asset_entry_init_tests.cpp:2:
+In file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/critical_section_services.h:2:
+
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/critical_sections.h:3:24: warning: extension used [-Wlanguage-extension-token]
+
+    3 | enum CriticalSection : __int32
+
+      |                        ^
+
+7 warnings and 1 error generated.
+
+ninja: build stopped: subcommand failed.

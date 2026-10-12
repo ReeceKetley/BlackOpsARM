@@ -21,11 +21,12 @@ namespace {
 unsigned index(bo1::script::PoolLock lock) {
     if (lock == bo1::script::PoolLock::Strings) return 0;
     if (lock == bo1::script::PoolLock::MemoryTree) return 1;
+    if (lock == bo1::script::PoolLock::Database) return 2;
     fail("invalid lock", static_cast<int>(lock));
 }
 std::atomic<unsigned> serverState{0}; // 0 unset, 1 publishing, 2 immutable identity
 #if defined(__ANDROID__)
-pthread_mutex_t sections[2];
+pthread_mutex_t sections[3];
 pthread_once_t once = PTHREAD_ONCE_INIT;
 pthread_t serverThread{};
 void initialize() {
@@ -43,7 +44,7 @@ void initialize() {
 }
 bool currentIsServer() { return pthread_equal(serverThread, pthread_self()) != 0; }
 #else
-CRITICAL_SECTION sections[2];
+CRITICAL_SECTION sections[3];
 INIT_ONCE once = INIT_ONCE_STATIC_INIT;
 DWORD serverThread{};
 BOOL CALLBACK initialize(PINIT_ONCE, PVOID, PVOID *) {
