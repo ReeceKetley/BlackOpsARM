@@ -1,5 +1,16 @@
 # Latest checkpoints after TASK41
 
+TASK44 now verifies genuine one-shot main/backend/DB TLS executing original
+Com_InitThreadData and Cmd_ResetArgs, plus actualmainTLS+allMP71 in the same
+process on x86/x64/HONOR O0/O3. Read `arm64_native_thread_data.md`/latestSTATE;
+Git supplies checkpoint. Independent original layouts, unchanged bodies,
+4normalWindowsTUs/ABI,72fatal controls and priorprotected evidence pass;138new
+metadata records frozen. Root owns allreturned edits. ActualDvars remaintest
+caller inputs; fullCom_Init/Com_Frame/DBworker/gameplay remain unexecuted.
+Next fixed32 genuineFastCriticalSection (`native_dvar_lock_plan.md`), actual
+Dvar/Cmd/Cbuf, then genuineDB orchestration/headlessboot. Mainprocesslifetime,
+workerretirement/noreuse and Androidmain-onlyzone owners remain explicit limits.
+
 TASK42 committed `7d1aaa6`: native Windows PMem previous-record stride repaired,
 Win32 branch preserved; genuine reader third/32nd/33rd owner controls and complete
 MP71 regressions pass. TASK43 subsequently completes all75 native recursive

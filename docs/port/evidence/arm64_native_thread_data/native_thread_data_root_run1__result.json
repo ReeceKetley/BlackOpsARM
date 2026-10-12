@@ -1,0 +1,36 @@
+{
+  "passed": true,
+  "runs": [
+    {
+      "architecture": "x86",
+      "pointer_bytes": 4,
+      "passed": true,
+      "negative_controls": 18,
+      "binary_sha256": "be8a6268cc893efa4efedd042268b01c8d9d2ec45410f2ffcba84b7248555872"
+    },
+    {
+      "architecture": "x64",
+      "pointer_bytes": 8,
+      "passed": true,
+      "negative_controls": 18,
+      "binary_sha256": "d031103cf5cc201731d6abda48c3a9a40f6a96a0ec0e49c969ca19f6e4c09fa5"
+    },
+    {
+      "architecture": "arm64_O0",
+      "pointer_bytes": 8,
+      "passed": true,
+      "negative_controls": 18,
+      "binary_sha256": "3e33c215312fd4076923a6ffb0a8a738d7b70428b53155a95c78e1d4fc025d7d"
+    },
+    {
+      "architecture": "arm64_O3",
+      "pointer_bytes": 8,
+      "passed": true,
+      "negative_controls": 18,
+      "binary_sha256": "f454d1364680a5b68fbc42eb785f09af4e54a91ea07efd68e233aa5c38989c9d"
+    }
+  ],
+  "independent_layout_baseline": "f117f5d",
+  "engine_init_executed": false,
+  "scope": "Actual Com_InitThreadData/Cmd_ResetArgs plus native one-shot TLS, not Com_Error recovery or startup."
+}

@@ -1,3 +1,6 @@
+#if defined(BO1_NATIVE_THREAD_DATA)
+#include <universal/thread_data.h>
+#else
 #include "cmd.h"
 
 #include <stdlib.h>
@@ -33,7 +36,10 @@ cmd_function_s *sv_cmd_functions;
 CmdArgs sv_cmd_args;
 int com_inServerFrame;
 cmd_function_s *cmd_functions;
+#endif
+
 CmdArgs g_cmd_args[2];
+#if !defined(BO1_NATIVE_THREAD_DATA)
 
 void __cdecl Cmd_Wait_f()
 {
@@ -1133,6 +1139,8 @@ void __cdecl Cmd_ComErrorCleanup()
         cmd_insideCBufExecute[client] = 0;
 }
 
+#endif
+
 void __cdecl Cmd_ResetArgs(CmdArgs *args)
 {
     args->nesting = -1;
@@ -1140,6 +1148,7 @@ void __cdecl Cmd_ResetArgs(CmdArgs *args)
     args->totalUsedTextPool = 0;
 }
 
+#if !defined(BO1_NATIVE_THREAD_DATA)
 void __cdecl Cmd_ExecuteSingleCommandInternal(
                 int localClientNum,
                 int controllerIndex,
@@ -1478,3 +1487,5 @@ int __cdecl Cmd_Argc()
     }
     return cmd_args->argc[cmd_args->nesting];
 }
+
+#endif // !BO1_NATIVE_THREAD_DATA

@@ -2,6 +2,13 @@
 
 ## Current integration direction (12 October 2026)
 
+TASK44 executes original thread-data initialization/reset with native roles/TLS,
+then all71 genuine MP assets in the same process on Windows and HONOR O0/O3.
+See `arm64_native_thread_data.md`. Next actual fixed32 FastCriticalSection
+protocol (`native_dvar_lock_plan.md`), real Dvar/Cmd/Cbuf services, then genuine
+DB workers/file publication and headless Com_Init/frames. Caller Dvars remain
+test-controlled; full startup/gameplay has not run.
+
 TASK43 completes all75 native recursive enum critical sections while preserving
 actual SL/MT/DBHASH lock identity. Windows/HONOR O0/O3 mutex and genuine asset/
 string-owner regressions pass; see `arm64_native_critical_sections.md`. Next:

@@ -1,0 +1,70 @@
+{
+  "baseline": "f117f5d",
+  "canonical_declarations": [
+    {
+      "path": "src/qcommon/cmd.h",
+      "name": "CmdArgs",
+      "kind": "struct",
+      "declaration_sha256": "1231bc1e87031c2212149f143d2bd3d9e70b94394c1f92280a191a1139408252"
+    },
+    {
+      "path": "src/qcommon/cm_trace.h",
+      "name": "TraceCheckCount",
+      "kind": "struct",
+      "declaration_sha256": "2d1c4de85d0f2390ff607a9b7f47ddc77951395d167be87938872ee7be9bd53c"
+    },
+    {
+      "path": "src/qcommon/cm_trace.h",
+      "name": "TraceThreadInfo",
+      "kind": "struct",
+      "declaration_sha256": "aeece0f330279ccc5a7bfc715199529390690441020def8e5eec74cee14a21d9"
+    },
+    {
+      "path": "src/universal/q_shared.cpp",
+      "name": "va_info_t",
+      "kind": "struct",
+      "declaration_sha256": "02ccf87808bf631fb03f70398ec2c044097be83a1376fef75b2888c2e822be46"
+    },
+    {
+      "path": "src/qcommon/threads.h",
+      "name": "ThreadContext_t",
+      "kind": "enum",
+      "declaration_sha256": "a8b599f3498d55b4dbbe95acd5290c45f444e0475f98a502ab5d758f243614c0"
+    }
+  ],
+  "expected": {
+    "4": {
+      "cmd_args_bytes": 10476,
+      "item_offset": 68,
+      "argv_offset": 164,
+      "text_offset": 196,
+      "argv_pool_offset": 8388,
+      "used_text_offset": 10436,
+      "total_argv_offset": 10468,
+      "total_text_offset": 10472,
+      "trace_count_bytes": 8,
+      "trace_info_bytes": 20,
+      "partition_offset": 4,
+      "brush_offset": 8,
+      "model_offset": 12,
+      "geoms_offset": 16
+    },
+    "8": {
+      "cmd_args_bytes": 12592,
+      "item_offset": 72,
+      "argv_offset": 200,
+      "text_offset": 264,
+      "argv_pool_offset": 8456,
+      "used_text_offset": 12552,
+      "total_argv_offset": 12584,
+      "total_text_offset": 12588,
+      "trace_count_bytes": 16,
+      "trace_info_bytes": 40,
+      "partition_offset": 8,
+      "brush_offset": 16,
+      "model_offset": 24,
+      "geoms_offset": 32
+    }
+  },
+  "generated_cpp_sha256": "f4dc18737566bdad13b1f74dd4e29adb0d07fcdb1e9c9731e91824229f04c3d7"
+}

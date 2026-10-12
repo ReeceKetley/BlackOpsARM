@@ -3,6 +3,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 project(BlackOpsNativeStartupLoader LANGUAGES C CXX)
 get_filename_component(BO1_ROOT "${CMAKE_CURRENT_LIST_DIR}/../../.." ABSOLUTE)
 set(SRC_DIR "${BO1_ROOT}/src")
+option(BO1_NATIVE_THREAD_INTEGRATION "Validate actual native main TLS and MP71 in one process" OFF)
 add_subdirectory("${BO1_ROOT}/android/cmake/arm64-audit" audit EXCLUDE_FROM_ALL)
 
 # Reusable production component. It contains no tools/port source, fixture Dvar,
@@ -67,4 +68,10 @@ target_compile_options(bo1_native_startup_zone_tests PRIVATE -fms-extensions
     -fsigned-char -fsanitize=undefined -fno-sanitize-recover=all
     -include "${SRC_DIR}/platform/win32_compat/msvc_compat.h")
 target_link_libraries(bo1_native_startup_zone_tests PRIVATE bo1_native_startup_loader)
+
+if(BO1_NATIVE_THREAD_INTEGRATION)
+    add_subdirectory("${BO1_ROOT}/android/cmake/native-thread-data" native-thread-data EXCLUDE_FROM_ALL)
+    target_compile_definitions(bo1_native_startup_zone_tests PRIVATE BO1_NATIVE_THREAD_INTEGRATION=1)
+    target_link_libraries(bo1_native_startup_zone_tests PRIVATE bo1_native_thread_data)
+endif()
 target_link_options(bo1_native_startup_zone_tests PRIVATE -Wl,--gc-sections -fsanitize=undefined)

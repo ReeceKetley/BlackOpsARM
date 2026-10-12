@@ -10,6 +10,10 @@
 #include <cstdlib>
 #include <cstring>
 #include <bitset>
+#if defined(BO1_NATIVE_THREAD_INTEGRATION)
+#include <platform/android/thread_services.h>
+#include <universal/thread_data.h>
+#endif
 #if defined(__ANDROID__)
 #include <platform/android/hunk_services.h>
 #include <platform/android/virtual_memory.h>
@@ -36,6 +40,19 @@ template<class T,int N>static unsigned freeHeaders(const XAssetPool<T,N> &pool){
 static unsigned long checksum(const void *p,std::size_t n){return static_cast<unsigned long>(adler32(1,static_cast<const Bytef*>(p),static_cast<unsigned>(n)));}
 int main(int argc,char **argv){
     require(argc==2,"genuine retail file required");
+#if defined(BO1_NATIVE_THREAD_INTEGRATION)
+    Sys_InitMainThread();
+    require(Sys_GetThreadContext()==0&&Sys_IsMainThread(),"actual native main role");
+    require(Sys_GetValue(1)==&va_info[0]&&Sys_GetValue(2)==g_com_error[0]&&
+        Sys_GetValue(3)==&g_traceThreadInfo[0]&&Sys_GetValue(4)==&g_cmd_args[0],"actual canonical main TLS slots");
+    g_cmd_args[0].nesting=17;g_cmd_args[0].totalUsedArgvPool=19;g_cmd_args[0].totalUsedTextPool=23;
+    Cmd_ResetArgs(&g_cmd_args[0]);
+    require(g_cmd_args[0].nesting==-1&&g_cmd_args[0].totalUsedArgvPool==0&&g_cmd_args[0].totalUsedTextPool==0,"actual Cmd_ResetArgs");
+#if defined(__ANDROID__)
+    require(bo1::android::IsHunkMainThread(),"native main is actual hunk owner");
+#endif
+    std::printf("{\"startup_thread_integration\":{\"pointer_bytes\":%zu,\"thread_context\":0,\"canonical_slots\":4,\"actual_cmd_reset\":true,\"com_init_executed\":false}}\n",sizeof(void*));
+#endif
 #if defined(__ANDROID__)
     bo1::android::RegisterHunkMainThread();const auto page=bo1::android::VirtualPageSize();
 #else

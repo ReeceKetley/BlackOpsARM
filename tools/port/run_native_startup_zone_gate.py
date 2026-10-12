@@ -15,6 +15,7 @@ def main():
     parser.add_argument('--output', required=True)
     parser.add_argument('--serial', required=True)
     parser.add_argument('--optimization', choices=('O0', 'O3'), required=True)
+    parser.add_argument('--thread-integration', action='store_true')
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[2]
     build, output = (root / args.build).resolve(), (root / args.output).resolve()
@@ -52,7 +53,7 @@ def main():
     run(['shell', 'chmod', '700', remote + '/startup_tests'])
     stdout = run(['shell', remote + '/startup_tests', remote + '/code_pre_gfx_mp.ff'])
     (output / 'test.log').write_text(stdout, encoding='utf-8')
-    result = validate(stdout, 8, oracle)
+    result = validate(stdout, 8, oracle, args.thread_integration)
     result.update(serial=args.serial, optimization=args.optimization,
                   binary_sha256=sha, retail_sha256=RAW_SHA)
     (output / 'result.json').write_text(json.dumps(result, indent=2) + '\n', encoding='utf-8')

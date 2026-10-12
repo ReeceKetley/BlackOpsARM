@@ -1,0 +1,161 @@
+[
+  {
+    "architecture": "x86",
+    "args": [
+      "build-android-audit\\native_thread_data_impl_host2\\x86\\native_thread_data.exe"
+    ],
+    "exit": 0,
+    "stdout": "{\"record\":\"layout\",\"pointer_bytes\":4,\"cmdargs_bytes\":10476,\"trace_bytes\":20,\"checkcount_bytes\":8,\"va_bytes\":4100,\"va_index_offset\":4096,\"cmd_item_offset\":68,\"cmd_argv_offset\":164,\"cmd_text_offset\":196,\"cmd_argvpool_offset\":8388,\"cmd_usedtext_offset\":10436,\"trace_partitions_offset\":4,\"trace_brush_offset\":8}\n{\"record\":\"verified\",\"live_roles\":3,\"canonical_slots\":12,\"native_jumps\":3,\"cmd_resets\":2,\"retired_workers\":2,\"pass\":true}\n",
+    "stderr": ""
+  },
+  {
+    "architecture": "x86",
+    "args": [
+      "build-android-audit\\native_thread_data_impl_host2\\x86\\native_thread_data.exe",
+      "unregistered_get"
+    ],
+    "exit": 3,
+    "stdout": "",
+    "stderr": "Native thread services: unregistered thread (-1)\n"
+  },
+  {
+    "architecture": "x86",
+    "args": [
+      "build-android-audit\\native_thread_data_impl_host2\\x86\\native_thread_data.exe",
+      "unregistered_set"
+    ],
+    "exit": 3,
+    "stdout": "",
+    "stderr": "Native thread services: unregistered thread (-1)\n"
+  },
+  {
+    "architecture": "x86",
+    "args": [
+      "build-android-audit\\native_thread_data_impl_host2\\x86\\native_thread_data.exe",
+      "unregistered_context"
+    ],
+    "exit": 3,
+    "stdout": "",
+    "stderr": "Native thread services: unregistered thread (-1)\n"
+  },
+  {
+    "architecture": "x86",
+    "args": [
+      "build-android-audit\\native_thread_data_impl_host2\\x86\\native_thread_data.exe",
+      "invalid_role_negative"
+    ],
+    "exit": 3,
+    "stdout": "",
+    "stderr": "Native thread services: unsupported role (-1)\n"
+  },
+  {
+    "architecture": "x86",
+    "args": [
+      "build-android-audit\\native_thread_data_impl_host2\\x86\\native_thread_data.exe",
+      "invalid_role_count"
+    ],
+    "exit": 3,
+    "stdout": "",
+    "stderr": "Native thread services: unsupported role (15)\n"
+  },
+  {
+    "architecture": "x86",
+    "args": [
+      "build-android-audit\\native_thread_data_impl_host2\\x86\\native_thread_data.exe",
+      "unsupported_server"
+    ],
+    "exit": 3,
+    "stdout": "",
+    "stderr": "Native thread services: unsupported role (10)\n"
+  },
+  {
+    "architecture": "x86",
+    "args": [
+      "build-android-audit\\native_thread_data_impl_host2\\x86\\native_thread_data.exe",
+      "slot_negative_get"
+    ],
+    "exit": 3,
+    "stdout": "",
+    "stderr": "Native thread services: invalid TLS slot (-1)\n"
+  },
+  {
+    "architecture": "x86",
+    "args": [
+      "build-android-audit\\native_thread_data_impl_host2\\x86\\native_thread_data.exe",
+      "slot_count_get"
+    ],
+    "exit": 3,
+    "stdout": "",
+    "stderr": "Native thread services: invalid TLS slot (5)\n"
+  },
+  {
+    "architecture": "x86",
+    "args": [
+      "build-android-audit\\native_thread_data_impl_host2\\x86\\native_thread_data.exe",
+      "slot_negative_set"
+    ],
+    "exit": 3,
+    "stdout": "",
+    "stderr": "Native thread services: invalid TLS slot (-1)\n"
+  },
+  {
+    "architecture": "x86",
+    "args": [
+      "build-android-audit\\native_thread_data_impl_host2\\x86\\native_thread_data.exe",
+      "slot_count_set"
+    ],
+    "exit": 3,
+    "stdout": "",
+    "stderr": "Native thread services: invalid TLS slot (5)\n"
+  },
+  {
+    "architecture": "x86",
+    "args": [
+      "build-android-audit\\native_thread_data_impl_host2\\x86\\native_thread_data.exe",
+      "role_switch"
+    ],
+    "exit": 3,
+    "stdout": "",
+    "stderr": "Native thread services: thread role switch (1)\n"
+  },
+  {
+    "architecture": "x86",
+    "args": [
+      "build-android-audit\\native_thread_data_impl_host2\\x86\\native_thread_data.exe",
+      "main_retire"
+    ],
+    "exit": 3,
+    "stdout": "",
+    "stderr": "Native thread services: main retirement unsupported (0)\n"
+  },
+  {
+    "architecture": "x86",
+    "args": [
+      "build-android-audit\\native_thread_data_impl_host2\\x86\\native_thread_data.exe",
+      "duplicate_main"
+    ],
+    "exit": 3,
+    "stdout": "",
+    "stderr": "Native thread services: role already claimed (0)\n"
+  },
+  {
+    "architecture": "x86",
+    "args": [
+      "build-android-audit\\native_thread_data_impl_host2\\x86\\native_thread_data.exe",
+      "duplicate_database"
+    ],
+    "exit": 3,
+    "stdout": "",
+    "stderr": "Native thread services: role already claimed (13)\n"
+  },
+  {
+    "architecture": "x86",
+    "args": [
+      "build-android-audit\\native_thread_data_impl_host2\\x86\\native_thread_data.exe",
+      "exit_without_retirement"
+    ],
+    "exit": 3221226505,
+    "stdout": "",
+    "stderr": "Native thread services: worker exited without retirement (13)\n"
+  }
+]

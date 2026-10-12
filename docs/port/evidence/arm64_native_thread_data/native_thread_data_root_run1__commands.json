@@ -1,0 +1,953 @@
+[
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "get-state"
+    ],
+    "exit": 0,
+    "stdout": "device\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_thread_data_impl_host2\\x86\\native_thread_data.exe"
+    ],
+    "exit": 0,
+    "stdout": "{\"record\":\"layout\",\"pointer_bytes\":4,\"cmdargs_bytes\":10476,\"trace_bytes\":20,\"checkcount_bytes\":8,\"va_bytes\":4100,\"va_index_offset\":4096,\"cmd_item_offset\":68,\"cmd_argv_offset\":164,\"cmd_text_offset\":196,\"cmd_argvpool_offset\":8388,\"cmd_usedtext_offset\":10436,\"trace_partitions_offset\":4,\"trace_brush_offset\":8}\n{\"record\":\"verified\",\"live_roles\":3,\"canonical_slots\":12,\"native_jumps\":3,\"cmd_resets\":2,\"retired_workers\":2,\"pass\":true}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_thread_data_impl_host2\\x86\\native_thread_data.exe",
+      "unregistered_get"
+    ],
+    "exit": 3,
+    "stdout": "",
+    "stderr": "Native thread services: unregistered thread (-1)\n"
+  },
+  {
+    "args": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_thread_data_impl_host2\\x86\\native_thread_data.exe",
+      "unregistered_set"
+    ],
+    "exit": 3,
+    "stdout": "",
+    "stderr": "Native thread services: unregistered thread (-1)\n"
+  },
+  {
+    "args": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_thread_data_impl_host2\\x86\\native_thread_data.exe",
+      "unregistered_context"
+    ],
+    "exit": 3,
+    "stdout": "",
+    "stderr": "Native thread services: unregistered thread (-1)\n"
+  },
+  {
+    "args": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_thread_data_impl_host2\\x86\\native_thread_data.exe",
+      "invalid_role_negative"
+    ],
+    "exit": 3,
+    "stdout": "",
+    "stderr": "Native thread services: unsupported role (-1)\n"
+  },
+  {
+    "args": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_thread_data_impl_host2\\x86\\native_thread_data.exe",
+      "invalid_role_count"
+    ],
+    "exit": 3,
+    "stdout": "",
+    "stderr": "Native thread services: unsupported role (15)\n"
+  },
+  {
+    "args": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_thread_data_impl_host2\\x86\\native_thread_data.exe",
+      "unsupported_server"
+    ],
+    "exit": 3,
+    "stdout": "",
+    "stderr": "Native thread services: unsupported role (10)\n"
+  },
+  {
+    "args": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_thread_data_impl_host2\\x86\\native_thread_data.exe",
+      "slot_negative_get"
+    ],
+    "exit": 3,
+    "stdout": "",
+    "stderr": "Native thread services: invalid TLS slot (-1)\n"
+  },
+  {
+    "args": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_thread_data_impl_host2\\x86\\native_thread_data.exe",
+      "slot_count_get"
+    ],
+    "exit": 3,
+    "stdout": "",
+    "stderr": "Native thread services: invalid TLS slot (5)\n"
+  },
+  {
+    "args": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_thread_data_impl_host2\\x86\\native_thread_data.exe",
+      "slot_negative_set"
+    ],
+    "exit": 3,
+    "stdout": "",
+    "stderr": "Native thread services: invalid TLS slot (-1)\n"
+  },
+  {
+    "args": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_thread_data_impl_host2\\x86\\native_thread_data.exe",
+      "slot_count_set"
+    ],
+    "exit": 3,
+    "stdout": "",
+    "stderr": "Native thread services: invalid TLS slot (5)\n"
+  },
+  {
+    "args": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_thread_data_impl_host2\\x86\\native_thread_data.exe",
+      "role_switch"
+    ],
+    "exit": 3,
+    "stdout": "",
+    "stderr": "Native thread services: thread role switch (1)\n"
+  },
+  {
+    "args": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_thread_data_impl_host2\\x86\\native_thread_data.exe",
+      "main_retire"
+    ],
+    "exit": 3,
+    "stdout": "",
+    "stderr": "Native thread services: main retirement unsupported (0)\n"
+  },
+  {
+    "args": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_thread_data_impl_host2\\x86\\native_thread_data.exe",
+      "duplicate_main"
+    ],
+    "exit": 3,
+    "stdout": "",
+    "stderr": "Native thread services: role already claimed (0)\n"
+  },
+  {
+    "args": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_thread_data_impl_host2\\x86\\native_thread_data.exe",
+      "duplicate_database"
+    ],
+    "exit": 3,
+    "stdout": "",
+    "stderr": "Native thread services: role already claimed (13)\n"
+  },
+  {
+    "args": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_thread_data_impl_host2\\x86\\native_thread_data.exe",
+      "exit_without_retirement"
+    ],
+    "exit": 3221226505,
+    "stdout": "",
+    "stderr": "Native thread services: worker exited without retirement (13)\n"
+  },
+  {
+    "args": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_thread_data_impl_host2\\x86\\native_thread_data.exe",
+      "retired_get"
+    ],
+    "exit": 3,
+    "stdout": "",
+    "stderr": "Native thread services: retired thread (-1)\n"
+  },
+  {
+    "args": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_thread_data_impl_host2\\x86\\native_thread_data.exe",
+      "retired_rebind"
+    ],
+    "exit": 3,
+    "stdout": "",
+    "stderr": "Native thread services: retired role cannot rebind (13)\n"
+  },
+  {
+    "args": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_thread_data_impl_host2\\x86\\native_thread_data.exe",
+      "retired_role_reuse"
+    ],
+    "exit": 3,
+    "stdout": "",
+    "stderr": "Native thread services: role already claimed (13)\n"
+  },
+  {
+    "args": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_thread_data_impl_host2\\x64\\native_thread_data.exe"
+    ],
+    "exit": 0,
+    "stdout": "{\"record\":\"layout\",\"pointer_bytes\":8,\"cmdargs_bytes\":12592,\"trace_bytes\":40,\"checkcount_bytes\":16,\"va_bytes\":4100,\"va_index_offset\":4096,\"cmd_item_offset\":72,\"cmd_argv_offset\":200,\"cmd_text_offset\":264,\"cmd_argvpool_offset\":8456,\"cmd_usedtext_offset\":12552,\"trace_partitions_offset\":8,\"trace_brush_offset\":16}\n{\"record\":\"verified\",\"live_roles\":3,\"canonical_slots\":12,\"native_jumps\":3,\"cmd_resets\":2,\"retired_workers\":2,\"pass\":true}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_thread_data_impl_host2\\x64\\native_thread_data.exe",
+      "unregistered_get"
+    ],
+    "exit": 3,
+    "stdout": "",
+    "stderr": "Native thread services: unregistered thread (-1)\n"
+  },
+  {
+    "args": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_thread_data_impl_host2\\x64\\native_thread_data.exe",
+      "unregistered_set"
+    ],
+    "exit": 3,
+    "stdout": "",
+    "stderr": "Native thread services: unregistered thread (-1)\n"
+  },
+  {
+    "args": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_thread_data_impl_host2\\x64\\native_thread_data.exe",
+      "unregistered_context"
+    ],
+    "exit": 3,
+    "stdout": "",
+    "stderr": "Native thread services: unregistered thread (-1)\n"
+  },
+  {
+    "args": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_thread_data_impl_host2\\x64\\native_thread_data.exe",
+      "invalid_role_negative"
+    ],
+    "exit": 3,
+    "stdout": "",
+    "stderr": "Native thread services: unsupported role (-1)\n"
+  },
+  {
+    "args": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_thread_data_impl_host2\\x64\\native_thread_data.exe",
+      "invalid_role_count"
+    ],
+    "exit": 3,
+    "stdout": "",
+    "stderr": "Native thread services: unsupported role (15)\n"
+  },
+  {
+    "args": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_thread_data_impl_host2\\x64\\native_thread_data.exe",
+      "unsupported_server"
+    ],
+    "exit": 3,
+    "stdout": "",
+    "stderr": "Native thread services: unsupported role (10)\n"
+  },
+  {
+    "args": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_thread_data_impl_host2\\x64\\native_thread_data.exe",
+      "slot_negative_get"
+    ],
+    "exit": 3,
+    "stdout": "",
+    "stderr": "Native thread services: invalid TLS slot (-1)\n"
+  },
+  {
+    "args": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_thread_data_impl_host2\\x64\\native_thread_data.exe",
+      "slot_count_get"
+    ],
+    "exit": 3,
+    "stdout": "",
+    "stderr": "Native thread services: invalid TLS slot (5)\n"
+  },
+  {
+    "args": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_thread_data_impl_host2\\x64\\native_thread_data.exe",
+      "slot_negative_set"
+    ],
+    "exit": 3,
+    "stdout": "",
+    "stderr": "Native thread services: invalid TLS slot (-1)\n"
+  },
+  {
+    "args": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_thread_data_impl_host2\\x64\\native_thread_data.exe",
+      "slot_count_set"
+    ],
+    "exit": 3,
+    "stdout": "",
+    "stderr": "Native thread services: invalid TLS slot (5)\n"
+  },
+  {
+    "args": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_thread_data_impl_host2\\x64\\native_thread_data.exe",
+      "role_switch"
+    ],
+    "exit": 3,
+    "stdout": "",
+    "stderr": "Native thread services: thread role switch (1)\n"
+  },
+  {
+    "args": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_thread_data_impl_host2\\x64\\native_thread_data.exe",
+      "main_retire"
+    ],
+    "exit": 3,
+    "stdout": "",
+    "stderr": "Native thread services: main retirement unsupported (0)\n"
+  },
+  {
+    "args": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_thread_data_impl_host2\\x64\\native_thread_data.exe",
+      "duplicate_main"
+    ],
+    "exit": 3,
+    "stdout": "",
+    "stderr": "Native thread services: role already claimed (0)\n"
+  },
+  {
+    "args": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_thread_data_impl_host2\\x64\\native_thread_data.exe",
+      "duplicate_database"
+    ],
+    "exit": 3,
+    "stdout": "",
+    "stderr": "Native thread services: role already claimed (13)\n"
+  },
+  {
+    "args": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_thread_data_impl_host2\\x64\\native_thread_data.exe",
+      "exit_without_retirement"
+    ],
+    "exit": 3221226505,
+    "stdout": "",
+    "stderr": "Native thread services: worker exited without retirement (13)\n"
+  },
+  {
+    "args": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_thread_data_impl_host2\\x64\\native_thread_data.exe",
+      "retired_get"
+    ],
+    "exit": 3,
+    "stdout": "",
+    "stderr": "Native thread services: retired thread (-1)\n"
+  },
+  {
+    "args": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_thread_data_impl_host2\\x64\\native_thread_data.exe",
+      "retired_rebind"
+    ],
+    "exit": 3,
+    "stdout": "",
+    "stderr": "Native thread services: retired role cannot rebind (13)\n"
+  },
+  {
+    "args": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_thread_data_impl_host2\\x64\\native_thread_data.exe",
+      "retired_role_reuse"
+    ],
+    "exit": 3,
+    "stdout": "",
+    "stderr": "Native thread services: role already claimed (13)\n"
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "mkdir",
+      "-p",
+      "/data/local/tmp/blackopsarm-thread44-arm64_O0"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "push",
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_thread_data_impl_O0_2\\bo1_native_thread_data_tests",
+      "/data/local/tmp/blackopsarm-thread44-arm64_O0/thread_tests"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_thread_data_impl_O0_2\\bo1_native_thread_data_tests: 1 file pushed, 0 skipped. 120.2 MB/s (1836128 bytes in 0.015s)\n"
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "sha256sum",
+      "/data/local/tmp/blackopsarm-thread44-arm64_O0/thread_tests"
+    ],
+    "exit": 0,
+    "stdout": "3e33c215312fd4076923a6ffb0a8a738d7b70428b53155a95c78e1d4fc025d7d  /data/local/tmp/blackopsarm-thread44-arm64_O0/thread_tests\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "chmod",
+      "700",
+      "/data/local/tmp/blackopsarm-thread44-arm64_O0/thread_tests"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "/data/local/tmp/blackopsarm-thread44-arm64_O0/thread_tests"
+    ],
+    "exit": 0,
+    "stdout": "{\"record\":\"layout\",\"pointer_bytes\":8,\"cmdargs_bytes\":12592,\"trace_bytes\":40,\"checkcount_bytes\":16,\"va_bytes\":4100,\"va_index_offset\":4096,\"cmd_item_offset\":72,\"cmd_argv_offset\":200,\"cmd_text_offset\":264,\"cmd_argvpool_offset\":8456,\"cmd_usedtext_offset\":12552,\"trace_partitions_offset\":8,\"trace_brush_offset\":16}\n{\"record\":\"verified\",\"live_roles\":3,\"canonical_slots\":12,\"native_jumps\":3,\"cmd_resets\":2,\"retired_workers\":2,\"pass\":true}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "/data/local/tmp/blackopsarm-thread44-arm64_O0/thread_tests",
+      "unregistered_get"
+    ],
+    "exit": 134,
+    "stdout": "",
+    "stderr": "Native thread services: unregistered thread (-1)\n"
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "/data/local/tmp/blackopsarm-thread44-arm64_O0/thread_tests",
+      "unregistered_set"
+    ],
+    "exit": 134,
+    "stdout": "",
+    "stderr": "Native thread services: unregistered thread (-1)\n"
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "/data/local/tmp/blackopsarm-thread44-arm64_O0/thread_tests",
+      "unregistered_context"
+    ],
+    "exit": 134,
+    "stdout": "",
+    "stderr": "Native thread services: unregistered thread (-1)\n"
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "/data/local/tmp/blackopsarm-thread44-arm64_O0/thread_tests",
+      "invalid_role_negative"
+    ],
+    "exit": 134,
+    "stdout": "",
+    "stderr": "Native thread services: unsupported role (-1)\n"
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "/data/local/tmp/blackopsarm-thread44-arm64_O0/thread_tests",
+      "invalid_role_count"
+    ],
+    "exit": 134,
+    "stdout": "",
+    "stderr": "Native thread services: unsupported role (15)\n"
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "/data/local/tmp/blackopsarm-thread44-arm64_O0/thread_tests",
+      "unsupported_server"
+    ],
+    "exit": 134,
+    "stdout": "",
+    "stderr": "Native thread services: unsupported role (10)\n"
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "/data/local/tmp/blackopsarm-thread44-arm64_O0/thread_tests",
+      "slot_negative_get"
+    ],
+    "exit": 134,
+    "stdout": "",
+    "stderr": "Native thread services: invalid TLS slot (-1)\n"
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "/data/local/tmp/blackopsarm-thread44-arm64_O0/thread_tests",
+      "slot_count_get"
+    ],
+    "exit": 134,
+    "stdout": "",
+    "stderr": "Native thread services: invalid TLS slot (5)\n"
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "/data/local/tmp/blackopsarm-thread44-arm64_O0/thread_tests",
+      "slot_negative_set"
+    ],
+    "exit": 134,
+    "stdout": "",
+    "stderr": "Native thread services: invalid TLS slot (-1)\n"
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "/data/local/tmp/blackopsarm-thread44-arm64_O0/thread_tests",
+      "slot_count_set"
+    ],
+    "exit": 134,
+    "stdout": "",
+    "stderr": "Native thread services: invalid TLS slot (5)\n"
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "/data/local/tmp/blackopsarm-thread44-arm64_O0/thread_tests",
+      "role_switch"
+    ],
+    "exit": 134,
+    "stdout": "",
+    "stderr": "Native thread services: thread role switch (1)\n"
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "/data/local/tmp/blackopsarm-thread44-arm64_O0/thread_tests",
+      "main_retire"
+    ],
+    "exit": 134,
+    "stdout": "",
+    "stderr": "Native thread services: main retirement unsupported (0)\n"
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "/data/local/tmp/blackopsarm-thread44-arm64_O0/thread_tests",
+      "duplicate_main"
+    ],
+    "exit": 134,
+    "stdout": "",
+    "stderr": "Native thread services: role already claimed (0)\n"
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "/data/local/tmp/blackopsarm-thread44-arm64_O0/thread_tests",
+      "duplicate_database"
+    ],
+    "exit": 134,
+    "stdout": "",
+    "stderr": "Native thread services: role already claimed (13)\n"
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "/data/local/tmp/blackopsarm-thread44-arm64_O0/thread_tests",
+      "exit_without_retirement"
+    ],
+    "exit": 134,
+    "stdout": "",
+    "stderr": "Native thread services: worker exited without retirement (13)\n"
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "/data/local/tmp/blackopsarm-thread44-arm64_O0/thread_tests",
+      "retired_get"
+    ],
+    "exit": 134,
+    "stdout": "",
+    "stderr": "Native thread services: retired thread (-1)\n"
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "/data/local/tmp/blackopsarm-thread44-arm64_O0/thread_tests",
+      "retired_rebind"
+    ],
+    "exit": 134,
+    "stdout": "",
+    "stderr": "Native thread services: retired role cannot rebind (13)\n"
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "/data/local/tmp/blackopsarm-thread44-arm64_O0/thread_tests",
+      "retired_role_reuse"
+    ],
+    "exit": 134,
+    "stdout": "",
+    "stderr": "Native thread services: role already claimed (13)\n"
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "mkdir",
+      "-p",
+      "/data/local/tmp/blackopsarm-thread44-arm64_O3"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "push",
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_thread_data_impl_O3_2\\bo1_native_thread_data_tests",
+      "/data/local/tmp/blackopsarm-thread44-arm64_O3/thread_tests"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_thread_data_impl_O3_2\\bo1_native_thread_data_tests: 1 file pushed, 0 skipped. 180.0 MB/s (1640808 bytes in 0.009s)\n"
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "sha256sum",
+      "/data/local/tmp/blackopsarm-thread44-arm64_O3/thread_tests"
+    ],
+    "exit": 0,
+    "stdout": "f454d1364680a5b68fbc42eb785f09af4e54a91ea07efd68e233aa5c38989c9d  /data/local/tmp/blackopsarm-thread44-arm64_O3/thread_tests\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "chmod",
+      "700",
+      "/data/local/tmp/blackopsarm-thread44-arm64_O3/thread_tests"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "/data/local/tmp/blackopsarm-thread44-arm64_O3/thread_tests"
+    ],
+    "exit": 0,
+    "stdout": "{\"record\":\"layout\",\"pointer_bytes\":8,\"cmdargs_bytes\":12592,\"trace_bytes\":40,\"checkcount_bytes\":16,\"va_bytes\":4100,\"va_index_offset\":4096,\"cmd_item_offset\":72,\"cmd_argv_offset\":200,\"cmd_text_offset\":264,\"cmd_argvpool_offset\":8456,\"cmd_usedtext_offset\":12552,\"trace_partitions_offset\":8,\"trace_brush_offset\":16}\n{\"record\":\"verified\",\"live_roles\":3,\"canonical_slots\":12,\"native_jumps\":3,\"cmd_resets\":2,\"retired_workers\":2,\"pass\":true}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "/data/local/tmp/blackopsarm-thread44-arm64_O3/thread_tests",
+      "unregistered_get"
+    ],
+    "exit": 134,
+    "stdout": "",
+    "stderr": "Native thread services: unregistered thread (-1)\n"
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "/data/local/tmp/blackopsarm-thread44-arm64_O3/thread_tests",
+      "unregistered_set"
+    ],
+    "exit": 134,
+    "stdout": "",
+    "stderr": "Native thread services: unregistered thread (-1)\n"
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "/data/local/tmp/blackopsarm-thread44-arm64_O3/thread_tests",
+      "unregistered_context"
+    ],
+    "exit": 134,
+    "stdout": "",
+    "stderr": "Native thread services: unregistered thread (-1)\n"
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "/data/local/tmp/blackopsarm-thread44-arm64_O3/thread_tests",
+      "invalid_role_negative"
+    ],
+    "exit": 134,
+    "stdout": "",
+    "stderr": "Native thread services: unsupported role (-1)\n"
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "/data/local/tmp/blackopsarm-thread44-arm64_O3/thread_tests",
+      "invalid_role_count"
+    ],
+    "exit": 134,
+    "stdout": "",
+    "stderr": "Native thread services: unsupported role (15)\n"
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "/data/local/tmp/blackopsarm-thread44-arm64_O3/thread_tests",
+      "unsupported_server"
+    ],
+    "exit": 134,
+    "stdout": "",
+    "stderr": "Native thread services: unsupported role (10)\n"
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "/data/local/tmp/blackopsarm-thread44-arm64_O3/thread_tests",
+      "slot_negative_get"
+    ],
+    "exit": 134,
+    "stdout": "",
+    "stderr": "Native thread services: invalid TLS slot (-1)\n"
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "/data/local/tmp/blackopsarm-thread44-arm64_O3/thread_tests",
+      "slot_count_get"
+    ],
+    "exit": 134,
+    "stdout": "",
+    "stderr": "Native thread services: invalid TLS slot (5)\n"
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "/data/local/tmp/blackopsarm-thread44-arm64_O3/thread_tests",
+      "slot_negative_set"
+    ],
+    "exit": 134,
+    "stdout": "",
+    "stderr": "Native thread services: invalid TLS slot (-1)\n"
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "/data/local/tmp/blackopsarm-thread44-arm64_O3/thread_tests",
+      "slot_count_set"
+    ],
+    "exit": 134,
+    "stdout": "",
+    "stderr": "Native thread services: invalid TLS slot (5)\n"
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "/data/local/tmp/blackopsarm-thread44-arm64_O3/thread_tests",
+      "role_switch"
+    ],
+    "exit": 134,
+    "stdout": "",
+    "stderr": "Native thread services: thread role switch (1)\n"
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "/data/local/tmp/blackopsarm-thread44-arm64_O3/thread_tests",
+      "main_retire"
+    ],
+    "exit": 134,
+    "stdout": "",
+    "stderr": "Native thread services: main retirement unsupported (0)\n"
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "/data/local/tmp/blackopsarm-thread44-arm64_O3/thread_tests",
+      "duplicate_main"
+    ],
+    "exit": 134,
+    "stdout": "",
+    "stderr": "Native thread services: role already claimed (0)\n"
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "/data/local/tmp/blackopsarm-thread44-arm64_O3/thread_tests",
+      "duplicate_database"
+    ],
+    "exit": 134,
+    "stdout": "",
+    "stderr": "Native thread services: role already claimed (13)\n"
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "/data/local/tmp/blackopsarm-thread44-arm64_O3/thread_tests",
+      "exit_without_retirement"
+    ],
+    "exit": 134,
+    "stdout": "",
+    "stderr": "Native thread services: worker exited without retirement (13)\n"
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "/data/local/tmp/blackopsarm-thread44-arm64_O3/thread_tests",
+      "retired_get"
+    ],
+    "exit": 134,
+    "stdout": "",
+    "stderr": "Native thread services: retired thread (-1)\n"
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "/data/local/tmp/blackopsarm-thread44-arm64_O3/thread_tests",
+      "retired_rebind"
+    ],
+    "exit": 134,
+    "stdout": "",
+    "stderr": "Native thread services: retired role cannot rebind (13)\n"
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "/data/local/tmp/blackopsarm-thread44-arm64_O3/thread_tests",
+      "retired_role_reuse"
+    ],
+    "exit": 134,
+    "stdout": "",
+    "stderr": "Native thread services: role already claimed (13)\n"
+  }
+]

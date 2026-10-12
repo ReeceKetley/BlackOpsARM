@@ -1,5 +1,14 @@
 ## Current Milestone
 
+TASK44 genuine native main/backend/database thread data and originalCmdReset
+verified3ABIs/O0/O3, actualmainTLS+allMP71 in sameprocess passes. TASK42PMem and
+TASK43all75locks committed; latestSTATE/Git give checkpoint. No actualDvar/DBworker/
+Com_Init/Frame/gameplay claim. Next fixed32actualFastCriticalSection protocol,
+genuineDvar/Cmd/Cbuf closure, realDB orchestration andheadlessboot/simulation.
+Standing DEC47/56/59/localverifiedcommits/nopush active; protectWindows/assets.
+
+## Historical Milestone
+
 TASK40 corrected actualdefault/SLownership verified3ABIs/O0/O3. Next complete
 production first71assetMPstartupzone, nativeDB/core startup, genuineheadless
 Zombiessimulation beforegraphics. DEC47/56/59 active; nofullenginebootclaim.
