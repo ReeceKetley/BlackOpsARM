@@ -236,3 +236,8 @@ DBHASH/asset-entry ownership/init andregistryboundary. No fakeDB_Addsuccess or
 arbitrarycaprelaxation. ContinueDEC29/localverifiedcommitsDEC26/no push; preserve
 all prior evidence/protectedrepos/assets. Invalidcaller guards arefixturecontracts,
 notuncheckedrawleaf recovery/concurrency certification.
+
+
+Ledger metadata correction: FACT82/83 supersede formatting of FACT76/77;
+FACT84/85 supersede FACT79/80; WARN27 supersedes WARN26. Evidence/results unchanged,
+old entry history retained; current TEMP reuse/real registry limitations unchanged.
