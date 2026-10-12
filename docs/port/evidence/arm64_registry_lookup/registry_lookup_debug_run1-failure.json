@@ -1,0 +1,5 @@
+{
+  "error_type": "TypeError",
+  "error": "main.<locals>.execute() takes 2 positional arguments but 3 were given",
+  "traceback": "Traceback (most recent call last):\n  File \"D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\tools\\port\\run_rawfile_payload_gate.py\", line 401, in main\n    raise RuntimeError('Unexpected/duplicate hash-vector record or incorrect prerequisite order')\nTypeError: main.<locals>.execute() takes 2 positional arguments but 3 were given\n"
+}

@@ -3,6 +3,9 @@
 #include <cstring>
 #if defined(BO1_ENTRY_ALLOC_GATE)
 #include "db_entry_alloc_api.h"
+#if defined(BO1_REGISTRY_LOOKUP_GATE)
+#include "db_registry_lookup_api.h"
+#endif
 #endif
 #include <universal/assertive.h>
 #else
@@ -783,6 +786,8 @@ const char *__cdecl DB_GetXAssetHeaderName(int type, const XAssetHeader *header)
 #if !defined(BO1_STRINGTABLE_OWNER_GATE)
 
 
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE) || defined(BO1_REGISTRY_LOOKUP_GATE)
 const char *__cdecl DB_GetXAssetName(const XAsset *asset)
 {
     if ( !asset
@@ -792,6 +797,9 @@ const char *__cdecl DB_GetXAssetName(const XAsset *asset)
     }
     return DB_GetXAssetHeaderName(asset->type, &asset->header);
 }
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE)
+
 
 void __cdecl DB_SetXAssetName(XAsset *asset, const char *name)
 {

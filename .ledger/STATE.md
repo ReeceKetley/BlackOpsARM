@@ -1,4 +1,21 @@
-# Current state — TASK33 complete; standing goal continues
+# Current state � TASK34 complete; standing goal continues
+
+Actual canonical hash/name/find returns genuine entry-owned headers after TEMP
+reuse on Windowsx86/x64/HONOR O0/O3. Fixture membership only; all bytes/buckets/counts
+restored before actual free/zone release. Finalpass2/debugrun3/O3run2 pass inherited
+215cases/12cycles/all1994queries,12lookuprows/4malformedcontrols,27hashvectors,
+realcollision/typefilter/firstprimary/samebucketoverride-tailmiss/slash/empty cases.
+Deferredmiss explicitly aborts3/134; positivecount hit bypasses endpoint. Source
+proof/defaultWindows8TUs/protected17521files/Git pass; failedcollector retained.
+Read arm64_registry_lookup.md, DEC50/FACT103/104/WARN35/FAIL33. Git supplies HEAD.
+Next actual production insertion/registration and returned-header loader boundary,
+then next genuine asset. No DB_Link/DB_Add/fullDB_Init/deferredmods/engineboot claim.
+Standing DEC47 localcommit/no push continues. Protected repos/assets/root/evidence
+and genuine TechniqueSet7 boundary remain intact. All tests completed.
+
+# Historical state (preserved)
+
+# Current state � TASK33 complete; standing goal continues
 
 Genuine StringTable/RawFile headers now use actual DB_AllocXAssetEntry/clone/free
 through codec/checkedzone/finite loader. Code owns2 entries/zombie1 without skipping
@@ -20,7 +37,7 @@ zombie TechniqueSet7 and protected original assets/repos/root/evidence intact.
 
 # Historical state (preserved)
 
-# Current state — TASK32 complete; standing autonomous goal active
+# Current state � TASK32 complete; standing autonomous goal active
 
 Actual header dispatch and entry alloc/free verified on Windowsx86/x64/HONOR O0/O3.
 1600 allocations,6 fixtureguards/full baselines/LIFO/highwater pass. Actual FF
@@ -42,7 +59,7 @@ recovery remain open. Preserve all prior evidence/protected repos/assets/root.
 
 # Historical state (preserved)
 
-# Current state — TASK31 complete, 12 October 2026
+# Current state � TASK31 complete, 12 October 2026
 
 Actual canonical entry-list initialization and native DBHASH prerequisite verified
 on Windows x86/x64 and HONOR/O0/O3. Retail free32752/mod65520, head16/reserved0..15,
@@ -66,7 +83,7 @@ Previous RawFile/StringTable evidence, protected repos/assets/root remain intact
 
 # Historical state (preserved)
 
-# Current state — TASK30 complete, 12 October 2026
+# Current state � TASK30 complete, 12 October 2026
 
 User handoff resumes work after NOTE-0009; follow-up explicitly authorizes local
 verified commits on android-arm64 (DEC45), no push. TASK30 genuine RawFile pool
@@ -89,7 +106,7 @@ five original uncommitted handoff paths preserved in the local checkpoint.
 
 # Historical state (preserved)
 
-# Lead rotation — implementation stopped, 12 October 2026 (NOTE-0009)
+# Lead rotation � implementation stopped, 12 October 2026 (NOTE-0009)
 
 Do not start TASK30 or further implementation until the user resumes. Latest
 rotation instruction forbids commits/pushes/reset/clean/stash/discard/production
@@ -111,7 +128,7 @@ TASK29 source/evidence checkpoint 8d3efb2 verified (FACT-0094); all196 durable p
 4014 prior frozen/4117 archive Git blobs preserved; tests completed, protected unchanged.
 Next TASK30 actual RawFile persistent pool ownership before TEMP reuse; full goal active.
 
-# Current State — TASK29 complete, 12 October 2026
+# Current State � TASK29 complete, 12 October 2026
 
 Genuine code RawFile name17 and present buffer141 load through original wrapper
 and leaves on HONOR/Windows x86/x64; source end10577, disk10496/native15357
@@ -136,7 +153,7 @@ smallest real registration/lookup boundary. Full gameplay/startup/render not yet
 
 # Historical state (preserved)
 
-# Active task — TASK29 genuine RawFile children
+# Active task � TASK29 genuine RawFile children
 
 TASK28 checkpoints acd48e5 / 7f7f005 are verified locally; no push.
 TASK29 selects the unchanged canonical RawFile wrapper, XString, byte allocator
@@ -159,7 +176,7 @@ TASK28 source/evidence checkpoint acd48e5 verified (FACT-0091); all392 durable p
 3652 prior frozen/3945 archive Git blobs preserved, tests completed, protected unchanged.
 Next TASK29 genuine RawFile name and present buffer before registration; full goal active.
 
-# Current State — TASK28 complete, 12 October 2026
+# Current State � TASK28 complete, 12 October 2026
 
 TEMP successful-write mappings and next genuine code RawFile numeric header
 verified. Current typed values captured before overwrite; exact address maps and
@@ -187,7 +204,7 @@ hashlocale unverified. No newlatency/RSS/benchmark. Allscratch/originals preserv
 
 # Historical state (preserved)
 
-# Resumed by user — 12 October 2026
+# Resumed by user � 12 October 2026
 
 User resumed porting and the goal (NOTE-0008). TASK28 remains active and
 uncommitted: finish controlled TEMP success/failure/opaque-value probes, then
@@ -198,7 +215,7 @@ logical words and native slots inside the actual write before live authority.
 Preserve all failures and scratch. Last verified checkpoint remains3f7dc56;
 local verified milestone commits are authorized, no push.
 
-# Historical pause — 12 October 2026 morning
+# Historical pause � 12 October 2026 morning
 
 The user stopped overnight work for an update. Goal is paused; all agents are
 stopped and no project build/test process remains live locally or on HONOR.
@@ -230,7 +247,7 @@ TASK27 source/evidence checkpoint ee13677 verified (FACT-0088); all352durablepat
 3325priorfrozen/3586archiveGitblobs preserved, alltestsfinished, protectedunchanged.
 NextTASK28 write-aware TEMP mapping beforeasset2; Git supplies latestpendingstate.
 
-# Current State — 12 October 2026
+# Current State � 12 October 2026
 
 TASK27 TEMP cursor/alias prerequisite complete. Actual native-only target-entry
 shadow stack restores block0 physical/shadow coordinates together; nested scopes
@@ -595,7 +612,7 @@ transaction/VM/Z/registry/backend/16KB/S25 and PMem caching/freeTot/multiowner.
 
 # Historical state (preserved)
 
-# Current overnight state â€” structural front end complete, 12 October 2026
+# Current overnight state — structural front end complete, 12 October 2026
 
 The user's objective in DEC-0029 remains active. Continue bounded milestones
 autonomously. Local verified commits are authorized by DEC-0026; never push.
@@ -636,7 +653,7 @@ S25 remain open. Historical TASK-0011 decoder/allocator measurements stay separa
 
 # Historical state (preserved)
 
-# Current active overnight progress â€” TASK-0015 complete, 2026-10-12
+# Current active overnight progress — TASK-0015 complete, 2026-10-12
 
 Current objective: user file DEC-0029; autonomous bounded native engine/assets
 progress. Local verified milestone commits authorized DEC-0026; no push. Prior
@@ -664,7 +681,7 @@ current gitstate from status/log; historical reports preserve formerheads/state.
 
 # Historical progress (preserved)
 
-# Current active overnight progress â€” 2026-10-12
+# Current active overnight progress — 2026-10-12
 
 Read updated user objective file referenced by DEC-0029; autonomous bounded
 progress toward actual native engine/assets/game-owned graphics, no deadline or
@@ -771,7 +788,7 @@ FACT-0037/0038, FAIL-0007, WARN-0013. TASK-0014 implementation is next under app
   Exact delta/cumulative status/ignored artifacts: arm64_assetlist_changes.md and
   evidence file_inventory.json. No deletion/reset/APK install/commit/push.
 
-## Active limits â€” WARN-0013
+## Active limits — WARN-0013
 
 Finite reader does not certify engine async/refill/APC/authentication. Android
 expander TU selected envelope subset only; full normal Windows TU passes. No

@@ -255,7 +255,12 @@ static unsigned fixtures(const ZonePlan&zone){unsigned count=0;const auto baseli
     std::printf("{\"fixture\":\"injected_failure\",\"status\":\"invalid_source\",\"no_mutation\":true}\n");
     DB_InitStreams(detached);DB_FreeXBlocks(b,0);frontend_fixture::release(&owner);require(frontend_fixture::counts()==baseline,"failure detach and release baseline");return count;
 }
-int main(int argc,char**argv){require(argc>=2,"decode/gate mode");if(!std::strcmp(argv[1],"decode")){require(argc==4,"decode input output");decode(argv[2],argv[3]);return 0;}
+int main(int argc,char**argv){
+#if defined(BO1_REGISTRY_LOOKUP_GATE)
+    if(argc==2&&!std::strcmp(argv[1],"--lookup-controls")){registry_lookup_fixture::controls();return 0;}
+    if(argc==2&&!std::strcmp(argv[1],"--mod-deferred-unavailable")){registry_lookup_fixture::deferredUnavailable();return 1;}
+#endif
+require(argc>=2,"decode/gate mode");if(!std::strcmp(argv[1],"decode")){require(argc==4,"decode input output");decode(argv[2],argv[3]);return 0;}
     require(argc==6&&!std::strcmp(argv[1],"gate"),"gate prefix1 decoded1 prefix2 decoded2");frontend_fixture::startup();
 #if defined(BO1_FRONTEND_INTERN_GATE)
     Sys_InitializeCriticalSections();bo1::script::RegisterServerThread();
@@ -365,6 +370,9 @@ int main(int argc,char**argv){require(argc>=2,"decode/gate mode");if(!std::strcm
 #if defined(BO1_STRINGTABLE_OWNER_GATE)
 #if defined(BO1_ENTRY_GENUINE_GATE)
         entry_owner_fixture::verifyLive(asset);
+#if defined(BO1_REGISTRY_LOOKUP_GATE)
+        registry_lookup_fixture::genuine(asset);
+#endif
         rawfile_owner_fixture::finish();
         owner_fixture::finish();
         entry_owner_fixture::finish(asset);
@@ -419,7 +427,9 @@ int main(int argc,char**argv){require(argc>=2,"decode/gate mode");if(!std::strcm
 #endif
     }
     const char*schema=
-#if defined(BO1_ENTRY_GENUINE_GATE)
+#if defined(BO1_REGISTRY_LOOKUP_GATE)
+        "BlackOpsARM.TASK-0034.registry-lookup.v1";
+#elif defined(BO1_ENTRY_GENUINE_GATE)
         "BlackOpsARM.TASK-0033.entry-owned-genuine.v1";
 #elif defined(BO1_RAWFILE_OWNER_GATE)
         "BlackOpsARM.TASK-0030.rawfile-owner.v1";
