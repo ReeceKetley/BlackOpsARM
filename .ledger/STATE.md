@@ -1,3 +1,34 @@
+# Latest verified TASK45 - fixed32 original admission protocol
+
+Actualwriter/readrelease nativefunctions passhostx86/x64/HONORO0/O3:10000writes,
+12000readerchecks, writerexclusion/payloadyield, queued/nestedreaders/canaries/
+independence/zero counters and24signedzero/negativefatalcontrols. Readeradmission
+driveriscontract; fullDvaroperations notexecuted. Windowsoriginaloracle3k/3k,
+16normalbody/canonicaltypeproofs and5completeWindowsTUs/ABI pass. All9nativecounter
+sitesadaptedwithatomicpolls+updates/realyield. SameprocessmainTLS+MP71 regressions
+all3ABIs/O0/O3 pass.12currentmanifests/19930protectedpaths/referenceGit/1345older
+records verified;169newmetadatarecords frozen. Read FACT134/WARN44/FAIL44-45 and
+arm64_fast_critical_section.md. TSanNOTpassing: runtime139internalCHECK reproduced
+byindependentnoenginecontrols, TSanonlyandcombined. No checksdisabled/RTpatches.
+Allsourceownershiproot, no livebuild/test/devicehandles. Localcheckpointpending,
+no push. NextactualDvar/Cmd/Cbuf startup closure/SLstrings, thenDBorchestration,
+genuineCom_Init/frames/headlesssimulation. No fullstartup/errorrecoveryclaim.
+
+# Historical active TASK45 - original FastCriticalSection native fixed32 protocol
+
+TASK44 verified/committed cfbd591, sourceownership clear. Implementationagent
+owns newcanonicalFCS type/helpers/nativeyield and minimalwin_common.h/dvar.cpp/
+db_registry.cpp/directsavegame/profilecounter adaptations+isolatedprotocol builds.
+Root independentoriginalWindowsbodyoracle/sourceproof/collectors/HONOR/docs/Ledger.
+Read DEC63/native_dvar_lock_plan.md/FACT132. Nativeprototype notverifiedyet.
+Originalcfbd591 writer/readrelease/NET_Sleep bodies compiled/run x86/x64 via
+fast_critical_section_original_run2:3000writerupdates/3000readerchecks, nested/
+queuedreaders/canaries/independence/zero counters pass. Readerdriveriscontract
+admission, not a nonexistentactualSys_LockRead. Firstoracleduplicatedsignature
+compilefailure retained/corrected. Roottrimmed3canonicalthreadheaderEOF blanks
+only; token/layout/body unchanged. PreviousTASK44source/evidence frozenparent.
+No actualDvarstartup/fullComInit claim; oneactualprotocolprerequisite only.
+
 # Latest verified TASK44 - native thread data and same-process MP71
 
 ActualCom_InitThreadData/Cmd_ResetArgs and canonicalarrays execute onx86/x64/HONOR

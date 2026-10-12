@@ -14,4 +14,3 @@ struct TraceThreadInfo // sizeof=0x14
     struct cmodel_t *box_model;
     struct PhysGeomList **geoms;
 };
-

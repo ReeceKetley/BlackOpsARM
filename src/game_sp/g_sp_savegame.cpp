@@ -1,3 +1,4 @@
+#include <platform/fast_critical_section.h>
 #include <platform/bo1_native_width.h>
 #include "g_sp_savegame.h"
 #include "g_sp_levelstart.h"
@@ -405,9 +406,15 @@ static void Dvar_SaveDvars(MemoryFile *memFile, unsigned int dvarFlags)
 {
     // zombies: SP 0x00415920: every dvar with one of these flags, in hash table order, as
     // int length + name, int length + value string (0x00860E30), ended by -1.
+#if BO1_NATIVE_FAST_CRIT_SECT
+    bo1::fcs::AddRead(&g_dvarCritSect);
+    while (bo1::fcs::LoadWrite(&g_dvarCritSect))
+        bo1::fcs::YieldThread();
+#else
     _InterlockedExchangeAdd(&g_dvarCritSect.readCount, 1u);
     while (g_dvarCritSect.writeCount)
         NET_Sleep(0);
+#endif
     for (int bucket = 0; bucket < 1024; ++bucket)
     {
         for (dvar_s *dvar = dvarHashTable[bucket]; dvar; dvar = dvar->hashNext)

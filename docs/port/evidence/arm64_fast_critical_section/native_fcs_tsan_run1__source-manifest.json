@@ -1,0 +1,10 @@
+{
+  "src/platform/fast_critical_section.h": "b6da808af485a8c800a054efa90b6259c619dc8a0e659c76cc8f325dedcd5e79",
+  "src/platform/atomic32.h": "62a90a29703b7ac9ae6e2ad4a457f8803fb72776def9e97c071141f9d1f90e1d",
+  "src/platform/android/fast_critical_section_services.cpp": "933038320e5b73149df62b26d0396c19c623f0e3bfa13b8ec4fef89b9cc387fb",
+  "src/database/db_registry.cpp": "335858fd98910c669b7e9b9a18bc53cc77b30e183bce95ebfdbbdfebb70a605e",
+  "src/universal/dvar.cpp": "d6d79671c3901fdd365f08b7e0fcaa55e5b7ab14ad2e6c520e72c60574133c81",
+  "tools/port/tests/native_fast_critical_section_tests.cpp": "38f685d4fc317f14004be842de9b52e2de2a6eb06d9f1a832b53a7898da84aca",
+  "android/cmake/native-fast-critical-section/CMakeLists.txt": "eb67e52e3415d351c4a14323d0ed13c0eb9e3ddc8b14e2fb6eee89c58370d08b",
+  "tools/port/run_fast_critical_section_tsan.py": "a3e8ca51c9b60e6a2ea1da8429d5e2453a534f6dde62bf20184d96ab3b62d6d0"
+}

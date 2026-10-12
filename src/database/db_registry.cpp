@@ -1,3 +1,4 @@
+#if !defined(BO1_FAST_CRIT_SECT_GATE)
 #if defined(BO1_STRINGTABLE_OWNER_GATE)
 #include "db_asset_pool.h"
 #include "db_asset_entry_types.h"
@@ -1946,35 +1947,6 @@ void __cdecl DB_RegisteredReorderAsset(int type, const char *assetName, XAssetEn
             Sys_UnlockWrite(&s_dbReorder.critSect);
         }
     }
-}
-
-void __cdecl Sys_LockWrite(FastCriticalSection *critSect)
-{
-    while ( 1 )
-    {
-        if ( critSect->readCount )
-            goto LABEL_5;
-        if ( _InterlockedIncrement(&critSect->writeCount) == 1 && !critSect->readCount )
-            break;
-        _InterlockedExchangeAdd(&critSect->writeCount, 0xFFFFFFFF);
-LABEL_5:
-        NET_Sleep(0);
-    }
-}
-
-void __cdecl Sys_UnlockWrite(FastCriticalSection *critSect)
-{
-    if ( critSect->writeCount <= 0
-        && !Assert_MyHandler(
-                    "c:\\projects_pc\\cod\\codsrc\\src\\universal\\../qcommon/threads_interlock.h",
-                    126,
-                    0,
-                    "%s",
-                    "critSect->writeCount > 0") )
-    {
-        __debugbreak();
-    }
-    _InterlockedExchangeAdd(&critSect->writeCount, 0xFFFFFFFF);
 }
 
 void DB_EndReorderZone()
@@ -5987,3 +5959,65 @@ void __cdecl DB_LoadGraphicsAssetsForPC()
 
 
 #endif // !BO1_STRINGTABLE_OWNER_GATE
+
+#endif // !BO1_FAST_CRIT_SECT_GATE
+
+#if !defined(BO1_STRINGTABLE_OWNER_GATE) || defined(BO1_FAST_CRIT_SECT_GATE)
+#include <platform/fast_critical_section.h>
+#if defined(BO1_FAST_CRIT_SECT_GATE)
+#include <universal/assertive.h>
+#endif
+void __cdecl Sys_LockWrite(FastCriticalSection *critSect)
+{
+    while ( 1 )
+    {
+#if BO1_NATIVE_FAST_CRIT_SECT
+        if ( bo1::fcs::LoadRead(critSect) )
+#else
+        if ( critSect->readCount )
+#endif
+            goto LABEL_5;
+#if BO1_NATIVE_FAST_CRIT_SECT
+        if ( bo1::fcs::IncrementWrite(critSect) == 1 && !bo1::fcs::LoadRead(critSect) )
+#else
+        if ( _InterlockedIncrement(&critSect->writeCount) == 1 && !critSect->readCount )
+#endif
+            break;
+#if BO1_NATIVE_FAST_CRIT_SECT
+        bo1::fcs::SubtractWrite(critSect);
+#else
+        _InterlockedExchangeAdd(&critSect->writeCount, 0xFFFFFFFF);
+#endif
+LABEL_5:
+#if BO1_NATIVE_FAST_CRIT_SECT
+        bo1::fcs::YieldThread();
+#else
+        NET_Sleep(0);
+#endif
+    }
+}
+
+void __cdecl Sys_UnlockWrite(FastCriticalSection *critSect)
+{
+#if BO1_NATIVE_FAST_CRIT_SECT
+    if ( !bo1::fcs::SignedPositive(bo1::fcs::LoadWrite(critSect))
+#else
+    if ( critSect->writeCount <= 0
+#endif
+        && !Assert_MyHandler(
+                    "c:\\projects_pc\\cod\\codsrc\\src\\universal\\../qcommon/threads_interlock.h",
+                    126,
+                    0,
+                    "%s",
+                    "critSect->writeCount > 0") )
+    {
+        __debugbreak();
+    }
+#if BO1_NATIVE_FAST_CRIT_SECT
+    bo1::fcs::SubtractWrite(critSect);
+#else
+    _InterlockedExchangeAdd(&critSect->writeCount, 0xFFFFFFFF);
+#endif
+}
+
+#endif

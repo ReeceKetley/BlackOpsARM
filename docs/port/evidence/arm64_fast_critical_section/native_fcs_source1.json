@@ -1,0 +1,91 @@
+{
+  "passed": true,
+  "baseline": "cfbd591",
+  "original_windows_bodies": {
+    "Sys_LockWrite": {
+      "path": "src/database/db_registry.cpp",
+      "original_body_sha256": "dd364d07976efc39a7dcd0e6b34d34123fbcad5e2c2a6fd89783a26c4fe92e5c",
+      "unchanged_windows": true
+    },
+    "Sys_UnlockWrite": {
+      "path": "src/database/db_registry.cpp",
+      "original_body_sha256": "db3394e8a0de3722381afe676524e5137b8a7c35370029465f89e03790e77a13",
+      "unchanged_windows": true
+    },
+    "DB_LinkXAssetEntry": {
+      "path": "src/database/db_registry.cpp",
+      "original_body_sha256": "44f2387db69028ed0cd0f45700214cc4e5740b7ba057c36d14f3879ae111bfc9",
+      "unchanged_windows": true
+    },
+    "Sys_UnlockRead": {
+      "path": "src/universal/dvar.cpp",
+      "original_body_sha256": "39954fc3b9403572426afc15e2bdd359bc3030d35541ee18f61e260b7c674dab",
+      "unchanged_windows": true
+    },
+    "Dvar_FindMalleableVar_0": {
+      "path": "src/universal/dvar.cpp",
+      "original_body_sha256": "8266f087dd942b83016f746865dc9c5a19887eb08f02b2b99e713c4982a76121",
+      "unchanged_windows": true
+    },
+    "Dvar_SetCheatState": {
+      "path": "src/universal/dvar.cpp",
+      "original_body_sha256": "8382e28937b1f64ad553e280d183f66a6b5ab263b590537781b2cdbe0bd66566",
+      "unchanged_windows": true
+    },
+    "Dvar_ResetScriptInfo": {
+      "path": "src/universal/dvar.cpp",
+      "original_body_sha256": "2b6dd4d62d6ddb7a7162b6b901adb9b84aa0cd3bd045396e983c1a383ab34823",
+      "unchanged_windows": true
+    },
+    "Dvar_AnyLatchedValues": {
+      "path": "src/universal/dvar.cpp",
+      "original_body_sha256": "f2cd27ec3b34b54c81950cd5d05d00b83fd41e8dc7581953f5b8dae3deb3822c",
+      "unchanged_windows": true
+    },
+    "Dvar_RestoreDvars": {
+      "path": "src/universal/dvar.cpp",
+      "original_body_sha256": "0384fea6763eff4e610b03c49c31dcdca6a682e9e0f1b184f5677d24d81b1b69",
+      "unchanged_windows": true
+    },
+    "Dvar_ResetDvars": {
+      "path": "src/universal/dvar.cpp",
+      "original_body_sha256": "8da5b216534ee21a419a62feb3b93c7c8de7875e26483b2aad6f2f47c0ccb326",
+      "unchanged_windows": true
+    },
+    "Dvar_ResetConAccessDvars": {
+      "path": "src/universal/dvar.cpp",
+      "original_body_sha256": "af68aacc02be92ed6ec47f3365d224a19b47e6e0854c5d19f1ab132d8b0a568a",
+      "unchanged_windows": true
+    },
+    "Dvar_Init": {
+      "path": "src/universal/dvar.cpp",
+      "original_body_sha256": "1e806491ecc47b18ae3f041524f447d4dfc861859b31daa10d1ba4dffa448605",
+      "unchanged_windows": true
+    },
+    "Dvar_Shutdown": {
+      "path": "src/universal/dvar.cpp",
+      "original_body_sha256": "b9994bdfc4d3c1264ea2356d7dd9eb2832d64ab91586e64f6e5c1b36dff40336",
+      "unchanged_windows": true
+    },
+    "Dvar_RegisterVariant": {
+      "path": "src/universal/dvar.cpp",
+      "original_body_sha256": "83245dc80e7ee0170ac6518bdf7ccb0541f68a7e6389c3bb54ae73e941652227",
+      "unchanged_windows": true
+    },
+    "Dvar_SaveDvars": {
+      "path": "src/game_sp/g_sp_savegame.cpp",
+      "original_body_sha256": "827563bbb702953a4a606d119b96493a4f89c3670362a53a5817a0ed8e27912d",
+      "unchanged_windows": true
+    },
+    "PCache_IsLocked": {
+      "path": "src/live/live_pcache.cpp",
+      "original_body_sha256": "f55329cae743bfe8eab4cac103fa93d60847c770389357be48dc9d803e5c3345",
+      "unchanged_windows": true
+    }
+  },
+  "canonical_windows_lock_unchanged": true,
+  "native_counter_access_sites": 9,
+  "atomic_thread_zone_implementations_unchanged": true,
+  "thread_header_delta": "EOF blank-line cleanup only",
+  "scope": "Original Windows body/type proof; native runtime and normal builds independently required."
+}
