@@ -1,0 +1,5 @@
+{
+  "error_type": "RuntimeError",
+  "error": "windows_x86-techset: exit 3; diagnostics retained",
+  "traceback": "Traceback (most recent call last):\n  File \"D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\tools\\port\\run_rawfile_payload_gate.py\", line 455, in main\n    or len(rawfile_records) != len(cycles) + 1):\n                       ^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\tools\\port\\run_rawfile_payload_gate.py\", line 349, in execute\n    return shell(target + '-' + label, [binary] + params) if on_device else run(target + '-' + label, [binary] + params)\n                                                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\tools\\port\\run_rawfile_payload_gate.py\", line 236, in run\n    raise RuntimeError(f'{label}: exit {code}; diagnostics retained')\nRuntimeError: windows_x86-techset: exit 3; diagnostics retained\n"
+}

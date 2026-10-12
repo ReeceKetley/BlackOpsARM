@@ -1,0 +1,5 @@
+{
+  "error_type": "RuntimeError",
+  "error": "Compiled source manifest differs from current Android worktree: D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\tools\\port\\build_techset_arm64.ps1",
+  "traceback": "Traceback (most recent call last):\n  File \"D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\tools\\port\\run_rawfile_payload_gate.py\", line 278, in main\n    'honor_arm64': verify_source_manifest(native.parent / 'source-manifest.json'),\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\tools\\port\\run_rawfile_payload_gate.py\", line 184, in verify_source_manifest\n    raise RuntimeError('Compiled source manifest differs from current Android worktree: ' + name)\nRuntimeError: Compiled source manifest differs from current Android worktree: D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\tools\\port\\build_techset_arm64.ps1\n"
+}

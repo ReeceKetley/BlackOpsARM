@@ -1,0 +1,1 @@
+{"schema":"BlackOpsARM.TASK38.blocked.v1","pointer_bytes":8,"source_end":66226,"header_bytes":1056,"null_techniques":130,"stub_name":true,"missing_dependency":"DB_CreateDefaultEntry/preloaded genuine TechniqueSet","registered_assets":1,"techset_registered":false,"root_pop_executed":false,"actual_deserialization_complete":true,"prior_queries":1994}

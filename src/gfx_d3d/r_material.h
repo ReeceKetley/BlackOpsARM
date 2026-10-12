@@ -225,17 +225,7 @@ struct MaterialTechnique // sizeof=0x1C
         MaterialPass passArray[1];
 };
 
-struct MaterialTechniqueSet // sizeof=0x210
-{                                                                             // XREF: XAssetPoolEntry<MaterialTechniqueSet>/r
-        const char *name;
-        unsigned __int8 worldVertFormat;
-        unsigned __int8 unused[1];
-        unsigned __int16 techsetFlags;
-        MaterialTechnique *techniques[130];
-};
-#if !BO1_NATIVE_64BIT
-static_assert(sizeof(MaterialTechniqueSet) == 528);
-#endif
+#include <database/db_techset_types.h>
 
 struct __declspec(align(4)) GfxImageLoadDef // sizeof=0x10
 {

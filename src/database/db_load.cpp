@@ -1,6 +1,9 @@
 #include <platform/bo1_native_width.h>
 #if defined(BO1_STRINGTABLE_INDEX_GATE)
 #include "db_scalar_load.h"
+#if defined(BO1_TECHSET_GATE)
+#include "db_techset_load.h"
+#endif
 #if defined(BO1_REGISTRY_ADD_GATE)
 #include "db_asset_entry_types.h"
 #endif
@@ -170,13 +173,21 @@ MaterialShaderArgument *varMaterialShaderArgument;
 MaterialArgumentDef *varMaterialArgumentDef;
 GfxStateBits *varGfxStateBits;
 MaterialVertexDeclaration **varMaterialPass;
+#endif
+#if !defined(BO1_STRINGTABLE_INDEX_GATE) || defined(BO1_TECHSET_GATE)
 MaterialTechnique *varMaterialTechnique;
+#endif
+#if !defined(BO1_STRINGTABLE_INDEX_GATE)
 MaterialTextureDef *varMaterialTextureDef;
 water_t **varMaterialTextureDefInfo;
 MaterialConstantDef *varMaterialConstantDef;
+#endif
+#if !defined(BO1_STRINGTABLE_INDEX_GATE) || defined(BO1_TECHSET_GATE)
 MaterialTechnique **varMaterialTechniquePtr;
 MaterialTechniqueSet *varMaterialTechniqueSet;
 MaterialTechniqueSet **varMaterialTechniqueSetPtr;
+#endif
+#if !defined(BO1_STRINGTABLE_INDEX_GATE)
 Material *varMaterial;
 Material **varMaterialHandle;
 GfxLightImage *varGfxLightImage;
@@ -2822,6 +2833,8 @@ void __cdecl Load_MaterialConstantDefArray(bool atStreamStart, int count)
     Load_Stream(atStreamStart, (unsigned __int8 *)varMaterialConstantDef, 32 * count);
 }
 
+#endif
+#if !defined(BO1_STRINGTABLE_INDEX_GATE) || defined(BO1_TECHSET_GATE)
 void __cdecl Load_MaterialTechniquePtr(bool atStreamStart)
 {
     Load_Stream(atStreamStart, (unsigned __int8 *)varMaterialTechniquePtr, 4);
@@ -2916,6 +2929,8 @@ void __cdecl Load_MaterialTechniqueSetPtr(bool atStreamStart)
     DB_PopStreamPos();
 }
 
+#endif
+#if !defined(BO1_STRINGTABLE_INDEX_GATE)
 void __cdecl Load_Material(bool atStreamStart)
 {
 #if BO1_NATIVE_64BIT
@@ -7825,11 +7840,15 @@ void __cdecl Load_flameTable(bool atStreamStart)
     Load_XString(0);
 }
 
+#endif
+#if !defined(BO1_STRINGTABLE_INDEX_GATE) || defined(BO1_TECHSET_GATE)
 XAsset *__cdecl AllocLoad_FxElemVisStateSample()
 {
     return (XAsset *)DB_AllocStreamPos(3);
 }
 
+#endif
+#if !defined(BO1_STRINGTABLE_INDEX_GATE)
 void __cdecl Load_WeaponDef(bool atStreamStart)
 {
 #if BO1_NATIVE_64BIT

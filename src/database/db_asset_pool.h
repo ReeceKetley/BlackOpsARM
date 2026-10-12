@@ -5,6 +5,7 @@
 #include "db_assetlist_types.h"
 #include <universal/com_stringtable.h>
 #include "db_rawfile_types.h"
+#include "db_techset_types.h"
 
 #define POOLSIZE_STRINGTABLE      576
 #define POOLSIZE_STRINGTABLE_MOD 768 // mod: capacity for bo1_mod_zones; in use only with it on the command line (DB_InitXAssets)
@@ -73,3 +74,8 @@ extern int(__cdecl *DB_GetXAssetSizeHandler[43])();
 
 extern XAssetPool<RawFile, POOLSIZE_RAWFILE_MOD> g_RawFilePool;
 int __cdecl DB_SizeofXAsset_RawFile_();
+
+#define POOLSIZE_TECHSET          2048
+#define POOLSIZE_TECHSET_MOD 3072 // mod: capacity for bo1_mod_zones; in use only with it on the command line (DB_InitXAssets)
+extern XAssetPool<MaterialTechniqueSet, POOLSIZE_TECHSET_MOD> g_MaterialTechniqueSetPool;
+int __cdecl DB_SizeofXAsset_MaterialTechniqueSet_();
