@@ -1,0 +1,27 @@
+{
+  "schema": "BlackOpsARM.TASK34.source.v1",
+  "status": "passed",
+  "parent": "5d4d641",
+  "production_files": {
+    "src/database/db_registry.cpp": {
+      "exact_selection_only": true,
+      "sha256": "6de8ac7a424d8c52a7f0382d2961b95314ce0413a209ce06f7731d9a0b73cd54",
+      "canonical_functions": [
+        "unsigned int __cdecl DB_HashForName(",
+        "XAssetEntryPoolEntry *__cdecl DB_FindXAssetEntry("
+      ]
+    },
+    "src/database/db_assetnames.cpp": {
+      "exact_selection_only": true,
+      "sha256": "2b99d3779d1ee97d13b8e7f966bbe5dca3bfe8ad5f5d4dbaac1f323e204fc173",
+      "canonical_functions": [
+        "const char *__cdecl DB_GetXAssetName("
+      ]
+    }
+  },
+  "normal_mod_deferred_static_linkage_preserved": true,
+  "default_mod_helper_body_preserved": true,
+  "existing_targets_preserved": true,
+  "new_header_sha256": "1ad332c67c5576f3f2841933be30b57c51b7b91d8e8435940997a921f2d093fa",
+  "registry_publication_executed": false
+}

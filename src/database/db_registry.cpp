@@ -3,6 +3,10 @@
 #include "db_asset_entry_types.h"
 #if defined(BO1_ENTRY_ALLOC_GATE)
 #include "db_entry_alloc_api.h"
+#if defined(BO1_REGISTRY_LOOKUP_GATE)
+#include "db_registry_lookup_api.h"
+#include <cctype>
+#endif
 #endif
 #include <universal/assertive.h>
 #include <cstring>
@@ -1412,6 +1416,8 @@ void __cdecl DB_FreeXAssetHeader(XAssetType type, XAssetHeader header)
 #if !defined(BO1_STRINGTABLE_OWNER_GATE)
 
 
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE) || defined(BO1_REGISTRY_LOOKUP_GATE)
 unsigned int __cdecl DB_HashForName(const char *name, XAssetType type)
 {
     unsigned int hash = type;
@@ -1428,6 +1434,9 @@ unsigned int __cdecl DB_HashForName(const char *name, XAssetType type)
 
     return hash;
 }
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE)
+
 
 void __cdecl DB_LogMissingAsset(XAssetType type, const char *name)
 {
@@ -2101,7 +2110,16 @@ struct ModDeferredAsset
 };
 static ModDeferredAsset g_modDeferred[8192];
 static int g_modDeferredUsed; // slots handed out since the level's zones started loading (never reused before that)
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE) || defined(BO1_REGISTRY_LOOKUP_GATE)
+#if defined(BO1_REGISTRY_LOOKUP_GATE)
+int g_modDeferredCount; // slots MOD_DEFERRED_UNLINKED
+#else
 static int g_modDeferredCount; // slots MOD_DEFERRED_UNLINKED
+#endif
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE)
+
 static int g_modDeferredLinked[3]; // linked on use: by a later asset's pointer, by a linked xmodel's surface, by name
 static bool g_modDeferredLinking;
 static XAssetEntryPoolEntry g_modUnlinked; // returned by DB_LinkXAssetEntry for an asset of a mod zone it leaves unlinked
@@ -2228,6 +2246,8 @@ static void DB_ModDropDeferred(unsigned int zoneIndex)
     Sys_LeaveCriticalSection(CRITSECT_DBHASH);
 }
 
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE) || defined(BO1_REGISTRY_LOOKUP_GATE)
 XAssetEntryPoolEntry *__cdecl DB_FindXAssetEntry(XAssetType type, const char *name)
 {
     const char *XAssetName; // eax
@@ -2250,6 +2270,9 @@ XAssetEntryPoolEntry *__cdecl DB_FindXAssetEntry(XAssetType type, const char *na
         return DB_ModLinkDeferredByName(type, name);
     return 0;
 }
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE)
+
 
 XAssetEntry *__cdecl DB_CreateDefaultEntry(XAssetType type, const char *name)
 {

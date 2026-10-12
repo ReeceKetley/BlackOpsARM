@@ -119,7 +119,7 @@ When evidence disproves a belief, use `ledger invalidate <ID> --because <ID>` or
 
 Record important discoveries, decisions, outcomes, failures, unresolved questions, and changes in project state. Run `ledger status` and update STATE.md when needed.
 
-## Current TASK-0012 continuation â€” complete
+## Current TASK-0012 continuation — complete
 
 The user's continuation authorized genuine checked blocks to DB_InitStreams.
 DEC-0023, FACT-0035/0036 and WARN-0012 supersede the historical not-started pointers
@@ -132,7 +132,7 @@ fixups/zone init; no implementation started. Current HEAD6f0787ab; TASK-0011/001
 remain uncommitted; no commit/push is authorized. Lead owns this gate; no new
 subagent delegation requested. Exact reproduction and inventory are in report.
 
-## Current TASK-0013 continuation â€” complete
+## Current TASK-0013 continuation — complete
 
 User authorized the next bounded envelope task and optional delegation.
 DEC-0024/0025, FACT-0037/0038, FAIL-0007, WARN-0013 supersede historical pointers
@@ -387,3 +387,8 @@ O0/O3. Production trees unchanged. Serial/private/nohash/noDBAdd boundary only;
 finite reader/error inputs not fullengine/async/recovery. Next actualname/hash
 lookup, smallest publication/returned-header, nextgenuineasset. Continue autonomous
 DEC47/localverifiedcommits/no push; preserve TechniqueSet7 and all old evidence.
+
+TASK34 current: actual genuine registry lookup verified on3ABIs/O0/O3; fixture
+membership restored before frees, not DB_Link/DB_Add. Read arm64_registry_lookup.md
+and DEC50/FACT103/104/WARN35/FAIL33; next real insertion/returned-header integration
+then next genuine asset. DEC47 standing autonomous goal/localcommits/no push active.

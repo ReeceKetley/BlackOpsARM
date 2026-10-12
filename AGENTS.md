@@ -319,3 +319,8 @@ O0/O3. Production trees unchanged. Serial/private/nohash/noDBAdd boundary only;
 finite reader/error inputs not fullengine/async/recovery. Next actualname/hash
 lookup, smallest publication/returned-header, nextgenuineasset. Continue autonomous
 DEC47/localverifiedcommits/no push; preserve TechniqueSet7 and all old evidence.
+
+TASK34 current: actual genuine registry lookup verified on3ABIs/O0/O3; fixture
+membership restored before frees, not DB_Link/DB_Add. Read arm64_registry_lookup.md
+and DEC50/FACT103/104/WARN35/FAIL33; next real insertion/returned-header integration
+then next genuine asset. DEC47 standing autonomous goal/localcommits/no push active.
