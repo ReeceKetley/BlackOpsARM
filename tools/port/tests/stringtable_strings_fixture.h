@@ -43,7 +43,12 @@ static void executeCellStrings(const StringTablePayloadPlan&p,StringTableCell*ce
         std::memcpy(&cells[entry.index].string,&value,sizeof(value));
         if(measurement)std::printf("%s{\"index\":%u,\"tag\":%u,\"kind\":\"%s\",\"length\":%llu,\"adler32\":%lu,\"disk_target\":%llu,\"native_target\":%llu}",entry.index?",":"",entry.index,entry.tag,entry.offset?"offset":entry.tag?"inline":"null",(unsigned long long)entry.bytes,address?adler32(1,address,static_cast<unsigned>(entry.bytes)):1ul,(unsigned long long)(entry.tag?entry.targetDisk:0),(unsigned long long)(entry.tag?entry.targetNative:0));
     }
-    if(measurement)std::printf("]}\n");require(conversionCalls-oldCalls==offsetCount&&r.Position()+52==p.end&&DB_GetStreamPos()==blocks[4].data+p.stringNativeEnd,"actual inline/offset counts and source/native endpoint before indices");
+#if defined(BO1_STRINGTABLE_INDEX_GATE)
+    const auto stringSourceEnd=p.indexSource;
+#else
+    const auto stringSourceEnd=p.end;
+#endif
+    if(measurement)std::printf("]}\n");require(conversionCalls-oldCalls==offsetCount&&r.Position()+52==stringSourceEnd&&DB_GetStreamPos()==blocks[4].data+p.stringNativeEnd,"actual inline/offset counts and source/native endpoint before indices");
 #if BO1_NATIVE_64BIT
     require(DB_StreamWin32Pos(4)==p.stringDiskEnd,"actual string shadow endpoint");
 #endif

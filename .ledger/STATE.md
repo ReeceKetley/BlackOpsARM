@@ -1,9 +1,37 @@
 # Current State
 
+Updated 12 October 2026: TASK-0021 original StringTable indices complete.
+HONOR ARM64/Windows x86/x64 pass162 cases/12 genuine cycles each; optimized ARM
+-O3 assertions/UBSan passes. Original400/1594 signed16 words/800/3188 bytes and
+order preserved, source ends10407/65678; block4 disk10338/65612/native15192/98916.
+Actual unique Load_shortArray body and default loader/global order unchanged;
+normal full Windows db_load.cpp x86/x64 compile,163 expander/6 stream bodies intact.
+Preflight source/product/domain/alignment/bounds/permutation, every scalar byte
+map/no pointer alias, late header publication/varshort invalidation and seeded
+short-read pre-reset preservation/cleanup verified. Failure17 fixture declaration
+diagnostics retained; endpoint review correction predates authoritative tests.
+Final debug pass4/run1 and optimized pass1/run1 all completed. FullARM0errors6449
+warnings/245 artifacts29executables; optimized36/1. No new timing/RSS or graphics.
+Windows2528/DXVK2552/root15 and2271 older frozen paths/APK unchanged.
+Read arm64_stringtable_indices.md/_changes.md and stringtable_indices_handoff.md.
+DEC-0029 autonomous objective continues; DEC-0026 verified local commits/no push.
+Parenta859d77; Git identifies resulting checkpoint. No index-gate work incomplete.
+Next3: canonical modulo32 Com_HashString Windows/genuine parity; actual lookup
+with original retail indices to investigate modeled misses; smallest genuine
+registration/next-asset boundary after ownership findings. Preserve original
+index order, no sorting rejection/resort or false native lookup claims. WARN21:
+finite adapter only, full async/dispatcher/registry/graphics, TEMP reuse, post-read
+OOM, general offsets, pool lifecycle, allocator retention/multipleowner/16KB/S25
+remain open. All old evidence and ignored scratch retained.
+
+# Historical state (preserved)
+
+# Current State
+
 Updated 12 October 2026: TASK-0020 initialized cell strings and real offsets complete.
 DEC-0029 autonomous native engine/assets objective remains active. Verified local
-milestone commits authorized DEC-0026; no push. Prior checkpoint6e3528a FACT-0059;
-Git supplies the current checkpoint and exact pending paths.
+milestone commits authorized DEC-0026; no push. TASK-0020 checkpoint a859d77 verified (FACT-0063); TASK-0021 is active.
+Git supplies current HEAD and exact pending paths.
 
 HONOR/Windows x86/x64 pass129 cases and12 genuine low/high cycles each. Actual raw
 leaf loads398/1545 inline cell strings (6005/22415 bytes); actual pointer converter
@@ -158,7 +186,7 @@ transaction/VM/Z/registry/backend/16KB/S25 and PMem caching/freeTot/multiowner.
 
 # Historical state (preserved)
 
-# Current overnight state — structural front end complete, 12 October 2026
+# Current overnight state â€” structural front end complete, 12 October 2026
 
 The user's objective in DEC-0029 remains active. Continue bounded milestones
 autonomously. Local verified commits are authorized by DEC-0026; never push.
@@ -199,7 +227,7 @@ S25 remain open. Historical TASK-0011 decoder/allocator measurements stay separa
 
 # Historical state (preserved)
 
-# Current active overnight progress — TASK-0015 complete, 2026-10-12
+# Current active overnight progress â€” TASK-0015 complete, 2026-10-12
 
 Current objective: user file DEC-0029; autonomous bounded native engine/assets
 progress. Local verified milestone commits authorized DEC-0026; no push. Prior
@@ -227,7 +255,7 @@ current gitstate from status/log; historical reports preserve formerheads/state.
 
 # Historical progress (preserved)
 
-# Current active overnight progress — 2026-10-12
+# Current active overnight progress â€” 2026-10-12
 
 Read updated user objective file referenced by DEC-0029; autonomous bounded
 progress toward actual native engine/assets/game-owned graphics, no deadline or
@@ -334,7 +362,7 @@ FACT-0037/0038, FAIL-0007, WARN-0013. TASK-0014 implementation is next under app
   Exact delta/cumulative status/ignored artifacts: arm64_assetlist_changes.md and
   evidence file_inventory.json. No deletion/reset/APK install/commit/push.
 
-## Active limits — WARN-0013
+## Active limits â€” WARN-0013
 
 Finite reader does not certify engine async/refill/APC/authentication. Android
 expander TU selected envelope subset only; full normal Windows TU passes. No

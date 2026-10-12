@@ -119,7 +119,7 @@ When evidence disproves a belief, use `ledger invalidate <ID> --because <ID>` or
 
 Record important discoveries, decisions, outcomes, failures, unresolved questions, and changes in project state. Run `ledger status` and update STATE.md when needed.
 
-## Current TASK-0012 continuation — complete
+## Current TASK-0012 continuation â€” complete
 
 The user's continuation authorized genuine checked blocks to DB_InitStreams.
 DEC-0023, FACT-0035/0036 and WARN-0012 supersede the historical not-started pointers
@@ -132,7 +132,7 @@ fixups/zone init; no implementation started. Current HEAD6f0787ab; TASK-0011/001
 remain uncommitted; no commit/push is authorized. Lead owns this gate; no new
 subagent delegation requested. Exact reproduction and inventory are in report.
 
-## Current TASK-0013 continuation — complete
+## Current TASK-0013 continuation â€” complete
 
 User authorized the next bounded envelope task and optional delegation.
 DEC-0024/0025, FACT-0037/0038, FAIL-0007, WARN-0013 supersede historical pointers
@@ -227,3 +227,14 @@ are permutations but not ordinarysigned/unsigned hash-sorted. Preserve bytes/ord
 do not reject/resort original data to satisfy the earlier plan. Modelmisses are
 not yet native execution. Continue DEC-0029, verified local commits DEC-0026;
 no push. Protected repos/assets/frozen evidence remain unchanged, graphics absent.
+
+
+TASK-0021 complete: original signed16 indices preserve every byte/order and
+stride2 on HONOR/Windows,162 cases/12 cycles each plus optimized ARM UBSan.
+Read arm64_stringtable_indices.md, FACT64/65, WARN21/FAIL17. Actual Load_shortArray
+body/defaultWindowsglobalorder remain unchanged; varshort invalid before reset/
+owner release. No ordinary hash sorting prerequisite. Next3: real modulo32 hash,
+actual lookup/reference investigation on original arrays, then smallest real
+registration/next-asset boundary. Finite reader/full async distinction persists.
+Continue autonomously DEC29; local verified commits DEC26/no push. Preserve all
+prior evidence/protected checkouts/original assets. No game-owned graphics yet.

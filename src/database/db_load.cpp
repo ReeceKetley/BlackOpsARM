@@ -1,4 +1,8 @@
 #include <platform/bo1_native_width.h>
+#if defined(BO1_STRINGTABLE_INDEX_GATE)
+#include "db_scalar_load.h"
+#include "db_stream_load.h"
+#else
 #include "db_load.h"
 #include "db_stream_load.h"
 #include "db_stream.h"
@@ -57,7 +61,9 @@ float (*varvec3_t)[3];
 float (*varvec4_t)[4];
 DObjAnimMat *varDObjAnimMat;
 float (*varshared_vec3_t)[3];
+#endif
 __int16 *varshort;
+#if !defined(BO1_STRINGTABLE_INDEX_GATE)
 unsigned __int16 *varushort;
 __int16 (*varXQuat2)[2];
 unsigned __int16 *varUnsignedShort;
@@ -489,10 +495,12 @@ void __cdecl Load_shared_vec3_tArray(bool atStreamStart, int count)
     Load_Stream(atStreamStart, (unsigned __int8 *)varshared_vec3_t, 12 * count);
 }
 
+#endif
 void __cdecl Load_shortArray(bool atStreamStart, int count)
 {
     Load_Stream(atStreamStart, (unsigned __int8 *)varshort, 2 * count);
 }
+#if !defined(BO1_STRINGTABLE_INDEX_GATE)
 
 void __cdecl Load_ushortArray(bool atStreamStart, int count)
 {
@@ -11082,3 +11090,5 @@ void __cdecl Mark_XAsset()
     Mark_XAssetHeader();
 }
 
+
+#endif // !BO1_STRINGTABLE_INDEX_GATE

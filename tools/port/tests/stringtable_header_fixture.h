@@ -56,7 +56,12 @@ static void executeHeader(const StringTableHeaderPlan&p,DecodedSource&r,XBlock(&
 #if defined(BO1_STRINGTABLE_CELLS_GATE)
     require(payload&&g_streamPosStackIndex==2,"actual parent block4 to header0 scope");const auto untouchedIndex=header->cellIndex;
     executePayload(*payload,header,r,blocks,measurement);
+#if defined(BO1_STRINGTABLE_INDEX_GATE)
+    require(reinterpret_cast<uintptr_t>(untouchedIndex)==widenTag(p.indexTag)&&header->cellIndex==(payload->indices.present?reinterpret_cast<__int16*>(blocks[4].data+payload->indices.nativeStart):nullptr),"original index tag replaced only by successfully loaded owned array");
+    require(header->columnCount==p.columns&&header->rowCount==p.rows,"child loading preserves dimensions");
+#else
     require(header->columnCount==p.columns&&header->rowCount==p.rows&&header->cellIndex==untouchedIndex,"child loading preserves dimensions and unresolved index tag");
+#endif
 #if BO1_NATIVE_64BIT
     require(DB_StreamAliasSlotLookup(0,static_cast<unsigned>(p.diskStart))==reinterpret_cast<uintptr_t*>(&header->name)&&DB_StreamAliasSlotLookup(0,static_cast<unsigned>(p.diskStart)+12)==reinterpret_cast<uintptr_t*>(&header->values)&&DB_StreamAliasSlotLookup(0,static_cast<unsigned>(p.diskStart)+16)==reinterpret_cast<uintptr_t*>(&header->cellIndex),"header aliases survive raw name and unresolved cell publication");
 #endif
@@ -64,7 +69,9 @@ static void executeHeader(const StringTableHeaderPlan&p,DecodedSource&r,XBlock(&
     DB_PopStreamPos();
 #if defined(BO1_STRINGTABLE_CELLS_GATE)
     require(g_streamPosArray[0]==blocks[0].data&&g_streamPosStackIndex==1&&g_streamPosIndex==4&&DB_GetStreamPos()==blocks[4].data+
-#if defined(BO1_STRINGTABLE_STRINGS_GATE)
+#if defined(BO1_STRINGTABLE_INDEX_GATE)
+        payload->indices.nativeEnd
+#elif defined(BO1_STRINGTABLE_STRINGS_GATE)
         payload->stringNativeEnd
 #else
         payload->cells.nativeEnd

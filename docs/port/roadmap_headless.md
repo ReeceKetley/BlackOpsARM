@@ -16,7 +16,7 @@ evidence/limits/reproduction. Actual zone bootstrap remains fixture-only; no gam
 
 ## Next three bounded milestones
 
-### TASK-0008 — FastFile preamble reader (complete 2026-10-11)
+### TASK-0008 â€” FastFile preamble reader (complete 2026-10-11)
 
 Shared parser + synchronous file-I/O boundary land in
 `src/platform/fastfile_reader.h`: 12-byte raw head (production-accurate,
@@ -29,7 +29,7 @@ verified genuine: all 158 zone FastFiles are `IWffu100` / 473, and
 content still needs the inflate stage. No zone loading, no async/APC
 pipeline.
 
-### TASK-0009 — Zone block allocation and stream init (complete 2026-10-11)
+### TASK-0009 â€” Zone block allocation and stream init (complete 2026-10-11)
 
 Actual complete DB source paths pass on HONOR and Windows x86/x64 using
 real native named HunkUser/first-fit ownership. Seven blocks, fixed disk sizes,
@@ -37,14 +37,14 @@ cursor/alias/stride reset and release pass. Native pending-stride reset fixes
 a retained x64 control failure. This is a logical XFile fixture, not an inflated
 retail zone or the legacy PMem pool/tracker. See arm64_zone.md; no asset parsing.
 
-### TASK-0010 — Deflate stage isolation (complete 2026-10-11)
+### TASK-0010 â€” Deflate stage isolation (complete 2026-10-11)
 
 Complete synchronous bounded wrapped decoding and genuine XFile validation
 pass on HONOR/MSVC x86/x64, with checksum/end/exact output, custom bundled codec,
 explicit errors/padding and independent fixtures/oracles. No assets parsed;
 engine async pipeline remains deferred. See arm64_inflate.md.
 
-### TASK-0011 — Checked genuine FastFile allocation (complete 2026-10-11)
+### TASK-0011 â€” Checked genuine FastFile allocation (complete 2026-10-11)
 
 Genuine code_pre_gfx/zombie_pentagon decoded headers drive checked unchanged
 production allocation policies on HONOR and Windows x86/x64. uint64 preflight,
@@ -53,7 +53,7 @@ decoder/allocator memory peaks are frozen. Native64 plans match; Windows retaine
 pool and Android touched mappings are different contracts. No new stream init,
 asset parsing or fixups. See arm64_checked_zone.md, FACT-0032/0033, WARN-0011.
 
-### TASK-0012 — Genuine checked blocks to DB_InitStreams (complete 2026-10-11)
+### TASK-0012 â€” Genuine checked blocks to DB_InitStreams (complete 2026-10-11)
 
 Actual stream initialization on both genuine files/HONOR/Windows x86/x64 passes
 seven cursors, zero slots, independent pending size/stride/alias/drift reset and
@@ -61,7 +61,7 @@ repeated detach/free/named release.12 cycles and61 Init calls per ABI; invalid
 plans/partial failures never publish streams. No shared engine edits or payload
 reads. See arm64_stream_init.md, FACT-0035/0036, WARN-0012 and exact inventory.
 
-### TASK-0013 — Genuine16-byte asset-list envelope (complete 2026-10-11)
+### TASK-0013 â€” Genuine16-byte asset-list envelope (complete 2026-10-11)
 
 Actual native expander/Win32 branch, checked count/footprint metadata, persistent
 aliases and exact16-byte side-buffer read pass both files/3 ABIs.72 fixtures and
@@ -71,7 +71,7 @@ bytes unchanged. Finite reader does not certify async/refill loader. Full normal
 Windows expander passes; bounded Android subset only. See arm64_assetlist.md,
 FACT-0037/0038, FAIL-0007, WARN-0013 and exact inventory.
 
-### TASK-0014 — Actual script-string pointer table (complete)
+### TASK-0014 â€” Actual script-string pointer table (complete)
 
 Both genuine files/HONOR/x86/x64,26 fixtures/12cycles, exact3440 disk/6880 native
 zombie860slot tags, allaliases/elements/cursors and cleanup verified. No strings.
@@ -89,7 +89,7 @@ See arm64_string_table.md/FACT-0040/0041/WARN-0014; failures retained.
 ## Beyond
 
 GSC string-intern/callable services, asset-stream expansion on ARM64 (the
-Win32→native offset remap is the known x64 blocker, see fastfile_32_to_64.md),
+Win32â†’native offset remap is the known x64 blocker, see fastfile_32_to_64.md),
 server init, headless `platform: ready`. Each gets its own bounded task when
 its predecessor lands.
 
@@ -153,3 +153,14 @@ are permutations but not ordinarysigned/unsigned hash-sorted. Preserve bytes/ord
 do not reject/resort original data to satisfy the earlier plan. Modelmisses are
 not yet native execution. Continue DEC-0029, verified local commits DEC-0026;
 no push. Protected repos/assets/frozen evidence remain unchanged, graphics absent.
+
+
+TASK-0021 complete: original signed16 indices preserve every byte/order and
+stride2 on HONOR/Windows,162 cases/12 cycles each plus optimized ARM UBSan.
+Read arm64_stringtable_indices.md, FACT64/65, WARN21/FAIL17. Actual Load_shortArray
+body/defaultWindowsglobalorder remain unchanged; varshort invalid before reset/
+owner release. No ordinary hash sorting prerequisite. Next3: real modulo32 hash,
+actual lookup/reference investigation on original arrays, then smallest real
+registration/next-asset boundary. Finite reader/full async distinction persists.
+Continue autonomously DEC29; local verified commits DEC26/no push. Preserve all
+prior evidence/protected checkouts/original assets. No game-owned graphics yet.

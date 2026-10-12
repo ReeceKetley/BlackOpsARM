@@ -1,0 +1,39 @@
+{
+  "schema": "BlackOpsARM.TASK-0021.source-preservation.v1",
+  "checkpoint": "a859d7713e268b9a4ef63b2384476a1f5e7c2923",
+  "baseline_sha256": "434dbca73a8d5367a2dca2bef8fc436439ff7e275c57decef4e3d753f6c8ee94",
+  "verifier_sha256": "711f7bd119a5c6b7cc8fdd798574736d1b032806a0f09fee03c236ee6aea09e0",
+  "normalization": "LF/CRLF only; restored comparison uses canonical CRLF",
+  "files": {
+    "src/database/db_load.cpp": {
+      "current_sha256": "57428558fba01e0a49316ae5dc96478d0e9ac898a1b843f5ff1575b6ef20aa3a",
+      "parent_crlf_sha256": "03c8c31f457a75a6a68dd40693e5a82463f62d76443c937fbe8ced12c852cca6",
+      "restored_default_crlf_sha256": "03c8c31f457a75a6a68dd40693e5a82463f62d76443c937fbe8ced12c852cca6",
+      "whole_default_source_exact": true,
+      "unique_varshort_original_order": true,
+      "unique_Load_shortArray_body_exact": true,
+      "Load_shortArray_sha256": "a86201e6fa5b4aa2e9a31f78f9ec80045dfce701d8a05b54524b92bb5f94b006"
+    },
+    "src/database/db_load.h": {
+      "current_sha256": "be0c84db11da58a7864b4fee7e84f00665c2539b0aaa005b325f8692271ffd4f",
+      "parent_crlf_sha256": "f60487ebee5577d651d95163c6b6006edf7fd6a6ce85f59d477d33a39364f9f7",
+      "restored_default_crlf_sha256": "f60487ebee5577d651d95163c6b6006edf7fd6a6ce85f59d477d33a39364f9f7",
+      "whole_default_source_exact": true
+    },
+    "src/database/db_scalar_load.h": {
+      "current_sha256": "e43120f97e9c90fa9a359013f92c3e36af2a8eb151bbeeaddcb78aa26078de85",
+      "exact_unique_declarations_no_definition": true
+    },
+    "src/database/db_stream_load.cpp": {
+      "current_sha256": "c74a716e71b2375eabc204d601e0b44e43c48bdc4cd869ca1e6fb6a0e924ba95",
+      "parent_crlf_sha256": "c74a716e71b2375eabc204d601e0b44e43c48bdc4cd869ca1e6fb6a0e924ba95",
+      "full_source_byte_unchanged": true
+    },
+    "src/database/db_expand.cpp": {
+      "current_sha256": "43bda9f92e609a6c04fc860732e3150d7d124440a788cb189f7983cb54d3b66a",
+      "parent_crlf_sha256": "43bda9f92e609a6c04fc860732e3150d7d124440a788cb189f7983cb54d3b66a",
+      "full_source_byte_unchanged": true
+    }
+  },
+  "status": "passed"
+}
