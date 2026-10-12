@@ -1,0 +1,23 @@
+{
+  "passed": true,
+  "baseline": "c297348",
+  "reviewed_production_deltas": {
+    "src/universal/physicalmemory.cpp": {
+      "before_sha256": "3ebcae303d8c77da42aa4fecdf05e71bdc11de8b52d17197f36742468642bac8",
+      "after_sha256": "2667c4f86edc7065b97a26e445dc82f4dd670a03168b5813858830242772b70b"
+    },
+    "src/platform/native_zone_file.cpp": {
+      "before_sha256": "8139787af849775753c4deb6bcaedff30f1a261c2cb126e790c215bd63a6951f",
+      "after_sha256": "eae544bde59c0371d01de3e06834d026366599cf7607bc557bd36aa3306a1b4f"
+    }
+  },
+  "protected_paths": 19930,
+  "reference_git_unchanged": true,
+  "frozen_archive_records": {
+    "arm64_default_resolution": 689,
+    "arm64_startup_reader": 82,
+    "arm64_native_startup_zone": 157
+  },
+  "current_build_manifests": 10,
+  "scope": "Native Windows PMem stack fix; ARM uses its existing named-zone backend. No DB worker/Com_Init claim."
+}

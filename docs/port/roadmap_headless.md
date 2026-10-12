@@ -2,6 +2,15 @@
 
 ## Current integration direction (12 October 2026)
 
+TASK42 removes the native Windows two-owner PMem validation limit after
+reproducing and repairing its native record stride; both primitive stacks and
+the genuine reader/MP71 regression pass. See `arm64_pmem_owner_stack.md`.
+`native_startup_services_plan.md` adds concrete Dvar/command ordering, fixed32
+synchronization and TLS requirements. Next bounded service: general recursive
+critical sections retaining existing SL/MT/DBHASH lock identity, then authentic
+thread/TLS and real Dvar/Cmd/Cbuf integration. Android DB-worker ownership remains
+unresolved; serial loading is not worker execution.
+
 TASK41 complete: all71 genuine MP startup assets now execute through the reusable
 production library on Windows x86/x64 and HONOR O0/O3, including357 earlier-string
 references, real lookups and ownership cleanup. See `arm64_native_startup_zone.md`

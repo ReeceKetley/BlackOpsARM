@@ -235,7 +235,13 @@ void __cdecl PMem_FreeIndex(PhysicalMemoryPrim *prim, unsigned int allocIndex, i
             }
             if ( !--prim->allocListCount )
                 break;
+#if BO1_NATIVE_64BIT
+            // The decompiled Win32 expression advances eight bytes per record.
+            // Native records contain an eight-byte name pointer and padding.
+            allocEntry = &prim->allocList[prim->allocListCount - 1];
+#else
             allocEntry = (PhysicalMemoryAllocation *)(&prim->allocListCount + 2 * prim->allocListCount);
+#endif
         }
         while ( !allocEntry->name );
     }

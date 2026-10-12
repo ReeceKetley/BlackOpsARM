@@ -28,11 +28,6 @@ bool NativeZoneFile::Begin(void *context, const ZonePlan &plan)
     const auto type = plan.limits.allocType;
     if (!g_mem.buf || g_mem.prim[type].allocName) return false;
     if (g_mem.prim[type].allocListCount >= 32) return false;
-#if BO1_NATIVE_64BIT
-    // The legacy PMem third-record native stride is not verified. Contain this
-    // component to the already verified two-owner boundary; do not alter PMem.
-    if (g_mem.prim[type].allocListCount >= 2) return false;
-#endif
     if (g_mem.prim[1].pos > g_mem.size || g_mem.prim[0].pos > g_mem.prim[1].pos) return false;
     // Match _PMem_AllocNamed's actual starting cursors; another retained owner
     // can leave low unaligned. No allocator policy or allocation-list change.
