@@ -1,0 +1,141 @@
+[
+  {
+    "args": [
+      "D:\\Android\\Sdk\\cmake\\3.22.1\\bin\\cmake.exe",
+      "-S",
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\android\\cmake\\native-fast-critical-section",
+      "-B",
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_fcs_tsan_run1\\build",
+      "-G",
+      "Ninja",
+      "-DCMAKE_MAKE_PROGRAM=D:\\Android\\Sdk\\cmake\\3.22.1\\bin\\ninja.exe",
+      "-DCMAKE_TOOLCHAIN_FILE=D:\\Android\\Sdk\\ndk\\30.0.16248370\\build\\cmake\\android.toolchain.cmake",
+      "-DANDROID_ABI=arm64-v8a",
+      "-DANDROID_PLATFORM=android-28",
+      "-DCMAKE_BUILD_TYPE=Debug",
+      "-DCMAKE_CXX_FLAGS_DEBUG=-O1 -g -fsanitize=thread"
+    ],
+    "exit": 0,
+    "stdout": "-- The CXX compiler identification is Clang 21.0.0\n-- Detecting CXX compiler ABI info\n-- Detecting CXX compiler ABI info - done\n-- Check for working CXX compiler: D:/Android/Sdk/ndk/30.0.16248370/toolchains/llvm/prebuilt/windows-x86_64/bin/clang++.exe - skipped\n-- Detecting CXX compile features\n-- Detecting CXX compile features - done\n-- Configuring done\n-- Generating done\n-- Build files have been written to: D:/Desktop/Black Ops 2 Android/BlackOpsARM/build-android-audit/native_fcs_tsan_run1/build\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "D:\\Android\\Sdk\\cmake\\3.22.1\\bin\\cmake.exe",
+      "--build",
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_fcs_tsan_run1\\build",
+      "--parallel",
+      "2",
+      "--verbose"
+    ],
+    "exit": 0,
+    "stdout": "[1/6] D:\\Android\\Sdk\\ndk\\30.0.16248370\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang++.exe --target=aarch64-none-linux-android28 --sysroot=D:/Android/Sdk/ndk/30.0.16248370/toolchains/llvm/prebuilt/windows-x86_64/sysroot -DBO1_FAST_CRIT_SECT_GATE=1 -I\"D:/Desktop/Black Ops 2 Android/BlackOpsARM/src\" -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fno-limit-debug-info -O1 -g -fsanitize=thread -fPIC -Wall -Wextra -Wpedantic -Werror=return-type -fms-extensions -fsigned-char -fsanitize=undefined -fno-sanitize-recover=all -include \"D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/win32_compat/msvc_compat.h\" -std=gnu++20 -MD -MT CMakeFiles/bo1_native_fast_critical_section.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/android/fast_critical_section_services.cpp.o -MF CMakeFiles\\bo1_native_fast_critical_section.dir\\D_\\Desktop\\Black_Ops_2_Android\\BlackOpsARM\\src\\platform\\android\\fast_critical_section_services.cpp.o.d -o CMakeFiles/bo1_native_fast_critical_section.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/android/fast_critical_section_services.cpp.o -c \"D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/android/fast_critical_section_services.cpp\"\n[2/6] D:\\Android\\Sdk\\ndk\\30.0.16248370\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang++.exe --target=aarch64-none-linux-android28 --sysroot=D:/Android/Sdk/ndk/30.0.16248370/toolchains/llvm/prebuilt/windows-x86_64/sysroot -DBO1_FAST_CRIT_SECT_GATE=1 -I\"D:/Desktop/Black Ops 2 Android/BlackOpsARM/src\" -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fno-limit-debug-info -O1 -g -fsanitize=thread -fPIC -Wall -Wextra -Wpedantic -Werror=return-type -fms-extensions -fsigned-char -fsanitize=undefined -fno-sanitize-recover=all -include \"D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/win32_compat/msvc_compat.h\" -std=gnu++20 -MD -MT CMakeFiles/bo1_native_fast_critical_section.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/database/db_registry.cpp.o -MF CMakeFiles\\bo1_native_fast_critical_section.dir\\D_\\Desktop\\Black_Ops_2_Android\\BlackOpsARM\\src\\database\\db_registry.cpp.o.d -o CMakeFiles/bo1_native_fast_critical_section.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/database/db_registry.cpp.o -c \"D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_registry.cpp\"\nIn file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/database/db_registry.cpp:5968:\n\nD:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/assertive.h:6:24: warning: extension used [-Wlanguage-extension-token]\n\n    6 | enum AssertOccurance : __int32\n\n      |                        ^\n\n1 warning generated.\n\n[3/6] D:\\Android\\Sdk\\ndk\\30.0.16248370\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang++.exe --target=aarch64-none-linux-android28 --sysroot=D:/Android/Sdk/ndk/30.0.16248370/toolchains/llvm/prebuilt/windows-x86_64/sysroot -DBO1_FAST_CRIT_SECT_GATE=1 -I\"D:/Desktop/Black Ops 2 Android/BlackOpsARM/src\" -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fno-limit-debug-info -O1 -g -fsanitize=thread -fPIC -Wall -Wextra -Wpedantic -Werror=return-type -fms-extensions -fsigned-char -fsanitize=undefined -fno-sanitize-recover=all -include \"D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/win32_compat/msvc_compat.h\" -std=gnu++20 -MD -MT CMakeFiles/bo1_native_fast_critical_section.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/universal/dvar.cpp.o -MF CMakeFiles\\bo1_native_fast_critical_section.dir\\D_\\Desktop\\Black_Ops_2_Android\\BlackOpsARM\\src\\universal\\dvar.cpp.o.d -o CMakeFiles/bo1_native_fast_critical_section.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/universal/dvar.cpp.o -c \"D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.cpp\"\nIn file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/dvar.cpp:3543:\n\nD:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/assertive.h:6:24: warning: extension used [-Wlanguage-extension-token]\n\n    6 | enum AssertOccurance : __int32\n\n      |                        ^\n\n1 warning generated.\n\n[4/6] cmd.exe /C \"cd . && D:\\Android\\Sdk\\cmake\\3.22.1\\bin\\cmake.exe -E rm -f libbo1_native_fast_critical_section.a && D:\\Android\\Sdk\\ndk\\30.0.16248370\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\llvm-ar.exe qc libbo1_native_fast_critical_section.a  CMakeFiles/bo1_native_fast_critical_section.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/database/db_registry.cpp.o CMakeFiles/bo1_native_fast_critical_section.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/universal/dvar.cpp.o CMakeFiles/bo1_native_fast_critical_section.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/android/fast_critical_section_services.cpp.o && D:\\Android\\Sdk\\ndk\\30.0.16248370\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\llvm-ranlib.exe libbo1_native_fast_critical_section.a && cd .\"\n[5/6] D:\\Android\\Sdk\\ndk\\30.0.16248370\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang++.exe --target=aarch64-none-linux-android28 --sysroot=D:/Android/Sdk/ndk/30.0.16248370/toolchains/llvm/prebuilt/windows-x86_64/sysroot  -I\"D:/Desktop/Black Ops 2 Android/BlackOpsARM/src\" -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fno-limit-debug-info -O1 -g -fsanitize=thread -fPIE -Wall -Wextra -Wpedantic -Werror=return-type -fms-extensions -fsigned-char -fsanitize=undefined -fno-sanitize-recover=all -include \"D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/win32_compat/msvc_compat.h\" -std=gnu++20 -MD -MT CMakeFiles/bo1_native_fast_critical_section_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/native_fast_critical_section_tests.cpp.o -MF CMakeFiles\\bo1_native_fast_critical_section_tests.dir\\D_\\Desktop\\Black_Ops_2_Android\\BlackOpsARM\\tools\\port\\tests\\native_fast_critical_section_tests.cpp.o.d -o CMakeFiles/bo1_native_fast_critical_section_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/native_fast_critical_section_tests.cpp.o -c \"D:/Desktop/Black Ops 2 Android/BlackOpsARM/tools/port/tests/native_fast_critical_section_tests.cpp\"\n[6/6] cmd.exe /C \"cd . && D:\\Android\\Sdk\\ndk\\30.0.16248370\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang++.exe --target=aarch64-none-linux-android28 --sysroot=D:/Android/Sdk/ndk/30.0.16248370/toolchains/llvm/prebuilt/windows-x86_64/sysroot -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fno-limit-debug-info -O1 -g -fsanitize=thread -static-libstdc++ -Wl,--build-id=sha1 -Wl,--no-rosegment -Wl,--no-undefined-version -Wl,--fatal-warnings -Wl,--no-undefined -Qunused-arguments      -fsanitize=undefined CMakeFiles/bo1_native_fast_critical_section_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/native_fast_critical_section_tests.cpp.o -o bo1_native_fast_critical_section_tests  libbo1_native_fast_critical_section.a  -latomic -lm && cd .\"\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "D:\\Android\\Sdk\\platform-tools\\adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "get-state"
+    ],
+    "exit": 0,
+    "stdout": "device\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "D:\\Android\\Sdk\\platform-tools\\adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "mkdir",
+      "-p",
+      "/data/local/tmp/blackopsarm-fcs45-tsan"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "D:\\Android\\Sdk\\platform-tools\\adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "push",
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_fcs_tsan_run1\\build\\bo1_native_fast_critical_section_tests",
+      "/data/local/tmp/blackopsarm-fcs45-tsan/lock_tests"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_fcs_tsan_run1\\build\\bo1_native_fast_critical_section_tests: 1 file pushed, 0 skipped. 167.9 MB/s (1650200 bytes in 0.009s)\n"
+  },
+  {
+    "args": [
+      "D:\\Android\\Sdk\\platform-tools\\adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "sha256sum",
+      "/data/local/tmp/blackopsarm-fcs45-tsan/lock_tests"
+    ],
+    "exit": 0,
+    "stdout": "d2bd4b7394c3175383c151184dcf4e9ed443d057d555901efaaf88161c1c8a75  /data/local/tmp/blackopsarm-fcs45-tsan/lock_tests\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "D:\\Android\\Sdk\\platform-tools\\adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "push",
+      "D:\\Android\\Sdk\\ndk\\30.0.16248370\\toolchains\\llvm\\prebuilt\\windows-x86_64\\lib\\clang\\21\\lib\\linux\\libclang_rt.tsan-aarch64-android.so",
+      "/data/local/tmp/blackopsarm-fcs45-tsan/libclang_rt.tsan-aarch64-android.so"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": "D:\\Android\\Sdk\\ndk\\30.0.16248370\\toolchains\\llvm\\prebuilt\\windows-x86_64\\lib\\clang\\21\\lib\\linux\\libclang_rt.tsan-aarch64-android.so: 1 file pushed, 0 skipped. 118.1 MB/s (3082080 bytes in 0.025s)\n"
+  },
+  {
+    "args": [
+      "D:\\Android\\Sdk\\platform-tools\\adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "sha256sum",
+      "/data/local/tmp/blackopsarm-fcs45-tsan/libclang_rt.tsan-aarch64-android.so"
+    ],
+    "exit": 0,
+    "stdout": "9a82d3228eb64588b532968cff616ea5b2175dc7cc3380499f20c5ca5d46f214  /data/local/tmp/blackopsarm-fcs45-tsan/libclang_rt.tsan-aarch64-android.so\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "D:\\Android\\Sdk\\platform-tools\\adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "chmod",
+      "700",
+      "/data/local/tmp/blackopsarm-fcs45-tsan/lock_tests"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "D:\\Android\\Sdk\\platform-tools\\adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "env",
+      "LD_LIBRARY_PATH=/data/local/tmp/blackopsarm-fcs45-tsan",
+      "TSAN_OPTIONS=halt_on_error=1:exitcode=66:memory_limit_mb=256",
+      "/data/local/tmp/blackopsarm-fcs45-tsan/lock_tests"
+    ],
+    "exit": 139,
+    "stdout": "",
+    "stderr": "ThreadSanitizer: CHECK failed: tsan_rtl.cpp:1043 \"((thr->ignore_reads_and_writes)) > ((0))\" (0x0, 0x0) (tid=32565)\nSegmentation fault \n"
+  }
+]

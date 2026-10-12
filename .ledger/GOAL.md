@@ -1,5 +1,13 @@
 ## Current Milestone
 
+TASK45 originalFastCriticalSection nativefixed32 protocol verifiedWindows/HONOR
+O0/O3 andpreservednormalWindows; sameprocessTLS+MP71 stillpasses. TSanruntime
+failure independentlyreproducedwithoutenginecode, retainedasnonpassingcoverage.
+NextactualDvar/Cmd/Cbuf registration/SLownership, realDBorchestration, genuine
+headlessCom_Init/Frames/Zombiessimulation. No fullstartup/gameplayclaim.
+
+## Historical Milestone
+
 TASK44 genuine native main/backend/database thread data and originalCmdReset
 verified3ABIs/O0/O3, actualmainTLS+allMP71 in sameprocess passes. TASK42PMem and
 TASK43all75locks committed; latestSTATE/Git give checkpoint. No actualDvar/DBworker/

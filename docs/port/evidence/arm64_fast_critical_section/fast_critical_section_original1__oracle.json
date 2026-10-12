@@ -1,0 +1,28 @@
+{
+  "baseline": "cfbd591",
+  "canonical_type_sha256": "01afa6a609a71b06f341fa13f52a6452e8f3d7362bc6fd032aaaab288f2166bd",
+  "production_bodies": [
+    {
+      "path": "src/win32/win_net.cpp",
+      "function": "NET_Sleep",
+      "body_sha256": "8dbf9b0079f68e6d6ee94fded5d925610e3f8a20f292ea594b6308029291e9e8"
+    },
+    {
+      "path": "src/database/db_registry.cpp",
+      "function": "Sys_LockWrite",
+      "body_sha256": "dd364d07976efc39a7dcd0e6b34d34123fbcad5e2c2a6fd89783a26c4fe92e5c"
+    },
+    {
+      "path": "src/database/db_registry.cpp",
+      "function": "Sys_UnlockWrite",
+      "body_sha256": "db3394e8a0de3722381afe676524e5137b8a7c35370029465f89e03790e77a13"
+    },
+    {
+      "path": "src/universal/dvar.cpp",
+      "function": "Sys_UnlockRead",
+      "body_sha256": "39954fc3b9403572426afc15e2bdd359bc3030d35541ee18f61e260b7c674dab"
+    }
+  ],
+  "generated_cpp_sha256": "30bf15a2031555d94109837190e6fce3afa318f5687f733059fbde24ac9aade4",
+  "scope": "Actual original writer/releases/NET_Sleep, reader admission contract driver; not Dvar_Init."
+}

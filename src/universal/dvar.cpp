@@ -1,3 +1,4 @@
+#if !defined(BO1_FAST_CRIT_SECT_GATE)
 #include "dvar.h"
 #include <database/db_registry.h>
 
@@ -32,9 +33,15 @@ dvar_s *__cdecl Dvar_FindMalleableVar_0(int dvarHash)
 {
     dvar_s *var; // [esp+0h] [ebp-4h]
 
+#if BO1_NATIVE_FAST_CRIT_SECT
+    bo1::fcs::AddRead(&g_dvarCritSect);
+    while (bo1::fcs::LoadWrite(&g_dvarCritSect))
+        bo1::fcs::YieldThread();
+#else
     _InterlockedExchangeAdd(&g_dvarCritSect.readCount, 1u);
     while (g_dvarCritSect.writeCount)
         NET_Sleep(0);
+#endif
     for (var = dvarHashTable[dvarHash & 0x3FF]; var; var = var->hashNext)
     {
         if (var->hash == dvarHash)
@@ -724,21 +731,6 @@ dvar_s *__cdecl Dvar_FindMalleableVar(const char *dvarName)
 
     hash = Com_HashString(dvarName, 0);
     return Dvar_FindMalleableVar_0(hash);
-}
-
-void __cdecl Sys_UnlockRead(FastCriticalSection *critSect)
-{
-    if ( critSect->readCount <= 0
-        && !Assert_MyHandler(
-                    "c:\\projects_pc\\cod\\codsrc\\src\\universal\\../qcommon/threads_interlock.h",
-                    78,
-                    0,
-                    "%s",
-                    "critSect->readCount > 0") )
-    {
-        __debugbreak();
-    }
-    _InterlockedExchangeAdd(&critSect->readCount, 0xFFFFFFFF);
 }
 
 const dvar_s *__cdecl Dvar_FindVar(int dvarHash)
@@ -3235,9 +3227,15 @@ void __cdecl Dvar_SetCheatState()
     int dvarIter; // [esp+0h] [ebp-8h]
     dvar_s *dvar; // [esp+4h] [ebp-4h]
 
+#if BO1_NATIVE_FAST_CRIT_SECT
+    bo1::fcs::AddRead(&g_dvarCritSect);
+    while (bo1::fcs::LoadWrite(&g_dvarCritSect))
+        bo1::fcs::YieldThread();
+#else
     _InterlockedExchangeAdd(&g_dvarCritSect.readCount, 1u);
     while ( g_dvarCritSect.writeCount )
         NET_Sleep(0);
+#endif
     for ( dvarIter = 0; dvarIter < dvarCount; ++dvarIter )
     {
         dvar = &dvarPool[dvarIter];
@@ -3263,9 +3261,15 @@ void __cdecl Dvar_ResetScriptInfo()
 {
     int dvarIter; // [esp+0h] [ebp-4h]
 
+#if BO1_NATIVE_FAST_CRIT_SECT
+    bo1::fcs::AddRead(&g_dvarCritSect);
+    while (bo1::fcs::LoadWrite(&g_dvarCritSect))
+        bo1::fcs::YieldThread();
+#else
     _InterlockedExchangeAdd(&g_dvarCritSect.readCount, 1u);
     while ( g_dvarCritSect.writeCount )
         NET_Sleep(0);
+#endif
     for ( dvarIter = 0; dvarIter < dvarCount; ++dvarIter )
         dvarPool[dvarIter].flags &= ~0x400u;
     Sys_UnlockRead(&g_dvarCritSect);
@@ -3275,9 +3279,15 @@ char __cdecl Dvar_AnyLatchedValues()
 {
     int dvarIter; // [esp+0h] [ebp-4h]
 
+#if BO1_NATIVE_FAST_CRIT_SECT
+    bo1::fcs::AddRead(&g_dvarCritSect);
+    while (bo1::fcs::LoadWrite(&g_dvarCritSect))
+        bo1::fcs::YieldThread();
+#else
     _InterlockedExchangeAdd(&g_dvarCritSect.readCount, 1u);
     while ( g_dvarCritSect.writeCount )
         NET_Sleep(0);
+#endif
     for ( dvarIter = 0; dvarIter < dvarCount; ++dvarIter )
     {
         if ( Dvar_HasLatchedValue(&dvarPool[dvarIter]) )
@@ -3297,9 +3307,15 @@ void __cdecl Dvar_RestoreDvars()
 
     if ( dvar_restoreDvarsOnLive && dvar_restoreDvarsOnLive->current.enabled )
     {
+#if BO1_NATIVE_FAST_CRIT_SECT
+        bo1::fcs::AddRead(&g_dvarCritSect);
+        while (bo1::fcs::LoadWrite(&g_dvarCritSect))
+            bo1::fcs::YieldThread();
+#else
         _InterlockedExchangeAdd(&g_dvarCritSect.readCount, 1u);
         while ( g_dvarCritSect.writeCount )
             NET_Sleep(0);
+#endif
         for ( hash = 0; hash < 0x400; ++hash )
         {
             for ( dvar = dvarHashTable[hash]; dvar; dvar = dvar->hashNext )
@@ -3321,9 +3337,15 @@ void __cdecl Dvar_ResetDvars(unsigned int filter, DvarSetSource setSource)
 {
     int dvarIter; // [esp+0h] [ebp-8h]
 
+#if BO1_NATIVE_FAST_CRIT_SECT
+    bo1::fcs::AddRead(&g_dvarCritSect);
+    while (bo1::fcs::LoadWrite(&g_dvarCritSect))
+        bo1::fcs::YieldThread();
+#else
     _InterlockedExchangeAdd(&g_dvarCritSect.readCount, 1u);
     while ( g_dvarCritSect.writeCount )
         NET_Sleep(0);
+#endif
     for ( dvarIter = 0; dvarIter < dvarCount; ++dvarIter )
     {
         if ( (filter & dvarPool[dvarIter].flags) != 0 )
@@ -3355,9 +3377,15 @@ void __cdecl Dvar_ResetConAccessDvars()
 {
     int dvarIter; // [esp+0h] [ebp-8h]
 
+#if BO1_NATIVE_FAST_CRIT_SECT
+    bo1::fcs::AddRead(&g_dvarCritSect);
+    while (bo1::fcs::LoadWrite(&g_dvarCritSect))
+        bo1::fcs::YieldThread();
+#else
     _InterlockedExchangeAdd(&g_dvarCritSect.readCount, 1u);
     while ( g_dvarCritSect.writeCount )
         NET_Sleep(0);
+#endif
     for ( dvarIter = 0; dvarIter < dvarCount; ++dvarIter )
         dvarPool[dvarIter].flags &= ~0x10000u;
     Sys_UnlockRead(&g_dvarCritSect);
@@ -3505,5 +3533,35 @@ void __cdecl Dvar_SetFloatIfChanged(dvar_s *dvar, float value)
         if ( dvar->current.value != value )
             Dvar_SetFloat(dvar, value);
     }
+}
+
+
+#endif // !BO1_FAST_CRIT_SECT_GATE
+
+#include <platform/fast_critical_section.h>
+#if defined(BO1_FAST_CRIT_SECT_GATE)
+#include "assertive.h"
+#endif
+void __cdecl Sys_UnlockRead(FastCriticalSection *critSect)
+{
+#if BO1_NATIVE_FAST_CRIT_SECT
+    if ( !bo1::fcs::SignedPositive(bo1::fcs::LoadRead(critSect))
+#else
+    if ( critSect->readCount <= 0
+#endif
+        && !Assert_MyHandler(
+                    "c:\\projects_pc\\cod\\codsrc\\src\\universal\\../qcommon/threads_interlock.h",
+                    78,
+                    0,
+                    "%s",
+                    "critSect->readCount > 0") )
+    {
+        __debugbreak();
+    }
+#if BO1_NATIVE_FAST_CRIT_SECT
+    bo1::fcs::SubtractRead(critSect);
+#else
+    _InterlockedExchangeAdd(&critSect->readCount, 0xFFFFFFFF);
+#endif
 }
 

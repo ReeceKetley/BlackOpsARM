@@ -1,5 +1,14 @@
 # Latest checkpoints after TASK41
 
+TASK45 verifies genuine native fixed32 FastCriticalSection writer/releases,
+all9counter callsite adaptations, Windows/body/layout oracles and HONOR O0/O3
+contention/24fatal controls. SameprocessTLS+MP71 remains passing. Read latestSTATE
+and `arm64_fast_critical_section.md`; Git supplies checkpoint.169newrecords frozen.
+Installed TSan runtime fails in independent no-engine controls too; it is not
+passing race coverage. Root owns allreturned sources; no outstanding build/test
+handles. Next actualDvar/Cmd/Cbuf initialization/SLstring ownership, then genuine
+DB orchestration/headlessboot. Fullstartup/gameplay/errorcleanup remain missing.
+
 TASK44 now verifies genuine one-shot main/backend/DB TLS executing original
 Com_InitThreadData and Cmd_ResetArgs, plus actualmainTLS+allMP71 in the same
 process on x86/x64/HONOR O0/O3. Read `arm64_native_thread_data.md`/latestSTATE;

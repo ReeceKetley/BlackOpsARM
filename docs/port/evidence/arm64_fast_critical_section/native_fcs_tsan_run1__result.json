@@ -1,0 +1,10 @@
+{
+  "passed": false,
+  "exit": 139,
+  "serial": "AKWJ9X5116G04618",
+  "binary_sha256": "d2bd4b7394c3175383c151184dcf4e9ed443d057d555901efaaf88161c1c8a75",
+  "runtime_sha256": "9a82d3228eb64588b532968cff616ea5b2175dc7cc3380499f20c5ca5d46f214",
+  "memory_limit_mb": 256,
+  "scope": "Positive protocol contention only; driver-owned20s watchdog; no Dvar startup.",
+  "diagnostic": "ThreadSanitizer: CHECK failed: tsan_rtl.cpp:1043 \"((thr->ignore_reads_and_writes)) > ((0))\" (0x0, 0x0) (tid=32565)\nSegmentation fault \n"
+}

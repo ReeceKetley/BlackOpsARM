@@ -1,0 +1,21 @@
+{
+  "control_runs": [
+    {
+      "label": "thread_only",
+      "exit": 139,
+      "stdout": "SANITIZER_CONTROL_MAIN_ENTER\n",
+      "stderr": "ThreadSanitizer: CHECK failed: tsan_rtl.cpp:1043 \"((thr->ignore_reads_and_writes)) > ((0))\" (0x0, 0x0) (tid=473)\nSegmentation fault \n",
+      "binary_sha256": "4c8138a4d344fa5e5ed49e56f0818761c8b8baf87a9e3356ae990dbbe50afd9b"
+    },
+    {
+      "label": "thread_undefined",
+      "exit": 139,
+      "stdout": "SANITIZER_CONTROL_MAIN_ENTER\n",
+      "stderr": "ThreadSanitizer: CHECK failed: tsan_rtl.cpp:1043 \"((thr->ignore_reads_and_writes)) > ((0))\" (0x0, 0x0) (tid=489)\nSegmentation fault \n",
+      "binary_sha256": "86454e8bca4cfe00d9b2404af7d01fe64763e5628bbd73ce6fa5ee584e537b08"
+    }
+  ],
+  "source_sha256": "8c86ee81758a063acde2f442aff0086c5f0f474e80e05deef4da32eebe315d39",
+  "runtime_sha256": "9a82d3228eb64588b532968cff616ea5b2175dc7cc3380499f20c5ca5d46f214",
+  "scope": "No engine code; only native atomic counter and std::thread with watchdog."
+}

@@ -1,0 +1,239 @@
+[
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "get-state"
+    ],
+    "exit": 0,
+    "stdout": "device\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "D:\\Android\\Sdk\\ndk\\30.0.16248370\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang++.exe",
+      "--target=aarch64-none-linux-android28",
+      "--sysroot=D:\\Android\\Sdk\\ndk\\30.0.16248370\\toolchains\\llvm\\prebuilt\\windows-x86_64\\sysroot",
+      "-std=c++20",
+      "-O1",
+      "-g",
+      "-static-libstdc++",
+      "-fsanitize=thread",
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_fcs_tsan_control1\\sanitizer_control.cpp",
+      "-o",
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_fcs_tsan_control1\\thread_only"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "mkdir",
+      "-p",
+      "/data/local/tmp/blackopsarm-fcs45-tsan-control-thread_only"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "push",
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_fcs_tsan_control1\\thread_only",
+      "/data/local/tmp/blackopsarm-fcs45-tsan-control-thread_only/control"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_fcs_tsan_control1\\thread_only: 1 file pushed, 0 skipped. 168.4 MB/s (1371640 bytes in 0.008s)\n"
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "sha256sum",
+      "/data/local/tmp/blackopsarm-fcs45-tsan-control-thread_only/control"
+    ],
+    "exit": 0,
+    "stdout": "4c8138a4d344fa5e5ed49e56f0818761c8b8baf87a9e3356ae990dbbe50afd9b  /data/local/tmp/blackopsarm-fcs45-tsan-control-thread_only/control\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "push",
+      "D:\\Android\\Sdk\\ndk\\30.0.16248370\\toolchains\\llvm\\prebuilt\\windows-x86_64\\lib\\clang\\21\\lib\\linux\\libclang_rt.tsan-aarch64-android.so",
+      "/data/local/tmp/blackopsarm-fcs45-tsan-control-thread_only/libclang_rt.tsan-aarch64-android.so"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": "D:\\Android\\Sdk\\ndk\\30.0.16248370\\toolchains\\llvm\\prebuilt\\windows-x86_64\\lib\\clang\\21\\lib\\linux\\libclang_rt.tsan-aarch64-android.so: 1 file pushed, 0 skipped. 107.8 MB/s (3082080 bytes in 0.027s)\n"
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "sha256sum",
+      "/data/local/tmp/blackopsarm-fcs45-tsan-control-thread_only/libclang_rt.tsan-aarch64-android.so"
+    ],
+    "exit": 0,
+    "stdout": "9a82d3228eb64588b532968cff616ea5b2175dc7cc3380499f20c5ca5d46f214  /data/local/tmp/blackopsarm-fcs45-tsan-control-thread_only/libclang_rt.tsan-aarch64-android.so\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "chmod",
+      "700",
+      "/data/local/tmp/blackopsarm-fcs45-tsan-control-thread_only/control"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "env",
+      "LD_LIBRARY_PATH=/data/local/tmp/blackopsarm-fcs45-tsan-control-thread_only",
+      "TSAN_OPTIONS=halt_on_error=1:exitcode=66:memory_limit_mb=256",
+      "/data/local/tmp/blackopsarm-fcs45-tsan-control-thread_only/control"
+    ],
+    "exit": 139,
+    "stdout": "SANITIZER_CONTROL_MAIN_ENTER\n",
+    "stderr": "ThreadSanitizer: CHECK failed: tsan_rtl.cpp:1043 \"((thr->ignore_reads_and_writes)) > ((0))\" (0x0, 0x0) (tid=473)\nSegmentation fault \n"
+  },
+  {
+    "args": [
+      "D:\\Android\\Sdk\\ndk\\30.0.16248370\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang++.exe",
+      "--target=aarch64-none-linux-android28",
+      "--sysroot=D:\\Android\\Sdk\\ndk\\30.0.16248370\\toolchains\\llvm\\prebuilt\\windows-x86_64\\sysroot",
+      "-std=c++20",
+      "-O1",
+      "-g",
+      "-static-libstdc++",
+      "-fsanitize=thread,undefined",
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_fcs_tsan_control1\\sanitizer_control.cpp",
+      "-o",
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_fcs_tsan_control1\\thread_undefined"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "mkdir",
+      "-p",
+      "/data/local/tmp/blackopsarm-fcs45-tsan-control-thread_undefined"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "push",
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_fcs_tsan_control1\\thread_undefined",
+      "/data/local/tmp/blackopsarm-fcs45-tsan-control-thread_undefined/control"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_fcs_tsan_control1\\thread_undefined: 1 file pushed, 0 skipped. 183.1 MB/s (1382432 bytes in 0.007s)\n"
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "sha256sum",
+      "/data/local/tmp/blackopsarm-fcs45-tsan-control-thread_undefined/control"
+    ],
+    "exit": 0,
+    "stdout": "86454e8bca4cfe00d9b2404af7d01fe64763e5628bbd73ce6fa5ee584e537b08  /data/local/tmp/blackopsarm-fcs45-tsan-control-thread_undefined/control\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "push",
+      "D:\\Android\\Sdk\\ndk\\30.0.16248370\\toolchains\\llvm\\prebuilt\\windows-x86_64\\lib\\clang\\21\\lib\\linux\\libclang_rt.tsan-aarch64-android.so",
+      "/data/local/tmp/blackopsarm-fcs45-tsan-control-thread_undefined/libclang_rt.tsan-aarch64-android.so"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": "D:\\Android\\Sdk\\ndk\\30.0.16248370\\toolchains\\llvm\\prebuilt\\windows-x86_64\\lib\\clang\\21\\lib\\linux\\libclang_rt.tsan-aarch64-android.so: 1 file pushed, 0 skipped. 136.0 MB/s (3082080 bytes in 0.022s)\n"
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "sha256sum",
+      "/data/local/tmp/blackopsarm-fcs45-tsan-control-thread_undefined/libclang_rt.tsan-aarch64-android.so"
+    ],
+    "exit": 0,
+    "stdout": "9a82d3228eb64588b532968cff616ea5b2175dc7cc3380499f20c5ca5d46f214  /data/local/tmp/blackopsarm-fcs45-tsan-control-thread_undefined/libclang_rt.tsan-aarch64-android.so\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "chmod",
+      "700",
+      "/data/local/tmp/blackopsarm-fcs45-tsan-control-thread_undefined/control"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "env",
+      "LD_LIBRARY_PATH=/data/local/tmp/blackopsarm-fcs45-tsan-control-thread_undefined",
+      "TSAN_OPTIONS=halt_on_error=1:exitcode=66:memory_limit_mb=256",
+      "/data/local/tmp/blackopsarm-fcs45-tsan-control-thread_undefined/control"
+    ],
+    "exit": 139,
+    "stdout": "SANITIZER_CONTROL_MAIN_ENTER\n",
+    "stderr": "ThreadSanitizer: CHECK failed: tsan_rtl.cpp:1043 \"((thr->ignore_reads_and_writes)) > ((0))\" (0x0, 0x0) (tid=489)\nSegmentation fault \n"
+  }
+]

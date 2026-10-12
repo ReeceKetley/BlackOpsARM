@@ -2,6 +2,12 @@
 
 ## Current integration direction (12 October 2026)
 
+TASK45 verifies the original FastCriticalSection writer/release protocol on
+native fixed32 atomic counters, preserving normal Windows behavior. See
+`arm64_fast_critical_section.md`; TSan runtime failure remains nonpassing
+coverage with independent no-engine reproduction. Next real Dvar/Cmd/Cbuf
+startup closure and SL-owned settings, then database orchestration/headless boot.
+
 TASK44 executes original thread-data initialization/reset with native roles/TLS,
 then all71 genuine MP assets in the same process on Windows and HONOR O0/O3.
 See `arm64_native_thread_data.md`. Next actual fixed32 FastCriticalSection

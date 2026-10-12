@@ -5,11 +5,7 @@
 
 
 
-struct FastCriticalSection // sizeof=0x8
-{                                                                             // XREF: .data:g_dvarCritSect/r
-        volatile long readCount;
-        volatile long writeCount;                        // XREF: Dvar_FindMalleableVar_0:loc_7BD2E2/r
-};
+#include <platform/fast_critical_section.h>
 
 void __cdecl Sys_Mkdir(const char *path);
 char *__cdecl Sys_Cwd();

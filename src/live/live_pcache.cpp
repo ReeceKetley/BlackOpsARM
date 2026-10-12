@@ -1,3 +1,4 @@
+#include <platform/fast_critical_section.h>
 #include "live_pcache.h"
 #include <ctime>
 #include "live_pcache_profile.h"
@@ -43,7 +44,11 @@ void __cdecl PCache_Unlock()
 
 bool __cdecl PCache_IsLocked()
 {
+#if BO1_NATIVE_FAST_CRIT_SECT
+    return bo1::fcs::SignedPositive(bo1::fcs::LoadWrite(&s_lock));
+#else
     return s_lock.writeCount > 0;
+#endif
 }
 
 unsigned __int64 __cdecl PCache_Hash(int controllerIndex, unsigned __int64 xuid)

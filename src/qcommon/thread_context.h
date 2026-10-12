@@ -23,5 +23,3 @@ enum ThreadContext_t : __int32 // not a real enum name
     THREAD_CONTEXT_COUNT = 0xF,
     THREAD_CONTEXT_INVALID = -1,
 };
-
-

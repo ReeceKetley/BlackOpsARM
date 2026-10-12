@@ -18,5 +18,3 @@ struct CmdArgs // sizeof=0x28EC
         int totalUsedArgvPool;                            // XREF: SV_Cmd_TokenizeString(char const *)+F/r
         int totalUsedTextPool;
 };
-
-
