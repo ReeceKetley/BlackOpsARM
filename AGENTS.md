@@ -140,3 +140,16 @@ cell-string range checks for2/49 genuine encoded offsets, then signed16 indices
 and actual lookup before registration. Reference-only payload oracle does not
 certify execution. Continue autonomously DEC-0029, verified local checkpoints
 DEC-0026; no push. Preserve prior evidence, original assets and protected repos.
+
+
+TASK-0019 is complete: actual genuine StringTable raw names and unresolved cell
+records on HONOR/Windows x86/x64,98 cases/12 cycles each. Read
+docs/port/arm64_stringtable_cells.md, FACT-0057/0058 and WARN-0019. Parent4/header0/
+child4 scope keeps TEMP header live; per-cell strings/index/fixups remain unread.
+Next TASK-0020 real cell strings and checked2/49 offsets to earlier initialized
+character starts/NUL/ranges, then actual signed16 indices and hash/lookup before
+registration. Original tag, exact mapping and native owned address must agree;
+never infer initialized strings from zero pages or capacity/drift fallback.
+Com_HashString overflow/ctype and CellCompare subtraction require bounded review
+before UBSan lookup. Continue DEC-0029, verified local commits DEC-0026; no push.
+Preserve protected repos/assets/frozen evidence. No game-owned graphics yet.

@@ -1,9 +1,49 @@
 # Current State
 
+Updated 12 October 2026: TASK-0019 genuine name/cell-record gate complete.
+DEC-0029 autonomous native engine/assets objective remains active. Local verified
+milestone commits authorized DEC-0026; no push. Verified prior4c6eb35 FACT-0056;
+Git gives current checkpoint and exact pending paths.
+
+Actual Load_XStringCustom/cell-array expander/Win32 Load_Stream pass HONOR and
+Windows x86/x64:98 adversarial cases/12 genuine low-high cycles each. Names34/58
+bytes, cells400/1594, every original tag/signed hash/padding/alias/exact interior
+verified. Source ends3602/40075, block4 disk3532/40008/native7032/67928. Parent4/
+header0/child4 lifecycle keeps header alive, retains dimensions/index tag/field
+aliases, then TEMP rewinds native0 with native64 shadow20. Actual2/49 cell-string
+offsets remain unresolved. Failure maps/bytes/cursors checked before reset, then
+detach/release restores logical counts. FACT-0057/0058, DEC-0034, WARN-0019.
+
+Fresh ARM0errors5603 retained warnings,207 AArch64 artifacts/27 executables,
+final cells-only rebuild adds reviewed header-preservation assertions. Current
+hostpass2 and genuine run2 pass, as did interim run1; no UBSan errors. All163
+expander bodies/2headers and6stream-loader bodies unchanged against4c6eb35; full
+gate-off Windows expander compiles bothABIs. Earlier real859 SL/MT IDs, optimized
+pool and four-byte Narrow32 evidence remain valid. All tests/processes ended.
+
+Next3: TASK-0020 actual cell strings398/1545 inline and2/49 checked ordinary
+offsets to earlier initialized starts/NUL/owned ranges, exact map/pointer equality;
+actual signed16 indices with permutation/signed-hash/equal-column order;
+isolated real hash/lookup validation before asset registration. Actual production
+Com_HashString signed overflow/negative-char ctype and CellCompare subtraction
+audited; preserve Windows bits, no broad sanitizer disabling or fabricated hashes.
+
+Windows2528/DXVK2552/rootLedger15 and2013 prior frozen paths preserved. Evidence/
+exact delta arm64_stringtable_cells.md/_changes.md. No original assets/buffers/
+binaries inGit, new latency/RSS claim, APK install, gameplay or graphics. All
+scratch/failures retained. WARN19: encoded/future/interior string ranges, TEMP
+alias/general duplicateordering, post-read helper/alias exceptions/transactional
+rollback, serial pool/live role, fullasync/APC/VM/init/OOM, registry/backend,
+Windows PMem/cache/freeTot/multiowner,16KB pages and S25 remain open.
+
+# Historical state (preserved)
+
+# Current State
+
 Updated 12 October 2026: TASK-0018 genuine first StringTable header complete.
 DEC-0029 autonomous engine/assets objective remains active. Local verified
-checkpoint commits authorized DEC-0026; no push. Prior verified c51db37
-(FACT-0053); Git gives current HEAD and exact pending paths.
+checkpoint commits authorized DEC-0026; no push. TASK-0018 checkpoint4c6eb35 verified
+(FACT-0056); TASK-0019 is active. Git gives current HEAD/pending paths.
 
 HONOR ARM64/Windows x86/x64 pass 73 adversarial cases and 12 genuine low/high
 zone cycles each. Actual header leaf/Win32 Load_Stream, genuine first assets

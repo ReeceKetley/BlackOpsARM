@@ -6,6 +6,9 @@ static_assert(sizeof(StringTable)==(BO1_NATIVE_64BIT?32:20));
 static_assert(offsetof(StringTable,name)==0&&offsetof(StringTable,columnCount)==sizeof(void*));
 static_assert(offsetof(StringTable,values)==(BO1_NATIVE_64BIT?16:12));
 static_assert(offsetof(StringTable,cellIndex)==(BO1_NATIVE_64BIT?24:16));
+#if defined(BO1_STRINGTABLE_CELLS_GATE)
+#include "stringtable_cells_fixture.h"
+#endif
 static StringTableHeaderPlan headerPlan(const Front&f,const AssetDirectoryPlan&d,const unsigned char*data,std::size_t bytes,std::uint64_t decoded){
     require(d.present&&d.count>0,"first genuine directory record exists");
     const auto start=f.end+static_cast<std::size_t>(d.diskBytes);require(start<=bytes&&start<=decoded,"header source after directory");
@@ -23,9 +26,13 @@ static void seedEnvelope(const unsigned char*data,XAssetList&envelope){
 #endif
     reader=nullptr;tableReadBytes=0;require(source.Position()==16&&DB_GetStreamPos()==g_streamBlocks[0].data,"side envelope preserves owned block0 cursor");
 }
-static void executeHeader(const StringTableHeaderPlan&p,DecodedSource&r,XBlock(&blocks)[7],XAssetList*envelope,bool measurement){
+static void executeHeader(const StringTableHeaderPlan&p,DecodedSource&r,XBlock(&blocks)[7],XAssetList*envelope,bool measurement
+#if defined(BO1_STRINGTABLE_CELLS_GATE)
+    ,const StringTablePayloadPlan*payload=nullptr
+#endif
+){
     if(!p.present)return;
-    const auto sourceStart=r.Position()+52;const auto block4=g_streamPosArray[4];
+    const auto sourceStart=r.Position()+52;const auto block4=g_streamPosIndex==4?DB_GetStreamPos():g_streamPosArray[4];
     const auto prefixBytes=static_cast<unsigned>(block4-blocks[4].data);const auto prefixAdler=adler32(1,blocks[4].data,prefixBytes);
     DB_PushStreamPos(0);auto*header=reinterpret_cast<StringTable*>(DB_AllocStreamPos(3));
     require(reinterpret_cast<unsigned char*>(header)==blocks[0].data+p.nativeStart,"header native aligned block0 owner");
@@ -46,12 +53,27 @@ static void executeHeader(const StringTableHeaderPlan&p,DecodedSource&r,XBlock(&
     require(DB_StreamAliasSlotLookup(0,static_cast<unsigned>(p.diskStart))==reinterpret_cast<uintptr_t*>(&header->name)&&DB_StreamAliasSlotLookup(0,static_cast<unsigned>(p.diskStart)+12)==reinterpret_cast<uintptr_t*>(&header->values)&&DB_StreamAliasSlotLookup(0,static_cast<unsigned>(p.diskStart)+16)==reinterpret_cast<uintptr_t*>(&header->cellIndex),"three actual header field aliases");
     if(envelope)require(DB_StreamAliasSlotLookup(0,4)==reinterpret_cast<uintptr_t*>(&envelope->stringList.strings),"unreplaced envelope alias remains valid");
 #endif
+#if defined(BO1_STRINGTABLE_CELLS_GATE)
+    require(payload&&g_streamPosStackIndex==2,"actual parent block4 to header0 scope");const auto untouchedIndex=header->cellIndex;
+    executePayload(*payload,header,r,blocks,measurement);
+    require(header->columnCount==p.columns&&header->rowCount==p.rows&&header->cellIndex==untouchedIndex,"child loading preserves dimensions and unresolved index tag");
+#if BO1_NATIVE_64BIT
+    require(DB_StreamAliasSlotLookup(0,static_cast<unsigned>(p.diskStart))==reinterpret_cast<uintptr_t*>(&header->name)&&DB_StreamAliasSlotLookup(0,static_cast<unsigned>(p.diskStart)+12)==reinterpret_cast<uintptr_t*>(&header->values)&&DB_StreamAliasSlotLookup(0,static_cast<unsigned>(p.diskStart)+16)==reinterpret_cast<uintptr_t*>(&header->cellIndex),"header aliases survive raw name and unresolved cell publication");
+#endif
+#endif
     DB_PopStreamPos();
+#if defined(BO1_STRINGTABLE_CELLS_GATE)
+    require(g_streamPosArray[0]==blocks[0].data&&g_streamPosStackIndex==1&&g_streamPosIndex==4&&DB_GetStreamPos()==blocks[4].data+payload->cells.nativeEnd,"TEMP pop restores block0 workspace while returning to parent4");
+#else
     require(DB_GetStreamPos()==blocks[0].data&&g_streamPosArray[0]==nullptr&&g_streamPosStackIndex==0&&g_streamPosIndex==0,"TEMP pop restores entry workspace cursor");
+#endif
 #if BO1_NATIVE_64BIT
     require(DB_StreamWin32Pos(0)==p.diskEnd,"TEMP pop retains shadow and mappings");
 #endif
-    require(g_streamPosArray[4]==block4&&adler32(1,blocks[4].data,prefixBytes)==prefixAdler,"header preserves preceding block4 bytes and cursor");
+#if !defined(BO1_STRINGTABLE_CELLS_GATE)
+    require(g_streamPosArray[4]==block4,"header-only block4 cursor preserved");
+#endif
+    require(adler32(1,blocks[4].data,prefixBytes)==prefixAdler,"header/children preserve preceding block4 bytes");
     if(measurement)std::printf("{\"header_measurements\":{\"source_start\":%zu,\"name_tag\":%u,\"column_count\":%d,\"row_count\":%d,\"values_tag\":%u,\"cell_index_tag\":%u,\"cell_count\":%llu,\"disk_start\":%llu,\"native_start\":%llu,\"disk_end\":%llu,\"native_end_before_pop\":%llu,\"native_cursor_after_pop\":0,\"shadow_after_pop\":%llu}}\n",sourceStart,p.nameTag,p.columns,p.rows,p.valuesTag,p.indexTag,(unsigned long long)p.cells,(unsigned long long)p.diskStart,(unsigned long long)p.nativeStart,(unsigned long long)p.diskEnd,(unsigned long long)p.nativeEnd,(unsigned long long)(BO1_NATIVE_64BIT?p.diskEnd:0));
 }
 static unsigned headerFixtures(const ZonePlan&zone){

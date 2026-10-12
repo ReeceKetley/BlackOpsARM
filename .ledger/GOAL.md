@@ -2,6 +2,15 @@
 
 ## Current Milestone
 
+TASK-0019 genuine StringTable names/cell descriptors complete (FACT-0057/0058).
+Core front end and actual interning stretch remain complete. DEC-0029 continues
+bounded native engine/assets progress. Next: initialized cell strings/real offset
+conversion, signed16 indices, actual hash/lookup before asset registration.
+No game-owned graphics yet. Local verified commits DEC-0026; no push.
+Read STATE, current Git and arm64_stringtable_cells.md.
+
+## Historical milestone
+
 TASK-0018 genuine StringTable numeric headers complete (FACT-0054/0055).
 Approved structural front end and actual interning stretch are complete;
 DEC-0029 continues bounded work toward native engine/assets/game-owned graphics.

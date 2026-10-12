@@ -1,0 +1,1248 @@
+{
+  "artifact_count": 207,
+  "executables": 27,
+  "artifacts": [
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/bo1_arm64_narrow_tests",
+      "sha256": "50379965EB6537DC1B447867B851D97ED8F2D6FF1F079276425F64D8BD344E29",
+      "elf_machine": 183,
+      "executable": true
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/bo1_asset_directory_tests",
+      "sha256": "450084A252FA3BC360E10D94E7415ECC2E0695A2D77D6296405F3E193F411056",
+      "elf_machine": 183,
+      "executable": true
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/bo1_assetlist_tests",
+      "sha256": "66E77D791AE71431E2736B7F46948DDA0691EA8376503131EB59C7119EEA124B",
+      "elf_machine": 183,
+      "executable": true
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/bo1_checked_zone_tests",
+      "sha256": "50ADD7DCF287A8446746F4CB81C17D1315B3260B3C263690B610FC0346EFCFC7",
+      "elf_machine": 183,
+      "executable": true
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/bo1_debugger_tests",
+      "sha256": "983C777DF11EDD9FE8F107D3486AA9758193A921481E675356E4EE2892D44312",
+      "elf_machine": 183,
+      "executable": true
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/bo1_engine_rng_tests",
+      "sha256": "EF55C0F91D638C7490F443B1001657281EACBFC0B3A9686B30693B9244F2599E",
+      "elf_machine": 183,
+      "executable": true
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/bo1_fastfile_tests",
+      "sha256": "5B48DBCA41C301DD6C5393CC3D4EC5D069AEC848275A359C8DAA83C575CB6B1B",
+      "elf_machine": 183,
+      "executable": true
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/bo1_firstfit_tests",
+      "sha256": "2882CF09B4109F74400D8602DCF35C0B63DBC83A70D679E72990E64F30ADFDB6",
+      "elf_machine": 183,
+      "executable": true
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/bo1_hunk_tests",
+      "sha256": "DC7468CF3738382D48E5DCB1227A46BC218ECE4C799BB3CAC225F67B400857BF",
+      "elf_machine": 183,
+      "executable": true
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/bo1_inflate_tests",
+      "sha256": "9740DA4E12C46BD3280F1C708D87D3740BB9759B5D401AEB257A6DF307A8B7E8",
+      "elf_machine": 183,
+      "executable": true
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/bo1_intern_strings_tests",
+      "sha256": "BCDF5C18A3F6FB8C902481C83C922ECA801857BE3C6B6181612EBFB0F95F97D5",
+      "elf_machine": 183,
+      "executable": true
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/bo1_math_axis_tests",
+      "sha256": "D5F2BD2A2D727D0EB2D8F5284B804F244F859DFCF892E193F3FE4368AA150522",
+      "elf_machine": 183,
+      "executable": true
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/bo1_parsetree_tests",
+      "sha256": "000D990F2172AD9D0CCB510AF22B7FB68C1A4FA1F3EE791073C4E1B61E6E86DF",
+      "elf_machine": 183,
+      "executable": true
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/bo1_profile_tests",
+      "sha256": "940F4E3F5504757D890248B0DE1FFA6990681634799559E130CA1B0A7F3F9E83",
+      "elf_machine": 183,
+      "executable": true
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/bo1_raw_strings_tests",
+      "sha256": "7CAB4E26ECED9B27B1CDC176A5BDD76D38F5B560629E5D9FE012481F1D8EE31F",
+      "elf_machine": 183,
+      "executable": true
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/bo1_rng_tests",
+      "sha256": "E4B17A9053D9B061E04577145EFD4E3DD23C60405998C088A84A9F72FCF9051D",
+      "elf_machine": 183,
+      "executable": true
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/bo1_script_headers_tests",
+      "sha256": "2289C405F6E91129A18D9B85ADD3B4092AA11091D1F20B43A8CE62BAE2C514E2",
+      "elf_machine": 183,
+      "executable": true
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/bo1_script_lookup_tests",
+      "sha256": "D9D7140F7F04249FA89893BBF2F326386DFB814AC651DAE0334DDF5996199E0B",
+      "elf_machine": 183,
+      "executable": true
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/bo1_script_slot_tests",
+      "sha256": "3DB2D99A914F5308834B0178029527741F161004E1BAE991412DEC03F718C140",
+      "elf_machine": 183,
+      "executable": true
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/bo1_script_string_services_tests",
+      "sha256": "A42B8B82651552CC542845E3B3610010EE95C93117747108C35C795337EB36DA",
+      "elf_machine": 183,
+      "executable": true
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/bo1_stream_init_tests",
+      "sha256": "FFAA4FDC7767BBA8CF2B06FB90400A007B1D66333F673D09934C144B02C73E11",
+      "elf_machine": 183,
+      "executable": true
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/bo1_string_pool_tests",
+      "sha256": "B84C7F1D949600656DDD417CF0EC15FDDBBE13B7563E8EA0A95103F1A796FC9B",
+      "elf_machine": 183,
+      "executable": true
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/bo1_string_table_tests",
+      "sha256": "C4E9662F2FBE736C986D25D7D99E5450DCE22D93238C7501C2194F3A62CDEDB9",
+      "elf_machine": 183,
+      "executable": true
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/bo1_stringtable_cells_tests",
+      "sha256": "C428BE55E3AB40941CDFA632574E0DCC20BFAD897DC6906E78FD3BFDF544E567",
+      "elf_machine": 183,
+      "executable": true
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/bo1_stringtable_header_tests",
+      "sha256": "527A780D8B04B6915B1CA7180B44C7BE3625BD260B8C6009971D144FD5E82D62",
+      "elf_machine": 183,
+      "executable": true
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/bo1_win32_compat_tests",
+      "sha256": "CA554C29B82CEC79E0C45015BD598BA033228BA6ED20C6F110FD36BF15FE252A",
+      "elf_machine": 183,
+      "executable": true
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/bo1_zone_tests",
+      "sha256": "D7D779325F0063323BB78A2260855C5F50785E514F4F7BBC88DF87E0F0AEC58E",
+      "elf_machine": 183,
+      "executable": true
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/3.22.1-g37088a8-dirty/CompilerIdC/CMakeCCompilerId.o",
+      "sha256": "5B2E4B1936662F5C4CE70DB1028A503E18F8137AE19AA40AD41D9D5982FBFC90",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/3.22.1-g37088a8-dirty/CompilerIdCXX/CMakeCXXCompilerId.o",
+      "sha256": "1812A88A5E7FF3D6A6B6974A467EACBCE12CC5DF84D896862F757682AE231FBE",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_android_hunk_services.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/android/hunk_services.cpp.o",
+      "sha256": "7CAD81A8EE895BA2D638C80646FAB844E061E94AF0E3B2FA5637EFE6BAB01E00",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_android_virtual_memory.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/android/virtual_memory.cpp.o",
+      "sha256": "F4EE8A088D0B2AFFC0CBF1E47F0310C7DD38D087933136F7C1694FB78812B091",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_android_zone_heap.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/android/zone_heap.cpp.o",
+      "sha256": "97655F7EA903660B88FEFE145493C985CD7850132E3AEFACB5CC764E4AA74C81",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_arm64_abi_contract.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/arm64_abi_contract.cpp.o",
+      "sha256": "23BAD4A176B46F260CC0706CB62EFADF7B521248A7F6DBF143EA1C02DEAB2A53",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_arm64_narrow.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/android/narrow32_android.cpp.o",
+      "sha256": "DAA8273A13C6619F72651DA9E85F8D17AAE2CA61E9937413DF53F15563276D1B",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_arm64_narrow_slot_probe.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/arm64_narrow_slot_probe.cpp.o",
+      "sha256": "0879E5DF81EF630567976F26674F7EE9AB060E366D300F5787B922FFE9032D2E",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_arm64_narrow_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/narrow32_tests.cpp.o",
+      "sha256": "80AE3FE547A312282034FB7BFC94A1C279B3F4FF0749B0271B72B1F4C503F174",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_arm64_profile.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/android/profile_services.cpp.o",
+      "sha256": "6804B403979BFD67806BD206C6B7E968A7B2566513A6481BBA13541C57611AF5",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_arm64_profile.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/universal/profile.cpp.o",
+      "sha256": "E87ABC4FC5ED650EE26A821F52BB39A8075C101F18DAD1A38A1B30A1EEB447F4",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_arm64_rng.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/android/engine_random.cpp.o",
+      "sha256": "666794969153033691C5E73FB94983D9F76A62FFAFC41495A938F968A1FB497B",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_arm64_utilities.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/universal/com_encode.cpp.o",
+      "sha256": "A8AC42C57426114C0D79DBA33F3B0E92E7061A38DC6079BB4F9964C7CD9C37E2",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_arm64_utilities.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/universal/com_math_anglevectors.cpp.o",
+      "sha256": "CE63F87DFDC8AB81ECD5BF7584CEA6D3D945EEC8F30C21F9EB7DD8CB692634D0",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_arm64_utilities.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/universal/timing.cpp.o",
+      "sha256": "5B497327A8A15D0145368DF1ECA74037EA7B4ECEB7377A3CD6FC1C009BA6A8AA",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_asset_directory_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/database/db_expand.cpp.o",
+      "sha256": "2A420CBCECA00B2DEBCE5BB5909E6291EA18EB4584010390E3740D9027383F34",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_asset_directory_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/database/db_stream_load.cpp.o",
+      "sha256": "BAE80CC734BAC763A523C6F760E1A7001EE97B408241D87F832C761369A54B33",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_asset_directory_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/android/database_diagnostics.cpp.o",
+      "sha256": "AB716F5710FA9C38A387BF223B573EE4DE638BB7A854CC99824919F013182904",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_asset_directory_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/android/zone_memory.cpp.o",
+      "sha256": "ABF8247736B55A4AE9B559E62FC207D15C2D841F64EF94AAD45F9EB540735D3C",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_asset_directory_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/fastfile_asset_directory.cpp.o",
+      "sha256": "ACC138C813379DF1465116342F15261C07AA27755E46C5894A365DF2CCC910C3",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_asset_directory_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/fastfile_assetlist.cpp.o",
+      "sha256": "5604AC7A6072635910E4855567D725BB17C89CF5E4B2F884ED9464D4AC022C4D",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_asset_directory_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/fastfile_inflate.cpp.o",
+      "sha256": "D33CC8B0F42D8F8E6A4CCA5A74128FCF83F947F729F44213C6EC281C19B7841A",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_asset_directory_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/fastfile_raw_string.cpp.o",
+      "sha256": "9BC3E9EDB5EF6A1538D6CCDA76629EA58231B13913DAF10AFC7AB56C296F41B6",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_asset_directory_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/fastfile_script_table.cpp.o",
+      "sha256": "F582466C89146AE2EB3A9266965D4CD4337612A1232A43A06C72CB128B00ADF2",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_asset_directory_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/fastfile_zone.cpp.o",
+      "sha256": "7B7DF59771F9866FA9B65700153916C75A3F6D649DC253E78B7E2668B367356A",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_asset_directory_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/checked_zone_support.cpp.o",
+      "sha256": "816BF938590C77E00112EE39AB008245A3E330C9FD7C5478E31D638F285E05C5",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_asset_directory_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/hunk_test_support.cpp.o",
+      "sha256": "239892A2228A7ACAC4EBDFB70ACF75D35C4F775D57ED4193845AE52875C5CB35",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_asset_directory_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/raw_strings_tests.cpp.o",
+      "sha256": "22E8FF74C3C29AB5E12AC25C1D59F45117DE9D6D275370A0CE3A79A99E516406",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_asset_directory_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/stream_init_support.cpp.o",
+      "sha256": "04C476A267BE7C9F0F43E02E0C1CA6276DC04D8CB0C257668F62EF9E68EDCA5B",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_assetlist_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/database/db_expand.cpp.o",
+      "sha256": "6C995CA78EF24E22728364FDF87131EAB4FC25805E919C175E5C699A4204E93D",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_assetlist_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/android/database_diagnostics.cpp.o",
+      "sha256": "AB716F5710FA9C38A387BF223B573EE4DE638BB7A854CC99824919F013182904",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_assetlist_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/android/zone_memory.cpp.o",
+      "sha256": "ABF8247736B55A4AE9B559E62FC207D15C2D841F64EF94AAD45F9EB540735D3C",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_assetlist_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/fastfile_assetlist.cpp.o",
+      "sha256": "5604AC7A6072635910E4855567D725BB17C89CF5E4B2F884ED9464D4AC022C4D",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_assetlist_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/fastfile_inflate.cpp.o",
+      "sha256": "D33CC8B0F42D8F8E6A4CCA5A74128FCF83F947F729F44213C6EC281C19B7841A",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_assetlist_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/fastfile_zone.cpp.o",
+      "sha256": "7B7DF59771F9866FA9B65700153916C75A3F6D649DC253E78B7E2668B367356A",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_assetlist_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/assetlist_tests.cpp.o",
+      "sha256": "5460769122FFC951FD63BB26E10AC85198E9A96BD7DC00C976AC75091642787E",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_assetlist_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/checked_zone_support.cpp.o",
+      "sha256": "1938BB754C37426828AEDC6C72D666FA6383DF185E9548378508F9AFC76B186A",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_assetlist_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/hunk_test_support.cpp.o",
+      "sha256": "239892A2228A7ACAC4EBDFB70ACF75D35C4F775D57ED4193845AE52875C5CB35",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_assetlist_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/stream_init_support.cpp.o",
+      "sha256": "04C476A267BE7C9F0F43E02E0C1CA6276DC04D8CB0C257668F62EF9E68EDCA5B",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_checked_zone_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/android/database_diagnostics.cpp.o",
+      "sha256": "AB716F5710FA9C38A387BF223B573EE4DE638BB7A854CC99824919F013182904",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_checked_zone_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/android/zone_memory.cpp.o",
+      "sha256": "ABF8247736B55A4AE9B559E62FC207D15C2D841F64EF94AAD45F9EB540735D3C",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_checked_zone_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/fastfile_inflate.cpp.o",
+      "sha256": "D33CC8B0F42D8F8E6A4CCA5A74128FCF83F947F729F44213C6EC281C19B7841A",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_checked_zone_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/fastfile_zone.cpp.o",
+      "sha256": "7B7DF59771F9866FA9B65700153916C75A3F6D649DC253E78B7E2668B367356A",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_checked_zone_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/checked_zone_support.cpp.o",
+      "sha256": "1938BB754C37426828AEDC6C72D666FA6383DF185E9548378508F9AFC76B186A",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_checked_zone_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/checked_zone_tests.cpp.o",
+      "sha256": "7F9D7BC8ADB88C7B1157ADE0D291A1D598F4A3248C9836DE59790ECD768A5713",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_checked_zone_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/hunk_test_support.cpp.o",
+      "sha256": "239892A2228A7ACAC4EBDFB70ACF75D35C4F775D57ED4193845AE52875C5CB35",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_debugger_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/debugger_tests.cpp.o",
+      "sha256": "D58BC059517E0D708A29B2E32DD7642D30B80A620B2864B6BE352E39570E5A49",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_debugger_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/hunk_test_support.cpp.o",
+      "sha256": "BF40A98C022A686B4701895E393304E40A9D56AA45D43C6B1C3160533FE75DFA",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_debugger_tests.dir/evaluator_test_services.cpp.o",
+      "sha256": "3A5252BC6455BFE8F7E465E2672107904FD0A613C66015E3594229C3BDB60BBB",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_engine_rng_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/engine_rng_tests.cpp.o",
+      "sha256": "B1232D4109628A727226FEDE950C966C9203AD75E2553397BDF1641AED47C220",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_evaluator_compile.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/clientscript/cscr_evaluate.cpp.o",
+      "sha256": "3A57E80871F1569517036AEA7A41458CE5F87A78F4EECB66E1A09983EB92C525",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_fastfile_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/fastfile_tests.cpp.o",
+      "sha256": "E5E6359BE8D30055BEE0667104B38ED8B64FD2B5C83D3010AFF2E3895D3867C3",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_fastfile_zlib.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/zlib/adler32.c.o",
+      "sha256": "435BE57E58F2DC1F660C8A5A7199581238902BF4A78989BD748DF2779E64DBBB",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_fastfile_zlib.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/zlib/crc32.c.o",
+      "sha256": "4E3155880BAC337E4CFAC820905EEDD7330B3F407C0E39D1C5BE8760B177C7F0",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_fastfile_zlib.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/zlib/inffast.c.o",
+      "sha256": "393593310E88FAD139B89483C65E14FB65D9B6E98B246F808A59011E81C5A166",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_fastfile_zlib.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/zlib/inflate.c.o",
+      "sha256": "4C4E3A0FA4CFA3F4BE5FC99E373FA37E9C4A3ADB3AE17C596EAD703B8886DEBF",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_fastfile_zlib.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/zlib/inftrees.c.o",
+      "sha256": "3211E907DF3473716F1640FCCE78610B0DDA133CA927BEC0D67E7D38D72256EB",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_fastfile_zlib.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/zlib/zutil.c.o",
+      "sha256": "381E5DE1A45934DA177E454BB40B0AFAFDB103F4D2144115CA2B009A7A74E587",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_firstfit_compile.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/universal/mem_firstfit.cpp.o",
+      "sha256": "433056C71957B1B7A26F1314FB9FDB296B642B6D758AC5F28C56A8A1BC1E5771",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_firstfit_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/firstfit_tests.cpp.o",
+      "sha256": "2DB2A7AE149272616DE1A877AD4A4FB9F6D4B219C1C6C78F3C958AA860C1E60C",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_firstfit_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/hunk_test_support.cpp.o",
+      "sha256": "2BF36F679A69E3C20A2B59C7799B408947D5826C7079C334968BB405123541F0",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_flag_guard_probe.dir/flag_guard_probe.cpp.o",
+      "sha256": "DEC5A057D5209DF770C40CA2F683A82E793931B0D5E908DE956EC1199D8DE499",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_hunk_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/hunk_test_support.cpp.o",
+      "sha256": "F780AEFFC4CDFBFC3A5EBA2A1810BF9F649ACD81B312CF936F4D41C83E640F85",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_hunk_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/hunk_tests.cpp.o",
+      "sha256": "D6BD3E4C0F0368B5728DC97C94DD35528E1405EE1585FA89BA2CCE0A52814746",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_inflate_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/fastfile_inflate.cpp.o",
+      "sha256": "D33CC8B0F42D8F8E6A4CCA5A74128FCF83F947F729F44213C6EC281C19B7841A",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_inflate_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/inflate_tests.cpp.o",
+      "sha256": "DC642386AB6DA8EB18AC23584F5549A6A6F35C0991FAFD12C2F83C1D74544501",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_intern_strings_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/clientscript/cscr_instance.cpp.o",
+      "sha256": "82541CE7A244F255E652494CDCF9E26994BB091CE9851546857DD33246DAD378",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_intern_strings_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/clientscript/cscr_memorytree.cpp.o",
+      "sha256": "F4AE7BD229262E107163BC13775C3FB145748CA3A6017027C2FD3EFF18459DE9",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_intern_strings_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/clientscript/cscr_stringlist.cpp.o",
+      "sha256": "953D4F0DB202ACA942F34403FE9ECAD022835966375B1A74A5EDD4DA2B31CE6B",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_intern_strings_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/database/db_expand.cpp.o",
+      "sha256": "2A420CBCECA00B2DEBCE5BB5909E6291EA18EB4584010390E3740D9027383F34",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_intern_strings_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/database/db_stream_load.cpp.o",
+      "sha256": "73E27CBB52F34C298BD73766C6D0B18FEBA6C13766048D7890D166FD6A7D8DD3",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_intern_strings_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/android/database_diagnostics.cpp.o",
+      "sha256": "AB716F5710FA9C38A387BF223B573EE4DE638BB7A854CC99824919F013182904",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_intern_strings_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/android/script_pool_bridge.cpp.o",
+      "sha256": "A031BB46F282DC9505A22E8B1326F584B8052B2D5CBBC5FDE08BF0DB8D881F3C",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_intern_strings_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/android/script_string_services.cpp.o",
+      "sha256": "5887C5CFE55A6B6815DA7B65795C2F9D8A2220EC683C173E3CBA93C70E7001B7",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_intern_strings_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/android/zone_memory.cpp.o",
+      "sha256": "ABF8247736B55A4AE9B559E62FC207D15C2D841F64EF94AAD45F9EB540735D3C",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_intern_strings_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/fastfile_assetlist.cpp.o",
+      "sha256": "5604AC7A6072635910E4855567D725BB17C89CF5E4B2F884ED9464D4AC022C4D",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_intern_strings_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/fastfile_inflate.cpp.o",
+      "sha256": "D33CC8B0F42D8F8E6A4CCA5A74128FCF83F947F729F44213C6EC281C19B7841A",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_intern_strings_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/fastfile_raw_string.cpp.o",
+      "sha256": "9BC3E9EDB5EF6A1538D6CCDA76629EA58231B13913DAF10AFC7AB56C296F41B6",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_intern_strings_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/fastfile_script_table.cpp.o",
+      "sha256": "F582466C89146AE2EB3A9266965D4CD4337612A1232A43A06C72CB128B00ADF2",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_intern_strings_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/fastfile_zone.cpp.o",
+      "sha256": "7B7DF59771F9866FA9B65700153916C75A3F6D649DC253E78B7E2668B367356A",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_intern_strings_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/checked_zone_support.cpp.o",
+      "sha256": "816BF938590C77E00112EE39AB008245A3E330C9FD7C5478E31D638F285E05C5",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_intern_strings_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/hunk_test_support.cpp.o",
+      "sha256": "3CBBE0FC89076C85A0946B21AEDC6C546A2237504620CAA98B06CEFFE7556845",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_intern_strings_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/raw_strings_tests.cpp.o",
+      "sha256": "16B77CC2D83E987D4A1EC7DDDA87A7AC113972B712C1CE059596643EBBE855F7",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_intern_strings_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/stream_init_support.cpp.o",
+      "sha256": "04C476A267BE7C9F0F43E02E0C1CA6276DC04D8CB0C257668F62EF9E68EDCA5B",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_intern_strings_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/string_pool_support.cpp.o",
+      "sha256": "A38952C02E0891420E8D74F524400F0D5AE371BA733CE1A78ACBEEEF581002C9",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_math_axis_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/universal/com_math_anglevectors.cpp.o",
+      "sha256": "CE63F87DFDC8AB81ECD5BF7584CEA6D3D945EEC8F30C21F9EB7DD8CB692634D0",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_math_axis_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/math_axis_tests.cpp.o",
+      "sha256": "9BBD4CDE015F39EFDAB7D6037AECC18B806AD006BB2E0316286B14724A575A34",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_parsetree_compile.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/clientscript/cscr_parsetree.cpp.o",
+      "sha256": "4DFADBD0A51255228F75D7F72976394F281AC25BA0B0D7E3129C22CB4EB07747",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_parsetree_compile.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/universal/mem_userhunk.cpp.o",
+      "sha256": "9E46D75F19459E8AA319817DF25B68EAE80667453A8C8172360DE4192C804D0F",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_parsetree_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/hunk_test_support.cpp.o",
+      "sha256": "F780AEFFC4CDFBFC3A5EBA2A1810BF9F649ACD81B312CF936F4D41C83E640F85",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_parsetree_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/parsetree_tests.cpp.o",
+      "sha256": "F172698ADC0019F60A505C9FF63B177407B55E2725A0A729DCC824463FD70184",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_profile_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/profile_tests.cpp.o",
+      "sha256": "56C94B0EBD482F741CDF38F5AADD6846F3B749A927B462A256FF2B52C85F54AE",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_raw_strings_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/database/db_expand.cpp.o",
+      "sha256": "2A420CBCECA00B2DEBCE5BB5909E6291EA18EB4584010390E3740D9027383F34",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_raw_strings_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/database/db_stream_load.cpp.o",
+      "sha256": "BAE80CC734BAC763A523C6F760E1A7001EE97B408241D87F832C761369A54B33",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_raw_strings_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/android/database_diagnostics.cpp.o",
+      "sha256": "AB716F5710FA9C38A387BF223B573EE4DE638BB7A854CC99824919F013182904",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_raw_strings_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/android/zone_memory.cpp.o",
+      "sha256": "ABF8247736B55A4AE9B559E62FC207D15C2D841F64EF94AAD45F9EB540735D3C",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_raw_strings_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/fastfile_assetlist.cpp.o",
+      "sha256": "5604AC7A6072635910E4855567D725BB17C89CF5E4B2F884ED9464D4AC022C4D",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_raw_strings_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/fastfile_inflate.cpp.o",
+      "sha256": "D33CC8B0F42D8F8E6A4CCA5A74128FCF83F947F729F44213C6EC281C19B7841A",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_raw_strings_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/fastfile_raw_string.cpp.o",
+      "sha256": "9BC3E9EDB5EF6A1538D6CCDA76629EA58231B13913DAF10AFC7AB56C296F41B6",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_raw_strings_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/fastfile_script_table.cpp.o",
+      "sha256": "F582466C89146AE2EB3A9266965D4CD4337612A1232A43A06C72CB128B00ADF2",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_raw_strings_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/fastfile_zone.cpp.o",
+      "sha256": "7B7DF59771F9866FA9B65700153916C75A3F6D649DC253E78B7E2668B367356A",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_raw_strings_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/checked_zone_support.cpp.o",
+      "sha256": "816BF938590C77E00112EE39AB008245A3E330C9FD7C5478E31D638F285E05C5",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_raw_strings_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/hunk_test_support.cpp.o",
+      "sha256": "239892A2228A7ACAC4EBDFB70ACF75D35C4F775D57ED4193845AE52875C5CB35",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_raw_strings_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/raw_strings_tests.cpp.o",
+      "sha256": "609A400A2B78774F6A356243C5581FD5FDDBF6B3930621842073857DB8BAE31A",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_raw_strings_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/stream_init_support.cpp.o",
+      "sha256": "04C476A267BE7C9F0F43E02E0C1CA6276DC04D8CB0C257668F62EF9E68EDCA5B",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_rng_tests.dir/rng_probe.cpp.o",
+      "sha256": "BB3EEC860BEECD027AEB52EE2E1F1AB6D5EC8BD5A3D938989408B35CD701EBDE",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_script_headers_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/clientscript/cscr_instance.cpp.o",
+      "sha256": "3CF7DBB36533B8F8EB8549F989904960E16FBED11F862A7F759B7FDF03EB688B",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_script_headers_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/script_headers_tests.cpp.o",
+      "sha256": "9F0109EA0B925B156E626F1400B603650BBFCD1378E0A2E80052F498FC98444D",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_script_lookup_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/clientscript/cscr_readwrite.cpp.o",
+      "sha256": "2DABEE3C79BC09B89571CF3BFD7A4CC9AF5B0056DF6BE82BDE051343D92210EF",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_script_lookup_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/script_lookup_tests.cpp.o",
+      "sha256": "EBCC17B1684FC13831473A8331AFA5DB70BD4E54C5AE321559DD2D4EEB256795",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_script_slot_tests.dir/script_slot_probe.cpp.o",
+      "sha256": "E032F144118A18C1B23CAFE604EF9F65954B44D86A866C4A883737462F9560E8",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_script_string_services_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/android/script_string_services.cpp.o",
+      "sha256": "3F36E91944B66A9C691DF5999D90B12050293CCB84E8A0B7BBC9B23F4A8C4252",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_script_string_services_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/script_string_services_tests.cpp.o",
+      "sha256": "FAF8CD70E33F8456DB4613B8EE324108EC6BE9667AC05B195A79225FB5C733D8",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_stream_init_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/android/database_diagnostics.cpp.o",
+      "sha256": "AB716F5710FA9C38A387BF223B573EE4DE638BB7A854CC99824919F013182904",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_stream_init_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/android/zone_memory.cpp.o",
+      "sha256": "ABF8247736B55A4AE9B559E62FC207D15C2D841F64EF94AAD45F9EB540735D3C",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_stream_init_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/fastfile_zone.cpp.o",
+      "sha256": "7B7DF59771F9866FA9B65700153916C75A3F6D649DC253E78B7E2668B367356A",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_stream_init_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/checked_zone_support.cpp.o",
+      "sha256": "1938BB754C37426828AEDC6C72D666FA6383DF185E9548378508F9AFC76B186A",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_stream_init_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/hunk_test_support.cpp.o",
+      "sha256": "239892A2228A7ACAC4EBDFB70ACF75D35C4F775D57ED4193845AE52875C5CB35",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_stream_init_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/stream_init_support.cpp.o",
+      "sha256": "04C476A267BE7C9F0F43E02E0C1CA6276DC04D8CB0C257668F62EF9E68EDCA5B",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_stream_init_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/stream_init_tests.cpp.o",
+      "sha256": "0D6FF962BAA5BE70A6FF7CFB6F52B15C8CF45A26516F4734C92B61DB783E745C",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_string_pool_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/clientscript/cscr_instance.cpp.o",
+      "sha256": "82541CE7A244F255E652494CDCF9E26994BB091CE9851546857DD33246DAD378",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_string_pool_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/clientscript/cscr_memorytree.cpp.o",
+      "sha256": "F4AE7BD229262E107163BC13775C3FB145748CA3A6017027C2FD3EFF18459DE9",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_string_pool_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/clientscript/cscr_stringlist.cpp.o",
+      "sha256": "953D4F0DB202ACA942F34403FE9ECAD022835966375B1A74A5EDD4DA2B31CE6B",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_string_pool_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/android/script_pool_bridge.cpp.o",
+      "sha256": "A031BB46F282DC9505A22E8B1326F584B8052B2D5CBBC5FDE08BF0DB8D881F3C",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_string_pool_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/android/script_string_services.cpp.o",
+      "sha256": "5887C5CFE55A6B6815DA7B65795C2F9D8A2220EC683C173E3CBA93C70E7001B7",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_string_pool_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/string_pool_support.cpp.o",
+      "sha256": "D7AC668BB78128B9282D38E68CDF2DD03F31C3B19E3DBD2604557019411E41A4",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_string_pool_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/string_pool_tests.cpp.o",
+      "sha256": "1E5CFC437F63304DE562EF8C974EA9F03EBC061C39913AF7A4FD9F50288952C5",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_string_table_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/database/db_expand.cpp.o",
+      "sha256": "2A420CBCECA00B2DEBCE5BB5909E6291EA18EB4584010390E3740D9027383F34",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_string_table_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/android/database_diagnostics.cpp.o",
+      "sha256": "AB716F5710FA9C38A387BF223B573EE4DE638BB7A854CC99824919F013182904",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_string_table_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/android/zone_memory.cpp.o",
+      "sha256": "ABF8247736B55A4AE9B559E62FC207D15C2D841F64EF94AAD45F9EB540735D3C",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_string_table_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/fastfile_assetlist.cpp.o",
+      "sha256": "5604AC7A6072635910E4855567D725BB17C89CF5E4B2F884ED9464D4AC022C4D",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_string_table_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/fastfile_inflate.cpp.o",
+      "sha256": "D33CC8B0F42D8F8E6A4CCA5A74128FCF83F947F729F44213C6EC281C19B7841A",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_string_table_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/fastfile_script_table.cpp.o",
+      "sha256": "F582466C89146AE2EB3A9266965D4CD4337612A1232A43A06C72CB128B00ADF2",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_string_table_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/fastfile_zone.cpp.o",
+      "sha256": "7B7DF59771F9866FA9B65700153916C75A3F6D649DC253E78B7E2668B367356A",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_string_table_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/checked_zone_support.cpp.o",
+      "sha256": "816BF938590C77E00112EE39AB008245A3E330C9FD7C5478E31D638F285E05C5",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_string_table_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/hunk_test_support.cpp.o",
+      "sha256": "239892A2228A7ACAC4EBDFB70ACF75D35C4F775D57ED4193845AE52875C5CB35",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_string_table_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/stream_init_support.cpp.o",
+      "sha256": "04C476A267BE7C9F0F43E02E0C1CA6276DC04D8CB0C257668F62EF9E68EDCA5B",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_string_table_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/string_table_tests.cpp.o",
+      "sha256": "E991EBF67345C1ED4F7528C3B09480B1A7E957D64390C8D7D1184326F7A5644C",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_stringtable_cells_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/database/db_expand.cpp.o",
+      "sha256": "E7781B0D277F4889927276A45801C378FFF4CCDF06ACA59E6A1249BA4D421F54",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_stringtable_cells_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/database/db_stream_load.cpp.o",
+      "sha256": "BAE80CC734BAC763A523C6F760E1A7001EE97B408241D87F832C761369A54B33",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_stringtable_cells_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/android/database_diagnostics.cpp.o",
+      "sha256": "AB716F5710FA9C38A387BF223B573EE4DE638BB7A854CC99824919F013182904",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_stringtable_cells_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/android/zone_memory.cpp.o",
+      "sha256": "ABF8247736B55A4AE9B559E62FC207D15C2D841F64EF94AAD45F9EB540735D3C",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_stringtable_cells_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/fastfile_asset_directory.cpp.o",
+      "sha256": "ACC138C813379DF1465116342F15261C07AA27755E46C5894A365DF2CCC910C3",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_stringtable_cells_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/fastfile_assetlist.cpp.o",
+      "sha256": "5604AC7A6072635910E4855567D725BB17C89CF5E4B2F884ED9464D4AC022C4D",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_stringtable_cells_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/fastfile_inflate.cpp.o",
+      "sha256": "D33CC8B0F42D8F8E6A4CCA5A74128FCF83F947F729F44213C6EC281C19B7841A",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_stringtable_cells_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/fastfile_raw_string.cpp.o",
+      "sha256": "9BC3E9EDB5EF6A1538D6CCDA76629EA58231B13913DAF10AFC7AB56C296F41B6",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_stringtable_cells_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/fastfile_script_table.cpp.o",
+      "sha256": "F582466C89146AE2EB3A9266965D4CD4337612A1232A43A06C72CB128B00ADF2",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_stringtable_cells_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/fastfile_stringtable_cells.cpp.o",
+      "sha256": "9D82A4A88FBDD25DA63938704A98D4DD402BE0239A255CE9A147989112084DBC",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_stringtable_cells_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/fastfile_stringtable_header.cpp.o",
+      "sha256": "BB7AF28A462BE775128393195E435E3417AD20A853F82AF15C0B642DB1F86529",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_stringtable_cells_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/fastfile_zone.cpp.o",
+      "sha256": "7B7DF59771F9866FA9B65700153916C75A3F6D649DC253E78B7E2668B367356A",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_stringtable_cells_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/checked_zone_support.cpp.o",
+      "sha256": "816BF938590C77E00112EE39AB008245A3E330C9FD7C5478E31D638F285E05C5",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_stringtable_cells_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/hunk_test_support.cpp.o",
+      "sha256": "239892A2228A7ACAC4EBDFB70ACF75D35C4F775D57ED4193845AE52875C5CB35",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_stringtable_cells_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/raw_strings_tests.cpp.o",
+      "sha256": "F698935004E92522006EC651747EF918BBF9A83D902012D314DD25ACB27D7F07",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_stringtable_cells_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/stream_init_support.cpp.o",
+      "sha256": "04C476A267BE7C9F0F43E02E0C1CA6276DC04D8CB0C257668F62EF9E68EDCA5B",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_stringtable_header_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/database/db_expand.cpp.o",
+      "sha256": "79BD9528673F24F012EA4F5EC288EC49D82AB7D4CA5A91933F51A2184B57F580",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_stringtable_header_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/database/db_stream_load.cpp.o",
+      "sha256": "BAE80CC734BAC763A523C6F760E1A7001EE97B408241D87F832C761369A54B33",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_stringtable_header_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/android/database_diagnostics.cpp.o",
+      "sha256": "AB716F5710FA9C38A387BF223B573EE4DE638BB7A854CC99824919F013182904",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_stringtable_header_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/android/zone_memory.cpp.o",
+      "sha256": "ABF8247736B55A4AE9B559E62FC207D15C2D841F64EF94AAD45F9EB540735D3C",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_stringtable_header_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/fastfile_asset_directory.cpp.o",
+      "sha256": "ACC138C813379DF1465116342F15261C07AA27755E46C5894A365DF2CCC910C3",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_stringtable_header_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/fastfile_assetlist.cpp.o",
+      "sha256": "5604AC7A6072635910E4855567D725BB17C89CF5E4B2F884ED9464D4AC022C4D",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_stringtable_header_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/fastfile_inflate.cpp.o",
+      "sha256": "D33CC8B0F42D8F8E6A4CCA5A74128FCF83F947F729F44213C6EC281C19B7841A",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_stringtable_header_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/fastfile_raw_string.cpp.o",
+      "sha256": "9BC3E9EDB5EF6A1538D6CCDA76629EA58231B13913DAF10AFC7AB56C296F41B6",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_stringtable_header_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/fastfile_script_table.cpp.o",
+      "sha256": "F582466C89146AE2EB3A9266965D4CD4337612A1232A43A06C72CB128B00ADF2",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_stringtable_header_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/fastfile_stringtable_header.cpp.o",
+      "sha256": "BB7AF28A462BE775128393195E435E3417AD20A853F82AF15C0B642DB1F86529",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_stringtable_header_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/fastfile_zone.cpp.o",
+      "sha256": "7B7DF59771F9866FA9B65700153916C75A3F6D649DC253E78B7E2668B367356A",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_stringtable_header_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/checked_zone_support.cpp.o",
+      "sha256": "816BF938590C77E00112EE39AB008245A3E330C9FD7C5478E31D638F285E05C5",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_stringtable_header_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/hunk_test_support.cpp.o",
+      "sha256": "239892A2228A7ACAC4EBDFB70ACF75D35C4F775D57ED4193845AE52875C5CB35",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_stringtable_header_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/raw_strings_tests.cpp.o",
+      "sha256": "148FA01B4D5E171F2B7FD01A33865A0D8E5AE710C4BB7A3B8DF648242E2B9815",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_stringtable_header_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/stream_init_support.cpp.o",
+      "sha256": "04C476A267BE7C9F0F43E02E0C1CA6276DC04D8CB0C257668F62EF9E68EDCA5B",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_win32_compat.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/win32_compat/win32_errors.cpp.o",
+      "sha256": "BA9CCC7F631D63D4BD0C5436E17CD17385602AFF40E6B09EA435731E1F536031",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_win32_compat.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/win32_compat/win32_time.cpp.o",
+      "sha256": "CA4E50A9020242F4174C0EF997149F7ED15898E299BAF4A1C3E4072AF3545906",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_win32_compat_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/win32_compat_tests.cpp.o",
+      "sha256": "E26AEBB5684468A70C49BD6C8182A762CB8C8DCB82A1E88E8384A076DA40DDC1",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_win32_compat_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/win32_error_tests.cpp.o",
+      "sha256": "99468513531410548A4802FBF56381B6BE10BC1C57A66AD0B6FF1AEC41B0472E",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_zone_compile.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/database/db_memory.cpp.o",
+      "sha256": "584F1815E2008862192EC58E79CB2B6B2ED726B6B3337FCA24606FF03C7B2481",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_zone_compile.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/database/db_stream.cpp.o",
+      "sha256": "2582B776233789E5232F7153462A7AA2125333A87D5DF2A4C271D9ABCA2688BA",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_zone_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/android/database_diagnostics.cpp.o",
+      "sha256": "AB716F5710FA9C38A387BF223B573EE4DE638BB7A854CC99824919F013182904",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_zone_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/android/zone_memory.cpp.o",
+      "sha256": "0C3C73AA13DABD9F0F9A499C34A5DC9E89C6D4C875822AE60BADF13C86201830",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_zone_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/hunk_test_support.cpp.o",
+      "sha256": "05A0CD1A4D18AC5C2968C32C148C19ABB088CDA4D3D88B2675E57238F06008EC",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_zone_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/zone_test_support.cpp.o",
+      "sha256": "5AC5EF86B3C2E2832C983E822ED3E994D3695CBA8A95A906D6B0D8F2396ADA7C",
+      "elf_machine": 183,
+      "executable": false
+    },
+    {
+      "path": "build-android-audit/stringtable_cells_pass1/CMakeFiles/bo1_zone_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/zone_tests.cpp.o",
+      "sha256": "8E6E1209FA3DE8E3F2A497CB524BAE59CAD9EBA8EE0DAB58EC3A41E75581456D",
+      "elf_machine": 183,
+      "executable": false
+    }
+  ]
+}
