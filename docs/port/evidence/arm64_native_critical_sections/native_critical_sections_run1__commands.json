@@ -1,0 +1,78 @@
+[
+  {
+    "args": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_critical_sections_host1\\x86\\native_critical_sections.exe"
+    ],
+    "exit": 0,
+    "stdout": "{\"native_critical_sections\":{\"pointer_bytes\":4,\"sections\":75,\"initializers\":12,\"protected_increments\":30000,\"shared_pool_locks\":3,\"passed\":true}}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_critical_sections_host1\\x86\\native_critical_sections.exe",
+      "--invalid-enter",
+      "-1"
+    ],
+    "exit": 2,
+    "stdout": "",
+    "stderr": "Native critical sections: invalid identifier (-1)\nFAIL lock watchdog\n"
+  },
+  {
+    "args": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_critical_sections_host1\\x86\\native_critical_sections.exe",
+      "--invalid-enter",
+      "75"
+    ],
+    "exit": 2,
+    "stdout": "",
+    "stderr": "Native critical sections: invalid identifier (75)\nFAIL lock watchdog\n"
+  },
+  {
+    "args": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_critical_sections_host1\\x86\\native_critical_sections.exe",
+      "--invalid-try",
+      "-1"
+    ],
+    "exit": 2,
+    "stdout": "",
+    "stderr": "Native critical sections: invalid identifier (-1)\nFAIL lock watchdog\n"
+  },
+  {
+    "args": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_critical_sections_host1\\x86\\native_critical_sections.exe",
+      "--invalid-try",
+      "75"
+    ],
+    "exit": 2,
+    "stdout": "",
+    "stderr": "Native critical sections: invalid identifier (75)\nFAIL lock watchdog\n"
+  },
+  {
+    "args": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_critical_sections_host1\\x86\\native_critical_sections.exe",
+      "--invalid-leave",
+      "-1"
+    ],
+    "exit": 2,
+    "stdout": "",
+    "stderr": "Native critical sections: invalid identifier (-1)\nFAIL lock watchdog\n"
+  },
+  {
+    "args": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_critical_sections_host1\\x86\\native_critical_sections.exe",
+      "--invalid-leave",
+      "75"
+    ],
+    "exit": 2,
+    "stdout": "",
+    "stderr": "Native critical sections: invalid identifier (75)\nFAIL lock watchdog\n"
+  },
+  {
+    "args": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_critical_sections_host1\\x64\\native_critical_sections.exe"
+    ],
+    "exit": 0,
+    "stdout": "{\"native_critical_sections\":{\"pointer_bytes\":8,\"sections\":75,\"initializers\":12,\"protected_increments\":30000,\"shared_pool_locks\":3,\"passed\":true}}\n",
+    "stderr": ""
+  }
+]

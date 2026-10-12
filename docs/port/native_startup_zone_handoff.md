@@ -1,4 +1,23 @@
-# TASK41 checkpoint and next lead handoff
+# Latest checkpoints after TASK41
+
+TASK42 committed `7d1aaa6`: native Windows PMem previous-record stride repaired,
+Win32 branch preserved; genuine reader third/32nd/33rd owner controls and complete
+MP71 regressions pass. TASK43 subsequently completes all75 native recursive
+critical sections, preserving actual SL/MT/DBHASH PoolLock identity. Host x86/x64
+and HONOR O0/O3 mutex tests, genuine MP71 and actual SL/MT/default ownership
+regressions pass. Git supplies TASK43 checkpoint. Read latest STATE,
+`arm64_pmem_owner_stack.md`, `arm64_native_critical_sections.md` and focused
+`native_startup_services_plan.md`. 91+188 new metadata records are frozen.
+
+Next is genuine thread/TLS binding with actual `Com_InitThreadData` and canonical
+va/error/trace/CmdArgs storage, then real Dvar/Cmd/Cbuf and actual DB workers.
+Native FastCriticalSection fixed32 atomic protocol and Android main-only zone
+ownership remain hard dependencies. Full Com_Init/frames/gameplay are not yet
+executed. Source/serialized layouts and protected references remain preserved.
+User resumed development after context refresh; the old context-only stop below
+is historical. No live source ownership delegated; root owns all edits.
+
+# Historical TASK41 checkpoint and next lead handoff
 
 Read this file, latest `.ledger/STATE.md`, Git status, and
 `production_startup_dependency_map.md`. Do not repeat historical milestones.
