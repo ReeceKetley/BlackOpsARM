@@ -1,22 +1,23 @@
-// Bounded real SL/MT platform bridge: only the two production pool sections
+// Bounded real SL/MT/DBHASH platform bridge: only three production sections
 // are supported. Unsupported sections fail explicitly, rather than appearing
 // initialized or locked. The full Windows implementation is never overridden.
-#include <platform/script_pool_services.h>
+#include <platform/critical_section_services.h>
 #include <platform/android/script_string_services.h>
 #include <cstdio>
 #include <cstdlib>
 
-#if !(defined(__ANDROID__) && defined(__aarch64__)) && !(defined(_WIN32) && defined(BO1_STRING_POOL_GATE))
+#if !(defined(__ANDROID__) && defined(__aarch64__)) && !(defined(_WIN32) && (defined(BO1_STRING_POOL_GATE) || defined(BO1_ASSET_ENTRY_GATE)))
 #error "Script pool bridge is Android ARM64 or an explicit Windows pool gate only."
 #endif
 
 static_assert(sizeof(CriticalSection) == 4);
-static_assert(CRITSECT_SCRIPT_STRING == 27 && CRITSECT_MEMORY_TREE == 28);
+static_assert(CRITSECT_SCRIPT_STRING == 27 && CRITSECT_MEMORY_TREE == 28 && CRITSECT_DBHASH == 74);
 namespace {
 bo1::script::PoolLock poolLock(CriticalSection section) {
     switch (section) {
     case CRITSECT_SCRIPT_STRING: return bo1::script::PoolLock::Strings;
     case CRITSECT_MEMORY_TREE: return bo1::script::PoolLock::MemoryTree;
+    case CRITSECT_DBHASH: return bo1::script::PoolLock::Database;
     default:
         std::fprintf(stderr, "Script pool bridge: unsupported critical section %d\n", static_cast<int>(section));
         std::fflush(stderr);

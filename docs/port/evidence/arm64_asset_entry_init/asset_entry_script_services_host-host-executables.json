@@ -1,0 +1,16 @@
+[
+  {
+    "arch": "x86",
+    "pointer_bytes": 4,
+    "machine": 332,
+    "path": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\asset_entry_script_services_host\\x86\\script_string_services.exe",
+    "sha256": "8d2e9b524773d647959ae507543ca8a37ec03c1fff15d0ac914e734b6807abad"
+  },
+  {
+    "arch": "x64",
+    "pointer_bytes": 8,
+    "machine": 34404,
+    "path": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\asset_entry_script_services_host\\x64\\script_string_services.exe",
+    "sha256": "6820baeeb6acb87974c570d3a352d4e77fb84e98a7899b8ac94b8be9d8732a5d"
+  }
+]

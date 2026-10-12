@@ -34,7 +34,7 @@ int main(int argc, char **argv) {
         require(false, "conflicting registration must terminate");
     }
     if (argc == 2 && !std::strcmp(argv[1], "--invalid-lock")) {
-        Lock(static_cast<PoolLock>(2));
+        Lock(static_cast<PoolLock>(3));
         require(false, "invalid section must terminate");
     }
     require(argc == 1, "unknown arguments");

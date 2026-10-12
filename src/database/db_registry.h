@@ -41,17 +41,7 @@ struct XModel;
 struct GfxImage;
 struct windowDef_t;
 
-struct XAssetEntry // sizeof=0x10
-{                                       // XREF: XAssetEntryPoolEntry/r
-                                        // DB_AddXAsset/r
-    XAsset asset;                       // XREF: DB_AddXAsset+9/w
-                                        // DB_AddXAsset+F/w
-    unsigned __int8 zoneIndex;
-    bool inuse;
-    unsigned __int16 nextHash;
-    unsigned __int16 nextOverride;
-    unsigned __int16 usageFrame;
-};
+#include "db_asset_entry_types.h"
 
 struct DBReorderAssetEntry // sizeof=0x10
 {                                       // XREF: $73C9AB3B505E60D629E435B147795978/r
@@ -66,16 +56,6 @@ struct XZoneInfo // sizeof=0xC
     const char *name;                   // XREF: DB_UpdateDebugZone(void)+15/w
     int allocFlags;                     // XREF: DB_UpdateDebugZone(void)+18/w
     int freeFlags;                      // XREF: DB_UpdateDebugZone(void)+1B/w
-};
-
-union XAssetEntryPoolEntry // sizeof=0x10
-{                                       // XREF: DB_Init+AB/w
-    XAssetEntry entry;
-    XAssetEntryPoolEntry *next;
-
-    XAssetEntryPoolEntry()
-    {
-    }
 };
 
 struct XZone // sizeof=0x40

@@ -1,0 +1,1 @@
+Read-only audit: no production correctness blocker in canonical startup/quiescent helper,24/16 layout, original capacities and native DBHASH. Real alloc/free deliberately deferred. Review requested captured output/invocation on timeout/launch failure, implemented before finalrun3. No edits/builds by reviewer.

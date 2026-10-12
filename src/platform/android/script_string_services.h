@@ -2,7 +2,7 @@
 
 namespace bo1::script {
 // Independent recursive sections. This is not the global Win32 section enum.
-enum class PoolLock { Strings, MemoryTree };
+enum class PoolLock { Strings, MemoryTree, Database };
 void InitializeServices();
 void Lock(PoolLock);
 bool TryLock(PoolLock);

@@ -1,0 +1,136 @@
+[
+  {
+    "label": "devices",
+    "argv": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "devices"
+    ],
+    "exit": 0,
+    "outcome": "completed"
+  },
+  {
+    "label": "device-create",
+    "argv": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "mkdir",
+      "-p",
+      "/data/local/tmp/blackopsarm-task31-asset_entry_optimized_run3"
+    ],
+    "exit": 0,
+    "outcome": "completed"
+  },
+  {
+    "label": "device-metadata",
+    "argv": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "getprop ro.product.model; getprop ro.build.version.sdk; getconf PAGESIZE"
+    ],
+    "exit": 0,
+    "outcome": "completed"
+  },
+  {
+    "label": "windows_x86-normal",
+    "argv": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\asset_entry_host_pass2\\x86\\asset_entry_init.exe"
+    ],
+    "exit": 0,
+    "outcome": "completed"
+  },
+  {
+    "label": "windows_x86-unsupported",
+    "argv": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\asset_entry_host_pass2\\x86\\asset_entry_init.exe",
+      "--unsupported-section"
+    ],
+    "exit": 3,
+    "outcome": "completed"
+  },
+  {
+    "label": "windows_x64-normal",
+    "argv": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\asset_entry_host_pass2\\x64\\asset_entry_init.exe"
+    ],
+    "exit": 0,
+    "outcome": "completed"
+  },
+  {
+    "label": "windows_x64-unsupported",
+    "argv": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\asset_entry_host_pass2\\x64\\asset_entry_init.exe",
+      "--unsupported-section"
+    ],
+    "exit": 3,
+    "outcome": "completed"
+  },
+  {
+    "label": "probe-push",
+    "argv": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "push",
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\asset_entry_optimized_pass2\\bo1_asset_entry_init_tests",
+      "/data/local/tmp/blackopsarm-task31-asset_entry_optimized_run3/entry-tests"
+    ],
+    "exit": 0,
+    "outcome": "completed"
+  },
+  {
+    "label": "probe-chmod",
+    "argv": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "chmod",
+      "700",
+      "/data/local/tmp/blackopsarm-task31-asset_entry_optimized_run3/entry-tests"
+    ],
+    "exit": 0,
+    "outcome": "completed"
+  },
+  {
+    "label": "probe-sha",
+    "argv": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "sha256sum",
+      "/data/local/tmp/blackopsarm-task31-asset_entry_optimized_run3/entry-tests"
+    ],
+    "exit": 0,
+    "outcome": "completed"
+  },
+  {
+    "label": "honor_arm64-normal",
+    "argv": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "/data/local/tmp/blackopsarm-task31-asset_entry_optimized_run3/entry-tests"
+    ],
+    "exit": 0,
+    "outcome": "completed"
+  },
+  {
+    "label": "honor_arm64-unsupported",
+    "argv": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "/data/local/tmp/blackopsarm-task31-asset_entry_optimized_run3/entry-tests",
+      "--unsupported-section"
+    ],
+    "exit": 134,
+    "outcome": "completed"
+  }
+]

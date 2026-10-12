@@ -1,0 +1,88 @@
+{
+  "schema": "BlackOpsARM.TASK31.source.v1",
+  "status": "passed",
+  "parent": "63c2fa4",
+  "files": {
+    "src/database/db_registry.h": {
+      "exact_named_edits_only": true,
+      "sha256": "5a0bd7214f4922c260e78a8f28ca78ab8edcb39f59ec8fcab4616b1fd43c0d87"
+    },
+    "src/database/db_asset_entry_types.h": {
+      "canonical_definition_bytes_unchanged": true,
+      "sha256": "5be7669a0c44ee052ea30e74bdabacf87d691c60e28b491ae25e416003d5cb9a"
+    },
+    "src/database/db_registry.cpp": {
+      "exact_named_edits_only": true,
+      "sha256": "239d22495356c32ba5da00d0ae5230773bf6d0b16cb8b6f419cc1b00918389fc"
+    },
+    "src/platform/android/script_string_services.cpp": {
+      "exact_named_edits_only": true,
+      "sha256": "032ee1f2a362284483ead49497eddf5e71bd07ad696b744fe5d6b55f89aae843"
+    },
+    "src/platform/android/script_string_services.h": {
+      "exact_named_edits_only": true,
+      "sha256": "8c4077f85765fade48597c81739ddeb81bb19a65589344ec50487b1155716861"
+    },
+    "src/platform/android/script_pool_bridge.cpp": {
+      "exact_named_edits_only": true,
+      "sha256": "311ffad0c02b005c33b75259193c5647b765f1ac64fec7829357a408c5ec397d"
+    },
+    "src/platform/script_pool_services.h": {
+      "exact_named_edits_only": true,
+      "sha256": "0e8adbd3cb8b77275c906aa7f950889e8aa1de5209ddbcda8a32a80bfac6be40"
+    },
+    "src/database/db_asset_pool.h": {
+      "exact_named_edits_only": true,
+      "sha256": "22507df059517afd4e4063e11a56cdae60acd0f65a0f28861b9119273f334812",
+      "whole_source_unchanged": true
+    },
+    "src/database/db_assetlist_types.h": {
+      "exact_named_edits_only": true,
+      "sha256": "30011cd4e22b61aeb454b45921d2a13fa91079749512b6710a8f6ae94c9cea64",
+      "whole_source_unchanged": true
+    },
+    "src/database/database.h": {
+      "exact_named_edits_only": true,
+      "sha256": "1af592c215601909e5a805bac02ecff5b01c715e8445539ff1547f074764138d",
+      "whole_source_unchanged": true
+    },
+    "src/database/db_assetnames.cpp": {
+      "exact_named_edits_only": true,
+      "sha256": "3c17829a6a7bd9e359043c1efa8dce62c3f6f389f9d30eb3e6ae8d7acbbeb7ba",
+      "whole_source_unchanged": true
+    },
+    "src/database/db_load.cpp": {
+      "exact_named_edits_only": true,
+      "sha256": "6a1b49ea2ae968ccc4a2809b7a66236a2b5f63bdbcd13c4e65ddce6245a835ed",
+      "whole_source_unchanged": true
+    },
+    "src/database/db_expand.cpp": {
+      "exact_named_edits_only": true,
+      "sha256": "0347bf177071abaa772d190ff6c67635ecd7d8f3b94d4fe048a378bedaacdf58",
+      "whole_source_unchanged": true
+    },
+    "src/database/db_stream.cpp": {
+      "exact_named_edits_only": true,
+      "sha256": "1800e9d78cc69861f0dfe6c81f83b36b15a11c0e8f622f58747d989dbdf62365",
+      "whole_source_unchanged": true
+    },
+    "src/universal/critical_sections.h": {
+      "exact_named_edits_only": true,
+      "sha256": "7c804634a66d7fdb531dccb20a42e8708ce14947971c914580df5b40b61b2707",
+      "whole_source_unchanged": true
+    },
+    "src/win32/win_common.cpp": {
+      "exact_named_edits_only": true,
+      "sha256": "c241d87ae9b4e203c08191ff4732231b3d078c48255b13c9a83b2420e1ece758",
+      "whole_source_unchanged": true
+    },
+    "src/win32/win_common.h": {
+      "exact_named_edits_only": true,
+      "sha256": "82d240f524b5a3514deb082086083e0d990d703f6a6dee91b60b9da8e5f4d33e",
+      "whole_source_unchanged": true
+    }
+  },
+  "canonical_init_assignments_and_loop_preserved": true,
+  "native_existing_lock_operations_preserved": true,
+  "full_db_init_execution_certified": false
+}
