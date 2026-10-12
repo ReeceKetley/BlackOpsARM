@@ -1,0 +1,7 @@
+{
+  "phase": "fixture integration after caller and CMake changes",
+  "failure": "asserted CRLF include anchor but historical fixture has LF",
+  "source_compiler_failure": false,
+  "correction": "detect and preserve per-file line endings; resume fixture-only edits",
+  "old_scratch_preserved": true
+}

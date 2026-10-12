@@ -273,6 +273,9 @@ int main(int argc,char**argv){require(argc>=2,"decode/gate mode");if(!std::strcm
     hashFixtures();
 #if defined(BO1_STRINGTABLE_LOOKUP_GATE)
     comparisonFixtures();lookupFixtures();
+#if defined(BO1_STRINGTABLE_NORMALIZATION_GATE)
+    normalizationFixtures();
+#endif
 #endif
 #endif
 #endif

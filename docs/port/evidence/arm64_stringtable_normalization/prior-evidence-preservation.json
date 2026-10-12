@@ -1,0 +1,11 @@
+{
+  "files_verified": 3018,
+  "all_unchanged": true,
+  "original_executable_sha_unchanged": true,
+  "apk_sha_unchanged": true,
+  "protected_unchanged": {
+    "Windows": 2528,
+    "DXVK": 2552,
+    "rootLedger": 15
+  }
+}

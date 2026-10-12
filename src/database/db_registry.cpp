@@ -1,4 +1,5 @@
 #include "db_registry.h"
+#include <universal/com_stringtable_sort.h>
 #include <cstdio>
 #include <universal/profile.h>
 #include <clientscript/cscr_parsetree.h>
@@ -977,6 +978,9 @@ void __cdecl Mark_RawFileAsset(RawFile *rawfile)
 void __cdecl Load_StringTableAsset(XAssetHeader *stringTable)
 {
     stringTable->xmodelPieces = DB_AddXAsset(ASSET_TYPE_STRINGTABLE, (XAssetHeader)stringTable->xmodelPieces).xmodelPieces;
+    const auto normalized = bo1::stringtable::NormalizeIndices(stringTable->stringTable);
+    if (normalized != bo1::stringtable::NormalizeResult::Ok)
+        Com_Error(ERR_DROP, "Invalid registered StringTable indices (%s)", bo1::stringtable::NormalizeResultName(normalized));
 }
 
 void __cdecl Mark_StringTableAsset(StringTable *stringTable)
