@@ -1,3 +1,7 @@
+TASK29 source/evidence checkpoint 8d3efb2 verified (FACT-0094); all196 durable paths committed.
+4014 prior frozen/4117 archive Git blobs preserved; tests completed, protected unchanged.
+Next TASK30 actual RawFile persistent pool ownership before TEMP reuse; full goal active.
+
 # Current State — TASK29 complete, 12 October 2026
 
 Genuine code RawFile name17 and present buffer141 load through original wrapper
