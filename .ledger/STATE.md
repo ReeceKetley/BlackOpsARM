@@ -1,3 +1,10 @@
+# Ledger field correction,12 October2026
+
+Latest facts use concise titles and full evidence bodies; earlier swapped fields
+are preserved and superseded: FACT76/77 -> FACT82/83, FACT79/80 -> FACT84/85,
+WARN26 -> WARN27. Source/evidence checkpoint71618fb and metadata75dab54 remain
+verified (FACT81); all tests completed. Next TASK27 TEMP shadow/maps reuse.
+
 # Current State
 
 Updated12 October2026: TASK26 persistent StringTable pool-header ownership complete.
