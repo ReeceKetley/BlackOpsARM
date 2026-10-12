@@ -1,0 +1,113 @@
+[
+  {
+    "args": [
+      "get-state"
+    ],
+    "exit": 0,
+    "stdout": "device\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "shell",
+      "mkdir",
+      "-p",
+      "/data/local/tmp/blackopsarm-startup-codec41-O3"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "push",
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_zone_file_arm_O3_final1\\audit\\bo1_inflate_tests",
+      "/data/local/tmp/blackopsarm-startup-codec41-O3/inflate_tests"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_zone_file_arm_O3_final1\\audit\\bo1_inflate_tests: 1 file pushed, 0 skipped. 177.7 MB/s (1476120 bytes in 0.008s)\n"
+  },
+  {
+    "args": [
+      "shell",
+      "sha256sum",
+      "/data/local/tmp/blackopsarm-startup-codec41-O3/inflate_tests"
+    ],
+    "exit": 0,
+    "stdout": "69b31881960d8a65674ade3ef05bcd280b3bbed5c77fe1421092d03a07b16163  /data/local/tmp/blackopsarm-startup-codec41-O3/inflate_tests\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "push",
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_zone_file_arm_O3_final1\\audit\\inflate-fixtures",
+      "/data/local/tmp/blackopsarm-startup-codec41-O3/inflate-fixtures"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_zone_file_arm_O3_final1\\audit\\inflate-fixtures\\: 18 files pushed, 0 skipped. 23.8 MB/s (1677191 bytes in 0.067s)\n"
+  },
+  {
+    "args": [
+      "push",
+      "D:\\Games\\Call of Duty - Black Ops\\zone\\Common\\code_pre_gfx_mp.ff",
+      "/data/local/tmp/blackopsarm-startup-codec41-O3/code_pre_gfx_mp.ff"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": "D:\\Games\\Call of Duty - Black Ops\\zone\\Common\\code_pre_gfx_mp.ff: 1 file pushed, 0 skipped. 103.8 MB/s (38048 bytes in 0.000s)\n"
+  },
+  {
+    "args": [
+      "shell",
+      "sha256sum",
+      "/data/local/tmp/blackopsarm-startup-codec41-O3/code_pre_gfx_mp.ff"
+    ],
+    "exit": 0,
+    "stdout": "75ffbf7a2ca0fe926e0f499abd182b5a1c3bb52e7c218c3956fa736dfda2a44f  /data/local/tmp/blackopsarm-startup-codec41-O3/code_pre_gfx_mp.ff\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "push",
+      "D:\\Games\\Call of Duty - Black Ops\\zone\\Common\\code_pre_gfx.ff",
+      "/data/local/tmp/blackopsarm-startup-codec41-O3/code_pre_gfx.ff"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": "D:\\Games\\Call of Duty - Black Ops\\zone\\Common\\code_pre_gfx.ff: 1 file pushed, 0 skipped. 41.1 MB/s (13280 bytes in 0.000s)\n"
+  },
+  {
+    "args": [
+      "shell",
+      "sha256sum",
+      "/data/local/tmp/blackopsarm-startup-codec41-O3/code_pre_gfx.ff"
+    ],
+    "exit": 0,
+    "stdout": "565f038d4a5a10912bda5741e80f31805f9c7c76fc18296f2a8591d58f1ee41f  /data/local/tmp/blackopsarm-startup-codec41-O3/code_pre_gfx.ff\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "shell",
+      "chmod",
+      "700",
+      "/data/local/tmp/blackopsarm-startup-codec41-O3/inflate_tests"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "shell",
+      "/data/local/tmp/blackopsarm-startup-codec41-O3/inflate_tests",
+      "/data/local/tmp/blackopsarm-startup-codec41-O3/code_pre_gfx_mp.ff",
+      "/data/local/tmp/blackopsarm-startup-codec41-O3/code_pre_gfx.ff"
+    ],
+    "exit": 0,
+    "stdout": "codec=1.2.3 streamBytes=104 unsignedLongBytes=8\nGENUINE status=Ok file=/data/local/tmp/blackopsarm-startup-codec41-O3/code_pre_gfx_mp.ff fileBytes=38048 compressedBytes=38009 padding=27 decoded=150108 size=150072 external=0 blocks=36,0,0,0,149187,0,0,\nGENUINE decodedAdler32=2e5aa7dc\nGENUINE status=Ok file=/data/local/tmp/blackopsarm-startup-codec41-O3/code_pre_gfx.ff fileBytes=13280 compressedBytes=13245 padding=23 decoded=49593 size=49557 external=0 blocks=36,0,0,0,49092,0,0,\nGENUINE decodedAdler32=d65f37d2\nPASS bounded inflate: independent fixtures, wrapped checksum/end, disk36, exact budgets, corrupt/truncated/dictionary/size/trailing failures, byte/chunk boundaries, atomic output publication\n",
+    "stderr": ""
+  }
+]

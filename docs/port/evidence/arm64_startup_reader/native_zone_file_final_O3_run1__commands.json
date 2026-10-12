@@ -1,0 +1,82 @@
+[
+  {
+    "args": [
+      "get-state"
+    ],
+    "exit": 0,
+    "stdout": "device\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "shell",
+      "mkdir",
+      "-p",
+      "/data/local/tmp/blackopsarm-startup-owner41-final-O3"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "push",
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_zone_file_arm_O3_final2\\bo1_native_zone_file_tests",
+      "/data/local/tmp/blackopsarm-startup-owner41-final-O3/owner_tests"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_zone_file_arm_O3_final2\\bo1_native_zone_file_tests: 1 file pushed, 0 skipped. 107.2 MB/s (2600752 bytes in 0.023s)\n"
+  },
+  {
+    "args": [
+      "shell",
+      "sha256sum",
+      "/data/local/tmp/blackopsarm-startup-owner41-final-O3/owner_tests"
+    ],
+    "exit": 0,
+    "stdout": "924a73fdf2304d5039f18cdc02f2258e07c97c725d575763decd72e1fcc87f8f  /data/local/tmp/blackopsarm-startup-owner41-final-O3/owner_tests\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "push",
+      "D:\\Games\\Call of Duty - Black Ops\\zone\\Common\\code_pre_gfx_mp.ff",
+      "/data/local/tmp/blackopsarm-startup-owner41-final-O3/code_pre_gfx_mp.ff"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": "D:\\Games\\Call of Duty - Black Ops\\zone\\Common\\code_pre_gfx_mp.ff: 1 file pushed, 0 skipped. 112.9 MB/s (38048 bytes in 0.000s)\n"
+  },
+  {
+    "args": [
+      "shell",
+      "sha256sum",
+      "/data/local/tmp/blackopsarm-startup-owner41-final-O3/code_pre_gfx_mp.ff"
+    ],
+    "exit": 0,
+    "stdout": "75ffbf7a2ca0fe926e0f499abd182b5a1c3bb52e7c218c3956fa736dfda2a44f  /data/local/tmp/blackopsarm-startup-owner41-final-O3/code_pre_gfx_mp.ff\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "shell",
+      "chmod",
+      "700",
+      "/data/local/tmp/blackopsarm-startup-owner41-final-O3/owner_tests"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "shell",
+      "/data/local/tmp/blackopsarm-startup-owner41-final-O3/owner_tests",
+      "/data/local/tmp/blackopsarm-startup-owner41-final-O3/code_pre_gfx_mp.ff"
+    ],
+    "exit": 0,
+    "stdout": "{\"native_zone_file\":{\"cycle\":0,\"decoded\":150108,\"adler32\":777693148,\"codec_peak\":290764,\"owner_capacity\":442368,\"padding\":27}}\n{\"native_zone_file\":{\"cycle\":1,\"decoded\":150108,\"adler32\":777693148,\"codec_peak\":290764,\"owner_capacity\":442368,\"padding\":27}}\n{\"native_zone_file\":{\"cycle\":2,\"decoded\":150108,\"adler32\":777693148,\"codec_peak\":290764,\"owner_capacity\":442368,\"padding\":27}}\n{\"native_zone_file\":{\"cycle\":3,\"decoded\":150108,\"adler32\":777693148,\"codec_peak\":290764,\"owner_capacity\":442368,\"padding\":27}}\n",
+    "stderr": ""
+  }
+]

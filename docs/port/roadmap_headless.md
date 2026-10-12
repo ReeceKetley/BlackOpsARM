@@ -1,5 +1,36 @@
 # Roadmap to a native Android ARM64 headless T5 engine
 
+## Current integration direction (12 October 2026)
+
+Latest verified checkpoint: TASK40, `db6c0e4`. Genuine asset registration and
+default resolution pass Windows x86/x64 and HONOR O0/O3; complete engine startup
+and headless gameplay remain unverified. Historical milestones below are retained.
+
+TASK41 is building a reusable production decoded-zone reader and owner for the
+genuine first MP startup zone (71 assets: three StringTables and 68 RawFiles).
+An independent full-zone oracle reaches exact source/block boundaries and rejects
+13 malformed controls. The reader/decoder prerequisite now passes Windows x86/x64
+and HONOR O0/O3; see `arm64_startup_reader.md`. Full71 dispatch remains active.
+Enforce allocation budgets during decompression, preserve real initialization and
+ownership contracts, and do not ship fixture Dvars or test callbacks as services.
+
+Alongside this work, the user requests a read-only dependency map of the actual
+`Com_Init` / `Com_Frame` path. Identify call order, required services, ARM64
+compile-versus-execution evidence, first platform/database/ABI blockers, and the
+smallest authentic headless integration target. Use those findings to prioritize
+increasing amounts of production code running together in one Android process.
+Do not invent a replacement boot sequence and call it T5 startup.
+The completed audit is `production_startup_dependency_map.md`: genuine first DB
+loading precedes filesystem initialization. Native TLS/recovery, general critical
+sections, Dvar/Cmd and database workers are the first hard startup dependencies.
+
+Next: complete the startup-zone reader/dispatch integration; implement the real
+startup services exposed by that investigation; execute genuine Zombies world,
+script and server simulation headlessly on HONOR. DXVK-Native rendering follows
+headless validation. Accepted x64 stubs and Dead Ops Arcade exclusion still apply.
+
+## Historical roadmap
+
 Living plan. Each milestone is bounded, keeps Windows compatible, preserves
 32-bit disk layouts, freezes its own evidence, and never widens into
 gameplay/backend work without authorization.

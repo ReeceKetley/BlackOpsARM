@@ -17,12 +17,16 @@ struct Bo1InflateLimits {
     std::uint64_t maxDecodedBytes = 512ull * 1024 * 1024; // Output length incl. XFile, not total heap/capacity.
     std::size_t chunkBytes = 32768; // 1..32768; never narrow a whole file to uInt.
     std::size_t maxZeroPadding = 31; // Explicit policy; 0 selects strict end-of-file.
+    // Zero preserves historical behavior. Nonzero caps decoded allocations
+    // (including old+new growth), codec allocations and fixed 64KB buffers.
+    std::uint64_t maxWorkingBytes = 0;
 };
 struct Bo1InflatedFastFile {
     Bo1FastFileRawHeader raw{};
     XFile file{};
     std::vector<std::uint8_t> decoded; // Exact disk XFile then file.size payload bytes.
     std::uint64_t fileBytes{}, compressedBytes{}, paddingBytes{};
+    std::uint64_t peakWorkingBytes{}; // Allocation bytes, not process RSS.
 };
 // Output is cleared on every failure; no partial header is published as validated.
 // Input overlapping out->decoded is rejected before clearing output.

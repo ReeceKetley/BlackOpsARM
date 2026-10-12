@@ -32,6 +32,28 @@ static void verify(const Bo1InflatedFastFile &out, unsigned size) {
     std::uint32_t state=11;
     for(unsigned i=0;i<size;++i) {state=state*1664525u+1013904223u; CHECK(out.decoded[36+i]==state>>24);}
 }
+static void verifyWorkingBudget(const std::vector<std::uint8_t> &data) {
+    for(std::size_t chunk:{1u,7u,32768u}) {
+        Bo1InflateLimits limits; limits.chunkBytes=chunk;
+        limits.maxWorkingBytes=16ull*1024*1024;
+        Bo1InflatedFastFile out;
+        CHECK(Bo1_InflateFastFileMemory(data.data(),data.size(),limits,&out)==Result::Ok);
+        const auto peak=out.peakWorkingBytes;
+        CHECK(peak>=65536+out.decoded.capacity() && peak<=limits.maxWorkingBytes);
+        const auto expected=out.decoded;
+        limits.maxWorkingBytes=peak;
+        CHECK(Bo1_InflateFastFileMemory(data.data(),data.size(),limits,&out)==Result::Ok);
+        CHECK(out.decoded==expected && out.peakWorkingBytes==peak);
+        --limits.maxWorkingBytes;
+        fail(data,Result::MemoryError,limits);
+        CHECK(Bo1_InflateFastFileMemory(data.data(),data.size(),limits,&out)==Result::MemoryError);
+        CHECK(!out.peakWorkingBytes && out.decoded.empty());
+    }
+    for(std::uint64_t budget:{1ull,65535ull,65536ull}) {
+        Bo1InflateLimits limits; limits.maxWorkingBytes=budget;
+        fail(data,Result::MemoryError,limits);
+    }
+}
 int main(int argc,char **argv) {
     CHECK(argc>0); std::string self=argv[0]; auto slash=self.find_last_of("/\\");
     std::string fixtures=(slash==std::string::npos?".":self.substr(0,slash))+"/inflate-fixtures/";
@@ -49,10 +71,12 @@ int main(int argc,char **argv) {
         }
     }
     auto good=load(fixtures+"payload-127.ff"); auto bad=good;
+    verifyWorkingBudget(good);
     Bo1InflatedFastFile aligned;
     std::vector<std::uint8_t> unaligned(1,0); unaligned.insert(unaligned.end(),good.begin(),good.end());
     CHECK(Bo1_InflateFastFileMemory(unaligned.data()+1,good.size(),{},&aligned)==Result::Ok); verify(aligned,127);
     auto pattern=load(fixtures+"pattern.ff");
+    verifyWorkingBudget(pattern);
     CHECK(Bo1_InflateFastFileMemory(pattern.data(),pattern.size(),{},&aligned)==Result::Ok);
     CHECK(aligned.file.size==131073 && aligned.decoded.size()==131109);
     for(unsigned i=0;i<131073;++i) CHECK(aligned.decoded[36+i]=="T5 Zombies"[i%10]);
