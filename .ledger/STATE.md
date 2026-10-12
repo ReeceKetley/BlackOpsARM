@@ -1,3 +1,7 @@
+TASK28 source/evidence checkpoint acd48e5 verified (FACT-0091); all392 durable paths committed.
+3652 prior frozen/3945 archive Git blobs preserved, tests completed, protected unchanged.
+Next TASK29 genuine RawFile name and present buffer before registration; full goal active.
+
 # Current State — TASK28 complete, 12 October 2026
 
 TEMP successful-write mappings and next genuine code RawFile numeric header
