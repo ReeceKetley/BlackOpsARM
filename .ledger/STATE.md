@@ -1,3 +1,34 @@
+# Active work - TASK41 after verified db6c0e4
+
+Latest TASK41 prerequisite: production NativeZoneFile/optional codec allocation
+budget verified Windows x86/x64 and exact HONOR final2 O0/O3 binaries. Fullold
+codec+exactpeak controls pass, reader4owner cycles/free baselines pass. Protection
+19930hashes/689priorarchive records/referenceGit pass;82new logs/metadata frozen
+under arm64_startup_reader. See FACT127/report arm64_startup_reader.md. Full MP71
+root dispatch remains active, not completed. startup_zone now owns db_load.cpp,
+db_registry.cpp/db_file_load.cpp and new separate production adapter/component/
+driver/build work; root owns returned reader/codec +oracle/tests/docs/Ledger.
+Read-only startup audit complete: production_startup_dependency_map.md/FACT125
+supersedes FACT121 and corrects parentFACT0103 exact-run attribution. Authentic
+Com_Init loads DBprezone before FS; nativeTLS/generalcriticalsections/Dvar/Cmd/
+DBworkers remain harddependencies. No wholeboot/ComFrame/headlessgameplay claim.
+
+User now requests parallel read-only production Com_Init/Com_Frame investigation.
+production_startup_audit owns no files/builds/ADB; root will persist its dependency
+map and prioritize authentic integrated headless startup. startup_zone owns draft
+NativeZoneFile and optional decoder allocation budget; no TASK41 hardware result
+yet. Root independent full MP oracle passes all71 source/block extents plus13
+malformed controls (metadata in build-android-audit/startup_zone_oracle*_run1.json).
+Root also owns new decoder peak-boundary regression tests. Treat draft/build
+activity as in-flight, not verified completion; db6c0e4 remains latest checkpoint.
+
+TASK40 is committed db6c0e4; corrected Windows/HONOR O0/O3 and prior loading checks
+all pass. Fresh agent startup_zone owns production reader/component/build/driver
+work; root owns independent oracle, collectors, Ledger and review. Agent first
+investigates real initialization and service closure before edits (DEC60). No
+TASK41 runtime result yet. No previous compiler/test workload remains active.
+Keep real headless gameplay before rendering (DEC59), accepted x64 stubs/DOA scope.
+
 # Current state - TASK40 real default ownership verified
 
 Correctedhost/O0/O3 passall3ABIs: genuineMPprovider + mapfirsttable + intentional

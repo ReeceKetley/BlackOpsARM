@@ -8,6 +8,7 @@
 #include <limits>
 #include <new>
 #include <stdexcept>
+#include <cstddef>
 
 namespace {
 using Result = Bo1InflateResult;
@@ -24,11 +25,35 @@ bool fileRead(void *context, std::uint8_t *buffer, std::size_t count, std::size_
     *got = std::fread(buffer, 1, count, file);
     return std::ferror(file) == 0;
 }
-voidpf codecAlloc(voidpf, uInt items, uInt size) {
+struct Budget {
+    std::uint64_t limit{}, codec{}, output{}, peak{65536};
+    bool denied{};
+    bool check(std::uint64_t extra) {
+        if (codec > UINT64_MAX - 65536ull || output > UINT64_MAX - 65536ull - codec) { denied = true; return false; }
+        const auto base = 65536ull + codec + output;
+        if (extra > UINT64_MAX - base || (limit && base + extra > limit)) { denied = true; return false; }
+        peak = (std::max<std::uint64_t>)(peak, base + extra); return true;
+    }
+};
+struct alignas(std::max_align_t) CodecAllocation { std::size_t bytes; };
+voidpf codecAlloc(voidpf context, uInt items, uInt size) {
     if (items && size > (std::numeric_limits<std::size_t>::max)() / items) return nullptr;
-    return std::calloc(items, size);
+    auto &budget = *static_cast<Budget *>(context);
+    const auto bytes = static_cast<std::size_t>(items) * size;
+    if (bytes > SIZE_MAX - sizeof(CodecAllocation)) return nullptr;
+    const auto allocationBytes = bytes + sizeof(CodecAllocation);
+    if (!budget.check(allocationBytes)) return nullptr;
+    auto *allocation = static_cast<CodecAllocation *>(std::calloc(1, allocationBytes));
+    if (!allocation) return nullptr;
+    allocation->bytes = allocationBytes; budget.codec += allocationBytes;
+    return allocation + 1;
 }
-void codecFree(voidpf, voidpf allocation) { std::free(allocation); }
+void codecFree(voidpf context, voidpf allocation) {
+    if (!allocation) return;
+    auto &budget = *static_cast<Budget *>(context);
+    auto *header = static_cast<CodecAllocation *>(allocation) - 1;
+    budget.codec -= header->bytes; std::free(header);
+}
 struct Stream {
     z_stream value{};
     bool initialized{};
@@ -38,6 +63,8 @@ bool valid(const Bo1InflateLimits &l) {
     return l.chunkBytes && l.chunkBytes <= 32768 && l.maxZeroPadding <= 31;
 }
 Result decode(Reader reader, void *context, const Bo1InflateLimits &limits, Bo1InflatedFastFile &result) {
+    Budget budget; budget.limit = limits.maxWorkingBytes;
+    if (!budget.check(0)) return Result::MemoryError;
     std::uint64_t readBytes = 0;
     auto read = [&](std::uint8_t *p, std::size_t count, std::size_t &got) {
         auto remaining = limits.maxFileBytes - readBytes;
@@ -59,11 +86,17 @@ Result decode(Reader reader, void *context, const Bo1InflateLimits &limits, Bo1I
     if (std::memcmp(result.raw.magic, BO1_FF_MAGIC_UNSIGNED, 8)) return Result::UnsupportedAuthenticated;
     Stream stream;
     auto &z = stream.value;
-    z.zalloc = codecAlloc; z.zfree = codecFree;
+    z.zalloc = codecAlloc; z.zfree = codecFree; z.opaque = &budget;
     int code = inflateInit(&z); // Wrapped zlib/Adler32, default window15, native sizeof.
     if (code != Z_OK) return code == Z_MEM_ERROR ? Result::MemoryError : Result::CodecError;
     stream.initialized = true;
     bool eof = false, header = false;
+    auto reserve = [&](std::uint64_t capacity) {
+        if (capacity > SIZE_MAX || !budget.check(capacity)) return false;
+        result.decoded.reserve(static_cast<std::size_t>(capacity));
+        if (result.decoded.capacity() != capacity) return false;
+        budget.output = result.decoded.capacity(); return true;
+    };
     std::uint64_t consumed = 0, produced = 0;
     for (;;) {
         if (!z.avail_in && !eof) {
@@ -80,11 +113,21 @@ Result decode(Reader reader, void *context, const Bo1InflateLimits &limits, Bo1I
         consumed += used;
         if (count > limits.maxDecodedBytes - produced) return Result::OutputLimit;
         produced += count;
+        if (limits.maxWorkingBytes && produced > result.decoded.capacity()) {
+            // Explicit reserve suppresses geometric insert growth in the
+            // supported MSVC/libc++ implementations. Both buffers coexist.
+            const auto previous = result.decoded.capacity();
+            const auto growth = previous <= limits.maxDecodedBytes / 2 ? 2ull * previous : limits.maxDecodedBytes;
+            if (!reserve((std::max<std::uint64_t>)(produced, growth))) return Result::MemoryError;
+        }
         result.decoded.insert(result.decoded.end(), output.begin(), output.begin() + count);
         if (!header && produced >= sizeof(XFile)) {
             std::memcpy(&result.file, result.decoded.data(), sizeof(XFile));
             header = true;
             if (std::uint64_t(sizeof(XFile)) + result.file.size > limits.maxDecodedBytes) return Result::OutputLimit;
+            const auto expected = std::uint64_t(sizeof(XFile)) + result.file.size;
+            if (limits.maxWorkingBytes && expected > result.decoded.capacity()
+                && !reserve(expected)) return Result::MemoryError;
         }
         if (code == Z_STREAM_END) break;
         if (code == Z_NEED_DICT) return Result::DictionaryRequired;
@@ -114,6 +157,7 @@ Result decode(Reader reader, void *context, const Bo1InflateLimits &limits, Bo1I
         if (status != Result::Ok) return status;
     } while (got);
     result.fileBytes = readBytes; result.compressedBytes = consumed; result.paddingBytes = padding;
+    result.peakWorkingBytes = limits.maxWorkingBytes ? budget.peak : 0;
     return Result::Ok;
 }
 Result run(Reader reader, void *context, const Bo1InflateLimits &limits, Bo1InflatedFastFile *out) {
