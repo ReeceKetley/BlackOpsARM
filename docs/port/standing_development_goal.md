@@ -50,3 +50,10 @@ engine-owned graphics/simulation are aspirations. Record smaller verified progre
 User scope clarification (DEC55): Dead Ops Arcade is a known limitation and is
 out of scope. Pentagon TechniqueSet comma stub matches x64; ignore its empty
 authored payload, preserve actual existing/default reference resolution.
+
+
+User reference policy: the working Windows x64 build is verified by extensive
+testing and gameplay. Intentional stubs matching that reference, including future
+discoveries, are accepted content and require no separate repair/implementation
+milestone. Preserve x64 reference handling; focus on actual Android startup and
+Zombies dependencies. Dead Ops Arcade remains excluded. See DEC56.

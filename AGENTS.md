@@ -364,3 +364,10 @@ proven; don't scan unknown payloads. Dead Ops Arcade is out of scope per user.
 No core engine boot/async/APK/game-owned graphics/playable claim. DEC47 remains
 active: autonomous milestones, local verified commits/no push. Root owns all
 returned implementation edits. Stable BlackOps64/original assets remain read-only.
+
+
+User reference policy: the working Windows x64 build is verified by extensive
+testing and gameplay. Intentional stubs matching that reference, including future
+discoveries, are accepted content and require no separate repair/implementation
+milestone. Preserve x64 reference handling; focus on actual Android startup and
+Zombies dependencies. Dead Ops Arcade remains excluded. See DEC56.
