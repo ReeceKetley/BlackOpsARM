@@ -4,6 +4,9 @@
 #if defined(BO1_RAWFILE_PAYLOAD_GATE)
 #include "rawfile_payload_fixture.h"
 #endif
+#if defined(BO1_RAWFILE_OWNER_GATE)
+#include "rawfile_owner_fixture.h"
+#endif
 namespace rawfile_fixture {
 struct Next { int type{};unsigned tag{};std::size_t source{},end{};RawFileHeaderPlan header;
 #if defined(BO1_RAWFILE_PAYLOAD_GATE)
@@ -117,6 +120,9 @@ static void execute(const Next& p,const StringTablePayloadPlan& payload,DecodedS
     const auto expected4=block4;const auto expectedDisk4=disk4;
     const char*childrenUnread="true";const char*cursorsPreserved="true";
 #endif
+#if defined(BO1_RAWFILE_OWNER_GATE)
+    rawfile_owner_fixture::prepare(header);
+#endif
     DB_PopStreamPos();require(g_streamPosIndex==4&&DB_GetStreamPos()==expected4&&g_streamPosArray[0]==blocks[0].data&&tempDiskCursor()==0,"both TEMP cursors rewind after next genuine header/payload");
 #if BO1_NATIVE_64BIT
     require(DB_StreamWin32Pos(4)==expectedDisk4,"persistent block4 disk cursor matches selected boundary");
@@ -124,6 +130,9 @@ static void execute(const Next& p,const StringTablePayloadPlan& payload,DecodedS
     require(adler32(1,blocks[4].data,static_cast<unsigned>(payload.indices.nativeEnd))==childHash,"RawFile header does not touch first asset children");
     executeLookups(payload,owner_fixture::persistent,false);
     require(!lastLookup.rowMisses&&!lastLookup.rowDisagreements&&!lastLookup.columnDisagreements,"pooled first asset queries pass immediately after real RawFile overwrite");
+#if defined(BO1_RAWFILE_OWNER_GATE)
+    rawfile_owner_fixture::verify(header,blocks,p.payload,payload,measurement);
+#endif
     if(measurement)std::printf("{\"rawfile_measurements\":{\"asset_type\":%d,\"directory_index\":1,\"status\":\"header_loaded\",\"source_start\":%zu,\"source_end\":%zu,\"disk_start\":%llu,\"native_start\":%llu,\"disk_end\":%llu,\"native_end_before_pop\":%llu,\"native_cursor_after_pop\":0,\"shadow_after_pop\":%u,\"name_tag\":%u,\"length\":%d,\"buffer_tag\":%u,\"future_buffer_bytes\":%llu,\"native_header_bytes\":%zu,\"retained_value_alias_verified\":true,\"retained_alias_address_exposed\":false,\"pooled_queries_after_raw_verified\":true,\"block4_bytes_cursors_preserved\":%s,\"children_unread\":%s,\"full_registry_executed\":false,\"next_asset_skipped\":false}}\n",p.type,p.source,p.source+12,(unsigned long long)p.header.diskStart,(unsigned long long)p.header.nativeStart,(unsigned long long)p.header.diskEnd,(unsigned long long)p.header.nativeEnd,tempDiskCursor(),p.header.nameTag,p.header.length,p.header.bufferTag,(unsigned long long)p.header.futureBufferBytes,sizeof(RawFile),cursorsPreserved,childrenUnread);
 }
 }

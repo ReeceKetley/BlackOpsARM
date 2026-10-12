@@ -304,6 +304,9 @@ int main(int argc,char**argv){require(argc>=2,"decode/gate mode");if(!std::strcm
 #endif
 #if defined(BO1_STRINGTABLE_OWNER_GATE)
     owner_fixture::fixtures();
+#if defined(BO1_RAWFILE_OWNER_GATE)
+    rawfile_owner_fixture::fixtures();
+#endif
 #if defined(BO1_RAWFILE_HEADER_GATE)
     tested+=rawfile_fixture::fixtures();
 #if defined(BO1_RAWFILE_PAYLOAD_GATE)
@@ -358,6 +361,9 @@ int main(int argc,char**argv){require(argc>=2,"decode/gate mode");if(!std::strcm
 #endif
 #if defined(BO1_STRINGTABLE_OWNER_GATE)
         owner_fixture::finish();
+#if defined(BO1_RAWFILE_OWNER_GATE)
+        rawfile_owner_fixture::finish();
+#endif
 #endif
         DB_InitStreams(detached);
 #if BO1_NATIVE_64BIT
@@ -403,7 +409,9 @@ int main(int argc,char**argv){require(argc>=2,"decode/gate mode");if(!std::strcm
 #endif
     }
     const char*schema=
-#if defined(BO1_RAWFILE_PAYLOAD_GATE)
+#if defined(BO1_RAWFILE_OWNER_GATE)
+        "BlackOpsARM.TASK-0030.rawfile-owner.v1";
+#elif defined(BO1_RAWFILE_PAYLOAD_GATE)
         "BlackOpsARM.TASK-0029.rawfile-payload.v1";
 #elif defined(BO1_RAWFILE_HEADER_GATE)
         "BlackOpsARM.TASK-0028.rawfile-header.v1";
