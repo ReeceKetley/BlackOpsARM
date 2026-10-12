@@ -258,3 +258,15 @@ Next TASK-0018 first genuine StringTable header; TASK19 name/cell array, then
 real encoded cell-string fixups before registry. Block0 Pop rewind/transient
 alias lifetime must be preserved. Continue autonomously DEC-0029, local verified
 checkpoints DEC-0026; no push. Protected checkouts/assets/evidence unchanged.
+
+
+TASK-0018 is complete: actual genuine first StringTable headers on HONOR and
+Windows x86/x64, 73 adversarial cases and12 cycles each. Read
+docs/port/arm64_stringtable_header.md, FACT-0054/0055 and WARN-0018. TEMP block0
+Pop rewinds native workspace while retaining shadow/maps; aliases are transient,
+not registered asset ownership or a general duplicate-key ordering guarantee.
+Next TASK-0019 actual name34/58 bytes and cell arrays400/1594, then initialized
+cell-string range checks for2/49 genuine encoded offsets, then signed16 indices
+and actual lookup before registration. Reference-only payload oracle does not
+certify execution. Continue autonomously DEC-0029, verified local checkpoints
+DEC-0026; no push. Preserve prior evidence, original assets and protected repos.

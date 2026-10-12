@@ -1,5 +1,14 @@
 # Project Goal
 
+## Current Milestone
+
+TASK-0018 genuine StringTable numeric headers complete (FACT-0054/0055).
+Approved structural front end and actual interning stretch are complete;
+DEC-0029 continues bounded work toward native engine/assets/game-owned graphics.
+Next: actual StringTable name/cell arrays, initialized cell-string offsets, then
+signed16 index data/actual lookup before asset registration. No graphics yet.
+Local verified commits authorized DEC-0026; no push. Read STATE/current Git.
+
 ## Primary Objective
 
 Native Android ARM64 port of the original T5 Zombies engine. Windows x64 is the
@@ -59,7 +68,7 @@ Not started. TASK-0011 timing/RSS and all older evidence remain frozen.
 - T6 compatibility work before native T5 bring-up.
 
 
-## Current Milestone
+## Historical milestone
 
 TASK-0017 is complete: real pool lifecycle and859 genuine IDs match Windows and
 HONOR, including optimized ARM validation. TASK-0018 is the next bounded first

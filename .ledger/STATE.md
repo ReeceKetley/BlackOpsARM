@@ -1,11 +1,49 @@
 # Current State
 
+Updated 12 October 2026: TASK-0018 genuine first StringTable header complete.
+DEC-0029 autonomous engine/assets objective remains active. Local verified
+checkpoint commits authorized DEC-0026; no push. Prior verified c51db37
+(FACT-0053); Git gives current HEAD and exact pending paths.
+
+HONOR ARM64/Windows x86/x64 pass 73 adversarial cases and 12 genuine low/high
+zone cycles each. Actual header leaf/Win32 Load_Stream, genuine first assets
+type37 and dimensions1x400/2x797, packed20/native32, source348/27245/prefix368/
+27265 verified. TEMP Pop rewinds native workspace0 while native64 shadow20 and
+aliases remain; this is temporary header ownership, not asset registration.
+Fields/tags/aliases/exact interiors, prior block4 bytes/cursors and short-read
+block0 maps before reset verified. Detach then owner release restores baseline.
+FACT-0054/0055, DEC-0033, FAIL-0015, WARN-0018; arm64_stringtable_header.md.
+
+Full ARM build0errors5183 retained warnings,190 AArch64 artifacts/26 executables;
+final header rebuild includes reviewed failure snapshots. Current hostpass3 and
+genuine run1 pass without UBSan diagnostics. All163 expander bodies/2headers and
+6stream-loader bodies unchanged; gate-off full Windows expander compiles both
+ABIs. Previous actual SL/MT/genuine859 interning and optimized pool remain valid.
+All tests/processes complete. No new timing/RSS claim, APK install or graphics.
+
+Next3: TASK-0019 actual names34/58 bytes and cells400/1594 to source3602/40075;
+real per-cell strings with2/49 offsets proven to earlier initialized ranges;
+signed16 indices plus real table lookup before asset registration. Independent
+payload oracle is reference-only, not engine execution. Keep block0 header live
+through its loading scope. No all-inline shortcut or zero-page string scans.
+
+Windows2528/DXVK2552/rootLedger15 and1937 prior frozen files preserved. Current
+delta arm64_stringtable_header_changes.md. Assets/buffers/binaries not inGit;
+all scratch/failures retained. WARN18 retains TEMP/repeatedalias ordering limits,
+block4 payload capacity/fixup/registry, serial-only pool/live role, fullasync/APC,
+post-read exceptions/fatal VM/OOM recovery, Windows PMem/multiowner/cache/freeTot,
+16KB pages and S25. No game-owned graphical output yet.
+
+# Historical state (preserved)
+
+# Current State
+
 Updated 12 October 2026: core and interning stretch complete.
 
 The user's objective DEC-0029 remains active; continue bounded milestones
 without fabricated gameplay or output. Local verified commits approved DEC-0026,
-no push. Prior checkpoint7cfc24c (FACT-0050); TASK-0017 checkpoint follows final
-preservation. Git gives the exact current HEAD/status.
+no push. Prior checkpoint7cfc24c (FACT-0050); TASK-0017 checkpoint c51db37 verified
+(FACT-0053). TASK-0018 begins next. Git gives the exact HEAD/status.
 
 Actual SL/MT code and Load_TempStringCustom execute on HONOR and Windows x86/x64.
 All859 genuine strings yield859 identical real IDs,1665 buckets/26640 bytes,

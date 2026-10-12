@@ -471,3 +471,4 @@ x64_diag.log
 !/docs/port/evidence/arm64_script_string_services/*.log
 !/docs/port/evidence/arm64_script_string_services_lifetime/*.log
 !/docs/port/evidence/arm64_string_pool/*.log
+!/docs/port/evidence/arm64_stringtable_header/*.log

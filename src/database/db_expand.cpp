@@ -8,6 +8,9 @@
 // Normal engine builds retain the complete expander and existing includes.
 #if defined(BO1_ASSETLIST_GATE)
 #include "db_assetlist_types.h"
+#if defined(BO1_STRINGTABLE_HEADER_GATE)
+#include <universal/com_stringtable.h>
+#endif
 void __cdecl DB_LoadXFileData(unsigned __int8 *pos, int size);
 #else
 #include "db_stream_load.h"
@@ -217,7 +220,7 @@ void DB_ExpandLoad_Ptr32Array(void *nativeDst, int count)
 
 #endif // normal engine or bounded frontend tables
 
-#if !defined(BO1_ASSETLIST_GATE)
+#if !defined(BO1_ASSETLIST_GATE) || defined(BO1_STRINGTABLE_HEADER_GATE)
 void DB_ExpandLoad_StringTable(StringTable *dst)
 {
     iassert(dst == reinterpret_cast<StringTable *>(DB_GetStreamPos()));
@@ -236,6 +239,9 @@ void DB_ExpandLoad_StringTable(StringTable *dst)
     DB_Expand_Commit(static_cast<int>(sizeof(StringTable)));
 }
 
+#endif // normal engine or bounded first StringTable header
+
+#if !defined(BO1_ASSETLIST_GATE)
 void DB_ExpandLoad_StringTableCellArray(StringTableCell *dst, int count)
 {
     iassert(dst == reinterpret_cast<StringTableCell *>(DB_GetStreamPos()));

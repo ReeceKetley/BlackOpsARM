@@ -133,10 +133,18 @@ static unsigned directoryFixtures(const ZonePlan&zone){unsigned count=0;const au
     DB_InitStreams(detached);DB_FreeXBlocks(blocks,0);frontend_fixture::release(&owner);require(frontend_fixture::counts()==baseline,"directory failure cleanup baseline");return count;
 }
 #endif
+#if defined(BO1_STRINGTABLE_HEADER_GATE)
+#include "stringtable_header_fixture.h"
+#endif
 static void decode(const char*path,const char*out){Bo1InflatedFastFile f;require(Bo1_InflateFastFilePath(path,{},&f)==Bo1InflateResult::Ok,"complete genuine production decode");
     auto plan=preflight(f.decoded.data(),f.decoded.size(),f.decoded.size());
 #if defined(BO1_ASSET_DIRECTORY_GATE)
-    const auto directory=directoryPlan(plan,f.decoded.data(),f.decoded.size());plan.end+=static_cast<std::size_t>(directory.diskBytes);
+    const auto directory=directoryPlan(plan,f.decoded.data(),f.decoded.size());
+#if defined(BO1_STRINGTABLE_HEADER_GATE)
+    const auto header=headerPlan(plan,directory,f.decoded.data(),f.decoded.size(),f.decoded.size());require(header.present,"genuine header exists");
+    plan.end+=20;
+#endif
+    plan.end+=static_cast<std::size_t>(directory.diskBytes);
 #endif
     const auto bytes=f.decoded.size(),capacity=f.decoded.capacity();const auto adler=adler32(1,f.decoded.data(),static_cast<unsigned>(bytes));
     std::ofstream file(out,std::ios::binary|std::ios::trunc);file.write(reinterpret_cast<char*>(f.decoded.data()),static_cast<std::streamsize>(plan.end));file.close();require(bool(file),"small validated string prefix output");
@@ -230,13 +238,22 @@ int main(int argc,char**argv){require(argc>=2,"decode/gate mode");if(!std::strcm
     DB_InitStreams(detached);const auto baseline=frontend_fixture::counts();
     auto a=readPrefix(argv[2]),b=readPrefix(argv[4]);auto ap=preflight(a.data(),a.size(),std::strtoull(argv[3],nullptr,10)),bp=preflight(b.data(),b.size(),std::strtoull(argv[5],nullptr,10));
 #if defined(BO1_ASSET_DIRECTORY_GATE)
-    auto ad=directoryPlan(ap,a.data(),a.size()),bd=directoryPlan(bp,b.data(),b.size());require(ap.end+ad.diskBytes==a.size()&&bp.end+bd.diskBytes==b.size(),"prefix stops exactly after directory before dispatch");
+    auto ad=directoryPlan(ap,a.data(),a.size()),bd=directoryPlan(bp,b.data(),b.size());
+#if defined(BO1_STRINGTABLE_HEADER_GATE)
+    auto ah=headerPlan(ap,ad,a.data(),a.size(),std::strtoull(argv[3],nullptr,10)),bh=headerPlan(bp,bd,b.data(),b.size(),std::strtoull(argv[5],nullptr,10));
+    require(ap.end+ad.diskBytes+20==a.size()&&bp.end+bd.diskBytes+20==b.size(),"prefix stops exactly after first numeric header");
+#else
+    require(ap.end+ad.diskBytes==a.size()&&bp.end+bd.diskBytes==b.size(),"prefix stops exactly after directory before dispatch");
+#endif
 #else
     require(ap.end==a.size()&&bp.end==b.size(),"prefix stops exactly before asset directory");
 #endif
     auto tested=fixtures(ap.envelope.zone);
 #if defined(BO1_ASSET_DIRECTORY_GATE)
     tested+=directoryFixtures(ap.envelope.zone);
+#if defined(BO1_STRINGTABLE_HEADER_GATE)
+    tested+=headerFixtures(ap.envelope.zone);
+#endif
 #endif
     unsigned cycles=0;
     for(unsigned round=0;round<3;++round)for(unsigned type=0;type<2;++type)for(unsigned asset=0;asset<2;++asset){auto&f=asset?bp:ap;auto&bytes=asset?b:a;auto zone=f.envelope.zone;zone.limits.allocType=type;frontend_fixture::Owner owner;owner.type=type;XBlock blocks[7]{};unsigned failed;
@@ -244,9 +261,15 @@ int main(int argc,char**argv){require(argc>=2,"decode/gate mode");if(!std::strcm
 #if defined(BO1_FRONTEND_INTERN_GATE)
         SL_Init(SCRIPTINSTANCE_SERVER);pool_fixture::baseline(SCRIPTINSTANCE_SERVER);
 #endif
+#if defined(BO1_STRINGTABLE_HEADER_GATE)
+        XAssetList envelope{};seedEnvelope(bytes.data(),envelope);
+#endif
         DecodedSource r(bytes.data()+52,bytes.size()-52);execute(f,r,blocks,asset&&round==0&&type==0);
 #if defined(BO1_ASSET_DIRECTORY_GATE)
         const auto&directory=asset?bd:ad;executeDirectory(f,directory,r,blocks,round==0&&type==0);
+#if defined(BO1_STRINGTABLE_HEADER_GATE)
+        const auto&header=asset?bh:ah;executeHeader(header,r,blocks,&envelope,round==0&&type==0);
+#endif
 #endif
 #if defined(BO1_FRONTEND_INTERN_GATE)
         std::set<unsigned>uniqueIds;
@@ -259,6 +282,9 @@ int main(int argc,char**argv){require(argc>=2,"decode/gate mode");if(!std::strcm
 #endif
         DB_InitStreams(detached);
 #if BO1_NATIVE_64BIT
+#if defined(BO1_STRINGTABLE_HEADER_GATE)
+        for(unsigned w:{0u,4u,12u,16u})require(!DB_StreamAliasSlotLookup(0,w)&&!DB_StreamExactLookup(0,w),"all header/envelope mappings detached before owner release");
+#endif
         for(int i=0;i<f.table.count;++i)require(!DB_StreamAliasSlotLookup(4,unsigned(4*i)),"all table aliases detached before owner release");
 #if defined(BO1_ASSET_DIRECTORY_GATE)
         for(int i=0;directory.present&&i<directory.count;++i){const auto w=static_cast<unsigned>(directory.diskStart+8*std::uint64_t(i));require(!DB_StreamAliasSlotLookup(4,w+4)&&!DB_StreamExactLookup(4,w),"all directory aliases and exact mappings detached before owner release");}
@@ -268,6 +294,8 @@ int main(int argc,char**argv){require(argc>=2,"decode/gate mode");if(!std::strcm
 #if defined(BO1_FRONTEND_INTERN_GATE)
         std::printf("{\"asset_index\":%u,\"round\":%u,\"alloc_type\":%u,\"inline_string_count\":%zu,\"raw_string_bytes\":%llu,\"source_consumed_bytes\":%zu,\"decoded_source_end\":%zu,\"block4_disk_cursor\":%llu,\"block4_native_cursor\":%llu,\"unique_interned_strings\":%zu,\"pool_live_allocations\":%d,\"pool_live_buckets\":%d,\"pool_debug_refs\":%u,\"pool_released\":true,\"hash_free_list_restored\":true,\"all_aliases_match\":true,\"reset_and_release_pass\":true,\"strings_used_after_release\":[",asset,round,type,f.strings.size()-f.nulls,(unsigned long long)(f.end-52-f.table.diskBytes),r.Position(),f.end,(unsigned long long)f.diskEnd,(unsigned long long)f.nativeEnd,uniqueIds.size(),poolAllocations,poolBuckets,poolReferences);
         for(unsigned i=0;i<32;++i)std::printf("%s%d",i?",":"",diagnostics[i]);std::printf("]}\n");
+#elif defined(BO1_STRINGTABLE_HEADER_GATE)
+        std::printf("{\"asset_index\":%u,\"round\":%u,\"alloc_type\":%u,\"source_consumed_bytes\":%zu,\"decoded_source_end\":%zu,\"block4_disk_cursor\":%llu,\"block4_native_cursor\":%llu,\"column_count\":%d,\"row_count\":%d,\"cell_count\":%llu,\"header_disk_bytes\":20,\"header_native_bytes\":%zu,\"block0_native_before_pop\":%llu,\"block0_native_after_pop\":0,\"block0_shadow_after_pop\":%llu,\"child_tags_preserved\":true,\"exact_header_mapping\":true,\"all_aliases_match\":true,\"prior_block4_preserved\":true,\"reset_and_release_pass\":true}\n",asset,round,type,r.Position(),bytes.size(),(unsigned long long)directory.diskEnd,(unsigned long long)directory.nativeEnd,header.columns,header.rows,(unsigned long long)header.cells,sizeof(StringTable),(unsigned long long)header.nativeEnd,(unsigned long long)(BO1_NATIVE_64BIT?header.diskEnd:0));
 #elif defined(BO1_ASSET_DIRECTORY_GATE)
         std::printf("{\"asset_index\":%u,\"round\":%u,\"alloc_type\":%u,\"inline_string_count\":%zu,\"raw_string_bytes\":%llu,\"directory_count\":%d,\"directory_disk_bytes\":%llu,\"directory_native_bytes\":%llu,\"directory_source_start\":%zu,\"directory_disk_start\":%llu,\"directory_native_start\":%llu,\"decoded_source_end\":%zu,\"source_consumed_bytes\":%zu,\"block4_disk_cursor\":%llu,\"block4_native_cursor\":%llu,\"directory_types_match\":true,\"header_tags_match\":true,\"padding_zero\":true,\"exact_element_mappings\":true,\"all_aliases_match\":true,\"reset_and_release_pass\":true}\n",asset,round,type,f.strings.size()-f.nulls,(unsigned long long)(f.end-52-f.table.diskBytes),directory.count,(unsigned long long)directory.diskBytes,(unsigned long long)directory.nativeBytes,f.end,(unsigned long long)directory.diskStart,(unsigned long long)directory.nativeStart,f.end+static_cast<std::size_t>(directory.diskBytes),r.Position(),(unsigned long long)directory.diskEnd,(unsigned long long)directory.nativeEnd);
 #else
@@ -277,6 +305,8 @@ int main(int argc,char**argv){require(argc>=2,"decode/gate mode");if(!std::strcm
     const char*schema=
 #if defined(BO1_FRONTEND_INTERN_GATE)
         "BlackOpsARM.TASK-0017.intern-strings.v1";
+#elif defined(BO1_STRINGTABLE_HEADER_GATE)
+        "BlackOpsARM.TASK-0018.stringtable-header.v1";
 #elif defined(BO1_ASSET_DIRECTORY_GATE)
         "BlackOpsARM.TASK-0016.asset-directory.v1";
 #else
