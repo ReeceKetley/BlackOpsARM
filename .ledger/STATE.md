@@ -1,3 +1,32 @@
+# Current state - TASK38 diagnostic verified; genuine bootstrap next
+
+TASK37 remains the successful asset checkpoint: all37 genuine code_pre_gfx assets
+register, survive TEMP reuse and release on x86/x64/HONOR O0/O3. TASK38 executes
+actual first Pentagon TechniqueSet header/name/130-null loop and Add/Link until
+required default resolution, not successful registration. Exact asset is
+`,mc_l_sm_r0c0n0s0x0`: x64 source confirms comma reference semantics. Empty payload
+needs no authored-content repair; referenced pointer must resolve through an
+existing asset or genuine default. No silent skip, fake provider or shader graph.
+
+Root-final host/O0/O3 builds, prerequisites and strict diagnostic collectors pass
+all3ABIs; observed exact exit3 Windows/134 HONOR at unavailable fixture endpoint.
+Root Pop, persistent type7 header and cleanup have not executed. Source bodies
+and normal Windows policy preserved; normal8TUs perABI pass. All18483 protected
+paths and exact Windows/DXVK Git unchanged. Archive1027 inventory rows plus
+inventory file; no game bytes/binaries committed. See arm64_techset.md,
+DEC54/55, FACT111-116, WARN39/FAIL36. All tests ended; Git supplies exact HEAD.
+
+Next3: genuine first code_post_gfx_mp/default CPU graph under actual headless
+resource policy; live SL/MT ownership plus real default clone/reference resolution;
+real bootstrap sequence (code_pre_gfx_mp/postgfx/common_zombie) then Pentagon
+XModel/script-index integration. Exact named provider before Pentagon is not
+proven; don't scan unknown payloads. Dead Ops Arcade is out of scope per user.
+No core engine boot/async/APK/game-owned graphics/playable claim. DEC47 remains
+active: autonomous milestones, local verified commits/no push. Root owns all
+returned implementation edits. Stable BlackOps64/original assets remain read-only.
+
+# Historical checkpoint (preserved)
+
 # Current state - TASK37 complete; standing goal continues
 
 All37 genuine code_pre_gfx assets (table+36RawFiles) deserialize/register through

@@ -1,3 +1,14 @@
+## Current Milestone
+
+TASK38 genuine TechniqueSet deserialization/default-dependency diagnostic verified
+on x86/x64/HONOR O0/O3; successful type7 registration remains blocked by real
+bootstrap dependencies. TASK37 all37 assets still passes. Read latest STATE and
+arm64_techset.md; DEC54/55/FACT115/116/WARN39/FAIL36. Next genuine bootstrap default
+graph, SL/MT default naming, then actual startup sequence/Pentagon XModel. Dead
+Ops Arcade excluded. Standing autonomous DEC47 active; local commits authorized.
+
+# Historical checkpoint (preserved)
+
 TASK37 complete codezone37assets verified3ABIs/O0/O3; next genuine firstTechniqueSet all130null through66226/type7registration, then XModel5 and wider coreinit. DEC53/FACT109/110/WARN38/FAIL35; standingDEC47active.
 
 TASK36 actual Add/completeLink new-name returnedheader registration verified3ABIs/O0/O3; next genuine asset deserialization then wider zone integration/core initialization. DEC52/FACT107/108/WARN37/FAIL34; standing DEC47 active.

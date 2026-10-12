@@ -8,6 +8,9 @@
 // Normal engine builds retain the complete expander and existing includes.
 #if defined(BO1_ASSETLIST_GATE)
 #include "db_assetlist_types.h"
+#if defined(BO1_TECHSET_GATE)
+#include "db_techset_types.h"
+#endif
 #if defined(BO1_RAWFILE_HEADER_GATE)
 #include "db_rawfile_types.h"
 #endif
@@ -371,14 +374,6 @@ struct MaterialTextureDef_32
     uint8_t pad[3];
     uint32_t u;
 };
-struct MaterialTechniqueSet_32
-{
-    uint32_t name;
-    uint8_t worldVertFormat;
-    uint8_t unused;
-    uint16_t techsetFlags;
-    uint32_t techniques[130];
-};
 struct MaterialTechniqueHeader_32
 {
     uint32_t name;
@@ -448,7 +443,6 @@ struct water_t_32
 static_assert(sizeof(MaterialInfo_32) == 40, "Win32 MaterialInfo");
 static_assert(sizeof(Material_32) == 192, "Win32 Material");
 static_assert(sizeof(MaterialTextureDef_32) == 16, "Win32 MaterialTextureDef");
-static_assert(sizeof(MaterialTechniqueSet_32) == 528, "Win32 MaterialTechniqueSet");
 static_assert(sizeof(MaterialTechniqueHeader_32) == 8, "Win32 MaterialTechnique header");
 static_assert(sizeof(MaterialPass_32) == 20, "Win32 MaterialPass");
 static_assert(sizeof(MaterialShaderArgument_32) == 8, "Win32 MaterialShaderArgument");
@@ -522,6 +516,20 @@ void DB_ExpandLoad_MaterialTextureDefArray(MaterialTextureDef *dst, int count)
     DB_Expand_Commit(static_cast<int>(sizeof(MaterialTextureDef) * static_cast<size_t>(count)), count);
 }
 
+#endif
+#if !defined(BO1_ASSETLIST_GATE) || defined(BO1_TECHSET_GATE)
+#pragma pack(push, 1)
+struct MaterialTechniqueSet_32
+{
+    uint32_t name;
+    uint8_t worldVertFormat;
+    uint8_t unused;
+    uint16_t techsetFlags;
+    uint32_t techniques[130];
+};
+#pragma pack(pop)
+static_assert(sizeof(MaterialTechniqueSet_32) == 528, "Win32 MaterialTechniqueSet");
+
 void DB_ExpandLoad_MaterialTechniqueSet(MaterialTechniqueSet *dst)
 {
     iassert(dst == reinterpret_cast<MaterialTechniqueSet *>(DB_GetStreamPos()));
@@ -540,6 +548,8 @@ void DB_ExpandLoad_MaterialTechniqueSet(MaterialTechniqueSet *dst)
     DB_Expand_Commit(static_cast<int>(sizeof(MaterialTechniqueSet)));
 }
 
+#endif
+#if !defined(BO1_ASSETLIST_GATE)
 void DB_ExpandLoad_MaterialTechnique(MaterialTechnique *dst)
 {
     iassert(dst == reinterpret_cast<MaterialTechnique *>(DB_GetStreamPos()));

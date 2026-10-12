@@ -1,0 +1,22 @@
+{
+  "head": "5ae358abab8537499fcdb04681f11e8b2e8401e4",
+  "branch": "android-arm64",
+  "status": " M .gitignore\n M .ledger/ledger.jsonl\n M android/cmake/arm64-audit/CMakeLists.txt\n M src/database/db_asset_pool.h\n M src/database/db_assetnames.cpp\n M src/database/db_expand.cpp\n M src/database/db_load.cpp\n M src/database/db_registry.cpp\n M src/gfx_d3d/r_material.h\n M tools/port/tests/code_zone_tests.cpp\n M tools/port/tests/entry_owner_support.cpp\n M tools/port/tests/stringtable_owner_fixture.h\n?? docs/port/arm64_techset.md\n?? docs/port/evidence/arm64_techset/\n?? docs/port/next_techset_handoff.md\n?? src/database/db_techset_load.h\n?? src/database/db_techset_types.h\n?? tools/port/build_techset_arm64.ps1\n?? tools/port/build_techset_host.ps1\n?? tools/port/collect_techset_blocker.py\n?? tools/port/run_techset_gate.py\n?? tools/port/run_techset_prerequisites.py\n?? tools/port/techset_oracle.py\n?? tools/port/tests/techset_tests.cpp\n?? tools/port/verify_techset_source.py\n",
+  "tests_ended": true,
+  "implementation_agent_commits": false,
+  "implementation_agent_ledger_edits": false,
+  "scope": "genuine deserialization to explicit missing default; no genuine registration",
+  "final_builds": [
+    "techset_host_final",
+    "techset_O0_final",
+    "techset_O3_final",
+    "techset_normal_pass1"
+  ],
+  "final_runs": [
+    "techset_prereq_O0_final",
+    "techset_prereq_O3_final",
+    "techset_blocker_O0_final",
+    "techset_blocker_O3_final",
+    "techset_full_request_final_failure2"
+  ]
+}

@@ -45,3 +45,8 @@ independent useful task when safe. Before intentional handoff record exact HEAD,
 capabilities, pending changes/test ownership, blockers/results and next three gates.
 No deadline or fake stretch-goal result: headless startup/assets/loading screen/menu/
 engine-owned graphics/simulation are aspirations. Record smaller verified progress.
+
+
+User scope clarification (DEC55): Dead Ops Arcade is a known limitation and is
+out of scope. Pentagon TechniqueSet comma stub matches x64; ignore its empty
+authored payload, preserve actual existing/default reference resolution.

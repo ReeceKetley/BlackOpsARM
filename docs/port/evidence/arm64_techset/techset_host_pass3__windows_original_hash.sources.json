@@ -1,0 +1,12 @@
+{
+  "schema": "BlackOpsARM.TASK-0022.original-windows-hash-reference.v1",
+  "original_commit": "1874245786ef55145c710d0016f693e123d66d1f",
+  "original_source": "src/server_mp/sv_bot_mp.cpp",
+  "original_git_blob_sha256": "9c4427b889965fc835990341e853ede8bd76b9a32fdca8ad5a0b839d78722248",
+  "original_function_sha256": "76668b340f317285de7aa46c54bf12de5eb5432a4caaeeb7f13bbfa1ab01ddcf",
+  "generated_source_sha256": "5c279e3638bcb500fa7e2bbfa6188d742243ee2a3c60e49ad3ac720a6f6f15e3",
+  "original_function_bytes": 296,
+  "only_function_name_changed": true,
+  "compiler_contract": "MSVC Windows x86/x64 /O2; exact historical signed arithmetic and ctype body",
+  "scope": "Standalone ignored original-behavior control only; not ARM64 production code or a tracked engine fork"
+}

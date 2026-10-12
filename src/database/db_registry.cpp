@@ -78,8 +78,6 @@ static bool DB_IsLevelSingletonType(XAssetType);
 #define POOLSIZE_XMODEL_MOD 2000 // mod: capacity for bo1_mod_zones; in use only with it on the command line (DB_InitXAssets)
 #define POOLSIZE_MATERIAL         4096
 #define POOLSIZE_MATERIAL_MOD 6144 // mod: capacity for bo1_mod_zones; in use only with it on the command line (DB_InitXAssets)
-#define POOLSIZE_TECHSET          2048
-#define POOLSIZE_TECHSET_MOD 3072 // mod: capacity for bo1_mod_zones; in use only with it on the command line (DB_InitXAssets)
 //#define POOLSIZE_IMAGE             4224
 #define POOLSIZE_IMAGE            4608
 #define POOLSIZE_IMAGE_MOD 8192 // mod: capacity for bo1_mod_zones; in use only with it on the command line (DB_InitXAssets). L62: 7168 ran out with Kino + temple coast moon pentagon cosmodrome (client); keep STREAM_MAX_IMAGE_PARTS_MOD equal
@@ -138,7 +136,11 @@ static int g_poolSize[43] = // mod: not const: DB_InitXAssets raises the *_MOD t
   0,
   0,
   0,
+#if defined(BO1_TECHSET_GATE)
+  POOLSIZE_TECHSET,
+#else
   0,
+#endif
   0,
   0,
   0,
@@ -243,7 +245,11 @@ XAssetHeader(__cdecl *DB_AllocXAssetHeaderHandler[43])(void *) =
   NULL,
   NULL,
   NULL,
+#if defined(BO1_TECHSET_GATE)
+  DB_AllocXAsset<MaterialTechniqueSet>,
+#else
   NULL,
+#endif
   NULL,
   NULL,
   NULL,
@@ -337,7 +343,6 @@ XAssetPool<DestructibleDef, POOLSIZE_DESTRUCTIBLEDEF_MOD>   g_DestructibleDefPoo
 XAssetPool<XAnimParts, POOLSIZE_XANIM_MOD>                  g_XAnimPartsPool;
 XAssetPool<XModel, POOLSIZE_XMODEL_MOD>                     g_XModelPool;
 XAssetPool<Material, POOLSIZE_MATERIAL_MOD>                 g_MaterialPool;
-XAssetPool<MaterialTechniqueSet, POOLSIZE_TECHSET_MOD>      g_MaterialTechniqueSetPool;
 XAssetPool<GfxImage, POOLSIZE_IMAGE_MOD>                    g_GfxImagePool;
 XAssetPool<SndBank, POOLSIZE_SOUND_MOD>                     g_SoundPool;
 XAssetPool<snd_alias_list_t, POOLSIZE_SOUND_PATCH>      g_SoundPatchPool;
@@ -355,6 +360,9 @@ XAssetPool<FxImpactTable, POOLSIZE_IMPACTFX_MOD>            g_FxImpactTablePool;
 #endif
 #if !defined(BO1_STRINGTABLE_OWNER_GATE) || defined(BO1_RAWFILE_OWNER_GATE)
 XAssetPool<RawFile, POOLSIZE_RAWFILE_MOD>                   g_RawFilePool;
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE) || defined(BO1_TECHSET_GATE)
+XAssetPool<MaterialTechniqueSet, POOLSIZE_TECHSET_MOD>      g_MaterialTechniqueSetPool;
 #endif
 XAssetPool<StringTable, POOLSIZE_STRINGTABLE_MOD>           g_StringTablePool;
 
@@ -377,7 +385,11 @@ void *DB_XAssetPool[43] =
   NULL,
   NULL,
   NULL,
+#if defined(BO1_TECHSET_GATE)
+  &g_MaterialTechniqueSetPool,
+#else
   NULL,
+#endif
   NULL,
   NULL,
   NULL,
@@ -492,7 +504,11 @@ void(__cdecl *DB_FreeXAssetHeaderHandler[43])(void *, XAssetHeader) =
   NULL,
   NULL,
   NULL,
+#if defined(BO1_TECHSET_GATE)
+  DB_FreeXAssetHeader_EmblemSet_,
+#else
   NULL,
+#endif
   NULL,
   NULL,
   NULL,
@@ -897,11 +913,15 @@ void __cdecl Mark_MaterialAsset(Material *material)
     DB_GetXAsset(ASSET_TYPE_MATERIAL, (XAssetHeader)material);
 }
 
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE) || defined(BO1_TECHSET_GATE)
 void __cdecl Load_MaterialTechniqueSetAsset(XAssetHeader *techniqueSet)
 {
     techniqueSet->xmodelPieces = DB_AddXAsset(ASSET_TYPE_TECHNIQUE_SET, (XAssetHeader)techniqueSet->xmodelPieces).xmodelPieces;
 }
 
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE)
 void __cdecl Mark_MaterialTechniqueSetAsset(MaterialTechniqueSet *techniqueSet)
 {
     DB_GetXAsset(ASSET_TYPE_TECHNIQUE_SET, (XAssetHeader)techniqueSet);

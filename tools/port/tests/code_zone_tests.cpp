@@ -49,4 +49,8 @@ static void run(const char*path){
 }
 static void decodeAll(const char*path,const char*out){Bo1InflatedFastFile f;Bo1InflateLimits limits;limits.maxDecodedBytes=65536;require(Bo1_InflateFastFilePath(path,limits,&f)==Bo1InflateResult::Ok&&f.decoded.size()==49593,"bounded actual full code decode");auto digest=adler32(1,f.decoded.data(),static_cast<unsigned>(f.decoded.size()));std::ofstream file(out,std::ios::binary);file.write(reinterpret_cast<const char*>(f.decoded.data()),f.decoded.size());require(bool(file),"complete decoded code scratch output");std::vector<std::uint8_t>().swap(f.decoded);std::printf("{\"schema\":\"BlackOpsARM.TASK37.decode.v1\",\"decoded_bytes\":49593,\"decoded_adler32\":%lu,\"buffer_released\":true}\n",(unsigned long)digest);}
 }
-int main(int argc,char**argv){if(argc==3&&!std::strcmp(argv[1],"--code-zone")){code_zone::run(argv[2]);return 0;}if(argc==4&&!std::strcmp(argv[1],"--decode-code-zone")){code_zone::decodeAll(argv[2],argv[3]);return 0;}return RawStringPrerequisiteMain(argc,argv);}
+
+#ifndef BO1_CODE_ZONE_MAIN
+#define BO1_CODE_ZONE_MAIN main
+#endif
+int BO1_CODE_ZONE_MAIN(int argc,char**argv){if(argc==3&&!std::strcmp(argv[1],"--code-zone")){code_zone::run(argv[2]);return 0;}if(argc==4&&!std::strcmp(argv[1],"--decode-code-zone")){code_zone::decodeAll(argv[2],argv[3]);return 0;}return RawStringPrerequisiteMain(argc,argv);}

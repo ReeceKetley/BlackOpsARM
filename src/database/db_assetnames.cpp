@@ -59,7 +59,11 @@ const char *(__cdecl *DB_XAssetGetNameHandler[43])(const XAssetHeader *) =
   NULL,
   NULL,
   NULL,
+#if defined(BO1_TECHSET_GATE)
+  DB_DDLGetName,
+#else
   NULL,
+#endif
   NULL,
   NULL,
   NULL,
@@ -351,6 +355,8 @@ int __cdecl DB_SizeofXAsset_Material_()
 #endif
 }
 
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE) || defined(BO1_TECHSET_GATE)
 #if !BO1_NATIVE_64BIT
 static_assert(sizeof(MaterialTechniqueSet) == 528);
 #endif
@@ -362,6 +368,8 @@ int __cdecl DB_SizeofXAsset_MaterialTechniqueSet_()
     return 528;
 #endif
 }
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE)
 
 #if !BO1_NATIVE_64BIT
 static_assert(sizeof(SndDriverGlobals) == 52);
@@ -592,7 +600,11 @@ int(__cdecl *DB_GetXAssetSizeHandler[43])() =
   NULL,
   NULL,
   NULL,
+#if defined(BO1_TECHSET_GATE)
+  &DB_SizeofXAsset_MaterialTechniqueSet_,
+#else
   NULL,
+#endif
   NULL,
   NULL,
   NULL,

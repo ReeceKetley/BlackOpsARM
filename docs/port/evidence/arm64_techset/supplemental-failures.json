@@ -1,0 +1,25 @@
+{
+  "non_archived_tool_only_failures": [
+    {
+      "action": "Initial PowerShell rg command with brace-style source paths",
+      "result": "PowerShell parser rejected syntax; corrected explicit pathlist",
+      "source_mutation": false
+    },
+    {
+      "action": "Initial builder generator script used stdin __file__ parents",
+      "result": "Wrong derived root D:/Desktop; no writes before failure",
+      "source_mutation": false
+    },
+    {
+      "action": "Scratch independent prefix generator reused asset-directory oracle as original input",
+      "result": "KeyError xFileFields; corrected original frozen inflate schema",
+      "source_mutation": false
+    },
+    {
+      "action": "Direct hostpass4 --techset verified66226prefix",
+      "result": "FAIL validated genuine envelope metadata because prefixextent incorrectly used as full decodedextent; corrected108009041"
+    }
+  ],
+  "all_archived_build_and_collector_failures": "See per-run failure.json/results.json/build-result.json and compile.log; report lists corrections",
+  "original_full_registration_request": "blocked; actual DB_CreateDefaultEntry explicitly aborts"
+}
