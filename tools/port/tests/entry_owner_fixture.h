@@ -18,10 +18,17 @@ InitializeRegistryAddInputs();require(!g_modDeferredCount&&!g_modDeferredUsed&&!
 }
 static XAssetHeader acquire(XAssetType type){require(started&&(type==ASSET_TYPE_RAWFILE||type==ASSET_TYPE_STRINGTABLE),"supported genuine entry type");unsigned slot=entries[0]?1:0;require(!entries[slot],"bounded genuine ownership at most two entries");Sys_EnterCriticalSection(CRITSECT_DBHASH);auto*p=DB_AllocXAssetEntry(type,1);Sys_LeaveCriticalSection(CRITSECT_DBHASH);entries[slot]=p;types[slot]=type;headers[slot]=p->entry.asset.header.data;require(p>=g_assetEntryPool+16&&p<g_assetEntryPool+32768&&p->entry.asset.type==type&&p->entry.zoneIndex==1&&!p->entry.inuse&&!p->entry.nextHash&&!p->entry.nextOverride&&headers[slot],"actual genuine entry owns actual selected pool header");return p->entry.asset.header;}
 #if defined(BO1_REGISTRY_ADD_GATE)
+static unsigned registrationZone(){
+#if defined(BO1_REGISTRY_DEFAULT_GATE)
+ return g_zoneIndex;
+#else
+ return 1;
+#endif
+}
 static XAssetHeader registerHeader(XAssetType type,void *temp){
 require(started&&temp&&(type==ASSET_TYPE_RAWFILE||type==ASSET_TYPE_STRINGTABLE),"supported live TEMP registration input");XAsset source{};source.type=type;source.header.data=temp;const auto*name=DB_GetXAssetName(&source);require(name&&*name&&*name!=',',"genuine nonstub name");unsigned slot=entries[0]?1:0;require(!entries[slot],"bounded genuine registration");
 Sys_EnterCriticalSection(CRITSECT_DBHASH);require(!DB_FindXAssetEntry(type,name),"actual new-name decision starts without duplicate");Sys_LeaveCriticalSection(CRITSECT_DBHASH);
-const auto beforeCount=XAssetEntryHighCount;auto returned=DB_AddXAsset(type,source.header);Sys_EnterCriticalSection(CRITSECT_DBHASH);auto*p=DB_FindXAssetEntry(type,name);require(p&&returned.data==p->entry.asset.header.data&&returned.data!=temp&&XAssetEntryHighCount==beforeCount+1&&p->entry.zoneIndex==1&&!p->entry.nextOverride&&!p->entry.inuse,"actual Add allocates/clones/publishes and returns persistent header");Sys_LeaveCriticalSection(CRITSECT_DBHASH);
+const auto beforeCount=XAssetEntryHighCount;auto returned=DB_AddXAsset(type,source.header);Sys_EnterCriticalSection(CRITSECT_DBHASH);auto*p=DB_FindXAssetEntry(type,name);require(p&&returned.data==p->entry.asset.header.data&&returned.data!=temp&&XAssetEntryHighCount==beforeCount+1&&p->entry.zoneIndex==registrationZone()&&!p->entry.nextOverride&&!p->entry.inuse,"actual Add allocates/clones/publishes and returns persistent header");Sys_LeaveCriticalSection(CRITSECT_DBHASH);
 entries[slot]=p;types[slot]=type;headers[slot]=returned.data;return returned;
 }
 #endif

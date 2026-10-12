@@ -7,6 +7,9 @@
 #include "db_registry_lookup_api.h"
 #if defined(BO1_REGISTRY_ADD_GATE)
 #include "db_registry_add_api.h"
+#if defined(BO1_REGISTRY_DEFAULT_GATE)
+#include "db_registry_default_api.h"
+#endif
 static bool DB_IsLevelSingletonType(XAssetType);
 #endif
 #include <cctype>
@@ -1587,6 +1590,8 @@ void __cdecl DB_LoadDelayedImages()
     }
 }
 
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE) || defined(BO1_REGISTRY_DEFAULT_GATE)
 XAssetHeader __cdecl DB_FindXAssetDefaultHeaderInternal(XAssetType type)
 {
     const char *XAssetName; // eax
@@ -1619,6 +1624,8 @@ XAssetHeader __cdecl DB_FindXAssetDefaultHeaderInternal(XAssetType type)
     return assetEntry->entry.asset.header;
 }
 
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE)
 const char *__cdecl DB_FindXAssetNameFromHash(XAssetType type, unsigned int hash)
 {
     //unsigned int assetEntryIndex; // [esp+0h] [ebp-Ch]
@@ -2358,7 +2365,7 @@ XAssetEntryPoolEntry *__cdecl DB_FindXAssetEntry(XAssetType type, const char *na
     return 0;
 }
 #endif
-#if !defined(BO1_STRINGTABLE_OWNER_GATE)
+#if !defined(BO1_STRINGTABLE_OWNER_GATE) || defined(BO1_REGISTRY_DEFAULT_GATE)
 
 
 XAssetEntry *__cdecl DB_CreateDefaultEntry(XAssetType type, const char *name)
@@ -5313,6 +5320,8 @@ void __cdecl DB_UnloadXZoneMemory(XZone *zone)
     g_zoneNames[zone->index].name[0] = 0;
 }
 
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE) || defined(BO1_REGISTRY_DEFAULT_GATE)
 void DB_FreeDefaultEntries()
 {
     unsigned int nextAssetEntryIndex; // [esp+0h] [ebp-10h]
@@ -5373,6 +5382,8 @@ void DB_FreeDefaultEntries()
     }
 }
 
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE)
 void __cdecl DB_UnloadXAssetsMemoryForZone(int zoneFreeFlags, int zoneFreeBit)
 {
     int i; // [esp+0h] [ebp-4h]
