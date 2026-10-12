@@ -1,0 +1,17 @@
+{
+  "passed": true,
+  "baseline": "f117f5d",
+  "protected_paths": 19930,
+  "reference_git_unchanged": true,
+  "frozen_archive_records": {
+    "arm64_default_resolution": 689,
+    "arm64_startup_reader": 82,
+    "arm64_native_startup_zone": 157,
+    "arm64_pmem_owner_stack": 91,
+    "arm64_native_critical_sections": 188
+  },
+  "current_build_manifests": 10,
+  "integration_collector_rejections": 7,
+  "single_hunk_owner_target": true,
+  "scope": "Original thread data and CmdReset plus MP71 in same native process. Controlled Dvar inputs; no Com_Init/DB worker/gameplay."
+}

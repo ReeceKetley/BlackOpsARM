@@ -1,3 +1,38 @@
+# Latest verified TASK44 - native thread data and same-process MP71
+
+ActualCom_InitThreadData/Cmd_ResetArgs and canonicalarrays execute onx86/x64/HONOR
+O0/O3:3liveroles/12slots/nativejumps3exact7/2retirements +72exactfatalcontrols.
+Canonicaltypes movedonce; soleinvalidenumliteral=-1 preservesoriginalMSVCsigned32.
+Independentoriginal-layoutoracle3ABIs and4normalfullWindowsTUs/ABI pass. Optional
+SAMEPROCESS actualmainTLS/CmdReset+MP71 full4cycles/284records/queries/lifetime/pools
+passall3ABIs/O0/O3 withsingleactualAndroidhunkowner. ControlledDvars remaintestonly.
+10currentmanifests/19930protectedhashes/referenceGit/1207previousarchive records
+verified;7collectorscope/type rejections and138newrecords frozen. FACT133/WARN43,
+FAIL43/NOTE11; report arm64_native_thread_data.md. Allsourceownership returnedroot,
+no livebuild/test handles; source/metadatauncommitted untillocalcheckpoint. NoPush.
+Onlyone-shot main/backend/DB; mainprocesslifetime/workerretirement/norecycling.
+No actualDvar/Cbuf/Cmd initialization,FastCriticalSection,DBworker/fullCom_Init/
+Com_Frame/errorrecovery/gameplay claim. Read native_dvar_lock_plan.md/FACT132:
+next actualfixed32protocol thenDvar/commandclosure, genuineDBheadlessboot.
+
+# Historical active TASK44 - genuine native thread-data integration
+
+Verified TASK43 committed f117f5d, priorPMemcheckpoint7d1aaa6. TASK44 changes are
+uncommitted: canonicalCmdArgs/TraceThreadInfo/ThreadContext/va types movedonce;
+actualCom_InitThreadData/Cmd_ResetArgs/globals selected unchanged; nativeone-shot
+main/backend/DBroles, retirement/noreuse, realAndroidhunkmain binding. Rootproof
+andnormalfullq_shared/cmd/threads/cm_trace x86/x64 pass; originaldeclarationoracle
+matches3ABIs, soleenumliteral0xffffffff->-1 explicitlypreservesMSVCsigned32value.
+Earlier rootstandalonebindings host/HONORO0/O3+72fatalcontrols pass; subsequent
+testexactjump7/Cmake reuse changes requirefreshfinalbuilds. No fullerrorbootclaim.
+Read DEC62/FAIL43/NOTE11, thread_data_layout_oracle.py and native_thread_data_source1.
+Implementationagent currentlyowns optional sameprocess actualmainTLS+MP71 startup
+driver/hunksupport/native-startup+native-threadCMake/buildscripts; rootcollectors/
+proof/docs/Ledger/HONOR. Other corethread edits returnedto root. Readonlyreview
+no blockers; agent nowaudits genuineFastCriticalSection fixed32 protocol fornext.
+ActualDvars remaincontrolledtestcallerinputs; actualDBworker/ComInit notexecuted.
+Mainprocesslifetime/no workerrecycling/restart/serveridentity certification.
+
 # Latest verified TASK43 - native general recursive critical sections
 
 All75 enum sections now backed by genuine recursive locks,72additional plus

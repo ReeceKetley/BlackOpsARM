@@ -22,7 +22,7 @@ char *va(const char *fmt, ...) { static thread_local char b[512]; va_list a; va_
 void Bo1_Diag(const char *fmt, ...) { va_list a; va_start(a,fmt); std::vfprintf(stderr,fmt,a); va_end(a); }
 void Bo1_DiagStack(const char *) { unsupported("diagnostic stack"); }
 #endif
-#if !defined(BO1_REAL_FIRSTFIT_GATE)
+#if !defined(BO1_REAL_FIRSTFIT_GATE) && !defined(BO1_NATIVE_THREAD_INTEGRATION)
 bool Sys_IsMainThread() { unsupported("main-thread registration"); }
 #endif
 void track_userhunk_freerange(void *, unsigned int) { unsupported("tracking freerange"); }

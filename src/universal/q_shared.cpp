@@ -1,3 +1,4 @@
+#if !defined(BO1_NATIVE_THREAD_DATA)
 #if defined(BO1_STRINGTABLE_LOOKUP_GATE)
 #include <platform/bo1_native_width.h>
 #if defined(BO1_REGISTRY_ADD_GATE)
@@ -23,16 +24,7 @@
 
 #define BIG_INFO_STRING 0x4000
 
-struct va_info_t
-{
-    char va_string[4][1024]; // see va(), the modulo is 4
-    int index;
-};
-
-va_info_t va_info[15];
-TraceThreadInfo g_traceThreadInfo[15];
-// Was int[15][16] matching 32-bit MSVC jmp_buf. Use real jmp_buf for x64.
-jmp_buf g_com_error[15];
+#include "thread_data.h"
 int valueindex;
 
 // *WARNING* One or more selections were skipped as they could not be interpreted as c data
@@ -677,17 +669,6 @@ char *va(const char *format, ...)
         Com_Error(ERR_DROP, "Attempted to overrun string in call to va(): '%s'", buf);
     }
     return (char *)info + 1024 * index;
-}
-
-void __cdecl Com_InitThreadData(int threadContext)
-{
-    Sys_SetValue(1, &va_info[threadContext]);
-    Sys_SetValue(2, g_com_error[threadContext]);
-    Sys_SetValue(3, &g_traceThreadInfo[threadContext]);
-    if ( threadContext == 1 )
-        Sys_SetValue(4, &g_cmd_args[1]);
-    else
-        Sys_SetValue(4, g_cmd_args);
 }
 
 char value1[3][2][8192];
@@ -1499,3 +1480,28 @@ double __cdecl CMD_GetAnalogButtonValue(usercmd_s *cmd, unsigned int whichBit)
 
 
 #endif // !BO1_STRINGTABLE_LOOKUP_GATE
+
+#endif // !BO1_NATIVE_THREAD_DATA
+
+#if !defined(BO1_STRINGTABLE_LOOKUP_GATE) || defined(BO1_NATIVE_THREAD_DATA)
+#include "thread_data.h"
+#if defined(BO1_NATIVE_THREAD_DATA)
+#include <platform/android/thread_services.h>
+#endif
+va_info_t va_info[15];
+TraceThreadInfo g_traceThreadInfo[15];
+// Was int[15][16] matching 32-bit MSVC jmp_buf. Use real jmp_buf for x64.
+jmp_buf g_com_error[15];
+
+void __cdecl Com_InitThreadData(int threadContext)
+{
+    Sys_SetValue(1, &va_info[threadContext]);
+    Sys_SetValue(2, g_com_error[threadContext]);
+    Sys_SetValue(3, &g_traceThreadInfo[threadContext]);
+    if ( threadContext == 1 )
+        Sys_SetValue(4, &g_cmd_args[1]);
+    else
+        Sys_SetValue(4, g_cmd_args);
+}
+
+#endif

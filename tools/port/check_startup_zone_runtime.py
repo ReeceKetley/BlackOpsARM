@@ -5,10 +5,18 @@ from pathlib import Path
 from startup_zone_oracle import inspect
 
 
-def validate(stdout, pointer_bytes, oracle):
+def validate(stdout, pointer_bytes, oracle, thread_integration=False):
     if pointer_bytes not in (4, 8):
         raise ValueError('Unsupported runtime ABI')
     lines = stdout.splitlines()
+    if thread_integration:
+        marker = json.loads(lines.pop(0))
+        expected = {'startup_thread_integration': {'pointer_bytes': pointer_bytes,
+                    'thread_context': 0, 'canonical_slots': 4,
+                    'actual_cmd_reset': True, 'com_init_executed': False}}
+        if marker != expected or set(marker) != set(expected) or any(type(marker['startup_thread_integration'][key]) is not type(value)
+                for key, value in expected['startup_thread_integration'].items()):
+            raise ValueError('Actual main-thread integration record differs')
     if len(lines) != 4 * 72:
         raise ValueError('Expected four complete 71-asset cycles')
     expected_queries = 2 * sum(row.get('cell_count', 0) for row in oracle['assets'])
@@ -49,10 +57,14 @@ def validate(stdout, pointer_bytes, oracle):
         if any(type(record['startup_zone_cycle'][key]) is not type(value)
                or record['startup_zone_cycle'][key] != value for key, value in expected.items()):
             raise ValueError('Cycle evidence differs')
-    return {'passed': True, 'pointer_bytes': pointer_bytes, 'cycles': 4,
+    result = {'passed': True, 'pointer_bytes': pointer_bytes, 'cycles': 4,
             'registered_asset_records': 284, 'queries_per_cycle': expected_queries,
             'complete_source_bytes': oracle['decoded_bytes'], 'controlled_caller_inputs': True,
             'com_init_executed': False}
+    if thread_integration:
+        result['actual_thread_data_integrated'] = True
+        result['actual_cmd_reset'] = True
+    return result
 
 
 if __name__ == '__main__':
@@ -61,11 +73,12 @@ if __name__ == '__main__':
     parser.add_argument('--pointer-bytes', type=int, required=True)
     parser.add_argument('--retail', required=True)
     parser.add_argument('--output', required=True)
+    parser.add_argument('--thread-integration', action='store_true')
     args = parser.parse_args()
     output = Path(args.output)
     if output.exists():
         raise SystemExit('Use fresh collector evidence')
-    result = validate(Path(args.runtime_log).read_text(encoding='utf-8-sig'), args.pointer_bytes, inspect(args.retail))
+    result = validate(Path(args.runtime_log).read_text(encoding='utf-8-sig'), args.pointer_bytes, inspect(args.retail), args.thread_integration)
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(result, indent=2) + '\n', encoding='utf-8')
     print('All 284 registered assets and complete table queries match independent oracle')
