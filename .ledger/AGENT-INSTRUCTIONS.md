@@ -301,3 +301,16 @@ notuncheckedrawleaf recovery/concurrency certification.
 Ledger metadata correction: FACT82/83 supersede formatting of FACT76/77;
 FACT84/85 supersede FACT79/80; WARN27 supersedes WARN26. Evidence/results unchanged,
 old entry history retained; current TEMP reuse/real registry limitations unchanged.
+
+
+TASK27 cursor/alias prerequisite complete; see arm64_temp_cursor.md/handoff,
+DEC42 and current Ledger evidence. Native block0 shadow must rewind with physical
+cursor to TARGET entry; nonzero streams keep advances. Keep maps on Pop until
+actual overwrite; latest equal-key alias ordering is stable. General TEMP reuse
+is NOT certified: retainedsegments may be unordered and native expansion may
+overwrite logically preserved Win32tails. Never hide this through driftfallback
+or wholemap rollback. NextTASK28 write-aware mappings/explicit suffix handling,
+then genuine codeRawFile numericheader12->24 atTEMP0; zombie nextTechniqueSet7
+deferredwithoutskipping. No nextasset/registry/render successclaim. Alltestsended;
+strictcurrentrunners expect observed0postPop while frozenold20evidence preserved.
+ContinueDEC29, localverifiedmilestone commitsDEC26 authorized; no push.

@@ -190,6 +190,9 @@ struct DriftMark
 
 std::vector<DriftMark> g_driftMarks[7];
 unsigned int g_streamWin32Pos[7];
+// TEMP Pop restores the target block entry position, including nested block0 scopes.
+// Keep native-only state outside the original StreamPosInfo layout.
+unsigned int g_streamWin32Stack[64];
 int g_expandWin32Size = -1;
 int g_expandElemW = 0;
 int g_expandElemN = 0;
@@ -285,7 +288,9 @@ static void DB_AliasMergeTail(unsigned int blockIndex)
     size_t &sorted = g_aliasSorted[blockIndex];
     if (sorted == v.size())
         return;
-    std::sort(v.begin() + sorted, v.end(), AliasSlotLess);
+    // Equal positions must retain registration order: the most recent slot wins.
+    // inplace_merge also keeps old prefix entries before equal new tail entries.
+    std::stable_sort(v.begin() + sorted, v.end(), AliasSlotLess);
     std::inplace_merge(v.begin(), v.begin() + sorted, v.end(), AliasSlotLess);
     sorted = v.size();
 }
@@ -454,6 +459,9 @@ void __cdecl DB_PushStreamPos(unsigned int index)
 
     g_streamPosStack[g_streamPosStackIndex].index = g_streamPosIndex;
     DB_SetStreamIndex(index);
+#if BO1_NATIVE_64BIT
+    g_streamWin32Stack[g_streamPosStackIndex] = g_streamWin32Pos[index];
+#endif
     g_streamPosStack[g_streamPosStackIndex++].pos = g_streamPos;
 }
 
@@ -484,6 +492,10 @@ void __cdecl DB_PopStreamPos()
     --g_streamPosStackIndex;
     if ( !g_streamPosIndex )
         g_streamPos = g_streamPosStack[g_streamPosStackIndex].pos;
+#if BO1_NATIVE_64BIT
+    if ( !g_streamPosIndex )
+        g_streamWin32Pos[0] = g_streamWin32Stack[g_streamPosStackIndex];
+#endif
     DB_SetStreamIndex(g_streamPosStack[g_streamPosStackIndex].index);
 }
 

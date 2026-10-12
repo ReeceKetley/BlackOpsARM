@@ -1,0 +1,24 @@
+
+D:\Games\Call of Duty - Black Ops\BlackOps.exe:	file format coff-i386
+
+Disassembly of section .text:
+
+00401000 <.text>:
+  460ed0:      	mov	eax, dword ptr [0x10c70d8]
+  460ed5:      	mov	ecx, dword ptr [0x10cf108]
+  460edb:      	dec	eax
+  460edc:      	mov	dword ptr [0x10c70d8], eax
+  460ee1:      	test	ecx, ecx
+  460ee3:      	jne	0x460ef2 <.text+0x5fef2>
+  460ee5:      	mov	edx, dword ptr [8*eax + 0x10cf110]
+  460eec:      	mov	dword ptr [0x10c70e8], edx
+  460ef2:      	mov	eax, dword ptr [8*eax + 0x10cf114]
+  460ef9:      	cmp	eax, ecx
+  460efb:      	je	0x460f27 <.text+0x5ff27>
+  460efd:      	mov	edx, dword ptr [0x10c70e8]
+  460f03:      	mov	dword ptr [4*ecx + 0x10c70ec], edx
+  460f0a:      	mov	ecx, dword ptr [4*eax + 0x10c70ec]
+  460f11:      	mov	dword ptr [0x10cf108], eax
+  460f16:      	mov	dword ptr [0x10c70e8], ecx
+  460f1c:      	mov	dword ptr [4*eax + 0x10c70ec], 0x0
+  460f27:      	ret

@@ -256,7 +256,7 @@ def main():
                                         'disk_start': 0, 'native_start': 0, 'disk_end': 20,
                                         'native_end_before_pop': 32 if pointer_bytes == 8 else 20,
                                         'native_cursor_after_pop': 0,
-                                        'shadow_after_pop': 20 if pointer_bytes == 8 else 0})
+                                        'shadow_after_pop': 0})
                 if actual_header != expected_header:
                     raise RuntimeError('Actual header fields/temporary cursor contract differs from genuine original')
                 headers[asset] = actual_header
@@ -284,7 +284,7 @@ def main():
                                      'header_native_bytes': 32 if pointer_bytes == 8 else 20,
                                      'block0_native_before_pop': 32 if pointer_bytes == 8 else 20,
                                      'block0_native_after_pop': 0,
-                                     'block0_shadow_after_pop': 20 if pointer_bytes == 8 else 0})
+                                     'block0_shadow_after_pop': 0})
                 for key, expected in expectations.items():
                     if row[key] != expected:
                         raise RuntimeError(f'{target} {identity}: {key} differs from independently decoded original')

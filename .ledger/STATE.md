@@ -1,3 +1,32 @@
+# Current State — 12 October 2026
+
+TASK27 TEMP cursor/alias prerequisite complete. Actual native-only target-entry
+shadow stack restores block0 physical/shadow coordinates together; nested scopes
+and nonzero advancement verified. Pop retains maps/bytes. Stable alias tail sort
+plus stable merge guarantees latest equal-key registration. Dedicated3processes
+perABI each40cases/8cycles; native112aliaschecks/O3assertionsUBSan pass; historical
+9a8534d negativecontrol fails expectedshadowcheck. Final genuineowner debug/O3
+run2 all3ABIs pass162prior/86normalization/12cycles/all1994queries afteroverwrite.
+Currentcollector emits observed0; strict8runners updated, prePop20 unchanged.
+Sourceproof1 sixWin32bodies/header and163expander/streamload source unchanged.
+All tests completed; finalfullpass3+collector rebuild/host4/normalWindows1 pass.
+Read arm64_temp_cursor.md/temp_cursor_handoff.md and frozen evidence/inventory.
+
+Initial fullTEMP reuse scope deliberately split afteroriginalretainedalias proof.
+No asset2/header execution yet. Next TASK28 successful-write-aware sortedsegments/
+aliasoverlap/tombstones, retainedsuffix policy, no stale driftfallback; then checked
+genuine codeRawFile header12disk/24native atTEMP0 (len140), firsttable queries
+intact. Zombie actualnextTechniqueSet7 deferredwithoutskipping. Nextthree: this
+TEMP writegate; realDBHASH/assetentry ownership/init; smallestregistrypublication.
+Front end/interner/firstStringTable queries/pooledownership verified, fullregistry/
+async/refill/zoneinit/graphics/postreadmetadataOOM/concurrency/generalTEMPtail/
+multiownerPMem/retainedpages/16KB/S25/hashlocale remainunverified. No newRSS/timing.
+Windows2528/DXVK2552/root15/originals/APK and3325oldfrozen protected. Localverified
+commitsDEC26 authorized, no push. ExactHEAD/pendingpaths fromGit; originalscope
+DEC42 and currentfacts/warning inLedger. Allscratch/failures/controls retained.
+
+# Historical state (preserved)
+
 # Ledger field correction,12 October2026
 
 Latest facts use concise titles and full evidence bodies; earlier swapped fields

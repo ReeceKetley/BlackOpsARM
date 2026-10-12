@@ -1,3 +1,10 @@
+## Current Milestone
+
+Cursor/alias prerequisite verified; TEMP successful-write mapping is next TASK28,
+before genuine codeRawFile numericheader atTEMP0. No asset skipping or fullregistry
+claim. Corefront end and interning already complete. Continue DEC29; localverified
+commitsDEC26, no push. Read STATE/arm64_temp_cursor.md; no engine-owned graphics.
+
 # Current milestone,12 October2026
 
 TASK26 actualpoolheader/cloneownership complete: genuine1994queries surviveTEMP
@@ -25,7 +32,7 @@ no push; no game-owned graphics yet. Historical goal retained below.
 
 # Project Goal
 
-## Current Milestone
+## Historical milestone
 
 TASK-0023 actual query parity audit complete, but shared genuine row misses
 24/400 and796/1594 remain open (FAIL20). Original-instruction/loading-path audit

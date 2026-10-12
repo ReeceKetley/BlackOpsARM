@@ -1,0 +1,20 @@
+{
+  "schema": "BlackOpsARM.TASK-0027.original-alias-instruction-evidence.v1",
+  "exe_sha256": "2ba4a04e81de2b60582da0e4489efde21e6cb07904a223bae633b6ccaebbf759",
+  "va": 5881632,
+  "end_exclusive": 5881666,
+  "bytes": 34,
+  "file_offset": 1684256,
+  "range_sha256": "9106d1e3d7d09fc76d44898cba1f555650728ada56643386237122d8c77ee258",
+  "argv": [
+    "D:/Android/Sdk/ndk/30.0.16248370/toolchains/llvm/prebuilt/windows-x86_64/bin/llvm-objdump.exe",
+    "-d",
+    "--no-show-raw-insn",
+    "--x86-asm-syntax=intel",
+    "--start-address=0x59bf20",
+    "--stop-address=0x59bf42",
+    "D:\\Games\\Call of Duty - Black Ops\\BlackOps.exe"
+  ],
+  "exit": 0,
+  "semantics": "[field]=*(blocks[(offset-1)>>29].data+((offset-1)&0x1fffffff)); no TEMP scope/generation test; block0 is permitted. Actual caller source references this leaf at0x604f83 before any new TEMP overwrite."
+}
