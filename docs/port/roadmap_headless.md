@@ -139,3 +139,17 @@ never infer initialized strings from zero pages or capacity/drift fallback.
 Com_HashString overflow/ctype and CellCompare subtraction require bounded review
 before UBSan lookup. Continue DEC-0029, verified local commits DEC-0026; no push.
 Preserve protected repos/assets/frozen evidence. No game-owned graphics yet.
+
+
+TASK-0020 is complete: actual cell strings and guarded2/49 pointer conversions
+on HONOR/Windows x86/x64,129 cases/12 cycles each and optimized ARM pass. Read
+docs/port/arm64_stringtable_strings.md, FACT-0060/0061/0062 and WARN-0020/FAIL16.
+Proof comes only from earlier successful loads in the live owner, never capacity/
+zero pages or drift fallback. Clear records before reset/release. Exact-earlier
+block4 starts only; caller liveness/proof creation remains a contract.
+Revised next3: original signed16 indices, isolated Windows-equivalent modulo32
+hash, actual lookup parity/investigation before registration. Genuine index arrays
+are permutations but not ordinarysigned/unsigned hash-sorted. Preserve bytes/order;
+do not reject/resort original data to satisfy the earlier plan. Modelmisses are
+not yet native execution. Continue DEC-0029, verified local commits DEC-0026;
+no push. Protected repos/assets/frozen evidence remain unchanged, graphics absent.

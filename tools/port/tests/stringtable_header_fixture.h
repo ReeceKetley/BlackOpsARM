@@ -63,7 +63,13 @@ static void executeHeader(const StringTableHeaderPlan&p,DecodedSource&r,XBlock(&
 #endif
     DB_PopStreamPos();
 #if defined(BO1_STRINGTABLE_CELLS_GATE)
-    require(g_streamPosArray[0]==blocks[0].data&&g_streamPosStackIndex==1&&g_streamPosIndex==4&&DB_GetStreamPos()==blocks[4].data+payload->cells.nativeEnd,"TEMP pop restores block0 workspace while returning to parent4");
+    require(g_streamPosArray[0]==blocks[0].data&&g_streamPosStackIndex==1&&g_streamPosIndex==4&&DB_GetStreamPos()==blocks[4].data+
+#if defined(BO1_STRINGTABLE_STRINGS_GATE)
+        payload->stringNativeEnd
+#else
+        payload->cells.nativeEnd
+#endif
+        ,"TEMP pop restores block0 workspace while returning to parent4");
 #else
     require(DB_GetStreamPos()==blocks[0].data&&g_streamPosArray[0]==nullptr&&g_streamPosStackIndex==0&&g_streamPosIndex==0,"TEMP pop restores entry workspace cursor");
 #endif

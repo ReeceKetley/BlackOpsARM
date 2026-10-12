@@ -2,13 +2,27 @@
 #include <platform/fastfile_stringtable_cells.h>
 static_assert(sizeof(StringTableCell)==(BO1_NATIVE_64BIT?16:8));
 static_assert(offsetof(StringTableCell,string)==0&&offsetof(StringTableCell,hash)==sizeof(void*));
-struct StringTablePayloadPlan{RawStringPlan name;StringTableCellsPlan cells;std::size_t nameSource{},cellSource{},end{};};
+#if defined(BO1_STRINGTABLE_STRINGS_GATE)
+struct CellStringEntry{unsigned index{},tag{};std::size_t source{};RawStringPlan plan;bool offset{};std::uint64_t targetDisk{},targetNative{},bytes{};};
+#endif
+struct StringTablePayloadPlan{RawStringPlan name;StringTableCellsPlan cells;std::size_t nameSource{},cellSource{},end{};
+#if defined(BO1_STRINGTABLE_STRINGS_GATE)
+    std::uint64_t diskCapacity{},nativeCapacity{},stringDiskEnd{},stringNativeEnd{};std::vector<CellStringEntry>strings;
+#endif
+};
+#if defined(BO1_STRINGTABLE_STRINGS_GATE)
+#include "stringtable_strings_fixture.h"
+#endif
 static StringTablePayloadPlan payloadPlan(const Front&f,const AssetDirectoryPlan&d,const StringTableHeaderPlan&h,const unsigned char*data,std::size_t bytes){
     StringTablePayloadPlan p;p.nameSource=f.end+static_cast<std::size_t>(d.diskBytes)+20;require(p.nameSource<=bytes,"name follows checked numeric header");
     require(PlanRawString(h.nameTag,data+p.nameSource,bytes-p.nameSource,f.envelope.zone.file.blockSize[4],f.envelope.zone.logical[4],d.diskEnd,d.nativeEnd,p.name)==RawStringResult::Ok,"checked genuine name capacity/source before allocation");
     p.cellSource=p.nameSource+static_cast<std::size_t>(p.name.bytes);require(p.cellSource<=bytes,"name end bounded");
     require(PlanStringTableCells(h.columns,h.rows,h.valuesTag,data+p.cellSource,bytes-p.cellSource,f.envelope.zone.file.blockSize[4],f.envelope.zone.logical[4],p.name.diskEnd,p.name.nativeEnd,p.cells)==StringTableCellsResult::Ok,"checked genuine cell records before allocation");
-    p.end=p.cellSource+static_cast<std::size_t>(p.cells.diskBytes);return p;
+    p.end=p.cellSource+static_cast<std::size_t>(p.cells.diskBytes);
+#if defined(BO1_STRINGTABLE_STRINGS_GATE)
+    p.diskCapacity=f.envelope.zone.file.blockSize[4];p.nativeCapacity=f.envelope.zone.logical[4];planCellStrings(p,data,bytes);
+#endif
+    return p;
 }
 static StringTableCell*executeCells(const StringTableCellsPlan&p,DecodedSource&r,XBlock(&blocks)[7],bool measurement){
     if(!p.present)return nullptr;require(g_streamPosIndex==4,"cell arrays use actual block4 loading scope");
@@ -46,7 +60,10 @@ static void executePayload(const StringTablePayloadPlan&p,StringTable*header,Dec
 #endif
     }else require(!header->name,"absent name remains absent");
     require(r.Position()+52==p.cellSource&&DB_GetStreamPos()==blocks[4].data+p.name.nativeEnd,"name source/native endpoint before cells");
-    header->values=executeCells(p.cells,r,blocks,measurement);require(r.Position()+52==p.end,"prefix stops before per-cell string payloads");
+    header->values=executeCells(p.cells,r,blocks,measurement);require(r.Position()+52==p.cellSource+p.cells.diskBytes,"cell-array end before per-cell strings");
+#if defined(BO1_STRINGTABLE_STRINGS_GATE)
+    if(p.cells.present)executeCellStrings(p,header->values,r,blocks,measurement);
+#endif
     if(measurement)std::printf("{\"name_measurements\":{\"source_start\":%zu,\"length\":%llu,\"adler32\":%lu,\"disk_start\":%llu,\"disk_end\":%llu,\"native_start\":%llu,\"native_end\":%llu}}\n",p.nameSource,(unsigned long long)p.name.bytes,p.name.present?adler32(1,blocks[4].data+p.name.nativeStart,static_cast<unsigned>(p.name.bytes)):1ul,(unsigned long long)p.name.diskStart,(unsigned long long)p.name.diskEnd,(unsigned long long)p.name.nativeStart,(unsigned long long)p.name.nativeEnd);
     DB_PopStreamPos();require(g_streamPosIndex==0&&DB_GetStreamPos()==headerCursor,"child scope retains live header end before outer TEMP pop");
 }
