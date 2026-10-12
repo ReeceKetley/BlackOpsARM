@@ -47,9 +47,25 @@ static std::size_t destinationCapacity(const unsigned char*dst){
     const auto&b=g_streamBlocks[g_streamPosIndex];const auto address=reinterpret_cast<uintptr_t>(dst),base=reinterpret_cast<uintptr_t>(b.data);
     require(b.data&&address>=base&&address-base<=b.size,"reader destination inside logical owned block");return b.size-(address-base);
 }
+#if defined(BO1_MATERIAL_GRAPH_GATE)
+struct GraphRead { std::size_t source; unsigned size; bool scratch; };
+static std::vector<GraphRead> graphReads;
+static std::size_t graphReadIndex;
+static bool graphReadActive;
+#endif
 void __cdecl DB_LoadXFileData(unsigned __int8*dst,int n){
     // Native helper reads a temporary vector sized to the checked table extent.
     // This audited scratch extent is separate from the owned raw-string block.
+#if defined(BO1_MATERIAL_GRAPH_GATE)
+    if(graphReadActive){
+        require(reader&&graphReadIndex<graphReads.size(),"finite planned graph read");
+        const auto& planned=graphReads[graphReadIndex];
+        require(n>=0&&reader->Position()+52==planned.source&&unsigned(n)==planned.size,"graph read exact source and extent");
+        const auto capacity=planned.scratch?std::size_t(planned.size):destinationCapacity(dst);
+        if(failRead)throw std::runtime_error("injected planned graph read failure");
+        require(reader->Read(dst,capacity,n),"bounded planned graph read");++graphReadIndex;++readCalls;return;
+    }
+#endif
     const auto capacity=tableReadBytes?tableReadBytes:destinationCapacity(dst);
     if(tableReadBytes&&n!=static_cast<int>(tableReadBytes))throw std::runtime_error("unexpected table scratch read size");
     if(!reader||failRead||!reader->Read(dst,capacity,n))throw std::runtime_error("bounded decoded read failed");++readCalls;
@@ -58,6 +74,13 @@ void __cdecl DB_LoadXFileData(unsigned __int8*dst,int n){
 #endif
 }
 int DB_LoadXFileDataNullTerminated(unsigned __int8*dst){
+#if defined(BO1_MATERIAL_GRAPH_GATE)
+    if(graphReadActive){
+        require(reader&&graphReadIndex<graphReads.size(),"finite planned graph string read");const auto&planned=graphReads[graphReadIndex];
+        require(!planned.scratch&&reader->Position()+52==planned.source,"graph string exact source and owned destination");
+        int n=0;require(!failRead&&reader->ReadCString(dst,destinationCapacity(dst),n)==RawStringResult::Ok&&n==static_cast<int>(planned.size),"bounded exact planned graph string extent");++graphReadIndex;++readCalls;return n;
+    }
+#endif
     int n=0;if(!reader||failRead||reader->ReadCString(dst,destinationCapacity(dst),n)!=RawStringResult::Ok)throw std::runtime_error("bounded decoded string read failed");++readCalls;return n;
 }
 struct StringEntry{unsigned index;std::size_t source;RawStringPlan plan;};

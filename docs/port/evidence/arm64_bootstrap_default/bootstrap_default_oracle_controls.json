@@ -1,0 +1,67 @@
+{
+  "status": "passed",
+  "targets": [
+    {
+      "original_path": "D:\\Games\\Call of Duty - Black Ops\\zone\\common\\code_post_gfx_mp.ff",
+      "raw_sha256": "48133f39f8a7a931cd7b4d79d2f60d813cbf44c0c3cd9d38d7bd89e40f5a668b",
+      "decoded_sha256": "b0fd31e65f5549003e0ba7b26ef268ca3f32d95ea8856884191f7abc51c53f22",
+      "decoded_bytes": 3840157,
+      "decoded_adler32": 4256620671,
+      "padding_bytes": 19,
+      "source_end": 10017,
+      "rejected_controls": [
+        "negative_string_count",
+        "absent_asset_directory",
+        "unsupported_string_tag",
+        "wrong_first_asset_type",
+        "unsupported_directory_tag",
+        "absent_default_name",
+        "unsupported_default_scalar",
+        "future_technique_reference",
+        "wrong_block_technique_reference",
+        "interior_technique_reference",
+        "unsupported_pass_count",
+        "unsupported_stream_count",
+        "retail_runtime_handle",
+        "absent_vertex_program",
+        "oversized_vertex_program",
+        "future_shader_name",
+        "truncated_header",
+        "truncated_final_name"
+      ],
+      "metadata_only": true,
+      "genuine_native_execution": false
+    },
+    {
+      "original_path": "D:\\Games\\Call of Duty - Black Ops\\zone\\common\\code_post_gfx.ff",
+      "raw_sha256": "d47945f6290e930c6b2db6801e7f87412f2f63fd6ab4e9dc1a3b28b1994a98e9",
+      "decoded_sha256": "2dbc5c0a954aa79ffa8068ead1fb84015c502d085b4650890e83a91a54fe975d",
+      "decoded_bytes": 6222433,
+      "decoded_adler32": 4107717948,
+      "padding_bytes": 20,
+      "source_end": 11255,
+      "rejected_controls": [
+        "negative_string_count",
+        "absent_asset_directory",
+        "unsupported_string_tag",
+        "wrong_first_asset_type",
+        "unsupported_directory_tag",
+        "absent_default_name",
+        "unsupported_default_scalar",
+        "future_technique_reference",
+        "wrong_block_technique_reference",
+        "interior_technique_reference",
+        "unsupported_pass_count",
+        "unsupported_stream_count",
+        "retail_runtime_handle",
+        "absent_vertex_program",
+        "oversized_vertex_program",
+        "future_shader_name",
+        "truncated_header",
+        "truncated_final_name"
+      ],
+      "metadata_only": true,
+      "genuine_native_execution": false
+    }
+  ]
+}

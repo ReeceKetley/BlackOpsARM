@@ -10,6 +10,9 @@
 #include "db_assetlist_types.h"
 #if defined(BO1_TECHSET_GATE)
 #include "db_techset_types.h"
+#if defined(BO1_MATERIAL_GRAPH_GATE)
+#include "db_material_graph_types.h"
+#endif
 #endif
 #if defined(BO1_RAWFILE_HEADER_GATE)
 #include "db_rawfile_types.h"
@@ -374,54 +377,6 @@ struct MaterialTextureDef_32
     uint8_t pad[3];
     uint32_t u;
 };
-struct MaterialTechniqueHeader_32
-{
-    uint32_t name;
-    uint16_t flags;
-    uint16_t passCount;
-};
-struct MaterialPass_32
-{
-    uint32_t vertexDecl;
-    uint32_t vertexShader;
-    uint32_t pixelShader;
-    uint8_t perPrimArgCount;
-    uint8_t perObjArgCount;
-    uint8_t stableArgCount;
-    uint8_t customSamplerFlags;
-    uint32_t args;
-};
-struct MaterialShaderArgument_32
-{
-    uint16_t type;
-    uint16_t dest;
-    uint32_t u;
-};
-struct MaterialVertexShader_32
-{
-    uint32_t name;
-    uint32_t vs;
-    uint32_t program;
-    uint16_t programSize;
-    uint16_t pad;
-};
-struct MaterialPixelShader_32
-{
-    uint32_t name;
-    uint32_t ps;
-    uint32_t program;
-    uint16_t programSize;
-    uint16_t pad;
-};
-struct MaterialVertexDeclaration_32
-{
-    uint8_t streamCount;
-    uint8_t hasOptionalSource;
-    uint8_t isLoaded;
-    uint8_t pad;
-    uint8_t routingData[32];
-    uint32_t decl[18];
-};
 struct water_t_32
 {
     float floatTime;
@@ -443,12 +398,6 @@ struct water_t_32
 static_assert(sizeof(MaterialInfo_32) == 40, "Win32 MaterialInfo");
 static_assert(sizeof(Material_32) == 192, "Win32 Material");
 static_assert(sizeof(MaterialTextureDef_32) == 16, "Win32 MaterialTextureDef");
-static_assert(sizeof(MaterialTechniqueHeader_32) == 8, "Win32 MaterialTechnique header");
-static_assert(sizeof(MaterialPass_32) == 20, "Win32 MaterialPass");
-static_assert(sizeof(MaterialShaderArgument_32) == 8, "Win32 MaterialShaderArgument");
-static_assert(sizeof(MaterialVertexShader_32) == 16, "Win32 MaterialVertexShader");
-static_assert(sizeof(MaterialPixelShader_32) == 16, "Win32 MaterialPixelShader");
-static_assert(sizeof(MaterialVertexDeclaration_32) == 108, "Win32 MaterialVertexDeclaration");
 static_assert(sizeof(water_t_32) == 68, "Win32 water_t");
 
 static void DB_Expand_MaterialInfo(MaterialInfo *dst, const MaterialInfo_32 &disk)
@@ -549,7 +498,64 @@ void DB_ExpandLoad_MaterialTechniqueSet(MaterialTechniqueSet *dst)
 }
 
 #endif
-#if !defined(BO1_ASSETLIST_GATE)
+#if !defined(BO1_ASSETLIST_GATE) || defined(BO1_MATERIAL_GRAPH_GATE)
+#pragma pack(push, 1)
+struct MaterialTechniqueHeader_32
+{
+    uint32_t name;
+    uint16_t flags;
+    uint16_t passCount;
+};
+struct MaterialPass_32
+{
+    uint32_t vertexDecl;
+    uint32_t vertexShader;
+    uint32_t pixelShader;
+    uint8_t perPrimArgCount;
+    uint8_t perObjArgCount;
+    uint8_t stableArgCount;
+    uint8_t customSamplerFlags;
+    uint32_t args;
+};
+struct MaterialShaderArgument_32
+{
+    uint16_t type;
+    uint16_t dest;
+    uint32_t u;
+};
+struct MaterialVertexShader_32
+{
+    uint32_t name;
+    uint32_t vs;
+    uint32_t program;
+    uint16_t programSize;
+    uint16_t pad;
+};
+struct MaterialPixelShader_32
+{
+    uint32_t name;
+    uint32_t ps;
+    uint32_t program;
+    uint16_t programSize;
+    uint16_t pad;
+};
+struct MaterialVertexDeclaration_32
+{
+    uint8_t streamCount;
+    uint8_t hasOptionalSource;
+    uint8_t isLoaded;
+    uint8_t pad;
+    uint8_t routingData[32];
+    uint32_t decl[18];
+};
+#pragma pack(pop)
+static_assert(sizeof(MaterialTechniqueHeader_32)==8);
+static_assert(sizeof(MaterialPass_32)==20);
+static_assert(sizeof(MaterialShaderArgument_32)==8);
+static_assert(sizeof(MaterialVertexShader_32)==16);
+static_assert(sizeof(MaterialPixelShader_32)==16);
+static_assert(sizeof(MaterialVertexDeclaration_32)==108);
+
 void DB_ExpandLoad_MaterialTechnique(MaterialTechnique *dst)
 {
     iassert(dst == reinterpret_cast<MaterialTechnique *>(DB_GetStreamPos()));
@@ -661,6 +667,8 @@ void DB_ExpandLoad_MaterialVertexDeclaration(MaterialVertexDeclaration *dst)
     DB_Expand_Commit(static_cast<int>(sizeof(MaterialVertexDeclaration)));
 }
 
+#endif
+#if !defined(BO1_ASSETLIST_GATE)
 void DB_ExpandLoad_water_t(water_t *dst)
 {
     iassert(dst == reinterpret_cast<water_t *>(DB_GetStreamPos()));
