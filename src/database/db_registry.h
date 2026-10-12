@@ -109,23 +109,7 @@ struct __declspec(align(4)) XZoneName // sizeof=0x50
     // padding byte
 };
 
-template <typename T>
-union XAssetPoolEntry // sizeof=0x10
-{                                       // ...
-    XAssetPoolEntry()
-    {
-        next = NULL;
-    }
-    T entry;
-    XAssetPoolEntry<T> *next;
-};
-
-template <typename T, int LEN>
-struct XAssetPool
-{
-    XAssetPoolEntry<T> *freeHead;
-    XAssetPoolEntry<T> entries[LEN];
-};
+#include "db_asset_pool.h"
 
 struct Material;
 struct SndBank;
@@ -251,7 +235,6 @@ void __cdecl DB_Sleep(unsigned int msec);
 XAssetEntryPoolEntry *__cdecl DB_FindXAssetEntry(XAssetType type, const char *name);
 XAssetEntry *__cdecl DB_CreateDefaultEntry(XAssetType type, const char *name);
 XAssetEntryPoolEntry *__cdecl DB_AllocXAssetEntry(XAssetType type, unsigned __int8 zoneIndex);
-void __cdecl DB_CloneXAssetInternal(const XAsset *from, XAsset *to);
 void __cdecl PrintWaitedError(XAssetType type, char *name, int waitedMsec);
 bool __cdecl IsConfigFile(char *name);
 void __cdecl DB_Update();

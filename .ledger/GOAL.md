@@ -1,5 +1,13 @@
 # Current milestone,12 October2026
 
+TASK26 actualpoolheader/cloneownership complete: genuine1994queries surviveTEMP
+overwrite onHONOR/Windows/optimized, real576/768 policy andcleanup preserved.
+TASK27 original-evidence TEMPshadow/maps reuse beforeasset2 next; then realregistry
+services andboundary. Read STATE/arm64_stringtable_owner.md. Corefrontend/interning/
+queries complete; autonomousDEC29/localcommitsDEC26/no push. Noenginegraphics yet.
+
+# Current milestone,12 October2026
+
 TASK25 actual normalization/query parity complete: exact original400/1594 arrays
 and all1994 queries onHONOR/Windows/optimizedARM. Persistent pool-header ownership
 beforeTEMP overwrite is next, then TEMPshadow/map reuse and realregistry boundary.

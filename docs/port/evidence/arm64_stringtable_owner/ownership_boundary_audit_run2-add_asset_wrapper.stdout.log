@@ -1,0 +1,34 @@
+
+D:\Games\Call of Duty - Black Ops\BlackOps.exe:	file format coff-i386
+
+Disassembly of section .text:
+
+00401000 <.text>:
+  7a3330:      	sub	esp, 0x10
+  7a3333:      	mov	ecx, dword ptr [esp + 0x14]
+  7a3337:      	push	esi
+  7a3338:      	push	0x46
+  7a333a:      	mov	dword ptr [esp + 0x8], eax
+  7a333e:      	mov	dword ptr [esp + 0xc], ecx
+  7a3342:      	call	0x5fea60 <.text+0x1fda60>
+  7a3347:      	lea	edx, [esp + 0x8]
+  7a334b:      	push	0x0
+  7a334d:      	push	edx
+  7a334e:      	call	0x7a2f10 <.text+0x3a1f10>
+  7a3353:      	push	0x46
+  7a3355:      	mov	esi, eax
+  7a3357:      	call	0x56d400 <.text+0x16c400>
+  7a335c:      	add	esp, 0x10
+  7a335f:      	cmp	byte ptr [0xc82336], 0x0
+  7a3366:      	je	0x7a3383 <.text+0x3a2383>
+  7a3368:      	mov	byte ptr [0xc82334], 0x1
+  7a336f:      	nop
+  7a3370:      	push	0x19
+  7a3372:      	call	0x4aae60 <.text+0xa9e60>
+  7a3377:      	add	esp, 0x4
+  7a337a:      	cmp	byte ptr [0xc82336], 0x0
+  7a3381:      	jne	0x7a3370 <.text+0x3a2370>
+  7a3383:      	mov	eax, dword ptr [esi + 0x4]
+  7a3386:      	pop	esi
+  7a3387:      	add	esp, 0x10
+  7a338a:      	ret

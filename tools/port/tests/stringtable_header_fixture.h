@@ -88,6 +88,9 @@ static void executeHeader(const StringTableHeaderPlan&p,DecodedSource&r,XBlock(&
 #endif
     require(adler32(1,blocks[4].data,prefixBytes)==prefixAdler,"header/children preserve preceding block4 bytes");
     if(measurement)std::printf("{\"header_measurements\":{\"source_start\":%zu,\"name_tag\":%u,\"column_count\":%d,\"row_count\":%d,\"values_tag\":%u,\"cell_index_tag\":%u,\"cell_count\":%llu,\"disk_start\":%llu,\"native_start\":%llu,\"disk_end\":%llu,\"native_end_before_pop\":%llu,\"native_cursor_after_pop\":0,\"shadow_after_pop\":%llu}}\n",sourceStart,p.nameTag,p.columns,p.rows,p.valuesTag,p.indexTag,(unsigned long long)p.cells,(unsigned long long)p.diskStart,(unsigned long long)p.nativeStart,(unsigned long long)p.diskEnd,(unsigned long long)p.nativeEnd,(unsigned long long)(BO1_NATIVE_64BIT?p.diskEnd:0));
+#if defined(BO1_STRINGTABLE_OWNER_GATE)
+    owner_fixture::verifyAfterPop(p,*payload,blocks,header,measurement);
+#endif
 }
 static unsigned headerFixtures(const ZonePlan&zone){
     unsigned count=0;const auto baseline=frontend_fixture::counts();std::array<unsigned char,20>data{};

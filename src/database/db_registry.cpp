@@ -1,3 +1,8 @@
+#if defined(BO1_STRINGTABLE_OWNER_GATE)
+#include "db_asset_pool.h"
+#include <universal/assertive.h>
+#include <cstring>
+#else
 #include "db_registry.h"
 #include <universal/com_stringtable_sort.h>
 #include <cstdio>
@@ -46,6 +51,8 @@
 #include <client_mp/cl_scrn_mp.h>
 
 
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE)
 #define POOLSIZE_XMODELPIECES      64
 #define POOLSIZE_PHYSPRESET       64
 #define POOLSIZE_PHYSPRESET_MOD 128 // mod: capacity for bo1_mod_zones; in use only with it on the command line (DB_InitXAssets)
@@ -101,8 +108,6 @@
 #define POOLSIZE_RAWFILE          1024
 #define POOLSIZE_RAWFILE_MOD 2048 // mod: capacity for bo1_mod_zones; in use only with it on the command line (DB_InitXAssets)
 //#define POOLSIZE_STRINGTABLE       256
-#define POOLSIZE_STRINGTABLE      576
-#define POOLSIZE_STRINGTABLE_MOD 768 // mod: capacity for bo1_mod_zones; in use only with it on the command line (DB_InitXAssets)
 #define POOLSIZE_PACKINDEX         16
 #define POOLSIZE_XGLOBALS          1
 #define POOLSIZE_DDL               24
@@ -158,27 +163,7 @@ static int g_poolSize[43] = // mod: not const: DB_InitXAssets raises the *_MOD t
     POOLSIZE_EMBLEMSET,
 };
 
-void __cdecl DB_FreeXAssetHeader_EmblemSet_(XAssetPoolEntry<EmblemSet> **pool, XAssetHeader header);
 
-template <typename T>
-XAssetHeader DB_AllocXAsset(void *pool)
-{
-    XAssetHeader header;
-    XAssetPool<T, 1> *castPool = (XAssetPool<T, 1> *) pool;
-    XAssetPoolEntry<T> *freeHead = castPool->freeHead;
-
-    if (freeHead)
-    {
-        header.data = &freeHead->entry;
-        castPool->freeHead = freeHead->next;
-    }
-    else
-    {
-        header.data = NULL;
-    }
-
-    return header;
-}
 
 XAssetHeader XASSET_SINGLETON(void *pool)
 {
@@ -255,7 +240,11 @@ XAssetPool<SndDriverGlobals, POOLSIZE_SNDDRIVERGLOBALS> g_SndDriverGlobalsPool;
 XAssetPool<FxEffectDef, POOLSIZE_FX_MOD>                    g_FxEffectDefPool;
 XAssetPool<FxImpactTable, POOLSIZE_IMPACTFX_MOD>            g_FxImpactTablePool;
 XAssetPool<RawFile, POOLSIZE_RAWFILE_MOD>                   g_RawFilePool;
+
+#endif
 XAssetPool<StringTable, POOLSIZE_STRINGTABLE_MOD>           g_StringTablePool;
+
+#if !defined(BO1_STRINGTABLE_OWNER_GATE)
 XAssetPool<PackIndex, POOLSIZE_PACKINDEX>               g_PackIndexPool;
 XAssetPool<XGlobals, POOLSIZE_XGLOBALS>                 g_XGlobalsPool;
 XAssetPool<ddlDef_t, POOLSIZE_DDL>                      g_DDLPool;
@@ -1028,14 +1017,21 @@ void __cdecl Mark_EmblemSetAsset(EmblemSet *emblemSet)
     DB_GetXAsset(ASSET_TYPE_EMBLEMSET, (XAssetHeader)emblemSet);
 }
 
+
+#endif
 void __cdecl DB_FreeXAssetHeader_EmblemSet_(XAssetPoolEntry<EmblemSet> **pool, XAssetHeader header)
 {
-    XAssetPoolEntry<EmblemSet> *oldFreeHead; // [esp+8h] [ebp-4h]
-
-    oldFreeHead = *pool;
-    *pool = (XAssetPoolEntry<EmblemSet> *)header.xmodelPieces;
-    header.xmodelPieces->name = (const char *)oldFreeHead;
+    // Preserve native pointer bits without unrelated pool/payload lvalue accesses.
+    static_assert(sizeof(XAssetHeader) == sizeof(void *));
+    void *released;
+    void *oldFreeHead;
+    ::memcpy(&released, &header, sizeof(released));
+    ::memcpy(&oldFreeHead, pool, sizeof(oldFreeHead));
+    ::memcpy(pool, &released, sizeof(released));
+    ::memcpy(released, &oldFreeHead, sizeof(oldFreeHead));
 }
+#if !defined(BO1_STRINGTABLE_OWNER_GATE)
+
 
 XAssetHeader __cdecl DB_AllocMaterial(void *arg)
 {
@@ -2107,6 +2103,8 @@ XAssetEntryPoolEntry *__cdecl DB_AllocXAssetEntry(XAssetType type, unsigned __in
     return freeHead;
 }
 
+
+#endif
 void __cdecl DB_CloneXAssetInternal(const XAsset *from, XAsset *to)
 {
     int size; // [esp+0h] [ebp-4h]
@@ -2124,6 +2122,8 @@ void __cdecl DB_CloneXAssetInternal(const XAsset *from, XAsset *to)
     size = DB_GetXAssetTypeSize(from->type);
     memcpy((unsigned __int8 *)to->header.xmodelPieces, (unsigned __int8 *)from->header.xmodelPieces, size);
 }
+#if !defined(BO1_STRINGTABLE_OWNER_GATE)
+
 
 void __cdecl PrintWaitedError(XAssetType type, char *name, int waitedMsec)
 {
@@ -3703,18 +3703,6 @@ LABEL_85:
         R_StreamPopSyncDisable();
 }
 
-template <typename T>
-void __cdecl DB_InitPool(void *arg, int32_t size)
-{
-    //XAssetPool<RawFile, POOLSIZE_RAWFILE_MOD> *pool = (XAssetPool<RawFile, POOLSIZE_RAWFILE_MOD>*)arg;
-    T *pool = (T *)arg;
-    pool->freeHead = &pool->entries[0];
-    for (int32_t i = 0; i < size - 1; i++)
-    {
-        pool->entries[i].next = &pool->entries[i + 1];
-    }
-    pool->entries[size - 1].next = NULL;
-}
 
 void(__cdecl *DB_InitPoolHeaderHandler[43])(void *, int) =
 {
@@ -5581,3 +5569,5 @@ void __cdecl DB_LoadGraphicsAssetsForPC()
     DB_LoadXAssets(zoneInfo, zoneCount, 0);
 }
 
+
+#endif // !BO1_STRINGTABLE_OWNER_GATE

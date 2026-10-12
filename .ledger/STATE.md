@@ -1,5 +1,32 @@
 # Current State
 
+Updated12 October2026: TASK26 persistent StringTable pool-header ownership complete.
+ActualInit/Alloc/size-dispatch/Clone/Free onHONOR/Win32/x64;genuine400/1594queries
+surviveTEMP Pop+20/32-byte overwrite, normalizeonce onpooledheader beforepop.
+Childrenstayzoneowned,poolfreebeforezone, completechain/countersbaseline.576normal/
+768mod/768physical preserved;1347nodes4null-exhaustions21callerfixtureguards pass.
+Genericfree4qualifiedpointer memcpy transfers preservecompiledhistoricalWindows
+LIFO/tail whileavoidunrelatedstorage/unionaccess; nofullregistryaliasclaim.
+Exactpooltypes/templates/policycanonicalmoved, Init/Alloc/Clone/getters unchanged;
+defaultsource/BOM/tableorderproof1 +normalWindows8TUsx2pass. Finaldebugpass3/host3/
+run1+optimizedpass1/run1 all3ABI pass162prior/86normalization/12genuinecycles,
+12857hash/262180comparison/22queryfixtures. FullARM0errors8192warnings347ELF incl
+checks;optimized0errors764warnings46ELF. FAIL26BOM/ADL firstbuildlogs retained/fixed.
+Alltestscompleted;150records+originalinstructionevidence frozen. Windows2528/DXVK
+2552/root15/APK/originals/3161olderfrozen unchanged. No newtiming/RSS/graphics.
+Read arm64_stringtable_owner.md/_changes.md/stringtable_owner_handoff.md, FACT79/80,
+WARN26/DEC41/NOTE6. Gitpendingauthority;checkpoint recordedafterpostproof.
+AutonomousDEC29/localverifiedcommitsDEC26/no push. Next3: TASK27 TEMP physical/
+shadow/segments/aliases reusebeforeasset2; actualDBHASH/asset-entry ownership/init
+services; smallestrealregistryboundary. Borrowedchildliveness/callerpreconditions
+remaincontracts, noactualDB_Add/fullregistry/rollback/async/dispatch/zoneinit/
+enginegraphics oruncheckedinvalid-leaf/concurrency cert. S25/16KB/hashlocale/
+retainedpages/multiowner remainopen. Allscratch/failed/referenceevidence preserved.
+
+# Historical state (preserved)
+
+# Current State
+
 Updated12 October2026: TASK25 real original normalization/query parity complete.
 Actual normalizer and unchanged lookup/hash leaves match original400/1594 index
 arrays/all1994 queries onHONOR/Win32/x64/optimizedARM;0misses/disagreements.

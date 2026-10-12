@@ -1,0 +1,102 @@
+{
+  "schema": "BlackOpsARM.TASK-0026.source-preservation.v1",
+  "parent": "fa27a73eee7042aef8a81fbb4d7207ec13f985c8",
+  "files": {
+    "src/database/db_registry.cpp": {
+      "all_default_bytes_exact_except_canonical_moves_and_generic_free": true,
+      "current_sha256": "3D1CFC4AA8682F7C8A9F2A14E13CCD574066D2080856C1A7268040949C9E77A0"
+    },
+    "src/database/db_registry.h": {
+      "only_canonical_pool_types_include_and_clone_prototype_move": true
+    },
+    "src/database/db_assetnames.h": {
+      "only_canonical_size_prototype_include_move": true
+    },
+    "src/database/db_assetnames.cpp": {
+      "whole_default_bytes_table_slot_order_and_bom_exact": true,
+      "current_sha256": "ACA9699EEBD179CA9C9882E72D9E556E028534BAC1676D4B3C86F7C2F98E1C3A"
+    },
+    "src/database/db_expand.cpp": {
+      "default_restored_exact_working_bytes": true,
+      "current_sha256": "43BDA9F92E609A6C04FC860732E3150D7D124440A788CB189F7983CB54D3B66A"
+    },
+    "src/database/db_stream_load.cpp": {
+      "default_restored_exact_working_bytes": true,
+      "current_sha256": "C74A716E71B2375EABC204D601E0B44E43C48BDC4CD869CA1E6FB6A0E924BA95"
+    },
+    "src/database/db_load.cpp": {
+      "default_restored_exact_working_bytes": true,
+      "current_sha256": "57428558FBA01E0A49316AE5DC96478D0E9AC898A1B843F5FF1575B6EF20AA3A"
+    },
+    "src/universal/com_stringtable.cpp": {
+      "default_restored_exact_working_bytes": true,
+      "current_sha256": "94F8454478FC8335356723C41970EA5792A36024AD0655B906DA9E5410CC8F2A"
+    },
+    "src/universal/com_stringtable_obj.cpp": {
+      "default_restored_exact_working_bytes": true,
+      "current_sha256": "387800F7D0BF28FA2318D035BDDCC8475B5E9057E5D481A0C36E8BC5C5C4637F"
+    },
+    "src/universal/q_shared.cpp": {
+      "default_restored_exact_working_bytes": true,
+      "current_sha256": "603D0A067809D2F5AED962254920AF5D17E3586517A92FFCE5E548D9DD124488"
+    },
+    "src/universal/com_hash.cpp": {
+      "default_restored_exact_working_bytes": true,
+      "current_sha256": "78F51E81FD16E4AB773CBCAAED951B6E7A3BA9A36DABE3BF8B45420C7B10B93D"
+    },
+    "src/universal/com_stringtable_sort.cpp": {
+      "default_restored_exact_working_bytes": true,
+      "current_sha256": "57786AF712F133DB2D548AE3400826E69F16374690CA9C3E56B60C301F63AB1D"
+    },
+    "src/platform/win32_compat/sort16.cpp": {
+      "default_restored_exact_working_bytes": true,
+      "current_sha256": "551B144A01F6A161CF61DC62FD0B1421FABE6AAFCFADC1959D29E0B91E6A2E70"
+    },
+    "android/cmake/arm64-audit/CMakeLists.txt": {
+      "default_restored_exact_working_bytes": true,
+      "current_sha256": "2C3971FCDF20297AA4A1D6DBCB6FAEB983A14BA83B813C2BBD7957285F44B48D"
+    }
+  },
+  "leaves": {
+    "Alloc": {
+      "canonical_move_byte_exact": true,
+      "sha256": "DCB51A23E0388A19CE80030BF00F55BD3157F11BF28921E4DA634032C9E459ED"
+    },
+    "Init": {
+      "canonical_move_byte_exact": true,
+      "sha256": "ADD3B2581A2332EC252BE248B7E77E8682FFCF2F13A5A53BEB55E77E26ADE946"
+    },
+    "policy": {
+      "canonical_move_byte_exact": true,
+      "sha256": "B02896CD7261BDEF62C68005AA5B60858CB2307CA17CB9666EB4A7AE2152CF58"
+    },
+    "Clone": {
+      "body_byte_unchanged": true,
+      "sha256": "962129205302A233BA81852682F7C8F203315DB69A96234E0261084CE4A254E7"
+    },
+    "Free": {
+      "only_intentional_changed_body": true,
+      "old_sha256": "2B346C4AC74BD52F9118B3AF44D7324EF979C6F8FA24717657F45A9E8F4EA6DC",
+      "new_sha256": "890919DC67AD237D3D7CDAC58A95A397EAC0A0FAB623E4CC8F04B29467E0180D",
+      "four_native_pointer_representation_transfers": true,
+      "no_child_release": true
+    },
+    "PoolTypes": {
+      "byte_unchanged": true,
+      "sha256": "903C8303F5FFA7072D1061B55C065C5E8399205555C73507D3D3E14447C3F417"
+    },
+    "TypeSize": {
+      "body_byte_unchanged": true,
+      "sha256": "36FD6704296A8B18A33378E48740218CD0F090ABF0EBA80271BE511EDD601B87"
+    },
+    "StringTableSize": {
+      "body_byte_unchanged": true,
+      "sha256": "C5CAD6E68CEB8574795BAAC8E1CD58C29338E8D2C683C8AADCA9F874F796C27C"
+    }
+  },
+  "verifier_sha256": "163A3163B2787EFE0B7BDAFD6460D7383EA43933D3CD636B980F3274F3DD2709",
+  "status": "passed",
+  "registry_execution_certified": false,
+  "only_behavior_change": "defined native pointer representation transfers in existing genericfree",
+  "original_init_alloc_clone_size_policy_and_all_prior_leaves_retained": true
+}
