@@ -1,3 +1,22 @@
+# Current state - TASK37 complete; standing goal continues
+
+All37 genuine code_pre_gfx assets (table+36RawFiles) deserialize/register through
+actual codec/checkedzone/stream/leaves/Add/fullLink, finite synchronous reader.
+Finalhost/O0/O3pass4 debugrun2/O3run1 pass3ABIs:4low/highcycles148Addcalls/144rawrows,
+all400tablequeries/completechildren/Findidentity throughTEMP reuse, exact49593end/
+zeroresidue. Fixture boundedunlink/reverseactualfrees restore32752chain/bothpools/
+count0/ownerbaseline/highwater37retained. Eightnewmalformedcontrols and allTASK36
+prerequisites215cases/12cycles/all1994queries/unsupportedpaths retained. Production
+src/tl/DemonWare unchanged; sourceproof/protected18193/Git pass. Alltests ended.
+Read arm64_code_zone.md, DEC53/FACT109/110/WARN38/FAIL35; Git supplies exact HEAD.
+Next actual complete firstzombie TechniqueSet7 header528/name20/all130tagsnull,
+source65678..66226 and type7registration. Then genuineXModel5 at66226; wider engine
+loading/core initialization. No scan/skip to easier asset. Async/generalregistration/
+Dvar/coreboot/APK/playablegraphics still unverified. DEC47 standingautonomous/local
+commits/no push continues. Protect originals/repos/root/evidence; cleanup remainsfixture.
+
+# Historical state (preserved)
+
 # Current state - TASK36 complete; standing goal continues
 
 Actual Add/fullLink new-name nonstub no-mod path registers genuine liveTEMP

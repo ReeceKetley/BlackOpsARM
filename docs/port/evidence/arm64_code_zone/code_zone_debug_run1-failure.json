@@ -1,0 +1,5 @@
+{
+  "error_type": "RuntimeError",
+  "error": "whole-zone rawfile fields/types/values differ from the checked contract",
+  "traceback": "Traceback (most recent call last):\n  File \"D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\tools\\port\\run_rawfile_payload_gate.py\", line 420, in main\n    if set(row) != {'owner_fixtures'}:\n    ^^^^^^^^^^^^^^^^^^^\n  File \"D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\tools\\port\\run_rawfile_payload_gate.py\", line 419, in check_raw\n    if 'owner_fixtures' in row:\n        ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\tools\\port\\run_rawfile_payload_gate.py\", line 53, in exact_record\n    raise RuntimeError(label + ' fields/types/values differ from the checked contract')\nRuntimeError: whole-zone rawfile fields/types/values differ from the checked contract\n"
+}

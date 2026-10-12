@@ -331,3 +331,8 @@ TASK36 current: actual Add/fullLink new-name no-mod path on liveTEMP returns
 persistent headers before normalization/Pop;3ABIs/O0/O3 pass. Cleanup fixture-owned.
 Read arm64_registry_registration.md, DEC52/FACT107/108/WARN37/FAIL34. Next genuine
 asset deserialization/wider zone integration/coreinit. No fullstartup claim. DEC47 active.
+
+TASK37 current: all37 code_pre_gfx assets deserialize/register,3ABIs/O0/O3 pass.
+Finite reader/fixtureunlink, not coreboot. Read arm64_code_zone.md and DEC53/FACT109/110/
+WARN38/FAIL35. Next firstzombieTechniqueSet7 all130null through66226/type7registration
+then genuineXModel5; no scanning/skipping. DEC47 autonomous/localcommits/no push active.
