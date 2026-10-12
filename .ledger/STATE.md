@@ -1,3 +1,12 @@
+# Latest scope clarification - DEC56
+
+
+User reference policy: the working Windows x64 build is verified by extensive
+testing and gameplay. Intentional stubs matching that reference, including future
+discoveries, are accepted content and require no separate repair/implementation
+milestone. Preserve x64 reference handling; focus on actual Android startup and
+Zombies dependencies. Dead Ops Arcade remains excluded. See DEC56.
+
 # Current state - TASK38 diagnostic verified; genuine bootstrap next
 
 TASK37 remains the successful asset checkpoint: all37 genuine code_pre_gfx assets
