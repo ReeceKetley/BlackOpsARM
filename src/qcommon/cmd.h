@@ -1,4 +1,5 @@
 #pragma once
+#if !defined(BO1_STARTUP_SERVICES)
 #include <universal/com_expressions.h>
 #include <ui/ui_main.h>
 
@@ -15,6 +16,8 @@ struct gameMsgDef_s // sizeof=0x8
         int gameMsgWindowMode;
 };
 
+
+#endif
 
 #include <qcommon/cmd_args.h>
 

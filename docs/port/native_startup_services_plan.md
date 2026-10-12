@@ -1,3 +1,64 @@
+# TASK46: genuine startup-service integration
+
+Verified parent: `8f81f9c`. This milestone selects actual production functions;
+it does not implement a substitute `Com_Init` or claim full engine startup.
+
+Implementation agent owns narrow production selections, necessary native
+platform leaves, isolated build files and integration driver. Root owns
+independent Windows oracles, device collection, source preservation proofs,
+Ledger and final verification. Stable BlackOps64 and retail files stay read-only.
+
+The intended boundary follows production ordering: actual main thread data,
+`Com_InitParse`, `Dvar_Init` and its18 command registrations, real server/client
+string-pool initialization, then `Cbuf_Init` and `Cmd_Init`. Verify the resulting
+23 actual command nodes and callbacks, all three argument resets, selected real
+command operations and string-reference lifetimes. Integrate the existing
+genuine MP startup-zone reader with registered settings when closure permits.
+Filesystem, localization, server forwarding and other unavailable endpoints
+must remain real unresolved application dependencies or explicit test failures.
+
+Independent review requires original Windows behavior for initial bool Dvars,
+canonical Dvar layouts, the original two-buffer `CanKeepStringPointer` cutoff,
+three misaligned eight-byte vec3 copies and SL ownership transitions. Never
+compare uninitialized union bytes or widen the pointer predicate to four buffers.
+The three native vec3 repairs must preserve exactly the original eight bytes
+at offset4 and surrounding writes.
+
+CRT prerequisite now passes230 exact records on original MSVC x86/x64, native
+wrapper host x86/x64 and HONOR ARM64 O0/O3 with UBSan. These cover112 simple
+format/canary cases,98 mixed integer/int64/float/vector/string cases and8 integer
+conversion cases including overflow saturation and ERANGE, plus12 finite float
+boundary/exponent/signed-zero cases. Exact-cap formatting
+writes no terminator and returns capacity; overflow returns-1. This certifies
+the selected caller formats, not arbitrary CRT format compatibility.
+
+Reproduce Windows reference:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/port/build_startup_crt_oracle.ps1 -OutputDirectory build-android-audit/startup_crt_original4
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/port/build_startup_crt_oracle.ps1 -OutputDirectory build-android-audit/startup_crt_native_host4 -NativeWrapper
+```
+
+Use fresh output directories on rerun. Device comparison:
+
+```powershell
+& 'C:/Users/recox/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/python.exe' -B tools/port/run_startup_crt_native.py --output build-android-audit/startup_crt_honor3 --original build-android-audit/startup_crt_original4 --serial AKWJ9X5116G04618
+```
+
+Detect the connected serial first. The collector records source/binary hashes,
+commands and exact Windows/device output. FACT-0135 records this prerequisite;
+Standalone integrated services now pass six original/native Windows and HONOR
+O0/O3 runs with42 state records each, plus30 exact unavailable-dependency
+controls. The three native `va_end` omissions are corrected. All11 touched
+production units compile in normal Windows x86/x64 configurations. Evidence:
+`startup_services_root_final1`, `startup_services_windows_full1`; MP71 joining
+these initialized services is still in progress. No fullCom_Init/Frame claim.
+
+Next boundaries after this milestone: genuine database worker/event/read
+orchestration with explicit allocation ownership, actual `Com_Init` and bounded
+`Com_Frame`, then server/world/script simulation before graphics.
+
+
 # Next authentic startup-services integration
 
 Read-only focused review after `c297348`, 12 October 2026. Research agent

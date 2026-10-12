@@ -1,0 +1,146 @@
+{
+  "passed": true,
+  "baseline": "8f81f9c",
+  "original_windows_bodies": {
+    "Dvar_Init": {
+      "path": "src/universal/dvar.cpp",
+      "original_body_sha256": "1e806491ecc47b18ae3f041524f447d4dfc861859b31daa10d1ba4dffa448605"
+    },
+    "Dvar_Shutdown": {
+      "path": "src/universal/dvar.cpp",
+      "original_body_sha256": "b9994bdfc4d3c1264ea2356d7dd9eb2832d64ab91586e64f6e5c1b36dff40336"
+    },
+    "Dvar_UpdateValue": {
+      "path": "src/universal/dvar.cpp",
+      "original_body_sha256": "f158e11b619e659818494f94e32d38425f157da1cff633e895cdfb397e6e3919"
+    },
+    "Dvar_RegisterNew": {
+      "path": "src/universal/dvar.cpp",
+      "original_body_sha256": "25ca0987e7553afa0edfb0c531295e5d63c6c6042c8e0dc9a6a24d532ccd299e"
+    },
+    "Dvar_RegisterVariant": {
+      "path": "src/universal/dvar.cpp",
+      "original_body_sha256": "83245dc80e7ee0170ac6518bdf7ccb0541f68a7e6389c3bb54ae73e941652227"
+    },
+    "Dvar_CopyString": {
+      "path": "src/universal/dvar.cpp",
+      "original_body_sha256": "027fb0c2dd4134e478113b567375b21fc280c1ea74f4cd46379dce7c9603fb3c"
+    },
+    "Dvar_WeakCopyString": {
+      "path": "src/universal/dvar.cpp",
+      "original_body_sha256": "c93f5a31795fb5f58c9d3e9c507de23041b83c022d37968183880d52f9491249"
+    },
+    "Cbuf_Init": {
+      "path": "src/qcommon/cmd.cpp",
+      "original_body_sha256": "8c4407f1cee5d09c0c54a892ff1d4c948bb0b55e300aeb90c328a351a246e1f2"
+    },
+    "Cmd_Init": {
+      "path": "src/qcommon/cmd.cpp",
+      "original_body_sha256": "62470fb56fdb658b7c5c723484535db918fbad8534a93e8245c766e465648c43"
+    },
+    "Cmd_Shutdown": {
+      "path": "src/qcommon/cmd.cpp",
+      "original_body_sha256": "583a6fc1e7fbf097d5cb6873bda3910d42b536c904a507c99729aec06c826327"
+    },
+    "Cmd_AddCommandInternal": {
+      "path": "src/qcommon/cmd.cpp",
+      "original_body_sha256": "21dddf1963eeaf73c405c80e582522b235e73fee88bec232d94a2f653f36ac80"
+    },
+    "Cmd_ExecuteSingleCommand": {
+      "path": "src/qcommon/cmd.cpp",
+      "original_body_sha256": "b0de6217a544d9ffe858f509f5ff9763b4e0b657bc0491c59b8418e824e66bff"
+    },
+    "Cmd_ResetArgs": {
+      "path": "src/qcommon/cmd.cpp",
+      "original_body_sha256": "88d9fa85dadbf2cac3877c4a487c67b932a39c80bb6fb2e722b8f143cbf46d82"
+    },
+    "Dvar_AddCommands": {
+      "path": "src/qcommon/dvar_cmds.cpp",
+      "original_body_sha256": "b781fc2d9aae0e2f69dcc62a4cac26aa2cffbdb40102f4631fffc6463cab2749"
+    },
+    "Com_LogFileOpen": {
+      "path": "src/qcommon/common.cpp",
+      "original_body_sha256": "817267ce1ac66a37c94df389f6493646860b40aea9cce31cb833de0a71588a0a"
+    },
+    "Com_InitParse": {
+      "path": "src/universal/q_parse.cpp",
+      "original_body_sha256": "5279c251b8d6ea3bce521ffe3ded1b1e857932b1793c891217d7e7fbdd813bba"
+    },
+    "Com_InitParseInfo": {
+      "path": "src/universal/q_parse.cpp",
+      "original_body_sha256": "1a0ce99da7b83f3b07cfb39faa57ea92e629a82df4b477bc717651c2eee339a1"
+    },
+    "Com_ScriptError": {
+      "path": "src/universal/q_parse.cpp",
+      "original_body_sha256": "d8fc14d7fed5502e30e54f9385ec56486ac4b7333d4ae7dfa1634256511049a7"
+    },
+    "Com_ScriptErrorDrop": {
+      "path": "src/universal/q_parse.cpp",
+      "original_body_sha256": "349da22a6c938740f1a2cf17f8e056045946d9cb702eefb9c79e8fa81a8ac908"
+    },
+    "Com_ScriptWarning": {
+      "path": "src/universal/q_parse.cpp",
+      "original_body_sha256": "b0c77e4b3062dca2b678190afbc406567e9584aa6721d1b1c37ab47a80c0d81b"
+    },
+    "CanKeepStringPointer": {
+      "path": "src/universal/q_shared.cpp",
+      "original_body_sha256": "b6acfc5e2c49c7b32d0c32aca5be2b8b7509dbbe592aec1e0e8097d7bd1f607a"
+    },
+    "Com_sprintf": {
+      "path": "src/universal/q_shared.cpp",
+      "original_body_sha256": "81355d71e6ff307e8fd458c73b31e55ef100ef82026e4b5c4b5ab316c9b82472"
+    },
+    "Com_sprintfPos": {
+      "path": "src/universal/q_shared.cpp",
+      "original_body_sha256": "65de854a771afa98741a64cea374802e42126217a8b6fe8758c836911ae72949"
+    },
+    "va": {
+      "path": "src/universal/q_shared.cpp",
+      "original_body_sha256": "0a2b2d550eaf588fee0ff8a3f22324452bd0f35eba5fda923b385daec81802f7"
+    },
+    "CopyString": {
+      "path": "src/universal/com_memory.cpp",
+      "original_body_sha256": "70230e0d735dfaa33dac6df8bed92004f2942d2d3c7a40def198acd69e6f4207"
+    },
+    "FreeString": {
+      "path": "src/universal/com_memory.cpp",
+      "original_body_sha256": "69d09415a3d57319b626f934a6cdcc5312bfff049d97e79be5ba3cf70627bb21"
+    },
+    "Com_Filter": {
+      "path": "src/universal/com_shared.cpp",
+      "original_body_sha256": "0dc444f149607d596191787db6da3278d36a30ab2285a3751b2ce5067a4bcb54"
+    },
+    "Com_Memset": {
+      "path": "src/universal/com_shared.cpp",
+      "original_body_sha256": "a9a1904e61848e9240779e732471ae9a5405e641d2455bf84862d36289a52e36"
+    },
+    "_copyDWord": {
+      "path": "src/universal/com_shared.cpp",
+      "original_body_sha256": "bacdc11ba56739d3e9d306bba769daf7602f3bd4aec9f89ca8ba1dc4c9fadefd"
+    },
+    "Vec2Copy": {
+      "path": "src/universal/com_math.cpp",
+      "original_body_sha256": "399ec0bd5018dc5edcef0cfbdd954e28bc8f1ec5342509f74ad262474cc9c52f"
+    },
+    "Vec3Copy": {
+      "path": "src/universal/com_math.cpp",
+      "original_body_sha256": "cfe0ed524129cd254e8265008ed13c57e7b571a02e45a7d972fafa9a2a73cc6c"
+    },
+    "Vec4Copy": {
+      "path": "src/universal/com_math.cpp",
+      "original_body_sha256": "cea19b1ad4ad6a1c9b87f944ce59a20ea557b72b90743e3b650c5ea6f2c4ba03"
+    },
+    "Vec4Set": {
+      "path": "src/universal/com_math.cpp",
+      "original_body_sha256": "9153dda0b0137ea0ddd51f014f42b66937b735ce076b9ed3b754475f51451c3b"
+    },
+    "Key_IsValidGamePadChar": {
+      "path": "src/client/cl_keys.cpp",
+      "original_body_sha256": "d246202e495e801ccaa24fe85a9da9de51a4c3f792f5a759fcfe4fcce8685ff9"
+    },
+    "Scr_MonitorCommand": {
+      "path": "src/clientscript/cscr_debugger.cpp",
+      "original_body_sha256": "30ca50af96500f99a88d827e88d867363e480114dbb6ab3b0cb9c23f0a97ec22"
+    }
+  }
+}

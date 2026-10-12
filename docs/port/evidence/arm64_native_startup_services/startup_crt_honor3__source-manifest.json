@@ -1,0 +1,5 @@
+{
+  "tools/port/startup_crt_oracle.cpp": "fee956a0d2fcf39e2e182a578806c24d684edaa7d5e2e19c827fc1ca8ed65f30",
+  "src/platform/android/legacy_crt.cpp": "bd997296e0973055bddcfc59f13206998af4a67c829fccfd31dbe79f5d50c52a",
+  "src/platform/android/legacy_crt.h": "6933f878f2930353dc76a2afe8be78eeee1f1305c67029d501060480ffcfecfb"
+}

@@ -1,3 +1,43 @@
+# Latest verified TASK46 - startup services and genuine MP71
+
+FACT141/DEC64: actual TLS/parse/Dvar/SL/CbufCmd initialization and five genuine
+registered settings now execute with all71 MP startup assets in one native
+process, Windowsx86/x64/HONORO0/O3. Existing4cycles/288records/lifetimes pass;
+actualservice cleanup follows.6standalone runs/30unavailable controls,42normal
+body proofs/11fullnormalWindowsTUsperABI,230CRTrecords/3ABIlayout+pointerpolicy
+and19930protectedpaths/1514olderarchives pass.290newrecords frozen. Read
+arm64_native_startup_services.md. All source ownership returnedroot, no active
+device/build handles. Verified local checkpoint pending; no push.
+Actual Com_Init/Com_Frame have not executed. Next exact complete Com_Init body
+native executable with canonical globals/client state and required pre-entry
+setup, runtime dedicated/headless policy. Record firstexecuted dependency,
+implement requiredproduction behavior andrerun. No expandedfixture scope absent
+specificnewABI/sync/ownership/recovery risk. Database/events/reads/allocator
+contracts remain required; don't bypass them. Frame only after realInitreturns.
+
+# Historical active TASK46 - genuine startup services
+
+Verified parent8f81f9c. Implementation agent owns narrow actual Dvar/Cmd/Parse/
+string/math/input-predicate selections, native CRT leaves and isolated integration
+build/driver. Root owns independent oracles/device collection/docs/Ledger/proofs.
+Extended standalone startup-service integration verified FACT140: six original/
+nativeWindows/HONORO0/O3 runs,42state records each,30exactunavailablecontrols.
+MainTLS/parse/Dvar/SL/CbufCmdInit,13directcommands/deferredCbuf,3vector types/
+tails,actual2referenceequalname/valueownership/zeroSLMTshutdown pass.
+SameprocessMP71 integration remains active/unverified; preserve agent changes.
+Read native_startup_services_plan.md/FACT135-140/FAIL46-47. ActualComLogFileOpen
+fixed initialsmoke logdependency; all11normalWindowsTUs bothABIs pass.
+Read native_database_services_plan.md for next actual event/worker prerequisite
+and hard allocator main/DB ownership barrier. No fabricated worker loading.
+Original MSVCx86/x64/nativewrapper hostboth/HONORO0/O3 UBSan match230 CRTrecords,
+including mixed GP/FP varargs, finiteFPbounds/exponents/signedzero, exact-cap/
+truncation/canaries and integeroverflow. Protected19930paths/1514olderrecords pass.
+Original canonical Dvar declarations independently match3ABIs/6offsets.
+Real mainTLS -> parse -> Dvar/18commands -> SL -> Cbuf/Cmd/23commands is target,
+then genuine MP71 with actual registered settings. No fullCom_Init/Frameclaim.
+Root oracle sources and logs in startup_crt_* and startup_dvar_layout1 under
+build-android-audit; previous checkpoint/evidence immutable. No push.
+
 # Latest verified TASK45 - fixed32 original admission protocol
 
 Actualwriter/readrelease nativefunctions passhostx86/x64/HONORO0/O3:10000writes,

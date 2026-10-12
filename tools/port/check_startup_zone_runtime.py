@@ -5,10 +5,23 @@ from pathlib import Path
 from startup_zone_oracle import inspect
 
 
-def validate(stdout, pointer_bytes, oracle, thread_integration=False):
+def validate(stdout, pointer_bytes, oracle, thread_integration=False, startup_services=False):
     if pointer_bytes not in (4, 8):
         raise ValueError('Unsupported runtime ABI')
     lines = stdout.splitlines()
+    if thread_integration and startup_services:
+        raise ValueError('Select exactly one integration prefix')
+    if startup_services:
+        marker = json.loads(lines.pop(0))
+        expected = {'startup_services_integration': {
+            'pointer_bytes': pointer_bytes, 'thread_context': 0, 'registered_dvars': 5,
+            'commands': 23, 'sl_instances': 2, 'actual_parse': True,
+            'actual_dvar_init': True, 'actual_cbuf_cmd_init': True,
+            'actual_registered_loader_dvars': 3, 'com_init_executed': False}}
+        if marker != expected or set(marker) != set(expected) or any(
+                type(marker['startup_services_integration'][key]) is not type(value)
+                for key, value in expected['startup_services_integration'].items()):
+            raise ValueError('Actual startup-services integration record differs')
     if thread_integration:
         marker = json.loads(lines.pop(0))
         expected = {'startup_thread_integration': {'pointer_bytes': pointer_bytes,
@@ -64,6 +77,9 @@ def validate(stdout, pointer_bytes, oracle, thread_integration=False):
     if thread_integration:
         result['actual_thread_data_integrated'] = True
         result['actual_cmd_reset'] = True
+    if startup_services:
+        result['actual_startup_services_integrated'] = True
+        result['actual_registered_loader_dvars'] = 3
     return result
 
 
@@ -74,11 +90,12 @@ if __name__ == '__main__':
     parser.add_argument('--retail', required=True)
     parser.add_argument('--output', required=True)
     parser.add_argument('--thread-integration', action='store_true')
+    parser.add_argument('--startup-services', action='store_true')
     args = parser.parse_args()
     output = Path(args.output)
     if output.exists():
         raise SystemExit('Use fresh collector evidence')
-    result = validate(Path(args.runtime_log).read_text(encoding='utf-8-sig'), args.pointer_bytes, inspect(args.retail), args.thread_integration)
+    result = validate(Path(args.runtime_log).read_text(encoding='utf-8-sig'), args.pointer_bytes, inspect(args.retail), args.thread_integration, args.startup_services)
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(result, indent=2) + '\n', encoding='utf-8')
     print('All 284 registered assets and complete table queries match independent oracle')

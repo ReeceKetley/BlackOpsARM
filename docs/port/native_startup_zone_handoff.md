@@ -1,5 +1,15 @@
 # Latest checkpoints after TASK41
 
+TASK46 completes integrated production startup services plus MP71 on Windows
+x86/x64 and HONOR O0/O3. Read arm64_native_startup_services.md/FACT140 and latest
+STATE: real TLS/parse/Dvar/SL/CbufCmd, actual registered settings, all71 assets
+and lifetime cleanup share one native process.290 new metadata records frozen.
+Actual Com_Init/Com_Frame have not run. The next execution target is the complete
+real startup body with runtime dedicated/headless policy, reaching/logging the
+first unsupported dependency and implementing its production behavior. No
+additional isolated-test scope is authorized without a concrete failure/risk.
+Sources returned to root; Windows reference/retail and old evidence preserved.
+
 TASK45 verifies genuine native fixed32 FastCriticalSection writer/releases,
 all9counter callsite adaptations, Windows/body/layout oracles and HONOR O0/O3
 contention/24fatal controls. SameprocessTLS+MP71 remains passing. Read latestSTATE

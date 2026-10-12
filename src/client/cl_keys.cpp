@@ -1,3 +1,4 @@
+#if !defined(BO1_STARTUP_SERVICES)
 #include <game_sp/g_sp_loadgame.h>
 #include "cl_keys.h"
 #include <gfx_d3d/r_font.h>
@@ -1219,10 +1220,7 @@ int __cdecl Key_StringToKeynum(const char *str)
     }
 }
 
-bool __cdecl Key_IsValidGamePadChar(char key)
-{
-    return key >= 1 && key <= 6 || key >= 14 && key <= 25 || key >= 28 && key <= 31;
-}
+
 
 char tinystr[5];
 const char *__cdecl Key_KeynumToString(int keynum, int translate)
@@ -2580,3 +2578,10 @@ void __cdecl Key_ContextIndex_SetCatcher(int contextIndex, int catcher)
     }
 }
 
+
+#endif
+
+bool __cdecl Key_IsValidGamePadChar(char key)
+{
+    return key >= 1 && key <= 6 || key >= 14 && key <= 25 || key >= 28 && key <= 31;
+}

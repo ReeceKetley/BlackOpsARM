@@ -1,3 +1,4 @@
+#if !defined(BO1_STARTUP_SERVICES)
 #include <platform/bo1_native_width.h>
 #include "cscr_debugger.h"
 #include <universal/assertive.h>
@@ -16,7 +17,7 @@
 #include <qcommon/cmd.h>
 #include <client/cl_console.h>
 
-scrDebuggerGlob_t gScrDebuggerGlob[2];
+
 scriptInstance_t gDebuggerInstance;
 
 Scr_Breakpoint *g_breakpointsHead;
@@ -699,16 +700,7 @@ LABEL_19:
     return 0;
 }
 
-void __cdecl Scr_MonitorCommand(const char *text, scriptInstance_t inst)
-{
-    if ( !text
-        && !Assert_MyHandler("C:\\projects_pc\\cod\\codsrc\\src\\clientscript\\cscr_debugger.cpp", 1245, 0, "%s", "text") )
-    {
-        __debugbreak();
-    }
-    if ( !I_strnicmp(text, "map_restart", 11) && (text[11] <= 32 || text[11] == 59) )
-        gScrDebuggerGlob[inst].abort = 1;
-}
+
 
 void __thiscall Scr_ScriptWindow::RunToCursor(scriptInstance_t inst)
 {
@@ -5385,3 +5377,23 @@ int __cdecl CompareThreadIndices(unsigned int *arg1, unsigned int *arg2)
     return *arg1 - *arg2;
 }
 
+
+#endif
+
+#include "cscr_debugger.h"
+#if defined(BO1_STARTUP_SERVICES)
+#include <platform/startup_services_api.h>
+#endif
+
+scrDebuggerGlob_t gScrDebuggerGlob[2];
+
+void __cdecl Scr_MonitorCommand(const char *text, scriptInstance_t inst)
+{
+    if ( !text
+        && !Assert_MyHandler("C:\\projects_pc\\cod\\codsrc\\src\\clientscript\\cscr_debugger.cpp", 1245, 0, "%s", "text") )
+    {
+        __debugbreak();
+    }
+    if ( !I_strnicmp(text, "map_restart", 11) && (text[11] <= 32 || text[11] == 59) )
+        gScrDebuggerGlob[inst].abort = 1;
+}

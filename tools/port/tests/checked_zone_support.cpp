@@ -11,16 +11,20 @@
 #include <Windows.h>
 #include <qcommon/msg_mp.h>
 #endif
-#if defined(BO1_FRONTEND_TRACE_LOGS)
+#if defined(BO1_STARTUP_SERVICES_ZONE_INTEGRATION)
+void tlPrintf(const char *f, ...) { va_list a; va_start(a,f); std::vfprintf(stderr,f,a); va_end(a); }
+#elif defined(BO1_FRONTEND_TRACE_LOGS)
 void Com_Printf(int, const char *f, ...) { va_list a; va_start(a,f); std::vfprintf(stderr,f,a); va_end(a); }
 void tlPrintf(const char *f, ...) { va_list a; va_start(a,f); std::vfprintf(stderr,f,a); va_end(a); }
 #else
 void Com_Printf(int, const char *, ...) {}
 void tlPrintf(const char *, ...) {}
 #endif
+#if !defined(BO1_STARTUP_SERVICES_ZONE_INTEGRATION)
 void Com_PrintError(int, const char *f, ...) { va_list a; va_start(a,f); std::vfprintf(stderr,f,a); va_end(a); }
 bool Assert_MyHandler(const char *f, int l, int, const char *, ...) { std::fprintf(stderr,"Assertion %s:%d\n",f,l); std::abort(); }
 void Com_Error(errorParm_t, const char *f, ...) { va_list a; va_start(a,f); std::vfprintf(stderr,f,a); va_end(a); std::abort(); }
+#endif
 unsigned int *Z_Malloc(int, const char *, int) { std::abort(); }
 void Z_Free(char *, int) { std::abort(); }
 #if defined(_WIN32)

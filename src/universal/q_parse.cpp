@@ -1,3 +1,6 @@
+#if defined(BO1_STARTUP_SERVICES)
+#include <platform/startup_services_api.h>
+#else
 #include "q_parse.h"
 #include <qcommon/common.h>
 #include <qcommon/threads.h>
@@ -5,6 +8,8 @@
 #include <stdarg.h>
 #include <string.h>
 #include <stdlib.h>
+
+#endif
 
 ParseThreadInfo g_parse[4];
 const char GLOBAL_EMPTY_STRING = 0;
@@ -247,9 +252,14 @@ void Com_ScriptErrorDrop(const char *msg, ...)
     va_start(va, msg);
     ParseThreadInfo = Com_GetParseThreadInfo();
     v3 = &ParseThreadInfo->parseInfo[ParseThreadInfo->parseInfoNum];
+#if defined(__ANDROID__)
+    _vsnprintf(string, 0x1000u, msg, va);
+    va_end(va);
+#else
     va_copy(ap, va);
     _vsnprintf(string, 0x1000u, msg, va);
     ap = 0;
+#endif
     if ( ParseThreadInfo->parseInfoNum )
         Com_Error(ERR_DROP, "%sFile %s, line %i: %s", v3->errorPrefix, v3->parseFile, v3->lines, string);
     else
@@ -267,9 +277,14 @@ void Com_ScriptError(const char *msg, ...)
     va_start(va, msg);
     ParseThreadInfo = Com_GetParseThreadInfo();
     v3 = &ParseThreadInfo->parseInfo[ParseThreadInfo->parseInfoNum];
+#if defined(__ANDROID__)
+    _vsnprintf(string, 0x1000u, msg, va);
+    va_end(va);
+#else
     va_copy(ap, va);
     _vsnprintf(string, 0x1000u, msg, va);
     ap = 0;
+#endif
     if ( ParseThreadInfo->parseInfoNum )
         Com_PrintError(24, "%sFile %s, line %i: %s", v3->warningPrefix, v3->parseFile, v3->lines, string);
     else
@@ -287,9 +302,14 @@ void Com_ScriptWarning(const char *msg, ...)
     va_start(va, msg);
     ParseThreadInfo = Com_GetParseThreadInfo();
     v3 = &ParseThreadInfo->parseInfo[ParseThreadInfo->parseInfoNum];
+#if defined(__ANDROID__)
+    _vsnprintf(string, 0x1000u, msg, va);
+    va_end(va);
+#else
     va_copy(ap, va);
     _vsnprintf(string, 0x1000u, msg, va);
     ap = 0;
+#endif
     if ( ParseThreadInfo->parseInfoNum )
         Com_PrintWarning(24, "%sFile %s, line %i: %s", v3->warningPrefix, v3->parseFile, v3->lines, string);
     else

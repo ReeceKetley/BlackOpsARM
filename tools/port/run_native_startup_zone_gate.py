@@ -16,13 +16,17 @@ def main():
     parser.add_argument('--serial', required=True)
     parser.add_argument('--optimization', choices=('O0', 'O3'), required=True)
     parser.add_argument('--thread-integration', action='store_true')
+    parser.add_argument('--startup-services', action='store_true')
+    parser.add_argument('--binary-name', default='bo1_native_startup_zone_tests')
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[2]
     build, output = (root / args.build).resolve(), (root / args.output).resolve()
     if not build.is_relative_to(root) or not output.is_relative_to(root) or output.exists():
         raise RuntimeError('Use worktree build and fresh evidence output')
     output.mkdir(parents=True)
-    binary = build / 'bo1_native_startup_zone_tests'
+    if Path(args.binary_name).name != args.binary_name:
+        raise RuntimeError('Binary name must be a single filename')
+    binary = build / args.binary_name
     data = binary.read_bytes()
     if data[:5] != b'\x7fELF\x02' or struct.unpack_from('<H', data, 18)[0] != 183:
         raise RuntimeError('Expected native ARM64 ELF')
@@ -30,10 +34,12 @@ def main():
     oracle = inspect(retail)
     adb = ['D:/Android/Sdk/platform-tools/adb.exe', '-s', args.serial]
     remote = '/data/local/tmp/blackopsarm-startup-zone41-' + args.optimization
+    if args.startup_services:
+        remote = '/data/local/tmp/blackopsarm-startup-services-zone46-' + args.optimization
     commands = []
 
     def run(arguments):
-        completed = subprocess.run(adb + arguments, capture_output=True, text=True)
+        completed = subprocess.run(adb + arguments, capture_output=True, text=True, timeout=40)
         commands.append({'args': arguments, 'exit': completed.returncode,
                          'stdout': completed.stdout, 'stderr': completed.stderr})
         (output / 'commands.json').write_text(json.dumps(commands, indent=2) + '\n', encoding='utf-8')
@@ -53,7 +59,7 @@ def main():
     run(['shell', 'chmod', '700', remote + '/startup_tests'])
     stdout = run(['shell', remote + '/startup_tests', remote + '/code_pre_gfx_mp.ff'])
     (output / 'test.log').write_text(stdout, encoding='utf-8')
-    result = validate(stdout, 8, oracle, args.thread_integration)
+    result = validate(stdout, 8, oracle, args.thread_integration, args.startup_services)
     result.update(serial=args.serial, optimization=args.optimization,
                   binary_sha256=sha, retail_sha256=RAW_SHA)
     (output / 'result.json').write_text(json.dumps(result, indent=2) + '\n', encoding='utf-8')

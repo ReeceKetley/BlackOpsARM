@@ -1,0 +1,37 @@
+{
+  "passed": true,
+  "baseline": "8f81f9c",
+  "original_body_sha256": "b6acfc5e2c49c7b32d0c32aca5be2b8b7509dbbe592aec1e0e8097d7bd1f607a",
+  "native_body_sha256": "6f984444711740aa2b49fbbe0a89282f3f9418bd6c941db7cf8c546a2a27b887",
+  "generated_cpp_sha256": "929e10e0bf1f4285aa17cc384588e9001bb392cfd5118b46df3e0581f2ae8a13",
+  "arm_binary_sha256": "67d61dce3994148b2304ef360ddafed2fb2a7688a40c95edb28fb37530cb2c41",
+  "runs": [
+    {
+      "architecture": "x86",
+      "result": {
+        "pointer_bytes": 4,
+        "checked_offsets": 4100,
+        "excluded_last_offset": 2047,
+        "passed": true
+      }
+    },
+    {
+      "architecture": "x64",
+      "result": {
+        "pointer_bytes": 8,
+        "checked_offsets": 4100,
+        "excluded_last_offset": 2047,
+        "passed": true
+      }
+    },
+    {
+      "architecture": "arm64",
+      "result": {
+        "pointer_bytes": 8,
+        "checked_offsets": 4100,
+        "excluded_last_offset": 2047,
+        "passed": true
+      }
+    }
+  ]
+}

@@ -1,3 +1,4 @@
+#if !defined(BO1_STARTUP_SERVICES)
 #include <cstddef>
 #include "com_memory.h"
 #include "assertive.h"
@@ -1376,15 +1377,7 @@ char *__cdecl Z_MallocGarbage(int size, const char *name, int type)
     return buf;
 }
 
-char *__cdecl CopyString(char *in, const char *name, int type, scriptInstance_t inst)
-{
-    unsigned int out; // [esp+0h] [ebp-4h]
 
-    if ( !in && !Assert_MyHandler("C:\\projects_pc\\cod\\codsrc\\src\\universal\\com_memory.cpp", 2100, 0, "%s", "in") )
-        __debugbreak();
-    out = SL_GetString_(inst, in, 0, 22);
-    return SL_ConvertToString(out, inst);
-}
 
 void __cdecl ReplaceString(const char **str, char *in, const char *name, int type, scriptInstance_t inst)
 {
@@ -1400,6 +1393,26 @@ void __cdecl ReplaceString(const char **str, char *in, const char *name, int typ
     *str = newStr;
 }
 
+
+
+
+#endif
+
+#if defined(BO1_STARTUP_SERVICES)
+#include <platform/startup_services_api.h>
+#include <clientscript/cscr_stringlist.h>
+#endif
+
+char *__cdecl CopyString(char *in, const char *name, int type, scriptInstance_t inst)
+{
+    unsigned int out; // [esp+0h] [ebp-4h]
+
+    if ( !in && !Assert_MyHandler("C:\\projects_pc\\cod\\codsrc\\src\\universal\\com_memory.cpp", 2100, 0, "%s", "in") )
+        __debugbreak();
+    out = SL_GetString_(inst, in, 0, 22);
+    return SL_ConvertToString(out, inst);
+}
+
 void __cdecl FreeString(const char *str, int type, scriptInstance_t inst)
 {
     unsigned int out; // [esp+0h] [ebp-4h]
@@ -1411,4 +1424,3 @@ void __cdecl FreeString(const char *str, int type, scriptInstance_t inst)
         __debugbreak();
     SL_RemoveRefToString(inst, out);
 }
-
