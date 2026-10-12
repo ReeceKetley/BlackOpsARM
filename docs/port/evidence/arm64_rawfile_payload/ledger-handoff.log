@@ -1,0 +1,20 @@
+# Session Handoff
+
+## Current milestone
+
+TASK29 genuine RawFile name/buffer and first StringTable queries verified. TASK30 actual RawFile persistent pool ownership before TEMP reuse is next, then registry-entry/DBHASH init services and real registration. Full native engine objective remains active; local verified checkpoints authorized/no push. Read STATE and arm64_rawfile_payload.md. No engine-owned graphics yet.
+
+## Recent memory changes
+
+- entry_archived: TASK-0029 Genuine RawFile name and buffer loading
+- entry_superseded: WARN-0029 Async error recovery and full asset registration remain unverified
+- entry_created: WARN-0030 RawFile registry ownership and asynchronous recovery remain next
+- entry_created: FACT-0093 Canonical RawFile source and reproducible evidence preserved
+- entry_created: FACT-0092 Genuine RawFile name and buffer loaded on HONOR and Windows
+- entry_created: DEC-0044 Bounded canonical RawFile child loading
+- entry_created: FACT-0091 Verified TEMP reuse and RawFile header checkpoint
+- entry_archived: TASK-0028 TASK-0028 checked TEMP write mappings and genuine next numeric header
+
+## Do not miss
+
+- WARN-0030 RawFile registry ownership and asynchronous recovery remain next

@@ -1,0 +1,10 @@
+{
+  "accepted_complete_records": 4,
+  "rejected_malformed_records": 268,
+  "unknown_missing_wrong_values_and_types_rejected": true,
+  "schema": "BlackOpsARM.TASK-0029.payload-record-controls.v1",
+  "status": "passed",
+  "native_execution": false,
+  "runner_sha256": "3bb26e84f8c1ada3a3f9e461cddf1126b327ca29929d704404e9e60f4ee85731",
+  "oracle_result_sha256": "d4e29c386107081983a1afcd777b700d5d9104b148ebf335c115fedbfa2a5f79"
+}

@@ -1,8 +1,15 @@
 #pragma once
 #include <platform/fastfile_rawfile_header.h>
 #include <database/db_rawfile_types.h>
+#if defined(BO1_RAWFILE_PAYLOAD_GATE)
+#include "rawfile_payload_fixture.h"
+#endif
 namespace rawfile_fixture {
-struct Next { int type{};unsigned tag{};std::size_t source{},end{};RawFileHeaderPlan header; };
+struct Next { int type{};unsigned tag{};std::size_t source{},end{};RawFileHeaderPlan header;
+#if defined(BO1_RAWFILE_PAYLOAD_GATE)
+    RawFilePayloadPlan payload;
+#endif
+};
 static Next plan(const Front& f,const AssetDirectoryPlan& d,const StringTablePayloadPlan& payload,
                  const unsigned char* data,std::size_t bytes,std::uint64_t decoded){
     require(d.present&&d.count>1&&f.end<=bytes&&16<=bytes-f.end,"genuine next directory entry exists");
@@ -13,6 +20,11 @@ static Next plan(const Front& f,const AssetDirectoryPlan& d,const StringTablePay
             f.envelope.zone.file.blockSize[0],f.envelope.zone.logical[0],0,0,p.header)==RawFileHeaderResult::Ok&&p.header.present,
             "genuine inline RawFile numeric header checked before owned writes");
         p.end+=12;
+#if defined(BO1_RAWFILE_PAYLOAD_GATE)
+        p.payload=rawfile_payload_fixture::plan(p.header,data+p.end,bytes-p.end,
+            f.envelope.zone.file.blockSize[4],f.envelope.zone.logical[4],payload.indices.diskEnd,payload.indices.nativeEnd);
+        p.end+=static_cast<std::size_t>(p.payload.sourceBytes);
+#endif
     }
     return p;
 }
@@ -60,6 +72,9 @@ static void execute(const Next& p,const StringTablePayloadPlan& payload,DecodedS
     require(g_streamPosIndex==4&&r.Position()+52==p.source,"next header begins at original source boundary in parent4");
     if(!p.header.present){
         require(p.end==p.source,"unsupported next asset is deferred without skipping");
+#if defined(BO1_RAWFILE_PAYLOAD_GATE)
+        rawfile_payload_fixture::deferred(p.type,p.source,payload,measurement);
+#endif
         if(measurement)std::printf("{\"rawfile_measurements\":{\"asset_type\":%d,\"directory_index\":1,\"status\":\"deferred_next_type\",\"source_start\":%zu,\"source_end\":%zu,\"disk_start\":0,\"native_start\":0,\"disk_end\":0,\"native_end_before_pop\":0,\"native_cursor_after_pop\":0,\"shadow_after_pop\":0,\"name_tag\":null,\"length\":null,\"buffer_tag\":null,\"future_buffer_bytes\":0,\"native_header_bytes\":0,\"retained_value_alias_verified\":false,\"retained_alias_address_exposed\":false,\"pooled_queries_after_raw_verified\":false,\"block4_bytes_cursors_preserved\":true,\"children_unread\":true,\"full_registry_executed\":false,\"next_asset_skipped\":false}}\n",p.type,p.source,p.end);
         return;
     }
@@ -78,7 +93,7 @@ static void execute(const Next& p,const StringTablePayloadPlan& payload,DecodedS
     reader=nullptr;tableReadBytes=0;
     const auto tag=[](unsigned v)->uintptr_t{return v==0xffffffffu?UINTPTR_MAX:v==0xfffffffeu?UINTPTR_MAX-1:v;};
     require(reinterpret_cast<uintptr_t>(header->name)==tag(p.header.nameTag)&&header->len==p.header.length&&reinterpret_cast<uintptr_t>(header->buffer)==tag(p.header.bufferTag),"actual RawFile body preserves all genuine numeric fields");
-    require(r.Position()+52==p.end&&DB_GetStreamPos()==blocks[0].data+p.header.nativeEnd,"only the numeric RawFile header was read and committed");
+    require(r.Position()+52==p.source+12&&DB_GetStreamPos()==blocks[0].data+p.header.nativeEnd,"only the numeric RawFile header was read and committed");
 #if BO1_NATIVE_64BIT
     require(DB_StreamWin32Pos(0)==p.header.diskEnd,"RawFile keeps twelve-byte disk extent");
     uintptr_t value{};
@@ -94,13 +109,21 @@ static void execute(const Next& p,const StringTablePayloadPlan& payload,DecodedS
     // of encoded block0 offsets in this FastFile (none in the covered metadata).
     uintptr_t alias=13;DB_ConvertOffsetToAlias(&alias);require(alias==previousValues,"actual alias conversion matches the untouched original Win32 word");
     alias=17;DB_ConvertOffsetToAlias(&alias);require(alias==previousIndices,"actual alias conversion preserves untouched original index word");
-    DB_PopStreamPos();require(g_streamPosIndex==4&&DB_GetStreamPos()==block4&&g_streamPosArray[0]==blocks[0].data&&tempDiskCursor()==0,"both TEMP cursors rewind after next genuine header");
+#if defined(BO1_RAWFILE_PAYLOAD_GATE)
+    rawfile_payload_fixture::execute(p.payload,header,r,blocks,payload,p.source+12,measurement);
+    const auto expected4=blocks[4].data+p.payload.nativeEnd;const auto expectedDisk4=p.payload.diskEnd;
+    const char*childrenUnread="false";const char*cursorsPreserved="false";
+#else
+    const auto expected4=block4;const auto expectedDisk4=disk4;
+    const char*childrenUnread="true";const char*cursorsPreserved="true";
+#endif
+    DB_PopStreamPos();require(g_streamPosIndex==4&&DB_GetStreamPos()==expected4&&g_streamPosArray[0]==blocks[0].data&&tempDiskCursor()==0,"both TEMP cursors rewind after next genuine header/payload");
 #if BO1_NATIVE_64BIT
-    require(DB_StreamWin32Pos(4)==disk4,"persistent block4 disk cursor unchanged");
+    require(DB_StreamWin32Pos(4)==expectedDisk4,"persistent block4 disk cursor matches selected boundary");
 #endif
     require(adler32(1,blocks[4].data,static_cast<unsigned>(payload.indices.nativeEnd))==childHash,"RawFile header does not touch first asset children");
     executeLookups(payload,owner_fixture::persistent,false);
     require(!lastLookup.rowMisses&&!lastLookup.rowDisagreements&&!lastLookup.columnDisagreements,"pooled first asset queries pass immediately after real RawFile overwrite");
-    if(measurement)std::printf("{\"rawfile_measurements\":{\"asset_type\":%d,\"directory_index\":1,\"status\":\"header_loaded\",\"source_start\":%zu,\"source_end\":%zu,\"disk_start\":%llu,\"native_start\":%llu,\"disk_end\":%llu,\"native_end_before_pop\":%llu,\"native_cursor_after_pop\":0,\"shadow_after_pop\":%u,\"name_tag\":%u,\"length\":%d,\"buffer_tag\":%u,\"future_buffer_bytes\":%llu,\"native_header_bytes\":%zu,\"retained_value_alias_verified\":true,\"retained_alias_address_exposed\":false,\"pooled_queries_after_raw_verified\":true,\"block4_bytes_cursors_preserved\":true,\"children_unread\":true,\"full_registry_executed\":false,\"next_asset_skipped\":false}}\n",p.type,p.source,p.end,(unsigned long long)p.header.diskStart,(unsigned long long)p.header.nativeStart,(unsigned long long)p.header.diskEnd,(unsigned long long)p.header.nativeEnd,tempDiskCursor(),p.header.nameTag,p.header.length,p.header.bufferTag,(unsigned long long)p.header.futureBufferBytes,sizeof(RawFile));
+    if(measurement)std::printf("{\"rawfile_measurements\":{\"asset_type\":%d,\"directory_index\":1,\"status\":\"header_loaded\",\"source_start\":%zu,\"source_end\":%zu,\"disk_start\":%llu,\"native_start\":%llu,\"disk_end\":%llu,\"native_end_before_pop\":%llu,\"native_cursor_after_pop\":0,\"shadow_after_pop\":%u,\"name_tag\":%u,\"length\":%d,\"buffer_tag\":%u,\"future_buffer_bytes\":%llu,\"native_header_bytes\":%zu,\"retained_value_alias_verified\":true,\"retained_alias_address_exposed\":false,\"pooled_queries_after_raw_verified\":true,\"block4_bytes_cursors_preserved\":%s,\"children_unread\":%s,\"full_registry_executed\":false,\"next_asset_skipped\":false}}\n",p.type,p.source,p.source+12,(unsigned long long)p.header.diskStart,(unsigned long long)p.header.nativeStart,(unsigned long long)p.header.diskEnd,(unsigned long long)p.header.nativeEnd,tempDiskCursor(),p.header.nameTag,p.header.length,p.header.bufferTag,(unsigned long long)p.header.futureBufferBytes,sizeof(RawFile),cursorsPreserved,childrenUnread);
 }
 }

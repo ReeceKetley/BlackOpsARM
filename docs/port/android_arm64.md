@@ -391,3 +391,15 @@ order andcanonical12/24 layout preserved; codeheaderends10419, zombie nexttype7
 deferredat65678withoutskip. NextTASK29 actualname/presentbuffer141bytes, preserve
 allfirsttablequeries/block4/ownership, stopbeforeDBAdd. NoRawchildren/registry/
 render claimyet. UserresumedfullgoalDEC29/localverifiedcommitsDEC26, no push.
+
+
+TASK29 complete: arm64_rawfile_payload.md/rawfile_payload_handoff.md, current Ledger.
+Canonical loader bodies unchanged; genuine name17/buffer141 now read to10577.
+Buffer any nonzero is presence, exact len+1 binary copy; no added NUL policy.
+Name only absent/inline certified here. Preflight all children before owned writes.
+Current and retained aliases rechecked after children; all first-table queries
+and bytes survive. Partial wrapper failure uses fixture-only unwind, not atomic
+or longjmp/async recovery. Original RawFile header remains TEMP-owned, no DB_Add
+success yet. Next actual RawFile pool1024/init/alloc/clone/free and zone child
+lifetime, registry-entry/DBHASH init, then smallest real registration. Preserve
+all evidence and protected checkouts; full goal active/local commitsDEC26/no push.

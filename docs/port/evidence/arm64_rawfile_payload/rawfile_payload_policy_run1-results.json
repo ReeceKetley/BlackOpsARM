@@ -1,0 +1,133 @@
+{
+  "schema": "BlackOpsARM.TASK-0029.rawfile-payload-policy-readonly-audit.v1",
+  "head": "7f7f0052e6ecac0aece8c3d645b1c8d3b179a21a",
+  "source_sha256": {
+    "src/database/db_load.cpp": "57428558fba01e0a49316ae5dc96478d0e9ac898a1b843f5ff1575b6ef20aa3a",
+    "src/database/db_load.h": "be0c84db11da58a7864b4fee7e84f00665c2539b0aaa005b325f8692271ffd4f",
+    "src/database/db_scalar_load.h": "e43120f97e9c90fa9a359013f92c3e36af2a8eb151bbeeaddcb78aa26078de85",
+    "src/database/db_stream.cpp": "726bfdfcaf8b220b2c6ea6058e916e4e905da334d314b5903b50b665934b605c",
+    "src/database/db_stream_load.cpp": "53b056435a94a714a5c94e8186d7893a2646597a9ae33accce00b71e0dfb2420",
+    "src/database/db_expand.cpp": "66bc38869f61b7b69a866c75a5e3090c80342880c0a7587a9a9ef727a14e0d71",
+    "src/database/db_rawfile_types.h": "51226815e230041e294488c433668273bba3647fe75874c2a84492856086f648",
+    "src/platform/fastfile_rawfile_header.cpp": "6892529ab9868a9c42e99c87fab5fa4a85f3fee4b4f3bc113241cda49228e3e6",
+    "tools/port/stringtable_payload_oracle.py": "2d5ab8ea1dcded32f427aa383b96db7f0a84878d6bb84370822ce56ca9e6057a",
+    "tools/port/rawfile_header_oracle.py": "d02bf0fadf0cd92fba0eb9b046887a69481a634c78d000c98cde90b9f19da543"
+  },
+  "previous_results": {
+    "path": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\rawfile_header_run2\\results.json",
+    "sha256": "d778e422c92de9a62c4f96e98c222603d18c29d10c96aff214331437e684e8f6",
+    "all_tests_completed": true
+  },
+  "audit_scope": "Source/dependency/policy and full independent streaming original provenance only. No wrapper/native execution/build/device action; only this fresh ignored report and notes written.",
+  "genuine_source": {
+    "original_path": "D:\\Games\\Call of Duty - Black Ops\\zone\\common\\code_pre_gfx.ff",
+    "raw_sha256": "565f038d4a5a10912bda5741e80f31805f9c7c76fc18296f2a8591d58f1ee41f",
+    "decoded_sha256": "475463b349e00cee0989a17273c8ef8b2a4588b9556ca9c40ac399d9cf90b5fa",
+    "decoded_bytes": 49593,
+    "decoded_adler32": 3596564434,
+    "padding_bytes": 23,
+    "xfile_fields": [
+      49557,
+      0,
+      36,
+      0,
+      0,
+      0,
+      49092,
+      0,
+      0
+    ],
+    "rawfile_header": {
+      "name_tag": 4294967295,
+      "length": 140,
+      "buffer_tag": 4294967295
+    },
+    "rawfile_header_sha256": "55e00818f5dece7889c2ab942379bb2bdc698895397e7057a1faa3c20e350f5c",
+    "rawfile_source_start": 10407,
+    "rawfile_source_end": 10419
+  },
+  "independent_child_metadata": {
+    "full_stream_sha_adler_and_previous_prefix_verified": true,
+    "audit_prefix_bytes": 12467,
+    "audit_window_bytes": 2048,
+    "audit_window_is_not_engine_policy_limit": true,
+    "name": {
+      "source_start": 10419,
+      "source_end": 10436,
+      "bytes_including_nul": 17,
+      "sha256": "3cb164b71986aeac3e8ce7776fd24261ebd6c485815ba1692d85ea9c43a29323",
+      "adler32": 1037043293,
+      "disk_start": 10338,
+      "disk_end": 10355,
+      "native64_start": 15192,
+      "native64_end": 15209
+    },
+    "buffer": {
+      "source_start": 10436,
+      "source_end": 10577,
+      "bytes": 141,
+      "sha256": "09da1831288bb715838dcd7fad70333fc4865d2da02038da2de9d955232379b8",
+      "adler32": 804990665,
+      "final_byte_zero": true,
+      "interior_nul_count": 0,
+      "disk_start": 10355,
+      "disk_end": 10496,
+      "native64_start": 15216,
+      "native64_end": 15357
+    },
+    "native64_alignment_padding_before_name": 0,
+    "native64_alignment_padding_before_buffer": 7,
+    "execution_prefix_bytes": 10577,
+    "execution_prefix_sha256": "57a58a3d13b51726440eda5ec987366aaadbf720cf613cf14d0504ab71a9e834",
+    "source_consumed_bytes_from52": 10525,
+    "no_original_text_or_hex_emitted": true
+  },
+  "production_references": {
+    "canonical_variables": "src/database/db_load.cpp:71-73(varConstChar,varTempString,varXString),319(varRawFile)",
+    "byte_allocator": "src/database/db_load.cpp:551; DB_AllocStreamPos(0), native cursor min8 inherited from src/database/db_stream.cpp allocator",
+    "fixed_byte_loader": "src/database/db_load.cpp:556; Load_Stream(atStreamStart,varConstChar,count)",
+    "name_loader": "src/database/db_load.cpp:602; null no-op, inlineFFF alloc/readCString, other values ConvertOffsetToPointer",
+    "rawfile_wrapper": "src/database/db_load.cpp:8745; header,Push4,name,ifbuffer alloc+fixedlen1,Pop4",
+    "pointer_wrapper_deferred": "src/database/db_load.cpp:8767; Push0+registry/inserted pointer path is outside TASK29",
+    "name_custom_reader": "src/database/db_stream_load.cpp:202; actual null-terminated decoder then stream increment",
+    "direct_byte_reader": "src/database/db_stream_load.cpp:32; direct read then increment",
+    "actual_decoder": "src/database/db_file_load.cpp:149/183; async/refill implementation not part of finite adapter certificate",
+    "current_light_index_selector": "src/database/db_load.cpp:2-66,503; selects actual Load_shortArray only"
+  },
+  "production_contract": [
+    "RawFile is canonical name pointer/intlen/buffer pointer only; disk12/native24. No flags or compressed-length field exists in this type.",
+    "Name null consumes0bytes; inlineFFF invokes actual XString null-terminated path; encoded offsets use actual pointer conversion. NameFFFFFFFE is not inline and must be rejected by a bounded adapter unless independently supported.",
+    "Any nonzero buffer field is a presence flag. Wrapper replaces it with a fresh block4 byte allocation and reads exactly signed len+1; it does not resolve buffer offsets or requireFFF.",
+    "Buffer null consumes0bytes even with a positive declared len. Present len0 reads1byte. Check len+1 overflow before wrapper branch; do not alter the unchanged leaf arithmetic.",
+    "Buffer is fixed byte data, not a strlen-driven string. Production does not explicitly validate finalNUL or reject interiorNUL; genuine observed finalNUL is evidence, not a new general format restriction.",
+    "Win32 mask0 allocation adds no disk pad. Native allocation aligns at least8; native padding is not read from source and must not be counted as FastFile bytes.",
+    "Name and buffer allocations append after first asset children in block4; TEMP header field updates remain live until future successful overwrite. Existing retained old StringTable tail values must stay authoritative.",
+    "Selected wrapper does not register a persistent RawFile header or call DB_AddXAsset. Keep TEMP scope explicit, inspect header while live, detach/reset before owner release."
+  ],
+  "minimal_compile_plan": [
+    "Extend db_load.cpp compile selectors to expose canonical AllocLoad_raw_byte, Load_ConstCharArray, Load_XString and Load_RawFile plus actual varConstChar/varXString/varRawFile definitions in sameTU; retain existing Load_shortArray selection.",
+    "Provide only lightweight canonical declarations using db_rawfile_types.h/db_stream/db_stream_load/db_expand. Do not copy engine function bodies or create fake registry endpoints.",
+    "Preflight header and children from the SHA-validated decoded prefix without advancing source or writing native bytes, then call actual Load_RawFile(true) exactlyonce after first asset. Alternatively false follow-up after actual header read must be explicitly labeled.",
+    "Use the existing finite checked reader to adapt actual DB_LoadXFileData and NullTerminated endpoints; record adapter scope separately from original async/refill production decoder.",
+    "Stop source exactly10577 before the next header; zombie nexttype7 remains explicitlydeferred, with no asset skips or later RawFile search."
+  ],
+  "preflight_and_acceptance": [
+    "All genuine block capacities/native allocation sizes come from original XFile and checked production policy. Payload extents do not fabricate allocation descriptors.",
+    "Validate checked uint64 align/subtraction capacity accounting for name bytes and fixed len+1 buffer, decoded source/truncated prefix bounds, signedlen and integerconversion before calling wrapper.",
+    "For first supported gate allow null/inlineFFF name; encoded names require exact existing initialized-string provenance and separate checked approval, not raw tag dereference or map fallback guessing.",
+    "Compare native loaded name17 and buffer141 bytes/digests to independent source, retain fieldlen140, sourceend10577, diskend10496, native64end15357/Win32end10496. Native pad7 does not consume source.",
+    "Fixture name null/empty/unterminated/truncated; buffer null/nonzero ordinary/FFF/FFFFFFFE presence; len0/negative/INTMAX; sourceshort by1; exact-capacity and alignment exhaustion; invalidheader/type/tag; unexpected null reader endpoints.",
+    "Actual wrapper uses both XString and fixedbyte leaves. C++throw staging/partial-copy tests must not claim whole wrapper rollback: child writes/headerfields may already change. Reset/detach and release owner on failure.",
+    "Verify first persistent StringTable header/children, normalized indices and all actual query results unchanged after RawFile child append; check previousblock4 mappings and TEMP retained aliases survive.",
+    "Verify guarded counters/source/cursors, Pop behavior, no persistent registration, no child pointer dangling beyond owner release, full reset baseline, native highaddress and Windowsx86/x64/HONOR parity.",
+    "Normal Windows full db_load.cpp compile plus source proof of wrapper/leaves/global definitions before after selection; no Windows checkout writes.",
+    "Retain failures/diagnostics and freeze numerical/digest evidence only; no original name text/payload/full decoded buffers inGit."
+  ],
+  "reference_evidence_limit": "Original retail RawFile wrapper instruction VA/body was not mapped or executed by this audit. Source is actual existing Windows engine implementation, and genuine disk fields/child byte boundaries are independently full-stream SHA/Adler verified. Prior original alias/Push/Pop evidence does not prove this wrapper machine code.",
+  "failure_recovery_limit": "Com_Error(ERR_DROP) in actual decoder uses production longjmp; finite adapter C++ catches and controlled poisoning do not certify original async error recovery.",
+  "files_created": [
+    "build-android-audit/rawfile_payload_policy_run1/results.json",
+    "build-android-audit/rawfile_payload_policy_run1/notes.md"
+  ],
+  "protected_or_shared_edits": false
+}
