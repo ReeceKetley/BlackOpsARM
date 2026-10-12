@@ -392,3 +392,5 @@ TASK34 current: actual genuine registry lookup verified on3ABIs/O0/O3; fixture
 membership restored before frees, not DB_Link/DB_Add. Read arm64_registry_lookup.md
 and DEC50/FACT103/104/WARN35/FAIL33; next real insertion/returned-header integration
 then next genuine asset. DEC47 standing autonomous goal/localcommits/no push active.
+
+TASK35 production insertion/lookup passes3ABIs/O0/O3. FullAdd/Link unverified; next actual returned-header registration on liveTEMP before normalization/Pop then next genuine asset. DEC51/FACT105/106/WARN36; standing DEC47 active.

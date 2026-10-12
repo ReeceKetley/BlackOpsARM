@@ -1,27 +1,29 @@
+TASK35 production insertion/lookup passes3ABIs/O0/O3. FullAdd/Link unverified; next actual returned-header registration on liveTEMP before normalization/Pop then next genuine asset. DEC51/FACT105/106/WARN36; standing DEC47 active.
+
 TASK34 lookup verified; continue actual production insertion/registration and returned-header integration, then next genuine asset. Read arm64_registry_lookup.md and DEC50/FACT103/104/WARN35/FAIL33. Fixture membership is not publication; standing autonomous DEC47 remains active.
 
-## Current autonomous progress — TASK33 complete
+## Current autonomous progress â€” TASK33 complete
 
 Genuine loaded headers now use real entry-owned pools/clone/free on3ABIs/O0/O3.
 Next actual name/hash lookup, smallest real publication, next genuine asset type.
 Continue standing_development_goal.md/DEC47; local verified checkpoints/no push.
 No fullengine startup/render yet.
 
-## Standing autonomous goal — TASK32 complete
+## Standing autonomous goal â€” TASK32 complete
 
 Continue successive verified native engine milestones without waiting after each.
 Read docs/port/standing_development_goal.md (DEC47). Actual entry allocation/free
 verified; next genuine entry-owned headers, lookup, minimal publication. Local
 verified commits allowed/no push. No fullengine startup/render yet.
 
-## Current milestone — TASK31 complete, 12 October 2026
+## Current milestone â€” TASK31 complete, 12 October 2026
 
 Actual entry-list init and native recursive DBHASH verified on3ABIs/O0/O3.
 Next actual header/entry allocation/free, hash lookup, smallest real registration.
 See STATE/arm64_asset_entry_init.md; local verified commits authorized/no push.
 No full DB_Init/registry publication/engine startup/rendering yet.
 
-## Current milestone — TASK30 complete, 12 October 2026
+## Current milestone â€” TASK30 complete, 12 October 2026
 
 Actual persistent RawFile pool header/children lifetime verified on HONOR and
 Windows x86/x64/O3. Next actual asset-entry/DBHASH initialization services, then

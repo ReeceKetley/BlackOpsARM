@@ -706,13 +706,22 @@ unsigned __int8 g_fileBuf[524288];
 unsigned __int16 db_hashTable[0x8000/*32768*/];
 XAssetEntryPoolEntry g_assetEntryPool[65536]; // mod: 32768 in the exe; the upper half is chained only with bo1_mod_zones (DB_InitXAssets)
 #endif
-#if !defined(BO1_STRINGTABLE_OWNER_GATE)
+#if !defined(BO1_STRINGTABLE_OWNER_GATE) || defined(BO1_REGISTRY_INSERT_GATE)
 // Win32 packed XAssetEntry was 16 bytes, so hash/override links used byte_offset >> 4.
 // On x64 the pool stride is sizeof(XAssetEntryPoolEntry); index via pointer arithmetic.
 static inline unsigned short DB_AssetEntryIndex(const void *entry)
 {
     return static_cast<unsigned short>(
         static_cast<const XAssetEntryPoolEntry *>(entry) - g_assetEntryPool);
+}
+
+// Caller holds DBHASH and has completed the new-name/duplicate decision. The
+// entry belongs to g_assetEntryPool and owns its live header/zone. This is only
+// primary-chain insertion; default, override and mod policy stays with Link.
+void __cdecl DB_InsertNewXAssetEntry(XAssetEntry *newEntry, unsigned int hash)
+{
+    newEntry->nextHash = db_hashTable[hash % 0x8000];
+    db_hashTable[hash % 0x8000] = DB_AssetEntryIndex(newEntry);
 }
 #endif
 #if !defined(BO1_STRINGTABLE_OWNER_GATE) || defined(BO1_ENTRY_ALLOC_GATE)
@@ -3055,8 +3064,7 @@ XAssetEntryPoolEntry *__cdecl DB_LinkXAssetEntry(XAssetEntry *newEntry, int allo
                 Com_Printf(16, "DB_LinkXAssetEntry: created new asset: '%s','%s'\n", v15, v28);
             }
         }
-        newEntry->nextHash = db_hashTable[hash % 0x8000];
-        db_hashTable[hash % 0x8000] = DB_AssetEntryIndex(newEntry);
+        DB_InsertNewXAssetEntry(newEntry, hash);
         if ( db_xassetdebug->current.enabled )
         {
             if ( db_xassetdebugtype->current.integer == -1

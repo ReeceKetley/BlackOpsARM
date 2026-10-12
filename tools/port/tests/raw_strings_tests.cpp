@@ -427,7 +427,9 @@ require(argc>=2,"decode/gate mode");if(!std::strcmp(argv[1],"decode")){require(a
 #endif
     }
     const char*schema=
-#if defined(BO1_REGISTRY_LOOKUP_GATE)
+#if defined(BO1_REGISTRY_INSERT_GATE)
+        "BlackOpsARM.TASK-0035.registry-insertion.v1";
+#elif defined(BO1_REGISTRY_LOOKUP_GATE)
         "BlackOpsARM.TASK-0034.registry-lookup.v1";
 #elif defined(BO1_ENTRY_GENUINE_GATE)
         "BlackOpsARM.TASK-0033.entry-owned-genuine.v1";
