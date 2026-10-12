@@ -342,3 +342,14 @@ row/index tie-break. Read-only original instruction oracle is analysis only,
 never Android implementation; registry/roworiginal not executed. Next persistent
 registry/TEMP lifetime, then actual next asset/workspace reuse. Continue DEC29,
 localverifiedcommitsDEC26/no push; protect all existing evidence/repos/assets.
+
+
+TASK25 complete: arm64_stringtable_normalization.md, FACT76/77/WARN25/DEC40.
+Actualnormalizer/originalqueries exactoriginal400/1594 arrays/all1994results
+onHONOR/Windows/optimized. ExistingLoadObj/comparison/hash/load bodies unchanged;
+onlymissing post-DB_AddXAsset sort restored onreturnedheader. Checkedborrowed
+spans/permutationbeforemutation, specificoriginalCRT16policy/noheap/globalcontext/
+tiebreak. Actualfullregistry notcertified; no fabricated registration success.
+Next TASK26 realpoolheader/cloneownership survivesTEMPoverwrite, then original
+shadow/map/alias reuseaudit andsmallestrealregistryboundary. ContinueDEC29,
+localverifiedcommitsDEC26/no push. Preserve allprior evidence/repos/assets.

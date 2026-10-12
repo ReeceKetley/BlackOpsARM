@@ -2721,6 +2721,8 @@ set(SRC_UNIVERSAL
 	"${SRC_DIR}/universal/com_pack.cpp"
 	"${SRC_DIR}/universal/com_pack.h"
 	"${SRC_DIR}/universal/com_hash.cpp"
+	"${SRC_DIR}/universal/com_stringtable_sort.cpp"
+	"${SRC_DIR}/platform/win32_compat/sort16.cpp"
 	"${SRC_DIR}/universal/com_hash.h"
 	"${SRC_DIR}/universal/com_shared.cpp"
 	"${SRC_DIR}/universal/com_shared.h"

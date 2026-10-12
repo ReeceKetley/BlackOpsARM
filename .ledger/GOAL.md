@@ -1,5 +1,13 @@
 # Current milestone,12 October2026
 
+TASK25 actual normalization/query parity complete: exact original400/1594 arrays
+and all1994 queries onHONOR/Windows/optimizedARM. Persistent pool-header ownership
+beforeTEMP overwrite is next, then TEMPshadow/map reuse and realregistry boundary.
+Read STATE/arm64_stringtable_normalization.md. Corefront end/interning complete;
+autonomousDEC29/localcommitsDEC26/no push. No game-owned graphics yet.
+
+# Current milestone,12 October2026
+
 TASK24 original audit complete: missing signed normalization after returned
 asset registration; Windows CRT exact, Android equal-key order differs6/14.
 TASK25 bounded original-policy normalizer/actual query parity next, then persistent

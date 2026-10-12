@@ -1,0 +1,65 @@
+{
+  "schema": "BlackOpsARM.TASK-0025.source-preservation.v1",
+  "parent": "6e6c7ca3ac5f63a334e958fcca1319a549cc1d51",
+  "files": {
+    "src/database/db_registry.cpp": {
+      "sha256": "EBC20E46DDBE77712860A2FE374F6BC3FA9E354981BF8F7C5B99B5547D1241FF",
+      "whole_source_restored_exact_after_documented_edits": true
+    },
+    "cmake_files.cmake": {
+      "sha256": "A87A7C7089D2510CDB52D04780A81DC10B2E8117E36448C737EE38FA69761E4F",
+      "whole_source_restored_exact_after_documented_edits": true
+    },
+    "android/cmake/arm64-audit/CMakeLists.txt": {
+      "only_new_target_added": true,
+      "sha256": "D5F96687CC55ECC616793A54A26B9FA7DD74343EB3422B03EC442F1EB2856944"
+    },
+    "tools/port/tests/stringtable_cells_fixture.h": {
+      "sha256": "4A056B0AF6D5DFE99FF0A70798A1177A2159BF1A477705C360DB7297DDD5F124",
+      "whole_source_restored_exact_after_documented_edits": true
+    },
+    "tools/port/tests/raw_strings_tests.cpp": {
+      "sha256": "82F48DC016F27ADE836A2F87C813ECC656BFE0E780E3A2BF7FC03CCB7E9B1EE8",
+      "whole_source_restored_exact_after_documented_edits": true
+    },
+    "src/database/db_expand.cpp": {
+      "whole_working_source_byte_unchanged": true,
+      "sha256": "43BDA9F92E609A6C04FC860732E3150D7D124440A788CB189F7983CB54D3B66A",
+      "unchanged_function_bodies": 163
+    },
+    "src/database/db_stream_load.cpp": {
+      "whole_working_source_byte_unchanged": true,
+      "sha256": "C74A716E71B2375EABC204D601E0B44E43C48BDC4CD869CA1E6FB6A0E924BA95",
+      "unchanged_function_bodies": 6
+    },
+    "src/database/db_load.cpp": {
+      "whole_working_source_byte_unchanged": true,
+      "sha256": "57428558FBA01E0A49316AE5DC96478D0E9AC898A1B843F5FF1575B6EF20AA3A"
+    },
+    "src/universal/com_stringtable.cpp": {
+      "whole_working_source_byte_unchanged": true,
+      "sha256": "94F8454478FC8335356723C41970EA5792A36024AD0655B906DA9E5410CC8F2A"
+    },
+    "src/universal/com_stringtable_obj.cpp": {
+      "whole_working_source_byte_unchanged": true,
+      "sha256": "387800F7D0BF28FA2318D035BDDCC8475B5E9057E5D481A0C36E8BC5C5C4637F"
+    },
+    "src/universal/q_shared.cpp": {
+      "whole_working_source_byte_unchanged": true,
+      "sha256": "603D0A067809D2F5AED962254920AF5D17E3586517A92FFCE5E548D9DD124488"
+    },
+    "src/universal/com_hash.cpp": {
+      "whole_working_source_byte_unchanged": true,
+      "sha256": "78F51E81FD16E4AB773CBCAAED951B6E7A3BA9A36DABE3BF8B45420C7B10B93D"
+    },
+    "src/universal/com_stringtable.h": {
+      "whole_working_source_byte_unchanged": true,
+      "sha256": "92015D95827EC19284732C908C7D5DEB9FCDF1C5EB16DFE18E15D5EF2B6145B3"
+    }
+  },
+  "verifier_sha256": "623D8C0886EE380670CAE2D6360EB9FD19CBC43CC328729C629E302272F8240F",
+  "status": "passed",
+  "registry_execution_certified": false,
+  "only_production_caller_change": "normalize returned registered StringTable header after DB_AddXAsset",
+  "legacy_csv_query_hash_and_all_loader_bodies_unchanged": true
+}

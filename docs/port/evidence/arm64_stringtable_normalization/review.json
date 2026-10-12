@@ -1,0 +1,9 @@
+{
+  "sorter_review": "envelope_review compared every pinned original branch/cutoff/swap/scan/pivot/trim/partition/stack/smallsort; no concrete implementation defect",
+  "fixture_review": "actual malformed header snapshot, header wrap/values overlap, exact concurrent permutation/header/cells added before finalbuilds;86cases",
+  "original_policy_review": "envelope_policy literal integer model exact both original permutations",
+  "scope": "actual normalizer/query leaves and finite decoded fixture, source caller added after real DB_AddXAsset but full registry not executed",
+  "caller_contract": "borrowed live initialized array extents; derived production extents are a caller obligation, not discovered ownership",
+  "context": "no globals, per-call callback context; same-table concurrent writes excluded",
+  "known_failures": "FAIL24 integration LF anchor,FAIL25 sourceproof mixed endings; corrected before finalevidence, all prioroutputsretained"
+}

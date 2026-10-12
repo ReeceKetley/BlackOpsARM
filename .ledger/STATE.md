@@ -1,5 +1,30 @@
 # Current State
 
+Updated12 October2026: TASK25 real original normalization/query parity complete.
+Actual normalizer and unchanged lookup/hash leaves match original400/1594 index
+arrays/all1994 queries onHONOR/Win32/x64/optimizedARM;0misses/disagreements.
+Registration source sorts RETURNED DB_AddXAsset header; fullregistry notexecuted.
+Fixed16 originalCRT policy explicitcontext/nativepositions/noheap/tiebreak;
+validatecompletepermutation/spans beforemutation; onlyindiceschange.86cases60CRT
+controls/16concurrentpasses +162priorcases12cycles/12857hash/262180comparison/
+22queryfixtures pass eachABI. Finaldebugpass3/host3/run1 +optimizedpass2/run1,
+normalWindows7TUsx2/sourceproof2 pass. FullARM0errors7748warnings/319ELF inclchecks;
+optimized0errors756warnings44ELF inclchecks. FAIL24/25 toolingerrors retained/fixed.
+Alltestscompleted,129records+metadatafrozen. Windows2528/DXVK2552/root15/APK/
+originals and3018 olderfrozen unchanged. No newtiming/RSS/graphics. Read
+arm64_stringtable_normalization.md/_changes.md/stringtable_normalization_handoff.md,
+FACT76/77/WARN25/DEC40. Git suppliescurrentpending; checkpoint recordedafterproof.
+AutonomousDEC29/localverifiedcommitsDEC26/no push. Next3: TASK26 realpoolheader/
+cloneownership survivesTEMP overwrite; original-evidence TEMPshadow/maps/aliases
+reuse beforeasset2; smallestrealregistryboundary/services. Borrowedliveness remains
+callercontract; registryrollback/async/dispatch/init/graphics, same-table concurrency,
+S25/16KB/hashlocale/retainedpages/multiowner remainunverified. Allscratch/evidence
+preserved; noAPKinstall orengineownedframe.
+
+# Historical state (preserved)
+
+# Current State
+
 Updated12 October2026: TASK-0024 original registration/sort audit complete.
 Original signed FirstHashIndex agrees with reconstruction. Inline FF pointer
 loader loads body -> type37 DB_AddXAsset -> replaced returned header -> signed
@@ -16,8 +41,8 @@ frozen files unchanged. No new timing/RSS/graphics. AutonomousDEC29, localverifi
 commitsDEC26/no push. Next3: TASK25 bounded original signed normalization/actual
 query parity; TASK26 persistent registration/TEMP lifetime; next genuine asset
 with original workspace/shadow reuse. Fullasync/dispatch/registry/init/graphics,
-multiowner/retainedpages/16KB/S25/hashlocale remain unverified. Git is pending
-inventory authority; verified checkpoint will be recorded after commit proof.
+multiowner/retainedpages/16KB/S25/hashlocale remain unverified. TASK24 checkpoint6e6c7ca verified (FACT75); TASK25 begins. Git supplies
+current pending paths.
 
 # Historical state (preserved)
 
