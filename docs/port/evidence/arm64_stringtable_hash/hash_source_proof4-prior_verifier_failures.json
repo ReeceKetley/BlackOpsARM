@@ -1,0 +1,20 @@
+[
+  {
+    "attempt": 1,
+    "kind": "verifier_error",
+    "reason": "Raw CMake baseline uses historical mixed line endings; uniform CRLF assumption was invalid",
+    "production_failure": false
+  },
+  {
+    "attempt": 2,
+    "kind": "verifier_error",
+    "reason": "Trying only uniform LF/CRLF still failed to reconstruct mixed raw baseline",
+    "production_failure": false
+  },
+  {
+    "attempt": 3,
+    "kind": "verifier_error",
+    "reason": "Declaration regex crossed function opening/body into static_assert; restricted prototype matching to one line",
+    "production_failure": false
+  }
+]

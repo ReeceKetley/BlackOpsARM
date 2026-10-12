@@ -269,6 +269,9 @@ int main(int argc,char**argv){require(argc>=2,"decode/gate mode");if(!std::strcm
     tested+=initializedFixtures(ap.envelope.zone);
 #if defined(BO1_STRINGTABLE_INDEX_GATE)
     tested+=indicesFixtures(ap.envelope.zone);
+#if defined(BO1_STRINGTABLE_HASH_GATE)
+    hashFixtures();
+#endif
 #endif
 #endif
 #endif
@@ -324,6 +327,9 @@ int main(int argc,char**argv){require(argc>=2,"decode/gate mode");if(!std::strcm
 #if defined(BO1_FRONTEND_INTERN_GATE)
         std::printf("{\"asset_index\":%u,\"round\":%u,\"alloc_type\":%u,\"inline_string_count\":%zu,\"raw_string_bytes\":%llu,\"source_consumed_bytes\":%zu,\"decoded_source_end\":%zu,\"block4_disk_cursor\":%llu,\"block4_native_cursor\":%llu,\"unique_interned_strings\":%zu,\"pool_live_allocations\":%d,\"pool_live_buckets\":%d,\"pool_debug_refs\":%u,\"pool_released\":true,\"hash_free_list_restored\":true,\"all_aliases_match\":true,\"reset_and_release_pass\":true,\"strings_used_after_release\":[",asset,round,type,f.strings.size()-f.nulls,(unsigned long long)(f.end-52-f.table.diskBytes),r.Position(),f.end,(unsigned long long)f.diskEnd,(unsigned long long)f.nativeEnd,uniqueIds.size(),poolAllocations,poolBuckets,poolReferences);
         for(unsigned i=0;i<32;++i)std::printf("%s%d",i?",":"",diagnostics[i]);std::printf("]}\n");
+#elif defined(BO1_STRINGTABLE_HASH_GATE)
+        unsigned inlineCells=0,offsetCells=0;std::uint64_t inlineBytes=0;for(const auto&e:payload.strings){if(e.offset)++offsetCells;else if(e.tag){++inlineCells;inlineBytes+=e.bytes;}}
+        std::printf("{\"asset_index\":%u,\"round\":%u,\"alloc_type\":%u,\"source_consumed_bytes\":%zu,\"decoded_source_end\":%zu,\"block4_disk_cursor\":%llu,\"block4_native_cursor\":%llu,\"name_bytes\":%llu,\"cell_count\":%d,\"inline_cell_strings\":%u,\"offset_cell_strings\":%u,\"inline_cell_bytes\":%llu,\"block0_native_after_pop\":0,\"block0_shadow_after_pop\":%u,\"every_cell_string_matches\":true,\"exact_initialized_targets\":true,\"actual_owned_slot_conversion\":true,\"provenance_cleared_before_reset\":true,\"actual_hash_matches\":true,\"indices_loaded\":true,\"original_index_order_preserved\":true,\"scalar_stride_two\":true,\"scalar_loader_cleared\":true,\"all_aliases_match\":true,\"live_header_scope_verified\":true,\"prior_block4_preserved\":true,\"reset_and_release_pass\":true}\n",asset,round,type,r.Position(),bytes.size(),(unsigned long long)payload.indices.diskEnd,(unsigned long long)payload.indices.nativeEnd,(unsigned long long)payload.name.bytes,payload.cells.count,inlineCells,offsetCells,(unsigned long long)inlineBytes,BO1_NATIVE_64BIT?20u:0u);
 #elif defined(BO1_STRINGTABLE_INDEX_GATE)
         unsigned inlineCells=0,offsetCells=0;std::uint64_t inlineBytes=0;for(const auto&e:payload.strings){if(e.offset)++offsetCells;else if(e.tag){++inlineCells;inlineBytes+=e.bytes;}}
         std::printf("{\"asset_index\":%u,\"round\":%u,\"alloc_type\":%u,\"source_consumed_bytes\":%zu,\"decoded_source_end\":%zu,\"block4_disk_cursor\":%llu,\"block4_native_cursor\":%llu,\"name_bytes\":%llu,\"cell_count\":%d,\"inline_cell_strings\":%u,\"offset_cell_strings\":%u,\"inline_cell_bytes\":%llu,\"block0_native_after_pop\":0,\"block0_shadow_after_pop\":%u,\"every_cell_string_matches\":true,\"exact_initialized_targets\":true,\"actual_owned_slot_conversion\":true,\"provenance_cleared_before_reset\":true,\"indices_loaded\":true,\"original_index_order_preserved\":true,\"scalar_stride_two\":true,\"scalar_loader_cleared\":true,\"all_aliases_match\":true,\"live_header_scope_verified\":true,\"prior_block4_preserved\":true,\"reset_and_release_pass\":true}\n",asset,round,type,r.Position(),bytes.size(),(unsigned long long)payload.indices.diskEnd,(unsigned long long)payload.indices.nativeEnd,(unsigned long long)payload.name.bytes,payload.cells.count,inlineCells,offsetCells,(unsigned long long)inlineBytes,BO1_NATIVE_64BIT?20u:0u);
@@ -343,6 +349,8 @@ int main(int argc,char**argv){require(argc>=2,"decode/gate mode");if(!std::strcm
     const char*schema=
 #if defined(BO1_FRONTEND_INTERN_GATE)
         "BlackOpsARM.TASK-0017.intern-strings.v1";
+#elif defined(BO1_STRINGTABLE_HASH_GATE)
+        "BlackOpsARM.TASK-0022.stringtable-hash.v1";
 #elif defined(BO1_STRINGTABLE_INDEX_GATE)
         "BlackOpsARM.TASK-0021.stringtable-indices.v1";
 #elif defined(BO1_STRINGTABLE_STRINGS_GATE)

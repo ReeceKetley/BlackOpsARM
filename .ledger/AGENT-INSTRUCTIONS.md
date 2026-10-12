@@ -238,3 +238,15 @@ actual lookup/reference investigation on original arrays, then smallest real
 registration/next-asset boundary. Finite reader/full async distinction persists.
 Continue autonomously DEC29; local verified commits DEC26/no push. Preserve all
 prior evidence/protected checkouts/original assets. No game-owned graphics yet.
+
+
+TASK-0022 complete: actual canonical Com_HashString and unchanged StringTable
+wrapper match originalWindows and genuine1994hashes;12857vectors7974overflow,
+162cases12cycles perABI plusoptimizedARMUBSan. Read arm64_stringtable_hash.md,
+FACT67/68, WARN22/FAIL18, DEC37. Onlyuint32 accumulation/int memcpy changes;
+originaltolowerargument/length/null semantics retained, highbytes/locale deferred.
+Unique canonical source/declaration/callers and normalWindows3TUs verified.
+Next3: actualhash-index/row/column andrealI_stricmp onoriginalindices; provenance-
+backed sharedordering investigation; smallest actualregistration/ownership gate.
+No resort/sortingreject/fallback/fakequery success. ContinueautonomousDEC29,
+localverifiedcheckpointsDEC26/no push. Protectedrepos/assets/olderproofs intact.

@@ -2720,6 +2720,8 @@ set(SRC_UNIVERSAL
 	"${SRC_DIR}/universal/com_memory.h"
 	"${SRC_DIR}/universal/com_pack.cpp"
 	"${SRC_DIR}/universal/com_pack.h"
+	"${SRC_DIR}/universal/com_hash.cpp"
+	"${SRC_DIR}/universal/com_hash.h"
 	"${SRC_DIR}/universal/com_shared.cpp"
 	"${SRC_DIR}/universal/com_shared.h"
 	"${SRC_DIR}/universal/com_stringtable.cpp"

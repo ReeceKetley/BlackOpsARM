@@ -23,6 +23,9 @@ struct StringTablePayloadPlan{
 #if defined(BO1_STRINGTABLE_INDEX_GATE)
 #include "stringtable_indices_fixture.h"
 #endif
+#if defined(BO1_STRINGTABLE_HASH_GATE)
+#include "stringtable_hash_fixture.h"
+#endif
 static StringTablePayloadPlan payloadPlan(const Front&f,const AssetDirectoryPlan&d,const StringTableHeaderPlan&h,const unsigned char*data,std::size_t bytes){
     StringTablePayloadPlan p;p.nameSource=f.end+static_cast<std::size_t>(d.diskBytes)+20;require(p.nameSource<=bytes,"name follows checked numeric header");
     require(PlanRawString(h.nameTag,data+p.nameSource,bytes-p.nameSource,f.envelope.zone.file.blockSize[4],f.envelope.zone.logical[4],d.diskEnd,d.nativeEnd,p.name)==RawStringResult::Ok,"checked genuine name capacity/source before allocation");
@@ -82,6 +85,9 @@ static void executePayload(const StringTablePayloadPlan&p,StringTable*header,Dec
 #if defined(BO1_STRINGTABLE_INDEX_GATE)
     require(r.Position()+52==p.indexSource,"index source after resolved cell strings");const auto originalIndex=header->cellIndex;
     auto*indices=executeIndices(p.indices,r,blocks,measurement);require(header->cellIndex==originalIndex,"actual index leaf does not prematurely publish header");header->cellIndex=indices;
+#endif
+#if defined(BO1_STRINGTABLE_HASH_GATE)
+    executeCellHashes(p,header,measurement);
 #endif
     if(measurement)std::printf("{\"name_measurements\":{\"source_start\":%zu,\"length\":%llu,\"adler32\":%lu,\"disk_start\":%llu,\"disk_end\":%llu,\"native_start\":%llu,\"native_end\":%llu}}\n",p.nameSource,(unsigned long long)p.name.bytes,p.name.present?adler32(1,blocks[4].data+p.name.nativeStart,static_cast<unsigned>(p.name.bytes)):1ul,(unsigned long long)p.name.diskStart,(unsigned long long)p.name.diskEnd,(unsigned long long)p.name.nativeStart,(unsigned long long)p.name.nativeEnd);
     DB_PopStreamPos();require(g_streamPosIndex==0&&DB_GetStreamPos()==headerCursor,"child scope retains live header end before outer TEMP pop");
