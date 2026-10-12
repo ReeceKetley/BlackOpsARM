@@ -1,0 +1,6 @@
+Traceback (most recent call last):
+  File "D:\Desktop\Black Ops 2 Android\BlackOpsARM\tools\port\verify_stringtable_hash_source.py", line 220, in <module>
+    main()
+  File "D:\Desktop\Black Ops 2 Android\BlackOpsARM\tools\port\verify_stringtable_hash_source.py", line 195, in main
+    raise RuntimeError('Unexpected newly introduced hash caller: ' + relative)
+RuntimeError: Unexpected newly introduced hash caller: src/universal/com_hash.cpp

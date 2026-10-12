@@ -1,5 +1,35 @@
 # Current State
 
+Updated 12 October 2026: TASK-0022 canonical hash complete.
+Actual Com_HashString and unchanged StringTable wrapper now execute on HONOR.
+Unique function/declaration moved to universal/com_hash, sourceList added once;
+uint32 modulo accumulation/int result memcpy preserves original Windows bits,
+null/empty/len/loop/tolower argument behavior. DefinedASCII/C locale certified;
+highbytes/locale untouched and deferred.12857 vectors7974overflow agree with
+compiled originalMSVCO2 controls on bothWindows and independentASCIIoracle.
+All1994 genuine stored cell hashes agree every12cycles perABI; original index
+bytes/order unchanged and162 earlier adversarial cases pass. End10407/65678.
+Final strict debugrun2/optimizedrun2 all3ABIs pass; assertions/UBSan retained.
+FullARM0errors6877warnings/267artifacts30exes; optimized38/1. Full normal Windows
+bot/StringTable/hash3TUs x86/x64 compile6objects, canonical callerdeclarations/
+source/globalorder preserved;163expander/6stream bodies unchanged. Verifier
+failures18 (mixed-ending/regex assumptions) retained, corrected proof4 passes;
+no nativehash failure or timing/RSS/graphics claim. All tests/processes finished.
+Windows2528/DXVK2552/root15/APK and2397 prior frozen files preserved. Read
+arm64_stringtable_hash.md/_changes.md, stringtable_hash_handoff.md, FACT67/68,
+WARN22/FAIL18, DEC37. Localverifiedcommits DEC26/no push; autonomousDEC29active.
+Parent1874245; Git supplies resulting checkpoint and pending files. No hashgate
+work incomplete. Next3: actual FirstHashIndex/row/column with real I_stricmp and
+original retail indices on3ABIs; original-evidence lookup/order investigation;
+smallest genuine asset ownership/registration boundary. Modelmisses FACT62 remain
+models; no resort/sortingreject/fallback toforce pass. WARN22 fullasync/dispatch/
+registry/graphics/TEMP reuse/postreadOOM/generaloffset/pool/Windowsretention/
+multiowner/16KB/S25 remainopen. All historical evidence and scratch retained.
+
+# Historical state (preserved)
+
+# Current State
+
 Updated 12 October 2026: TASK-0021 original StringTable indices complete.
 HONOR ARM64/Windows x86/x64 pass162 cases/12 genuine cycles each; optimized ARM
 -O3 assertions/UBSan passes. Original400/1594 signed16 words/800/3188 bytes and
@@ -15,7 +45,8 @@ warnings/245 artifacts29executables; optimized36/1. No new timing/RSS or graphic
 Windows2528/DXVK2552/root15 and2271 older frozen paths/APK unchanged.
 Read arm64_stringtable_indices.md/_changes.md and stringtable_indices_handoff.md.
 DEC-0029 autonomous objective continues; DEC-0026 verified local commits/no push.
-Parenta859d77; Git identifies resulting checkpoint. No index-gate work incomplete.
+TASK-0021 checkpoint1874245 verified (FACT-0066); TASK-0022 hash active.
+No index-gate work incomplete. Git identifies current pending paths.
 Next3: canonical modulo32 Com_HashString Windows/genuine parity; actual lookup
 with original retail indices to investigate modeled misses; smallest genuine
 registration/next-asset boundary after ownership findings. Preserve original

@@ -1,3 +1,8 @@
+#if defined(BO1_STRINGTABLE_HASH_GATE)
+#include <platform/bo1_native_width.h>
+#include "com_stringtable_obj.h"
+#include "com_hash.h"
+#else
 #include "com_stringtable_obj.h"
 #include <server_mp/sv_bot_mp.h>
 #include "com_stringtable.h"
@@ -12,10 +17,12 @@
 
 StringTable *s_sortTable;
 
+#endif
 int __cdecl StringTable_HashString(const char *string)
 {
     return Com_HashString(string, 0);
 }
+#if !defined(BO1_STRINGTABLE_HASH_GATE)
 
 void __cdecl StringTable_ParseFileIntoTable(const char *filename, StringTable *table)
 {
@@ -272,3 +279,5 @@ void __cdecl StringTable_GetAsset_LoadObj(const char *filename, StringTable **ta
     *tablePtr = table;
 }
 
+
+#endif // !BO1_STRINGTABLE_HASH_GATE

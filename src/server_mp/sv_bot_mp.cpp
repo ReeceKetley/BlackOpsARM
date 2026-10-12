@@ -386,19 +386,6 @@ void __cdecl SV_BotThink(client_t *bot, usercmd_s *cmd)
     }
 }
 
-int __cdecl Com_HashString(const char *fname, int len)
-{
-    int hash; // [esp+0h] [ebp-Ch]
-    int i; // [esp+8h] [ebp-4h]
-
-    if ( !fname )
-        return 0;
-    hash = 5381;
-    for ( i = 0; fname[i] && (!len || i < len); ++i )
-        hash = tolower(fname[i]) + 33 * hash;
-    return hash;
-}
-
 void __cdecl Bot_UpdateTimedAction(int *timedAction)
 {
     if ( svs.time >= *timedAction )

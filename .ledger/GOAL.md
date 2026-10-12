@@ -2,6 +2,14 @@
 
 ## Current Milestone
 
+TASK-0022 real modulo32 hash complete. Genuine first payloads/index arrays and
+all1994 stored hashes match originalWindows/HONOR. Actual lookup/reference
+investigation next before assetregistration; FACT67/68/WARN22/DEC37. Autonomous
+objectiveDEC29 continues, local verified checkpointsDEC26/no push. Read STATE
+and arm64_stringtable_hash.md; no engine-owned graphics yet.
+
+## Historical milestone
+
 TASK-0021 original StringTable indices complete. Actual payload leaves through
 index arrays pass HONOR/Windows; real hash/lookup next before registry. Read
 STATE, arm64_stringtable_indices.md and FACT-0064/0065/WARN-0021. Autonomous

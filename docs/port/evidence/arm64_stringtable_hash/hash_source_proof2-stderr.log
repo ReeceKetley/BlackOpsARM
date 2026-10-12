@@ -1,0 +1,9 @@
+Traceback (most recent call last):
+  File "D:\Desktop\Black Ops 2 Android\BlackOpsARM\tools\port\verify_stringtable_hash_source.py", line 212, in <module>
+    main()
+  File "D:\Desktop\Black Ops 2 Android\BlackOpsARM\tools\port\verify_stringtable_hash_source.py", line 165, in main
+    old = original(name)
+          ^^^^^^^^^^^^^^
+  File "D:\Desktop\Black Ops 2 Android\BlackOpsARM\tools\port\verify_stringtable_hash_source.py", line 66, in original
+    raise RuntimeError('Captured baseline differs from Git source: ' + name)
+RuntimeError: Captured baseline differs from Git source: cmake_files.cmake
