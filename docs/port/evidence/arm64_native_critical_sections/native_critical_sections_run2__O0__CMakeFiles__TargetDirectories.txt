@@ -1,0 +1,3 @@
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/build-android-audit/native_critical_sections_run2/O0/CMakeFiles/bo1_native_critical_sections_tests.dir
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/build-android-audit/native_critical_sections_run2/O0/CMakeFiles/edit_cache.dir
+D:/Desktop/Black Ops 2 Android/BlackOpsARM/build-android-audit/native_critical_sections_run2/O0/CMakeFiles/rebuild_cache.dir

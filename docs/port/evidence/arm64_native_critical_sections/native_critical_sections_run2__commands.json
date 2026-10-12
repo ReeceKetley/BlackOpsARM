@@ -1,0 +1,528 @@
+[
+  {
+    "args": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_critical_sections_host2\\x86\\native_critical_sections.exe"
+    ],
+    "exit": 0,
+    "stdout": "{\"native_critical_sections\":{\"pointer_bytes\":4,\"sections\":75,\"initializers\":12,\"protected_increments\":30000,\"shared_pool_locks\":3,\"passed\":true}}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_critical_sections_host2\\x86\\native_critical_sections.exe",
+      "--invalid-enter",
+      "-1"
+    ],
+    "exit": 3,
+    "stdout": "",
+    "stderr": "Native critical sections: invalid identifier (-1)\n"
+  },
+  {
+    "args": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_critical_sections_host2\\x86\\native_critical_sections.exe",
+      "--invalid-enter",
+      "75"
+    ],
+    "exit": 3,
+    "stdout": "",
+    "stderr": "Native critical sections: invalid identifier (75)\n"
+  },
+  {
+    "args": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_critical_sections_host2\\x86\\native_critical_sections.exe",
+      "--invalid-try",
+      "-1"
+    ],
+    "exit": 3,
+    "stdout": "",
+    "stderr": "Native critical sections: invalid identifier (-1)\n"
+  },
+  {
+    "args": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_critical_sections_host2\\x86\\native_critical_sections.exe",
+      "--invalid-try",
+      "75"
+    ],
+    "exit": 3,
+    "stdout": "",
+    "stderr": "Native critical sections: invalid identifier (75)\n"
+  },
+  {
+    "args": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_critical_sections_host2\\x86\\native_critical_sections.exe",
+      "--invalid-leave",
+      "-1"
+    ],
+    "exit": 3,
+    "stdout": "",
+    "stderr": "Native critical sections: invalid identifier (-1)\n"
+  },
+  {
+    "args": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_critical_sections_host2\\x86\\native_critical_sections.exe",
+      "--invalid-leave",
+      "75"
+    ],
+    "exit": 3,
+    "stdout": "",
+    "stderr": "Native critical sections: invalid identifier (75)\n"
+  },
+  {
+    "args": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_critical_sections_host2\\x64\\native_critical_sections.exe"
+    ],
+    "exit": 0,
+    "stdout": "{\"native_critical_sections\":{\"pointer_bytes\":8,\"sections\":75,\"initializers\":12,\"protected_increments\":30000,\"shared_pool_locks\":3,\"passed\":true}}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_critical_sections_host2\\x64\\native_critical_sections.exe",
+      "--invalid-enter",
+      "-1"
+    ],
+    "exit": 3,
+    "stdout": "",
+    "stderr": "Native critical sections: invalid identifier (-1)\n"
+  },
+  {
+    "args": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_critical_sections_host2\\x64\\native_critical_sections.exe",
+      "--invalid-enter",
+      "75"
+    ],
+    "exit": 3,
+    "stdout": "",
+    "stderr": "Native critical sections: invalid identifier (75)\n"
+  },
+  {
+    "args": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_critical_sections_host2\\x64\\native_critical_sections.exe",
+      "--invalid-try",
+      "-1"
+    ],
+    "exit": 3,
+    "stdout": "",
+    "stderr": "Native critical sections: invalid identifier (-1)\n"
+  },
+  {
+    "args": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_critical_sections_host2\\x64\\native_critical_sections.exe",
+      "--invalid-try",
+      "75"
+    ],
+    "exit": 3,
+    "stdout": "",
+    "stderr": "Native critical sections: invalid identifier (75)\n"
+  },
+  {
+    "args": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_critical_sections_host2\\x64\\native_critical_sections.exe",
+      "--invalid-leave",
+      "-1"
+    ],
+    "exit": 3,
+    "stdout": "",
+    "stderr": "Native critical sections: invalid identifier (-1)\n"
+  },
+  {
+    "args": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_critical_sections_host2\\x64\\native_critical_sections.exe",
+      "--invalid-leave",
+      "75"
+    ],
+    "exit": 3,
+    "stdout": "",
+    "stderr": "Native critical sections: invalid identifier (75)\n"
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "get-state"
+    ],
+    "exit": 0,
+    "stdout": "device\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "getprop",
+      "ro.product.cpu.abi"
+    ],
+    "exit": 0,
+    "stdout": "arm64-v8a\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/cmake/3.22.1/bin/cmake.exe",
+      "-S",
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\android\\cmake\\native-critical-sections",
+      "-B",
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_critical_sections_run2\\O0",
+      "-G",
+      "Ninja",
+      "-DCMAKE_MAKE_PROGRAM=D:/Android/Sdk/cmake/3.22.1/bin/ninja.exe",
+      "-DCMAKE_TOOLCHAIN_FILE=D:/Android/Sdk/ndk/30.0.16248370/build/cmake/android.toolchain.cmake",
+      "-DANDROID_ABI=arm64-v8a",
+      "-DANDROID_PLATFORM=android-28",
+      "-DCMAKE_BUILD_TYPE=Debug",
+      "-DCMAKE_CXX_FLAGS_DEBUG=-O0 -g"
+    ],
+    "exit": 0,
+    "stdout": "-- The CXX compiler identification is Clang 21.0.0\n-- Detecting CXX compiler ABI info\n-- Detecting CXX compiler ABI info - done\n-- Check for working CXX compiler: D:/Android/Sdk/ndk/30.0.16248370/toolchains/llvm/prebuilt/windows-x86_64/bin/clang++.exe - skipped\n-- Detecting CXX compile features\n-- Detecting CXX compile features - done\n-- Configuring done\n-- Generating done\n-- Build files have been written to: D:/Desktop/Black Ops 2 Android/BlackOpsARM/build-android-audit/native_critical_sections_run2/O0\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/cmake/3.22.1/bin/cmake.exe",
+      "--build",
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_critical_sections_run2\\O0",
+      "--parallel",
+      "2",
+      "--verbose"
+    ],
+    "exit": 0,
+    "stdout": "[1/4] D:\\Android\\Sdk\\ndk\\30.0.16248370\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang++.exe --target=aarch64-none-linux-android28 --sysroot=D:/Android/Sdk/ndk/30.0.16248370/toolchains/llvm/prebuilt/windows-x86_64/sysroot  -I\"D:/Desktop/Black Ops 2 Android/BlackOpsARM/src\" -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fno-limit-debug-info -O0 -g -fPIE -Wall -Wextra -Wpedantic -Werror=return-type -fms-extensions -fsigned-char -fsanitize=undefined -fno-sanitize-recover=all -include \"D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/win32_compat/msvc_compat.h\" -std=gnu++20 -MD -MT CMakeFiles/bo1_native_critical_sections_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/android/script_pool_bridge.cpp.o -MF CMakeFiles\\bo1_native_critical_sections_tests.dir\\D_\\Desktop\\Black_Ops_2_Android\\BlackOpsARM\\src\\platform\\android\\script_pool_bridge.cpp.o.d -o CMakeFiles/bo1_native_critical_sections_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/android/script_pool_bridge.cpp.o -c \"D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/android/script_pool_bridge.cpp\"\nIn file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/android/script_pool_bridge.cpp:3:\nIn file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/critical_section_services.h:2:\nD:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/critical_sections.h:3:24: warning: extension used [-Wlanguage-extension-token]\n\n    3 | enum CriticalSection : __int32\n\n      |                        ^\n\n1 warning generated.\n\n[2/4] D:\\Android\\Sdk\\ndk\\30.0.16248370\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang++.exe --target=aarch64-none-linux-android28 --sysroot=D:/Android/Sdk/ndk/30.0.16248370/toolchains/llvm/prebuilt/windows-x86_64/sysroot  -I\"D:/Desktop/Black Ops 2 Android/BlackOpsARM/src\" -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fno-limit-debug-info -O0 -g -fPIE -Wall -Wextra -Wpedantic -Werror=return-type -fms-extensions -fsigned-char -fsanitize=undefined -fno-sanitize-recover=all -include \"D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/win32_compat/msvc_compat.h\" -std=gnu++20 -MD -MT CMakeFiles/bo1_native_critical_sections_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/android/script_string_services.cpp.o -MF CMakeFiles\\bo1_native_critical_sections_tests.dir\\D_\\Desktop\\Black_Ops_2_Android\\BlackOpsARM\\src\\platform\\android\\script_string_services.cpp.o.d -o CMakeFiles/bo1_native_critical_sections_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/android/script_string_services.cpp.o -c \"D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/android/script_string_services.cpp\"\n[3/4] D:\\Android\\Sdk\\ndk\\30.0.16248370\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang++.exe --target=aarch64-none-linux-android28 --sysroot=D:/Android/Sdk/ndk/30.0.16248370/toolchains/llvm/prebuilt/windows-x86_64/sysroot  -I\"D:/Desktop/Black Ops 2 Android/BlackOpsARM/src\" -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fno-limit-debug-info -O0 -g -fPIE -Wall -Wextra -Wpedantic -Werror=return-type -fms-extensions -fsigned-char -fsanitize=undefined -fno-sanitize-recover=all -include \"D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/win32_compat/msvc_compat.h\" -std=gnu++20 -MD -MT CMakeFiles/bo1_native_critical_sections_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/native_critical_sections_tests.cpp.o -MF CMakeFiles\\bo1_native_critical_sections_tests.dir\\D_\\Desktop\\Black_Ops_2_Android\\BlackOpsARM\\tools\\port\\tests\\native_critical_sections_tests.cpp.o.d -o CMakeFiles/bo1_native_critical_sections_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/native_critical_sections_tests.cpp.o -c \"D:/Desktop/Black Ops 2 Android/BlackOpsARM/tools/port/tests/native_critical_sections_tests.cpp\"\nIn file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/tools/port/tests/native_critical_sections_tests.cpp:1:\nIn file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/critical_section_services.h:2:\nD:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/critical_sections.h:3:24: warning: extension used [-Wlanguage-extension-token]\n    3 | enum CriticalSection : __int32\n\n      |                        ^\n\n1 warning generated.\n\n[4/4] cmd.exe /C \"cd . && D:\\Android\\Sdk\\ndk\\30.0.16248370\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang++.exe --target=aarch64-none-linux-android28 --sysroot=D:/Android/Sdk/ndk/30.0.16248370/toolchains/llvm/prebuilt/windows-x86_64/sysroot -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fno-limit-debug-info -O0 -g -static-libstdc++ -Wl,--build-id=sha1 -Wl,--no-rosegment -Wl,--no-undefined-version -Wl,--fatal-warnings -Wl,--no-undefined -Qunused-arguments      -fsanitize=undefined CMakeFiles/bo1_native_critical_sections_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/android/script_pool_bridge.cpp.o CMakeFiles/bo1_native_critical_sections_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/android/script_string_services.cpp.o CMakeFiles/bo1_native_critical_sections_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/native_critical_sections_tests.cpp.o -o bo1_native_critical_sections_tests  -latomic -lm && cd .\"\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "mkdir",
+      "-p",
+      "/data/local/tmp/blackopsarm-critical43-O0"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "push",
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_critical_sections_run2\\O0\\bo1_native_critical_sections_tests",
+      "/data/local/tmp/blackopsarm-critical43-O0/lock_tests"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_critical_sections_run2\\O0\\bo1_native_critical_sections_tests: 1 file pushed, 0 skipped. 155.7 MB/s (1738856 bytes in 0.011s)\n"
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "sha256sum",
+      "/data/local/tmp/blackopsarm-critical43-O0/lock_tests"
+    ],
+    "exit": 0,
+    "stdout": "54d51ea2c394fc3397bd332dbeb787ccddab281f7167721a508a1e7090a68475  /data/local/tmp/blackopsarm-critical43-O0/lock_tests\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "chmod",
+      "700",
+      "/data/local/tmp/blackopsarm-critical43-O0/lock_tests"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "/data/local/tmp/blackopsarm-critical43-O0/lock_tests"
+    ],
+    "exit": 0,
+    "stdout": "{\"native_critical_sections\":{\"pointer_bytes\":8,\"sections\":75,\"initializers\":12,\"protected_increments\":30000,\"shared_pool_locks\":3,\"passed\":true}}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "/data/local/tmp/blackopsarm-critical43-O0/lock_tests",
+      "--invalid-enter",
+      "-1"
+    ],
+    "exit": 134,
+    "stdout": "",
+    "stderr": "Native critical sections: invalid identifier (-1)\n"
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "/data/local/tmp/blackopsarm-critical43-O0/lock_tests",
+      "--invalid-enter",
+      "75"
+    ],
+    "exit": 134,
+    "stdout": "",
+    "stderr": "Native critical sections: invalid identifier (75)\n"
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "/data/local/tmp/blackopsarm-critical43-O0/lock_tests",
+      "--invalid-try",
+      "-1"
+    ],
+    "exit": 134,
+    "stdout": "",
+    "stderr": "Native critical sections: invalid identifier (-1)\n"
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "/data/local/tmp/blackopsarm-critical43-O0/lock_tests",
+      "--invalid-try",
+      "75"
+    ],
+    "exit": 134,
+    "stdout": "",
+    "stderr": "Native critical sections: invalid identifier (75)\n"
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "/data/local/tmp/blackopsarm-critical43-O0/lock_tests",
+      "--invalid-leave",
+      "-1"
+    ],
+    "exit": 134,
+    "stdout": "",
+    "stderr": "Native critical sections: invalid identifier (-1)\n"
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "/data/local/tmp/blackopsarm-critical43-O0/lock_tests",
+      "--invalid-leave",
+      "75"
+    ],
+    "exit": 134,
+    "stdout": "",
+    "stderr": "Native critical sections: invalid identifier (75)\n"
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/cmake/3.22.1/bin/cmake.exe",
+      "-S",
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\android\\cmake\\native-critical-sections",
+      "-B",
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_critical_sections_run2\\O3",
+      "-G",
+      "Ninja",
+      "-DCMAKE_MAKE_PROGRAM=D:/Android/Sdk/cmake/3.22.1/bin/ninja.exe",
+      "-DCMAKE_TOOLCHAIN_FILE=D:/Android/Sdk/ndk/30.0.16248370/build/cmake/android.toolchain.cmake",
+      "-DANDROID_ABI=arm64-v8a",
+      "-DANDROID_PLATFORM=android-28",
+      "-DCMAKE_BUILD_TYPE=Debug",
+      "-DCMAKE_CXX_FLAGS_DEBUG=-O3 -g"
+    ],
+    "exit": 0,
+    "stdout": "-- The CXX compiler identification is Clang 21.0.0\n-- Detecting CXX compiler ABI info\n-- Detecting CXX compiler ABI info - done\n-- Check for working CXX compiler: D:/Android/Sdk/ndk/30.0.16248370/toolchains/llvm/prebuilt/windows-x86_64/bin/clang++.exe - skipped\n-- Detecting CXX compile features\n-- Detecting CXX compile features - done\n-- Configuring done\n-- Generating done\n-- Build files have been written to: D:/Desktop/Black Ops 2 Android/BlackOpsARM/build-android-audit/native_critical_sections_run2/O3\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/cmake/3.22.1/bin/cmake.exe",
+      "--build",
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_critical_sections_run2\\O3",
+      "--parallel",
+      "2",
+      "--verbose"
+    ],
+    "exit": 0,
+    "stdout": "[1/4] D:\\Android\\Sdk\\ndk\\30.0.16248370\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang++.exe --target=aarch64-none-linux-android28 --sysroot=D:/Android/Sdk/ndk/30.0.16248370/toolchains/llvm/prebuilt/windows-x86_64/sysroot  -I\"D:/Desktop/Black Ops 2 Android/BlackOpsARM/src\" -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fno-limit-debug-info -O3 -g -fPIE -Wall -Wextra -Wpedantic -Werror=return-type -fms-extensions -fsigned-char -fsanitize=undefined -fno-sanitize-recover=all -include \"D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/win32_compat/msvc_compat.h\" -std=gnu++20 -MD -MT CMakeFiles/bo1_native_critical_sections_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/android/script_pool_bridge.cpp.o -MF CMakeFiles\\bo1_native_critical_sections_tests.dir\\D_\\Desktop\\Black_Ops_2_Android\\BlackOpsARM\\src\\platform\\android\\script_pool_bridge.cpp.o.d -o CMakeFiles/bo1_native_critical_sections_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/android/script_pool_bridge.cpp.o -c \"D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/android/script_pool_bridge.cpp\"\nIn file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/android/script_pool_bridge.cpp:3:\nIn file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/critical_section_services.h:2:\nD:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/critical_sections.h:3:24: warning: extension used [-Wlanguage-extension-token]\n\n    3 | enum CriticalSection : __int32\n\n      |                        ^\n\n1 warning generated.\n\n[2/4] D:\\Android\\Sdk\\ndk\\30.0.16248370\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang++.exe --target=aarch64-none-linux-android28 --sysroot=D:/Android/Sdk/ndk/30.0.16248370/toolchains/llvm/prebuilt/windows-x86_64/sysroot  -I\"D:/Desktop/Black Ops 2 Android/BlackOpsARM/src\" -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fno-limit-debug-info -O3 -g -fPIE -Wall -Wextra -Wpedantic -Werror=return-type -fms-extensions -fsigned-char -fsanitize=undefined -fno-sanitize-recover=all -include \"D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/win32_compat/msvc_compat.h\" -std=gnu++20 -MD -MT CMakeFiles/bo1_native_critical_sections_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/android/script_string_services.cpp.o -MF CMakeFiles\\bo1_native_critical_sections_tests.dir\\D_\\Desktop\\Black_Ops_2_Android\\BlackOpsARM\\src\\platform\\android\\script_string_services.cpp.o.d -o CMakeFiles/bo1_native_critical_sections_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/android/script_string_services.cpp.o -c \"D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/android/script_string_services.cpp\"\n[3/4] D:\\Android\\Sdk\\ndk\\30.0.16248370\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang++.exe --target=aarch64-none-linux-android28 --sysroot=D:/Android/Sdk/ndk/30.0.16248370/toolchains/llvm/prebuilt/windows-x86_64/sysroot  -I\"D:/Desktop/Black Ops 2 Android/BlackOpsARM/src\" -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fno-limit-debug-info -O3 -g -fPIE -Wall -Wextra -Wpedantic -Werror=return-type -fms-extensions -fsigned-char -fsanitize=undefined -fno-sanitize-recover=all -include \"D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/win32_compat/msvc_compat.h\" -std=gnu++20 -MD -MT CMakeFiles/bo1_native_critical_sections_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/native_critical_sections_tests.cpp.o -MF CMakeFiles\\bo1_native_critical_sections_tests.dir\\D_\\Desktop\\Black_Ops_2_Android\\BlackOpsARM\\tools\\port\\tests\\native_critical_sections_tests.cpp.o.d -o CMakeFiles/bo1_native_critical_sections_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/native_critical_sections_tests.cpp.o -c \"D:/Desktop/Black Ops 2 Android/BlackOpsARM/tools/port/tests/native_critical_sections_tests.cpp\"\nIn file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/tools/port/tests/native_critical_sections_tests.cpp:1:\nIn file included from D:/Desktop/Black Ops 2 Android/BlackOpsARM/src/platform/critical_section_services.h:2:\nD:/Desktop/Black Ops 2 Android/BlackOpsARM/src/universal/critical_sections.h:3:24: warning: extension used [-Wlanguage-extension-token]\n    3 | enum CriticalSection : __int32\n\n      |                        ^\n\n1 warning generated.\n\n[4/4] cmd.exe /C \"cd . && D:\\Android\\Sdk\\ndk\\30.0.16248370\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang++.exe --target=aarch64-none-linux-android28 --sysroot=D:/Android/Sdk/ndk/30.0.16248370/toolchains/llvm/prebuilt/windows-x86_64/sysroot -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fno-limit-debug-info -O3 -g -static-libstdc++ -Wl,--build-id=sha1 -Wl,--no-rosegment -Wl,--no-undefined-version -Wl,--fatal-warnings -Wl,--no-undefined -Qunused-arguments      -fsanitize=undefined CMakeFiles/bo1_native_critical_sections_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/android/script_pool_bridge.cpp.o CMakeFiles/bo1_native_critical_sections_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/src/platform/android/script_string_services.cpp.o CMakeFiles/bo1_native_critical_sections_tests.dir/D_/Desktop/Black_Ops_2_Android/BlackOpsARM/tools/port/tests/native_critical_sections_tests.cpp.o -o bo1_native_critical_sections_tests  -latomic -lm && cd .\"\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "mkdir",
+      "-p",
+      "/data/local/tmp/blackopsarm-critical43-O3"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "push",
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_critical_sections_run2\\O3\\bo1_native_critical_sections_tests",
+      "/data/local/tmp/blackopsarm-critical43-O3/lock_tests"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_critical_sections_run2\\O3\\bo1_native_critical_sections_tests: 1 file pushed, 0 skipped. 135.1 MB/s (1594112 bytes in 0.011s)\n"
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "sha256sum",
+      "/data/local/tmp/blackopsarm-critical43-O3/lock_tests"
+    ],
+    "exit": 0,
+    "stdout": "38133f0c732ee7a6a527dd879ee4483c5616550bec9a95a836fb984cf3d38616  /data/local/tmp/blackopsarm-critical43-O3/lock_tests\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "chmod",
+      "700",
+      "/data/local/tmp/blackopsarm-critical43-O3/lock_tests"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "/data/local/tmp/blackopsarm-critical43-O3/lock_tests"
+    ],
+    "exit": 0,
+    "stdout": "{\"native_critical_sections\":{\"pointer_bytes\":8,\"sections\":75,\"initializers\":12,\"protected_increments\":30000,\"shared_pool_locks\":3,\"passed\":true}}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "/data/local/tmp/blackopsarm-critical43-O3/lock_tests",
+      "--invalid-enter",
+      "-1"
+    ],
+    "exit": 134,
+    "stdout": "",
+    "stderr": "Native critical sections: invalid identifier (-1)\n"
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "/data/local/tmp/blackopsarm-critical43-O3/lock_tests",
+      "--invalid-enter",
+      "75"
+    ],
+    "exit": 134,
+    "stdout": "",
+    "stderr": "Native critical sections: invalid identifier (75)\n"
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "/data/local/tmp/blackopsarm-critical43-O3/lock_tests",
+      "--invalid-try",
+      "-1"
+    ],
+    "exit": 134,
+    "stdout": "",
+    "stderr": "Native critical sections: invalid identifier (-1)\n"
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "/data/local/tmp/blackopsarm-critical43-O3/lock_tests",
+      "--invalid-try",
+      "75"
+    ],
+    "exit": 134,
+    "stdout": "",
+    "stderr": "Native critical sections: invalid identifier (75)\n"
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "/data/local/tmp/blackopsarm-critical43-O3/lock_tests",
+      "--invalid-leave",
+      "-1"
+    ],
+    "exit": 134,
+    "stdout": "",
+    "stderr": "Native critical sections: invalid identifier (-1)\n"
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "/data/local/tmp/blackopsarm-critical43-O3/lock_tests",
+      "--invalid-leave",
+      "75"
+    ],
+    "exit": 134,
+    "stdout": "",
+    "stderr": "Native critical sections: invalid identifier (75)\n"
+  }
+]

@@ -1,0 +1,4 @@
+{
+  "reason": "Windows expected abort delayed until watchdog exit2; runner interrupted for explicit abort-policy and exit validation repair",
+  "completed": false
+}

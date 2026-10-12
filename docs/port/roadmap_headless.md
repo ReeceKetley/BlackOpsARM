@@ -2,6 +2,12 @@
 
 ## Current integration direction (12 October 2026)
 
+TASK43 completes all75 native recursive enum critical sections while preserving
+actual SL/MT/DBHASH lock identity. Windows/HONOR O0/O3 mutex and genuine asset/
+string-owner regressions pass; see `arm64_native_critical_sections.md`. Next:
+native role/TLS bindings executing original `Com_InitThreadData`, then real
+Dvar/Cmd/Cbuf with fixed32 synchronization, before actual DB orchestration.
+
 TASK42 removes the native Windows two-owner PMem validation limit after
 reproducing and repairing its native record stride; both primitive stacks and
 the genuine reader/MP71 regression pass. See `arm64_pmem_owner_stack.md`.

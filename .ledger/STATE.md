@@ -1,4 +1,21 @@
-# Latest verified TASK42 - native PMem owner stack
+# Latest verified TASK43 - native general recursive critical sections
+
+All75 enum sections now backed by genuine recursive locks,72additional plus
+existingSL27/MT28/DBHASH74 exactPoolLock identities. Hostx86/x64/HONORO0/O3 pass
+12concurrentinitializers, everysectionrecursion/depth/independence,30000increments,
+crossinterfacecontention and24invalidcontrols exactexit3/134. GenuineMP71 and
+retainedprovider/default/actualSLMTrefownership regressions passall3ABIs/O0/O3.
+Oneproductionbridge edit; normalWindowsimplementation/enum/poolservices unchanged.
+11currentmanifests/19930protectedpaths/referenceGit/1019priorarchive records
+verified;188newmetadatarecords frozen. Read FACT131/FAIL42 and report
+arm64_native_critical_sections.md. InterruptedWindowsabortreporting test retained,
+test-onlypolicy corrected; passing controls requireactualabort ratherthanwatchdog.
+NoengineTLS/FastCriticalSection/Com_Error/DBworkers/fullstartup claim. Next native
+thread/TLS executes originalCom_InitThreadData with canonicalva/error/trace/CmdArgs
+storage and realmainowner identity, thenactualDvar/Cmd andDBpublication.
+Root owns all edits, localverifiedcommits authorized/no push. Goalunfinished.
+
+# Historical verified TASK42 - native PMem owner stack
 
 Native-only PMem previous-record indexing repaired after reproduced x64 failure;
 Win32 branch unchanged. Actual low/high stacks tested independently at3/8/32,
