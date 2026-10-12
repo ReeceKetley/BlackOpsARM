@@ -1,3 +1,24 @@
+# Current state - TASK36 complete; standing goal continues
+
+Actual Add/fullLink new-name nonstub no-mod path registers genuine liveTEMP
+StringTable/RawFile: engine allocates/clonesonce/publishes/returns persistentheader
+before normalization/Pop. All1994queries/children surviveTEMP reuse; actualFind
+identity preserved. 18Addcalls/12cycles perABI,215priorcases/12typedregistrationrows/
+4newmalformedcontrols+placement pass finalhost/O0/O3pass4 +debug/O3run1 on3ABIs.
+Fixture unlink then actual frees restore32752chain/bothpools/count0/highwater2 before
+zone free. Actual missingcomma default reaches explicit unavailable fatal3/134.
+Canonical enum/capacity8192/globals/cheap policy/sync/stringhelper preserved;
+sourceproof/defaultWindows8TUs/protected17955paths/Git pass. Failedbuilds retained.
+Read arm64_registry_registration.md, DEC52/FACT107/108/WARN37/FAIL34. Git supplies HEAD.
+Next next genuine asset deserialization, wider realzone integration, core engine
+initialization. FullDB_Init/Dvar startup/default/override/mod/recovery/async/
+concurrency/applicationboot still unverified. Cleanup fixture-owned; expected
+unlinked bytes comparison, not publishedlink restoration. DEC47 autonomous/local
+commits/no push continues. All tests completed; protect original assets/repos/root/
+evidence and unskipped genuine TechniqueSet7.
+
+# Historical state (preserved)
+
 # Current state - TASK35 complete; standing goal continues
 
 Actual production insertion/Find on genuine headers passes x86/x64/HONOR O0/O3:

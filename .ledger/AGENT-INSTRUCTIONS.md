@@ -394,3 +394,8 @@ and DEC50/FACT103/104/WARN35/FAIL33; next real insertion/returned-header integra
 then next genuine asset. DEC47 standing autonomous goal/localcommits/no push active.
 
 TASK35 production insertion/lookup passes3ABIs/O0/O3. FullAdd/Link unverified; next actual returned-header registration on liveTEMP before normalization/Pop then next genuine asset. DEC51/FACT105/106/WARN36; standing DEC47 active.
+
+TASK36 current: actual Add/fullLink new-name no-mod path on liveTEMP returns
+persistent headers before normalization/Pop;3ABIs/O0/O3 pass. Cleanup fixture-owned.
+Read arm64_registry_registration.md, DEC52/FACT107/108/WARN37/FAIL34. Next genuine
+asset deserialization/wider zone integration/coreinit. No fullstartup claim. DEC47 active.

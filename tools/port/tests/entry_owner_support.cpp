@@ -9,6 +9,30 @@ void InitializeEntryOwnerInput(){fastFile.current.enabled=true;}
 #if !defined(__ANDROID__)
 char *va(const char*format,...){static thread_local char text[1024];va_list args;va_start(args,format);std::vsnprintf(text,sizeof(text),format,args);va_end(args);return text;}
 #endif
+
+#if defined(BO1_REGISTRY_ADD_GATE)
+#include <database/db_registry_add_api.h>
+#if defined(_WIN32)
+#include <crtdbg.h>
+#endif
+static dvar_t assetDebug{},assetDebugType{};
+void InitializeRegistryAddInputs(){db_xassetdebug=&assetDebug;db_xassetdebugtype=&assetDebugType;assetDebug.current.enabled=false;assetDebugType.current.integer=-1;g_zoneIndex=1;}
+[[noreturn]] static void registrationUnavailable(const char *name){
+#if defined(_WIN32)
+_set_abort_behavior(0,_WRITE_ABORT_MSG|_CALL_REPORTFAULT);
+#endif
+std::fprintf(stderr,"Explicit unsupported standalone registration dependency: %s\n",name);std::fflush(stderr);std::abort();}
+const char *Dvar_GetString(const char*){registrationUnavailable("Dvar_GetString");}
+XAssetEntry *DB_CreateDefaultEntry(XAssetType,const char*){registrationUnavailable("DB_CreateDefaultEntry");}
+bool DB_OverrideAsset(unsigned int,unsigned int){registrationUnavailable("DB_OverrideAsset");}
+void DB_DelayedCloneXAsset(XAssetEntry*){registrationUnavailable("DB_DelayedCloneXAsset");}
+void DB_SwapXAsset(XAsset*,XAsset*){registrationUnavailable("DB_SwapXAsset");}
+void DB_CloneXAssetEntry(const XAssetEntry*,XAssetEntry*,DBCloneMethod){registrationUnavailable("DB_CloneXAssetEntry");}
+void Mark_XAsset(){registrationUnavailable("Mark_XAsset");}
+void NET_Sleep(unsigned int){registrationUnavailable("NET_Sleep");}
+XAssetHeader DB_ModDefer(const XAssetEntry*){registrationUnavailable("DB_ModDefer");}
+void DB_ModLinkModelMaterials(XModel*){registrationUnavailable("DB_ModLinkModelMaterials");}
+#endif
 void __cdecl DB_EnumXAssets(XAssetType,void(__cdecl *)(XAssetHeader,void*),void*,bool){std::fprintf(stderr,"Explicit unsupported standalone LoadObj diagnostic\n");std::abort();}
 
 #if defined(BO1_REGISTRY_LOOKUP_GATE)

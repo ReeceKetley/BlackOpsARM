@@ -256,6 +256,9 @@ static unsigned fixtures(const ZonePlan&zone){unsigned count=0;const auto baseli
     DB_InitStreams(detached);DB_FreeXBlocks(b,0);frontend_fixture::release(&owner);require(frontend_fixture::counts()==baseline,"failure detach and release baseline");return count;
 }
 int main(int argc,char**argv){
+#if defined(BO1_REGISTRY_ADD_GATE)
+    if(argc==2&&!std::strcmp(argv[1],"--registration-default-unavailable")){registry_lookup_fixture::defaultUnavailable();return 1;}
+#endif
 #if defined(BO1_REGISTRY_LOOKUP_GATE)
     if(argc==2&&!std::strcmp(argv[1],"--lookup-controls")){registry_lookup_fixture::controls();return 0;}
     if(argc==2&&!std::strcmp(argv[1],"--mod-deferred-unavailable")){registry_lookup_fixture::deferredUnavailable();return 1;}
@@ -427,7 +430,9 @@ require(argc>=2,"decode/gate mode");if(!std::strcmp(argv[1],"decode")){require(a
 #endif
     }
     const char*schema=
-#if defined(BO1_REGISTRY_INSERT_GATE)
+#if defined(BO1_REGISTRY_ADD_GATE)
+        "BlackOpsARM.TASK-0036.registry-registration.v1";
+#elif defined(BO1_REGISTRY_INSERT_GATE)
         "BlackOpsARM.TASK-0035.registry-insertion.v1";
 #elif defined(BO1_REGISTRY_LOOKUP_GATE)
         "BlackOpsARM.TASK-0034.registry-lookup.v1";

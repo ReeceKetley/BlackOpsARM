@@ -103,11 +103,19 @@ static StringTable* prepare(StringTable* temp){
     require(!persistent&&!live.any()&&freeCount(true)==POOLSIZE_STRINGTABLE,"genuine clone starts at pool baseline");
     XAsset from{},to{};from.type=to.type=ASSET_TYPE_STRINGTABLE;from.header.data=temp;
 #if defined(BO1_ENTRY_GENUINE_GATE)
-    to.header=entry_owner_fixture::acquire(ASSET_TYPE_STRINGTABLE);const auto id=indexOf(to.header.data);require(id<active&&!live[id],"actual entry header unique in StringTable pool");live[id]=true;
+    #if defined(BO1_REGISTRY_ADD_GATE)
+ to.header=entry_owner_fixture::registerHeader(ASSET_TYPE_STRINGTABLE,temp);
+#else
+ to.header=entry_owner_fixture::acquire(ASSET_TYPE_STRINGTABLE);
+#endif
+const auto id=indexOf(to.header.data);require(id<active&&!live[id],"actual entry header unique in StringTable pool");live[id]=true;
 #else
     to.header=allocate();
 #endif
-    require(clone(from,to,sizeof(StringTable),sizeof(StringTable)),"actual production pool allocation and clone before TEMP pop");
+    #if !defined(BO1_REGISTRY_ADD_GATE)
+require(clone(from,to,sizeof(StringTable),sizeof(StringTable)),"actual production pool allocation and clone before TEMP pop");
+#endif
+
     persistent=to.header.stringTable;std::memcpy(copiedHeader.data(),temp,sizeof(StringTable));
     require(persistent!=temp&&!std::memcmp(persistent,temp,sizeof(StringTable)),"exact native-width persistent shallow header");return persistent;
 }

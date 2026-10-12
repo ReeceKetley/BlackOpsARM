@@ -1,5 +1,8 @@
 #if defined(BO1_STRINGTABLE_LOOKUP_GATE)
 #include <platform/bo1_native_width.h>
+#if defined(BO1_REGISTRY_ADD_GATE)
+#include <ctype.h>
+#endif
 #include "assertive.h"
 #else
 #include "q_shared.h"
@@ -344,6 +347,8 @@ int __cdecl I_strncmp(const char *s0, const char *s1, int n)
     return 0;
 }
 
+#endif
+#if !defined(BO1_STRINGTABLE_LOOKUP_GATE) || defined(BO1_REGISTRY_ADD_GATE)
 const char *__cdecl I_stristr(const char *s0, const char *substr)
 {
     int v3; // esi
@@ -372,6 +377,9 @@ const char *__cdecl I_stristr(const char *s0, const char *substr)
     }
     return 0;
 }
+#endif
+#if !defined(BO1_STRINGTABLE_LOOKUP_GATE)
+
 
 #endif
 int __cdecl I_stricmp(const char *s0, const char *s1)

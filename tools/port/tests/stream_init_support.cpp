@@ -3,4 +3,6 @@
 #include <cstdio>
 #include <cstdlib>
 unsigned long long DB_XFileBytesLoaded(){std::fputs("Unavailable engine decode byte accounting\n",stderr);std::abort();}
+#if !defined(BO1_REGISTRY_ADD_GATE)
 int g_dbTopAssetType{};
+#endif

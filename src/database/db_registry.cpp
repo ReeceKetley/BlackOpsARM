@@ -5,6 +5,10 @@
 #include "db_entry_alloc_api.h"
 #if defined(BO1_REGISTRY_LOOKUP_GATE)
 #include "db_registry_lookup_api.h"
+#if defined(BO1_REGISTRY_ADD_GATE)
+#include "db_registry_add_api.h"
+static bool DB_IsLevelSingletonType(XAssetType);
+#endif
 #include <cctype>
 #endif
 #endif
@@ -574,6 +578,8 @@ void(__cdecl *DB_FreeXAssetHeaderHandler[43])(void *, XAssetHeader) =
 #if !defined(BO1_STRINGTABLE_OWNER_GATE)
 
 
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE) || defined(BO1_REGISTRY_ADD_GATE)
 const char *g_defaultAssetName[43] =
 {
   "",
@@ -620,6 +626,9 @@ const char *g_defaultAssetName[43] =
   "",
   ""
 };
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE)
+
 
 static void CLONE_NULLSUB(const XAssetHeader, XAssetHeader, DBCloneMethod)
 {
@@ -738,8 +747,18 @@ unsigned int g_copyInfoCount;
 
 unsigned int g_zoneAllocType;
 bool g_zoneInited;
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE) || defined(BO1_REGISTRY_ADD_GATE)
 bool g_mayRecoverLostAssets;
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE)
+
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE) || defined(BO1_REGISTRY_ADD_GATE)
 int g_defaultAssetCount;
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE)
+
 int skipLoadingMaterialsHack;
 int g_missingAssetFile;
 int com_missingAssetOpenFailed;
@@ -758,11 +777,21 @@ int XAssetEntryHighCount;
 
 char g_zoneNameList[2080];
 volatile bool g_loadingZone;
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE) || defined(BO1_REGISTRY_ADD_GATE)
 bool g_isRecoveringLostDevice;
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE)
+
 bool g_initializing;
 bool s_usageUpToDate[43];
 int s_usageCounts[43];
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE) || defined(BO1_REGISTRY_ADD_GATE)
 unsigned int g_zoneIndex;
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE)
+
 int g_sync;
 bool s_inuseCacheEnabled;
 uintptr_t *s_inuseCache;
@@ -778,8 +807,13 @@ char g_debugZoneName[64];
 int g_zoneCount;
 XZone g_zones[32];
 
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE) || defined(BO1_REGISTRY_ADD_GATE)
 const dvar_t *db_xassetdebug;
 const dvar_t *db_xassetdebugtype;
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE)
+
 
 void __cdecl DB_InitSingleton(void *pool, int size)
 {
@@ -2117,8 +2151,22 @@ struct ModDeferredAsset
         XModel model;
     } copy;
 };
-static ModDeferredAsset g_modDeferred[8192];
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE) || defined(BO1_REGISTRY_ADD_GATE)
+static constexpr int DB_MOD_DEFERRED_CAPACITY = 8192;
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE)
+static ModDeferredAsset g_modDeferred[DB_MOD_DEFERRED_CAPACITY];
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE) || defined(BO1_REGISTRY_ADD_GATE)
+#if defined(BO1_REGISTRY_ADD_GATE)
+int g_modDeferredUsed; // standalone no-mod input
+#else
 static int g_modDeferredUsed; // slots handed out since the level's zones started loading (never reused before that)
+#endif
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE)
+
 #endif
 #if !defined(BO1_STRINGTABLE_OWNER_GATE) || defined(BO1_REGISTRY_LOOKUP_GATE)
 #if defined(BO1_REGISTRY_LOOKUP_GATE)
@@ -2130,17 +2178,27 @@ static int g_modDeferredCount; // slots MOD_DEFERRED_UNLINKED
 #if !defined(BO1_STRINGTABLE_OWNER_GATE)
 
 static int g_modDeferredLinked[3]; // linked on use: by a later asset's pointer, by a linked xmodel's surface, by name
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE) || defined(BO1_REGISTRY_ADD_GATE)
 static bool g_modDeferredLinking;
 static XAssetEntryPoolEntry g_modUnlinked; // returned by DB_LinkXAssetEntry for an asset of a mod zone it leaves unlinked
 bool g_modLazyModels = true; // L62: bo1_mod_lazymodels (Com_LoadLevelFastFiles)
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE)
+
 
 // the zone's top-level asset being loaded is one whose nested materials (and xmodels) are deferred
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE) || defined(BO1_REGISTRY_ADD_GATE)
 static bool DB_IsModDeferringLoad()
 {
     return g_dbTopAssetType >= 0
         && (DB_IsLevelSingletonType((XAssetType)g_dbTopAssetType)
             || (g_modLazyModels && g_dbTopAssetType == ASSET_TYPE_XMODEL));
 }
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE)
+
 
 // caller holds CRITSECT_DBHASH (DB_LinkXAssetEntry); the header the zone gets for it
 static XAssetHeader DB_ModDefer(const XAssetEntry *entry)
@@ -2721,6 +2779,8 @@ int __cdecl DB_GetZonePriority(int zone)
 }
 
 
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE) || defined(BO1_REGISTRY_ADD_GATE)
 XAssetHeader __cdecl DB_AddXAsset(XAssetType type, XAssetHeader header)
 {
     XAssetEntryPoolEntry *existingEntry; // [esp+0h] [ebp-14h]
@@ -2769,11 +2829,19 @@ void DB_SyncLostDevice()
         }
     }
 }
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE)
+
 
 // mod: the bo1_mod_zones list (Com_LoadLevelFastFiles). A zone is a mod extra zone when a listed name occurs in its
 // name, so '<zone>_patch' and the localized '<lang>_<zone>' count too.
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE) || defined(BO1_REGISTRY_ADD_GATE)
 static char g_modExtraZones[256];
 int g_dbTopAssetType = -1; // mod (L60): the top-level asset type Load_XAssetArrayCustom is loading, -1 between zones
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE)
+
 
 // mod (L60, L62): the counts line Material_Sort prints with bo1_mod_zones (deferred mod-zone assets, DB_ModDefer)
 void DB_PrintModMaterialStats(int materialCount)
@@ -2838,6 +2906,8 @@ const char *DB_GetModExtraZones()
     return g_modExtraZones;
 }
 
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE) || defined(BO1_REGISTRY_ADD_GATE)
 static bool DB_IsModExtraZone(unsigned int zoneIndex)
 {
     char token[64];
@@ -2865,7 +2935,12 @@ static bool DB_IsLevelSingletonType(XAssetType type)
     return (type >= ASSET_TYPE_CLIPMAP && type <= ASSET_TYPE_GFXWORLD) || type == ASSET_TYPE_SNDDRIVER_GLOBALS
         || type == ASSET_TYPE_XGLOBALS || type == ASSET_TYPE_GLASSES;
 }
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE)
 
+
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE) || defined(BO1_REGISTRY_ADD_GATE)
 XAssetEntryPoolEntry *__cdecl DB_LinkXAssetEntry(XAssetEntry *newEntry, int allowOverride)
 {
     const char *String; // eax
@@ -2995,7 +3070,7 @@ XAssetEntryPoolEntry *__cdecl DB_LinkXAssetEntry(XAssetEntry *newEntry, int allo
         }
         // L60/L62: the world's materials, a top-level xmodel and its materials are deferred (DB_ModDefer)
         if ( (type == ASSET_TYPE_MATERIAL || (type == ASSET_TYPE_XMODEL && g_modLazyModels)) && !g_modDeferredLinking
-            && DB_IsModDeferringLoad() && g_modDeferredUsed < ARRAY_COUNT(g_modDeferred) )
+            && DB_IsModDeferringLoad() && g_modDeferredUsed < DB_MOD_DEFERRED_CAPACITY )
         {
             g_modUnlinked.entry = *newEntry;
             g_modUnlinked.entry.asset.header = DB_ModDefer(newEntry); // the zone holds the deferred copy
@@ -3269,6 +3344,9 @@ LABEL_106:
     DB_FreeXAssetEntry((XAssetEntryPoolEntry*)newEntry);
     return existingEntrya;
 }
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE)
+
 
 #endif
 #if !defined(BO1_STRINGTABLE_OWNER_GATE) || defined(BO1_ENTRY_ALLOC_GATE)

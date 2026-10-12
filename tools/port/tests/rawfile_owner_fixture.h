@@ -39,11 +39,19 @@ static void fixtures(){
 }
 static void prepare(RawFile*temp){require(!persistent&&!live.any()&&freeCount(true)==POOLSIZE_RAWFILE,"RawFile genuine pool starts baseline");XAsset from{},to{};from.type=to.type=ASSET_TYPE_RAWFILE;from.header.data=temp;
 #if defined(BO1_ENTRY_GENUINE_GATE)
- to.header=entry_owner_fixture::acquire(ASSET_TYPE_RAWFILE);const auto id=index(to.header.data);require(id<active&&!live[id],"actual RawFile entry header unique in pool");live[id]=true;
+ #if defined(BO1_REGISTRY_ADD_GATE)
+ to.header=entry_owner_fixture::registerHeader(ASSET_TYPE_RAWFILE,temp);
+#else
+ to.header=entry_owner_fixture::acquire(ASSET_TYPE_RAWFILE);
+#endif
+const auto id=index(to.header.data);require(id<active&&!live[id],"actual RawFile entry header unique in pool");live[id]=true;
 #else
  to.header=alloc();
 #endif
-require(clone(from,to,sizeof(RawFile),sizeof(RawFile)),"RawFile actual clone before TEMP pop");persistent=static_cast<RawFile*>(to.header.data);std::memcpy(saved.data(),temp,sizeof(RawFile));require(persistent!=temp&&!std::memcmp(persistent,temp,sizeof(RawFile)),"RawFile persistent exact native header");}
+#if !defined(BO1_REGISTRY_ADD_GATE)
+require(clone(from,to,sizeof(RawFile),sizeof(RawFile)),"RawFile actual clone before TEMP pop");
+#endif
+persistent=static_cast<RawFile*>(to.header.data);std::memcpy(saved.data(),temp,sizeof(RawFile));require(persistent!=temp&&!std::memcmp(persistent,temp,sizeof(RawFile)),"RawFile persistent exact native header");}
 static void verify(RawFile*temp,XBlock(&blocks)[7],const RawFilePayloadPlan&p,const StringTablePayloadPlan&first,bool measurement){
  require(persistent&&live[index(persistent)]&&!std::memcmp(persistent,saved.data(),sizeof(RawFile)),"RawFile persistent survives Pop");auto state=frontend_fixture::streamState();auto owners=frontend_fixture::counts();std::vector<unsigned char> children(static_cast<std::size_t>(p.nativeEnd));std::memcpy(children.data(),blocks[4].data,children.size());
  require(persistent->name==reinterpret_cast<char*>(blocks[4].data+p.name.nativeStart)&&persistent->buffer==reinterpret_cast<char*>(blocks[4].data+p.bufferNativeStart)&&persistent->len==140&&p.name.bytes==17&&p.bufferBytes==141,"RawFile genuine child ownership and original length");
