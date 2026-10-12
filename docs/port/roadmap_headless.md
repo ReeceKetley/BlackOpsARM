@@ -2,6 +2,15 @@
 
 ## Current integration direction (12 October 2026)
 
+TASK46 is verified: actual main TLS/parse/Dvar/SL/CbufCmd and genuine registered
+settings now precede all71 MP startup-zone assets in one process on Windows and
+HONOR O0/O3. Ownership cleanup and focused ABI/CRT checks pass. Read
+`arm64_native_startup_services.md`. DEC64 prioritizes the exact actual Com_Init
+executable next, executing to its first unsupported dependency and implementing
+the required behavior. Database events/workers/reads/allocator ownership remain
+real dependencies as reached, not an isolated fixture program to expand first.
+Actual Com_Frame follows successful initialization. Full Com_Init has not run.
+
 TASK45 verifies the original FastCriticalSection writer/release protocol on
 native fixed32 atomic counters, preserving normal Windows behavior. See
 `arm64_fast_critical_section.md`; TSan runtime failure remains nonpassing

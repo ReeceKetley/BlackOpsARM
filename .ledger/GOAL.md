@@ -6,6 +6,28 @@ failure independentlyreproducedwithoutenginecode, retainedasnonpassingcoverage.
 NextactualDvar/Cmd/Cbuf registration/SLownership, realDBorchestration, genuine
 headlessCom_Init/Frames/Zombiessimulation. No fullstartup/gameplayclaim.
 
+## Current integration target - actual Com_Init
+
+TASK46 complete FACT141, read STATE and arm64_native_startup_services.md.
+DEC64: build the smallest honest native executable calling the full real
+Com_Init, preserving required entry order and runtime dedicated/headless behavior.
+Trace actual progress; first unsupported dependency -> production behavior ->
+rerun. Resolve real DBworker/events/files/allocator ownership as reached, without
+fake readiness/assertion bypass. Actual bounded Com_Frame and clean shutdown
+follow successful Com_Init return, then headless Zombies simulation. Focus
+tests on new ABI/sync/ownership/recovery risks; don't repeatedly broaden checks.
+Protected Windows/retail, accepted stubs/DOA exclusion, localcommits/nopush stay.
+
+## Historical active TASK46
+
+Continue genuine startup services from verified8f81f9c. Initial integrated HONOR
+smoke passes real mainTLS/parse/Dvar/SL/CbufInit/CmdInit/3commandoperations/cleanup,
+but extended Windows/ARM acceptance and MP71 integration remain unfinished.
+Root and implementation agent have separate source ownership. Next real database
+events/one-shot role13 worker, explicit allocator ownership, actual Com_Init and
+bounded Frames/headless simulation. Preserve original Windows/retail/DXVK and
+all evidence; verified local commits authorized, no push. Read STATE/FACT139.
+
 ## Historical Milestone
 
 TASK44 genuine native main/backend/database thread data and originalCmdReset

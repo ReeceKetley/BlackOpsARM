@@ -1,5 +1,8 @@
 #if !defined(BO1_NATIVE_THREAD_DATA)
-#if defined(BO1_STRINGTABLE_LOOKUP_GATE)
+#if defined(BO1_STARTUP_SERVICES)
+#include <platform/startup_services_api.h>
+#include "thread_data.h"
+#elif defined(BO1_STRINGTABLE_LOOKUP_GATE)
 #include <platform/bo1_native_width.h>
 #if defined(BO1_REGISTRY_ADD_GATE)
 #include <ctype.h>
@@ -22,6 +25,9 @@
 #include <EffectsCore/fx_load_obj.h>
 #include <csetjmp>
 
+#endif // startup / lookup / normal includes
+
+#if !defined(BO1_STRINGTABLE_LOOKUP_GATE) || defined(BO1_STARTUP_SERVICES)
 #define BIG_INFO_STRING 0x4000
 
 #include "thread_data.h"
@@ -30,6 +36,7 @@ int valueindex;
 // *WARNING* One or more selections were skipped as they could not be interpreted as c data
 
 
+#if !defined(BO1_STARTUP_SERVICES)
 unsigned __int8 __cdecl ColorIndex(unsigned __int8 c)
 {
     if ( (unsigned __int8)(c - 48) >= 0x11u )
@@ -37,6 +44,7 @@ unsigned __int8 __cdecl ColorIndex(unsigned __int8 c)
     else
         return c - 48;
 }
+#endif
 
 const char *__cdecl Com_GetFilenameSubString(const char *pathname)
 {
@@ -79,6 +87,7 @@ const char *__cdecl Com_GetExtensionSubString(const char *filename)
     return substr;
 }
 
+#if !defined(BO1_STARTUP_SERVICES)
 void __cdecl Com_StripExtension(char *in, char *out)
 {
     const char *extension; // [esp+0h] [ebp-4h]
@@ -88,6 +97,7 @@ void __cdecl Com_StripExtension(char *in, char *out)
         *out++ = *in++;
     *out = 0;
 }
+#endif
 
 void __cdecl Com_DefaultExtension(char *path, unsigned int maxSize, const char *extension)
 {
@@ -108,26 +118,35 @@ void __cdecl Com_DefaultExtension(char *path, unsigned int maxSize, const char *
 //    return BigShort(l);
 //}
 //
+#if !defined(BO1_STARTUP_SERVICES)
 unsigned __int64 __cdecl LittleLong64(unsigned __int64 l)
 {
     return LittleLong64(l);
 }
+#endif
 
+#if !defined(BO1_STARTUP_SERVICES)
 int __cdecl ShortSwap(__int16 l)
 {
     return HIBYTE(l) + ((unsigned __int8)l << 8);
 }
+#endif
 
+#if !defined(BO1_STARTUP_SERVICES)
 __int16 __cdecl ShortNoSwap(__int16 l)
 {
     return l;
 }
+#endif
 
+#if !defined(BO1_STARTUP_SERVICES)
 int __cdecl LongSwap(int l)
 {
     return HIBYTE(l) + (BYTE2(l) << 8) + (BYTE1(l) << 16) + ((unsigned __int8)l << 24);
 }
+#endif
 
+#if !defined(BO1_STARTUP_SERVICES)
 unsigned __int64 __cdecl Long64Swap(unsigned __int64 l)
 {
     return HIBYTE(l)
@@ -139,12 +158,16 @@ unsigned __int64 __cdecl Long64Swap(unsigned __int64 l)
              + ((unsigned __int64)BYTE1(l) << 48)
              + ((unsigned __int64)(unsigned __int8)l << 56);
 }
+#endif
 
+#if !defined(BO1_STARTUP_SERVICES)
 unsigned __int64 __cdecl Long64NoSwap(unsigned __int64 ll)
 {
     return ll;
 }
+#endif
 
+#if !defined(BO1_STARTUP_SERVICES)
 double __cdecl FloatReadSwap(int n)
 {
     FloatReadSwap_union dat2; // [esp+4h] [ebp-4h]
@@ -155,12 +178,16 @@ double __cdecl FloatReadSwap(int n)
     dat2.b[3] = n;
     return dat2.f;
 }
+#endif
 
+#if !defined(BO1_STARTUP_SERVICES)
 double __cdecl FloatReadNoSwap(int n)
 {
     return *(float *)&n;
 }
+#endif
 
+#if !defined(BO1_STARTUP_SERVICES)
 FloatWriteSwap_union __cdecl FloatWriteSwap(float f)
 {
     FloatWriteSwap_union dat2; // [esp+4h] [ebp-4h]
@@ -171,7 +198,9 @@ FloatWriteSwap_union __cdecl FloatWriteSwap(float f)
     dat2.b[3] = LOBYTE(f);
     return dat2;
 }
+#endif
 
+#if !defined(BO1_STARTUP_SERVICES)
 void __cdecl Swap_InitLittleEndian()
 {
     //BigShort = (__int16 (__cdecl *)(__int16))ShortSwap;
@@ -182,7 +211,9 @@ void __cdecl Swap_InitLittleEndian()
     //LittleFloatRead = (float (__cdecl *)(int))FloatReadNoSwap;
     //LittleFloatWrite = (int (__cdecl *)(float))Ragdoll_HandleBody;
 }
+#endif
 
+#if !defined(BO1_STARTUP_SERVICES)
 void __cdecl Swap_InitBigEndian()
 {
     //BigShort = ShortNoSwap;
@@ -193,21 +224,28 @@ void __cdecl Swap_InitBigEndian()
     //LittleFloatRead = (float (__cdecl *)(int))FloatReadSwap;
     //LittleFloatWrite = (int (__cdecl *)(float))FloatWriteSwap;
 }
+#endif
 
+#if !defined(BO1_STARTUP_SERVICES)
 void __cdecl Swap_Init()
 {
     Swap_InitLittleEndian();
 }
+#endif
 
+#if !defined(BO1_STARTUP_SERVICES)
 __int64 __cdecl I_atoi64(const char *str)
 {
     return _atoi64(str);
 }
+#endif
 
+#if !defined(BO1_STARTUP_SERVICES)
 bool __cdecl I_islower(int c)
 {
     return c >= 97 && c <= 122;
 }
+#endif
 
 #endif
 bool __cdecl I_isupper(int c)
@@ -216,25 +254,33 @@ bool __cdecl I_isupper(int c)
 }
 #if !defined(BO1_STRINGTABLE_LOOKUP_GATE)
 
+#if !defined(BO1_STARTUP_SERVICES)
 bool __cdecl I_isalpha(int c)
 {
     return c >= 97 && c <= 122 || c >= 65 && c <= 90;
 }
+#endif
 
+#if !defined(BO1_STARTUP_SERVICES)
 bool __cdecl I_isdigit(int c)
 {
     return c >= 48 && c <= 57;
 }
+#endif
 
+#if !defined(BO1_STARTUP_SERVICES)
 bool __cdecl I_isalnum(int c)
 {
     return I_isalpha(c) || I_isdigit(c);
 }
+#endif
 
+#if !defined(BO1_STARTUP_SERVICES)
 bool __cdecl I_isforfilename(int c)
 {
     return I_isalnum(c) || c == 95 || c == 45;
 }
+#endif
 
 void __cdecl I_strncpyz(char *dest, const char *src, int destsize)
 {
@@ -393,6 +439,7 @@ int __cdecl I_strcmp(const char *s0, const char *s1)
     return I_strncmp(s0, s1, 0x7FFFFFFF);
 }
 
+#if !defined(BO1_STARTUP_SERVICES)
 int __cdecl I_stricmpwild(const char *wild, const char *s)
 {
     int v3; // esi
@@ -429,7 +476,9 @@ int __cdecl I_stricmpwild(const char *wild, const char *s)
     while ( charWild );
     return 0;
 }
+#endif
 
+#if !defined(BO1_STARTUP_SERVICES)
 char *__cdecl I_strlwr(char *s)
 {
     char *iter; // [esp+0h] [ebp-4h]
@@ -441,7 +490,9 @@ char *__cdecl I_strlwr(char *s)
     }
     return s;
 }
+#endif
 
+#if !defined(BO1_STARTUP_SERVICES)
 char *__cdecl I_strupr(char *s)
 {
     char *iter; // [esp+0h] [ebp-4h]
@@ -453,7 +504,9 @@ char *__cdecl I_strupr(char *s)
     }
     return s;
 }
+#endif
 
+#if !defined(BO1_STARTUP_SERVICES)
 bool __cdecl I_iscsym(int c)
 {
     if ( c >= 97 && c <= 122 )
@@ -464,6 +517,7 @@ bool __cdecl I_iscsym(int c)
         return c == 95;
     return 1;
 }
+#endif
 
 void __cdecl I_strncat(char *dest, int size, const char *src)
 {
@@ -485,6 +539,7 @@ void __cdecl I_strncat(char *dest, int size, const char *src)
     I_strncpyz(&dest[destLen], src, size - destLen);
 }
 
+#if !defined(BO1_STARTUP_SERVICES)
 int __cdecl I_DrawStrlen(const char *str)
 {
     int count; // [esp+4h] [ebp-4h]
@@ -504,6 +559,7 @@ int __cdecl I_DrawStrlen(const char *str)
     }
     return count;
 }
+#endif
 
 char *__cdecl I_CleanStr(char *string)
 {
@@ -539,6 +595,7 @@ char *__cdecl I_CleanStr(char *string)
     return string;
 }
 
+#if !defined(BO1_STARTUP_SERVICES)
 unsigned __int8 __cdecl I_CleanChar(unsigned __int8 character)
 {
     if ( character == 146 )
@@ -546,6 +603,7 @@ unsigned __int8 __cdecl I_CleanChar(unsigned __int8 character)
     else
         return character;
 }
+#endif
 
 int Com_sprintf(char *dest, unsigned int size, const char *fmt, ...)
 {
@@ -554,6 +612,9 @@ int Com_sprintf(char *dest, unsigned int size, const char *fmt, ...)
 
     va_start(va, fmt);
     result = _vsnprintf(dest, size, fmt, va);
+#if defined(__ANDROID__)
+    va_end(va);
+#endif
     dest[size - 1] = 0;
     return result;
 }
@@ -567,10 +628,20 @@ int Com_sprintfPos(char *dest, int destSize, int *destPos, const char *fmt, ...)
 
     va_start(va, fmt);
     if ( *destPos >= destSize - 1 )
+#if defined(__ANDROID__)
+    {
+        va_end(va);
         return -1;
+    }
+#else
+        return -1;
+#endif
     destMod = &dest[*destPos];
     destModSize = destSize - *destPos;
     len = _vsnprintf(destMod, destModSize, fmt, va);
+#if defined(__ANDROID__)
+    va_end(va);
+#endif
     destMod[destModSize - 1] = 0;
     if ( len == destModSize || len == -1 )
         *destPos = destSize - 1;
@@ -589,9 +660,16 @@ bool __cdecl CanKeepStringPointer(char *string)
         //return 0;
 
     info = (va_info_t *)Sys_GetValue(1);
+#if defined(__ANDROID__) || defined(BO1_STARTUP_SERVICES_NATIVE_HOST_TEST)
+    const auto address = reinterpret_cast<std::uintptr_t>(string);
+    return address < reinterpret_cast<std::uintptr_t>(info)
+        || address > reinterpret_cast<std::uintptr_t>(&info->va_string[1][1023]);
+#else
     return string < (char *)info || string > &info->va_string[1][1023];
+#endif
 }
 
+#if !defined(BO1_STARTUP_SERVICES)
 char *__cdecl I_itoa(int value, char *buf, int bufsize)
 {
     int v4; // [esp+0h] [ebp-Ch]
@@ -635,7 +713,9 @@ char *__cdecl I_itoa(int value, char *buf, int bufsize)
         return buf;
     }
 }
+#endif
 
+#if !defined(BO1_STARTUP_SERVICES)
 void __cdecl strreverse(char *begin, char *end)
 {
     char aux; // [esp+3h] [ebp-1h]
@@ -647,6 +727,7 @@ void __cdecl strreverse(char *begin, char *end)
         *begin++ = aux;
     }
 }
+#endif
 
 char *va(const char *format, ...)
 {
@@ -662,6 +743,9 @@ char *va(const char *format, ...)
     info->index = (index + 1) % 4;
     buf = info->va_string[index];
     len = _vsnprintf(buf, 0x400u, format, v6);
+#if defined(__ANDROID__)
+    va_end(v6);
+#endif
     buf[1023] = 0;
     if ( len >= 0x400 )
     {
@@ -672,6 +756,7 @@ char *va(const char *format, ...)
 }
 
 char value1[3][2][8192];
+#if !defined(BO1_STARTUP_SERVICES)
 char *__cdecl Info_ValueForKey(char *s, char *key)
 {
     char *v4; // [esp+0h] [ebp-2010h]
@@ -737,7 +822,9 @@ char *__cdecl Info_ValueForKey(char *s, char *key)
     }
     return (char *)"";
 }
+#endif
 
+#if !defined(BO1_STARTUP_SERVICES)
 void __cdecl Info_NextPair(const char **head, char *key, char *value)
 {
     char *o; // [esp+0h] [ebp-8h]
@@ -769,7 +856,9 @@ void __cdecl Info_NextPair(const char **head, char *key, char *value)
     *oa = 0;
     *head = sa;
 }
+#endif
 
+#if !defined(BO1_STARTUP_SERVICES)
 void __cdecl Info_RemoveKey(char *s, char *key)
 {
     char *v2; // eax
@@ -820,8 +909,10 @@ void __cdecl Info_RemoveKey(char *s, char *key)
         while ( v3 );
     }
 }
+#endif
 
 // aislop used here to cleanup
+#if !defined(BO1_STARTUP_SERVICES)
 void __cdecl Info_RemoveKey_Big(char *s, char *key)
 {
     char *pairStart;
@@ -878,7 +969,9 @@ void __cdecl Info_RemoveKey_Big(char *s, char *key)
         *dst++ = *src;
     } while (*src++);
 }
+#endif
 
+#if !defined(BO1_STARTUP_SERVICES)
 bool __cdecl Info_Validate(char *s)
 {
     char *v1; // eax
@@ -890,7 +983,9 @@ bool __cdecl Info_Validate(char *s)
     v3 = strchr(s, 0x3Bu);
     return v3 == 0;
 }
+#endif
 
+#if !defined(BO1_STARTUP_SERVICES)
 void __cdecl Info_SetValueForKey(char *s, char *key, const char *value)
 {
     char *v3; // eax
@@ -1017,7 +1112,9 @@ void __cdecl Info_SetValueForKey(char *s, char *key, const char *value)
         Com_Printf(16, "Info_SetValueForKey: oversize infostring");
     }
 }
+#endif
 
+#if !defined(BO1_STARTUP_SERVICES)
 void __cdecl Info_SetValueForKey_Big(char *s, char *key, const char *value)
 {
     int j; // [esp+54h] [ebp-8018h]
@@ -1088,7 +1185,9 @@ void __cdecl Info_SetValueForKey_Big(char *s, char *key, const char *value)
         strcat(s, dest);
     }
 }
+#endif
 
+#if !defined(BO1_STARTUP_SERVICES)
 bool __cdecl ParseConfigStringToStruct(
                 unsigned __int8 *pStruct,
                 const cspField_t *pFieldList,
@@ -1112,7 +1211,9 @@ bool __cdecl ParseConfigStringToStruct(
     }
     return iField == iNumFields && !error;
 }
+#endif
 
+#if !defined(BO1_STARTUP_SERVICES)
 bool __cdecl KeyValueToField(
                 unsigned __int8 *pStruct,
                 const cspField_t *pField,
@@ -1235,7 +1336,9 @@ bool __cdecl KeyValueToField(
     }
     return result;
 }
+#endif
 
+#if !defined(BO1_STARTUP_SERVICES)
 bool __cdecl ParseConfigStringToStructMerged(
                 unsigned __int8 *pStruct,
                 cspField_t *pFieldList,
@@ -1321,7 +1424,9 @@ bool __cdecl ParseConfigStringToStructMerged(
     }
     return v21 == iNumFields && !v16;
 }
+#endif
 
+#if !defined(BO1_STARTUP_SERVICES)
 double __cdecl GetLeanFraction(float fFrac)
 {
     float v2; // [esp+0h] [ebp-4h]
@@ -1329,7 +1434,9 @@ double __cdecl GetLeanFraction(float fFrac)
     v2 = fabs(fFrac);
     return (2.0 - v2) * fFrac;
 }
+#endif
 
+#if !defined(BO1_STARTUP_SERVICES)
 double __cdecl UnGetLeanFraction(float fFrac)
 {
     float v2; // [esp+0h] [ebp-4h]
@@ -1347,7 +1454,9 @@ double __cdecl UnGetLeanFraction(float fFrac)
     v2 = sqrt(1.0 - fFrac);
     return 1.0 - v2;
 }
+#endif
 
+#if !defined(BO1_STARTUP_SERVICES)
 void __cdecl AddLeanToPosition(float *position, float fViewYaw, float fLeanFrac, float fViewRoll, float fLeanDist)
 {
     float fLean; // [esp+4h] [ebp-1Ch]
@@ -1368,7 +1477,9 @@ void __cdecl AddLeanToPosition(float *position, float fViewYaw, float fLeanFrac,
         position[2] = (float)(fLeana * vRight[2]) + position[2];
     }
 }
+#endif
 
+#if !defined(BO1_STARTUP_SERVICES)
 void __cdecl OrientationPosToWorldPos(const orientation_t *orient, const float *pos, float *out)
 {
     if ( pos == out
@@ -1383,7 +1494,9 @@ void __cdecl OrientationPosToWorldPos(const orientation_t *orient, const float *
     out[2] = (float)((float)((float)(*pos * orient->axis[0][2]) + orient->origin[2]) + (float)(pos[1] * orient->axis[1][2]))
                  + (float)(pos[2] * orient->axis[2][2]);
 }
+#endif
 
+#if !defined(BO1_STARTUP_SERVICES)
 void __cdecl OrientationDirToWorldDir(const orientation_t *orient, const float *dir, float *out)
 {
     if ( dir == out
@@ -1398,7 +1511,9 @@ void __cdecl OrientationDirToWorldDir(const orientation_t *orient, const float *
     out[2] = (float)((float)(*dir * orient->axis[0][2]) + (float)(dir[1] * orient->axis[1][2]))
                  + (float)(dir[2] * orient->axis[2][2]);
 }
+#endif
 
+#if !defined(BO1_STARTUP_SERVICES)
 void __cdecl OrientationConcatenate(const orientation_t *orFirst, const orientation_t *orSecond, orientation_t *out)
 {
     if ( out == orFirst
@@ -1416,7 +1531,9 @@ void __cdecl OrientationConcatenate(const orientation_t *orFirst, const orientat
     OrientationDirToWorldDir(orSecond, orFirst->axis[2], out->axis[2]);
     OrientationPosToWorldPos(orSecond, orFirst->origin, out->origin);
 }
+#endif
 
+#if !defined(BO1_STARTUP_SERVICES)
 void __cdecl OrientationInvert(const orientation_t *orient, orientation_t *out)
 {
     float origin; // [esp+0h] [ebp-Ch]
@@ -1442,12 +1559,16 @@ void __cdecl OrientationInvert(const orientation_t *orient, orientation_t *out)
     out->origin[2] = (float)((float)(origin * out->axis[0][2]) + (float)(origin_4 * out->axis[1][2]))
                                  + (float)(origin_8 * out->axis[2][2]);
 }
+#endif
 
+#if !defined(BO1_STARTUP_SERVICES)
 bool __cdecl Com_IsLegacyXModelName(const char *name)
 {
     return !I_strnicmp(name, "xmodel", 6) && (name[6] == 47 || name[6] == 92);
 }
+#endif
 
+#if !defined(BO1_STARTUP_SERVICES)
 double __cdecl CMD_GetAnalogButtonValue(usercmd_s *cmd, unsigned int whichBit)
 {
     int i; // [esp+0h] [ebp-10h]
@@ -1477,6 +1598,7 @@ double __cdecl CMD_GetAnalogButtonValue(usercmd_s *cmd, unsigned int whichBit)
         return (double)val / (double)((1 << numBits) - 1);
     }
 }
+#endif
 
 
 #endif // !BO1_STRINGTABLE_LOOKUP_GATE

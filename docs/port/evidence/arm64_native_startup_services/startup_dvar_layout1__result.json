@@ -1,0 +1,59 @@
+{
+  "passed": true,
+  "baseline": "8f81f9c",
+  "canonical_header_sha256": "032b27f1809b3f1c9e1539f8d533394c53232724aba62d11b1ee454527d5bc78",
+  "generated_cpp_sha256": "d37bffa73f6c0b704aada92d8bb3b93f98bc99b31093ce9ba0ebb8034c717941",
+  "runs": [
+    {
+      "architecture": "x86",
+      "layout": {
+        "pointer_bytes": 4,
+        "value_size": 16,
+        "limits_size": 16,
+        "dvar_size": 112,
+        "dvar_align": 8,
+        "current": 24,
+        "latched": 40,
+        "reset": 56,
+        "saved": 72,
+        "domain": 88,
+        "hashNext": 104
+      },
+      "binary_sha256": "45d0201e38c667f2b21594d6ec00d0348cee11ddb0d2c447bac6e9b2b4c70923"
+    },
+    {
+      "architecture": "x64",
+      "layout": {
+        "pointer_bytes": 8,
+        "value_size": 16,
+        "limits_size": 16,
+        "dvar_size": 120,
+        "dvar_align": 8,
+        "current": 32,
+        "latched": 48,
+        "reset": 64,
+        "saved": 80,
+        "domain": 96,
+        "hashNext": 112
+      },
+      "binary_sha256": "9f7a316f21ee55986c63936db6033801d759ce5cff282094a4aa52f50e7cc9f0"
+    },
+    {
+      "architecture": "arm64",
+      "layout": {
+        "pointer_bytes": 8,
+        "value_size": 16,
+        "limits_size": 16,
+        "dvar_size": 120,
+        "dvar_align": 8,
+        "current": 32,
+        "latched": 48,
+        "reset": 64,
+        "saved": 80,
+        "domain": 96,
+        "hashNext": 112
+      },
+      "binary_sha256": "ff4509e606416bcaf059d761604bfb7b32de99fda05b6b3db7839a9e08db5626"
+    }
+  ]
+}

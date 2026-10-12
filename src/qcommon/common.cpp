@@ -1,3 +1,10 @@
+#if defined(BO1_STARTUP_SERVICES)
+#include <platform/startup_services_api.h>
+#endif
+
+int logfile;
+
+#if !defined(BO1_STARTUP_SERVICES)
 #include "common.h"
 
 #include <string.h>
@@ -229,7 +236,6 @@ int com_expectedHunkUsage;
 char *rd_buffer;
 unsigned int rd_buffersize;
 void(__cdecl *rd_flush)(char *);
-int logfile;
 
 int opening_qconsole;
 int com_consoleLogOpenFailed;
@@ -3642,10 +3648,6 @@ void __cdecl Com_CloseLogfiles()
     }
 }
 
-bool __cdecl Com_LogFileOpen()
-{
-    return logfile != 0;
-}
 
 void __cdecl Com_Close()
 {
@@ -3858,3 +3860,10 @@ void Com_Printf_NoFilter(const char *fmt, ...)
     Com_PrintMessage(0, string, 0);
 }
 
+
+#endif // !BO1_STARTUP_SERVICES
+
+bool __cdecl Com_LogFileOpen()
+{
+    return logfile != 0;
+}

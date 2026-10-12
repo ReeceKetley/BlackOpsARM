@@ -1,3 +1,6 @@
+#if defined(BO1_STARTUP_SERVICES)
+#include <platform/startup_services_api.h>
+#else
 #include "dvar_cmds.h"
 #include "cmd.h"
 #include "common.h"
@@ -15,6 +18,8 @@
 #include <live/live_steam.h>
 #include <live/live_pcache_profile.h>
 #include <bgame/bg_emblems.h>
+
+#endif
 
 char info1[1024];
 char info2[16384];
@@ -618,7 +623,11 @@ void __cdecl Com_DvarDumpSingle(const dvar_s *dvar, void *userData)
     char message[2052]; // [esp+4h] [ebp-808h] BYREF
 
     ++*(unsigned int *)userData;
+#if defined(__ANDROID__) || defined(BO1_STARTUP_SERVICES_NATIVE_HOST_TEST)
+    if ( !static_cast<DvarDumpInfo *>(userData)->match || Com_Filter(static_cast<DvarDumpInfo *>(userData)->match, (char *)dvar->name, 0) )
+#else
     if ( !*((unsigned int *)userData + 2) || Com_Filter(*((const char **)userData + 2), (char *)dvar->name, 0) )
+#endif
     {
         if ( Dvar_HasLatchedValue(dvar) )
         {
@@ -650,6 +659,7 @@ void __cdecl Dvar_Dump_f()
     }
 }
 
+#if !defined(BO1_STARTUP_SERVICES)
 void __cdecl SV_SetConfig(int start, int max, int bit)
 {
     DvarSetConfigInfo info; // [esp+0h] [ebp-Ch] BYREF
@@ -659,7 +669,9 @@ void __cdecl SV_SetConfig(int start, int max, int bit)
     info.bit = bit;
     Dvar_ForEach((void (__cdecl *)(const dvar_s *, void *))SV_SetConfigDvar, &info);
 }
+#endif
 
+#if !defined(BO1_STARTUP_SERVICES)
 void __cdecl SV_SetConfigDvar(const dvar_s *dvar, int *userData)
 {
     char *v2; // eax
@@ -670,7 +682,9 @@ void __cdecl SV_SetConfigDvar(const dvar_s *dvar, int *userData)
         SV_SetConfigValueForKey(*userData, userData[1], (char *)dvar->name, v2);
     }
 }
+#endif
 
+#if !defined(BO1_STARTUP_SERVICES)
 char *__cdecl Dvar_InfoString(int localClientNum, int bit)
 {
     const char *Username; // eax
@@ -771,7 +785,9 @@ char *__cdecl Dvar_InfoString(int localClientNum, int bit)
     }
     return info1;
 }
+#endif
 
+#if !defined(BO1_STARTUP_SERVICES)
 void __cdecl Dvar_InfoStringSingle(const dvar_s *dvar, unsigned int *userData)
 {
     const char *v2; // eax
@@ -782,14 +798,18 @@ void __cdecl Dvar_InfoStringSingle(const dvar_s *dvar, unsigned int *userData)
         Info_SetValueForKey(info1, (char *)dvar->name, v2);
     }
 }
+#endif
 
+#if !defined(BO1_STARTUP_SERVICES)
 char *__cdecl Dvar_InfoString_Big(int bit)
 {
     info2[0] = 0;
     Dvar_ForEach((void (__cdecl *)(const dvar_s *, void *))Dvar_InfoStringSingle_Big, &bit);
     return info2;
 }
+#endif
 
+#if !defined(BO1_STARTUP_SERVICES)
 void __cdecl Dvar_InfoStringSingle_Big(const dvar_s *dvar, unsigned int *userData)
 {
     const char *v2; // eax
@@ -800,6 +820,7 @@ void __cdecl Dvar_InfoStringSingle_Big(const dvar_s *dvar, unsigned int *userDat
         Info_SetValueForKey_Big(info2, (char *)dvar->name, v2);
     }
 }
+#endif
 
 cmd_function_s Dvar_Toggle_f_VAR;
 cmd_function_s Dvar_TogglePrint_f_VAR;

@@ -1,0 +1,49 @@
+{
+  "binary_sha256": "2ba1da890a6fa792a71886e50d2b495ff86b7ecf4eea5986cab77a6011887827",
+  "canonical_definitions": {
+    "g_cmd_args": [
+      "00000000001256c0 B g_cmd_args"
+    ],
+    "g_com_error": [
+      "000000000014ce78 B g_com_error"
+    ],
+    "g_traceThreadInfo": [
+      "000000000014cc20 B g_traceThreadInfo"
+    ],
+    "va_info": [
+      "000000000013dbe0 B va_info"
+    ],
+    "gScrStringGlob": [
+      "0000000000073c00 D gScrStringGlob"
+    ],
+    "gScrDebuggerGlob": [
+      "000000000049e520 B gScrDebuggerGlob"
+    ],
+    "logfile": [
+      "000000000012bd78 B logfile"
+    ],
+    "bo1::android::RegisterHunkMainThread()": [
+      "0000000000056264 T bo1::android::RegisterHunkMainThread()"
+    ],
+    "Com_InitThreadData(int)": [
+      "000000000002f3c4 T Com_InitThreadData(int)"
+    ],
+    "Dvar_Init()": [
+      "0000000000026598 T Dvar_Init()"
+    ],
+    "Com_InitParse()": [
+      "000000000002e564 T Com_InitParse()"
+    ],
+    "Cmd_Init()": [
+      "000000000002c2c0 T Cmd_Init()"
+    ]
+  },
+  "actual_hunk_compile_commands": [
+    {
+      "directory": "D:/Desktop/Black Ops 2 Android/BlackOpsARM/build-android-audit/native_startup_services_zone_O3_final1",
+      "command": "D:\\Android\\Sdk\\ndk\\30.0.16248370\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang++.exe --target=aarch64-none-linux-android28 --sysroot=D:/Android/Sdk/ndk/30.0.16248370/toolchains/llvm/prebuilt/windows-x86_64/sysroot -I\"D:/Desktop/Black Ops 2 Android/BlackOpsARM/src\" -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fno-limit-debug-info -O3 -g -fPIC -Wall -Wextra -Wpedantic -Werror -std=gnu++20 -o loader\\audit\\CMakeFiles\\bo1_android_hunk_services.dir\\D_\\Desktop\\Black_Ops_2_Android\\BlackOpsARM\\src\\platform\\android\\hunk_services.cpp.o -c \"D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\src\\platform\\android\\hunk_services.cpp\"",
+      "file": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\src\\platform\\android\\hunk_services.cpp"
+    }
+  ],
+  "passed": true
+}

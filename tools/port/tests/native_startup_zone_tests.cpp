@@ -38,7 +38,11 @@ template<class T,int N>static unsigned freeHeaders(const XAssetPool<T,N> &pool){
     }return count;
 }
 static unsigned long checksum(const void *p,std::size_t n){return static_cast<unsigned long>(adler32(1,static_cast<const Bytef*>(p),static_cast<unsigned>(n)));}
+#if defined(BO1_STARTUP_SERVICES_ZONE_INTEGRATION)
+int RunNativeStartupZoneChecks(int argc,char **argv){
+#else
 int main(int argc,char **argv){
+#endif
     require(argc==2,"genuine retail file required");
 #if defined(BO1_NATIVE_THREAD_INTEGRATION)
     Sys_InitMainThread();

@@ -1,4 +1,15 @@
 #if !defined(BO1_FAST_CRIT_SECT_GATE)
+#if defined(BO1_STARTUP_SERVICES)
+#include <platform/startup_services_api.h>
+#include <algorithm>
+#include <cctype>
+#if !defined(min)
+#define min(a,b) (((a)<(b))?(a):(b))
+#endif
+#if !defined(max)
+#define max(a,b) (((a)>(b))?(a):(b))
+#endif
+#else
 #include "dvar.h"
 #include <database/db_registry.h>
 
@@ -15,6 +26,8 @@
 #include "com_memory.h"
 #include "q_parse.h"
 #include <qcommon/dvar_cmds.h>
+
+#endif
 
 int dvar_modifiedFlags;
 FastCriticalSection g_dvarCritSect;
@@ -2100,7 +2113,11 @@ void __cdecl Dvar_UpdateValue(dvar_s *dvar, DvarValue value)
         case DVAR_TYPE_LINEAR_COLOR_RGB:
         case DVAR_TYPE_COLOR_XYZ:
             dvar->current.integer = value.integer;
+#if defined(__ANDROID__) || defined(BO1_STARTUP_SERVICES_NATIVE_HOST_TEST)
+            std::memcpy((char *)&dvar->current.integer64 + 4, (char *)&value.integer64 + 4, 8);
+#else
             *(__int64 *)((char *)&dvar->current.integer64 + 4) = *(__int64 *)((char *)&value.integer64 + 4);
+#endif
             dvar->latched.integer64 = value.integer64;
             dvar->latched.vector[2] = value.vector[2];
             break;
@@ -2235,9 +2252,17 @@ const dvar_s *__cdecl Dvar_RegisterNew(
         case DVAR_TYPE_LINEAR_COLOR_RGB:
         case DVAR_TYPE_COLOR_XYZ:
             dvar->current.integer = value.integer;
+#if defined(__ANDROID__) || defined(BO1_STARTUP_SERVICES_NATIVE_HOST_TEST)
+            std::memcpy((char *)&dvar->current.integer64 + 4, (char *)&value.integer64 + 4, 8);
+#else
             *(__int64 *)((char *)&dvar->current.integer64 + 4) = *(__int64 *)((char *)&value.integer64 + 4);
+#endif
             dvar->latched.integer = value.integer;
+#if defined(__ANDROID__) || defined(BO1_STARTUP_SERVICES_NATIVE_HOST_TEST)
+            std::memcpy((char *)&dvar->latched.integer64 + 4, (char *)&value.integer64 + 4, 8);
+#else
             *(__int64 *)((char *)&dvar->latched.integer64 + 4) = *(__int64 *)((char *)&value.integer64 + 4);
+#endif
             dvar->reset.integer64 = value.integer64;
             dvar->reset.vector[2] = value.vector[2];
             break;

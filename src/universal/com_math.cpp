@@ -1,3 +1,4 @@
+#if !defined(BO1_STARTUP_SERVICES)
 #include <platform/engine_random.h>
 #include "com_math.h"
 
@@ -3560,21 +3561,9 @@ float __cdecl Vec4Dot(const float *a, const float *b)
     return (float)(*a * *b + a[1] * b[1] + a[2] * b[2] + a[3] * b[3]);
 }
 
-void __cdecl Vec4Set(float *v, float x, float y, float z, float w)
-{
-    *v = x;
-    v[1] = y;
-    v[2] = z;
-    v[3] = w;
-}
 
-void __cdecl Vec4Copy(const float *from, float *to)
-{
-    *to = *from;
-    to[1] = from[1];
-    to[2] = from[2];
-    to[3] = from[3];
-}
+
+
 
 void __cdecl Vec3Mad(const float *start, float scale, const float *dir, float *result)
 {
@@ -3624,18 +3613,9 @@ void __cdecl Vec3Sub(const float *a, const float *b, float *diff)
     diff[2] = a[2] - b[2];
 }
 
-void Vec2Copy(const float *from, float *to)
-{
-    to[0] = from[0];
-    to[1] = from[1];
-}
 
-void __cdecl Vec3Copy(const float *from, float *to)
-{
-    to[0] = from[0];
-    to[1] = from[1];
-    to[2] = from[2];
-}
+
+
 
 void __cdecl Vec2NormalizeFast(float *v)
 {
@@ -3653,4 +3633,36 @@ float Q_fabs(float f)
     int tmp = *(int *)&f;
     tmp &= 0x7FFFFFFF;
     return *(float *)&tmp;
+}
+#endif
+
+#include "com_math.h"
+
+void Vec2Copy(const float *from, float *to)
+{
+    to[0] = from[0];
+    to[1] = from[1];
+}
+
+void __cdecl Vec3Copy(const float *from, float *to)
+{
+    to[0] = from[0];
+    to[1] = from[1];
+    to[2] = from[2];
+}
+
+void __cdecl Vec4Copy(const float *from, float *to)
+{
+    *to = *from;
+    to[1] = from[1];
+    to[2] = from[2];
+    to[3] = from[3];
+}
+
+void __cdecl Vec4Set(float *v, float x, float y, float z, float w)
+{
+    *v = x;
+    v[1] = y;
+    v[2] = z;
+    v[3] = w;
 }

@@ -1,0 +1,79 @@
+[
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "get-state"
+    ],
+    "exit": 0,
+    "stdout": "device\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "mkdir",
+      "-p",
+      "/data/local/tmp/blackopsarm-startup-services-smoke46v2"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "push",
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_startup_services_arm_smoke2\\bo1_native_startup_services_tests",
+      "/data/local/tmp/blackopsarm-startup-services-smoke46v2/smoke"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\native_startup_services_arm_smoke2\\bo1_native_startup_services_tests: 1 file pushed, 0 skipped. 115.8 MB/s (2589792 bytes in 0.021s)\n"
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "sha256sum",
+      "/data/local/tmp/blackopsarm-startup-services-smoke46v2/smoke"
+    ],
+    "exit": 0,
+    "stdout": "4ece44af71f993e93a00023d7c487cf6149910c8d99c80b0b15ea7a8e2d9678a  /data/local/tmp/blackopsarm-startup-services-smoke46v2/smoke\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "chmod",
+      "700",
+      "/data/local/tmp/blackopsarm-startup-services-smoke46v2/smoke"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "/data/local/tmp/blackopsarm-startup-services-smoke46v2/smoke"
+    ],
+    "exit": 0,
+    "stdout": "{\"startup_services\":{\"pointer_bytes\":8,\"initial_dvars\":2,\"commands_before_cmd_init\":18,\"commands_after_cmd_init\":23,\"actual_parse\":true,\"actual_sl_instances\":2,\"actual_command_operations\":3,\"actual_loader_dvar\":true,\"com_init_executed\":false}}\n",
+    "stderr": ""
+  }
+]

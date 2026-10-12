@@ -1,0 +1,123 @@
+[
+  {
+    "argv": "cmd /d /s /c \"\"C:/BuildTools/VC/Auxiliary/Build/vcvarsall.bat\" x86 >nul && cl /nologo /W4 /std:c++20 /EHsc /MT /O2 \"D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\startup_dvar_layout1\\original_dvar_layout.cpp\" /Fe\"D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\startup_dvar_layout1\\x86\\oracle.exe\" /Fo\"D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\startup_dvar_layout1\\x86/\"\"",
+    "exit": 0,
+    "stdout": "original_dvar_layout.cpp\n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\startup_dvar_layout1\\x86\\oracle.exe"
+    ],
+    "exit": 0,
+    "stdout": "{\"pointer_bytes\":4,\"value_size\":16,\"limits_size\":16,\"dvar_size\":112,\"dvar_align\":8,\"current\":24,\"latched\":40,\"reset\":56,\"saved\":72,\"domain\":88,\"hashNext\":104}\n",
+    "stderr": ""
+  },
+  {
+    "argv": "cmd /d /s /c \"\"C:/BuildTools/VC/Auxiliary/Build/vcvarsall.bat\" x64 >nul && cl /nologo /W4 /std:c++20 /EHsc /MT /O2 \"D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\startup_dvar_layout1\\original_dvar_layout.cpp\" /Fe\"D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\startup_dvar_layout1\\x64\\oracle.exe\" /Fo\"D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\startup_dvar_layout1\\x64/\"\"",
+    "exit": 0,
+    "stdout": "original_dvar_layout.cpp\n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\startup_dvar_layout1\\x64\\oracle.exe"
+    ],
+    "exit": 0,
+    "stdout": "{\"pointer_bytes\":8,\"value_size\":16,\"limits_size\":16,\"dvar_size\":120,\"dvar_align\":8,\"current\":32,\"latched\":48,\"reset\":64,\"saved\":80,\"domain\":96,\"hashNext\":112}\n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "D:\\Android\\Sdk\\ndk\\30.0.16248370\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang++.exe",
+      "--target=aarch64-linux-android26",
+      "-std=c++20",
+      "-fms-extensions",
+      "-static-libstdc++",
+      "-O2",
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\startup_dvar_layout1\\original_dvar_layout.cpp",
+      "-o",
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\startup_dvar_layout1\\oracle_arm64"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "get-state"
+    ],
+    "exit": 0,
+    "stdout": "device\n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "mkdir",
+      "-p",
+      "/data/local/tmp/blackopsarm-dvar-layout-startup_dvar_layout1"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "push",
+      "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\startup_dvar_layout1\\oracle_arm64",
+      "/data/local/tmp/blackopsarm-dvar-layout-startup_dvar_layout1/oracle"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": "D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\startup_dvar_layout1\\oracle_arm64: 1 file pushed, 0 skipped. 23.9 MB/s (6504 bytes in 0.000s)\n"
+  },
+  {
+    "argv": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "sha256sum",
+      "/data/local/tmp/blackopsarm-dvar-layout-startup_dvar_layout1/oracle"
+    ],
+    "exit": 0,
+    "stdout": "ff4509e606416bcaf059d761604bfb7b32de99fda05b6b3db7839a9e08db5626  /data/local/tmp/blackopsarm-dvar-layout-startup_dvar_layout1/oracle\n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "chmod",
+      "700",
+      "/data/local/tmp/blackopsarm-dvar-layout-startup_dvar_layout1/oracle"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "D:/Android/Sdk/platform-tools/adb.exe",
+      "-s",
+      "AKWJ9X5116G04618",
+      "shell",
+      "/data/local/tmp/blackopsarm-dvar-layout-startup_dvar_layout1/oracle"
+    ],
+    "exit": 0,
+    "stdout": "{\"pointer_bytes\":8,\"value_size\":16,\"limits_size\":16,\"dvar_size\":120,\"dvar_align\":8,\"current\":32,\"latched\":48,\"reset\":64,\"saved\":80,\"domain\":96,\"hashNext\":112}\n",
+    "stderr": ""
+  }
+]

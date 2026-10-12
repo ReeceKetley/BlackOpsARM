@@ -1,6 +1,9 @@
 #if defined(BO1_NATIVE_THREAD_DATA)
 #include <universal/thread_data.h>
 #else
+#if defined(BO1_STARTUP_SERVICES)
+#include <platform/startup_services_api.h>
+#else
 #include "cmd.h"
 
 #include <stdlib.h>
@@ -25,6 +28,8 @@
 #include <database/db_file_load.h>
 #include <client_mp/cl_main_mp.h>
 #include <server/sv_game.h>
+
+#endif
 
 int cmd_wait;
 CmdText cmd_textArray[1];
@@ -393,6 +398,7 @@ void __cdecl Cbuf_ExecuteBufferUI(int localClientNum, int controllerIndex, itemD
     Cbuf_ExecuteBufferInternal(localClientNum, controllerIndex, item, buffer, 0, 0);
 }
 
+#if !defined(BO1_STARTUP_SERVICES)
 void __cdecl Cbuf_Execute(int localClientNum, int controllerIndex)
 {
     PROF_SCOPED("Cbuf_Execute");
@@ -413,6 +419,7 @@ void __cdecl Cbuf_Execute(int localClientNum, int controllerIndex)
     cmd_insideCBufExecute[localClientNum] = 0;
     Cbuf_SV_Execute();
 }
+#endif
 
 void __cdecl Cbuf_ExecuteInternal(int localClientNum, int controllerIndex)
 {
