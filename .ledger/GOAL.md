@@ -2,6 +2,16 @@
 
 ## Current Milestone
 
+TASK-0020 actual initialized StringTable strings/offset conversion complete
+(FACT-0060/0061). Approved core front end and actual interning are complete;
+DEC-0029 continues bounded native engine/assets progress. Next: original index
+bytes, Windows-equivalent hash arithmetic, actual lookup/reference investigation.
+Retail indices are not ordinarily hash-sorted; preserve them (FACT-0062).
+No game-owned graphics yet. Local verified checkpoints DEC-0026; no push.
+Read STATE/current Git and arm64_stringtable_strings.md.
+
+## Historical milestone
+
 TASK-0019 genuine StringTable names/cell descriptors complete (FACT-0057/0058).
 Core front end and actual interning stretch remain complete. DEC-0029 continues
 bounded native engine/assets progress. Next: initialized cell strings/real offset

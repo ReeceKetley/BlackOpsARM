@@ -1,9 +1,51 @@
 # Current State
 
+Updated 12 October 2026: TASK-0020 initialized cell strings and real offsets complete.
+DEC-0029 autonomous native engine/assets objective remains active. Verified local
+milestone commits authorized DEC-0026; no push. Prior checkpoint6e3528a FACT-0059;
+Git supplies the current checkpoint and exact pending paths.
+
+HONOR/Windows x86/x64 pass129 cases and12 genuine low/high cycles each. Actual raw
+leaf loads398/1545 inline cell strings (6005/22415 bytes); actual pointer converter
+writes2/49 owned cell fields only after earlier-start/NUL/live-owner-generation/
+bounds/exact-map proof, then pointer equality. Source ends9607/62490 beforeindices;
+block4 disk9537/62423/native14388/95724. Every target/byte/digest/kind/tag verified.
+Provenance clears while ownerlive before reset/release and logical baseline.
+Header/index tag and TEMP scope remain intact. FACT60/61, DEC35, WARN20, FAIL16.
+
+Debug run2 and optimized-O3/assertions/UBSan run1 passall3 ABIs. Full fresh ARM:
+0errors6024 retained warnings,225 AArch64 artifacts/28 executables. Optimized:
+34 artifacts/1 executable. All163 actual expander bodies/2headers and6 loader
+bodies unchanged against6e3528a; Windows source behavior and previous Narrow32/
+actual859 SLMT/optimized pool evidence intact. Failure16 was runner coordinate
+shadowing the executable Path afternativevalidation; complete failed log retained,
+fixed runner passes. All tests/processes ended; no new timing/RSS or graphics.
+
+Revised next3: TASK21 actual signed16 index reads400/1594 entries, original byte/
+order preservation, range/permutation/alignment/bounds/cleanup; isolated actual
+Com_HashString modulo32 Windows-equivalent arithmetic; actual lookup leaves/
+reference parity investigation before registration. FACT62: genuineindices are
+valid permutations but NOT ordinarysigned/unsigned sorted. Adjacent wrapping
+comparator model passes; sourcebinarylookup model predicts24/400 and796/1594
+existing-query misses. This is reference modeling, no native lookup execution.
+Preserve originalindices; do not reject/resort them to force earlier prerequisite.
+
+Windows2528/DXVK2552/rootLedger15 and2123 prior frozen paths preserved. Current
+report/delta arm64_stringtable_strings.md/_changes.md. No assets/buffers/binaries
+inGit or APK install/gameplay/graphics. All failed diagnostics/scratch retained.
+WARN20: trusted caller live-owner proof, exact-earlierblock4 subset only, future
+index/hash/lookup/registry, TEMP shadow/alias/multipleasset reuse, post-read helper/
+alias/OOM transactional recovery, serial pool/live role, fullasync/APC/VM/init,
+Windows PMem cache/freeTot/multipleowner,16KB pages and S25 remain open.
+
+# Historical state (preserved)
+
+# Current State
+
 Updated 12 October 2026: TASK-0019 genuine name/cell-record gate complete.
 DEC-0029 autonomous native engine/assets objective remains active. Local verified
-milestone commits authorized DEC-0026; no push. Verified prior4c6eb35 FACT-0056;
-Git gives current checkpoint and exact pending paths.
+milestone commits authorized DEC-0026; no push. TASK-0019 checkpoint6e3528a verified (FACT-0059); TASK-0020 is active.
+Git gives current HEAD and exact pending paths.
 
 Actual Load_XStringCustom/cell-array expander/Win32 Load_Stream pass HONOR and
 Windows x86/x64:98 adversarial cases/12 genuine low-high cycles each. Names34/58

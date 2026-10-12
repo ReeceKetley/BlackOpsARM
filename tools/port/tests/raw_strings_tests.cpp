@@ -248,7 +248,7 @@ int main(int argc,char**argv){require(argc>=2,"decode/gate mode");if(!std::strcm
 #if defined(BO1_STRINGTABLE_HEADER_GATE)
     auto ah=headerPlan(ap,ad,a.data(),a.size(),std::strtoull(argv[3],nullptr,10)),bh=headerPlan(bp,bd,b.data(),b.size(),std::strtoull(argv[5],nullptr,10));
 #if defined(BO1_STRINGTABLE_CELLS_GATE)
-    auto ac=payloadPlan(ap,ad,ah,a.data(),a.size()),bc=payloadPlan(bp,bd,bh,b.data(),b.size());require(ac.end==a.size()&&bc.end==b.size(),"prefix stops after cells before their strings/index");
+    auto ac=payloadPlan(ap,ad,ah,a.data(),a.size()),bc=payloadPlan(bp,bd,bh,b.data(),b.size());require(ac.end==a.size()&&bc.end==b.size(),"prefix stops at selected cell/strings boundary before index");
 #else
     require(ap.end+ad.diskBytes+20==a.size()&&bp.end+bd.diskBytes+20==b.size(),"prefix stops exactly after first numeric header");
 #endif
@@ -265,6 +265,9 @@ int main(int argc,char**argv){require(argc>=2,"decode/gate mode");if(!std::strcm
     tested+=headerFixtures(ap.envelope.zone);
 #if defined(BO1_STRINGTABLE_CELLS_GATE)
     tested+=cellsFixtures(ap.envelope.zone);
+#if defined(BO1_STRINGTABLE_STRINGS_GATE)
+    tested+=initializedFixtures(ap.envelope.zone);
+#endif
 #endif
 #endif
 #endif
@@ -315,6 +318,9 @@ int main(int argc,char**argv){require(argc>=2,"decode/gate mode");if(!std::strcm
 #if defined(BO1_FRONTEND_INTERN_GATE)
         std::printf("{\"asset_index\":%u,\"round\":%u,\"alloc_type\":%u,\"inline_string_count\":%zu,\"raw_string_bytes\":%llu,\"source_consumed_bytes\":%zu,\"decoded_source_end\":%zu,\"block4_disk_cursor\":%llu,\"block4_native_cursor\":%llu,\"unique_interned_strings\":%zu,\"pool_live_allocations\":%d,\"pool_live_buckets\":%d,\"pool_debug_refs\":%u,\"pool_released\":true,\"hash_free_list_restored\":true,\"all_aliases_match\":true,\"reset_and_release_pass\":true,\"strings_used_after_release\":[",asset,round,type,f.strings.size()-f.nulls,(unsigned long long)(f.end-52-f.table.diskBytes),r.Position(),f.end,(unsigned long long)f.diskEnd,(unsigned long long)f.nativeEnd,uniqueIds.size(),poolAllocations,poolBuckets,poolReferences);
         for(unsigned i=0;i<32;++i)std::printf("%s%d",i?",":"",diagnostics[i]);std::printf("]}\n");
+#elif defined(BO1_STRINGTABLE_STRINGS_GATE)
+        unsigned inlineCells=0,offsetCells=0;std::uint64_t inlineBytes=0;for(const auto&e:payload.strings){if(e.offset)++offsetCells;else if(e.tag){++inlineCells;inlineBytes+=e.bytes;}}
+        std::printf("{\"asset_index\":%u,\"round\":%u,\"alloc_type\":%u,\"source_consumed_bytes\":%zu,\"decoded_source_end\":%zu,\"block4_disk_cursor\":%llu,\"block4_native_cursor\":%llu,\"name_bytes\":%llu,\"cell_count\":%d,\"inline_cell_strings\":%u,\"offset_cell_strings\":%u,\"inline_cell_bytes\":%llu,\"block0_native_after_pop\":0,\"block0_shadow_after_pop\":%u,\"every_cell_string_matches\":true,\"exact_initialized_targets\":true,\"actual_owned_slot_conversion\":true,\"provenance_cleared_before_reset\":true,\"index_tag_unresolved\":true,\"all_aliases_match\":true,\"live_header_scope_verified\":true,\"prior_block4_preserved\":true,\"reset_and_release_pass\":true}\n",asset,round,type,r.Position(),bytes.size(),(unsigned long long)payload.stringDiskEnd,(unsigned long long)payload.stringNativeEnd,(unsigned long long)payload.name.bytes,payload.cells.count,inlineCells,offsetCells,(unsigned long long)inlineBytes,BO1_NATIVE_64BIT?20u:0u);
 #elif defined(BO1_STRINGTABLE_CELLS_GATE)
         std::printf("{\"asset_index\":%u,\"round\":%u,\"alloc_type\":%u,\"source_consumed_bytes\":%zu,\"decoded_source_end\":%zu,\"block4_disk_cursor\":%llu,\"block4_native_cursor\":%llu,\"name_bytes\":%llu,\"name_source_start\":%zu,\"name_disk_start\":%llu,\"name_native_start\":%llu,\"cell_count\":%d,\"cell_source_start\":%zu,\"cell_disk_start\":%llu,\"cell_native_start\":%llu,\"cell_disk_bytes\":%llu,\"cell_native_bytes\":%llu,\"block0_native_after_pop\":0,\"block0_shadow_after_pop\":%u,\"all_cell_tags_hashes_match\":true,\"cell_padding_zero\":true,\"exact_cell_mappings\":true,\"all_aliases_match\":true,\"live_header_scope_verified\":true,\"prior_block4_preserved\":true,\"reset_and_release_pass\":true}\n",asset,round,type,r.Position(),bytes.size(),(unsigned long long)payload.cells.diskEnd,(unsigned long long)payload.cells.nativeEnd,(unsigned long long)payload.name.bytes,payload.nameSource,(unsigned long long)payload.name.diskStart,(unsigned long long)payload.name.nativeStart,payload.cells.count,payload.cellSource,(unsigned long long)payload.cells.diskStart,(unsigned long long)payload.cells.nativeStart,(unsigned long long)payload.cells.diskBytes,(unsigned long long)payload.cells.nativeBytes,BO1_NATIVE_64BIT?20u:0u);
 #elif defined(BO1_STRINGTABLE_HEADER_GATE)
@@ -328,6 +334,8 @@ int main(int argc,char**argv){require(argc>=2,"decode/gate mode");if(!std::strcm
     const char*schema=
 #if defined(BO1_FRONTEND_INTERN_GATE)
         "BlackOpsARM.TASK-0017.intern-strings.v1";
+#elif defined(BO1_STRINGTABLE_STRINGS_GATE)
+        "BlackOpsARM.TASK-0020.stringtable-strings.v1";
 #elif defined(BO1_STRINGTABLE_CELLS_GATE)
         "BlackOpsARM.TASK-0019.stringtable-cells.v1";
 #elif defined(BO1_STRINGTABLE_HEADER_GATE)
