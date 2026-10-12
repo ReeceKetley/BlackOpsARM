@@ -1,0 +1,17 @@
+{
+  "schema": "BlackOpsARM.TASK35.source.v1",
+  "status": "passed",
+  "parent": "54dd902",
+  "files": {
+    "src/database/db_registry.cpp": "518823dbf6278affa1139476f5e0a858c505d6674bf89e3d684f085ea8d15f9e",
+    "src/database/db_registry.h": "5a8eb5c94f3c4f7769deb8bc129f9d8d5ccb238e0bd400d359a381aaa1b137c4",
+    "src/database/db_registry_lookup_api.h": "79d2c3041f1d7135dd0cb69b5b6411a232f712f1762d7bbcd4ceeb5a38449fb4"
+  },
+  "original_two_assignments_preserved": true,
+  "native_index_body_preserved": true,
+  "normal_link_call_position_preserved": true,
+  "other_link_policy_and_lookup_bodies_preserved": true,
+  "existing_targets_preserved": true,
+  "full_link_or_add_executed": false,
+  "fixture_removal_explicit": true
+}
