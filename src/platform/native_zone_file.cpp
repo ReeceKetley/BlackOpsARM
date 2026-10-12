@@ -113,6 +113,7 @@ NativeZoneResult NativeZoneFile::Open(const char *path, const char *ownerName,
 NativeZoneResult NativeZoneFile::Close()
 {
     if (!open_) return NativeZoneResult::Ok;
+    if (childrenRetained_) return NativeZoneResult::BorrowedChildren;
     if (g_streamBlocks == blocks_) return NativeZoneResult::StreamsAttached;
     if (g_streamBlocks) for (const auto &owned : blocks_) {
         if (!owned.data) continue;

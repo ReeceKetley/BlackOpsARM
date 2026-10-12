@@ -208,6 +208,8 @@ int __cdecl StringTable_LookupRowNumForValue(
     }
 }
 
+#endif
+#if !defined(BO1_STRINGTABLE_LOOKUP_GATE) || defined(BO1_NATIVE_ZONE_LOAD)
 const char *__cdecl StringTable_GetColumnValueForRow(const StringTable *table, int row, int column)
 {
     if ( column < table->columnCount
@@ -224,6 +226,8 @@ const char *__cdecl StringTable_GetColumnValueForRow(const StringTable *table, i
     }
 }
 
+#endif
+#if !defined(BO1_STRINGTABLE_LOOKUP_GATE)
 const char *__cdecl StringTable_Lookup(
                 const StringTable *table,
                 int comparisonColumn,
