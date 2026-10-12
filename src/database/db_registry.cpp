@@ -1,6 +1,9 @@
 #if defined(BO1_STRINGTABLE_OWNER_GATE)
 #include "db_asset_pool.h"
 #include "db_asset_entry_types.h"
+#if defined(BO1_ENTRY_ALLOC_GATE)
+#include "db_entry_alloc_api.h"
+#endif
 #include <universal/assertive.h>
 #include <cstring>
 #else
@@ -115,8 +118,55 @@
 #define POOLSIZE_EMBLEMSET         4
 
 
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE) || defined(BO1_ENTRY_ALLOC_GATE)
 static int g_poolSize[43] = // mod: not const: DB_InitXAssets raises the *_MOD types with bo1_mod_zones
 {
+#if defined(BO1_ENTRY_ALLOC_GATE)
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  POOLSIZE_RAWFILE,
+  POOLSIZE_STRINGTABLE,
+  0,
+  0,
+  0,
+  0,
+  0,
+#else
     POOLSIZE_XMODELPIECES,
     POOLSIZE_PHYSPRESET,
     POOLSIZE_PHYSCONSTRAINTS,
@@ -160,7 +210,11 @@ static int g_poolSize[43] = // mod: not const: DB_InitXAssets raises the *_MOD t
     POOLSIZE_DDL,
     POOLSIZE_GLASSES,
     POOLSIZE_EMBLEMSET,
+#endif
 };
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE)
+
 
 
 
@@ -169,8 +223,55 @@ XAssetHeader XASSET_SINGLETON(void *pool)
     return (XAssetHeader)pool;
 }
 
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE) || defined(BO1_ENTRY_ALLOC_GATE)
 XAssetHeader(__cdecl *DB_AllocXAssetHeaderHandler[43])(void *) =
 {
+#if defined(BO1_ENTRY_ALLOC_GATE)
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  DB_AllocXAsset<RawFile>,
+  DB_AllocXAsset<StringTable>,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+#else
   DB_AllocXAsset<XModelPieces>,
   DB_AllocXAsset<PhysPreset>,
   DB_AllocXAsset<PhysConstraints>,
@@ -214,7 +315,11 @@ XAssetHeader(__cdecl *DB_AllocXAssetHeaderHandler[43])(void *) =
   DB_AllocXAsset<ddlDef_t>,
   DB_AllocXAsset<Glasses>,
   DB_AllocXAsset<EmblemSet>
+#endif
 };
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE)
+
 
 
 XAssetPool<XModelPieces, POOLSIZE_XMODELPIECES>         g_XModelPiecesPool;
@@ -252,8 +357,55 @@ XAssetPool<ddlDef_t, POOLSIZE_DDL>                      g_DDLPool;
 XAssetPool<Glasses, POOLSIZE_GLASSES>                   g_GlassesPool;
 XAssetPool<EmblemSet, POOLSIZE_EMBLEMSET>               g_EmblemSetPool;
 
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE) || defined(BO1_ENTRY_ALLOC_GATE)
 void *DB_XAssetPool[43] =
 {
+#if defined(BO1_ENTRY_ALLOC_GATE)
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  &g_RawFilePool,
+  &g_StringTablePool,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+#else
   &g_XModelPiecesPool,
   &g_PhysPresetPool,
   &g_PhysConstraintsPool,
@@ -297,7 +449,11 @@ void *DB_XAssetPool[43] =
   &g_DDLPool,
   &g_GlassesPool,
   &g_EmblemSetPool
+#endif
 };
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE)
+
 
 
 static void FREE_NULLSUB(void *, XAssetHeader)
@@ -316,52 +472,103 @@ static void FREE_NULLSUB(void *, XAssetHeader)
 //}
 
 // casting all cuz it's easier
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE) || defined(BO1_ENTRY_ALLOC_GATE)
 void(__cdecl *DB_FreeXAssetHeaderHandler[43])(void *, XAssetHeader) =
 {
-  (void(*)(void*, XAssetHeader))DB_FreeXAssetHeader_EmblemSet_,
-  (void(*)(void*, XAssetHeader))DB_FreeXAssetHeader_EmblemSet_,
-  (void(*)(void*, XAssetHeader))DB_FreeXAssetHeader_EmblemSet_,
-  (void(*)(void*, XAssetHeader))DB_FreeXAssetHeader_EmblemSet_,
-  (void(*)(void*, XAssetHeader))DB_FreeXAssetHeader_EmblemSet_,
-  (void(*)(void*, XAssetHeader))DB_FreeXAssetHeader_EmblemSet_,
+#if defined(BO1_ENTRY_ALLOC_GATE)
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  DB_FreeXAssetHeader_EmblemSet_,
+  DB_FreeXAssetHeader_EmblemSet_,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+#else
+  DB_FreeXAssetHeader_EmblemSet_,
+  DB_FreeXAssetHeader_EmblemSet_,
+  DB_FreeXAssetHeader_EmblemSet_,
+  DB_FreeXAssetHeader_EmblemSet_,
+  DB_FreeXAssetHeader_EmblemSet_,
+  DB_FreeXAssetHeader_EmblemSet_,
   (void(*)(void*, XAssetHeader))DB_FreeMaterial,
-  (void(*)(void*, XAssetHeader))DB_FreeXAssetHeader_EmblemSet_,
+  DB_FreeXAssetHeader_EmblemSet_,
   (void(*)(void*, XAssetHeader))DB_FreeGfxImage,
-  (void(*)(void*, XAssetHeader))DB_FreeXAssetHeader_EmblemSet_,
-  (void(*)(void*, XAssetHeader))DB_FreeXAssetHeader_EmblemSet_,
+  DB_FreeXAssetHeader_EmblemSet_,
+  DB_FreeXAssetHeader_EmblemSet_,
   (void(*)(void*, XAssetHeader))FREE_NULLSUB,
   (void(*)(void*, XAssetHeader))FREE_NULLSUB,
   (void(*)(void*, XAssetHeader))FREE_NULLSUB,
   (void(*)(void*, XAssetHeader))FREE_NULLSUB,
   (void(*)(void*, XAssetHeader))FREE_NULLSUB,
-  (void(*)(void*, XAssetHeader))DB_FreeXAssetHeader_EmblemSet_,
+  DB_FreeXAssetHeader_EmblemSet_,
   (void(*)(void*, XAssetHeader))FREE_NULLSUB,
-  (void(*)(void*, XAssetHeader))DB_FreeXAssetHeader_EmblemSet_,
+  DB_FreeXAssetHeader_EmblemSet_,
   (void(*)(void*, XAssetHeader))NULL,
-  (void(*)(void*, XAssetHeader))DB_FreeXAssetHeader_EmblemSet_,
-  (void(*)(void*, XAssetHeader))DB_FreeXAssetHeader_EmblemSet_,
+  DB_FreeXAssetHeader_EmblemSet_,
+  DB_FreeXAssetHeader_EmblemSet_,
   (void(*)(void*, XAssetHeader))DB_FreeMenu,
-  (void(*)(void*, XAssetHeader))DB_FreeXAssetHeader_EmblemSet_,
-  (void(*)(void*, XAssetHeader))DB_FreeXAssetHeader_EmblemSet_,
+  DB_FreeXAssetHeader_EmblemSet_,
+  DB_FreeXAssetHeader_EmblemSet_,
   (void(*)(void*, XAssetHeader))NULL,
   (void(*)(void*, XAssetHeader))NULL,
-  (void(*)(void*, XAssetHeader))DB_FreeXAssetHeader_EmblemSet_,
-  (void(*)(void*, XAssetHeader))DB_FreeXAssetHeader_EmblemSet_,
-  (void(*)(void*, XAssetHeader))DB_FreeXAssetHeader_EmblemSet_,
-  (void(*)(void*, XAssetHeader))NULL,
-  (void(*)(void*, XAssetHeader))NULL,
-  (void(*)(void*, XAssetHeader))NULL,
+  DB_FreeXAssetHeader_EmblemSet_,
+  DB_FreeXAssetHeader_EmblemSet_,
+  DB_FreeXAssetHeader_EmblemSet_,
   (void(*)(void*, XAssetHeader))NULL,
   (void(*)(void*, XAssetHeader))NULL,
   (void(*)(void*, XAssetHeader))NULL,
-  (void(*)(void*, XAssetHeader))DB_FreeXAssetHeader_EmblemSet_,
-  (void(*)(void*, XAssetHeader))DB_FreeXAssetHeader_EmblemSet_,
-  (void(*)(void*, XAssetHeader))DB_FreeXAssetHeader_EmblemSet_,
+  (void(*)(void*, XAssetHeader))NULL,
+  (void(*)(void*, XAssetHeader))NULL,
+  (void(*)(void*, XAssetHeader))NULL,
+  DB_FreeXAssetHeader_EmblemSet_,
+  DB_FreeXAssetHeader_EmblemSet_,
+  DB_FreeXAssetHeader_EmblemSet_,
   (void(*)(void*, XAssetHeader))DB_FreeXGlobals,
-  (void(*)(void*, XAssetHeader))DB_FreeXAssetHeader_EmblemSet_,
-  (void(*)(void*, XAssetHeader))DB_FreeXAssetHeader_EmblemSet_,
-  (void(*)(void*, XAssetHeader))DB_FreeXAssetHeader_EmblemSet_
+  DB_FreeXAssetHeader_EmblemSet_,
+  DB_FreeXAssetHeader_EmblemSet_,
+  DB_FreeXAssetHeader_EmblemSet_
+#endif
 };
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE)
+
 
 const char *g_defaultAssetName[43] =
 {
@@ -503,7 +710,12 @@ static inline unsigned short DB_AssetEntryIndex(const void *entry)
     return static_cast<unsigned short>(
         static_cast<const XAssetEntryPoolEntry *>(entry) - g_assetEntryPool);
 }
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE) || defined(BO1_ENTRY_ALLOC_GATE)
 XZoneName g_zoneNames[33];
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE)
+
 
 // zombies: SP and MP hold 0xC00 (SP exe 0x007A32F2). bo1_zombies loads SP's en_code_post_gfx after MP's
 // en_code_post_gfx_mp in one DB_LoadXAssets call, and SP's localize entries override more than 3072 of MP's.
@@ -523,8 +735,13 @@ int com_missingAssetOpenFailed;
 XAssetEntryPoolEntry *g_freeAssetEntryHead;
 #endif
 #if !defined(BO1_STRINGTABLE_OWNER_GATE)
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE) || defined(BO1_ENTRY_ALLOC_GATE)
 int XAssetEntryHighWaterMark;
 int XAssetEntryHighCount;
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE)
+
 
 char g_zoneNameList[2080];
 volatile bool g_loadingZone;
@@ -1028,7 +1245,7 @@ void __cdecl Mark_EmblemSetAsset(EmblemSet *emblemSet)
 
 
 #endif
-void __cdecl DB_FreeXAssetHeader_EmblemSet_(XAssetPoolEntry<EmblemSet> **pool, XAssetHeader header)
+void __cdecl DB_FreeXAssetHeader_EmblemSet_(void *pool, XAssetHeader header)
 {
     // Preserve native pointer bits without unrelated pool/payload lvalue accesses.
     static_assert(sizeof(XAssetHeader) == sizeof(void *));
@@ -1096,6 +1313,8 @@ void __cdecl DB_GetAssetTypeUsageInfo(XAssetType assetType, const char **outName
     *outName = g_assetNames[assetType];
 }
 
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE) || defined(BO1_ENTRY_ALLOC_GATE)
 void __cdecl DB_PrintXAssetsForType_FastFile(XAssetType type, void *inData, bool includeOverride)
 {
     const char *XAssetHeaderName; // eax
@@ -1146,6 +1365,9 @@ void __cdecl DB_PrintXAssetsForType(
     else
         DB_EnumXAssets(type, func, &inData, includeOverride);
 }
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE)
+
 
 GfxImage *__cdecl DB_AllocTempImage()
 {
@@ -1157,6 +1379,8 @@ GfxImage *__cdecl DB_AllocTempImage()
     return (GfxImage *)header.xmodelPieces;
 }
 
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE) || defined(BO1_ENTRY_ALLOC_GATE)
 XAssetHeader __cdecl DB_AllocXAssetHeader(XAssetType type)
 {
     XAssetHeader header; // [esp+4h] [ebp-4h]
@@ -1166,17 +1390,17 @@ XAssetHeader __cdecl DB_AllocXAssetHeader(XAssetType type)
     {
         Sys_LeaveCriticalSection(CRITSECT_DBHASH);
         Com_PrintError(1, "Exceeded limit of %d '%s' assets.\n", g_poolSize[type], g_assetNames[type]);
-        DB_PrintXAssetsForType(type, (void (__cdecl *)(XAssetHeader, void *))DB_PrintAssetName, &type, 1);
+        DB_PrintXAssetsForType(type, DB_PrintAssetName, &type, 1);
         Com_Error(ERR_DROP, "Exceeded limit of %d '%s' assets.\n", g_poolSize[type], g_assetNames[type]);
     }
     return header;
 }
 
-void __cdecl DB_PrintAssetName(XAssetHeader header, int *data)
+void __cdecl DB_PrintAssetName(XAssetHeader header, void *data)
 {
     const char *XAssetHeaderName; // eax
 
-    XAssetHeaderName = DB_GetXAssetHeaderName(*data, &header);
+    XAssetHeaderName = DB_GetXAssetHeaderName(*static_cast<int *>(data), &header);
     Com_Printf(0, "%s\n", XAssetHeaderName);
 }
 
@@ -1184,6 +1408,9 @@ void __cdecl DB_FreeXAssetHeader(XAssetType type, XAssetHeader header)
 {
     DB_FreeXAssetHeaderHandler[type](DB_XAssetPool[type], header);
 }
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE)
+
 
 unsigned int __cdecl DB_HashForName(const char *name, XAssetType type)
 {
@@ -2088,6 +2315,8 @@ XAssetEntry *__cdecl DB_CreateDefaultEntry(XAssetType type, const char *name)
     return newEntry;
 }
 
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE) || defined(BO1_ENTRY_ALLOC_GATE)
 XAssetEntryPoolEntry *__cdecl DB_AllocXAssetEntry(XAssetType type, unsigned __int8 zoneIndex)
 {
     XAssetEntryPoolEntry *freeHead; // [esp+4h] [ebp-8h]
@@ -2111,10 +2340,13 @@ XAssetEntryPoolEntry *__cdecl DB_AllocXAssetEntry(XAssetType type, unsigned __in
     freeHead->entry.nextOverride = 0;
     return freeHead;
 }
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE)
+
 
 
 #endif
-#if !defined(BO1_ASSET_ENTRY_GATE)
+#if !defined(BO1_ASSET_ENTRY_GATE) || defined(BO1_ENTRY_ALLOC_GATE)
 void __cdecl DB_CloneXAssetInternal(const XAsset *from, XAsset *to)
 {
     int size; // [esp+0h] [ebp-4h]
@@ -3007,6 +3239,8 @@ LABEL_106:
     return existingEntrya;
 }
 
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE) || defined(BO1_ENTRY_ALLOC_GATE)
 void __cdecl DB_FreeXAssetEntry(XAssetEntryPoolEntry *assetEntry)
 {
     DB_FreeXAssetHeader(assetEntry->entry.asset.type, assetEntry->entry.asset.header);
@@ -3017,6 +3251,9 @@ void __cdecl DB_FreeXAssetEntry(XAssetEntryPoolEntry *assetEntry)
     g_freeAssetEntryHead = assetEntry;
     assetEntry->next = oldFreeHead;
 }
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE)
+
 
 void __cdecl DB_CloneXAssetEntry(const XAssetEntry *from, XAssetEntry *to, DBCloneMethod cloneMethod)
 {
@@ -3993,7 +4230,7 @@ void __cdecl DB_DumpMaterialList_f()
     XAssetType type; // [esp+0h] [ebp-4h] BYREF
 
     type = ASSET_TYPE_MATERIAL;
-    DB_PrintXAssetsForType(ASSET_TYPE_MATERIAL, (void (__cdecl *)(XAssetHeader, void *))DB_PrintAssetName, &type, 1);
+    DB_PrintXAssetsForType(ASSET_TYPE_MATERIAL, DB_PrintAssetName, &type, 1);
 }
 
 void __cdecl DB_LoadXZone(XZoneInfo *zoneInfo, unsigned int zoneCount)

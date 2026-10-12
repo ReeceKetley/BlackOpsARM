@@ -1,5 +1,9 @@
 ﻿#if defined(BO1_STRINGTABLE_OWNER_GATE)
 #include "db_asset_pool.h"
+#include <cstring>
+#if defined(BO1_ENTRY_ALLOC_GATE)
+#include "db_entry_alloc_api.h"
+#endif
 #include <universal/assertive.h>
 #else
 #include <platform/bo1_native_width.h>
@@ -37,8 +41,55 @@
 
 #endif
 #if !defined(BO1_STRINGTABLE_OWNER_GATE)
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE) || defined(BO1_ENTRY_ALLOC_GATE)
 const char *(__cdecl *DB_XAssetGetNameHandler[43])(const XAssetHeader *) =
 {
+#if defined(BO1_ENTRY_ALLOC_GATE)
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  DB_DDLGetName,
+  DB_DDLGetName,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+#else
   &DB_DDLGetName,
   &DB_DDLGetName,
   &DB_DDLGetName,
@@ -82,8 +133,14 @@ const char *(__cdecl *DB_XAssetGetNameHandler[43])(const XAssetHeader *) =
   &DB_DDLGetName,
   &DB_DDLGetName,
   &DB_GetEmblemSetName
+#endif
 };
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE)
 
+
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE) || defined(BO1_ENTRY_ALLOC_GATE)
 const char *g_assetNames[43] =
 {
   "xmodelpieces",
@@ -130,6 +187,9 @@ const char *g_assetNames[43] =
   "glasses",
   "emblemset"
 };
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE)
+
 
 void(__cdecl *DB_XAssetSetNameHandler[43])(XAssetHeader *, const char *) =
 {
@@ -645,16 +705,27 @@ void __cdecl DB_DDLSetname(XAssetHeader *header, const char *name)
     header->xmodelPieces->name = name;
 }
 
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE) || defined(BO1_ENTRY_ALLOC_GATE)
 const char *__cdecl DB_DDLGetName(const XAssetHeader *header)
 {
-    return header->xmodelPieces->name;
+    void *payload;
+    const char *name;
+    ::memcpy(&payload, header, sizeof(payload));
+    ::memcpy(&name, payload, sizeof(name));
+    return name;
 }
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE)
+
 
 const char *__cdecl DB_GetEmblemSetName(const XAssetHeader *header)
 {
     return "emblemset";
 }
 
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE) || defined(BO1_ENTRY_ALLOC_GATE)
 const char *__cdecl DB_GetXAssetHeaderName(int type, const XAssetHeader *header)
 {
     const char *v2; // eax
@@ -708,6 +779,9 @@ const char *__cdecl DB_GetXAssetHeaderName(int type, const XAssetHeader *header)
     }
     return name;
 }
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE)
+
 
 const char *__cdecl DB_GetXAssetName(const XAsset *asset)
 {

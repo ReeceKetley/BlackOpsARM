@@ -1,0 +1,74 @@
+{
+  "schema": "BlackOpsARM.TASK32.source.v1",
+  "parent": "f523687",
+  "status": "passed",
+  "files": {
+    "src/database/db_registry.h": {
+      "exact_named_edits_only": true,
+      "sha256": "a5974a1a0764e7db09033b9872df4b027d69fa08fcb9a024faa6da2391683177",
+      "bom_preserved": true
+    },
+    "src/database/db_asset_pool.h": {
+      "exact_named_edits_only": true,
+      "sha256": "7cd3f6fe1510858c0f73091065ac66ed75e73a2999a58390521e07d7d6e9a824",
+      "bom_preserved": true
+    },
+    "src/database/db_registry.cpp": {
+      "exact_named_edits_only": true,
+      "sha256": "928c9fbda4ed7d0b06a2dde3babf6db86fc334597c80aa1477f8262baf49ee6c",
+      "bom_preserved": true
+    },
+    "src/database/db_assetnames.cpp": {
+      "exact_named_edits_only": true,
+      "sha256": "b3423869314dc387479b3524911c1a46cb7eab9b0f3b6f896fc8986d97722791",
+      "bom_preserved": true
+    },
+    "src/database/db_asset_entry_types.h": {
+      "exact_named_edits_only": true,
+      "sha256": "5be7669a0c44ee052ea30e74bdabacf87d691c60e28b491ae25e416003d5cb9a",
+      "bom_preserved": true,
+      "whole_source_unchanged": true
+    },
+    "src/database/db_load.cpp": {
+      "exact_named_edits_only": true,
+      "sha256": "6a1b49ea2ae968ccc4a2809b7a66236a2b5f63bdbcd13c4e65ddce6245a835ed",
+      "bom_preserved": true,
+      "whole_source_unchanged": true
+    },
+    "src/database/db_expand.cpp": {
+      "exact_named_edits_only": true,
+      "sha256": "0347bf177071abaa772d190ff6c67635ecd7d8f3b94d4fe048a378bedaacdf58",
+      "bom_preserved": true,
+      "whole_source_unchanged": true
+    },
+    "src/database/db_stream.cpp": {
+      "exact_named_edits_only": true,
+      "sha256": "1800e9d78cc69861f0dfe6c81f83b36b15a11c0e8f622f58747d989dbdf62365",
+      "bom_preserved": true,
+      "whole_source_unchanged": true
+    },
+    "src/database/db_stream_load.cpp": {
+      "exact_named_edits_only": true,
+      "sha256": "70bfd759dcbe121d5dd930597d6513c76e360fddd48803e98b9dda7b8d150e1f",
+      "bom_preserved": true,
+      "whole_source_unchanged": true
+    },
+    "src/platform/android/script_string_services.cpp": {
+      "exact_named_edits_only": true,
+      "sha256": "032ee1f2a362284483ead49497eddf5e71bd07ad696b744fe5d6b55f89aae843",
+      "bom_preserved": true,
+      "whole_source_unchanged": true
+    },
+    "src/platform/android/script_pool_bridge.cpp": {
+      "exact_named_edits_only": true,
+      "sha256": "311ffad0c02b005c33b75259193c5647b765f1ac64fec7829357a408c5ec397d",
+      "bom_preserved": true,
+      "whole_source_unchanged": true
+    }
+  },
+  "canonical_allocation_and_entry_free_bodies_preserved": true,
+  "generic_free_four_copy_body_preserved": true,
+  "typed_callback_and_void_pool_signatures": true,
+  "name_getter_nonnull_pointer_representation": true,
+  "game_assets_copied": false
+}

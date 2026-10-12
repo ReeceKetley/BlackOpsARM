@@ -1,0 +1,9 @@
+entry_alloc_tests.cpp
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\tools\port\tests\entry_alloc_tests.cpp(43): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\tools\port\tests\entry_alloc_tests.cpp(43): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+db_registry.cpp
+D:\Desktop\Black Ops 2 Android\BlackOpsARM\src\database\db_registry.cpp(1318): warning C4100: 'inData': unreferenced parameter
+db_assetnames.cpp
+script_pool_bridge.cpp
+script_string_services.cpp
+Generating Code...

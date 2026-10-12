@@ -7,13 +7,7 @@
 #include <gfx_d3d/r_material.h>
 #include <xanim/xmodel.h>
 
-enum FF_DIR : __int32
-{                                       // XREF: XZoneName/r
-                                        // UI_LoadModsMap/r ...
-    FFD_DEFAULT  = 0x0,
-    FFD_MOD_DIR  = 0x1,
-    FFD_USER_MAP = 0x2,
-};
+#include "db_zone_name_types.h"
 
 enum DBCloneMethod : __int32
 {                                       // XREF: DB_DynamicCloneMenu/r
@@ -65,23 +59,6 @@ struct XZone // sizeof=0x40
     // padding byte
     int flags;                          // XREF: DB_UnloadXAssetsMemoryForZone+31/r
     XBlock blocks[7];
-};
-
-struct __declspec(align(4)) XZoneName // sizeof=0x50
-{                                       // XREF: .data:g_zoneNames/r
-    char name[64];                      // XREF: DB_LinkXAssetEntry+236/r
-                                        // DB_LinkXAssetEntry+A1E/r ...
-    int flags;                          // XREF: DB_OverrideAsset+64/r
-                                        // DB_OverrideAsset+82/r ...
-    int fileSize;                       // XREF: DB_TryLoadXFileInternal+34D/w
-                                        // DB_ReferencedFFChecksums(void)+B3/r
-    FF_DIR dir;                         // XREF: DB_TryLoadXFileInternal+362/w
-                                        // DB_ReferencedFFNameList(void)+A3/r ...
-    bool loaded;                        // XREF: DB_IsZoneLoaded(char const *)+50/r
-                                        // DB_IsZoneTypeLoaded(int)+44/r ...
-    // padding byte
-    // padding byte
-    // padding byte
 };
 
 #include "db_asset_pool.h"
@@ -186,7 +163,7 @@ void __cdecl DB_PrintXAssetsForType(
                 bool includeOverride);
 GfxImage *__cdecl DB_AllocTempImage();
 XAssetHeader __cdecl DB_AllocXAssetHeader(XAssetType type);
-void __cdecl DB_PrintAssetName(XAssetHeader header, int *data);
+void __cdecl DB_PrintAssetName(XAssetHeader header, void *data);
 void __cdecl DB_FreeXAssetHeader(XAssetType type, XAssetHeader header);
 unsigned int __cdecl DB_HashForName(const char *name, XAssetType type);
 void __cdecl DB_LogMissingAsset(XAssetType type, const char *name);
