@@ -178,6 +178,8 @@ void(__cdecl *DB_XAssetSetNameHandler[43])(XAssetHeader *, const char *) =
   NULL
 };
 
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE) || defined(BO1_RAWFILE_OWNER_GATE)
 #if !BO1_NATIVE_64BIT
 static_assert(sizeof(RawFile) == 12);
 #endif
@@ -189,6 +191,10 @@ int __cdecl DB_SizeofXAsset_RawFile_()
     return 12;
 #endif
 }
+
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE)
+
 
 int __cdecl DB_SizeofXAsset_LocalizeEntry_()
 {
@@ -549,7 +555,11 @@ int(__cdecl *DB_GetXAssetSizeHandler[43])() =
   NULL,
   NULL,
   NULL,
+#if defined(BO1_RAWFILE_OWNER_GATE)
+  &DB_SizeofXAsset_RawFile_,
+#else
   NULL,
+#endif
 #else
   &DB_SizeofXAsset_XModelPieces_,
   &DB_SizeofXAsset_PhysPreset_,

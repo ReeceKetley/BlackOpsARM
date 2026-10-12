@@ -49,7 +49,11 @@ static bool clone(const XAsset& from,XAsset& to,std::size_t sourceBytes,std::siz
 static void fixtures(){
     require(!persistent&&!live.any(),"pool fixture begins with no ownership");unsigned allocated=0,exhaustions=0,invalid=0;
     require(DB_GetXAssetTypeSize(ASSET_TYPE_STRINGTABLE)==sizeof(StringTable)&&DB_SizeofXAsset_StringTable_()==sizeof(StringTable),"actual size leaf and actual dispatcher");
-    for(unsigned i=0;i<43;++i)require((DB_GetXAssetSizeHandler[i]!=nullptr)==(i==37),"other compile-selected size types unsupported, never fabricated");
+    for(unsigned i=0;i<43;++i)require((DB_GetXAssetSizeHandler[i]!=nullptr)==(i==37
+#if defined(BO1_RAWFILE_OWNER_GATE)
+        ||i==36
+#endif
+        ),"other compile-selected size types unsupported, never fabricated");
     for(int size:{1,2,POOLSIZE_STRINGTABLE,POOLSIZE_STRINGTABLE_MOD}){
         require(initialize(size)&&freeCount(true)==static_cast<unsigned>(size),"actual production init and active pool sizes");
         std::vector<XAssetHeader> headers;for(int i=0;i<size;++i){auto h=allocate();require(indexOf(h.data)==static_cast<unsigned>(i),"actual ascending allocation");headers.push_back(h);++allocated;}

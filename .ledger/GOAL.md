@@ -1,3 +1,11 @@
+## Current milestone — TASK30 complete, 12 October 2026
+
+Actual persistent RawFile pool header/children lifetime verified on HONOR and
+Windows x86/x64/O3. Next actual asset-entry/DBHASH initialization services, then
+real registration/lookup. User resumed and authorizes local verified ARM64
+checkpoint commits (DEC45); no push. See STATE and arm64_rawfile_owner.md.
+No genuine engine startup/rendering yet. Historical goals remain below.
+
 ## Current Milestone
 
 TASK29 genuine RawFile name/buffer and first StringTable queries verified.

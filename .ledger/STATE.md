@@ -1,3 +1,44 @@
+# Current state — TASK30 complete, 12 October 2026
+
+User handoff resumes work after NOTE-0009; follow-up explicitly authorizes local
+verified commits on android-arm64 (DEC45), no push. TASK30 genuine RawFile pool
+ownership now verified: actual1024/2048 init/alloc/clone/free, exact12/24-byte
+headers, complete name17/buffer141 bytes and first-table queries survive TEMP
+Pop/overwrite on HONOR and Windows x86/x64. Pool1/2/1024/2048 controls3075 nodes,
+4 exhaustion/20 invalid caller guards/LIFO/release baselines pass. Debug/O3 ARM
+assertions/UBSan and strict inherited215cases/12cycles perABI pass. Final collector
+14 additional records; six code allocations/six deferred zombie cycles. Normal
+Windows8TUs eachABI and exact source proof pass. Protected16875 paths unchanged.
+All tests completed; failed/superseded logs preserved. Local checkpoint covers
+this completed gate; Git gives actual HEAD. Read docs/port/arm64_rawfile_owner.md, FACT95/96/WARN31.
+
+Next: actual registry-entry/DBHASH initialization and synchronization services,
+then smallest real registration/lookup; zombie actualTechniqueSet7 still deferred.
+No full registry/startup/rendering. Children remain zone-owned; raw leaves retain
+caller contracts, not fixture-certified recovery. No async/refill/longjmp/SEH/OOM/
+concurrency/16KB/S25 or new memory/performance claim. All prior evidence and the
+five original uncommitted handoff paths preserved in the local checkpoint.
+
+# Historical state (preserved)
+
+# Lead rotation — implementation stopped, 12 October 2026 (NOTE-0009)
+
+Do not start TASK30 or further implementation until the user resumes. Latest
+rotation instruction forbids commits/pushes/reset/clean/stash/discard/production
+edits, overriding earlier autonomous local-checkpoint authorization for this stop.
+Current HEAD0a9dbfc on android-arm64 was clean before handoff; TASK28/TASK29 are
+verified and committed. 3f7dc56/exact20 files describe the earlier pause, preserved
+unchanged. No corrected TASK28 tests remain pending; all latest tests completed.
+Fresh protected verification: Windows2528/DXVK2552/root15 unchanged; source/index/
+HEAD, originals/APK and previous archives preserved. HONOR online/API36/page4096,
+no local/device project test processes. No suite rerun or new commit this handoff.
+Only Ledger and rotation report/verification pending; exact paths in new report.
+Read docs/port/lead_rotation_20261012.md (verified historical/current distinction,
+reproduction, failures, risks). Next TASK30 RawFile persistent pool1024/clone/free
+and genuine child lifetime; registry-entry/DBHASH init; real registration/lookup.
+
+# Historical state (preserved)
+
 TASK29 source/evidence checkpoint 8d3efb2 verified (FACT-0094); all196 durable paths committed.
 4014 prior frozen/4117 archive Git blobs preserved; tests completed, protected unchanged.
 Next TASK30 actual RawFile persistent pool ownership before TEMP reuse; full goal active.

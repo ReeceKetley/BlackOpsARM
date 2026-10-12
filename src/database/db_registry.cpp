@@ -105,8 +105,6 @@
 #define POOLSIZE_MPHEAD            0
 #define POOLSIZE_CHARACTER         0
 #define POOLSIZE_XMODELALIAS       0
-#define POOLSIZE_RAWFILE          1024
-#define POOLSIZE_RAWFILE_MOD 2048 // mod: capacity for bo1_mod_zones; in use only with it on the command line (DB_InitXAssets)
 //#define POOLSIZE_STRINGTABLE       256
 #define POOLSIZE_PACKINDEX         16
 #define POOLSIZE_XGLOBALS          1
@@ -239,8 +237,10 @@ XAssetPool<WeaponVariantDef, POOLSIZE_WEAPON>           g_WeaponVariantDefPool;
 XAssetPool<SndDriverGlobals, POOLSIZE_SNDDRIVERGLOBALS> g_SndDriverGlobalsPool;
 XAssetPool<FxEffectDef, POOLSIZE_FX_MOD>                    g_FxEffectDefPool;
 XAssetPool<FxImpactTable, POOLSIZE_IMPACTFX_MOD>            g_FxImpactTablePool;
-XAssetPool<RawFile, POOLSIZE_RAWFILE_MOD>                   g_RawFilePool;
 
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE) || defined(BO1_RAWFILE_OWNER_GATE)
+XAssetPool<RawFile, POOLSIZE_RAWFILE_MOD>                   g_RawFilePool;
 #endif
 XAssetPool<StringTable, POOLSIZE_STRINGTABLE_MOD>           g_StringTablePool;
 

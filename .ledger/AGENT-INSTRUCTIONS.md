@@ -338,3 +338,21 @@ or longjmp/async recovery. Original RawFile header remains TEMP-owned, no DB_Add
 success yet. Next actual RawFile pool1024/init/alloc/clone/free and zone child
 lifetime, registry-entry/DBHASH init, then smallest real registration. Preserve
 all evidence and protected checkouts; full goal active/local commitsDEC26/no push.
+
+
+Latest rotation stop (NOTE-0009, 12 October2026): read STATE and
+docs/port/lead_rotation_20261012.md before resuming. No new implementation, commit,
+push, reset, clean, stash, discard or production edit during handoff; explicit
+latest user prohibition overrides earlier autonomous checkpoint authorization.
+TASK28/TASK29 complete at0a9dbfc;3f7dc56/exact20 are historical, not current pending
+implementation. Await user resume. Preserve all scratch/frozen evidence.
+
+
+TASK30 complete: read arm64_rawfile_owner.md, DEC45/FACT95/96/WARN31/FAIL29.
+Latest user handoff resumes work after NOTE9 and explicitly authorizes local
+verified ARM64 checkpoints; no push. Actual RawFile1024/2048 pool/clone/free and
+complete genuine child lifetime survive TEMP overwrite on3ABIs/debug/O3; source
+proof/defaultWindows compile and protected16875 paths pass. No alias retargeting
+or DB_Add success. Unchecked raw leaf rejection remains fixture caller contracts.
+Next actual registry-entry/DBHASH init services, then real registration/lookup.
+Preserve zombie's actual TechniqueSet7 boundary and all previous evidence/repos.
