@@ -5,6 +5,9 @@
 #include "db_entry_alloc_api.h"
 #if defined(BO1_REGISTRY_LOOKUP_GATE)
 #include "db_registry_lookup_api.h"
+#if defined(BO1_REGISTRY_ADD_GATE)
+#include "db_registry_add_api.h"
+#endif
 #endif
 #endif
 #include <universal/assertive.h>
@@ -835,6 +838,8 @@ int __cdecl DB_GetXAssetTypeSize(int type)
 #if !defined(BO1_STRINGTABLE_OWNER_GATE)
 
 
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE) || defined(BO1_REGISTRY_ADD_GATE)
 const char *__cdecl DB_GetXAssetTypeName(unsigned int type)
 {
     if ( type > 0x2A
@@ -849,6 +854,9 @@ const char *__cdecl DB_GetXAssetTypeName(unsigned int type)
     }
     return g_assetNames[type];
 }
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE)
+
 
 
 #endif // !BO1_STRINGTABLE_OWNER_GATE

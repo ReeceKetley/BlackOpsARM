@@ -1,6 +1,9 @@
 #include <platform/bo1_native_width.h>
 #if defined(BO1_STRINGTABLE_INDEX_GATE)
 #include "db_scalar_load.h"
+#if defined(BO1_REGISTRY_ADD_GATE)
+#include "db_asset_entry_types.h"
+#endif
 #if defined(BO1_RAWFILE_PAYLOAD_GATE)
 #include "db_rawfile_load.h"
 #include "db_stream.h"
@@ -397,7 +400,11 @@ GlassDef *varGlassDef;
 Glasses *varGlasses;
 Glasses **varGlassesPtr;
 Glass *varGlass;
+#endif
+#if !defined(BO1_STRINGTABLE_INDEX_GATE) || defined(BO1_REGISTRY_ADD_GATE)
 XAsset *varXAsset;
+#endif
+#if !defined(BO1_STRINGTABLE_INDEX_GATE)
 XAssetHeader *varXAssetHeader;
 pathnode_tree_info_t *varpathnode_tree_info_t;
 

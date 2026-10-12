@@ -1,0 +1,18 @@
+{
+  "schema": "BlackOpsARM.TASK36.protected.v1",
+  "checked_files": 17955,
+  "status": "passed",
+  "changed": [],
+  "protected_git": {
+    "BlackOps64": {
+      "head": "76edfd5e75976c41bfab5a5db262b8b593432518\n",
+      "branch": "main\n",
+      "status": "?? _expr_sz.cpp\n?? _sizeof_fx.cpp\n?? _sizeof_xmodel.cpp\n?? _sizeof_xsurf.cpp\n?? _sz.cpp\n?? _sz2.cpp\n?? _sz3.cpp\n?? _x64_fix_batch.py\n?? _x64_fix_batch2.py\n"
+    },
+    "DXVK-Native": {
+      "head": "0e271c6be16ded1a8638d117360c2e65d9df4603\n",
+      "branch": "master\n",
+      "status": ""
+    }
+  }
+}

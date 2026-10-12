@@ -24,10 +24,12 @@ void Com_Error(errorParm_t, const char *f, ...) { va_list a; va_start(a,f); std:
 unsigned int *Z_Malloc(int, const char *, int) { std::abort(); }
 void Z_Free(char *, int) { std::abort(); }
 #if defined(_WIN32)
+#if !defined(BO1_REGISTRY_ADD_GATE)
 const char *I_stristr(const char *a, const char *b) {
     for (; *a; ++a) if (!_strnicmp(a,b,std::strlen(b))) return a;
     return nullptr;
 }
+#endif
 #if !defined(BO1_STRINGTABLE_LOOKUP_GATE)
 int I_stricmp(const char *a, const char *b) { return _stricmp(a,b); }
 #endif

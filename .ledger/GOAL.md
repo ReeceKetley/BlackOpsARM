@@ -1,3 +1,5 @@
+TASK36 actual Add/completeLink new-name returnedheader registration verified3ABIs/O0/O3; next genuine asset deserialization then wider zone integration/core initialization. DEC52/FACT107/108/WARN37/FAIL34; standing DEC47 active.
+
 TASK35 production insertion/lookup passes3ABIs/O0/O3. FullAdd/Link unverified; next actual returned-header registration on liveTEMP before normalization/Pop then next genuine asset. DEC51/FACT105/106/WARN36; standing DEC47 active.
 
 TASK34 lookup verified; continue actual production insertion/registration and returned-header integration, then next genuine asset. Read arm64_registry_lookup.md and DEC50/FACT103/104/WARN35/FAIL33. Fixture membership is not publication; standing autonomous DEC47 remains active.

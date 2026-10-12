@@ -1,0 +1,54 @@
+# Ledger Context
+
+## Project Goal
+ Native Android ARM64 port of the original T5 Zombies engine. Windows x64 is the
+functional reference implementation; the original Win32 path remains a behavior
+and serialization oracle. This Git worktree shares BlackOps64 history and sources.
+
+## Current State
+ 
+
+## Relevant Facts
+
+- **FACT-0073** [ACTIVE; high] Original StringTable normalization provenance: Original SHA-pinned pointer loading registers type37, replaces returned header then signed hash/column sort. FirstHashIndex signed CMP/JGE agrees with reconstruction. db_registry Load_StringTableAsset omits original sort; do not modify query algorithm or sort transient input before registration. Six original instruction ranges actually execute bounded analysis; row/DB_AddXAsset not executed. Genuine normalized permutations400/1594 eliminate modeled24/796 misses. No engine changes.
+
+- **FACT-0099** [ACTIVE; high] Real entry/header allocation and FastFile diagnostics verified: TASK32 actual RawFile/StringTable header dispatch and entry alloc/free pass host/O0/O3 on Windowsx86/x64/HONOR. Finaldebugrun3/O3run2:1600 entries/headers,6 fixture invalid-free guards, complete32752entry/1024raw/576table baselines, LIFO and retainedhighwater1600. ActualFF diagnostic current/override/nonmatching inputs print exact expected order; typed callback executed. Empty-head injected fatal no progress; realheader exhaustion retainscount1026raw/578table after entry pop; worker proves DBHASH released. All3ABIs fatalexit3Windows/134ARM. LoadObjfixture endpoint explicit failure. Collector8malformed controls rejects nestedbool/int substitut…
+
+- **FACT-0092** [ACTIVE; high] Genuine RawFile name and buffer loaded on HONOR and Windows: TASK29 complete: unchanged canonical header expander then actual Load_RawFile(false) follow-up, Load_XString/AllocLoad_raw_byte/Load_XStringCustom and Load_ConstCharArray execute genuine code asset2 children. Name17 source10419..10436 Adler1037043293; present buffer141=len140+1 source10436..10577 Adler804990665, exact bytes match independently full SHA/Adler-validated original prefix. Disk block4 end10496; native64 end15357 (buffer aligns15209->15216,7 untouched padding); Win32 native end10496. Current name/buffer, retained first values and untouched first index aliases plus actual converters1/9/13/17 verified AFTER children, all first pooled…
+
+- **FACT-0081** [ACTIVE; high] Persistent header owner local checkpoint: Verified TASK26 local source/evidence checkpoint71618fb0bfd15634ebe8d0085bf26d30493d8b00:188durablepaths, cleanstatus,3161olderfrozenworking/Gitblobs and3262archiveblobsbyte-exact. ProtectedWindows/DXVK/root/APK/originals unchanged; testsfinished/debug+optimized actual1994queries exactall3ABIs. No push. Next original TEMP shadow/map reuse beforeasset2, thenrealDBHASH/asset-entry services andregistry.
+
+- **FACT-0101** [ACTIVE; high] Genuine loaded headers have actual entry ownership: TASK33 real DB_AllocXAssetEntry/DB_CloneXAssetInternal/DB_FreeXAssetEntry now own genuine first StringTable and codeRawFile headers on Windowsx86/x64/HONOR O0/O3. Finalhostpass2/debugpass2/O3pass2/debugrun2/O3run2 pass215priorcases/12genuinecycles/all1994queries plus12 exact entry cycles perABI. Sixcode cycles own2 entries/sixzombie own1 table; no TechniqueSet skip. Header/child bytes and queries surviveTEMP reuse; entry/header pairs/type/zone/emptyhash/count verified. Raw-first/table-second release restores complete32752 entry chain and bothheader pools beforezone; highcount0/highwater2 retained withoutreset.18 actual entryallocations perABI…
+
+- **FACT-0091** [ACTIVE; high] Verified TEMP reuse and RawFile header checkpoint: TASK28 source/evidence checkpoint acd48e5d06e6b435dcaa3a1ff62ef6ac6751b661 verified: 392 durable paths, 3652 prior frozen working/Git blobs unchanged, 3945 archive Git blobs byte exact; Windows2528/DXVK2552/root15/originals/APK protected, all tests completed and source worktree clean. Final controlled Run4/pass6 and genuine debug Run2/optimized Run1 pass on Windows x86/x64 and HONOR. Actual next code RawFile numeric header12->24 now ends10419; all1994 first-table queries survive real overwrite. Zombie nexttype7 deferred without skip. Raw children/registry/graphics remain next; production longjmp recovery is not certified. Failed tests/compile…
+
+- **FACT-0020** [ACTIVE; high] Fresh agent handoff prepared and tests completed: The debugger allocation gate is complete: final debugger_pass10 builds ten actual T5 units with zero compiler errors, successful links, 1261 retained warnings and 55 AArch64 artifacts; thirteen HONOR probes exit zero with no UBSan findings on passing paths. Windows x86/x64 and prior regression checks completed. No compiler or native probe remains running locally or on HONOR; ADB server/Gradle daemon are background services. Handoff documents exact commands, fixtures, WARN-0007, TASK-0007 acceptance criteria, all modified/untracked files and local ignored artifacts. Five frozen archives contain 436 unchanged evidence files. No new porting task…
+
+- **FACT-0051** [ACTIVE; high] Genuine production temporary-string interning verified: TASK-0017 genuine interning is verified on HONOR ARM64 and Windows x86/x64. Actual Load_TempStringCustom loads and interns all 859 genuine inline strings into 859 matching real IDs; null slot0 remains0 and empty slot12 is nonzero. Actual pool uses1665 sixteen-byte buckets (26640 bytes), debug/user4 refs859; release returns MT/debug ownership and complete hash free list to baseline before shutdown/zone free. Retained stringsUsed[0]=13 matches all Windows/Android references and remains diagnostic, not leak evidence. Six serial pool lifecycle cycles and24 adversarial raw fixtures/12 genuine low/high zone cycles perABI pass; max65530 accepted/655…
+
+- **FACT-0095** [ACTIVE; high] TASK30 RawFile pool ownership verified on three ABIs: TASK30 actual canonical RawFile pool initialization/allocation/shallow clone/native free and type36 size dispatch execute on Windows x86/x64 and HONOR ARM64. Final hostpass3/debugpass3/O3pass3 and debugrun2/optimizedrun2 pass all prerequisite TASK29 records (215 cases/12 cycles each ABI), plus pool1/2/1024/2048:3075 allocations,4 null exhaustion no-write,20 guarded invalid caller preconditions, LIFO/tail/conservation. Six genuine RawFile headers per run survive TEMP Pop/overwrite; complete name17/buffer141/len140 and first400 queries remain intact. Six zombie cycles stop at genuine TechniqueSet7 without allocation/skipping. Pool headers free …
+
+## Relevant Decisions
+
+- **DEC-0047** [ACTIVE; critical] Standing autonomous native engine development goal: Standing Development Goal received12Oct2026 adapts from verifiedTASK31/f523687. Continue autonomously across successive bounded critical dependencies without stopping for milestone completion. Prior explicit local ARM64 checkpoint authorization remains valid under new conditional no-commit rule; never push/rewrite/destructiveGit. Preserve stable Windows/root/original assets. Ordinary needed asset transfer to authorized HONOR allowed. DXVK inspection/build/integration expected at graphics; independent source modification only justified/tested/isolated. Prefer production integration over unlimited fixtures; stop only stated architecture/resourc…
+
+- **DEC-0040** [ACTIVE; high] Bounded original StringTable normalization: TASK25 restores original signed hash/column sort on returned registered header after DB_AddXAsset. Specific fixed16 bounded Microsoft CRT policy with explicit context/native-width positions, no row tie-break/global qsort replacement. Preserve LoadObj/query/hash bodies and Windows exact outputs; validated live spans/permutation before mutation, no fake registry. Lead owns sharedcode/CMake/fixture andLedger; disjoint builders/runner and read-onlyreview. Actual normalizer/query exact original400/1594 permutations/all1994results onWin32/x64/HONOR/optimizedUBSan; malformed domains/7-8-9threshold/duplicates/extremes/concurrency/cleanup/source/prote…
+
+- **DEC-0049** [ACTIVE; high] Genuine entry-owned header integration boundary: TASK33 integrates actual canonical entry allocation/free with genuine loaded StringTable and RawFile persistent headers, actual clone before TEMP Pop, private serial ownership under live zones, no hash publication. Two code entries/one zombie table entry, reverse frees before zone release and full entry/header baseline. All production src/tl/DemonWare remain unchanged; fixture hooks/additive target only. Next real hash/name lookup then smallest publication. Standing DEC47 continues automatically; local verified checkpoints allowed/no push.
+
+- **DEC-0051** [ACTIVE; high] Production primary hash insertion boundary: TASK35 canonical DB_InsertNewXAssetEntry extracts the two original primary hash assignments, used at unchanged no-existing Link position. Original native DB_AssetEntryIndex body unchanged/exposed only gate; DBHASH-held live pool entry and prior new-name decision are caller preconditions. Genuine loader/controlled collision call actual helper, explicit fixture removal before free. Next actual full DB_Add/Link returned-header integration, not further isolated helper expansion.
+
+- **DEC-0008** [ACTIVE; high] Actual script-header compilation gate authorized: The user requests the next bounded milestone: compile actual script headers and one memory-independent utility, isolate profiler OS services with real Android clocks/thread IDs/atomics, and verify the maths subarray correction against Windows behavior. Preserve all completed Phase 1 work and frozen evidence. No full engine/backend integration, commits or pushes.
+
+- **DEC-0045** [ACTIVE; high] Resume TASK30 and authorize local ARM64 checkpoints: User handoff resumes bounded TASK30 work after NOTE-0009; follow-up explicitly authorizes local verified checkpoint commits in BlackOpsARM/android-arm64. No push, protected checkouts/root/original assets remain read-only. Preserve existing five handoff paths and all prior evidence. TASK30 stops at actual RawFile pool ownership before registry initialization or DB_AddXAsset.
+
+## Known Failures
+
+## Warnings
+
+## Relevant Files / Entities
+- docs/port/arm64_original_query.md
+- docs/port/arm64_entry_allocation.md
+- docs/port/arm64_entry_owned_genuine.md
+- docs/port/agent_handoff.md
+- docs/port/arm64_rawfile_owner.md
