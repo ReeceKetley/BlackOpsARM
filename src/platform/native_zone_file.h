@@ -5,7 +5,7 @@
 
 namespace bo1::fastfile {
 enum class NativeZoneResult { Ok, Occupied, InvalidArgument, DecodeFailed,
-    PlanFailed, WorkingSetLimit, AllocationFailed, StreamsAttached };
+    PlanFailed, WorkingSetLimit, AllocationFailed, StreamsAttached, BorrowedChildren };
 // Serial engine component. Main thread/Hunk (Android) or PMem (Windows) must
 // already be initialized. This synchronous source does not replace DB workers.
 // Native Windows refuses a third same-prim owner until legacy PMem record stride
@@ -37,6 +37,10 @@ public:
     Bo1InflateResult DecodeStatus() const { return decodeStatus_; }
     ZoneResult AllocationStatus() const { return zoneStatus_; }
 private:
+    friend class NativeZoneLoad;
+    // One production loader retains this owner until scoped removal completes.
+    bool RetainChildren() { if (!open_ || childrenRetained_) return false; childrenRetained_=true; return true; }
+    void ReleaseChildren() { childrenRetained_=false; }
     static bool Begin(void *, const ZonePlan &);
     static unsigned char *Allocate(void *, unsigned, unsigned);
     static void End(void *);
@@ -47,6 +51,7 @@ private:
     XBlock blocks_[7]{};
     std::size_t position_{};
     bool open_{}, ownsAllocation_{};
+    bool childrenRetained_{};
     Bo1InflateResult decodeStatus_ = Bo1InflateResult::Ok;
     ZoneResult zoneStatus_ = ZoneResult::Ok;
 };

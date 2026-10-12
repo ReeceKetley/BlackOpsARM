@@ -7,6 +7,10 @@
 #include "db_registry_lookup_api.h"
 #if defined(BO1_REGISTRY_ADD_GATE)
 #include "db_registry_add_api.h"
+#if defined(BO1_NATIVE_ZONE_LOAD)
+#include "db_native_zone_load.h"
+#include <universal/com_stringtable_sort.h>
+#endif
 #if defined(BO1_REGISTRY_DEFAULT_GATE)
 #include "db_registry_default_api.h"
 #endif
@@ -1250,16 +1254,22 @@ void __cdecl Mark_FxImpactTableAsset(FxImpactTable *impactFx)
     DB_GetXAsset(ASSET_TYPE_IMPACT_FX, (XAssetHeader)impactFx);
 }
 
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE) || defined(BO1_NATIVE_ZONE_LOAD)
 void __cdecl Load_RawFileAsset(XAssetHeader *rawfile)
 {
     rawfile->xmodelPieces = DB_AddXAsset(ASSET_TYPE_RAWFILE, (XAssetHeader)rawfile->xmodelPieces).xmodelPieces;
 }
 
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE)
 void __cdecl Mark_RawFileAsset(RawFile *rawfile)
 {
     DB_GetXAsset(ASSET_TYPE_RAWFILE, (XAssetHeader)rawfile);
 }
 
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE) || defined(BO1_NATIVE_ZONE_LOAD)
 void __cdecl Load_StringTableAsset(XAssetHeader *stringTable)
 {
     stringTable->xmodelPieces = DB_AddXAsset(ASSET_TYPE_STRINGTABLE, (XAssetHeader)stringTable->xmodelPieces).xmodelPieces;
@@ -1268,6 +1278,8 @@ void __cdecl Load_StringTableAsset(XAssetHeader *stringTable)
         Com_Error(ERR_DROP, "Invalid registered StringTable indices (%s)", bo1::stringtable::NormalizeResultName(normalized));
 }
 
+#endif
+#if !defined(BO1_STRINGTABLE_OWNER_GATE)
 void __cdecl Mark_StringTableAsset(StringTable *stringTable)
 {
     DB_GetXAsset(ASSET_TYPE_STRINGTABLE, (XAssetHeader)stringTable);
@@ -2866,6 +2878,14 @@ void DB_SyncLostDevice()
 #if !defined(BO1_STRINGTABLE_OWNER_GATE) || defined(BO1_REGISTRY_ADD_GATE)
 static char g_modExtraZones[256];
 int g_dbTopAssetType = -1; // mod (L60): the top-level asset type Load_XAssetArrayCustom is loading, -1 between zones
+#if defined(BO1_NATIVE_ZONE_LOAD)
+bool DB_NativeZonePolicyReady(unsigned zone)
+{
+    return zone && zone < 33 && !g_modExtraZones[0]
+        && g_zoneNames[zone].dir == FFD_DEFAULT
+        && (g_zoneNames[zone].flags == 0 || g_zoneNames[zone].flags == 1);
+}
+#endif
 #endif
 #if !defined(BO1_STRINGTABLE_OWNER_GATE)
 

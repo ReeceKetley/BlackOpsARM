@@ -86,10 +86,11 @@ def inspect_payload(data):
             native += count * 16
             inline, aliases = 0, 0
             cells = []
+            hash_adler, string_adler = 1, 1
             for cell in range(count):
                 tag, value_hash = struct.unpack_from('<Ii', descriptors, cell * 8)
                 if tag == 0xffffffff:
-                    _, record = string()
+                    value, record = string()
                     inline += 1
                 elif tag:
                     block, offset = (tag - 1) >> 29, (tag - 1) & 0x1fffffff
@@ -102,6 +103,8 @@ def inspect_payload(data):
                     aliases += 1
                 else:
                     raise ValueError('Unexpected null genuine cell')
+                hash_adler = zlib.adler32(struct.pack('<i', value_hash), hash_adler)
+                string_adler = zlib.adler32(value, string_adler)
                 cells.append({'index': cell, 'signed_hash': value_hash, 'string': record})
             packed_indices = take(count * 2)
             indices = struct.unpack('<' + 'h' * count, packed_indices)
@@ -110,10 +113,17 @@ def inspect_payload(data):
             align(1)
             disk += count * 2
             native += count * 2
+            if len({cell['signed_hash'] for cell in cells}) != count:
+                raise ValueError('Genuine startup table hash uniqueness differs')
+            normalized = sorted(range(count), key=lambda index: (cells[index]['signed_hash'], index % columns))
+            normalized_bytes = struct.pack('<' + 'h' * count, *normalized)
             row.update(columns=columns, rows=count_rows, cell_count=count,
                        inline_strings=inline, aliases=aliases, cells=cells,
                        indices_sha256=hashlib.sha256(packed_indices).hexdigest(),
-                       indices_adler32=zlib.adler32(packed_indices))
+                       indices_adler32=zlib.adler32(packed_indices),
+                       cell_hash_adler32=hash_adler, cell_string_adler32=string_adler,
+                       normalized_index_adler32=zlib.adler32(normalized_bytes),
+                       query_rows=list(range(count_rows)))
         if not name[:-1] or name.startswith(b',') or name.lower() in names:
             raise ValueError('Unexpected missing/default/duplicate startup asset name')
         names.add(name.lower())

@@ -1,3 +1,6 @@
+#if defined(BO1_NATIVE_ZONE_LOAD)
+#include "db_native_zone_load.h"
+#else
 #include <platform/bo1_native_width.h>
 #include "db_file_load.h"
 #include <universal/assertive.h>
@@ -142,12 +145,18 @@ void __cdecl DB_LoadedExternalData(unsigned int size)
     _InterlockedExchangeAdd(&g_loadedExternalBytes, size);
 }
 
+#endif
+#if !defined(BO1_NATIVE_ZONE_LOAD)
 static unsigned long long g_xfileBytes;
 unsigned long long DB_XFileBytesLoaded() { return g_xfileBytes; }
 void DB_XFileBytesReset() { g_xfileBytes = 0; }
 
+#endif
 int __cdecl DB_LoadXFileDataNullTerminated(unsigned __int8 *pos)
 {
+#if defined(BO1_NATIVE_ZONE_LOAD)
+    return bo1::fastfile::NativeZoneReadCString(pos);
+#else
     unsigned __int8 *origPos; // [esp+0h] [ebp-4h]
 
     origPos = pos;
@@ -163,8 +172,10 @@ int __cdecl DB_LoadXFileDataNullTerminated(unsigned __int8 *pos)
     }
     while ( *pos++ );
     return static_cast<int>(pos - origPos);
+#endif
 }
 
+#if !defined(BO1_NATIVE_ZONE_LOAD)
 void __cdecl DB_LoadXFileSetSize(int size)
 {
     if ( g_load.deflateRemainingFileSize
@@ -180,8 +191,12 @@ void __cdecl DB_LoadXFileSetSize(int size)
     g_load.deflateRemainingFileSize = size;
 }
 
+#endif
 void __cdecl DB_LoadXFileData(unsigned __int8 *pos, int size)
 {
+#if defined(BO1_NATIVE_ZONE_LOAD)
+    bo1::fastfile::NativeZoneReadData(pos, size);
+#else
     if ( size > 0 )
         g_xfileBytes += static_cast<unsigned int>(size);
     const char *v2; // eax
@@ -313,8 +328,10 @@ RESTART:
             memcpy(pos, &g_load.deflateBuffer[g_load.deflateBufferPos], size);
         g_load.deflateBufferPos += size;
     }
+#endif
 }
 
+#if !defined(BO1_NATIVE_ZONE_LOAD)
 void DB_ReadXFileStage()
 {
     if ( g_load.f )
@@ -646,3 +663,5 @@ char __cdecl DB_LoadXFile(
     return 1;
 }
 
+
+#endif // normal async file loader

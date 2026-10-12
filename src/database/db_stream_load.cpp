@@ -1,4 +1,7 @@
 #include <platform/bo1_native_width.h>
+#if defined(BO1_NATIVE_ZONE_LOAD)
+#include "db_native_zone_load.h"
+#endif
 #include "db_stream_load.h"
 #include "db_stream.h"
 #include <universal/assertive.h>
@@ -177,6 +180,9 @@ void __cdecl DB_ConvertOffsetToAlias(void *field)
 
 void __cdecl DB_ConvertOffsetToPointer(void *field)
 {
+#if defined(BO1_NATIVE_ZONE_LOAD)
+    bo1::fastfile::NativeZoneValidatePointerOffset(field);
+#endif
     auto *data = reinterpret_cast<uintptr_t *>(field);
     const unsigned int offset = static_cast<unsigned int>(*data);
 #if BO1_NATIVE_64BIT

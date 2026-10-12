@@ -2,6 +2,16 @@
 
 ## Current integration direction (12 October 2026)
 
+TASK41 complete: all71 genuine MP startup assets now execute through the reusable
+production library on Windows x86/x64 and HONOR O0/O3, including357 earlier-string
+references, real lookups and ownership cleanup. See `arm64_native_startup_zone.md`
+and `native_startup_zone_handoff.md`. Controlled test caller inputs do not establish
+full Dvar/DB initialization. The next milestone is genuine startup platform/service
+closure from the completed dependency map, then actual database orchestration and
+`Com_Init` / `Com_Frame`; headless gameplay remains ahead.
+
+The paragraphs below preserve the milestone's earlier planning checkpoint.
+
 Latest verified checkpoint: TASK40, `db6c0e4`. Genuine asset registration and
 default resolution pass Windows x86/x64 and HONOR O0/O3; complete engine startup
 and headless gameplay remain unverified. Historical milestones below are retained.

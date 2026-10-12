@@ -1,5 +1,11 @@
 #include <platform/bo1_native_width.h>
+#if defined(BO1_NATIVE_ZONE_LOAD)
+#include "db_native_zone_load.h"
+#endif
 #if defined(BO1_STRINGTABLE_INDEX_GATE)
+#if defined(BO1_NATIVE_ZONE_LOAD)
+#include "db_native_zone_load.h"
+#endif
 #include "db_scalar_load.h"
 #if defined(BO1_TECHSET_GATE)
 #include "db_techset_load.h"
@@ -359,13 +365,19 @@ EmblemSet **varEmblemSetPtr;
 #if !defined(BO1_STRINGTABLE_INDEX_GATE) || defined(BO1_RAWFILE_PAYLOAD_GATE)
 RawFile *varRawFile;
 #endif
-#if !defined(BO1_STRINGTABLE_INDEX_GATE)
+#if !defined(BO1_STRINGTABLE_INDEX_GATE) || defined(BO1_NATIVE_ZONE_LOAD)
 RawFile **varRawFilePtr;
+#endif
+#if !defined(BO1_STRINGTABLE_INDEX_GATE)
 XGlobals *varXGlobals;
 XGlobals **varXGlobalsPtr;
+#endif
+#if !defined(BO1_STRINGTABLE_INDEX_GATE) || defined(BO1_NATIVE_ZONE_LOAD)
 StringTableCell *varStringTableCell;
 StringTable *varStringTable;
 StringTable **varStringTablePtr;
+#endif
+#if !defined(BO1_STRINGTABLE_INDEX_GATE)
 ddlMemberDef_t *varddlMemberDef_t;
 ddlStructDef_t *varddlStructDef_t;
 ddlEnumDef_t *varddlEnumDef_t;
@@ -427,8 +439,10 @@ Glass *varGlass;
 #if !defined(BO1_STRINGTABLE_INDEX_GATE) || defined(BO1_REGISTRY_ADD_GATE)
 XAsset *varXAsset;
 #endif
-#if !defined(BO1_STRINGTABLE_INDEX_GATE)
+#if !defined(BO1_STRINGTABLE_INDEX_GATE) || defined(BO1_NATIVE_ZONE_LOAD)
 XAssetHeader *varXAssetHeader;
+#endif
+#if !defined(BO1_STRINGTABLE_INDEX_GATE)
 pathnode_tree_info_t *varpathnode_tree_info_t;
 
 
@@ -572,11 +586,15 @@ void __cdecl Load_XQuat2Array(bool atStreamStart, int count)
     Load_Stream(atStreamStart, (unsigned __int8 *)varXQuat2, 4 * count);
 }
 
+#endif
+#if !defined(BO1_STRINGTABLE_INDEX_GATE) || defined(BO1_NATIVE_ZONE_LOAD)
 unsigned __int8 *__cdecl AllocLoad_XBlendInfo()
 {
     return DB_AllocStreamPos(1);
 }
 
+#endif
+#if !defined(BO1_STRINGTABLE_INDEX_GATE)
 void __cdecl Load_UnsignedShortArray(bool atStreamStart, int count)
 {
     Load_Stream(atStreamStart, (unsigned __int8 *)varUnsignedShort, 2 * count);
@@ -7869,7 +7887,7 @@ void __cdecl Load_flameTable(bool atStreamStart)
 }
 
 #endif
-#if !defined(BO1_STRINGTABLE_INDEX_GATE) || defined(BO1_TECHSET_GATE)
+#if !defined(BO1_STRINGTABLE_INDEX_GATE) || defined(BO1_TECHSET_GATE) || defined(BO1_NATIVE_ZONE_LOAD)
 XAsset *__cdecl AllocLoad_FxElemVisStateSample()
 {
     return (XAsset *)DB_AllocStreamPos(3);
@@ -8846,7 +8864,7 @@ void __cdecl Load_RawFile(bool atStreamStart)
 }
 
 #endif
-#if !defined(BO1_STRINGTABLE_INDEX_GATE)
+#if !defined(BO1_STRINGTABLE_INDEX_GATE) || defined(BO1_NATIVE_ZONE_LOAD)
 void __cdecl Load_RawFilePtr(bool atStreamStart)
 {
     const void **inserted; // [esp+0h] [ebp-Ch]
@@ -8878,6 +8896,8 @@ void __cdecl Load_RawFilePtr(bool atStreamStart)
     DB_PopStreamPos();
 }
 
+#endif
+#if !defined(BO1_STRINGTABLE_INDEX_GATE)
 void __cdecl Mark_RawFilePtr()
 {
     if ( *varRawFilePtr )
@@ -8943,6 +8963,8 @@ void __cdecl Mark_XGlobalsPtr()
     }
 }
 
+#endif
+#if !defined(BO1_STRINGTABLE_INDEX_GATE) || defined(BO1_NATIVE_ZONE_LOAD)
 void __cdecl Load_StringTableCell(bool atStreamStart)
 {
 #if BO1_NATIVE_64BIT
@@ -9051,6 +9073,8 @@ void __cdecl Load_StringTablePtr(bool atStreamStart)
     DB_PopStreamPos();
 }
 
+#endif
+#if !defined(BO1_STRINGTABLE_INDEX_GATE)
 void __cdecl Mark_StringTablePtr()
 {
     if ( *varStringTablePtr )
@@ -10888,10 +10912,13 @@ void __cdecl Mark_GlassesPtr()
     }
 }
 
+#endif
+#if !defined(BO1_STRINGTABLE_INDEX_GATE) || defined(BO1_NATIVE_ZONE_LOAD)
 void __cdecl Load_XAssetHeader(bool atStreamStart)
 {
     switch ( varXAsset->type )
     {
+#if !defined(BO1_NATIVE_ZONE_LOAD)
         case 1:
             varPhysPresetPtr = (PhysPreset **)varXAssetHeader;
             Load_PhysPresetPtr(atStreamStart);
@@ -10993,6 +11020,7 @@ void __cdecl Load_XAssetHeader(bool atStreamStart)
             varFxImpactTablePtr = (FxImpactTable **)varXAssetHeader;
             Load_FxImpactTablePtr(atStreamStart);
             break;
+#endif
         case 36:
             varRawFilePtr = (RawFile **)varXAssetHeader;
             Load_RawFilePtr(atStreamStart);
@@ -11001,6 +11029,7 @@ void __cdecl Load_XAssetHeader(bool atStreamStart)
             varStringTablePtr = (StringTable **)varXAssetHeader;
             Load_StringTablePtr(atStreamStart);
             break;
+#if !defined(BO1_NATIVE_ZONE_LOAD)
         case 38:
             varPackIndexPtr = (PackIndex **)varXAssetHeader;
             Load_PackIndexPtr(atStreamStart);
@@ -11021,6 +11050,10 @@ void __cdecl Load_XAssetHeader(bool atStreamStart)
             varEmblemSetPtr = (EmblemSet **)varXAssetHeader;
             Load_EmblemSetPtr(atStreamStart);
             break;
+#else
+        default:
+            Com_Error(ERR_DROP, "Unsupported native zone asset type %u", static_cast<unsigned>(varXAsset->type));
+#endif
     }
 }
 
@@ -11031,6 +11064,8 @@ void __cdecl Load_XAsset(bool atStreamStart)
     Load_XAssetHeader(0);
 }
 
+#endif
+#if !defined(BO1_STRINGTABLE_INDEX_GATE)
 void __cdecl Mark_XAssetHeader()
 {
     switch ( varXAsset->type )

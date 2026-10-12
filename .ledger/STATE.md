@@ -1,4 +1,33 @@
-# Active work - TASK41 after verified db6c0e4
+# Latest verified TASK41 - complete genuine MP startup assets
+
+TASK41 finalhost1 x86/x64 +exactHONOR O0/O3final2 pass: reusableproductionlibrary,
+all71roots(3tables+68raw),357earlierstringrefs,1792queries/cycle,4cycles/full150108
+source,284assetrecords/run. Actualroot/Ptr/Add/Find/normalization; children survive
+TEMP overwrite. Real scopedRemove refusesreferencedentries beforemutation, restores
+32752freeentries/all576table+1024rawheaders andPMem/namedownerbaselines. Childlease
+blocksClose untilRemove; detacheddescriptorstorage process lifetime. Readfaults
+unwindC++ buffers beforeCom_Error outsidecatch; fullengine recovery unverified.
+20canonical/normalbodyproofs+explicitreaderlease delta,8normalWindowsTUs/ABI,
+19930protectedhashes/referenceGit/689+82previousarchive records/finalmanifests pass.
+157newmetadata/logrecords frozenarm64_native_startup_zone, noassets/binaries.
+Read FACT128/WARN42/FAIL39-40, arm64_native_startup_zone.md and handoff. Git supplies
+finalcheckpoint; readerprerequisitebf199b7 preserved. Allworkrootowned, no live
+build/test/devicehandles. Leadpreparesfreshhandoff due longcontext (standing stop
+condition); fullgoal remainsunfinished/active. NoPush/merge/destructiveGit.
+
+ActualCom_Init/Com_Frame, nativeTLS/generalSync/DvarCmd/DBworkers/wholeVM/server/map
+simulation remainmissing; APK environment only. Tests usecontrolledcallerinputs,
+productionlibrarycontainsnofixtures. Next3: genuineplatform/TLS/error/synchronization
+andDvarCmd; actualDBworker/filepublication beforeFS; genuineheadlessCom_Init/Frame
+thenZombiesworld/server beforegraphics. Read production_startup_dependency_map.md.
+NativeWindows3+PMem riskcontained; acceptedx64stubs/DOA exclusion/headlessfirstapply.
+
+# Historical in-flight TASK41 context (preserved)
+
+Reader prerequisite/report/startup dependency map committed locally bf199b7,
+no push. Latest full asset/default checkpoint remains TASK40 db6c0e4. Pending
+fullMP71 component belongs to startup_zone; root retains review/oracle/buildproof
+ownership. No root build/test handles live after reader final verification.
 
 Latest TASK41 prerequisite: production NativeZoneFile/optional codec allocation
 budget verified Windows x86/x64 and exact HONOR final2 O0/O3 binaries. Fullold
