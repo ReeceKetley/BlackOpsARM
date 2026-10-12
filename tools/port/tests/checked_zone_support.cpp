@@ -28,7 +28,9 @@ const char *I_stristr(const char *a, const char *b) {
     for (; *a; ++a) if (!_strnicmp(a,b,std::strlen(b))) return a;
     return nullptr;
 }
+#if !defined(BO1_STRINGTABLE_LOOKUP_GATE)
 int I_stricmp(const char *a, const char *b) { return _stricmp(a,b); }
+#endif
 void track_flush_physical_alloc(const char *, unsigned char) {}
 void track_physical_alloc(int, const char *, int, int) {}
 void track_PrintInfo() { std::fputs("PMem tracker disabled in production/reference fixture\n",stderr); }

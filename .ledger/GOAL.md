@@ -2,6 +2,14 @@
 
 ## Current Milestone
 
+TASK-0023 actual query parity audit complete, but shared genuine row misses
+24/400 and796/1594 remain open (FAIL20). Original-instruction/loading-path audit
+next before any correction or registration. Read STATE/arm64_stringtable_lookup.md
+and FACT70/71/WARN23. AutonomousDEC29 continues, verified local commitsDEC26,
+no push. No engine-owned graphics yet.
+
+## Historical milestone
+
 TASK-0022 real modulo32 hash complete. Genuine first payloads/index arrays and
 all1994 stored hashes match originalWindows/HONOR. Actual lookup/reference
 investigation next before assetregistration; FACT67/68/WARN22/DEC37. Autonomous

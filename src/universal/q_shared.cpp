@@ -1,3 +1,7 @@
+#if defined(BO1_STRINGTABLE_LOOKUP_GATE)
+#include <platform/bo1_native_width.h>
+#include "assertive.h"
+#else
 #include "q_shared.h"
 #include "assertive.h"
 #include <string.h>
@@ -210,10 +214,12 @@ bool __cdecl I_islower(int c)
     return c >= 97 && c <= 122;
 }
 
+#endif
 bool __cdecl I_isupper(int c)
 {
     return c >= 65 && c <= 90;
 }
+#if !defined(BO1_STRINGTABLE_LOOKUP_GATE)
 
 bool __cdecl I_isalpha(int c)
 {
@@ -279,6 +285,7 @@ void __cdecl I_strncpyz(char *dest, const char *src, int destsize)
     }
 }
 
+#endif
 int __cdecl I_strnicmp(const char *s0, const char *s1, int n)
 {
     int c1; // [esp+0h] [ebp-8h]
@@ -311,6 +318,7 @@ int __cdecl I_strnicmp(const char *s0, const char *s1, int n)
     while ( c0 );
     return 0;
 }
+#if !defined(BO1_STRINGTABLE_LOOKUP_GATE)
 
 int __cdecl I_strncmp(const char *s0, const char *s1, int n)
 {
@@ -365,6 +373,7 @@ const char *__cdecl I_stristr(const char *s0, const char *substr)
     return 0;
 }
 
+#endif
 int __cdecl I_stricmp(const char *s0, const char *s1)
 {
     if ( !s0 && !Assert_MyHandler("C:\\projects_pc\\cod\\codsrc\\src\\universal\\q_shared.cpp", 747, 0, "%s", "s0") )
@@ -373,6 +382,7 @@ int __cdecl I_stricmp(const char *s0, const char *s1)
         __debugbreak();
     return I_strnicmp(s0, s1, 0x7FFFFFFF);
 }
+#if !defined(BO1_STRINGTABLE_LOOKUP_GATE)
 
 int __cdecl I_strcmp(const char *s0, const char *s1)
 {
@@ -1479,3 +1489,5 @@ double __cdecl CMD_GetAnalogButtonValue(usercmd_s *cmd, unsigned int whichBit)
     }
 }
 
+
+#endif // !BO1_STRINGTABLE_LOOKUP_GATE

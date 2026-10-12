@@ -1,3 +1,9 @@
+#if defined(BO1_STRINGTABLE_LOOKUP_GATE)
+#include "com_stringtable.h"
+#include "com_stringtable_obj.h"
+int __cdecl I_stricmp(const char*, const char*);
+void Com_PrintError(int, const char*, ...);
+#else
 #include "com_stringtable.h"
 #include "com_stringtable_obj.h"
 #include "q_shared.h"
@@ -8,6 +14,7 @@
 #include <xanim/xmodel.h>
 #include <qcommon/md4.h>
 
+#endif
 int __cdecl StringTable_LookupRowNumForValue(const StringTable *table, int comparisonColumn, const char *value)
 {
     int cell; // [esp+10h] [ebp-10h]
@@ -106,6 +113,7 @@ int __cdecl StringTable_LookupColumnNumForValue(const StringTable *table, int co
     }
 }
 
+#if !defined(BO1_STRINGTABLE_LOOKUP_GATE)
 int __cdecl StringTable_LookupRowNumForValue(
                 const StringTable *table,
                 int comparisonColumn1,
@@ -375,3 +383,5 @@ void __cdecl StringTable_GetAsset(const char *filename, XAssetHeader *tablePtr)
         StringTable_GetAsset_LoadObj(filename, (StringTable **)tablePtr);
 }
 
+
+#endif // !BO1_STRINGTABLE_LOOKUP_GATE

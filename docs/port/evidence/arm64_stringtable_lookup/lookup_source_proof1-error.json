@@ -1,0 +1,8 @@
+{
+  "exit": 1,
+  "error": "Captured source baseline differs from Git: src/universal/com_hash.cpp",
+  "origin": "Captured tool output; first trial raw stderr bytes were not separately saved",
+  "cause": "Verifier required canonical CRLF baseline for new LF com_hash source; corrected exact Git LF/CRLF baseline candidate check",
+  "engine_failure": false,
+  "historical_verifier_source_sha256": null
+}
