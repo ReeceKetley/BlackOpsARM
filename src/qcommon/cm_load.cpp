@@ -1,3 +1,6 @@
+#if defined(BO1_NATIVE_CLIPMAP_STATE)
+#include <qcommon/clipmap_state.h>
+#else
 #include <database/db_stream.h>
 #include "cm_load.h"
 #include "cm_mapkit.h"
@@ -14,7 +17,7 @@
 #include <database/db_registry.h>
 #include <physics/rope.h>
 
-clipMap_t cm;
+
 
 int num_occlusion_overrides;
 float occlusion_overrides[32][2][3];
@@ -230,3 +233,6 @@ void __cdecl CM_Hunk_ClearTempMemoryHigh()
     Hunk_ClearTempMemoryHigh();
 }
 
+
+#endif
+clipMap_t cm;

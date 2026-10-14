@@ -19,6 +19,11 @@
 #include <cstdint>
 #include <cmath>
 
+// angle indexes
+#define	PITCH				0		// up / down
+#define	YAW					1		// left / right
+#define	ROLL				2		// fall over
+
 //======================= WIN32 DEFINES =================================
 #ifdef WIN32
 
@@ -42,11 +47,6 @@
 #endif
 #endif
 
-// angle indexes
-#define	PITCH				0		// up / down
-#define	YAW					1		// left / right
-#define	ROLL				2		// fall over
-
 #define ID_INLINE __inline 
 
 int __cdecl ShortSwap(__int16 l);
@@ -62,6 +62,13 @@ static ID_INLINE int BigLong(int l) { return LongSwap(l); }
 #define	PATH_SEP '\\'
 
 #endif // WIN32
+#if defined(__ANDROID__)
+// ARM64 Android uses the existing little-endian file/network conventions.
+int __cdecl ShortSwap(__int16 l);
+int __cdecl LongSwap(int l);
+static inline short BigShort(short l) { return static_cast<short>(ShortSwap(l)); }
+static inline int BigLong(int l) { return LongSwap(l); }
+#endif
 
 
 #define MAX_LOCAL_CENTITIES 0x600

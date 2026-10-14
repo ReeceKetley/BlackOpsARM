@@ -1,4 +1,10 @@
 #include <platform/engine_random.h>
+#include <platform/bo1_native_width.h>
+#if defined(__ANDROID__)
+#include <platform/android/stdio_services.h>
+#include <platform/android/engine_paths.h>
+#include <string>
+#endif
 #include <cgame_mp/cg_anim_commands.h>
 #include "cg_view_mp.h"
 #include <sound/snd_bo1_trace.h>
@@ -1343,6 +1349,39 @@ void __cdecl CG_UpdateScriptedKillCam(int localClientNum)
 
 double __cdecl LookAtAxisAndDistance(const float *origin, const float *lookAt, float (*axis)[3])
 {
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+    double v3; // st7
+    const char *v4; // eax
+    float v6; // [esp+3Ch] [ebp-14h]
+    float distance; // [esp+4Ch] [ebp-4h]
+
+    axis[0][0] = *lookAt - *origin;
+    axis[0][1] = lookAt[1] - origin[1];
+    axis[0][2] = lookAt[2] - origin[2];
+    distance = Vec3Normalize(axis[0]);
+    v6 = axis[0][0];
+    (axis[1][0]) = -(axis[0][1]);
+    axis[1][1] = v6;
+    axis[1][2] = 0.0f;
+    if ( axis[1][0] == 0.0 && axis[1][1] == 0.0 )
+        axis[1][0] = 1.0f;
+    Vec3Normalize(axis[1]);
+    Vec3Cross(axis[0], axis[1], axis[2]);
+    if ( !Vec3IsNormalized(axis[2]) )
+    {
+        v3 = Vec3Length(axis[2]);
+        v4 = va("(%g %g %g) len %g", axis[2][0], axis[2][1], axis[2][2], v3);
+        if ( !Assert_MyHandler(
+                        "C:\\projects_pc\\cod\\codsrc\\src\\cgame_mp\\cg_view_mp.cpp",
+                        1409,
+                        0,
+                        "%s\n\t%s",
+                        "Vec3IsNormalized( axis[2] )",
+                        v4) )
+            __debugbreak();
+    }
+    return distance;
+#else
     double v3; // st7
     const char *v4; // eax
     float v6; // [esp+3Ch] [ebp-14h]
@@ -1374,6 +1413,7 @@ double __cdecl LookAtAxisAndDistance(const float *origin, const float *lookAt, f
             __debugbreak();
     }
     return distance;
+#endif
 }
 
 void __cdecl CG_UpdateScriptedKillCamDof(float distance, GfxDepthOfField *dof)
@@ -2141,7 +2181,14 @@ static void CG_SP_LastStandSway(cg_s *cgameGlob, CgSPClientExt *ext)
     lastSwayLog = cgameGlob->time;
     static FILE *swayFile;
     if ( !swayFile )
+#if defined(__ANDROID__)
+    {
+        const auto swayPath=std::string(Sys_EngineUserRoot())+"/bo1_sway.log";
+        swayFile=bo1::android::OpenStdio(swayPath.c_str(),"w");
+    }
+#else
         fopen_s(&swayFile, "bo1_sway.log", "w");
+#endif
     if ( swayFile )
     {
         fprintf(swayFile, "time %d pm_type %d accel %g sway %.4f %.4f %.4f goal %.4f %.4f\n", cgameGlob->time,
@@ -3631,6 +3678,86 @@ void __cdecl CG_UpdateExplosiveKillCam(int localClientNum, KillCamEntityType kil
 
 double __cdecl LookAtBothPoints(const float *point1, const float *point2, const float *campos, float (*lookaxis)[3])
 {
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+    double v4; // st7
+    const char *v5; // eax
+    float v7; // [esp+30h] [ebp-74h]
+    float axisOfRotation[3]; // [esp+68h] [ebp-3Ch] BYREF
+    float lerp; // [esp+74h] [ebp-30h]
+    float lookDir[3]; // [esp+78h] [ebp-2Ch] BYREF
+    float point1dir[3]; // [esp+84h] [ebp-20h] BYREF
+    float distance; // [esp+90h] [ebp-14h]
+    float point2dir[3]; // [esp+94h] [ebp-10h] BYREF
+    float dot; // [esp+A0h] [ebp-4h]
+
+    point1dir[0] = *point1 - *campos;
+    point1dir[1] = point1[1] - campos[1];
+    point1dir[2] = point1[2] - campos[2];
+    distance = Vec3Normalize(point1dir);
+    point2dir[0] = *point2 - *campos;
+    point2dir[1] = point2[1] - campos[1];
+    point2dir[2] = point2[2] - campos[2];
+    Vec3Normalize(point2dir);
+    lookDir[0] = (float)(point1dir[0] + point2dir[0]) * 0.5;
+    lookDir[1] = (float)(point1dir[1] + point2dir[1]) * 0.5;
+    lookDir[2] = (float)(point1dir[2] + point2dir[2]) * 0.5;
+    Vec3Normalize(lookDir);
+    dot = (float)((float)(lookDir[0] * point1dir[0]) + (float)(lookDir[1] * point1dir[1]))
+            + (float)(lookDir[2] * point1dir[2]);
+    if ( dot < 0.98480779 )
+    {
+        if ( dot >= 0.86602539 )
+        {
+            Vec3Cross(point1dir, point2dir, axisOfRotation);
+            Vec3Normalize(axisOfRotation);
+            RotatePointAroundVector(lookDir, axisOfRotation, point1dir, 10.0);
+            lerp = (float)(dot - 0.98480779) / (float)(0.86602539 - 0.98480779);
+            Vec3Lerp(lookDir, point1dir, lerp, lookDir);
+        }
+        else
+        {
+            lookDir[0] = point1dir[0];
+            lookDir[1] = point1dir[1];
+            lookDir[2] = point1dir[2];
+        }
+    }
+    if ( lookDir[2] < -0.94999999 )
+    {
+        if ( lookDir[2] >= -0.98000002 )
+        {
+            Vec3Lerp(point1dir, lookDir, (float)(lookDir[2] - -0.98000002) / 0.030000031, lookDir);
+        }
+        else
+        {
+            lookDir[0] = point1dir[0];
+            lookDir[1] = point1dir[1];
+            lookDir[2] = point1dir[2];
+        }
+    }
+    Vec3NormalizeTo(lookDir, lookaxis[0]);
+    v7 = lookaxis[0][0];
+    (lookaxis[1][0]) = -(lookaxis[0][1]);
+    lookaxis[1][1] = v7;
+    lookaxis[1][2] = 0.0f;
+    if ( lookaxis[1][0] == 0.0 && lookaxis[1][1] == 0.0 )
+        lookaxis[1][0] = 1.0f;
+    Vec3Normalize(lookaxis[1]);
+    Vec3Cross(lookaxis[0], lookaxis[1], lookaxis[2]);
+    if ( !Vec3IsNormalized(lookaxis[2]) )
+    {
+        v4 = Vec3Length(lookaxis[2]);
+        v5 = va("(%g %g %g) len %g", lookaxis[2][0], lookaxis[2][1], lookaxis[2][2], v4);
+        if ( !Assert_MyHandler(
+                        "C:\\projects_pc\\cod\\codsrc\\src\\cgame_mp\\cg_view_mp.cpp",
+                        1481,
+                        0,
+                        "%s\n\t%s",
+                        "Vec3IsNormalized( lookaxis[2] )",
+                        v5) )
+            __debugbreak();
+    }
+    return distance;
+#else
     double v4; // st7
     const char *v5; // eax
     float v7; // [esp+30h] [ebp-74h]
@@ -3709,6 +3836,7 @@ double __cdecl LookAtBothPoints(const float *point1, const float *point2, const 
             __debugbreak();
     }
     return distance;
+#endif
 }
 
 const float THIN_MAXS[3] = { 0.0, 0.0, 0.0 };
@@ -4984,7 +5112,11 @@ void __cdecl CG_UpdateEntInfo(int localClientNum)
         fakeEnt = &cg_fakeEntitiesArray[512 * localClientNum + num];
         if ( cg_fakeEntitiesInuseArray[512 * localClientNum + fakeEnt - &cg_fakeEntitiesArray[512 * localClientNum]] )
         {
+#if defined(__ANDROID__)
+            __builtin_prefetch(&cg_fakeEntitiesArray[512 * localClientNum + num].cent.nextState.eType,0,1);
+#else
             _mm_prefetch((const char *)&cg_fakeEntitiesArray[512 * localClientNum + num].cent.nextState.eType, 1);
+#endif
             cent = &fakeEnt->cent;
             obj = Com_GetClientDObj(fakeEnt->cent.nextState.number, localClientNum);
             if ( obj )

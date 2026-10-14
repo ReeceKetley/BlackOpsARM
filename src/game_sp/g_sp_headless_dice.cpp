@@ -48,10 +48,17 @@
 #include <universal/dvar.h>
 #include <qcommon/common.h>
 #include <stdio.h>
+#if defined(__ANDROID__)
+#include <platform/android/stdio_services.h>
+#endif
 #include <string.h>
 #include <math.h>
 #include <vector>
 #include <string>
+#if defined(__ANDROID__)
+#include <iterator>
+#define _countof(array) std::size(array)
+#endif
 
 namespace
 {
@@ -122,7 +129,11 @@ bool DiceLoad()
 {
     if (s_diceLoaded || s_diceFailed)
         return s_diceLoaded;
+#if defined(__ANDROID__)
+    FILE *f=bo1::android::OpenStdio(g_dicePath->current.string,"rb");
+#else
     FILE *f = fopen(g_dicePath->current.string, "rb");
+#endif
     if (!f)
     {
         s_diceFailed = true;
@@ -187,7 +198,11 @@ bool DiceLoad()
             s_meleeDamage[n] = a;
         }
         else if (sscanf(line, "mantle %d %63s", &n, name) == 2 && n >= 0 && n < 256)
+#if defined(__ANDROID__)
+            I_strncpyz(DiceAt(n).mantle,name,sizeof(DiceAt(n).mantle));
+#else
             strcpy_s(DiceAt(n).mantle, name);
+#endif
         else
         {
             DiceFlight fl;
@@ -196,7 +211,11 @@ bool DiceLoad()
                 s_flights.push_back(fl);
         }
     }
+#if defined(__ANDROID__)
+    bo1::android::CloseStdio(f);
+#else
     fclose(f);
+#endif
     s_diceLoaded = !s_dice.empty();
     s_diceFailed = !s_diceLoaded;
     Com_Printf(16, "bo1_dice: loaded '%s' zombies %u ok %d\n", g_dicePath->current.string, (unsigned int)s_dice.size(),

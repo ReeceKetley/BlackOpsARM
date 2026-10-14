@@ -1,11 +1,22 @@
+#if defined(BO1_NATIVE_MAPNAME_GLOBAL_ONLY)
+#include <universal/dvar.h>
+#else
 #include <platform/engine_random.h>
+#if defined(__ANDROID__)
+#include <platform/android/legacy_crt.h>
+#include <win32/win_main.h>
+#include <platform/android/profiling_diagnostics.h>
+#include <platform/win32_compat/win32_time.h>
+#endif
 #include <platform/bo1_native_width.h>
 #include <qcommon/cm_mapkit.h>
 #include <universal/profile.h>
 #include <algorithm>
 #include <windows.h>
 #include <platform/bo1_arch.hpp>
+#if !defined(__ANDROID__)
 #include <dbghelp.h>
+#endif
 #include <clientscript/cscr_compiler.h>
 #include <clientscript/cscr_parser.h>
 #include <clientscript/cscr_vm.h>
@@ -134,11 +145,16 @@ const char *moveOrientModeStrings[8] =
   NULL
 };
 
-const dvar_t *g_connectpaths;
-const dvar_t *g_loadScripts;
+extern const dvar_t *g_connectpaths;
+extern const dvar_t *g_loadScripts;
 const dvar_t *g_cheats;
 const dvar_t *g_erroronpathsnotconnected;
+#endif // BO1_NATIVE_MAPNAME_GLOBAL_ONLY
+
 const dvar_t *sv_mapname;
+
+#if !defined(BO1_NATIVE_MAPNAME_GLOBAL_ONLY)
+
 const dvar_t *g_gametype;
 const dvar_t *g_synchronousClients;
 const dvar_t *g_log;
@@ -367,25 +383,14 @@ int __cdecl G_GetTime()
     return level.time;
 }
 
-void __cdecl G_RegisterConnectPaths()
-{
-    g_connectpaths = _Dvar_RegisterInt("g_connectpaths", 0, 0, 3, 0, "Connect paths");
-}
+
 
 bool __cdecl G_OnlyConnectingPaths()
 {
     return g_connectpaths->current.integer >= 2;
 }
 
-void __cdecl G_RegisterRegisterToolDvars()
-{
-    bool v0; // al
 
-    G_RegisterConnectPaths();
-    R_ReflectionProbeRegisterDvars();
-    v0 = G_ExitAfterToolComplete();
-    g_loadScripts = _Dvar_RegisterBool("g_loadScripts", !v0, 0, "Disable scripts from loading");
-}
 
 int __cdecl G_GetSavePersist()
 {
@@ -641,15 +646,9 @@ void *__cdecl Hunk_AllocXAnimServer(unsigned int size)
     return Hunk_AllocLow(size, "Hunk_AllocXAnimServer", 13);
 }
 
-bool __cdecl G_ExitAfterConnectPaths()
-{
-    return g_connectpaths && g_connectpaths->current.integer >= 2;
-}
 
-bool __cdecl G_ExitAfterToolComplete()
-{
-    return G_ExitAfterConnectPaths() || R_ReflectionProbeGenerateExitWhenDone();
-}
+
+
 
 bool __cdecl G_ExitOnComError(int code)
 {
@@ -1203,6 +1202,12 @@ void __cdecl    G_InitGame(int levelTime, int randomSeed, int restart, int regis
         RadiantRemoteInit();
 
     RunSavedRadiantCmds();
+#if defined(__ANDROID__)
+    if (Sys_IsHeadless())
+        Com_Printf(16, "BO1_GAME_INIT_COMPLETE level_time=%d frame=%d script_time=%u\n",
+                   level.time, level.framenum, static_cast<unsigned>(gScrVarPub[SCRIPTINSTANCE_SERVER].time));
+#endif
+
 
     //result = GetCurrentThreadId();
     //*(_DWORD *)(a1 - 2140) = result;
@@ -2375,13 +2380,21 @@ void G_LoadAnimTreeInstances()
     if ( G_SP_IsSPLevel() )
     {
         for ( int i = 0; i < MAX_ACTORS; ++i ) // mod: was ARRAY_COUNT(actorXAnimTrees) = 32
+#if defined(__ANDROID__)
+            G_ActorXAnimTreeSlot(i) = XAnimCreateTree(anims, Hunk_AllocActorXAnimServer);
+#else
             G_ActorXAnimTreeSlot(i) = XAnimCreateTree(anims, (void* (*)(unsigned int))Hunk_AllocActorXAnimServer);
+#endif
     }
 
     // zombies: 32 corpse slots on an SP level (Com_GetMaxActorCorpses), MP 8
     for ( int i = 0; i < Com_GetMaxActorCorpses(); ++i )
     {
+#if defined(__ANDROID__)
+        g_scr_data.actorCorpseInfo[i].tree = XAnimCreateTree(anims, Hunk_AllocActorXAnimServer);
+#else
         g_scr_data.actorCorpseInfo[i].tree = XAnimCreateTree(anims, (void* (*)(unsigned int))Hunk_AllocActorXAnimServer);
+#endif
         g_scr_data.actorCorpseInfo[i].entnum = -1;
     }
 }
@@ -4022,9 +4035,15 @@ static const char *volatile s_svSamplePos[SVPROF_SAMPLE_SLOTS];
 static volatile unsigned int s_svSampleCount[SVPROF_SAMPLE_SLOTS];
 // bo1_mod_svprof 2: outside SVPROF_SCRIPT, suspend the server thread and count its instruction pointer (per category);
 // the report names the functions through dbghelp (BO1_SVPC)
-static volatile unsigned int s_svPcAddr[SVPROF_SAMPLE_SLOTS];
+#if defined(__ANDROID__)
+using BO1_SvProfPcAddress = std::uintptr_t;
+#else
+using BO1_SvProfPcAddress = unsigned int;
+#endif
+static volatile BO1_SvProfPcAddress s_svPcAddr[SVPROF_SAMPLE_SLOTS];
 static volatile unsigned int s_svPcCount[SVPROF_SAMPLE_SLOTS];
 static volatile unsigned char s_svPcCat[SVPROF_SAMPLE_SLOTS];
+#if !defined(__ANDROID__)
 static void G_ModSvProfSamplePc(int cat)
 {
     static HANDLE thread;
@@ -4047,8 +4066,8 @@ static void G_ModSvProfSamplePc(int cat)
     ResumeThread(thread);
     if (!ok || !BO1_CTX_IP(ctx))
         return;
-    const unsigned int pc = (unsigned int)BO1_CTX_IP(ctx);
-    unsigned int h = (pc * 2654435761u) >> 20;
+    const BO1_SvProfPcAddress pc = static_cast<BO1_SvProfPcAddress>(BO1_CTX_IP(ctx));
+    unsigned int h = (static_cast<unsigned int>(pc) * 2654435761u) >> 20;
     for (int probe = 0; probe < 16; ++probe, h = (h + 1) & (SVPROF_SAMPLE_SLOTS - 1))
     {
         if (!s_svPcAddr[h])
@@ -4099,6 +4118,39 @@ static DWORD WINAPI G_ModSvProfSampler(void *)
         }
     }
 }
+
+#else
+static thread_local bool s_nativeSvSamplesActive;
+static void G_ModSvProfCollectNativeSamples()
+{
+    if (!s_nativeSvSamplesActive) return;
+    static thread_local bo1::android::ServerProfileSample samples[SVPROF_SAMPLE_SLOTS];
+    unsigned dropped;
+    const std::size_t count = bo1::android::EndServerSamples(samples, SVPROF_SAMPLE_SLOTS, &dropped);
+    s_nativeSvSamplesActive = false;
+    if (dropped) Com_Printf(15, "BO1_SVSAMPLE dropped=%u\n", dropped);
+    for (std::size_t i = 0; i < count; ++i) {
+        const auto &sample = samples[i];
+        if (sample.category == SVPROF_SCRIPT) {
+            const char *pos = sample.scriptPosition;
+            const auto address = reinterpret_cast<std::uintptr_t>(pos);
+            if (!pos || address < reinterpret_cast<std::uintptr_t>(gScrVarPub[SCRIPTINSTANCE_SERVER].programBuffer)
+                || address >= reinterpret_cast<std::uintptr_t>(gScrVarPub[SCRIPTINSTANCE_SERVER].endScriptBuffer)) continue;
+            unsigned h = (static_cast<unsigned>(address) * 2654435761u) >> 20;
+            for (int probe = 0; probe < 16; ++probe, h = (h + 1) & (SVPROF_SAMPLE_SLOTS - 1)) {
+                if (!s_svSamplePos[h]) s_svSamplePos[h] = pos;
+                if (s_svSamplePos[h] == pos) { ++s_svSampleCount[h]; break; }
+            }
+        } else if (sample.pc) {
+            unsigned h = (static_cast<unsigned>(sample.pc) * 2654435761u) >> 20;
+            for (int probe = 0; probe < 16; ++probe, h = (h + 1) & (SVPROF_SAMPLE_SLOTS - 1)) {
+                if (!s_svPcAddr[h]) { s_svPcAddr[h] = sample.pc; s_svPcCat[h] = static_cast<unsigned char>(sample.category); }
+                if (s_svPcAddr[h] == sample.pc) { ++s_svPcCount[h]; break; }
+            }
+        }
+    }
+}
+#endif
 
 // mod (L55): bo1_mod_svab <mask> - an in-run A/B of optimizations that give the same game, for a machine that is never
 // quiet: each block of bo1_mod_svab_frames server frames is randomly (a hash of the block number, so no periodic script
@@ -4195,20 +4247,28 @@ void G_ModSvProfBegin()
     if (!g_svProfOn)
         return;
     ++g_svPcoreFrames[Sys_ModOnPCore() + 1]; // mod (L64): which core class each server frame starts on
+#if defined(__ANDROID__)
+    bo1::android::BeginServerSamples(g_svProfOn, SVPROF_SCRIPT);
+    s_nativeSvSamplesActive = true;
+#else
     static bool samplerStarted;
     if (!samplerStarted)
     {
         samplerStarted = true;
         CreateThread(0, 0, G_ModSvProfSampler, 0, 0, 0);
     }
-    g_svProfThread = GetCurrentThreadId();
+#endif
+    g_svProfThread = BO1_ProfileThreadId();
     g_svProfDepth = 0;
     g_svProfStack[0] = SVPROF_OTHER;
-    g_svProfLast = __rdtsc();
+    g_svProfLast = BO1_ProfileTicks();
 }
 
 void G_ModSvProfEnd(long long frameQpcTicks)
 {
+#if defined(__ANDROID__)
+    G_ModSvProfCollectNativeSamples();
+#endif
     static unsigned long long winTicks[SVPROF_COUNT];
     static unsigned long long winCalls[SVPROF_COUNT];
     static float frameMs[4096];
@@ -4225,14 +4285,20 @@ void G_ModSvProfEnd(long long frameQpcTicks)
         winQpc0 = 0;
         return;
     }
-    const unsigned long long now = __rdtsc();
+    const unsigned long long now = BO1_ProfileTicks();
     g_svProfTicks[g_svProfStack[g_svProfDepth]] += now - g_svProfLast;
     g_svProfLast = now;
     g_svProfDepth = 0;
     g_svProfThread = 0; // scopes between frames (event loop, packet reads) are not frame time: off until G_ModSvProfBegin
+#if defined(__ANDROID__)
+    bo1::win32::LARGE_INTEGER freq, qpc;
+    bo1::win32::QueryPerformanceFrequency(&freq);
+    bo1::win32::QueryPerformanceCounter(&qpc);
+#else
     LARGE_INTEGER freq, qpc;
     QueryPerformanceFrequency(&freq);
     QueryPerformanceCounter(&qpc);
+#endif
     if (!winQpc0)
     {
         winQpc0 = qpc.QuadPart;
@@ -4275,9 +4341,18 @@ void G_ModSvProfEnd(long long frameQpcTicks)
     int actors = 0;
     for (int a = 0; level.actors && a < g_maxActors; ++a)
         actors += level.actors[a].inuse ? 1 : 0;
+#if defined(__ANDROID__)
+    std::uint64_t virtualBytes;
+    if (!bo1::android::ProcessVirtualBytes(&virtualBytes)) {
+        std::perror("Server profiler: process virtual memory");
+        std::abort();
+    }
+#else
     MEMORYSTATUSEX mem;
     mem.dwLength = sizeof(mem);
     GlobalMemoryStatusEx(&mem);
+    const auto virtualBytes = mem.ullTotalVirtual - mem.ullAvailVirtual;
+#endif
     char cats[512];
     int len = 0;
     for (int c = 0; c < SVPROF_COUNT; ++c)
@@ -4286,7 +4361,7 @@ void G_ModSvProfEnd(long long frameQpcTicks)
         "\"ms_p99\":%.2f,\"ms_max\":%.2f,%s\"path_n\":%.1f,\"trace_n\":%.0f,\"va_mb\":%d,\"rw_consts\":%ld,\"rw_skin\":%ld,\"rw_gfxents\":%ld,\"ge_peak\":%ld,\"ge_over256\":%ld,\"snap_ents\":%d,\"snap_bytes\":%d,\"pcore_pct\":%d}\n",
         level.time, winMs, frames, actors, sumMs / frames, frameMs[n / 2], frameMs[(n * 99) / 100 < n ? (n * 99) / 100 : n - 1],
         frameMs[n - 1], cats, (double)winCalls[SVPROF_PATH] / frames, (double)winCalls[SVPROF_TRACE] / frames,
-        (int)((mem.ullTotalVirtual - mem.ullAvailVirtual) >> 20), g_modRendWarn[0], g_modRendWarn[1], g_modRendWarn[2],
+        (int)(virtualBytes >> 20), g_modRendWarn[0], g_modRendWarn[1], g_modRendWarn[2],
         _InterlockedExchange(&g_modRendWarn[3], 0), g_modRendWarn[5], g_bo1SnapEntsMax, g_bo1SnapBytesMax,
         g_svPcoreFrames[1] + g_svPcoreFrames[2] ? 100 * g_svPcoreFrames[2] / (g_svPcoreFrames[1] + g_svPcoreFrames[2]) : -1);
     memset(g_svPcoreFrames, 0, sizeof(g_svPcoreFrames));
@@ -4370,6 +4445,7 @@ void G_ModSvProfEnd(long long frameQpcTicks)
     }
     // the 10 builtins with the most time this window, names from the PDB (dbghelp, loaded on first use)
     {
+#if !defined(__ANDROID__)
         typedef BOOL(WINAPI * SymInit_t)(HANDLE, PCSTR, BOOL);
         typedef BOOL(WINAPI * SymFromAddr_t)(HANDLE, DWORD64, PDWORD64, void *);
         static SymFromAddr_t symFromAddr;
@@ -4382,6 +4458,7 @@ void G_ModSvProfEnd(long long frameQpcTicks)
             if (symInit && symInit(GetCurrentProcess(), 0, TRUE))
                 symFromAddr = (SymFromAddr_t)GetProcAddress(dbghelp, "SymFromAddr");
         }
+#endif
         char top[1024];
         int topLen = 0;
         for (int k = 0; k < 10; ++k)
@@ -4395,6 +4472,11 @@ void G_ModSvProfEnd(long long frameQpcTicks)
             const void *fn = gScrCompilePub[SCRIPTINSTANCE_SERVER].func_table ? (const void *)gScrCompilePub[SCRIPTINSTANCE_SERVER].func_table[best] : 0;
             char name[64];
             _snprintf(name, sizeof(name), "b%d", best);
+#if defined(__ANDROID__)
+            char resolved[64];
+            if (fn && bo1::android::ProfileSymbolName(fn, resolved, sizeof(resolved)))
+                std::strcpy(name, resolved);
+#else
             struct { SYMBOL_INFO info; char more[256]; } sym;
             memset(&sym, 0, sizeof(sym));
             sym.info.SizeOfStruct = sizeof(SYMBOL_INFO);
@@ -4402,6 +4484,7 @@ void G_ModSvProfEnd(long long frameQpcTicks)
             DWORD64 disp = 0;
             if (fn && symFromAddr && symFromAddr(GetCurrentProcess(), (DWORD64)(size_t)fn, &disp, &sym.info))
                 _snprintf(name, sizeof(name), "%s", sym.info.Name);
+#endif
             name[sizeof(name) - 1] = 0;
             topLen += _snprintf(top + topLen, sizeof(top) - topLen, "%s\"%s\":[%.3f,%.1f]", k ? "," : "", name,
                 (double)g_svProfBuiltinTicks[best] * msPerTick / frames, (double)g_svProfBuiltinCalls[best] / frames);
@@ -4421,7 +4504,7 @@ void G_ModSvProfEnd(long long frameQpcTicks)
             unsigned int pcTotal = 0;
             for (int i = 0; i < SVPROF_SAMPLE_SLOTS; ++i)
             {
-                const unsigned int pc = s_svPcAddr[i];
+                const BO1_SvProfPcAddress pc = s_svPcAddr[i];
                 const unsigned int count = s_svPcCount[i];
                 const int cat = s_svPcCat[i];
                 s_svPcCount[i] = 0;
@@ -4431,6 +4514,13 @@ void G_ModSvProfEnd(long long frameQpcTicks)
                 pcTotal += count;
                 const char *catName = cat < SVPROF_COUNT ? s_svProfNames[cat] : "?";
                 char name[72];
+#if defined(__ANDROID__)
+                char symbol[64];
+                if (bo1::android::ProfileSymbolName(reinterpret_cast<const void *>(static_cast<std::uintptr_t>(pc)), symbol, sizeof(symbol)))
+                    _snprintf(name, sizeof(name), "%s:%s", catName, symbol);
+                else
+                    _snprintf(name, sizeof(name), "%s:0x%llx", catName, static_cast<unsigned long long>(pc));
+#else
                 struct { SYMBOL_INFO info; char more[256]; } sym;
                 memset(&sym, 0, sizeof(sym));
                 sym.info.SizeOfStruct = sizeof(SYMBOL_INFO);
@@ -4440,6 +4530,7 @@ void G_ModSvProfEnd(long long frameQpcTicks)
                     _snprintf(name, sizeof(name), "%s:%s%s", catName, sym.info.Name, sym.info.Size && disp >= sym.info.Size ? "+past" : "");
                 else
                     _snprintf(name, sizeof(name), "%s:0x%x", catName, pc);
+#endif
                 name[sizeof(name) - 1] = 0;
                 for (char *c = name; *c; ++c)
                     if (*c == '"' || *c == '\\' || *c < ' ')
@@ -4484,4 +4575,39 @@ void G_ModSvProfEnd(long long frameQpcTicks)
     sumMs = 0.0;
     memset(winTicks, 0, sizeof(winTicks));
     memset(winCalls, 0, sizeof(winCalls));
+}
+
+#endif // BO1_NATIVE_MAPNAME_GLOBAL_ONLY
+
+#if defined(BO1_NATIVE_MAPNAME_GLOBAL_ONLY)
+#include <platform/common_boot_api.h>
+void R_ReflectionProbeRegisterDvars();
+bool R_ReflectionProbeGenerateExitWhenDone();
+bool G_ExitAfterToolComplete();
+#endif
+const dvar_t *g_connectpaths;
+const dvar_t *g_loadScripts;
+void __cdecl G_RegisterConnectPaths()
+{
+    g_connectpaths = _Dvar_RegisterInt("g_connectpaths", 0, 0, 3, 0, "Connect paths");
+}
+
+void __cdecl G_RegisterRegisterToolDvars()
+{
+    bool v0; // al
+
+    G_RegisterConnectPaths();
+    R_ReflectionProbeRegisterDvars();
+    v0 = G_ExitAfterToolComplete();
+    g_loadScripts = _Dvar_RegisterBool("g_loadScripts", !v0, 0, "Disable scripts from loading");
+}
+
+bool __cdecl G_ExitAfterConnectPaths()
+{
+    return g_connectpaths && g_connectpaths->current.integer >= 2;
+}
+
+bool __cdecl G_ExitAfterToolComplete()
+{
+    return G_ExitAfterConnectPaths() || R_ReflectionProbeGenerateExitWhenDone();
 }

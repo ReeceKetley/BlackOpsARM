@@ -1,3 +1,10 @@
+#if defined(BO1_NATIVE_COM_BOOT)
+#include <platform/common_boot_api.h>
+#include <client/console_state.h>
+extern const dvar_t *cl_noprint;
+void Con_OneTimeInit();
+void CL_ConsolePrint_AddLine(int,int,const char *,int,int,char,int);
+#else
 #include <universal/narrow32.h>
 #include <qcommon/common.h>
 #include "screen_placement.h"
@@ -23,7 +30,7 @@
 
 
 
-Console con;
+
 ConDrawInputGlob conDrawInputGlob;
 
 field_t g_consoleField;
@@ -954,24 +961,7 @@ void __cdecl Con_InitMessageBuffer()
     }
 }
 
-void __cdecl CL_ConsolePrint(int localClientNum, int channel, const char *txt, int duration, int pixelWidth, int flags)
-{
-    iassert(txt);
 
-    if ( cl_noprint && !cl_noprint->current.enabled && channel != 6 )
-    {
-        if ( !con.initialized )
-        {
-            Con_OneTimeInit();
-
-            iassert(con.initialized);
-        }
-        Con_IsChannelVisible(CON_DEST_CONSOLE, channel, flags);
-        Sys_EnterCriticalSection(CRITSECT_CONSOLE);
-        CL_ConsolePrint_AddLine(localClientNum, channel, txt, duration, pixelWidth, 55, flags);
-        Sys_LeaveCriticalSection(CRITSECT_CONSOLE);
-    }
-}
 
 void CL_ConsolePrint_AddLine(
     int localClientNum,
@@ -3084,6 +3074,27 @@ void __cdecl Con_DrawSolidConsole(int localClientNum)
 
 const float con_versionColor[4] = { 1.0, 1.0, 0.0, 1.0 };
 const float con_inputDvarMatchColor[4] = { 1.0, 1.0, 0.8, 1.0 };
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+// Name enumeration owns the const-name callback ABI. Canonical draw routines
+// only read each name, and retain their original char * entry signatures.
+static void __cdecl ConDrawInput_DetailedDvarMatchEnumerated(const char *name)
+{
+    ConDrawInput_DetailedDvarMatch(const_cast<char *>(name));
+}
+static void __cdecl ConDrawInput_DetailedCmdMatchEnumerated(const char *name)
+{
+    ConDrawInput_DetailedCmdMatch(const_cast<char *>(name));
+}
+static void __cdecl ConDrawInput_DvarMatchEnumerated(const char *name)
+{
+    ConDrawInput_DvarMatch(const_cast<char *>(name));
+}
+static void __cdecl ConDrawInput_CmdMatchEnumerated(const char *name)
+{
+    ConDrawInput_CmdMatch(const_cast<char *>(name));
+}
+#endif
+
 void __cdecl Con_DrawInput(int localClientNum)
 {
     int BuildNumber; // eax
@@ -3178,18 +3189,32 @@ void __cdecl Con_DrawInput(int localClientNum)
                 {
                     if ( matchCount == 1 || conDrawInputGlob.hasExactMatch && Con_AnySpaceAfterCommand() )
                     {
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+                        Con_ForEach(
+                            v3,
+                            ConDrawInput_DetailedDvarMatchEnumerated,
+                            ConDrawInput_DetailedCmdMatchEnumerated);
+#else
                         Con_ForEach(
                             v3,
                             (void (__cdecl *)(const char *))ConDrawInput_DetailedDvarMatch,
                             (void (__cdecl *)(const char *))ConDrawInput_DetailedCmdMatch);
+#endif
                     }
                     else
                     {
                         ConDrawInput_Box(matchCount, &con_inputHintBoxColor->current.value);
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+                        Con_ForEach(
+                            v3,
+                            ConDrawInput_DvarMatchEnumerated,
+                            ConDrawInput_CmdMatchEnumerated);
+#else
                         Con_ForEach(
                             v3,
                             (void (__cdecl *)(const char *))ConDrawInput_DvarMatch,
                             (void (__cdecl *)(const char *))ConDrawInput_CmdMatch);
+#endif
                     }
                 }
                 else
@@ -4308,3 +4333,25 @@ int __cdecl ConDrawInput_CompareStrings(const char **e0, const char **e1)
     return I_stricmp(*e0, *e1);
 }
 
+
+#endif
+
+Console con;
+void __cdecl CL_ConsolePrint(int localClientNum, int channel, const char *txt, int duration, int pixelWidth, int flags)
+{
+    iassert(txt);
+
+    if ( cl_noprint && !cl_noprint->current.enabled && channel != 6 )
+    {
+        if ( !con.initialized )
+        {
+            Con_OneTimeInit();
+
+            iassert(con.initialized);
+        }
+        Con_IsChannelVisible(CON_DEST_CONSOLE, channel, flags);
+        Sys_EnterCriticalSection(CRITSECT_CONSOLE);
+        CL_ConsolePrint_AddLine(localClientNum, channel, txt, duration, pixelWidth, 55, flags);
+        Sys_LeaveCriticalSection(CRITSECT_CONSOLE);
+    }
+}

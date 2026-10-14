@@ -1,11 +1,14 @@
+#if defined(BO1_NATIVE_COM_BOOT) && !defined(BO1_NATIVE_PREGAME_IMPLEMENTATION)
+#include <platform/common_boot_api.h>
+#else
 #include "pregame.h"
 #include <server_mp/sv_main_pc_mp.h>
 #include <cstring>
 
 pregameStateGlobal pregameG;
-const dvar_t *g_pregame_enabled;
-const dvar_t *ui_pregame;
-const dvar_t *g_pregame_minplayers;
+extern const dvar_t *g_pregame_enabled;
+extern const dvar_t *ui_pregame;
+extern const dvar_t *g_pregame_minplayers;
 
 void __cdecl Pregame_SetState(pregameStateEnum s)
 {
@@ -81,18 +84,7 @@ bool __cdecl Pregame_ShouldLoadPregame()
     return Pregame_isEnabled() && Pregame_GetState() < PREGAME_GAMESTARTED;
 }
 
-void __cdecl Pregame_RegisterDvars()
-{
-    g_pregame_enabled = _Dvar_RegisterBool("g_pregame_enabled", 0, 0, "Begin matches with a Pre-Match period");
-    ui_pregame = _Dvar_RegisterBool("ui_pregame", 0, 0x80u, "Used by server to let clients know the Pre-Match state");
-    g_pregame_minplayers = _Dvar_RegisterInt(
-                                                     "party_minplayers",
-                                                     2,
-                                                     1,
-                                                     32,
-                                                     0,
-                                                     "Minimum number of players needed to start the game");
-}
+
 
 team_t __cdecl Pregame_GetAssignedPregameTeam(unsigned int clientNum)
 {
@@ -158,3 +150,20 @@ char *__cdecl Pregame_GetAssignedPregameClass(unsigned int clientNum)
     return pregameG.clients[clientNum].pregame_class;
 }
 
+
+#endif
+const dvar_t *g_pregame_enabled;
+const dvar_t *ui_pregame;
+const dvar_t *g_pregame_minplayers;
+void __cdecl Pregame_RegisterDvars()
+{
+    g_pregame_enabled = _Dvar_RegisterBool("g_pregame_enabled", 0, 0, "Begin matches with a Pre-Match period");
+    ui_pregame = _Dvar_RegisterBool("ui_pregame", 0, 0x80u, "Used by server to let clients know the Pre-Match state");
+    g_pregame_minplayers = _Dvar_RegisterInt(
+                                                     "party_minplayers",
+                                                     2,
+                                                     1,
+                                                     32,
+                                                     0,
+                                                     "Minimum number of players needed to start the game");
+}

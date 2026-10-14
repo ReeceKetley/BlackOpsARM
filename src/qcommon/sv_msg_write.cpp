@@ -7,6 +7,21 @@
 #include <cgame/cg_draw_debug.h>
 #include <flame/flame_system.h>
 #include <qcommon/common.h>
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+#include <cstdlib>
+#include <cstring>
+#endif
+
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+template <typename T>
+static T Bo1_MsgFieldLoad(const void *source)
+{
+    T value;
+    std::memcpy(&value, source, sizeof(value));
+    return value;
+}
+static_assert(sizeof(int) == 4 && sizeof(float) == 4 && sizeof(__int16) == 2 && sizeof(char) == 1);
+#endif
 
 // mod (L51): the entity (and snapshot) MSG_WriteEntityDeltaForEType is writing, so the "too far outside the playable
 // area" Com_Errors name it (retail printed only the coordinate). Diagnostic text only, behind no dvar.
@@ -609,6 +624,133 @@ void __cdecl MSG_WriteDemoRoundedFloat(
 
 bool __cdecl MSG_ValuesAreEqual(int clientNum, int bits, int size, const int *fromF, const int *toF)
 {
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+    bool result; // al
+    bool v6; // [esp+20h] [ebp-74h]
+
+    if ( size == 1 )
+    {
+        if ( *(char *)fromF == *(char *)toF )
+            return 1;
+    }
+    else if ( size == 2 )
+    {
+        if ( Bo1_MsgFieldLoad<__int16>(fromF) == Bo1_MsgFieldLoad<__int16>(toF) )
+            return 1;
+    }
+    else if ( size == 4 && Bo1_MsgFieldLoad<int>(fromF) == Bo1_MsgFieldLoad<int>(toF) )
+    {
+        return 1;
+    }
+    switch ( bits )
+    {
+        case -107:
+            result = MSG_WriteRangedFloat(clientNum, 0, Bo1_MsgFieldLoad<float>(fromF), Bo1_MsgFieldLoad<float>(toF), 0.0, 60.0, 100, 0) == 0;
+            break;
+        case -106:
+            result = MSG_WriteRangedFloat(clientNum, 0, Bo1_MsgFieldLoad<float>(fromF), Bo1_MsgFieldLoad<float>(toF), 0.0, 255.0, 100, 0) == 0;
+            break;
+        case -105:
+            result = ((int)(float)((float)(Bo1_MsgFieldLoad<float>(fromF) * 1024.0) / 360.0) & 0x3FF) == ((int)(float)((float)(Bo1_MsgFieldLoad<float>(toF) * 1024.0)
+                                                                                                                                                                                                / 360.0)
+                                                                                                                                                                     & 0x3FF);
+            break;
+        case -104:
+        case -103:
+        case -102:
+        case -101:
+        case -92:
+        case -91:
+        case -90:
+        case -66:
+        case -65:
+        case -64:
+            result = MSG_RoundFloatToInt(Bo1_MsgFieldLoad<float>(fromF)) == MSG_RoundFloatToInt(Bo1_MsgFieldLoad<float>(toF));
+            break;
+        case -100:
+        case -87:
+        case -62:
+            result = (unsigned __int16)(int)(float)(Bo1_MsgFieldLoad<float>(fromF) * 182.04445) == (unsigned __int16)(int)(float)(Bo1_MsgFieldLoad<float>(toF) * 182.04445);
+            break;
+        case -98:
+            result = ((Bo1_MsgFieldLoad<int>(toF) ^ Bo1_MsgFieldLoad<int>(fromF)) & 0xFFFFFF) == 0;
+            break;
+        case -95:
+            result = Bo1_MsgFieldLoad<int>(fromF) / 100 == Bo1_MsgFieldLoad<int>(toF) / 100;
+            break;
+        case -86:
+            result = MSG_RoundFloatToInt((float)(Bo1_MsgFieldLoad<float>(fromF) - 1.0) * 10.0f) == MSG_RoundFloatToInt((float)(Bo1_MsgFieldLoad<float>(toF) - 1.0) * 10.0f);
+            break;
+        case -85:
+            v6 = *(unsigned __int8 *)fromF == *(unsigned __int8 *)toF
+                && *((unsigned __int8 *)fromF + 1) == *((unsigned __int8 *)toF + 1)
+                && *((unsigned __int8 *)fromF + 2) == *((unsigned __int8 *)toF + 2)
+                && (int)*((unsigned __int8 *)fromF + 3) >> 3 == (int)*((unsigned __int8 *)toF + 3) >> 3;
+            result = v6;
+            break;
+        case -84:
+            result = MSG_WriteRangedFloat(clientNum, 0, Bo1_MsgFieldLoad<float>(fromF), Bo1_MsgFieldLoad<float>(toF), 0.0, 1.0, 1000, 1) == 0;
+            break;
+        case -83:
+            result = MSG_WriteRangedFloat(clientNum, 0, Bo1_MsgFieldLoad<float>(fromF), Bo1_MsgFieldLoad<float>(toF), 0.0, 1.5, 10, 0) == 0;
+            break;
+        case -82:
+            result = MSG_WriteRangedFloat(clientNum, 0, Bo1_MsgFieldLoad<float>(fromF), Bo1_MsgFieldLoad<float>(toF), 0.0, 3.0, 100, 1) == 0;
+            break;
+        case -81:
+            result = MSG_WriteRangedFloat(clientNum, 0, Bo1_MsgFieldLoad<float>(fromF), Bo1_MsgFieldLoad<float>(toF), 0.0, 1.0, 100, 0) == 0;
+            break;
+        case -80:
+            result = MSG_WriteRangedFloat(clientNum, 0, Bo1_MsgFieldLoad<float>(fromF), Bo1_MsgFieldLoad<float>(toF), 0.0, 1.0, 1000, 0) == 0;
+            break;
+        case -77:
+            result = MSG_WriteRangedFloat(clientNum, 0, Bo1_MsgFieldLoad<float>(fromF), Bo1_MsgFieldLoad<float>(toF), -1.0, 1.0, 100, 0) == 0;
+            break;
+        case -76:
+            result = MSG_WriteRangedFloat(
+                                 clientNum,
+                                 0,
+                                 (float)Bo1_MsgFieldLoad<__int16>(fromF) * 0.000030517578,
+                                 (float)Bo1_MsgFieldLoad<__int16>(toF) * 0.000030517578,
+                                 -1.0,
+                                 1.0,
+                                 10,
+                                 0) == 0;
+            break;
+        case -75:
+            result = MSG_WriteRangedFloat(
+                                 clientNum,
+                                 0,
+                                 (float)Bo1_MsgFieldLoad<__int16>(fromF) * 0.0054931641,
+                                 (float)Bo1_MsgFieldLoad<__int16>(toF) * 0.0054931641,
+                                 -90.0,
+                                 90.0,
+                                 10,
+                                 0) == 0;
+            break;
+        case -74:
+            result = MSG_WriteRangedFloat(
+                                 clientNum,
+                                 0,
+                                 (float)Bo1_MsgFieldLoad<__int16>(fromF) * 0.0054931641,
+                                 (float)Bo1_MsgFieldLoad<__int16>(toF) * 0.0054931641,
+                                 -180.0,
+                                 180.0,
+                                 10,
+                                 0) == 0;
+            break;
+        case -73:
+            result = MSG_WriteRangedFloat(clientNum, 0, Bo1_MsgFieldLoad<float>(fromF), Bo1_MsgFieldLoad<float>(toF), -12.0, 12.0, 10, 0) == 0;
+            break;
+        case -72:
+            result = MSG_WriteRangedFloat(clientNum, 0, Bo1_MsgFieldLoad<float>(fromF), Bo1_MsgFieldLoad<float>(toF), -6000.0, 6000.0, 10, 0) == 0;
+            break;
+        default:
+            result = 0;
+            break;
+    }
+    return result;
+#else
     bool result; // al
     bool v6; // [esp+20h] [ebp-74h]
 
@@ -734,6 +876,7 @@ bool __cdecl MSG_ValuesAreEqual(int clientNum, int bits, int size, const int *fr
             break;
     }
     return result;
+#endif
 }
 
 void __cdecl MSG_WriteEntityIndex(const SnapshotInfo_s *snapInfo, msg_t *msg, int index, int indexBits)
@@ -1097,8 +1240,21 @@ void __cdecl MSG_WriteValue(
 
     fromVal = MSG_GetField(fromF, size);
     value = fromVal ^ MSG_GetField(toF, size);
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+    // Negative widths describe signed fields; their wire width is the magnitude.
+    if (bits < -32 || bits > 32)
+    {
+        Com_Error(ERR_FATAL, "Native MSG_WriteValue: plain field width %d is outside [-32, 32]", bits);
+        std::abort();
+    }
+    static_assert(sizeof(unsigned int) == 4);
+    const unsigned int wireBits = bits < 0 ? static_cast<unsigned int>(-bits) : static_cast<unsigned int>(bits);
+    if ( wireBits != 32 )
+        value = static_cast<int>(static_cast<unsigned int>(value) & ((1u << wireBits) - 1u));
+#else
     if ( bits != 32 )
         value &= (1 << bits) - 1;
+#endif
     MSG_WriteValueNoXor(snapInfo, msg, value, bits);
 }
 
@@ -1107,6 +1263,13 @@ void __cdecl MSG_WriteValueNoXor(const SnapshotInfo_s *snapInfo, msg_t *msg, int
     int absbits; // [esp+0h] [ebp-8h]
     unsigned int partialBits; // [esp+4h] [ebp-4h]
 
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+    if (bits < -32 || bits > 32)
+    {
+        Com_Error(ERR_FATAL, "Native MSG_WriteValueNoXor: plain field width %d is outside [-32, 32]", bits);
+        std::abort();
+    }
+#endif
     absbits = abs(bits);
     partialBits = absbits & 7;
     if ( (absbits & 7) != 0 )
@@ -1134,6 +1297,7 @@ char __cdecl MSG_WriteDeltaField_Internal(
                 const int *fromF,
                 const int *toF)
 {
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
     int v9; // eax
     unsigned __int8 v10; // al
     int v11; // eax
@@ -1157,28 +1321,364 @@ char __cdecl MSG_WriteDeltaField_Internal(
 
     switch ( field->bits )
     {
-        case 0xFFFFFF95:
+        case -107:
+            MSG_WriteRangedFloat(snapInfo->clientNum, msg, Bo1_MsgFieldLoad<float>(fromF), Bo1_MsgFieldLoad<float>(toF), 0.0, 60.0, 100, 0);
+            break;
+        case -106:
+            MSG_WriteRangedFloat(snapInfo->clientNum, msg, Bo1_MsgFieldLoad<float>(fromF), Bo1_MsgFieldLoad<float>(toF), 0.0, 255.0, 100, 0);
+            break;
+        case -105:
+            MSG_WriteAngle(msg, 0xAu, Bo1_MsgFieldLoad<float>(toF));
+            break;
+        case -104:
+            MSG_WriteDemoRoundedFloat(msg, field->bits, Bo1_MsgFieldLoad<float>(toF), Bo1_MsgFieldLoad<float>(fromF), 7u, 12);
+            break;
+        case -103:
+        case -102:
+        case -101:
+            MSG_WriteDemoRoundedFloat(msg, field->bits, Bo1_MsgFieldLoad<float>(toF), Bo1_MsgFieldLoad<float>(fromF), 5u, 16);
+            break;
+        case -100:
+        case -62:
+            MSG_WriteDeltaAngle(snapInfo, msg, Bo1_MsgFieldLoad<float>(fromF), Bo1_MsgFieldLoad<float>(toF));
+            break;
+        case -99:
+            fullFloata = Bo1_MsgFieldLoad<float>(toF);
+            truncc = (int)Bo1_MsgFieldLoad<float>(toF);
+            oldTruncb = (int)Bo1_MsgFieldLoad<float>(fromF);
+            if ( Bo1_MsgFieldLoad<float>(toF) != 0.0 || LODWORD(fullFloata) == 0x80000000 )
+            {
+                MSG_WriteBit1(msg);
+                if ( LODWORD(fullFloata) == 0x80000000 || (float)truncc != fullFloata || (unsigned int)(truncc + 2048) >= 0x1000 )
+                {
+                    MSG_WriteBit1(msg);
+                    MSG_WriteLong(msg, Bo1_MsgFieldLoad<int>(fromF) ^ Bo1_MsgFieldLoad<int>(toF));
+                }
+                else
+                {
+                    MSG_WriteBit0(msg);
+                    trunce = (truncc + 2048) ^ (oldTruncb + 2048);
+                    MSG_WriteBits(msg, trunce, 4u);
+                    MSG_WriteByte(msg, trunce >> 4);
+                }
+            }
+            else
+            {
+                MSG_WriteBit0(msg);
+            }
+            if ( (unsigned int)(__int64)(Bo1_MsgFieldLoad<float>(toF) + 2048.0) >= 0x1000
+                && !Assert_MyHandler(
+                            "C:\\projects_pc\\cod\\codsrc\\src\\qcommon\\sv_msg_write.cpp",
+                            1841,
+                            0,
+                            "*(float *)toF + HUDELEM_COORD_BIAS doesn't index 1 << HUDELEM_COORD_BITS\n\t%i not in [0, %i)",
+                            (int)(float)(Bo1_MsgFieldLoad<float>(toF) + 2048.0),
+                            4096) )
+            {
+                __debugbreak();
+            }
+            break;
+        case -98:
+            MSG_WriteEFlags(snapInfo->clientNum, msg, Bo1_MsgFieldLoad<int>(fromF), Bo1_MsgFieldLoad<int>(toF));
+            break;
+        case -97:
+        case -71:
+        case -70:
+        case -68:
+            MSG_WriteDeltaTime(snapInfo->clientNum, msg, time, Bo1_MsgFieldLoad<int>(toF));
+            break;
+        case -96:
+            v9 = MSG_GetField(toF, field->size);
+            MSG_WriteGroundEntityNum(snapInfo->clientNum, msg, v9);
+            break;
+        case -95:
+            MSG_WriteBits(msg, Bo1_MsgFieldLoad<int>(toF) / 100, 7u);
+            break;
+        case -94:
+            v10 = MSG_GetField(toF, field->size);
+            MSG_WriteEventNum(snapInfo->clientNum, msg, v10);
+            break;
+        case -93:
+            v11 = MSG_GetField(toF, field->size);
+            MSG_WriteEventParam(snapInfo->clientNum, msg, v11);
+            break;
+        case -92:
+        case -91:
+        case -66:
+        case -65:
+            MSG_WriteOriginFloat(snapInfo, snapInfo->clientNum, msg, field->bits, Bo1_MsgFieldLoad<float>(toF), Bo1_MsgFieldLoad<float>(fromF));
+            break;
+        case -90:
+        case -64:
+            MSG_WriteOriginZFloat(snapInfo, snapInfo->clientNum, msg, Bo1_MsgFieldLoad<float>(toF), Bo1_MsgFieldLoad<float>(fromF));
+            break;
+        case -89:
+            truncb = (int)Bo1_MsgFieldLoad<float>(toF);
+            oldTrunca = (int)Bo1_MsgFieldLoad<float>(fromF);
+            if ( (float)truncb != Bo1_MsgFieldLoad<float>(toF) || Bo1_MsgFieldLoad<int>(toF) == 0x80000000 || (unsigned int)(truncb + 4096) >= 0x2000 )
+                goto LABEL_19;
+            MSG_WriteBit0(msg);
+            truncd = (truncb + 4096) ^ (oldTrunca + 4096);
+            MSG_WriteBits(msg, truncd, 5u);
+            MSG_WriteByte(msg, truncd >> 5);
+            break;
+        case -88:
+            MSG_WriteLong(msg, Bo1_MsgFieldLoad<int>(fromF) ^ Bo1_MsgFieldLoad<int>(toF));
+            break;
+        case -87:
+            MSG_WriteAngle16(msg, Bo1_MsgFieldLoad<float>(toF));
+            break;
+        case -86:
+            MSG_WriteBits(msg, MSG_RoundFloatToInt((float)(Bo1_MsgFieldLoad<float>(toF) - 1.0) * 10.0f), 6u);
+            break;
+        case -85:
+            if ( (*((unsigned __int8 *)fromF + 3) == 255 && !*((_BYTE *)toF + 3)
+                 || !*((_BYTE *)fromF + 3) && *((unsigned __int8 *)toF + 3) == 255)
+                && !memcmp(fromF, toF, 3u) )
+            {
+                goto LABEL_4;
+            }
+            MSG_WriteBit0(msg);
+            if ( *(unsigned __int8 *)fromF == *(unsigned __int8 *)toF
+                && *((unsigned __int8 *)fromF + 1) == *((unsigned __int8 *)toF + 1)
+                && *((unsigned __int8 *)fromF + 2) == *((unsigned __int8 *)toF + 2) )
+            {
+                MSG_WriteBit1(msg);
+            }
+            else
+            {
+                MSG_WriteBit0(msg);
+                MSG_WriteByte(msg, *(_BYTE *)toF);
+                MSG_WriteByte(msg, *((_BYTE *)toF + 1));
+                MSG_WriteByte(msg, *((_BYTE *)toF + 2));
+            }
+            MSG_WriteBits(msg, (int)*((unsigned __int8 *)toF + 3) >> 3, 5u);
+            break;
+        case -84:
+            MSG_WriteRangedFloat(snapInfo->clientNum, msg, Bo1_MsgFieldLoad<float>(fromF), Bo1_MsgFieldLoad<float>(toF), 0.0, 1.0, 1000, 1);
+            break;
+        case -83:
+            MSG_WriteRangedFloat(snapInfo->clientNum, msg, Bo1_MsgFieldLoad<float>(fromF), Bo1_MsgFieldLoad<float>(toF), 0.0, 1.5, 10, 0);
+            break;
+        case -82:
+            MSG_WriteRangedFloat(snapInfo->clientNum, msg, Bo1_MsgFieldLoad<float>(fromF), Bo1_MsgFieldLoad<float>(toF), 0.0, 3.0, 100, 1);
+            break;
+        case -81:
+            MSG_WriteRangedFloat(snapInfo->clientNum, msg, Bo1_MsgFieldLoad<float>(fromF), Bo1_MsgFieldLoad<float>(toF), 0.0, 1.0, 100, 0);
+            break;
+        case -80:
+            MSG_WriteRangedFloat(snapInfo->clientNum, msg, Bo1_MsgFieldLoad<float>(fromF), Bo1_MsgFieldLoad<float>(toF), 0.0, 1.0, 1000, 0);
+            break;
+        case -79:
+            value = Bo1_MsgFieldLoad<int>(toF) - Bo1_MsgFieldLoad<int>(fromF);
+            if ( value >= 64 || value < -64 )
+            {
+                if ( value >= 4096 || value < -4096 )
+                {
+                    if (value >= 0x800000 || value < (int)0xFF800000)
+                    {
+                        MSG_WriteBits(msg, 3, 2u);
+                        MSG_WriteLong(msg, value);
+                    }
+                    else
+                    {
+                        MSG_WriteBits(msg, 2, 2u);
+                        MSG_WriteByte(msg, value);
+                        MSG_WriteShort(msg, value >> 8);
+                    }
+                }
+                else
+                {
+                    MSG_WriteBits(msg, 1, 2u);
+                    MSG_WriteBits(msg, value, 0xDu);
+                }
+            }
+            else
+            {
+                MSG_WriteBits(msg, 0, 2u);
+                MSG_WriteBits(msg, value, 7u);
+            }
+            break;
+        case -78:
+            MSG_WriteDeltaFrameTime(snapInfo->clientNum, msg, time, Bo1_MsgFieldLoad<int>(toF));
+            break;
+        case -77:
+            MSG_WriteRangedFloat(snapInfo->clientNum, msg, Bo1_MsgFieldLoad<float>(fromF), Bo1_MsgFieldLoad<float>(toF), -1.0, 1.0, 100, 0);
+            break;
+        case -76:
+            MSG_WriteRangedFloat(
+                snapInfo->clientNum,
+                msg,
+                (float)Bo1_MsgFieldLoad<__int16>(fromF) * 0.000030517578,
+                (float)Bo1_MsgFieldLoad<__int16>(toF) * 0.000030517578,
+                -1.0,
+                1.0,
+                10,
+                0);
+            break;
+        case -75:
+            MSG_WriteRangedFloat(
+                snapInfo->clientNum,
+                msg,
+                (float)Bo1_MsgFieldLoad<__int16>(fromF) * 0.0054931641,
+                (float)Bo1_MsgFieldLoad<__int16>(toF) * 0.0054931641,
+                -90.0,
+                90.0,
+                10,
+                0);
+            break;
+        case -74:
+            MSG_WriteRangedFloat(
+                snapInfo->clientNum,
+                msg,
+                (float)Bo1_MsgFieldLoad<__int16>(fromF) * 0.0054931641,
+                (float)Bo1_MsgFieldLoad<__int16>(toF) * 0.0054931641,
+                -180.0,
+                180.0,
+                10,
+                0);
+            break;
+        case -73:
+            MSG_WriteRangedFloat(snapInfo->clientNum, msg, Bo1_MsgFieldLoad<float>(fromF), Bo1_MsgFieldLoad<float>(toF), -12.0, 12.0, 10, 0);
+            break;
+        case -72:
+            MSG_WriteRangedFloat(snapInfo->clientNum, msg, Bo1_MsgFieldLoad<float>(fromF), Bo1_MsgFieldLoad<float>(toF), -6000.0, 6000.0, 10, 0);
+            break;
+        case -69:
+        case -67:
+        case -63:
+        case -61:
+            MSG_WriteLong(msg, Bo1_MsgFieldLoad<int>(toF));
+            break;
+        case -60:
+            delta = Bo1_MsgFieldLoad<int>(toF) - Bo1_MsgFieldLoad<int>(fromF);
+            if ( (int)abs(delta) >= 16 )
+            {
+                MSG_WriteBit0(msg);
+                MSG_WriteValue(snapInfo, msg, fromF, toF, -8, field->size);
+            }
+            else
+            {
+                MSG_WriteBit1(msg);
+                MSG_WriteBits(msg, delta + 16, 5u);
+            }
+            break;
+        case -59:
+            v13 = MSG_GetField(toF, field->size);
+            diff = v13 - MSG_GetField(fromF, field->size);
+            if ( diff < 1 || diff > 16 )
+            {
+                MSG_WriteBit0(msg);
+                MSG_WriteValue(snapInfo, msg, fromF, toF, 8, field->size);
+            }
+            else
+            {
+                MSG_WriteBit1(msg);
+                MinBitCountForNum = GetMinBitCountForNum(0x10u);
+                MSG_WriteBits(msg, diff - 1, MinBitCountForNum);
+            }
+            break;
+        case -58:
+            v12 = MSG_GetField(toF, field->size);
+            MSG_WriteValueNoXor(snapInfo, msg, v12, 8);
+            break;
+        case 0:
+            fullFloat = Bo1_MsgFieldLoad<float>(toF);
+            trunc = (int)Bo1_MsgFieldLoad<float>(toF);
+            oldTrunc = (int)Bo1_MsgFieldLoad<float>(fromF);
+            if ( Bo1_MsgFieldLoad<float>(toF) == 0.0 )
+            {
+                MSG_WriteBit0(msg);
+                if ( LODWORD(fullFloat) == 0x80000000 )
+LABEL_4:
+                    MSG_WriteBit1(msg);
+                else
+                    MSG_WriteBit0(msg);
+            }
+            else
+            {
+                MSG_WriteBit1(msg);
+                if ( LODWORD(fullFloat) == 0x80000000
+                    || (float)trunc != fullFloat
+                    || (unsigned int)(trunc + 4096) >= 0x2000
+                    || (unsigned int)(oldTrunc + 4096) >= 0x2000 )
+                {
+LABEL_19:
+                    MSG_WriteBit1(msg);
+                    MSG_WriteLong(msg, Bo1_MsgFieldLoad<int>(fromF) ^ Bo1_MsgFieldLoad<int>(toF));
+                }
+                else
+                {
+                    MSG_WriteBit0(msg);
+                    trunca = (trunc + 4096) ^ (oldTrunc + 4096);
+                    if ( (unsigned int)trunca >= 0x2000
+                        && !Assert_MyHandler(
+                                    "C:\\projects_pc\\cod\\codsrc\\src\\qcommon\\sv_msg_write.cpp",
+                                    1737,
+                                    0,
+                                    "trunc not in [0, (1 << FLOAT_INT_BITS) - 1]\n\t%i not in [%i, %i]",
+                                    trunca,
+                                    0,
+                                    0x1FFF) )
+                    {
+                        __debugbreak();
+                    }
+                    MSG_WriteBits(msg, trunca, 5u);
+                    MSG_WriteByte(msg, trunca >> 5);
+                }
+            }
+            break;
+        default:
+            MSG_WriteDeltaField_Default(snapInfo, msg, field, fromF, toF);
+            break;
+    }
+    return 1;
+#else
+    int v9; // eax
+    unsigned __int8 v10; // al
+    int v11; // eax
+    int v12; // eax
+    int v13; // esi
+    unsigned int MinBitCountForNum; // eax
+    int delta; // [esp+5Ch] [ebp-28h]
+    int diff; // [esp+60h] [ebp-24h]
+    int trunc; // [esp+6Ch] [ebp-18h]
+    int trunca; // [esp+6Ch] [ebp-18h]
+    int truncb; // [esp+6Ch] [ebp-18h]
+    int truncd; // [esp+6Ch] [ebp-18h]
+    int truncc; // [esp+6Ch] [ebp-18h]
+    int trunce; // [esp+6Ch] [ebp-18h]
+    int oldTrunc; // [esp+70h] [ebp-14h]
+    int oldTrunca; // [esp+70h] [ebp-14h]
+    int oldTruncb; // [esp+70h] [ebp-14h]
+    float fullFloat; // [esp+78h] [ebp-Ch]
+    float fullFloata; // [esp+78h] [ebp-Ch]
+    int value; // [esp+80h] [ebp-4h]
+
+    switch ( field->bits )
+    {
+        case -107:
             MSG_WriteRangedFloat(snapInfo->clientNum, msg, *(float *)fromF, *(float *)toF, 0.0, 60.0, 100, 0);
             break;
-        case 0xFFFFFF96:
+        case -106:
             MSG_WriteRangedFloat(snapInfo->clientNum, msg, *(float *)fromF, *(float *)toF, 0.0, 255.0, 100, 0);
             break;
-        case 0xFFFFFF97:
+        case -105:
             MSG_WriteAngle(msg, 0xAu, *(float *)toF);
             break;
-        case 0xFFFFFF98:
+        case -104:
             MSG_WriteDemoRoundedFloat(msg, field->bits, *(float *)toF, *(float *)fromF, 7u, 12);
             break;
-        case 0xFFFFFF99:
-        case 0xFFFFFF9A:
-        case 0xFFFFFF9B:
+        case -103:
+        case -102:
+        case -101:
             MSG_WriteDemoRoundedFloat(msg, field->bits, *(float *)toF, *(float *)fromF, 5u, 16);
             break;
-        case 0xFFFFFF9C:
-        case 0xFFFFFFC2:
+        case -100:
+        case -62:
             MSG_WriteDeltaAngle(snapInfo, msg, *(float *)fromF, *(float *)toF);
             break;
-        case 0xFFFFFF9D:
+        case -99:
             fullFloata = *(float *)toF;
             truncc = (int)*(float *)toF;
             oldTruncb = (int)*(float *)fromF;
@@ -1214,41 +1714,41 @@ char __cdecl MSG_WriteDeltaField_Internal(
                 __debugbreak();
             }
             break;
-        case 0xFFFFFF9E:
+        case -98:
             MSG_WriteEFlags(snapInfo->clientNum, msg, *fromF, *toF);
             break;
-        case 0xFFFFFF9F:
-        case 0xFFFFFFB9:
-        case 0xFFFFFFBA:
-        case 0xFFFFFFBC:
+        case -97:
+        case -71:
+        case -70:
+        case -68:
             MSG_WriteDeltaTime(snapInfo->clientNum, msg, time, *toF);
             break;
-        case 0xFFFFFFA0:
+        case -96:
             v9 = MSG_GetField(toF, field->size);
             MSG_WriteGroundEntityNum(snapInfo->clientNum, msg, v9);
             break;
-        case 0xFFFFFFA1:
+        case -95:
             MSG_WriteBits(msg, *toF / 100, 7u);
             break;
-        case 0xFFFFFFA2:
+        case -94:
             v10 = MSG_GetField(toF, field->size);
             MSG_WriteEventNum(snapInfo->clientNum, msg, v10);
             break;
-        case 0xFFFFFFA3:
+        case -93:
             v11 = MSG_GetField(toF, field->size);
             MSG_WriteEventParam(snapInfo->clientNum, msg, v11);
             break;
-        case 0xFFFFFFA4:
-        case 0xFFFFFFA5:
-        case 0xFFFFFFBE:
-        case 0xFFFFFFBF:
+        case -92:
+        case -91:
+        case -66:
+        case -65:
             MSG_WriteOriginFloat(snapInfo, snapInfo->clientNum, msg, field->bits, *(float *)toF, *(float *)fromF);
             break;
-        case 0xFFFFFFA6:
-        case 0xFFFFFFC0:
+        case -90:
+        case -64:
             MSG_WriteOriginZFloat(snapInfo, snapInfo->clientNum, msg, *(float *)toF, *(float *)fromF);
             break;
-        case 0xFFFFFFA7:
+        case -89:
             truncb = (int)*(float *)toF;
             oldTrunca = (int)*(float *)fromF;
             if ( (float)truncb != *(float *)toF || *toF == 0x80000000 || (unsigned int)(truncb + 4096) >= 0x2000 )
@@ -1258,16 +1758,16 @@ char __cdecl MSG_WriteDeltaField_Internal(
             MSG_WriteBits(msg, truncd, 5u);
             MSG_WriteByte(msg, truncd >> 5);
             break;
-        case 0xFFFFFFA8:
+        case -88:
             MSG_WriteLong(msg, *fromF ^ *toF);
             break;
-        case 0xFFFFFFA9:
+        case -87:
             MSG_WriteAngle16(msg, *(float *)toF);
             break;
-        case 0xFFFFFFAA:
+        case -86:
             MSG_WriteBits(msg, MSG_RoundFloatToInt((float)(*(float *)toF - 1.0) * 10.0f), 6u);
             break;
-        case 0xFFFFFFAB:
+        case -85:
             if ( (*((unsigned __int8 *)fromF + 3) == 255 && !*((_BYTE *)toF + 3)
                  || !*((_BYTE *)fromF + 3) && *((unsigned __int8 *)toF + 3) == 255)
                 && !memcmp(fromF, toF, 3u) )
@@ -1290,22 +1790,22 @@ char __cdecl MSG_WriteDeltaField_Internal(
             }
             MSG_WriteBits(msg, (int)*((unsigned __int8 *)toF + 3) >> 3, 5u);
             break;
-        case 0xFFFFFFAC:
+        case -84:
             MSG_WriteRangedFloat(snapInfo->clientNum, msg, *(float *)fromF, *(float *)toF, 0.0, 1.0, 1000, 1);
             break;
-        case 0xFFFFFFAD:
+        case -83:
             MSG_WriteRangedFloat(snapInfo->clientNum, msg, *(float *)fromF, *(float *)toF, 0.0, 1.5, 10, 0);
             break;
-        case 0xFFFFFFAE:
+        case -82:
             MSG_WriteRangedFloat(snapInfo->clientNum, msg, *(float *)fromF, *(float *)toF, 0.0, 3.0, 100, 1);
             break;
-        case 0xFFFFFFAF:
+        case -81:
             MSG_WriteRangedFloat(snapInfo->clientNum, msg, *(float *)fromF, *(float *)toF, 0.0, 1.0, 100, 0);
             break;
-        case 0xFFFFFFB0:
+        case -80:
             MSG_WriteRangedFloat(snapInfo->clientNum, msg, *(float *)fromF, *(float *)toF, 0.0, 1.0, 1000, 0);
             break;
-        case 0xFFFFFFB1:
+        case -79:
             value = *toF - *fromF;
             if ( value >= 64 || value < -64 )
             {
@@ -1335,13 +1835,13 @@ char __cdecl MSG_WriteDeltaField_Internal(
                 MSG_WriteBits(msg, value, 7u);
             }
             break;
-        case 0xFFFFFFB2:
+        case -78:
             MSG_WriteDeltaFrameTime(snapInfo->clientNum, msg, time, *toF);
             break;
-        case 0xFFFFFFB3:
+        case -77:
             MSG_WriteRangedFloat(snapInfo->clientNum, msg, *(float *)fromF, *(float *)toF, -1.0, 1.0, 100, 0);
             break;
-        case 0xFFFFFFB4:
+        case -76:
             MSG_WriteRangedFloat(
                 snapInfo->clientNum,
                 msg,
@@ -1352,7 +1852,7 @@ char __cdecl MSG_WriteDeltaField_Internal(
                 10,
                 0);
             break;
-        case 0xFFFFFFB5:
+        case -75:
             MSG_WriteRangedFloat(
                 snapInfo->clientNum,
                 msg,
@@ -1363,7 +1863,7 @@ char __cdecl MSG_WriteDeltaField_Internal(
                 10,
                 0);
             break;
-        case 0xFFFFFFB6:
+        case -74:
             MSG_WriteRangedFloat(
                 snapInfo->clientNum,
                 msg,
@@ -1374,19 +1874,19 @@ char __cdecl MSG_WriteDeltaField_Internal(
                 10,
                 0);
             break;
-        case 0xFFFFFFB7:
+        case -73:
             MSG_WriteRangedFloat(snapInfo->clientNum, msg, *(float *)fromF, *(float *)toF, -12.0, 12.0, 10, 0);
             break;
-        case 0xFFFFFFB8:
+        case -72:
             MSG_WriteRangedFloat(snapInfo->clientNum, msg, *(float *)fromF, *(float *)toF, -6000.0, 6000.0, 10, 0);
             break;
-        case 0xFFFFFFBB:
-        case 0xFFFFFFBD:
-        case 0xFFFFFFC1:
-        case 0xFFFFFFC3:
+        case -69:
+        case -67:
+        case -63:
+        case -61:
             MSG_WriteLong(msg, *toF);
             break;
-        case 0xFFFFFFC4:
+        case -60:
             delta = *toF - *fromF;
             if ( (int)abs(delta) >= 16 )
             {
@@ -1399,7 +1899,7 @@ char __cdecl MSG_WriteDeltaField_Internal(
                 MSG_WriteBits(msg, delta + 16, 5u);
             }
             break;
-        case 0xFFFFFFC5:
+        case -59:
             v13 = MSG_GetField(toF, field->size);
             diff = v13 - MSG_GetField(fromF, field->size);
             if ( diff < 1 || diff > 16 )
@@ -1414,7 +1914,7 @@ char __cdecl MSG_WriteDeltaField_Internal(
                 MSG_WriteBits(msg, diff - 1, MinBitCountForNum);
             }
             break;
-        case 0xFFFFFFC6:
+        case -58:
             v12 = MSG_GetField(toF, field->size);
             MSG_WriteValueNoXor(snapInfo, msg, v12, 8);
             break;
@@ -1469,6 +1969,7 @@ LABEL_19:
             break;
     }
     return 1;
+#endif
 }
 
 void __cdecl MSG_WriteDeltaTime(int clientNum, msg_t *msg, int timeBase, int time)
@@ -1671,6 +2172,70 @@ char __cdecl MSG_WriteDeltaField(
                 int skippedFieldBits,
                 bool sendSkippedFields)
 {
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+    const char *EntityTypeString; // eax
+    const char *v14; // [esp+0h] [ebp-14h]
+    int zeroVal; // [esp+4h] [ebp-10h] BYREF
+    const int *realFromF; // [esp+8h] [ebp-Ch]
+    const int *toF; // [esp+Ch] [ebp-8h]
+    const int *fromF; // [esp+10h] [ebp-4h]
+
+    if ( msg->readOnly
+        && !Assert_MyHandler(
+                    "C:\\projects_pc\\cod\\codsrc\\src\\qcommon\\sv_msg_write.cpp",
+                    2205,
+                    0,
+                    "%s",
+                    "!msg->readOnly") )
+    {
+        __debugbreak();
+    }
+    toF = (const int *)&to[field->offset];
+    if ( !from && !Assert_MyHandler("C:\\projects_pc\\cod\\codsrc\\src\\qcommon\\sv_msg_write.cpp", 2213, 0, "%s", "from") )
+        __debugbreak();
+    realFromF = (const int *)&from[field->offset];
+    if ( xorValue )
+    {
+        fromF = realFromF;
+    }
+    else
+    {
+        zeroVal = 0;
+        fromF = &zeroVal;
+    }
+    if ( sendSkippedFields )
+    {
+        if ( !forceSend && MSG_ValuesAreEqual(snapInfo->clientNum, field->bits, field->size, realFromF, toF) )
+            return 0;
+        if ( !forceSend
+            && MSG_GetField(realFromF, field->size) == MSG_GetField(toF, field->size)
+            && !Assert_MyHandler(
+                        "C:\\projects_pc\\cod\\codsrc\\src\\qcommon\\sv_msg_write.cpp",
+                        2232,
+                        0,
+                        "%s",
+                        "forceSend || MSG_GetField(realFromF, field->size) != MSG_GetField(toF, field->size)") )
+        {
+            __debugbreak();
+        }
+        if ( field->changeHints == 1 && (!snapInfo->fromBaseline || fieldNum) )
+        {
+            if ( snapInfo->packetEntityTypeArchived )
+                v14 = "archived";
+            else
+                v14 = "unarchived";
+            EntityTypeString = SV_GetEntityTypeString(snapInfo->packetEntityType);
+            Com_PrintError(
+                15,
+                "Field %s changed for %s eType %s when we thought it never would\n",
+                field->name,
+                v14,
+                EntityTypeString);
+        }
+        MSG_EncodeSkippedFields(snapInfo, msg, fieldNum - lastChangedField, skippedFieldBits);
+    }
+    return MSG_WriteDeltaField_Internal(snapInfo, msg, time, from, to, field, fieldNum, fromF, toF);
+#else
     const char *EntityTypeString; // eax
     const char *v14; // [esp+0h] [ebp-14h]
     int zeroVal; // [esp+4h] [ebp-10h] BYREF
@@ -1733,6 +2298,7 @@ char __cdecl MSG_WriteDeltaField(
         MSG_EncodeSkippedFields(snapInfo, msg, fieldNum - lastChangedField, skippedFieldBits);
     }
     return MSG_WriteDeltaField_Internal(snapInfo, msg, time, from, to, field, fieldNum, fromF, toF);
+#endif
 }
 
 void __cdecl MSG_EncodeSkippedFields(
@@ -1990,25 +2556,25 @@ bool __cdecl MSG_ShouldEntityFieldBeForcedHidden(
 
     switch ( field->bits )
     {
-        case 0xFFFFFFBB:
+        case -69:
             v5 = !MSG_EntityIsLinked(to) && !MSG_TrTypeUsesTrDuration(to->lerp.apos.trType);
             result = v5;
             break;
-        case 0xFFFFFFBD:
+        case -67:
             v6 = !MSG_EntityIsLinked(to) && !MSG_TrTypeUsesTrDuration(to->lerp.pos.trType);
             result = v6;
             break;
-        case 0xFFFFFFBE:
-        case 0xFFFFFFBF:
-        case 0xFFFFFFC0:
-        case 0xFFFFFFC2:
+        case -66:
+        case -65:
+        case -64:
+        case -62:
             result = MSG_EntityIsLinked(to);
             break;
-        case 0xFFFFFFC1:
+        case -63:
             v8 = !MSG_EntityIsLinked(to) && !Flame_GetLocalClientSourceRange();
             result = v8;
             break;
-        case 0xFFFFFFC3:
+        case -61:
             v7 = !MSG_EntityIsLinked(to) && !Flame_GetLocalClientSourceRange();
             result = v7;
             break;
@@ -2051,29 +2617,29 @@ bool __cdecl MSG_ShouldEntityFieldBeForcedSent(
 
     switch ( field->bits )
     {
-        case 0xFFFFFFBB:
+        case -69:
             v5 = !snapInfo->fromBaseline
                 && !MSG_TrTypeUsesTrDuration(from->lerp.apos.trType)
                 && MSG_TrTypeUsesTrDuration(to->lerp.apos.trType);
             result = v5;
             break;
-        case 0xFFFFFFBD:
+        case -67:
             v6 = !snapInfo->fromBaseline
                 && !MSG_TrTypeUsesTrDuration(from->lerp.pos.trType)
                 && MSG_TrTypeUsesTrDuration(to->lerp.pos.trType);
             result = v6;
             break;
-        case 0xFFFFFFBE:
-        case 0xFFFFFFBF:
-        case 0xFFFFFFC0:
-        case 0xFFFFFFC2:
+        case -66:
+        case -65:
+        case -64:
+        case -62:
             result = snapInfo->entJustUnlinked;
             break;
-        case 0xFFFFFFC1:
+        case -63:
             v8 = snapInfo->entJustUnlinked && Flame_GetLocalClientSourceRange();
             result = v8;
             break;
-        case 0xFFFFFFC3:
+        case -61:
             v7 = snapInfo->entJustUnlinked && Flame_GetLocalClientSourceRange();
             result = v7;
             break;

@@ -5,6 +5,26 @@
 #include "../tl_system.h"
 #include <universal/q_shared.h>
 #include <qcommon/threads.h>
+#if defined(__ANDROID__)
+#include <platform/android/jobqueue_atomic.h>
+#include <platform/android/jobqueue_worker.h>
+#include <platform/android/stream_worker.h>
+#include <unistd.h>
+#define _InterlockedCompareExchange(p,d,c) bo1::android::jq_atomic::compareExchange(p,d,c)
+#define _InterlockedCompareExchange64(p,d,c) bo1::android::jq_atomic::compareExchange(p,d,c)
+#define _InterlockedExchangeAdd(p,d) bo1::android::jq_atomic::add32(p,d)
+#define InterlockedExchange(p,d) bo1::android::jq_atomic::exchange(p,d)
+#define InterlockedExchange64(p,d) bo1::android::jq_atomic::exchange(p,d)
+#define InterlockedDecrement(p) bo1::android::jq_atomic::decrement32(p)
+#define InterlockedCompareExchangePointer(p,d,c) bo1::android::jq_atomic::comparePointer(p,d,c)
+#define GetCurrentThreadId() bo1::android::tl_atomic::threadId()
+#define SwitchToThread() bo1::android::tl_atomic::yield()
+#define Sleep(ms) bo1::win32::Sleep(ms)
+#define BO1_JQ_LOAD(value) bo1::android::jq_atomic::load(&(value))
+#define PulseEvent(handle) Sys_PulseManualEvent(&(handle))
+#else
+#define BO1_JQ_LOAD(value) (value)
+#endif
 
 thread_local jqBatch *jqCurBatch;
 thread_local jqWorker *jqCurWorker;
@@ -18,17 +38,45 @@ jqBatchPool jqPool;
 
 void(__cdecl *jqWorkerInitFn)(int);
 HANDLE jqNewJobAdded;
+#if defined(__ANDROID__)
+std::atomic<bool> jqStopSignal;
+#else
 bool jqStopSignal;
+#endif
+#if defined(__ANDROID__)
+std::atomic<unsigned int> jqPoolLock;
+#else
 volatile unsigned int jqPoolLock;
+#endif
 jqQueue jqGlobalQueue;
 jqWorker jqMainThreadWorker;
 jqWorker *jqTempWorkers;
 
+#if defined(__ANDROID__)
+std::atomic<unsigned int> jqKeepWorkersAwakeCount;
+#else
 volatile unsigned int jqKeepWorkersAwakeCount;
+#endif
+#if defined(__ANDROID__)
+std::atomic<unsigned int> jqSleepingWorkersCount;
+#else
 volatile unsigned int jqSleepingWorkersCount;
+#endif
+#if defined(__ANDROID__)
+std::atomic<unsigned int> jqNextAvailTempWorker;
+#else
 volatile unsigned int jqNextAvailTempWorker;
+#endif
+#if defined(__ANDROID__)
+std::atomic<unsigned int> jqBatchPoolExternallyLockedCount;
+#else
 volatile unsigned int jqBatchPoolExternallyLockedCount;
+#endif
+#if defined(__ANDROID__)
+std::atomic<unsigned int> jqNWorkers;
+#else
 volatile unsigned int jqNWorkers;
+#endif
 jqWorker *jqWorkers;
 
 const char *jqCheckContext;
@@ -41,13 +89,21 @@ unsigned int __cdecl tlAtomicAdd(volatile unsigned __int32 *var, unsigned int va
   // Sleep(0) before a retry. KB loaded *var three times (i, the new value, the comparand): a change between the
   // loads made the CAS store a sum built from a different value (lost update), or succeed with a comparand
   // other than i and then add a second time (jqAtomicHeap TotalUsed / TotalBlocks drift).
+#if defined(__ANDROID__)
+  return __atomic_add_fetch(var,value,__ATOMIC_SEQ_CST);
+#else
   for ( i = *var; (unsigned int)_InterlockedCompareExchange(var, i + value, i) != i; i = *var )
     Sleep(0);
   return i + value;
+#endif
 }
 
 unsigned __int64 __cdecl tlAtomicAnd(volatile unsigned __int64 *var, unsigned __int64 value)
 {
+#if defined(__ANDROID__)
+    return __atomic_and_fetch(var,value,__ATOMIC_SEQ_CST);
+#else
+
 #if 0
   volatile signed __int64 *v2; // edi
   unsigned int v3; // esi
@@ -82,10 +138,15 @@ unsigned __int64 __cdecl tlAtomicAnd(volatile unsigned __int64 *var, unsigned __
 
     return newValue;
 #endif
+#endif
 }
 
 unsigned __int64 __cdecl tlAtomicOr(volatile unsigned __int64 *var, unsigned __int64 value)
 {
+#if defined(__ANDROID__)
+    return __atomic_or_fetch(var,value,__ATOMIC_SEQ_CST);
+#else
+
 #if 0
   volatile signed __int64 *v2; // edi
   unsigned int v3; // esi
@@ -120,10 +181,19 @@ unsigned __int64 __cdecl tlAtomicOr(volatile unsigned __int64 *var, unsigned __i
 
     return newValue;
 #endif
+#endif
 }
 
 void __thiscall tlAtomicMutex::Lock()
 {
+#if defined(__ANDROID__)
+    auto *owner=ThisPtr;
+    const auto tid=GetCurrentThreadId();
+    if(__atomic_load_n(&owner->ThreadId,__ATOMIC_SEQ_CST)==tid){++owner->LockCount;return;}
+    while(_InterlockedCompareExchange64(&owner->ThreadId,tid,0))SwitchToThread();
+    owner->LockCount=1;
+#else
+
     //LONG Target; // [esp+1Ch] [ebp-10h] BYREF
     tlAtomicMutex *ThisPtr2; // [esp+20h] [ebp-Ch]
     unsigned __int64 CurThread; // [esp+24h] [ebp-8h]
@@ -146,10 +216,19 @@ void __thiscall tlAtomicMutex::Lock()
         //InterlockedExchange(&Target, 0);
         this->LockCount = 1;
     }
+
+#endif
 }
 
 void tlAtomicMutex::Unlock()
 {
+#if defined(__ANDROID__)
+    auto *owner=ThisPtr;
+    if(__atomic_load_n(&owner->ThreadId,__ATOMIC_SEQ_CST)!=GetCurrentThreadId() || owner->LockCount<=0){
+        _tlAssert(__FILE__,__LINE__,"mutex owned by calling thread","Invalid native unlock");__debugbreak();}
+    if(--owner->LockCount==0)__atomic_store_n(&owner->ThreadId,0,__ATOMIC_SEQ_CST);
+#else
+
   if ( this->LockCount-- == 1 )
   {
       volatile int barrier = 0;
@@ -157,10 +236,19 @@ void tlAtomicMutex::Unlock()
 
       ThreadId = 0;
   }
+
+#endif
 }
 
 bool __thiscall tlAtomicMutex::TryLock()
 {
+#if defined(__ANDROID__)
+    auto *owner=ThisPtr;const auto tid=GetCurrentThreadId();
+    if(__atomic_load_n(&owner->ThreadId,__ATOMIC_SEQ_CST)==tid){++owner->LockCount;return true;}
+    if(_InterlockedCompareExchange64(&owner->ThreadId,tid,0))return false;
+    owner->LockCount=1;return true;
+#else
+
     volatile unsigned int Target; // [esp+1Ch] [ebp-10h] BYREF
     tlAtomicMutex *ThisPtr2; // [esp+20h] [ebp-Ch]
     unsigned __int64 CurThread; // [esp+24h] [ebp-8h]
@@ -186,11 +274,20 @@ bool __thiscall tlAtomicMutex::TryLock()
             return 1;
         }
     }
+
+#endif
 }
 
 // this was added later as aislop, seems inlined 
 void tlSharedAtomicMutex::Unlock()
 {
+#if defined(__ANDROID__)
+    auto *owner=ThisPtr;
+    if(__atomic_load_n(&owner->ThreadId,__ATOMIC_SEQ_CST)!=GetCurrentThreadId() || __atomic_load_n(&owner->LockCount,__ATOMIC_SEQ_CST)<=0){
+        _tlAssert(__FILE__,__LINE__,"shared mutex owned by calling thread","Invalid native unlock");__debugbreak();}
+    if(__atomic_sub_fetch(&owner->LockCount,1,__ATOMIC_SEQ_CST)==0)__atomic_store_n(&owner->ThreadId,0,__ATOMIC_SEQ_CST);
+#else
+
     tlSharedAtomicMutex *m = ThisPtr;
     const uint32_t tid = GetCurrentThreadId();
 
@@ -200,10 +297,19 @@ void tlSharedAtomicMutex::Unlock()
     {
         InterlockedExchange64((volatile long long *)&m->ThreadId, 0);
     }
+
+#endif
 }
 
 void tlSharedAtomicMutex::Lock()
 {
+#if defined(__ANDROID__)
+    auto *owner=ThisPtr;const auto tid=GetCurrentThreadId();
+    if(__atomic_load_n(&owner->ThreadId,__ATOMIC_SEQ_CST)==tid){__atomic_add_fetch(&owner->LockCount,1,__ATOMIC_SEQ_CST);return;}
+    while(_InterlockedCompareExchange64(&owner->ThreadId,tid,0))SwitchToThread();
+    __atomic_store_n(&owner->LockCount,1,__ATOMIC_SEQ_CST);
+#else
+
 #if 0
   unsigned int CurrentThreadId; // ebx
   tlSharedAtomicMutex *ThisPtr; // eax
@@ -268,6 +374,8 @@ void tlSharedAtomicMutex::Lock()
     InterlockedExchange((volatile long *)&target, 0);
 
     m->LockCount = 1;
+#endif
+
 #endif
 }
 
@@ -392,6 +500,9 @@ unsigned __int8 *jqAtomicHeap::Alloc(unsigned int Size, unsigned int Align)
     }
     else
     {
+#if defined(__ANDROID__)
+        this->Mutex.Unlock();
+#endif
         tlPrintf("Size (%d) > HeapSize (%d), return NULL\n", Size, this->HeapSize);
         return 0;
     }
@@ -498,7 +609,7 @@ LABEL_3:
 
         uint64_t mask = 1ULL << bitIndex;
 
-        volatile uint64_t *cell =
+volatile unsigned __int64 *cell =
             &level->CellAvailable[cellIndex];
 
         while (true)
@@ -576,7 +687,14 @@ void jqAtomicHeap::Free(jqAtomicHeap::LevelInfo *Ptr)
     this->Mutex.Lock();
 
     // Compute offset into heap
+#if defined(__ANDROID__)
+    auto address=reinterpret_cast<std::uintptr_t>(Ptr),base=reinterpret_cast<std::uintptr_t>(this->HeapBase);
+    if(address<base || address-base>=this->HeapSize){
+        _tlAssert(__FILE__,__LINE__,"pointer in owned heap","Invalid job heap free");__debugbreak();}
+    unsigned int offset=static_cast<unsigned>(address-base);
+#else
     unsigned int offset = (unsigned int)((unsigned char *)Ptr - this->HeapBase);
+#endif
 
     LevelInfo *level = nullptr;
     int slot = 0;
@@ -729,7 +847,7 @@ void __cdecl jqAttachQueueToWorkers(jqQueue *Queue, unsigned int ProcessorMask)
         int queueSlot;
         do
         {
-            queueSlot = worker->NumQueues;
+            queueSlot = BO1_JQ_LOAD(worker->NumQueues);
             if (queueSlot >= 8)
             {
                 if (_tlAssert(
@@ -743,7 +861,7 @@ void __cdecl jqAttachQueueToWorkers(jqQueue *Queue, unsigned int ProcessorMask)
                 break; // L57: do not write Queues[8+] (retail would, over WorkTime); skip this worker
             }
         } while (InterlockedCompareExchangePointer(
-            reinterpret_cast<PVOID *>(&worker->Queues[queueSlot]),
+            reinterpret_cast<void *volatile *>(&worker->Queues[queueSlot]),
             Queue,
             nullptr) != nullptr);
         if (queueSlot >= 8)
@@ -812,17 +930,17 @@ void __cdecl jqShutdownWorker()
 int __cdecl jqGetQueuedBatchCount(jqBatchGroup *GroupID)
 {
   if ( GroupID )
-    return GroupID->QueuedBatchCount;
+    return BO1_JQ_LOAD(GroupID->QueuedBatchCount);
   else
-    return jqPool.group.QueuedBatchCount;
+    return BO1_JQ_LOAD(jqPool.group.QueuedBatchCount);
 }
 
 int __cdecl jqGetExecutingBatchCount(jqBatchGroup *GroupID)
 {
   if ( GroupID )
-    return GroupID->ExecutingBatchCount;
+    return BO1_JQ_LOAD(GroupID->ExecutingBatchCount);
   else
-    return jqPool.group.ExecutingBatchCount;
+    return BO1_JQ_LOAD(jqPool.group.ExecutingBatchCount);
 }
 
 jqWorker *__cdecl jqFindWorkerForProcessor(jqProcessor Processor)
@@ -852,7 +970,7 @@ bool __cdecl jqPoll(jqBatchGroup *GroupID)
     {
         __debugbreak();
     }
-    return p_group->BatchCount != 0;
+    return BO1_JQ_LOAD(p_group->BatchCount) != 0;
 }
 
 bool __cdecl jqAreJobsQueued(jqBatchGroup *GroupID)
@@ -862,7 +980,7 @@ bool __cdecl jqAreJobsQueued(jqBatchGroup *GroupID)
     p_group = GroupID;
     if (!GroupID)
         p_group = &jqPool.group;
-    return p_group->QueuedBatchCount != 0;
+    return BO1_JQ_LOAD(p_group->QueuedBatchCount) != 0;
 }
 
 void __cdecl jqSetWorkerInitFunction(void (__cdecl *fn)(int))
@@ -898,7 +1016,7 @@ void __cdecl jqFreeBatchData(jqAtomicHeap::LevelInfo *Ptr)
 
 unsigned int __cdecl jqGetBatchDataAvailable()
 {
-  return jqPool.BatchDataHeap.HeapSize - jqPool.BatchDataHeap.TotalUsed;
+  return jqPool.BatchDataHeap.HeapSize - BO1_JQ_LOAD(jqPool.BatchDataHeap.TotalUsed);
 }
 
 int __cdecl jqExecuteBatch(jqWorker *Worker, jqBatch *Batch)
@@ -916,14 +1034,18 @@ bool __cdecl jqWorkerSleep()
 {
   volatile unsigned int Target; // [esp+0h] [ebp-4h] BYREF
 
-  while ( !jqPool.group.QueuedBatchCount )
+  while ( !BO1_JQ_LOAD(jqPool.group.QueuedBatchCount) )
   {
     if ( jqStopSignal )
       break;
     if ( jqKeepWorkersAwakeCount )
       break;
     _InterlockedExchangeAdd(&jqSleepingWorkersCount, 1u);
+#if defined(__ANDROID__)
+    Sys_WaitForSingleObjectTimeout(&jqNewJobAdded,1);
+#else
     WaitForSingleObject(jqNewJobAdded, 1u);
+#endif
     _InterlockedExchangeAdd(&jqSleepingWorkersCount, 0xFFFFFFFF);
   }
   SwitchToThread();
@@ -1045,6 +1167,12 @@ void *__cdecl jqGetMemBase()
 
 void __cdecl _jqInit()
 {
+#if defined(__ANDROID__)
+  Sys_CreateEvent(true,false,&jqNewJobAdded);
+  const auto count=sysconf(_SC_NPROCESSORS_ONLN);
+  if(count<=0)tlFatal("Cannot query native processor count");
+  jqProcessorsMask=count>=32?0xffffffffu:(std::uint32_t(1)<<count)-1;
+#else
   unsigned int v0; // ecx
   unsigned int v1; // edx
   int v2; // esi
@@ -1065,11 +1193,16 @@ void __cdecl _jqInit()
     while ( v0 < SystemInfo.dwNumberOfProcessors );
     jqProcessorsMask = v1;
   }
+#endif
 }
 
 void __cdecl _jqShutdown()
 {
+#if defined(__ANDROID__)
+  Sys_DestroyEvent(&jqNewJobAdded);
+#else
   CloseHandle(jqNewJobAdded);
+#endif
 }
 
 void __cdecl _jqStop()
@@ -1079,7 +1212,11 @@ void __cdecl _jqStop()
   void *Thread; // eax
 
   jqStopSignal = 1;
+#if defined(__ANDROID__)
+  Sys_SetEvent(&jqNewJobAdded);
+#else
   SetEvent(jqNewJobAdded);
+#endif
   v0 = 0;
   if ( jqNWorkers > 0 )
   {
@@ -1089,8 +1226,13 @@ void __cdecl _jqStop()
       Thread = jqWorkers[v1].Thread;
       if ( Thread )
       {
+#if defined(__ANDROID__)
+        bo1::android::JoinJobWorker(Thread);
+        jqWorkers[v1].Thread=nullptr;
+#else
         WaitForSingleObject(Thread, 0xFFFFFFFF);
         CloseHandle(jqWorkers[v1].Thread);
+#endif
       }
       ++v0;
       ++v1;
@@ -1098,7 +1240,11 @@ void __cdecl _jqStop()
     while ( v0 < jqNWorkers );
   }
   jqStopSignal = 0;
+#if defined(__ANDROID__)
+  Sys_ResetEvent(&jqNewJobAdded);
+#else
   ResetEvent(jqNewJobAdded);
+#endif
 }
 
 void __cdecl _jqAddBatch()
@@ -1108,7 +1254,11 @@ void __cdecl _jqAddBatch()
 
 void __cdecl jqAlertWorkers()
 {
+#if defined(__ANDROID__)
+  Sys_PulseManualEvent(&jqNewJobAdded);
+#else
   PulseEvent(jqNewJobAdded);
+#endif
 }
 
 void jqLockBatchPoolInternal()
@@ -1186,8 +1336,16 @@ void __cdecl jqSetBatchDataHeapSize(unsigned int Size, unsigned int BlockSize)
     __debugbreak();
   }
 
+#if defined(__ANDROID__)
+  if(BO1_JQ_LOAD(jqPool.BatchDataHeap.TotalBlocks)){
+    _tlAssert(__FILE__,__LINE__,"no live heap allocations","Cannot replace owned job heap");__debugbreak();}
+#endif
   if ( jqPool.BatchDataHeap.LevelData )
     tlMemFree(jqPool.BatchDataHeap.LevelData);
+#if defined(__ANDROID__)
+  jqPool.BatchDataHeap.LevelData=nullptr;
+  tlMemFree(jqPool.BatchDataHeap.HeapBase);jqPool.BatchDataHeap.HeapBase=nullptr;
+#endif
   v2 = (unsigned __int8 *)tlMemAlloc(Size, 0x80u, 0);
   //jqAtomicHeap::Init(&jqPool.BatchDataHeap, v2, Size, BlockSize);
   jqPool.BatchDataHeap.Init(v2, Size, BlockSize);
@@ -1365,7 +1523,7 @@ char __cdecl jqPopNextBatchFromQueue(jqQueue *Queue, jqBatchGroup *Worker, jqBat
     //LONG v16; // [esp+10h] [ebp-8h] BYREF
     LONG Target; // [esp+14h] [ebp-4h] BYREF
 
-    QueuedBatchCount = Queue->ThisPtr->QueuedBatchCount;
+    QueuedBatchCount = BO1_JQ_LOAD(Queue->ThisPtr->QueuedBatchCount);
     v5 = 0;
     if (QueuedBatchCount)
     {
@@ -1388,7 +1546,7 @@ char __cdecl jqPopNextBatchFromQueue(jqQueue *Queue, jqBatchGroup *Worker, jqBat
                 {
                     _InterlockedExchangeAdd(&v13->ExecutingBatchCount, 1u);
                     _InterlockedExchangeAdd(&PoppedBatch->GroupID->QueuedBatchCount, 0xFFFFFFFF);
-                    if (PoppedBatch->GroupID->QueuedBatchCount < 0)
+                    if (BO1_JQ_LOAD(PoppedBatch->GroupID->QueuedBatchCount) < 0)
                     {
                         if (_tlAssert(
                             "c:\\projects_pc\\cod\\codsrc\\tl\\jobqueue\\jobqueue_kernel.cpp",
@@ -1405,7 +1563,7 @@ char __cdecl jqPopNextBatchFromQueue(jqQueue *Queue, jqBatchGroup *Worker, jqBat
                 _InterlockedExchangeAdd(&jqPool.ThisPtr->group.ExecutingBatchCount, 1u);
                 _InterlockedExchangeAdd(&jqPool.ThisPtr->group.QueuedBatchCount, 0xFFFFFFFF);
                 _InterlockedExchangeAdd(&Queue->ThisPtr->QueuedBatchCount, 0xFFFFFFFF);
-                if (jqPool.group.QueuedBatchCount < 0
+                if (BO1_JQ_LOAD(jqPool.group.QueuedBatchCount) < 0
                     && _tlAssert(
                         "c:\\projects_pc\\cod\\codsrc\\tl\\jobqueue\\jobqueue_kernel.cpp",
                         88,
@@ -1414,7 +1572,7 @@ char __cdecl jqPopNextBatchFromQueue(jqQueue *Queue, jqBatchGroup *Worker, jqBat
                 {
                     __debugbreak();
                 }
-                if (Queue->QueuedBatchCount < 0
+                if (BO1_JQ_LOAD(Queue->QueuedBatchCount) < 0
                     && _tlAssert(
                         "c:\\projects_pc\\cod\\codsrc\\tl\\jobqueue\\jobqueue_kernel.cpp",
                         89,
@@ -1453,7 +1611,7 @@ char __cdecl jqPopNextBatchFromQueue(jqQueue *Queue, jqBatchGroup *Worker, jqBat
             //{
             //    p_Queue->TailLock.ThreadId = 0;
             //}
-            QueuedBatchCount = Queue->ThisPtr->QueuedBatchCount;
+            QueuedBatchCount = BO1_JQ_LOAD(Queue->ThisPtr->QueuedBatchCount);
             if (!QueuedBatchCount)
                 return 0;
             v5 = CheckedBatches;
@@ -1482,7 +1640,7 @@ char  jqPopNextBatch(
     else
     {
       v7 = 0;
-      for ( i = Worker->Queues; !*i || !jqPopNextBatchFromQueue(*i, GroupID, PoppedBatch); ++i )
+      for ( i = Worker->Queues; !BO1_JQ_LOAD(*i) || !jqPopNextBatchFromQueue(BO1_JQ_LOAD(*i), GroupID, PoppedBatch); ++i )
       {
         if ( ++v7 >= 8 )
           return 0;
@@ -1641,7 +1799,7 @@ void __cdecl jqWorkerLoop(jqWorker *Worker, jqBatchGroup *GroupID, bool BreakWhe
                 if (CurBatch.GroupID)
                     _InterlockedExchangeAdd(&CurBatch.GroupID->ExecutingBatchCount, 0xFFFFFFFF);
                 if (BreakWhenEmpty && ret
-                    || batchCount && !*batchCount
+                    || batchCount && !BO1_JQ_LOAD(*batchCount)
                     || !jqPopNextBatch(Worker, &doHighPriority, GroupID, &CurBatch))
                 {
                     goto LABEL_40;
@@ -1843,6 +2001,9 @@ unsigned int __stdcall jqWorkerThread(jqWorker *_this)
   sprintf(ThreadName, "JQ Worker %d (Processor 0x%x)", _this->WorkerID, _this->Processor);
   SetThreadName(0xFFFFFFFF, ThreadName);
   _this->ThreadId = GetCurrentThreadId();
+#if defined(__ANDROID__)
+  bo1::android::JobWorkerReady(_this);
+#endif
   jqWorkerLoop(_this, 0, 0, 0);
   return 0;
 }
@@ -1864,7 +2025,11 @@ void __cdecl _jqStart()
     jqWorkers[v0].Type = JQ_WORKER_GENERIC;
     if ( !v1 )
     {
+#if defined(__ANDROID__)
+      thr=bo1::android::SpawnJobWorker(v2,jqWorkerThread);
+#else
       thr = CreateThread(0, 0x10000u, (LPTHREAD_START_ROUTINE)jqWorkerThread, v2, 4u, &ThreadId);
+#endif
       if ( !thr )
       {
         if ( _tlAssert(
@@ -1877,7 +2042,9 @@ void __cdecl _jqStart()
         }
       }
       v2->Thread = thr;
+#if !defined(__ANDROID__)
       ResumeThread(thr);
+#endif
     }
     ++v0;
   }
@@ -1926,10 +2093,10 @@ void __cdecl jqFlush(jqBatchGroup *GroupID, unsigned __int64 batchCount)
     // local zero) and Sleep(0) are not in the SP exe.
     while (1)
     {
-        unsigned int queued = p_group->QueuedBatchCount;
+        unsigned int queued = BO1_JQ_LOAD(p_group->QueuedBatchCount);
         volatile LONG Target = 0;
         InterlockedExchange(&Target, 0);
-        if (!(queued + p_group->ExecutingBatchCount) && p_group->BatchCount <= batchCount)
+        if (!(queued + BO1_JQ_LOAD(p_group->ExecutingBatchCount)) && BO1_JQ_LOAD(p_group->BatchCount) <= batchCount)
             break;
 
         jqWorkerLoop(jqWorkers, GroupID, true, workerBatchCount);
@@ -1950,7 +2117,7 @@ void __cdecl jqStop()
   if ( jqWorkers )
   {
     jqFlush(0, 0);
-    if ( jqPool.group.QueuedBatchCount )
+    if ( BO1_JQ_LOAD(jqPool.group.QueuedBatchCount) )
     {
       if ( _tlAssert(
              "c:\\projects_pc\\cod\\codsrc\\tl\\jobqueue\\jobqueue.cpp",
@@ -1963,6 +2130,9 @@ void __cdecl jqStop()
     }
     _jqStop();
     tlMemFree(jqTempWorkers);
+#if defined(__ANDROID__)
+    jqTempWorkers=nullptr;
+#endif
     jqNWorkers = 0;
     tlMemFree(jqWorkers);
     jqWorkers = 0;
@@ -2028,7 +2198,21 @@ void __cdecl jqShutdown()
     NodeBlockListHead = NodeBlockListHead->Next;
     tlMemFree(Addr);
   }
+#if defined(__ANDROID__)
+  jqPool.BaseQueue.Queue.NodeBlockListHead=nullptr;
+  jqPool.BaseQueue.Queue._FreeList=nullptr;
+  jqPool.BaseQueue.Queue.Head=nullptr;jqPool.BaseQueue.Queue.Tail=nullptr;
+  if(BO1_JQ_LOAD(jqPool.BatchDataHeap.TotalBlocks)){
+    _tlAssert(__FILE__,__LINE__,"no live heap allocations","Shutdown with owned job data");__debugbreak();}
+  tlMemFree(jqPool.BatchDataHeap.LevelData);jqPool.BatchDataHeap.LevelData=nullptr;
+  tlMemFree(jqPool.BatchDataHeap.HeapBase);jqPool.BatchDataHeap.HeapBase=nullptr;
+  jqPool.BatchDataHeap.HeapSize=0;
+#endif
+#if defined(__ANDROID__)
+  Sys_DestroyEvent(&jqNewJobAdded);
+#else
   CloseHandle(jqNewJobAdded);
+#endif
   jqSleepingWorkersCount = 0;
 }
 
@@ -2593,7 +2777,9 @@ jqQueue::~jqQueue()
 jqBatchPool::~jqBatchPool()
 {
   //jqAtomicHeap::~jqAtomicHeap(&this->BatchDataHeap);
+#if !defined(__ANDROID__)
   this->BatchDataHeap.~jqAtomicHeap();
+#endif
   this->BaseQueue.Queue.TailLock.ThreadId = 0;
   this->BaseQueue.Queue.TailLock.ThisPtr = 0;
   this->BaseQueue.Queue.HeadLock.ThreadId = 0;

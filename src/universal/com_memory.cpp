@@ -1,5 +1,12 @@
 #if !defined(BO1_STARTUP_SERVICES)
 #include <cstddef>
+#if defined(__ANDROID__)
+#include <platform/android/virtual_memory.h>
+#include <cstdint>
+#include <cstdlib>
+#include <type_traits>
+#include <platform/android/oom_error.h>
+#endif
 #include "com_memory.h"
 #include "assertive.h"
 
@@ -23,14 +30,19 @@ hunkUsed_t hunk_low;
 // Page-floor a hunk pointer without truncating it to 32 bits (x64: s_hunkData is above 4 GB).
 static inline unsigned __int8 *Hunk_PageFloor(const unsigned __int8 *p)
 {
+#if defined(__ANDROID__)
+    const uintptr_t mask = bo1::android::VirtualPageSize() - 1;
+    return reinterpret_cast<unsigned __int8 *>(reinterpret_cast<uintptr_t>(p) & ~mask);
+#else
     return reinterpret_cast<unsigned __int8 *>(reinterpret_cast<uintptr_t>(p) & ~static_cast<uintptr_t>(0xFFF));
+#endif
 }
 
 unsigned __int8 *s_hunkData;
 int s_hunkTotal;
 hunkUsed_t hunk_high;
 unsigned __int8 *s_origHunkData;
-fileData_s *com_fileDataHashTable[1024];
+extern fileData_s *com_fileDataHashTable[1024];
 fileData_s *com_hunkData;
 
 
@@ -43,6 +55,7 @@ struct AssetList // sizeof=0xC
 
 
 
+#if !defined(__ANDROID__) // Native reserve/commit/free are owned by virtual_memory.cpp.
 void *__cdecl Z_VirtualReserve(int size)
 {
     void *buf; // [esp+0h] [ebp-4h]
@@ -121,6 +134,7 @@ void __cdecl Z_VirtualCommitInternal(void *ptr, int size)
         Sys_OutOfMemErrorInternal("C:\\projects_pc\\cod\\codsrc\\src\\universal\\com_memory.cpp", 420);
 }
 
+#endif
 void Com_TouchMemory()
 {
     int sum; // [esp+4h] [ebp-10h]
@@ -380,6 +394,46 @@ char *__cdecl Hunk_SetDataForFile(int type, const char *name, void *data, void *
     return fileData->name;
 }
 
+#if defined(__ANDROID__)
+template<class Size>
+static void Hunk_AddTypedData(int type,void *data,void *(__cdecl *alloc)(Size))
+{
+    static_assert(std::is_same_v<Size,int> || std::is_same_v<Size,unsigned int>);
+    if (!Sys_IsMainThread()
+        && !Assert_MyHandler("C:\\projects_pc\\cod\\codsrc\\src\\universal\\com_memory.cpp",880,0,"%s","Sys_IsMainThread()"))
+        __debugbreak();
+    if(!alloc || !data || type<0 || type>255)
+    {
+        Com_Error(ERR_FATAL,"Invalid native hunk data registration");
+        std::abort();
+    }
+    // This anonymous record is a real native object, including its alignment tail.
+    auto *fileData=static_cast<fileData_s *>(alloc(static_cast<Size>(sizeof(fileData_s))));
+    if(!fileData || reinterpret_cast<std::uintptr_t>(fileData)%alignof(fileData_s))
+    {
+        Com_Error(ERR_FATAL,"Invalid native hunk data registration storage");
+        std::abort();
+    }
+    if(!Hunk_DataOnHunk(reinterpret_cast<unsigned __int8 *>(fileData))
+        && !Assert_MyHandler("C:\\projects_pc\\cod\\codsrc\\src\\universal\\com_memory.cpp",885,0,"%s","Hunk_DataOnHunk( fileData )"))
+        __debugbreak();
+    fileData->data=data;
+    fileData->type=static_cast<unsigned __int8>(type);
+    if(type!=fileData->type
+        && !Assert_MyHandler("C:\\projects_pc\\cod\\codsrc\\src\\universal\\com_memory.cpp",890,0,"%s","type == fileData->type"))
+        __debugbreak();
+    fileData->next=com_hunkData;
+    com_hunkData=fileData;
+}
+void __cdecl Hunk_AddData(int type,void *data,void *(__cdecl *alloc)(int))
+{
+    Hunk_AddTypedData(type,data,alloc);
+}
+void __cdecl Hunk_AddData(int type,void *data,void *(__cdecl *alloc)(unsigned int))
+{
+    Hunk_AddTypedData(type,data,alloc);
+}
+#else
 void __cdecl Hunk_AddData(int type, void *data, void *(__cdecl *alloc)(int))
 {
     fileData_s *fileData; // [esp+0h] [ebp-4h]
@@ -420,6 +474,7 @@ void __cdecl Hunk_AddData(int type, void *data, void *(__cdecl *alloc)(int))
     fileData->next = com_hunkData;
     com_hunkData = fileData;
 }
+#endif
 
 void __cdecl Hunk_OverrideDataForFile(int type, const char *name, void *data)
 {
@@ -461,6 +516,13 @@ int __cdecl DB_GetAllXAssetOfType(XAssetType type, XAssetHeader *assets, int max
         return DB_GetAllXAssetOfType_LoadObj(type, assets, maxCount);
 }
 
+#if defined(__ANDROID__)
+static void __cdecl Hunk_AddAssetEnumerated(XAssetHeader header, void *data)
+{
+    Hunk_AddAsset(header, static_cast<AssetList *>(data));
+}
+#endif
+
 int __cdecl DB_GetAllXAssetOfType_LoadObj(XAssetType type, XAssetHeader *assets, int maxCount)
 {
     AssetList assetList; // [esp+0h] [ebp-Ch] BYREF
@@ -468,17 +530,21 @@ int __cdecl DB_GetAllXAssetOfType_LoadObj(XAssetType type, XAssetHeader *assets,
     assetList.assets = assets;
     assetList.assetCount = 0;
     assetList.maxCount = maxCount;
+#if defined(__ANDROID__)
+    DB_EnumXAssets(type, Hunk_AddAssetEnumerated, &assetList, 0);
+#else
     DB_EnumXAssets(type, (void (__cdecl *)(XAssetHeader, void *))Hunk_AddAsset, &assetList, 0);
+#endif
     return assetList.assetCount;
 }
 
 void __cdecl Hunk_AddAsset(XAssetHeader header, AssetList *data)
 {
-    if ( !data && !Assert_MyHandler("C:\projects_pc\cod\codsrc\src\universal\com_memory.cpp", 1071, 0, "%s", "data") )
+    if ( !data && !Assert_MyHandler("C:\\projects_pc\\cod\\codsrc\\src\\universal\\com_memory.cpp", 1071, 0, "%s", "data") )
         __debugbreak();
     if ( data->assetCount >= data->maxCount
         && !Assert_MyHandler(
-                    "C:\projects_pc\cod\codsrc\src\universal\com_memory.cpp",
+                    "C:\\projects_pc\\cod\\codsrc\\src\\universal\\com_memory.cpp",
                     1075,
                     0,
                     "%s",
@@ -489,6 +555,18 @@ void __cdecl Hunk_AddAsset(XAssetHeader header, AssetList *data)
     data->assets[data->assetCount++] = header;
 }
 
+#endif // full memory bodies before asset enumeration
+#if defined(BO1_STARTUP_SERVICES) && defined(BO1_NATIVE_ASSET_ENUM)
+#include "com_memory.h"
+#include <database/db_registry.h>
+#include <gfx_d3d/r_image.h>
+#include <gfx_d3d/r_dvars.h>
+#include <qcommon/common.h>
+#include <cstring>
+#endif
+#if !defined(BO1_STARTUP_SERVICES) || defined(BO1_NATIVE_ASSET_ENUM)
+fileData_s *com_fileDataHashTable[1024];
+
 void __cdecl DB_EnumXAssets(
                 XAssetType type,
                 void (__cdecl *func)(XAssetHeader, void *),
@@ -497,17 +575,22 @@ void __cdecl DB_EnumXAssets(
 {
     if ( useFastFile->current.enabled )
         DB_EnumXAssets_FastFile(type, func, inData, includeOverride);
-    else
-        ((void (__cdecl *)(XAssetType, void (__cdecl *)(XAssetHeader, void *), void *, bool))DB_EnumXAssets_LoadObj)(
-            type,
-            func,
-            inData,
-            includeOverride);
+    else {
+        struct Callback { void (*function)(XAssetHeader, void *); void *data; } callback{func,inData};
+        DB_EnumXAssets_LoadObj(type, [](void *asset, void *context) {
+            auto &call=*static_cast<Callback *>(context);
+            XAssetHeader header{};
+            static_assert(sizeof(header)==sizeof(asset));
+            std::memcpy(&header,&asset,sizeof(header));
+            call.function(header,call.data);
+        }, &callback);
+    }
 }
 
 void __cdecl DB_EnumXAssets_LoadObj(XAssetType type, void (__cdecl *func)(void *, void *), void *inData)
 {
     unsigned int hash; // [esp+4h] [ebp-Ch]
+    struct Callback { void (*function)(void *,void *); void *data; } callback{func,inData};
 
     switch ( type )
     {
@@ -516,13 +599,19 @@ void __cdecl DB_EnumXAssets_LoadObj(XAssetType type, void (__cdecl *func)(void *
                 DB_EnumXAssetsFor(com_fileDataHashTable[hash], 5, func, inData);
             break;
         case ASSET_TYPE_MATERIAL:
-            R_EnumMaterials((void (__cdecl *)(Material *, void *))func, inData);
+            R_EnumMaterials([](Material *asset,void *context) {
+                auto &call=*static_cast<Callback *>(context);call.function(asset,call.data);
+            }, &callback);
             break;
         case ASSET_TYPE_TECHNIQUE_SET:
-            R_EnumTechniqueSets((void (__cdecl *)(MaterialTechniqueSet *, void *))func, inData);
+            R_EnumTechniqueSets([](MaterialTechniqueSet *asset,void *context) {
+                auto &call=*static_cast<Callback *>(context);call.function(asset,call.data);
+            }, &callback);
             break;
         case ASSET_TYPE_IMAGE:
-            R_EnumImages((void (__cdecl *)(GfxImage *, void *))func, inData);
+            R_EnumImages([](GfxImage *asset,void *context) {
+                auto &call=*static_cast<Callback *>(context);call.function(asset,call.data);
+            }, &callback);
             break;
         default:
             return;
@@ -543,6 +632,8 @@ void __cdecl DB_EnumXAssetsFor(
     }
 }
 
+#endif // asset enumeration
+#if !defined(BO1_STARTUP_SERVICES)
 int __cdecl Hunk_SetMark()
 {
     if ( !Sys_IsMainThread()
@@ -1118,6 +1209,7 @@ void __cdecl Com_TempMeminfo_f()
     Com_Printf(0, "Related commands: meminfo, imagelist, gfx_world, gfx_model, cg_drawfps, com_statmon, tempmeminfo\n");
 }
 
+#if !defined(__ANDROID__) // Native virtual and zone allocators retain their single owners.
 char *__cdecl Z_TryVirtualAlloc(int size, const char *name, int type)
 {
     char *buf; // [esp+0h] [ebp-4h]
@@ -1363,8 +1455,12 @@ unsigned int *__cdecl Z_Malloc(int size, const char *name, int type)
 
 void __cdecl    Z_MallocFailed(int size)
 {
+#if defined(__ANDROID__)
+    bo1::android::ReportAllocationFailure("C:\\projects_pc\\cod\\codsrc\\src\\universal\\com_memory.cpp", 436,"Z_MallocFailed",nullptr,size,0,false);
+#else
     Com_PrintError(16, "Failed to Z_Malloc %i bytes\n", size);
     Sys_OutOfMemErrorInternal("C:\\projects_pc\\cod\\codsrc\\src\\universal\\com_memory.cpp", 436);
+#endif
 }
 
 char *__cdecl Z_MallocGarbage(int size, const char *name, int type)
@@ -1379,6 +1475,7 @@ char *__cdecl Z_MallocGarbage(int size, const char *name, int type)
 
 
 
+#endif
 void __cdecl ReplaceString(const char **str, char *in, const char *name, int type, scriptInstance_t inst)
 {
     char *newStr; // [esp+0h] [ebp-4h]

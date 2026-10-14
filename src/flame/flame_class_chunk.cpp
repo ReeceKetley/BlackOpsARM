@@ -20,13 +20,29 @@ int g_ChunkCountWaterMark;
 
 void __cdecl Flame_Class_Chunk_Init()
 {
+#if defined(__ANDROID__)
+    memset(flameChunks, 0, sizeof(flameChunks));
+#else
     memset(flameChunks, 0, 0x15E00u);
+#endif
+#if defined(__ANDROID__)
+    Flame_List_Init(&flameChunks[0].gen, sizeof(flameChunks[0]), sizeof(flameChunks) / sizeof(flameChunks[0]));
+#else
     Flame_List_Init((flameGeneric_s*)flameChunks, 112, 800);
+#endif
     flameChunksFree = flameChunks;
     flameChunksUsed = 0;
 
+#if defined(__ANDROID__)
+    memset(sv_flameChunks, 0, sizeof(sv_flameChunks));
+#else
     memset(sv_flameChunks, 0, 0x15E00u);
+#endif
+#if defined(__ANDROID__)
+    Flame_List_Init(&sv_flameChunks[0].gen, sizeof(sv_flameChunks[0]), sizeof(sv_flameChunks) / sizeof(sv_flameChunks[0]));
+#else
     Flame_List_Init((flameGeneric_s *)sv_flameChunks, 112, 800);
+#endif
     sv_flameChunksFree = sv_flameChunks;
     sv_flameChunksUsed = 0;
 
@@ -72,7 +88,11 @@ void __cdecl Flame_Class_Chunk_Free(bool is_server, flameChunk_s *chunk)
         Flame_List_Move_Global(&chunk->gen, (flameGeneric_s **)&flameChunksUsed, (flameGeneric_s **)&flameChunksFree);
         --g_ChunkCount;
     }
+#if defined(__ANDROID__)
+    Flame_Item_Init(&chunk->gen, sizeof(*chunk));
+#else
     Flame_Item_Init(&chunk->gen, 0x70u);
+#endif
 }
 
 void __cdecl Flame_Phys_Spawn_Items(bool is_server, int curTime, flameChunk_s *trav)
@@ -148,7 +168,11 @@ void __cdecl Flame_Class_Chunk_Age(bool is_server, int time)
         {
             curTime = trav->spawnFireInterval + trav->lastSpawnFire;
         }
+#if defined(__ANDROID__)
+        if ( trav->gen.delete_chunk != 0
+#else
         if ( ((*((unsigned int *)&trav->gen + 23) >> 3) & 1) != 0
+#endif
             || trav->gen.age.lastUpdateTime - trav->gen.age.startTime >= (int)(float)(1000.0
                                                                                                                                                             * trav->gen.stream->flameVars->flameVar_streamChunkSpawnFireMaxLifeFrac) )
         {
@@ -206,9 +230,21 @@ flameChunk_s *__cdecl Flame_Class_Chunk_Spawn(
     chunk = Flame_Class_Chunk_Alloc(is_server);
     if ( !chunk )
         return 0;
+#if defined(__ANDROID__)
+    chunk->gen.type = 1;
+#else
     *((unsigned int *)&chunk->gen + 23) = *((unsigned int *)&chunk->gen + 23) & 0xFFFFFFF8 | 1;
+#endif
+#if defined(__ANDROID__)
+    chunk->gen.id = flame_spawn_id++;
+#else
     *((unsigned int *)&chunk->gen + 23) = (16 * flame_spawn_id++) | *((unsigned int *)&chunk->gen + 23) & 0xF;
+#endif
+#if defined(__ANDROID__)
+    chunk->gen.delete_chunk = 0;
+#else
     *((unsigned int *)&chunk->gen + 23) &= ~8u;
+#endif
     chunk->gen.age.startTime = spawnVars->time;
     chunk->gen.age.endTime = spawnVars->duration + spawnVars->time;
     chunk->gen.age.lastUpdateTime = spawnVars->time;

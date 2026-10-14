@@ -2,6 +2,12 @@
 
 struct cbrushside_t;
 struct winding_t;
+#if defined(__ANDROID__)
+// Runtime-only viewer ownership; shared/serialized winding_t remains p[4].
+struct CMShowCollisionWinding { int numpoints; float p[1024][3]; };
+#else
+using CMShowCollisionWinding = winding_t;
+#endif
 struct cbrush_t;
 struct cplane_s;
 
@@ -35,7 +41,7 @@ int __cdecl CM_AddSimpleBrushPoint(
                 int ptCount,
                 ShowCollisionBrushPt *brushPts);
 char __cdecl CM_BuildBrushWindingForSide(
-                winding_t *winding,
+                CMShowCollisionWinding *winding,
                 float *planeNormal,
                 int sideIndex,
                 const ShowCollisionBrushPt *pts,
@@ -43,17 +49,17 @@ char __cdecl CM_BuildBrushWindingForSide(
 int __cdecl CM_GetXyzList(int sideIndex, const ShowCollisionBrushPt *pts, int ptCount, float (*xyz)[3], int xyzLimit);
 int __cdecl CM_PointInList(const float *point, const float (*xyzList)[3], int xyzCount);
 void __cdecl CM_PickProjectionAxes(const float *normal, int *i, int *j);
-void __cdecl CM_AddExteriorPointToWindingProjected(winding_t *w, float *pt, int i, int j);
+void __cdecl CM_AddExteriorPointToWindingProjected(CMShowCollisionWinding *w, float *pt, int i, int j);
 double __cdecl CM_SignedAreaForPointsProjected(const float *pt0, const float *pt1, const float *pt2, int i, int j);
 void __cdecl CM_AddColinearExteriorPointToWindingProjected(
-                winding_t *w,
+                CMShowCollisionWinding *w,
                 float *pt,
                 int i,
                 int j,
                 int index0,
                 int index1);
-double __cdecl CM_RepresentativeTriangleFromWinding(const winding_t *w, const float *normal, int *i0, int *i1, int *i2);
-void __cdecl CM_ReverseWinding(winding_t *w);
+double __cdecl CM_RepresentativeTriangleFromWinding(const CMShowCollisionWinding *w, const float *normal, int *i0, int *i1, int *i2);
+void __cdecl CM_ReverseWinding(CMShowCollisionWinding *w);
 void __cdecl CM_ShowBrushCollision(
                 int contentMask,
                 cplane_s *frustumPlanes,

@@ -46,6 +46,9 @@ void *__cdecl Hunk_FindDataForFileInternal(int type, const char *name, int hash)
 bool __cdecl Hunk_DataOnHunk(unsigned __int8 *data);
 char *__cdecl Hunk_SetDataForFile(int type, const char *name, void *data, void *(__cdecl *alloc)(int));
 void __cdecl Hunk_AddData(int type, void *data, void *(__cdecl *alloc)(int));
+#if defined(__ANDROID__)
+void __cdecl Hunk_AddData(int type, void *data, void *(__cdecl *alloc)(unsigned int));
+#endif
 void __cdecl Hunk_OverrideDataForFile(int type, const char *name, void *data);
 int __cdecl DB_GetAllXAssetOfType(XAssetType type, XAssetHeader *assets, int maxCount);
 int __cdecl DB_GetAllXAssetOfType_LoadObj(XAssetType type, XAssetHeader *assets, int maxCount);

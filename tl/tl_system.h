@@ -1,6 +1,13 @@
 #pragma once
+#include <cstdarg>
 
 union _LARGE_INTEGER;
+#if defined(__ANDROID__)
+#include <platform/win32_compat/win32_types.h>
+using BO1_TL_COUNTER = bo1::win32::LARGE_INTEGER;
+#else
+using BO1_TL_COUNTER = _LARGE_INTEGER;
+#endif
 
 struct tlFileBuf // sizeof=0xC
 {
@@ -25,13 +32,13 @@ void __cdecl tlSetSystemCallbacks(const tlSystemCallbacks *Callbacks);
 void __cdecl tlSetFileServerRootPC(const char *Path);
 void __cdecl tlMemFree(void *Ptr);
 void __cdecl tlReleaseFile(tlFileBuf *File);
-_LARGE_INTEGER __cdecl tlPcGetTick();
+BO1_TL_COUNTER __cdecl tlPcGetTick();
 void __cdecl tlPrint(const char *txt);
 int __cdecl tlGetVersion();
 void __cdecl tlStackRangeInit();
 char __cdecl tlFatalHandler(const char *Msg);
 void __cdecl tlDebugPrint(const char *txt);
-void __cdecl tlVPrintf(const char *Format, char *args);
+void __cdecl tlVPrintf(const char *Format, va_list args);
 void tlPrintf(const char *Format, ...);
 char __cdecl _tlAssert(const char *file, int line, const char *expr, const char *desc);
 void tlFatal(const char *Format, ...);

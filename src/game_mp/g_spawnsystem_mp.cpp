@@ -1,4 +1,7 @@
 #include "g_spawnsystem_mp.h"
+#if defined(__ANDROID__)
+#include <platform/android/legacy_crt.h>
+#endif
 
 #include <algorithm>
 #include <universal/com_math_anglevectors.h>

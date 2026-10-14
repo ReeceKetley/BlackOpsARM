@@ -15,6 +15,9 @@ void __cdecl Load_DelayStream();
 // Win32 call sites still pass (unsigned int *); both overloads share one body.
 void __cdecl DB_ConvertOffsetToAlias(void *field);
 void __cdecl DB_ConvertOffsetToPointer(void *field);
+#if defined(__ANDROID__)
+void DB_ConvertOffsetToPointerArray(void *field, unsigned count);
+#endif
 inline void __cdecl DB_ConvertOffsetToAlias(unsigned int *data)
 {
     DB_ConvertOffsetToAlias(static_cast<void *>(data));

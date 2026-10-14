@@ -1019,7 +1019,11 @@ self_destruct (j_common_ptr cinfo)
 }
 
 // ADD 
+#if defined(__ANDROID__)
+_Thread_local struct jpeg_alloc jpeg_alloc_overrides;
+#else
 struct jpeg_alloc jpeg_alloc_overrides;
+#endif
 struct jpeg_alloc *jpeg_get_jpeg_alloc()
 {
     return &jpeg_alloc_overrides;

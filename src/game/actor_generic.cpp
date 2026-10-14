@@ -1,4 +1,5 @@
 #include "actor_generic.h"
+#include <platform/bo1_native_width.h>
 #include <game_mp/g_main_mp.h>
 #include <game_mp/actor_mp.h>
 
@@ -77,7 +78,11 @@ bool __fastcall Actor_Generic_Resume(actor_s *self, ai_state_t ePrevState)
     {
         __debugbreak();
     }
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+    return AIFuncTable[self->species][self->eState[self->stateLevel]].pfnStart(
+#else
     return ((int (__fastcall *)(actor_s *, ai_state_t))AIFuncTable[self->species][self->eState[self->stateLevel]].pfnStart)(
+#endif
                      self,
                      ePrevState);
 }

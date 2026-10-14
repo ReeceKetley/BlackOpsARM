@@ -1,4 +1,7 @@
 #include "eval.h"
+#if defined(__ANDROID__)
+#include <platform/android/legacy_crt.h>
+#endif
 #include "assertive.h"
 #include <cstdlib>
 #include <string.h>

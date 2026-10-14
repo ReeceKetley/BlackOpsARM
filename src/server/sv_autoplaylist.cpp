@@ -1,4 +1,7 @@
 #include "sv_autoplaylist.h"
+#if defined(__ANDROID__)
+#include <cstdio>
+#endif
 #include <universal/dvar.h>
 #include <qcommon/common.h>
 #include <universal/q_parse.h>
@@ -430,7 +433,13 @@ void SV_GroupError(const char *fmt, ...)
     va_list va; // [esp+98h] [ebp+Ch] BYREF
 
     va_start(va, fmt);
+#if defined(__ANDROID__)
+    const int formatted = std::vsnprintf(msg, 0x80u, fmt, va);
+    va_end(va);
+    if (formatted < 0) std::snprintf(msg, 0x80u, "Group error message formatting failed");
+#else
     _vsnprintf(msg, 0x80u, fmt, va);
+#endif
     Com_PrintError(15, "GROUPS: %s\n", msg);
 }
 

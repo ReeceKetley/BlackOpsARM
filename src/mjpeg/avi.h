@@ -168,7 +168,11 @@ namespace avi
     unsigned int __cdecl Out32(unsigned __int8 **out, unsigned int d);
 } // namespace avi
 
+#if defined(__ANDROID__)
+struct avi_s
+#else
 struct __declspec(align(4)) avi_s // sizeof=0xA7870
+#endif
 {
     avi::RIFF_s riff;
     void *hFile;
@@ -190,6 +194,11 @@ struct __declspec(align(4)) avi_s // sizeof=0xA7870
     // padding byte
     // padding byte
 
+#if defined(__ANDROID__)
+    void *nativeState{};
+    bool native_good() const;
+    ~avi_s();
+#endif
     void write_thread();
     void create(
         const char *szFile,

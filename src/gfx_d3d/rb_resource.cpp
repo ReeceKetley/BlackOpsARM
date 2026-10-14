@@ -7,6 +7,14 @@
 #include "r_image_load_obj.h"
 #include "r_init.h"
 #include "r_buffers.h"
+#if defined(__ANDROID__)
+#include <atomic>
+#include <platform/win32_compat/win32_time.h>
+using BO1_ResourceCounter = bo1::win32::LARGE_INTEGER;
+using bo1::win32::QueryPerformanceCounter;
+#else
+using BO1_ResourceCounter = LARGE_INTEGER;
+#endif
 #if defined(BO1_PORT_X64)
 #include <database/db_stream.h>
 #endif
@@ -14,7 +22,12 @@
 FastCriticalSection resourceLock;
 r_resource_action resourceActions[16384];
 
+#if defined(__ANDROID__)
+std::atomic<int> numResourceActions;
+static_assert(sizeof(std::atomic<int>) == 4 && std::atomic<int>::is_always_lock_free);
+#else
 volatile int numResourceActions;
+#endif
 
 void __cdecl RB_Resource_Lock()
 {
@@ -112,7 +125,7 @@ void __cdecl RB_Resource_Callback(void (__cdecl *callback)())
         __debugbreak();
     }
     action->action = ACTION_CALLBACK;
-    action->resource = callback;
+    action->callback = callback;
     RB_Resource_Unlock();
 }
 
@@ -128,7 +141,7 @@ void __cdecl RB_Resource_CallbackParam(void (__cdecl *callback)(void *), void *d
         __debugbreak();
     }
     action->action = ACTION_CALLBACKPARAM;
-    action->resource = callback;
+    action->callbackParam = callback;
     action->data = data;
     RB_Resource_Unlock();
 }
@@ -206,8 +219,8 @@ void __cdecl RB_Resource_LoadVertexBuffer(IDirect3DVertexBuffer9 **vb, void *buf
 
 void __cdecl RB_Resource_Update(int msec)
 {
-    LARGE_INTEGER v1; // [esp+20h] [ebp-20h] BYREF
-    LARGE_INTEGER PerformanceCount; // [esp+28h] [ebp-18h] BYREF
+    BO1_ResourceCounter v1; // [esp+20h] [ebp-20h] BYREF
+    BO1_ResourceCounter PerformanceCount; // [esp+28h] [ebp-18h] BYREF
     unsigned __int64 endtime; // [esp+30h] [ebp-10h]
     unsigned __int64 curtime; // [esp+38h] [ebp-8h]
 
@@ -346,10 +359,10 @@ void RB_Resource_Update_Internal()
                 Z_VirtualFree(action->data, 20);
                 goto LABEL_2;
             case ACTION_CALLBACK:
-                ((void (*)(void))action->resource)();
+                action->callback();
                 goto LABEL_2;
             case ACTION_CALLBACKPARAM:
-                ((void (__cdecl *)(void *))action->resource)(action->data);
+                action->callbackParam(action->data);
                 goto LABEL_2;
             case ACTION_CREATEVERTEXDECL:
                 dx.device->CreateVertexDeclaration(

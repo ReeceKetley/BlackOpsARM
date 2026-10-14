@@ -10,11 +10,15 @@
 #include <qcommon/cmd.h>
 #include <win32/win_common.h>
 #include <universal/timing.h>
+#if defined(__ANDROID__)
+#include <platform/profile_services.h>
+#include <cstdlib>
+#endif
 
 char g_MonkeyPrintBuffer[0x20000];
 unsigned int g_MonkeyPrintBufferSize;
 bool g_MonkeyGrabPrints;
-bool g_MonkeyIsRunning;
+extern bool g_MonkeyIsRunning;
 unsigned __int64 g_MonkeyOokTimer;
 unsigned __int64 g_MonkeyOokTimeoutTicks;
 
@@ -34,6 +38,13 @@ void __cdecl Monkey_Error(const char *text)
 
 void __cdecl Monkey_GrabComPrints(bool enable)
 {
+#if defined(__ANDROID__)
+    if(!Monkey_IsRunning()) return;
+    Sys_EnterCriticalSection(CRITSECT_CONSOLE);
+    if(!enable || !g_MonkeyGrabPrints) { g_MonkeyPrintBuffer[0]=0; g_MonkeyPrintBufferSize=0; }
+    g_MonkeyGrabPrints=enable;
+    Sys_LeaveCriticalSection(CRITSECT_CONSOLE);
+#else
     if ( Monkey_IsRunning() )
     {
         if ( enable )
@@ -52,10 +63,33 @@ void __cdecl Monkey_GrabComPrints(bool enable)
             g_MonkeyGrabPrints = 0;
         }
     }
+#endif
 }
 
 void __cdecl Monkey_ComPrintHook(const char *msg)
 {
+#if defined(__ANDROID__)
+    if(!msg) { Com_Error(ERR_FATAL,"Monkey print capture received null text"); std::abort(); }
+    Sys_EnterCriticalSection(CRITSECT_CONSOLE);
+    if(g_MonkeyGrabPrints) {
+        constexpr char marker[]="\n(Message truncated)\n";
+        constexpr std::size_t capacity=sizeof(g_MonkeyPrintBuffer);
+        const std::size_t count=strnlen(msg,capacity);
+        std::size_t used=g_MonkeyPrintBufferSize;
+        if(used>=capacity) used=capacity-1;
+        if(count>=capacity-used-1) {
+            constexpr std::size_t markerBytes=sizeof(marker)-1;
+            if(used>capacity-markerBytes-1) used=capacity-markerBytes-1;
+            memcpy(g_MonkeyPrintBuffer+used,marker,sizeof(marker));
+            g_MonkeyPrintBufferSize=static_cast<unsigned int>(used+markerBytes);
+        } else {
+            memcpy(g_MonkeyPrintBuffer+used,msg,count);
+            g_MonkeyPrintBuffer[used+count]=0;
+            g_MonkeyPrintBufferSize=static_cast<unsigned int>(used+count);
+        }
+    }
+    Sys_LeaveCriticalSection(CRITSECT_CONSOLE);
+#else
     unsigned int v1; // kr00_4
     char v2; // dl
     char *v3; // [esp+10h] [ebp-58h]
@@ -89,10 +123,24 @@ void __cdecl Monkey_ComPrintHook(const char *msg)
             g_MonkeyPrintBufferSize += msg_len;
         }
     }
+#endif
 }
 
 void __cdecl Monkey_Start()
 {
+#if defined(__ANDROID__)
+    in_monkey=_Dvar_RegisterBool("in_monkey",0,0,"Randomly generate input");
+    const char *zookeeper=Dvar_GetString("zookeeper");
+    if(zookeeper && *zookeeper) {
+        if(!Monkey_InitCommunication(zookeeper)) {
+            Com_Error(ERR_FATAL,"Monkey communication initialization failed"); std::abort();
+        }
+        g_MonkeyOokTimer=BO1_ProfileTicks();
+        g_MonkeyOokTimeoutTicks=BO1_PROFILE_TICKS_PER_SECOND;
+        Assert_SetMonkeyCallbackHandler(Monkey_AssertCallback);
+        __atomic_store_n(&g_MonkeyIsRunning,true,__ATOMIC_RELEASE);
+    }
+#else
     LARGE_INTEGER PerformanceCount; // [esp+0h] [ebp-Ch] BYREF
     const char *zookeeper; // [esp+8h] [ebp-4h]
 
@@ -110,17 +158,20 @@ void __cdecl Monkey_Start()
             Assert_SetMonkeyCallbackHandler(Monkey_AssertCallback);
         }
     }
+#endif
 }
 
 void __cdecl Monkey_AssertCallback(const char *assertMsg)
 {
+#if defined(__ANDROID__)
+    if(!Monkey_IsRunning()) return;
+    Monkey_Send("assert",assertMsg);
+    Monkey_ShutdownCommunication();
+    __atomic_store_n(&g_MonkeyIsRunning,false,__ATOMIC_RELEASE);
+#else
     Monkey_Send("assert", assertMsg);
     Monkey_ShutdownCommunication();
-}
-
-bool __cdecl Monkey_IsRunning()
-{
-    return g_MonkeyIsRunning;
+#endif
 }
 
 void __cdecl Monkey_Frame()
@@ -162,6 +213,17 @@ void __cdecl Monkey_Frame()
 
 void __cdecl Monkey_KeepAlive()
 {
+#if defined(__ANDROID__)
+    if(!Monkey_IsRunning()) return;
+    const unsigned __int64 now=BO1_ProfileTicks();
+    if(now>g_MonkeyOokTimer) {
+        g_MonkeyOokTimer=now+g_MonkeyOokTimeoutTicks;
+        Monkey_Send("ook","Ook, ook, eek!\n");
+    } else if(g_MonkeyOokTimer-now>g_MonkeyOokTimeoutTicks) {
+        g_MonkeyOokTimer=now+g_MonkeyOokTimeoutTicks;
+        Monkey_Send("ook","Ook, ook, eek (strange happenings)!\n");
+    }
+#else
     LARGE_INTEGER PerformanceCount; // [esp+8h] [ebp-18h] BYREF
     const char *string; // [esp+10h] [ebp-10h]
     const char *ook; // [esp+14h] [ebp-Ch]
@@ -187,6 +249,7 @@ void __cdecl Monkey_KeepAlive()
             Monkey_Send("ook", "Ook, ook, eek!\n");
         }
     }
+#endif
 }
 
 void __cdecl Monkey_Event(const char *event)
@@ -200,3 +263,13 @@ bool __cdecl Monkey_UseRandomInput()
     return in_monkey->current.enabled;
 }
 
+
+bool g_MonkeyIsRunning;
+bool __cdecl Monkey_IsRunning()
+{
+#if defined(__ANDROID__)
+    return __atomic_load_n(&g_MonkeyIsRunning,__ATOMIC_ACQUIRE);
+#else
+    return g_MonkeyIsRunning;
+#endif
+}

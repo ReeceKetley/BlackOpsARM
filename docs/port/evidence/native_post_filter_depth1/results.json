@@ -1,0 +1,45 @@
+{
+  "fixture-0": {
+    "compile": 0,
+    "normal": {
+      "exit": 0,
+      "expected": true,
+      "release": false
+    }
+  },
+  "native-0": 0,
+  "fixture-1": {
+    "compile": 0,
+    "normal": {
+      "exit": 0,
+      "expected": true,
+      "release": true
+    },
+    "state": {
+      "exit": 3,
+      "expected": true,
+      "release": false
+    },
+    "get": {
+      "exit": 3,
+      "expected": true,
+      "release": true
+    },
+    "get-positive": {
+      "exit": 3,
+      "expected": true,
+      "release": true
+    },
+    "unbind": {
+      "exit": 3,
+      "expected": true,
+      "release": true
+    },
+    "restore": {
+      "exit": 3,
+      "expected": true,
+      "release": true
+    }
+  },
+  "native-1": 0
+}

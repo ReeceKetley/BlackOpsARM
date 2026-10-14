@@ -3,6 +3,9 @@
 #else
 #if defined(BO1_STARTUP_SERVICES)
 #include <platform/startup_services_api.h>
+#if defined(BO1_NATIVE_CBUF_EXECUTE)
+#include <universal/profile.h>
+#endif
 #else
 #include "cmd.h"
 
@@ -398,7 +401,7 @@ void __cdecl Cbuf_ExecuteBufferUI(int localClientNum, int controllerIndex, itemD
     Cbuf_ExecuteBufferInternal(localClientNum, controllerIndex, item, buffer, 0, 0);
 }
 
-#if !defined(BO1_STARTUP_SERVICES)
+#if !defined(BO1_STARTUP_SERVICES) || defined(BO1_NATIVE_CBUF_EXECUTE)
 void __cdecl Cbuf_Execute(int localClientNum, int controllerIndex)
 {
     PROF_SCOPED("Cbuf_Execute");

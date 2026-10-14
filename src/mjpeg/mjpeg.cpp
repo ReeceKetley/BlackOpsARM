@@ -8,6 +8,9 @@
 #include <tl/tl_system.h>
 #include <gfx_d3d/r_dvars.h>
 
+#if defined(__ANDROID__)
+#include "mjpeg_native.inl"
+#else
 struct mjpeg_render // sizeof=0x0
 {
 };
@@ -105,3 +108,5 @@ void __cdecl mjpeg_draw()
     }
 }
 
+
+#endif

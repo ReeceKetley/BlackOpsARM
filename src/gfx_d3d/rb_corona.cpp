@@ -1,4 +1,7 @@
 #include "rb_corona.h"
+#if defined(__ANDROID__)
+#include <platform/win32_compat/win32_time.h>
+#endif
 #include "rb_pixelcost.h"
 #include "rb_shade.h"
 #include "rb_stats.h"
@@ -554,7 +557,11 @@ unsigned int __cdecl RB_HW_ReadOcclusionQuery(IDirect3DQuery9 *query)
         hr = query->GetData(&pixelCount, 4, D3DGETDATA_FLUSH);
         if ( hr != 1 )
             break;
+#if defined(__ANDROID__)
+        bo1::win32::Sleep(0);
+#else
         Sleep(0);
+#endif
     }
     if ( hr >= 0 )
         return pixelCount;

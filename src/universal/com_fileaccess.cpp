@@ -2,21 +2,36 @@
 #include <qcommon/com_profilemapload.h>
 #include <string.h>
 #include "assertive.h"
+#if defined(BO1_NATIVE_COM_BOOT)
+#include <platform/common_boot_api.h>
+#include <platform/android/stdio_services.h>
+#include <cerrno>
+static int *_errno() { return &errno; }
+#else
 #include "q_shared.h"
+#endif
 
 unsigned int __cdecl FS_FileRead(void *ptr, unsigned int len, FILE *stream)
 {
     unsigned int read_size; // [esp+0h] [ebp-4h]
 
     ProfLoad_BeginTrackedValue(MAP_PROFILE_FILE_READ);
+    #if defined(__ANDROID__)
+    read_size = bo1::android::ReadStdio(ptr, len, stream);
+#else
     read_size = fread(ptr, 1u, len, stream);
+#endif
     ProfLoad_EndTrackedValue(MAP_PROFILE_FILE_READ);
     return read_size;
 }
 
 unsigned int __cdecl FS_FileWrite(const void *ptr, unsigned int len, FILE *stream)
 {
+#if defined(__ANDROID__)
+    return bo1::android::WriteStdio(ptr,len,stream);
+#else
     return fwrite(ptr, 1u, len, stream);
+#endif
 }
 
 FILE *__cdecl FileWrapper_Open(const char *ospath, const char *mode)
@@ -27,7 +42,11 @@ FILE *__cdecl FileWrapper_Open(const char *ospath, const char *mode)
     FILE *file; // [esp+0h] [ebp-4h]
 
     *_errno() = 0;
+    #if defined(__ANDROID__)
+    file = bo1::android::OpenStdio(ospath, mode);
+#else
     file = fopen(ospath, mode);
+#endif
     if ( file != (FILE *)-1 )
         return file;
     v3 = _errno();
@@ -94,7 +113,11 @@ FILE *__cdecl FS_FileOpenWriteText(const char *filename)
 
 void __cdecl FS_FileClose(FILE *stream)
 {
+#if defined(__ANDROID__)
+    bo1::android::CloseStdio(stream);
+#else
     fclose(stream);
+#endif
 }
 
 int __cdecl FS_FileSeek(FILE *file, int offset, int whence)

@@ -34,6 +34,45 @@
 #define R_CMD_BYTES(T, win32Bytes) (win32Bytes)
 #endif
 
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+#include <cstddef>
+#include <cstdlib>
+namespace {
+constexpr int R_NATIVE_COMMAND_ALIGNMENT = 8;
+constexpr int R_NATIVE_COMMAND_MAX_BYTES = 0xFFF8;
+#define R_CHECK_COMMAND_ALIGNMENT(T) static_assert(alignof(T) <= R_NATIVE_COMMAND_ALIGNMENT)
+R_CHECK_COMMAND_ALIGNMENT(GfxCmdHeader);
+R_CHECK_COMMAND_ALIGNMENT(GfxCmdStretchComposite);
+R_CHECK_COMMAND_ALIGNMENT(GfxCmdStretchPic);
+R_CHECK_COMMAND_ALIGNMENT(GfxCmdStretchPicRotateXY);
+R_CHECK_COMMAND_ALIGNMENT(GfxCmdStretchPicRotateST);
+R_CHECK_COMMAND_ALIGNMENT(GfxCmdDrawText2D);
+R_CHECK_COMMAND_ALIGNMENT(GfxCmdDrawQuadList2D);
+R_CHECK_COMMAND_ALIGNMENT(GfxCmdDrawQuadPic);
+R_CHECK_COMMAND_ALIGNMENT(GfxCmdSetCustomConstant);
+R_CHECK_COMMAND_ALIGNMENT(GfxCmdSetScissor);
+R_CHECK_COMMAND_ALIGNMENT(GfxCmdResolveComposite);
+R_CHECK_COMMAND_ALIGNMENT(GfxCmdPCCopyImageGenMIP);
+R_CHECK_COMMAND_ALIGNMENT(GfxCmdClearScreen);
+R_CHECK_COMMAND_ALIGNMENT(GfxCmdDrawEmblemLayer);
+R_CHECK_COMMAND_ALIGNMENT(GfxCmdProjectionSet);
+R_CHECK_COMMAND_ALIGNMENT(GfxCmdDrawFramed2D);
+#undef R_CHECK_COMMAND_ALIGNMENT
+static_assert(sizeof(GfxCmdHeader) == 4);
+int R_NativeTextCommandBytes(size_t characters) {
+    constexpr size_t prefix = offsetof(GfxCmdDrawText2D, text);
+    static_assert(sizeof(GfxCmdDrawText2D) <= R_NATIVE_COMMAND_MAX_BYTES);
+    if (characters > R_NATIVE_COMMAND_MAX_BYTES - prefix - 1) {
+        Com_Error(ERR_FATAL, "Native render text command exceeds actual 16-bit command span");
+        std::abort();
+    }
+    size_t bytes = prefix + characters + 1; // Own the complete text and NUL.
+    if (bytes < sizeof(GfxCmdDrawText2D)) bytes = sizeof(GfxCmdDrawText2D);
+    return static_cast<int>((bytes + 3) & ~size_t(3));
+}
+}
+#endif
+
 GfxBackEndData *frontEndDataOut;
 GfxCmdArray g_frontEndCmds[2];
 GfxBackEndData s_backEndData[2];
@@ -677,6 +716,15 @@ GfxCmdHeader *__cdecl R_GetCommandBuffer(GfxRenderCommand renderCmd, int bytes)
     {
         __debugbreak();
     }
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+    if (bytes < static_cast<int>(sizeof(GfxCmdHeader)) || bytes > R_NATIVE_COMMAND_MAX_BYTES) {
+        Com_Error(ERR_FATAL, "Native render command size %i cannot fit an aligned 16-bit span", bytes);
+        std::abort();
+    }
+    // Pad the actual record, not the next start. All walkers consume byteCount,
+    // so budgets, list starts and end markers must use the same aligned stride.
+    bytes = (bytes + R_NATIVE_COMMAND_ALIGNMENT - 1) & ~(R_NATIVE_COMMAND_ALIGNMENT - 1);
+#endif
     if ( bytes >= s_cmdList->byteSize
         && !Assert_MyHandler(
                     "C:\\projects_pc\\cod\\codsrc\\src\\gfx_d3d\\r_rendercmds.cpp",
@@ -709,6 +757,15 @@ GfxCmdHeader *__cdecl R_GetCommandBuffer(GfxRenderCommand renderCmd, int bytes)
     {
         __debugbreak();
     }
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+    if ((reinterpret_cast<uintptr_t>(s_cmdList->cmds) & (R_NATIVE_COMMAND_ALIGNMENT - 1)) ||
+        s_cmdList->usedTotal < 0 || s_cmdList->usedTotal > s_cmdList->byteSize ||
+        (s_cmdList->usedTotal & (R_NATIVE_COMMAND_ALIGNMENT - 1)) ||
+        s_cmdList->usedCritical < 0 || s_cmdList->usedCritical > s_cmdList->usedTotal) {
+        Com_Error(ERR_FATAL, "Native render command buffer base, stride or accounting is invalid");
+        std::abort();
+    }
+#endif
     if ( !rg.inFrame
         && !Assert_MyHandler("C:\\projects_pc\\cod\\codsrc\\src\\gfx_d3d\\r_rendercmds.cpp", 1322, 0, "%s", "rg.inFrame") )
     {
@@ -888,7 +945,6 @@ void R_ToggleSmpFrame()
     frontEndDataOut->textureOverrideCount = 0;
     frontEndDataOut->cloudCount = 0;
     frontEndDataOut->shaderConstantSetCount = 1;
-    extern volatile long g_scsFrameStamp;
     ++g_scsFrameStamp; // mod (L43): r_mod_scsShare: slots copied before this reset are stale
     frontEndDataOut->codeMeshPtr = &g_codeMesh[g_currCodeMesh];
     g_currCodeMesh = (g_currCodeMesh + 1) % 2;
@@ -1199,7 +1255,11 @@ GfxCmdDrawText2D *__cdecl AddBaseDrawTextCmd(
                 int cursorPos,
                 char cursor)
 {
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+    size_t len;
+#else
     unsigned int len; // [esp+10h] [ebp-Ch]
+#endif
     GfxCmdDrawText2D *cmd; // [esp+18h] [ebp-4h]
 
     if ( maxChars <= 0
@@ -1212,7 +1272,11 @@ GfxCmdDrawText2D *__cdecl AddBaseDrawTextCmd(
     if ( !*text && cursorPos < 0 )
         return 0;
     len = strlen(text);
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+    cmd = (GfxCmdDrawText2D *)R_GetCommandBuffer(RC_DRAW_TEXT_2D, R_NativeTextCommandBytes(len));
+#else
     cmd = (GfxCmdDrawText2D *)R_GetCommandBuffer(RC_DRAW_TEXT_2D, (len + R_CMD_BYTES(GfxCmdDrawText2D, 96)) & 0xFFFFFFFC);
+#endif
     if ( !cmd )
         return 0;
     cmd->x = x;
@@ -1673,7 +1737,11 @@ GfxCmdDrawText2D *__cdecl AddBaseDrawConsoleTextCmd(
     }
     if ( !charCount )
         return 0;
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+    cmd = (GfxCmdDrawText2D *)R_GetCommandBuffer(RC_DRAW_TEXT_2D, R_NativeTextCommandBytes(static_cast<size_t>(charCount)));
+#else
     cmd = (GfxCmdDrawText2D *)R_GetCommandBuffer(RC_DRAW_TEXT_2D, (charCount + R_CMD_BYTES(GfxCmdDrawText2D, 96)) & 0xFFFFFFFC);
+#endif
     if ( !cmd )
         return 0;
     cmd->x = x;
@@ -1855,8 +1923,13 @@ void __cdecl R_AddCmdDrawQuadPicW(const float (*verts)[2], float w, const float 
         cmd->material = defaultMaterial;
         for ( cornerIndex = 0; cornerIndex < 4; ++cornerIndex )
         {
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+            cmd->verts[cornerIndex][0] = verts[cornerIndex][0];
+            cmd->verts[cornerIndex][1] = verts[cornerIndex][1];
+#else
             cmd->verts[cornerIndex][0] = (*verts)[2 * cornerIndex];
             cmd->verts[cornerIndex][1] = (*verts)[2 * cornerIndex + 1];
+#endif
         }
         cmd->w = w;
         R_ConvertColorToBytes(color, (unsigned __int8 *)&cmd->color);

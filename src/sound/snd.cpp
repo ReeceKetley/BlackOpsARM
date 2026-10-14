@@ -19,7 +19,13 @@
 #include "snd_globals.h"
 #include "snd_bank.h"
 #include "snd_log.h"
-#include "snd_driver_xaudio2.h"
+#include "snd_driver_api.h"
+#if defined(__ANDROID__)
+#include <cstdio>
+#include <platform/android/file_services.h>
+#define _stricmp I_stricmp
+#define _snprintf std::snprintf
+#endif
 #include <cgame/cg_sound.h>
 #include "snd_debug.h"
 #include <qcommon/threads.h>
@@ -2836,7 +2842,11 @@ void __cdecl SND_Shutdown()
         SD_Shutdown();
         SND_LosOcclusionFini();
         memset(&g_snd, 0, sizeof(g_snd));
+#if defined(__ANDROID__)
+        SleepEx(1000,0);
+#else
         Sleep(1000);
+#endif
         Snd_StreamFini();
     }
 }

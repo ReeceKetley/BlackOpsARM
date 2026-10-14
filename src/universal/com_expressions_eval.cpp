@@ -1,4 +1,8 @@
+#include <platform/bo1_native_width.h>
 #include "com_expressions_eval.h"
+#if defined(__ANDROID__)
+#include <platform/android/legacy_crt.h>
+#endif
 #include "assertive.h"
 #include <ui/ui_localvars.h>
 #include <qcommon/com_clients.h>
@@ -5302,7 +5306,11 @@ void __cdecl GetClientInPlace(int localClientNum, itemDef_s *item, OperandStack 
     {
         __debugbreak();
     }
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+    clientNum = cgameGlob->scoreOrder[place - 1];
+#else
     clientNum = cgameGlob->teamPlayers[place + 3];
+#endif
     if ( (unsigned int)clientNum < 0x20 )
         result.internals.intVal = clientNum;
     AddOperandToStack(dataStack, &result);
@@ -14140,7 +14148,11 @@ char __cdecl EvaluateExpression(
         if ( type == 1 )
         {
             i->type = 2;
+            #if defined(__ANDROID__)
+            i->data.cmd = reinterpret_cast<void *>(rpnFunctions[Expression_GetFunctionForOp(i->data.cmdIdx)]);
+#else
             i->data.cmd = rpnFunctions[Expression_GetFunctionForOp(i->data.cmdIdx)];
+#endif
             ((void (__cdecl *)(const int, itemDef_s *, OperandStack *))i->data.cmd)(localClientNum, item, &dataStack);
             continue;
         }

@@ -1,5 +1,12 @@
 # BlackOpsARM Android ARM64 development
 
+Latest authentic startup/database work: see
+[native_database_registry_closure.md](native_database_registry_closure.md).
+Full43-pool registry and original file loader compile ARM64. Actual async file
+reads match both Windows ABIs; full startup integration still has unresolved
+services. Current tablet entry exits78 at DB_InitThread; Init/Frame are unfinished.
+The persistent game-data copy is reused; APK import/app-UID storage is TASK-0030.
+
 ## Scope and source baseline
 
 This is an Android scaffold with a bounded Phase 1 engine compilation audit.

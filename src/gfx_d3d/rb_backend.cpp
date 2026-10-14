@@ -1,4 +1,21 @@
 #include <universal/narrow32.h>
+#if defined(__ANDROID__) && defined(BO1_NATIVE_FULLSCREEN_TRIANGLE) && BO1_NATIVE_FULLSCREEN_TRIANGLE
+#include "platform/android/fullscreen_triangle.h"
+#endif
+#include <setjmp.h>
+#if defined(__ANDROID__)
+#include <platform/android/window_lifecycle.h>
+#if defined(__ANDROID__) && defined(BO1_NATIVE_FILTER_DEPTH_UNBIND) && BO1_NATIVE_FILTER_DEPTH_UNBIND
+#include "platform/android/post_filter_depth.h"
+#endif
+#include <platform/android/performance_overlay.h>
+#include <platform/android/performance_gpu_overlay.h>
+static bool RB_NativePerformanceSurface();
+#include <chrono>
+#include <atomic>
+#include <cstdio>
+#include <thread>
+#endif
 #include "rb_backend.h"
 #include "rb_stats.h"
 #include "r_image.h"
@@ -31,11 +48,15 @@
 #include <win32/win_net.h>
 #include <win32/win_common.h>
 #include <win32/win_main.h>
+#if defined(_WIN32)
 #include <win32/win_wndproc.h> // borderless: g_wv for bo1_testfocusloss
+#endif
 #include <client/cl_compositing.h>
 #include "r_pixelcost_load_obj.h"
 #include "r_setstate_d3d.h"
+#if defined(_WIN32)
 #include <intrin.h>
+#endif
 #include "r_streamalloc.h"
 #include "r_stream.h"
 #include "rb_resource.h"
@@ -600,6 +621,9 @@ void __cdecl RB_DrawFullScreenColoredQuad(
   if ( tess.indexCount )
     RB_EndTessSurface();
   R_Set2D(&gfxCmdBufSourceState);
+#if defined(__ANDROID__) && defined(BO1_NATIVE_FULLSCREEN_TRIANGLE) && BO1_NATIVE_FULLSCREEN_TRIANGLE
+  bo1::android::fullscreen_triangle::Scope triangleScope;
+#endif
   RB_DrawStretchPic(
     material,
     0.0,
@@ -628,6 +652,9 @@ void __cdecl RB_FullScreenFilter(const Material *material)
 
 void __cdecl RB_Filter(const Material *material, const GfxViewInfo *viewInfo)
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_FILTER_DEPTH_UNBIND) && BO1_NATIVE_FILTER_DEPTH_UNBIND
+    bo1::android::post_filter_depth::FilterScope filterDepthScope;
+#endif
     if ( (viewInfo->sceneComposition.renderingMode & 7) != 0 || viewInfo->isRenderingFullScreen )
         RB_FullScreenFilter(material);
     else
@@ -804,7 +831,11 @@ void __cdecl R_Resolve(GfxCmdBufContext context, GfxImage *image)
         context.state->prim.device->GetRenderTargetData(
             gfxRenderTargets[R_RENDERTARGET_FRAME_BUFFER].surface.color,
             gfxRenderTargets[R_RENDERTARGET_16BIT_SYSTEM].surface.color);
+#if defined(__ANDROID__)
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+#else
         Sleep(100);
+#endif
         surfd->LockRect(&rs, 0, 0);
         //((void(__thiscall *)(IDirect3DSurface9 *, IDirect3DSurface9 *, _D3DLOCKED_RECT *, _DWORD, _DWORD))surfd->LockRect)(
         //    surfd,
@@ -3776,7 +3807,12 @@ void __cdecl GlowColor(GfxColor *result, GfxColor baseColor, GfxColor forcedGlow
 {
     if ( (renderFlags & 0x20) != 0 )
     {
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+        result->array[1] = forcedGlowColor.array[1];
+        result->array[2] = forcedGlowColor.array[2];
+#else
         *(_WORD *)((char *)&result->packed + 1) = *(_WORD *)((char *)&forcedGlowColor.packed + 1);
+#endif
         result->array[0] = forcedGlowColor.array[0];
     }
     else
@@ -4583,6 +4619,11 @@ void __cdecl RB_ResetStatTracking(int viewIndex)
 {
     RB_Stats_UpdateMaxs(&g_frameStatsCur, &backEnd.frameStatsMax);
     memset((unsigned __int8 *)&g_frameStatsCur, 0, sizeof(g_frameStatsCur));
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+    // Local draw states copy and publish this embedded per-view accumulator.
+    // Reset its actual owner before the next view can inherit prior counts.
+    memset(&gfxCmdBufState.prim.frameStats, 0, sizeof(gfxCmdBufState.prim.frameStats));
+#endif
     g_viewStats = (GfxViewStats *)&g_frameStatsCur;
     if ( rg.globalstats )
         rg.stats = &rg.globalstats->views[viewIndex];
@@ -4592,6 +4633,13 @@ void __cdecl RB_ResetStatTracking(int viewIndex)
 
 void __cdecl RB_BeginFrame(GfxBackEndData *data)
 {
+#if defined(__ANDROID__)
+    // Begin before any scene/2D commands, including real loading/remote frames.
+    if (bo1::android::performance::Enabled() && RB_NativePerformanceSurface())
+        bo1::android::performance::gpu::Begin(dx.device);
+    else
+        bo1::android::performance::gpu::Release();
+#endif
     const char *v1; // eax
     int semaphore; // [esp+0h] [ebp-Ch]
     int hr; // [esp+4h] [ebp-8h]
@@ -4697,7 +4745,17 @@ void __cdecl RB_EndFrame(char drawType)
     }
 }
 
+#if defined(__ANDROID__)
+#include <platform/android/cpu_profile.h>
+#include <platform/android/legacy_crt.h>
+#include <platform/win32_compat/win32_time.h>
+using BO1RenderPerfCounter = bo1::win32::LARGE_INTEGER;
+using bo1::win32::QueryPerformanceCounter;
+using bo1::win32::QueryPerformanceFrequency;
+#else
+using BO1RenderPerfCounter = LARGE_INTEGER;
 #include <tlhelp32.h>
+#endif
 
 // zombies (p1 chunk 25): per render frame GPU / Present timing and resource counts for bo1_frameperf (measurement
 // only; nothing runs unless g_bo1ProfOn). One ring entry per Present (universal/profile.h g_bo1RenderRing); the GPU
@@ -4712,16 +4770,16 @@ struct BO1GpuQuerySet
     IDirect3DQuery9 *end;
     IDirect3DQuery9 *mark[BO1_GPU_SEGS - 1];
     unsigned int markMask; // marks issued this frame
-    long frame; // frame the set measures, 0 = free
+    BO1RenderCounter frame; // frame the set measures, 0 = free
 };
 const int BO1_GPU_SETS = 8;
 BO1GpuQuerySet s_kgq[BO1_GPU_SETS];
 bool s_kgqInit, s_kgqFailed;
 int s_kgqOpen = -1;
-long s_kgFrame, s_kgResolveNext = 1;
+BO1RenderCounter s_kgFrame, s_kgResolveNext = 1;
 long long s_kgLastSwapEnd;
 unsigned long long s_kgLastEndTs;
-long s_kgLastEndFrame;
+BO1RenderCounter s_kgLastEndFrame;
 
 void RB_BO1GpuInit()
 {
@@ -4846,14 +4904,19 @@ void RB_BO1GpuFrameEnd(long frame)
 
 long long RB_BO1Qpc()
 {
-    LARGE_INTEGER t;
+    BO1RenderPerfCounter t;
     QueryPerformanceCounter(&t);
     return t.QuadPart;
 }
 
 // Before Present: close this frame's queries. Returns the QPC time Present starts at.
 unsigned long long s_kgThreadCycles, s_kgProcCycles, s_kgMainCycles;
+#if defined(__ANDROID__)
+bo1::android::CpuThread *s_kgMainThread;
+bool s_nativeRenderBefore, s_nativeProcessBefore, s_nativeMainBefore;
+#else
 HANDLE s_kgMainThread;
+#endif
 long long s_kgCalQpc;
 unsigned long long s_kgCalTsc;
 double s_kgCyclesPerMs;
@@ -4864,7 +4927,12 @@ double s_kgCyclesPerMs;
 struct BO1ThreadInfo
 {
     DWORD id;
+#if defined(__ANDROID__)
+    bo1::android::CpuThread *handle;
+    bool valid;
+#else
     HANDLE handle;
+#endif
     char start[40];
     unsigned long long cycles;
 };
@@ -4875,6 +4943,57 @@ long long s_ktRefreshQpc;
 int s_ktRefreshes;
 bool s_ktRefreshed; // this frame (the snapshot costs ~25 ms on the render thread)
 
+#if defined(__ANDROID__)
+void RB_BO1ThreadsRefresh()
+{
+    unsigned ids[BO1_MAX_THREADS]; std::size_t count=0;
+    if(!bo1::android::EnumerateCpuThreads(ids,BO1_MAX_THREADS,&count))return;
+    BO1ThreadInfo fresh[BO1_MAX_THREADS]{}; int n=0;
+    for(std::size_t i=0;i<count;++i) {
+        auto *handle=bo1::android::OpenCpuThread(ids[i]);
+        if(!handle)continue; // A task can exit between enumeration and open.
+        if(!bo1::android::CpuThreadName(handle,fresh[n].start,sizeof(fresh[n].start))) {
+            bo1::android::CloseCpuThread(handle);continue;
+        }
+        fresh[n].id=ids[i];fresh[n].handle=handle;++n;
+    }
+    for(int i=0;i<s_ktCount;++i)bo1::android::CloseCpuThread(s_ktThreads[i].handle);
+    memcpy(s_ktThreads,fresh,sizeof(BO1ThreadInfo)*n);s_ktCount=n;
+}
+void RB_BO1ThreadsBefore(long long now,double toMs)
+{
+    s_ktRefreshed=false;
+    if(!s_ktRefreshQpc || (double)(now-s_ktRefreshQpc)*toMs>2000.0) {
+        RB_BO1ThreadsRefresh();s_ktRefreshQpc=now;s_ktRefreshed=true;
+    }
+    for(int i=0;i<s_ktCount;++i) {
+        std::uint64_t value=0;
+        s_ktThreads[i].valid=bo1::android::ReadCpuThread(s_ktThreads[i].handle,&value);
+        if(s_ktThreads[i].valid)s_ktThreads[i].cycles=value;
+    }
+}
+void RB_BO1ThreadsAfter(char *out,int size,double unitsPerMs)
+{
+    int top[3]={-1,-1,-1};double topMs[3]={};
+    for(int i=0;i<s_ktCount;++i) {
+        std::uint64_t value=0;
+        if(!s_ktThreads[i].valid || !bo1::android::ReadCpuThread(s_ktThreads[i].handle,&value)
+            || value<s_ktThreads[i].cycles)continue;
+        const double ms=static_cast<double>(value-s_ktThreads[i].cycles)/unitsPerMs;
+        for(int k=0;k<3;++k)if(ms>topMs[k]) {
+            for(int j=2;j>k;--j){top[j]=top[j-1];topMs[j]=topMs[j-1];}
+            top[k]=i;topMs[k]=ms;break;
+        }
+    }
+    out[0]=0;int length=0;
+    for(int k=0;k<3 && top[k]>=0;++k) {
+        const auto &thread=s_ktThreads[top[k]];
+        const int written=std::snprintf(out+length,size-length,"%s%s%s:%.1f",k?" ":"",thread.start,
+            thread.id==BO1_ProfileThreadId()?"(render)":thread.id==g_bo1ProfMainThread?"(main)":"",topMs[k]);
+        if(written<0 || written>=size-length){out[length]=0;break;}length+=written;
+    }
+}
+#else
 void RB_BO1ThreadStart(HANDLE h, char *out, int size)
 {
     typedef LONG(WINAPI * NtQueryInformationThreadFn)(HANDLE, int, PVOID, ULONG, PULONG);
@@ -4998,11 +5117,25 @@ void RB_BO1ThreadsAfter(char *out, int size, double cyclesPerMs)
     }
 }
 
+#endif
+
 long long RB_BO1PresentBegin()
 {
     if (!s_kgqInit)
         RB_BO1GpuInit();
     RB_BO1GpuFrameEnd(s_kgFrame + 1);
+#if defined(__ANDROID__)
+    std::uint64_t render=0,process=0,main=0;
+    s_nativeRenderBefore=bo1::android::CurrentCpuNanoseconds(&render);
+    s_nativeProcessBefore=bo1::android::ProcessCpuNanoseconds(&process);
+    if(!s_kgMainThread && g_bo1ProfMainThread)s_kgMainThread=bo1::android::OpenCpuThread(g_bo1ProfMainThread);
+    s_nativeMainBefore=s_kgMainThread && bo1::android::ReadCpuThread(s_kgMainThread,&main);
+    if(s_kgMainThread && !s_nativeMainBefore) {
+        bo1::android::CloseCpuThread(s_kgMainThread);s_kgMainThread=nullptr;
+    }
+    s_kgThreadCycles=render;s_kgProcCycles=process;s_kgMainCycles=main;
+    s_kgCyclesPerMs=1000000.0;
+#else
     QueryThreadCycleTime(GetCurrentThread(), &s_kgThreadCycles);
     QueryProcessCycleTime(GetCurrentProcess(), &s_kgProcCycles);
     if (!s_kgMainThread && g_bo1ProfMainThread)
@@ -5010,10 +5143,11 @@ long long RB_BO1PresentBegin()
     s_kgMainCycles = 0;
     if (s_kgMainThread)
         QueryThreadCycleTime(s_kgMainThread, &s_kgMainCycles);
+#endif
     const long long now = RB_BO1Qpc();
     if (s_kgCyclesPerMs)
     {
-        LARGE_INTEGER freq;
+        BO1RenderPerfCounter freq;
         QueryPerformanceFrequency(&freq);
         RB_BO1ThreadsBefore(now, 1000.0 / (double)freq.QuadPart);
     }
@@ -5025,15 +5159,24 @@ void RB_BO1PresentEnd(long long presentStart)
 {
     const long long now = RB_BO1Qpc();
     unsigned long long threadCycles = 0, procCycles = 0;
+#if defined(__ANDROID__)
+    std::uint64_t render=0,process=0,main=0;
+    const bool renderValid=bo1::android::CurrentCpuNanoseconds(&render) && s_nativeRenderBefore && render>=s_kgThreadCycles;
+    const bool processValid=bo1::android::ProcessCpuNanoseconds(&process) && s_nativeProcessBefore && process>=s_kgProcCycles;
+    const bool mainValid=s_kgMainThread && bo1::android::ReadCpuThread(s_kgMainThread,&main) && s_nativeMainBefore && main>=s_kgMainCycles;
+    threadCycles=render;procCycles=process;unsigned long long mainCycles=main;
+#else
     QueryThreadCycleTime(GetCurrentThread(), &threadCycles);
     QueryProcessCycleTime(GetCurrentProcess(), &procCycles);
     unsigned long long mainCycles = 0;
     if (s_kgMainThread)
         QueryThreadCycleTime(s_kgMainThread, &mainCycles);
-    LARGE_INTEGER freq;
+#endif
+    BO1RenderPerfCounter freq;
     QueryPerformanceFrequency(&freq);
     const double toMs = 1000.0 / (double)freq.QuadPart;
     // cycle counts are in TSC units; calibrate TSC per ms against QPC over the run (re-measured after 1 s, then fixed)
+#if !defined(__ANDROID__)
     if (!s_kgCalQpc)
     {
         s_kgCalQpc = now;
@@ -5043,7 +5186,8 @@ void RB_BO1PresentEnd(long long presentStart)
     {
         s_kgCyclesPerMs = (double)(__rdtsc() - s_kgCalTsc) / ((double)(now - s_kgCalQpc) * toMs);
     }
-    const long f = ++s_kgFrame;
+#endif
+    const BO1RenderCounter f = ++s_kgFrame;
     BO1RenderFrame *e = &g_bo1RenderRing[f % BO1_RENDER_RING];
     _InterlockedExchange(&e->frame, 0);
     e->state = s_kgqFailed ? 2 : 0;
@@ -5052,9 +5196,15 @@ void RB_BO1PresentEnd(long long presentStart)
     e->gpuMs = -1.0f;
     e->gpuEndDeltaMs = -1.0f;
     e->availMB = dx.device->GetAvailableTextureMem() >> 20;
+#if defined(__ANDROID__)
+    e->presentCpuMs=renderValid?static_cast<float>((threadCycles-s_kgThreadCycles)/1000000.0):-1.0f;
+    e->presentProcMs=processValid?static_cast<float>((procCycles-s_kgProcCycles)/1000000.0):-1.0f;
+    e->presentMainMs=mainValid?static_cast<float>((mainCycles-s_kgMainCycles)/1000000.0):-1.0f;
+#else
     e->presentCpuMs = s_kgCyclesPerMs ? (float)((double)(threadCycles - s_kgThreadCycles) / s_kgCyclesPerMs) : -1.0f;
     e->presentProcMs = s_kgCyclesPerMs ? (float)((double)(procCycles - s_kgProcCycles) / s_kgCyclesPerMs) : -1.0f;
     e->presentMainMs = s_kgCyclesPerMs && s_kgMainCycles ? (float)((double)(mainCycles - s_kgMainCycles) / s_kgCyclesPerMs) : -1.0f;
+#endif
     for (int k = 0; k < BO1_RC_KINDS; ++k)
         e->counts[k] = _InterlockedExchange(&g_bo1RenderCount[k], 0);
     for (float &seg : e->gpuSeg)
@@ -5063,7 +5213,11 @@ void RB_BO1PresentEnd(long long presentStart)
     if (s_kgCyclesPerMs && s_ktCount && e->presentMs >= 10.0f)
         RB_BO1ThreadsAfter(e->threads, sizeof(e->threads), s_kgCyclesPerMs);
     else if (s_ktRefreshed)
+#if defined(__ANDROID__)
+        std::snprintf(e->threads,sizeof(e->threads),"thread list refreshed");
+#else
         strcpy_s(e->threads, "thread list refreshed");
+#endif
     for (int k = 0; k < BO1_FIRST_KINDS; ++k)
         e->first[k] = _InterlockedExchange(&g_bo1RenderFirstUse[k], 0);
     _InterlockedExchange(&e->frame, f);
@@ -5076,6 +5230,9 @@ void RB_BO1PresentEnd(long long presentStart)
 // First issue per frame of GPU phase mark idx (the main view; later views of the frame do not move it).
 void RB_BO1GpuMark(int idx)
 {
+#if defined(__ANDROID__)
+    bo1::android::performance::gpu::Mark(idx);
+#endif
     if (!g_bo1ProfOn || s_kgqFailed || s_kgqOpen < 0 || idx < 0 || idx >= BO1_GPU_SEGS - 1)
         return;
     BO1GpuQuerySet &q = s_kgq[s_kgqOpen];
@@ -5119,8 +5276,14 @@ static HRESULT RB_BO1TestLostDeviceFilter(HRESULT hr)
     if ( s_bo1TestLostCloseAt && (int)(Sys_Milliseconds() - (unsigned int)s_bo1TestLostCloseAt) >= 0 )
     {
         s_bo1TestLostCloseAt = 0;
+#if defined(__ANDROID__)
+        Com_Printf(8, "BO1_LOSTDEVICE: requesting native engine quit\n");
+        Sys_SetQuitRequested();
+        Sys_SetWin32QuitEvent();
+#else
         Com_Printf(8, "BO1_LOSTDEVICE: posting WM_CLOSE to the game window\n");
         PostMessageA(dx.windows[0].hwnd, WM_CLOSE, 0, 0);
+#endif
     }
     if ( (int)(Sys_Milliseconds() - (unsigned int)s_bo1TestLostUntil) < 0 )
         return D3DERR_DEVICELOST;
@@ -5135,6 +5298,47 @@ static HRESULT RB_BO1TestLostDeviceFilter(HRESULT hr)
 // BO1_FOCUSLOSS lines log whether the device was lost, the window minimized or moved, or the display mode changed.
 // A headless client's window sits on a private desktop that never has the real focus, and its device is 9Ex; the real
 // non-Ex focus change is the user's to check. Test evidence only; off (0) by default.
+#if defined(__ANDROID__)
+static void RB_NativeWindowCheckpoint()
+{
+    auto *window=reinterpret_cast<SDL_Window *>(dx.windows[dx.targetWindowIndex].hwnd);
+    // The actual input/UI producer publishes desired cursor state through the
+    // SDL owner service's atomic request. Do not reread the Windows-only plain
+    // g_showCursor global here or overwrite a request from another thread.
+    bo1::android::PumpSDLEventsIfOwner();
+    bo1::android::WindowLifecycleState state;
+    if(!bo1::android::ReadSDLWindow(window,&state))
+        Com_Error(ERR_FATAL,"Renderer requires an attached SDL window and event owner\n");
+    if(state.closing)Sys_SetQuitRequested();
+}
+static void RB_BO1FocusLossFrame(HRESULT presentHr)
+{
+    static int seen,until,phase,frames,failures;
+    const int value=bo1_testfocusloss?bo1_testfocusloss->current.integer:0;
+    auto *window=reinterpret_cast<SDL_Window *>(dx.windows[dx.targetWindowIndex].hwnd);
+    if(!phase) {
+        if(value==seen)return;seen=value;if(value<=0)return;
+        if(!bo1::android::PushSDLFocus(window,false))
+            Com_Error(ERR_FATAL,"SDL focus diagnostic requires live owner and accepted event\n");
+        until=Sys_Milliseconds()+value;phase=1;frames=failures=0;
+        Com_Printf(8,"BO1_FOCUSLOSS: queued native logical SDL focus loss for %d ms\n",value);
+        return;
+    }
+    ++frames;if(presentHr!=D3D_OK)++failures;
+    bo1::android::WindowLifecycleState state;
+    if(!bo1::android::ReadSDLWindow(window,&state))
+        Com_Error(ERR_FATAL,"SDL focus diagnostic lost its window owner\n");
+    if(phase==2) {
+        if(!state.focused)return; // Wait for delivery by the actual SDL owner.
+        Com_Printf(8,"BO1_FOCUSLOSS: native return observed: focused %d foreground %d flags %u\n",state.focused,state.foreground,state.flags);
+        phase=0;return;
+    }
+    if(static_cast<int>(Sys_Milliseconds()-static_cast<unsigned>(until))<0)return;
+    Com_Printf(8,"BO1_FOCUSLOSS: native frames %d Present failures %d focused %d foreground %d flags %u\n",frames,failures,state.focused,state.foreground,state.flags);
+    if(!bo1::android::PushSDLFocus(window,true))Com_Error(ERR_FATAL,"Cannot queue native SDL focus return\n");
+    phase=2;
+}
+#else
 extern int in_appactive; // win_input.cpp
 static int s_bo1FocusSeen;
 static int s_bo1FocusPhase; // 0 idle, 1 focus lost, 2 returned (logged on the next frame)
@@ -5228,13 +5432,64 @@ static void RB_BO1FocusLossFrame(HRESULT presentHr)
     s_bo1FocusPhase = 2;
 }
 
+#endif
+
+#if defined(__ANDROID__)
+// A bounded observation of the actual API return, not screen-delivery readiness.
+// ReadSDLWindow copies the real owner-published lifecycle state under its mutex;
+// it makes no SDL calls and may be read by the render backend owner.
+__attribute__((no_instrument_function)) static void RB_NativeNotePresentReturn(HRESULT status)
+{
+    static std::atomic<unsigned> samples{};
+    if (status != S_OK || samples.load(std::memory_order_relaxed) >= 3)
+        return;
+    const GfxWindowTarget &target = dx.windows[dx.targetWindowIndex];
+    bo1::android::WindowLifecycleState window{};
+    if (!bo1::android::ReadSDLWindow(reinterpret_cast<SDL_Window *>(target.hwnd), &window)
+        || !window.foreground || window.closing || window.width <= 0 || window.height <= 0)
+        return;
+    const unsigned sample = samples.fetch_add(1, std::memory_order_relaxed);
+    if (sample >= 3)
+        return;
+    std::fprintf(stderr,
+        "BO1_NATIVE_PRESENT_RETURN sample=%u hr=0x%08x window_id=%u window=%dx%d target=%dx%d foreground=%d focused=%d closing=%d flags=0x%08x remote_nesting=%d remote_rendering=%d backend_frame=%u thread=%lu\n",
+        sample + 1, static_cast<unsigned>(status), window.windowId, window.width, window.height,
+        target.width, target.height, window.foreground, window.focused, window.closing, window.flags,
+        r_glob.remoteScreenUpdateNesting, r_glob.isRenderingRemoteUpdate,
+        static_cast<unsigned>(r_glob.backEndFrameCount), BO1_ProfileThreadId());
+}
+// Measurement only: the real attached foreground positive-size surface and actual
+// successful Present path gate submission rate. No compositor-delivery claim.
+__attribute__((no_instrument_function)) static bool RB_NativePerformanceSurface()
+{
+    if (dx.targetWindowIndex < 0 || dx.targetWindowIndex >= dx.windowCount) return false;
+    const GfxWindowTarget &target = dx.windows[dx.targetWindowIndex];
+    bo1::android::WindowLifecycleState window{};
+    return bo1::android::ReadSDLWindow(reinterpret_cast<SDL_Window *>(target.hwnd), &window)
+        && window.foreground && window.focused && !window.closing && window.windowId
+        && window.width > 0 && window.height > 0 && target.width > 0 && target.height > 0
+        && (window.flags & SDL_WINDOW_SHOWN) && !(window.flags & (SDL_WINDOW_HIDDEN | SDL_WINDOW_MINIMIZED));
+}
+__attribute__((no_instrument_function)) static void RB_NativePerformancePresent(HRESULT status)
+{
+    if (!bo1::android::performance::Enabled()) {
+        bo1::android::performance::gpu::Release();
+        return;
+    }
+    const bool active = status == S_OK && RB_NativePerformanceSurface();
+    bo1::android::performance::Present(active);
+    bo1::android::performance::gpu::Presented(active);
+}
+#endif
 void RB_SwapBuffers()
 {
     unsigned __int8 stereoActivated; // [esp+2Fh] [ebp-2Dh] BYREF
     int semaphore; // [esp+30h] [ebp-2Ch]
     int actualShow; // [esp+34h] [ebp-28h]
     HRESULT hr; // [esp+38h] [ebp-24h]
+#if !defined(__ANDROID__)
     tagMSG msg; // [esp+3Ch] [ebp-20h] BYREF
+#endif
     int desiredShow; // [esp+58h] [ebp-4h]
 
     PROF_SCOPED("RB_SwapBuffers"); // ADD
@@ -5247,9 +5502,26 @@ void RB_SwapBuffers()
         const bool bo1Perf = g_bo1ProfOn; // p1: bo1_frameperf GPU / Present timing (measurement only)
         const long long bo1PresentStart = bo1Perf ? RB_BO1PresentBegin() : 0;
         if (rg.renderHiResShot || dx.resizeWindow)
+#if defined(__ANDROID__)
+        {
+            bo1::android::performance::Present(false);
+            bo1::android::performance::gpu::Release();
             hr = 0;
+        }
+#else
+            hr = 0;
+#endif
         else
+        {
+#if defined(__ANDROID__)
+            bo1::android::performance::gpu::BeforePresent();
+#endif
             hr = dx.windows[dx.targetWindowIndex].swapChain->Present(0, 0, 0, 0, 0);
+#if defined(__ANDROID__)
+            RB_NativeNotePresentReturn(hr);
+            RB_NativePerformancePresent(hr);
+#endif
+        }
         if ( bo1Perf )
             RB_BO1PresentEnd(bo1PresentStart);
         // zombies: a headless client's 9Ex swap chain (r_init.cpp) sits on a desktop that is never shown, so every
@@ -5301,6 +5573,9 @@ void RB_SwapBuffers()
     {
         PROF_SCOPED("Win32 Msg Pump"); // ADD
 
+#if defined(__ANDROID__)
+        RB_NativeWindowCheckpoint();
+#else
         desiredShow = g_showCursor - 1;
         for (actualShow = ShowCursor(g_showCursor); actualShow != desiredShow; actualShow = ShowCursor(actualShow < desiredShow))
             ;
@@ -5312,9 +5587,19 @@ void RB_SwapBuffers()
             TranslateMessage(&msg);
             DispatchMessageA(&msg);
         }
+#endif
     }
 
     dx.nvStereoActivated = 0;
+#if defined(__ANDROID__)
+    // Native DXVK has no initialized Windows NVAPI stereo service/handle.
+    // Unexpected publication is an ownership error, never a successful probe.
+    iassert(!dx.nvStereoHandle);
+    if (dx.nvStereoHandle) {
+        Com_Error(ERR_FATAL,"Native renderer received an unavailable NVAPI stereo handle");
+        __builtin_trap();
+    }
+#else
     if ( dx.nvStereoHandle )
     {
         stereoActivated = 0;
@@ -5328,6 +5613,7 @@ void RB_SwapBuffers()
         NvAPI_Stereo_SetConvergence(dx.nvStereoHandle, r_convergence->current.value);
     }
 
+#endif
     if ( hr == -2005530520 )
     {
         const int lostSinceMs = Sys_Milliseconds();
@@ -5368,6 +5654,9 @@ void RB_SwapBuffers()
 
             PROF_SCOPED("(#2) Win32 Msg Pump"); // ADD
 
+#if defined(__ANDROID__)
+            RB_NativeWindowCheckpoint();
+#else
             while ( PeekMessageA(&msg, 0, 0, 0, 0) )
             {
                 if ( !GetMessageA(&msg, 0, 0, 0) )
@@ -5377,6 +5666,7 @@ void RB_SwapBuffers()
                 DispatchMessageA(&msg);
             }
 
+            #endif
             // zombies L5 (BO1Zombies's own; SP 0x006EB3A8 waits here forever too): a quit or window close while the
             // device stays lost cannot finish - every quit path waits for this thread, and a full-screen exclusive
             // device only comes back once the window is active again. Give a quit the main thread runs itself
@@ -5795,7 +6085,13 @@ void __cdecl RB_UpdateDynamicBuffers(GfxBackEndData *backendData)
     *backendData->dynamicBufferCurrentFrame = 0;
 }
 
+#if defined(__ANDROID__)
+// This render-thread scratch pointer has no external users; avoid colliding
+// with the unrelated water simulation's canonical global named data.
+static const void *data;
+#else
 const void *data;
+#endif
 void     RB_RenderThread(unsigned int threadContext)
 {
     void *Value; // eax

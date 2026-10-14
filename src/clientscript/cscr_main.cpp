@@ -632,13 +632,28 @@ void __cdecl Scr_EndLoadScripts(scriptInstance_t inst)
     gScrCompilePub[inst].builtinMeth = 0;
 }
 
+#if defined(__ANDROID__)
+// Preserve the allocator function type through the canonical synchronous body.
+template <typename Allocator> static void Scr_PrecacheAnimTreesInternal(scriptInstance_t inst, Allocator Alloc, int user, bool modChecksum)
+#else
 void __cdecl Scr_PrecacheAnimTrees(scriptInstance_t inst, void *(__cdecl *Alloc)(int), int user, bool modChecksum)
+#endif
 {
     unsigned int i; // [esp+0h] [ebp-4h]
 
     for (i = 1; i <= gScrAnimPub[inst].xanim_num[user]; ++i)
         Scr_LoadAnimTreeAtIndex(inst, i, Alloc, user, modChecksum);
 }
+#if defined(__ANDROID__)
+void __cdecl Scr_PrecacheAnimTrees(scriptInstance_t inst, void *(__cdecl *Alloc)(int), int user, bool modChecksum)
+{
+    Scr_PrecacheAnimTreesInternal(inst, Alloc, user, modChecksum);
+}
+void __cdecl Scr_PrecacheAnimTrees(scriptInstance_t inst, void *(__cdecl *Alloc)(unsigned int), int user, bool modChecksum)
+{
+    Scr_PrecacheAnimTreesInternal(inst, Alloc, user, modChecksum);
+}
+#endif
 
 void __cdecl Scr_EndLoadAnimTrees(scriptInstance_t inst)
 {

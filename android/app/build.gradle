@@ -2,6 +2,19 @@ plugins {
     id "com.android.application"
 }
 
+// An explicit reviewed native staging directory lets development APKs reuse the
+// same production build used on the tablet. Normal builds use the source recipe.
+def nativeStage = providers.gradleProperty("bo1NativePrebuiltDir").orNull
+def nativeLibraries = ["blackopsarm_engine", "blackopsarm_environment", "SDL2", "dxvk_d3d9", "steam_api",
+                       "bo1_native_shader_compiler", "clang_rt.ubsan_standalone-aarch64-android"]
+if (nativeStage != null) {
+    nativeLibraries.each { name ->
+        if (!file("${nativeStage}/arm64-v8a/lib${name}.so").isFile()) {
+            throw new GradleException("Missing actual native library: ${name}")
+        }
+    }
+}
+
 android {
     namespace "com.blackopsarm.dev"
     compileSdk 35
@@ -17,12 +30,38 @@ android {
         ndk {
             abiFilters "arm64-v8a"
         }
+        if (nativeStage == null) {
+            externalNativeBuild {
+                cmake {
+                    targets "blackopsarm_engine", "blackopsarm_environment"
+                    arguments "-DANDROID_PLATFORM=android-28"
+                    cppFlags "-O0 -g"
+                }
+            }
+        }
     }
 
-    externalNativeBuild {
-        cmake {
-            path file("../../src/platform/android/CMakeLists.txt")
-            version "3.22.1"
+    if (nativeStage == null) {
+        externalNativeBuild {
+            cmake {
+                path file("../../src/platform/android/CMakeLists.txt")
+                version "3.22.1"
+            }
+        }
+    }
+
+    sourceSets {
+        main {
+            java.srcDirs += ["../../../DXVK-Native/third_party/SDL/android-project/app/src/main/java"]
+            if (nativeStage != null) jniLibs.srcDirs = [nativeStage]
+        }
+    }
+
+    packaging {
+        jniLibs {
+            useLegacyPackaging true
+            // Keep matching debug/UBSan symbols in this development package.
+            keepDebugSymbols += ["**/*.so"]
         }
     }
 

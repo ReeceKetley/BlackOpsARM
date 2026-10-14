@@ -1,6 +1,7 @@
 #include "gdt_remote.h"
 
 #include <cstring>
+#include <cstdlib>
 #include <bgame/bg_weapons_load_obj.h>
 #include <ctype.h>
 #include <physics/physconstraints_load_obj.h>
@@ -56,6 +57,28 @@ bool __cdecl GDT_RemoteWeaponUpdate(const char *in)
 
 const char *__cdecl GDTCmd_NextToken(const char *src, char *dst, unsigned int len)
 {
+#if defined(__ANDROID__)
+  if (!dst || !len) {
+    Com_Error(ERR_FATAL, "GDT token requires a nonempty destination");
+    std::abort();
+  }
+  dst[0] = 0;
+  if (!src) return nullptr;
+  unsigned int end = 0;
+  while (end < len && src[end]) ++end;
+  if (end == len) {
+    Com_Error(ERR_FATAL, "GDT token input exceeds its bounded command record");
+    std::abort();
+  }
+  unsigned int cursor = 0;
+  while (cursor < end && isspace(static_cast<unsigned char>(src[cursor]))) ++cursor;
+  unsigned int written = 0;
+  while (cursor < end && !isspace(static_cast<unsigned char>(src[cursor])))
+    dst[written++] = src[cursor++];
+  dst[written] = 0;
+  while (cursor < end && isspace(static_cast<unsigned char>(src[cursor]))) ++cursor;
+  return cursor < end ? src + cursor : nullptr;
+#else
   unsigned int start; // [esp+0h] [ebp-8h]
   unsigned int i; // [esp+4h] [ebp-4h]
   unsigned int ia; // [esp+4h] [ebp-4h]
@@ -82,6 +105,7 @@ const char *__cdecl GDTCmd_NextToken(const char *src, char *dst, unsigned int le
     return &src[ia];
   else
     return 0;
+#endif
 }
 
 bool __cdecl GDT_RemoteFlametableUpdate(const char *in)
@@ -378,6 +402,20 @@ char __cdecl ProcessGDTCmds()
   int i; // [esp+8Ch] [ebp-4h]
 
   Sys_EnterCriticalSection(CRITSECT_GDT_COMMAND);
+#if defined(__ANDROID__)
+  if (GDTCommandCount < 0 || GDTCommandCount > 4) {
+    Sys_LeaveCriticalSection(CRITSECT_GDT_COMMAND);
+    Com_Error(ERR_FATAL, "GDT saved command count is out of bounds");
+    std::abort();
+  }
+  for (int slot = 0; slot < GDTCommandCount; ++slot) {
+    if (!std::memchr(GDTCommands[slot], 0, sizeof(GDTCommands[slot]))) {
+      Sys_LeaveCriticalSection(CRITSECT_GDT_COMMAND);
+      Com_Error(ERR_FATAL, "GDT saved command is unterminated");
+      std::abort();
+    }
+  }
+#endif
   for ( j = 0; j < GDTCommandCount; ++j )
   {
     strCommand = GDTCmd_NextToken(GDTCommands[j], assetType, 0x80u);

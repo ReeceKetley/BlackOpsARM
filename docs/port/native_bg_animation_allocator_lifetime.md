@@ -1,0 +1,14 @@
+# Animation parser lifetime and native allocator contract
+
+2026-10-13. Canonical BG_LoadAnim passed bgs->AllocXAnim, whose actual type is void*(*)(unsigned int), to the signed script-animation allocator API using a cast. The native script/XAnim chain now has exact typed overloads, so Android BG_LoadAnim forwards the original unsigned provider directly. It does not capture or replace a provider. The existing thread/allocator checks and Windows calls remain.
+
+A concrete independent lifetime issue is also repaired on Android. BG_LoadAnim published its local LargeLocal parser rows through g_pLoadAnims, then returned and released that scratch region. Actual callers next run SP actor-tree lookup and BG_PostLoadAnim, whose finalization still reads those rows. Native parser storage now comes from the actual bgs map animation allocator, so its owning arena remains alive through these consumers and retires with the original map arena. It allocates exactly sizeof(loadAnim_t)*1024; the fixed pointer-free record size/VM animation handle does not change. No arbitrary arena growth or new allocator is introduced.
+
+Native new-row insertion checks the actual1024-record capacity and64-byte name field before taking the record address/copying. It retains duplicate lookup and actual Scr_FindAnim publication. Errors remain explicit; Windows keeps the original body.
+
+Verification: actual canonical native BG whole TU compile0 in build-android-audit/native_registry_closure/bg-anim-owner1.log, and normal Windows x86/x64 whole TU both0 under build-android-audit/takeover_bg_anim_owner_windows1. Production BG_LoadAnim/PostLoad coverage is pending the next real map run. These checks do not prove script compilation or a completed animation/game frame.
+
+Related coordinated owners: native_anim_unsigned_allocator_integration.md (script propagation), native_cgame_anim_callbacks.md (fixed client allocation/free adapters), and XAnim owner's pending creator/registry report. No new source/CMake selection or test exclusion is needed.
+## Actual full419 integration scope
+
+Matching full419 ELF resolves G_InitGame1008 at G_LoadAnimTreeInstances. The canonical call sequence immediately preceding it is GScr_LoadScripts, BG_LoadAnim, G_SP_FindActorAnimTree, BG_PostLoadAnim. Those calls returned during genuine Kino initialization before the next actor-tree callback UBSan boundary. The root typed BG allocator and parser-row storage lifetime therefore have production integration through the real postload consumer, beyond the earlier source/fixture-only evidence. This does not prove actor tree creation, map-main execution, simulation or rendered play. Preserve full-engine419-honor-zombies1.log and BuildIde288a7fea0e27379dd2dbb8fdaeb78da58464753.

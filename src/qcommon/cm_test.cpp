@@ -3,6 +3,11 @@
 #include "cm_trace.h"
 #include "cm_load.h"
 #include <universal/com_math_anglevectors.h>
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+#include <cstddef>
+#include <cstdint>
+#include <cstring>
+#endif
 
 int __cdecl CM_PointLeafnum_r(const float *p, int num)
 {
@@ -68,7 +73,17 @@ void __cdecl CM_StoreLeafs(leafList_s *ll, int nodenum)
     int leafNum; // [esp+0h] [ebp-4h]
 
     leafNum = -1 - nodenum;
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+    // Preserve the original four-byte cluster/tail decision without an aliased load.
+    std::uint32_t clusterWord;
+    static_assert(offsetof(cLeaf_s, cluster) + sizeof(clusterWord) <= sizeof(cLeaf_s));
+    std::memcpy(&clusterWord,
+        reinterpret_cast<const unsigned char *>(&cm.leafs[leafNum]) + offsetof(cLeaf_s, cluster),
+        sizeof(clusterWord));
+    if ( clusterWord != UINT32_MAX )
+#else
     if ( *(unsigned int *)&cm.leafs[-1 - nodenum].cluster != -1 )
+#endif
         ll->lastLeaf = leafNum;
     if ( ll->count < ll->maxcount )
     {
@@ -94,11 +109,17 @@ int __cdecl CM_BoxLeafnums(const float *mins, const float *maxs, unsigned __int1
 {
     leafList_s ll; // [esp+4h] [ebp-2Ch] BYREF
 
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+    // Bounds are three floats with float alignment, not an eight-byte scalar.
+    std::memcpy(ll.bounds[0], mins, sizeof(ll.bounds[0]));
+    std::memcpy(ll.bounds[1], maxs, sizeof(ll.bounds[1]));
+#else
     *(_QWORD *)&ll.bounds[0][0] = *(_QWORD *)mins;
     ll.bounds[0][2] = mins[2];
     ll.bounds[1][0] = *maxs;
     ll.bounds[1][1] = maxs[1];
     ll.bounds[1][2] = maxs[2];
+#endif
     ll.count = 0;
     ll.maxcount = listsize;
     ll.list = list;

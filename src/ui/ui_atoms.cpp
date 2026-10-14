@@ -1,4 +1,5 @@
 #include "ui_atoms.h"
+#include <platform/bo1_native_width.h>
 #include <gfx_d3d/r_material.h>
 #include <client_mp/cl_cgame_mp.h>
 #include <client/cl_main.h>
@@ -143,10 +144,17 @@ void __cdecl UI_DrawLoadBar(
     double v9; // st7
     float percentDone; // [esp+3Ch] [ebp-10h]
 
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+    if ( useFastFile->current.enabled )
+        v9 = UI_LoadBarProgress_FastFile();
+    else
+        v9 = UI_LoadBarProgress_LoadObj();
+#else
     if ( useFastFile->current.enabled )
         v9 = ((double (__cdecl *)(double (__cdecl *)()))UI_LoadBarProgress_FastFile)(UI_LoadBarProgress_FastFile);
     else
         v9 = ((double (__cdecl *)(double (__cdecl *)()))UI_LoadBarProgress_LoadObj)(UI_LoadBarProgress_LoadObj);
+#endif
     percentDone = v9;
     CL_DrawStretchPic(
         scrPlace,
@@ -243,10 +251,17 @@ void __cdecl UI_DrawSpinnerLoadbar(
     double v8; // st7
     float percentDone; // [esp+28h] [ebp-4h]
 
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+    if ( useFastFile->current.enabled )
+        v8 = UI_LoadBarProgress_FastFile();
+    else
+        v8 = UI_LoadBarProgress_LoadObj();
+#else
     if ( useFastFile->current.enabled )
         v8 = ((double (__cdecl *)(double (__cdecl *)()))UI_LoadBarProgress_FastFile)(UI_LoadBarProgress_FastFile);
     else
         v8 = ((double (__cdecl *)(double (__cdecl *)()))UI_LoadBarProgress_LoadObj)(UI_LoadBarProgress_LoadObj);
+#endif
     percentDone = v8;
     CL_DrawSpinnerLoadbar(scrPlace, x, y, width, height, horzAlign, vertAlign, color, percentDone);
 }

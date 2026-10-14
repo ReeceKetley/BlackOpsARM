@@ -1,9 +1,48 @@
 #include "monkey_comm.h"
 
+#if !defined(__ANDROID__)
 #include <winsock.h>
+#endif
 #include <qcommon/common.h>
 #include <universal/assertive.h>
 
+#if defined(__ANDROID__)
+#include <platform/android/monkey_transport.h>
+#include <unistd.h>
+extern bool g_MonkeyIsRunning;
+namespace {
+void Monkey_ReportTransport(bo1::android::MonkeyResult result) {
+    if(result.state==bo1::android::MonkeyIo::Failed) {
+        // Service locks and descriptor references have retired before callbacks.
+        Com_PrintError(16,"Monkey TCP transport failed: errno %d\n",result.error);
+        Monkey_DisconnectAndExit();
+    }
+}
+}
+char Monkey_InitCommunication(const char *server) {
+    const auto result=bo1::android::MonkeyConnect(server);
+    if(result.state==bo1::android::MonkeyIo::Failed) Com_Error(ERR_FATAL,"Monkey could not connect to zookeeper '%s': errno %d",server?server:"",result.error);
+    return result.state==bo1::android::MonkeyIo::Complete;
+}
+void Monkey_ShutdownCommunication() {
+    __atomic_store_n(&g_MonkeyIsRunning,false,__ATOMIC_RELEASE);
+    bo1::android::MonkeyClose();
+}
+void Monkey_DisconnectAndExit() { Monkey_ShutdownCommunication(); _exit(255); }
+void Monkey_Send(const char *type,const char *string) { Monkey_ReportTransport(bo1::android::MonkeySend(type,string,true)); }
+void Monkey_SendString(const char *string) { Monkey_ReportTransport(bo1::android::MonkeySend(string,nullptr,false)); }
+bool Monkey_Recv(char *type,int type_size,char *string,int string_size) {
+    const auto result=bo1::android::MonkeyReceive(type,type_size>0?type_size:0,string,string_size>0?string_size:0,true);
+    Monkey_ReportTransport(result);return result.state==bo1::android::MonkeyIo::Complete;
+}
+char Monkey_RecvString(char *data,int data_size) {
+    const auto result=bo1::android::MonkeyReceive(data,data_size>0?data_size:0,nullptr,0,false);
+    Monkey_ReportTransport(result);return result.state==bo1::android::MonkeyIo::Complete;
+}
+bool Monkey_SocketHasData() {
+    const auto result=bo1::android::MonkeyReadable();Monkey_ReportTransport(result);return result.state==bo1::android::MonkeyIo::Complete;
+}
+#else
 bool g_MonkeyConnected;
 SOCKET g_MonkeySock;
 
@@ -191,3 +230,5 @@ bool __cdecl Monkey_SocketHasData()
     return avail && __WSAFDIsSet(g_MonkeySock, &readfds);
 }
 
+
+#endif

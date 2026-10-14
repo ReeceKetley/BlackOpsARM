@@ -7,6 +7,14 @@
 
 
 
+#endif
+#include "com_shared.h"
+#include "q_shared.h"
+
+#if defined(__ANDROID__)
+#include <platform/android/calendar_time.h>
+#endif
+
 char __cdecl Com_FilterPath(const char *filter, const char *name, int casesensitive)
 {
     char new_filter[64]; // [esp+0h] [ebp-88h] BYREF
@@ -32,6 +40,7 @@ char __cdecl Com_FilterPath(const char *filter, const char *name, int casesensit
     return Com_Filter(new_filter, new_name, casesensitive);
 }
 
+#if !defined(BO1_STARTUP_SERVICES) || defined(BO1_NATIVE_COM_BOOT)
 int __cdecl Com_HashKey(const char *string, int maxlen)
 {
     int hash; // [esp+0h] [ebp-8h]
@@ -45,19 +54,30 @@ int __cdecl Com_HashKey(const char *string, int maxlen)
     return (hash >> 20) ^ hash ^ (hash >> 10);
 }
 
+#endif // shared command hash
+#if !defined(BO1_STARTUP_SERVICES) || defined(BO1_NATIVE_COM_BOOT)
 void __cdecl Com_GetQTime(int time, qtime_s *qtime, bool useLocalTime)
 {
+#if defined(__ANDROID__)
+    std::tm local;
+    std::tm *tms;
+#else
     __int64 t; // [esp+0h] [ebp-10h] BYREF
     tm *tms; // [esp+Ch] [ebp-4h]
+#endif
 
     if ( qtime )
     {
         tms = 0;
+#if defined(__ANDROID__)
+        tms = bo1::android::BreakDownTime32(time, useLocalTime, local);
+#else
         t = time;
         if ( useLocalTime )
             tms = _localtime64(&t);
         else
             tms = _gmtime64(&t);
+#endif
         if ( tms )
         {
             qtime->tm_sec = tms->tm_sec;
@@ -77,13 +97,24 @@ int __cdecl Com_RealTime(qtime_s *qtime, bool useLocalTime)
 {
     int t; // [esp+0h] [ebp-8h]
 
+#if defined(__ANDROID__)
+    // Keep the existing signed 32-bit engine time contract and Windows low
+    // 32-bit narrowing behavior without changing qtime/serialized callers.
+    static_assert(sizeof(int) == sizeof(std::int32_t));
+    t = bo1::android::WallTime32();
+#else
     t = _time64(0);
+#endif
     if ( qtime )
         Com_GetQTime(t, qtime, useLocalTime);
     return t;
 }
 
 
+
+#endif
+#include <universal/assertive.h>
+#include <cstring>
 
 void __cdecl Com_Memcpy(void *dest_p, const void *src_p, const size_t count)
 {
@@ -183,8 +214,6 @@ void __cdecl Com_Memcpy(void *dest_p, const void *src_p, const size_t count)
 }
 
 
-
-#endif
 
 #include "com_shared.h"
 #include "q_shared.h"

@@ -8,3 +8,10 @@ void __cdecl yuv_shutdown_internal();
 void __cdecl yuv_shutdown();
 void __cdecl yuv_lost_device();
 void __cdecl yuv_recover_device();
+
+#if defined(__ANDROID__)
+#include <cstddef>
+bool yuv_is_ready();
+void yuv_dimensions(int *width,int *height);
+bool yuv_unpack(const unsigned char *pixels,int width,int height,std::ptrdiff_t pitch,unsigned char *y,unsigned char *u,unsigned char *v);
+#endif

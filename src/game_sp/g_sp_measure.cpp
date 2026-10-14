@@ -1,6 +1,16 @@
 #include "g_sp_headless_throw.h"
 #include "g_sp_headless_dice.h"
 #include "g_sp_measure.h"
+#if defined(__ANDROID__)
+#include <platform/android/process_resources.h>
+#include <platform/android/cpu_profile.h>
+#include <platform/android/profile_services.h>
+#include <platform/win32_compat/win32_time.h>
+#include <cerrno>
+#include <cstdio>
+#include <cstdlib>
+#include <unistd.h>
+#endif
 #include "g_sp_testplan.h"
 #include "g_sp_weapon_sweep.h"
 #include "g_sp_headless_move.h"
@@ -18,7 +28,9 @@
 #include <string>
 #include <vector>
 #include <algorithm>
+#if !defined(__ANDROID__)
 #include <intrin.h>
+#endif
 #include <universal/profile.h>
 #include <cmath>
 #include <clientscript/scr_const.h>
@@ -29,10 +41,63 @@
 #include <xanim/xanim.h>
 #include <game_mp/actor_mp.h>
 #include <game_mp/g_utils_mp.h>
+#if !defined(__ANDROID__)
 #include <psapi.h>
+#endif
 #include <universal/physicalmemory.h>
 #include <universal/com_memory.h>
 
+#if defined(__ANDROID__)
+using MeasureCounter = bo1::win32::LARGE_INTEGER;
+static long MeasureReadLong(const volatile long *value) { return BO1_ProfileLoad(value); }
+static BO1ProfZone *MeasureZones() { return BO1_ProfileZones(); }
+template<class T, std::size_t N>
+static constexpr std::size_t _countof(const T (&)[N]) { return N; }
+static void MeasureFrequency(MeasureCounter *counter)
+{
+    if (!bo1::win32::QueryPerformanceFrequency(counter)) std::abort();
+}
+static void MeasureReadCounter(MeasureCounter *counter)
+{
+    if (!bo1::win32::QueryPerformanceCounter(counter)) { std::perror("SP measurement clock"); std::abort(); }
+}
+// Existing callers accumulate returned lengths. Reject truncation before those
+// lengths can advance pointers beyond their arrays.
+template<class... Args>
+static int sprintf_s(char *output, std::size_t capacity, const char *format, Args... arguments)
+{
+    const int written = std::snprintf(output, capacity, format, arguments...);
+    if (written < 0 || static_cast<std::size_t>(written) >= capacity) {
+        Com_Error(ERR_DROP, "SP measurement output exceeds buffer");
+        std::abort();
+    }
+    return written;
+}
+template<std::size_t N, class... Args>
+static int sprintf_s(char (&output)[N], const char *format, Args... arguments)
+{
+    return sprintf_s(output, N, format, arguments...);
+}
+static long _InterlockedExchange(volatile long *value, long replacement)
+{
+    return __atomic_exchange_n(value, replacement, __ATOMIC_SEQ_CST);
+}
+static long _InterlockedIncrement(volatile long *value)
+{
+    return __atomic_add_fetch(value, 1L, __ATOMIC_SEQ_CST);
+}
+static long _InterlockedCompareExchange(volatile long *value, long replacement, long expected)
+{
+    __atomic_compare_exchange_n(value, &expected, replacement, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST);
+    return expected;
+}
+#else
+using MeasureCounter = LARGE_INTEGER;
+static long MeasureReadLong(const volatile long *value) { return *value; }
+static BO1ProfZone *MeasureZones() { return g_bo1ProfZones; }
+#define MeasureFrequency QueryPerformanceFrequency
+#define MeasureReadCounter QueryPerformanceCounter
+#endif
 extern hunkUsed_t hunk_low; // k1: read-only allocator positions for the resources event (com_memory.cpp)
 extern hunkUsed_t hunk_high;
 
@@ -149,11 +214,20 @@ double Us(long long ticks)
 // k1: pool and memory use, every RESOURCE_MS of level time. Read-only counters.
 void EmitResources()
 {
+#if defined(__ANDROID__)
+    bo1::android::ProcessResources memory{};
+    if (!bo1::android::ReadProcessResources(&memory))
+    {
+        Emit("resources_unavailable", ",\"errno\":" + std::to_string(errno));
+        return;
+    }
+#else
     PROCESS_MEMORY_COUNTERS_EX memory = {};
     memory.cb = sizeof(memory);
     K32GetProcessMemoryInfo(GetCurrentProcess(), (PROCESS_MEMORY_COUNTERS *)&memory, sizeof(memory));
     DWORD handles = 0;
     GetProcessHandleCount(GetCurrentProcess(), &handles);
+#endif
     int entities = 0, actors = 0, sentients = 0;
     for (int i = 0; i < level.num_entities; ++i)
         if (g_entities[i].r.inuse) ++entities;
@@ -173,15 +247,25 @@ void EmitResources()
     int animReferenced, animProtected, animSnapshotTime;
     G_SP_GetAnimCommandUsage(&animReferenced, &animProtected, &animSnapshotTime);
     char fields[1024];
+#if defined(__ANDROID__)
+    sprintf_s(fields, ",\"rss_kb\":%llu,\"anonymous_rss_kb\":%llu,\"peak_rss_kb\":%llu,\"open_fds\":%u,"
+#else
     sprintf_s(fields, ",\"working_set_kb\":%u,\"private_kb\":%u,\"peak_working_set_kb\":%u,\"handles\":%u,"
+#endif
         "\"script_objects\":%u,\"script_values\":%u,\"script_threads\":%d,\"script_refs\":%d,"
         "\"entities\":%d,\"num_entities\":%d,\"max_entities\":%d,\"actors\":%d,\"max_actors\":%d,"
         "\"sentients\":%d,\"max_sentients\":%d,\"fx_effects\":%d,\"fx_elems\":%d,\"fx_trail_elems\":%d,"
         "\"ent_handles\":%u,\"peak_ent_handles\":%u,"
         "\"anim_referenced\":%d,\"anim_protected\":%d,\"anim_snapshot_time\":%d,"
         "\"pmem_low\":%u,\"pmem_high\":%u,\"hunk_low\":%d,\"hunk_high\":%d,\"hunk_temp\":%d,\"round\":",
+#if defined(__ANDROID__)
+        static_cast<unsigned long long>(memory.residentBytes / 1024),
+        static_cast<unsigned long long>(memory.anonymousResidentBytes / 1024),
+        static_cast<unsigned long long>(memory.peakResidentBytes / 1024), memory.openFileDescriptors,
+#else
         (unsigned int)(memory.WorkingSetSize / 1024), (unsigned int)(memory.PrivateUsage / 1024),
         (unsigned int)(memory.PeakWorkingSetSize / 1024), (unsigned int)handles,
+#endif
         Scr_GetNumScriptVarsParent(SCRIPTINSTANCE_SERVER), Scr_GetNumScriptVarsChild(SCRIPTINSTANCE_SERVER),
         Scr_GetNumScriptThreads(SCRIPTINSTANCE_SERVER), gScrVarPub[SCRIPTINSTANCE_SERVER].totalObjectRefCount,
         entities, level.num_entities, MAX_GENTITIES, actors, MAX_ACTORS, sentients, MAX_SENTIENTS,
@@ -199,8 +283,8 @@ void G_SP_ProfileBegin()
         return;
     if (!s_profileFrequency)
     {
-        LARGE_INTEGER frequency;
-        QueryPerformanceFrequency(&frequency);
+        MeasureCounter frequency;
+        MeasureFrequency(&frequency);
         s_profileFrequency = frequency.QuadPart;
     }
     memset(s_phaseTicks, 0, sizeof(s_phaseTicks));
@@ -214,8 +298,8 @@ long long G_SP_ProfileNow()
 {
     if (!s_profiling)
         return 0;
-    LARGE_INTEGER now;
-    QueryPerformanceCounter(&now);
+    MeasureCounter now;
+    MeasureReadCounter(&now);
     return now.QuadPart;
 }
 
@@ -326,14 +410,25 @@ void G_SP_FormatWeightedAnims(const XAnimTree_s *tree, char *out, int size)
         const float weight = (float)XAnimGetWeight(tree, anim);
         if (weight <= 0.0f)
             continue;
+#if defined(__ANDROID__)
+        const int n = std::snprintf(out + used, size - used, "%s%s:%.2f:%.3f", used ? "," : "",
+            XAnimGetAnimName(anims, anim), weight, (float)XAnimGetTime(tree, anim));
+        if (n >= size - used)
+            break;
+#else
         const int n = _snprintf_s(out + used, size - used, _TRUNCATE, "%s%s:%.2f:%.3f", used ? "," : "",
             XAnimGetAnimName(anims, anim), weight, (float)XAnimGetTime(tree, anim));
+#endif
         if (n < 0)
             break;
         used += n;
     }
     if (!used)
+#if defined(__ANDROID__)
+        std::snprintf(out, size, "%s", "-");
+#else
         strcpy_s(out, size, "-");
+#endif
 }
 
 // a1 c15 (TEST): one actor's think result - origin, yaw, desired yaw, the path lookahead (the recording's actors.tsv
@@ -633,11 +728,18 @@ unsigned int s_clientCgCpuSamples;
 // Windows accounts it coarsely, so report a five-second mean rather than percentiles.
 long long ThreadCpuTime()
 {
+#if defined(__ANDROID__)
+    std::uint64_t nanoseconds;
+    if (!bo1::android::CurrentCpuNanoseconds(&nanoseconds)) return -1;
+    // Existing observer accumulation uses Windows 100-nanosecond units.
+    return static_cast<long long>(nanoseconds / 100);
+#else
     FILETIME created, exited, kernel, user;
     if (!GetThreadTimes(GetCurrentThread(), &created, &exited, &kernel, &user))
         return -1;
     return ((long long)kernel.dwHighDateTime << 32) + kernel.dwLowDateTime
         + ((long long)user.dwHighDateTime << 32) + user.dwLowDateTime;
+#endif
 }
 
 double Percentile(std::vector<double> &v, double p)
@@ -653,8 +755,8 @@ long long Frequency()
     static long long frequency;
     if (!frequency)
     {
-        LARGE_INTEGER f;
-        QueryPerformanceFrequency(&f);
+        MeasureCounter f;
+        MeasureFrequency(&f);
         frequency = f.QuadPart;
     }
     return frequency;
@@ -663,8 +765,8 @@ long long Frequency()
 
 long long G_SP_MeasureTicks()
 {
-    LARGE_INTEGER now;
-    QueryPerformanceCounter(&now);
+    MeasureCounter now;
+    MeasureReadCounter(&now);
     return now.QuadPart;
 }
 
@@ -797,9 +899,9 @@ std::string FramePerfRenderBrief(long f)
     if (f <= 0 || e.frame != f)
         return "null";
     sprintf_s(item, "[%.1f,%.1f,%.1f,%.1f,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld]", e.swapMs, e.presentMs, e.gpuMs, e.gpuEndDeltaMs,
-        e.counts[BO1_RC_TEX_CREATE], e.counts[BO1_RC_TEX_UPLOAD_KB], e.counts[BO1_RC_TEX_RELEASE],
-        e.counts[BO1_RC_STREAM_DONE], e.counts[BO1_RC_BUF_CREATE], e.counts[BO1_RC_BUF_LOCK], e.first[BO1_FIRST_PS],
-        e.first[BO1_FIRST_COMBO]);
+        static_cast<long>(e.counts[BO1_RC_TEX_CREATE]), static_cast<long>(e.counts[BO1_RC_TEX_UPLOAD_KB]), static_cast<long>(e.counts[BO1_RC_TEX_RELEASE]),
+        static_cast<long>(e.counts[BO1_RC_STREAM_DONE]), static_cast<long>(e.counts[BO1_RC_BUF_CREATE]), static_cast<long>(e.counts[BO1_RC_BUF_LOCK]), static_cast<long>(e.first[BO1_FIRST_PS]),
+        static_cast<long>(e.first[BO1_FIRST_COMBO]));
     return item;
 }
 
@@ -841,12 +943,12 @@ void FramePerfRender(unsigned int hitchMs)
         // buf create, buf lock, buf lock KB]; prev: [swap, present, gpu, gpu_end_delta, tex create, upload KB,
         // tex release, stream done, buf create, buf lock, first ps, first combo] of frames f-1, f-2 (and next: f+1);
         // first: first uses [vs, ps, pair, pass, texture, combo] drawn in frame f
-        const long *c = e.counts;
+        const BO1RenderCounter *c = e.counts;
         Com_Printf(16, "BO1_RENDERFRAME {\"level_time\":%d,\"frame\":%ld,\"swap_ms\":%.1f,\"present_ms\":%.1f,\"gpu_ms\":%.1f,"
             "\"gpu_end_delta_ms\":%.1f,\"present_cpu_ms\":%.1f,\"present_proc_ms\":%.1f,\"present_main_ms\":%.1f,\"gpu_state\":%ld,\"avail_mb\":%u,\"counts\":[%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld],"
             "\"threads\":\"%s\",\"first\":[%ld,%ld,%ld,%ld,%ld,%ld],\"gpu_seg\":[%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f],\"prev\":[%s,%s],\"next\":%s}\n",
-            level.time, f, e.swapMs, e.presentMs, e.gpuMs, e.gpuEndDeltaMs, e.presentCpuMs, e.presentProcMs, e.presentMainMs, e.state, e.availMB, c[0], c[1], c[2], c[3], c[4],
-            c[5], c[6], c[7], c[8], c[9], FramePerfJsonText(e.threads).c_str(), e.first[0], e.first[1], e.first[2], e.first[3], e.first[4], e.first[5],
+            level.time, f, e.swapMs, e.presentMs, e.gpuMs, e.gpuEndDeltaMs, e.presentCpuMs, e.presentProcMs, e.presentMainMs, static_cast<long>(e.state), e.availMB, static_cast<long>(c[0]), static_cast<long>(c[1]), static_cast<long>(c[2]), static_cast<long>(c[3]), static_cast<long>(c[4]),
+            static_cast<long>(c[5]), static_cast<long>(c[6]), static_cast<long>(c[7]), static_cast<long>(c[8]), static_cast<long>(c[9]), FramePerfJsonText(e.threads).c_str(), static_cast<long>(e.first[0]), static_cast<long>(e.first[1]), static_cast<long>(e.first[2]), static_cast<long>(e.first[3]), static_cast<long>(e.first[4]), static_cast<long>(e.first[5]),
             e.gpuSeg[0], e.gpuSeg[1], e.gpuSeg[2], e.gpuSeg[3], e.gpuSeg[4], e.gpuSeg[5],
             e.gpuSeg[6], e.gpuSeg[7], FramePerfRenderBrief(f - 1).c_str(), FramePerfRenderBrief(f - 2).c_str(),
             FramePerfRenderBrief(f + 1).c_str());
@@ -865,23 +967,28 @@ std::string FramePerfJsonText(const char *s)
 
 void FramePerfCalibrate()
 {
+#if defined(__ANDROID__)
+    // BO1_ProfileTicks already records monotonic nanoseconds on Android.
+    s_fpTscPerMs = static_cast<double>(BO1_PROFILE_TICKS_PER_SECOND) / 1000.0;
+#else
     const long long f = Frequency();
-    LARGE_INTEGER q0, q1;
-    QueryPerformanceCounter(&q0);
+    MeasureCounter q0, q1;
+    MeasureReadCounter(&q0);
     const unsigned long long t0 = __rdtsc();
     do
-        QueryPerformanceCounter(&q1);
+        MeasureReadCounter(&q1);
     while (q1.QuadPart - q0.QuadPart < f / 50);
     s_fpTscPerMs = (double)(__rdtsc() - t0) / ((double)(q1.QuadPart - q0.QuadPart) * 1000.0 / (double)f);
+#endif
 }
 
 // Top zones by time: main thread (inclusive, outermost entry) and other threads, then clear every zone.
 std::string FramePerfZones(bool report)
 {
     std::vector<BO1ProfZone *> zones;
-    for (BO1ProfZone *z = g_bo1ProfZones; z; z = z->next)
+    for (BO1ProfZone *z = MeasureZones(); z; z = z->next)
     {
-        if (report && (z->mainTicks || z->otherTicks1k))
+        if (report && (z->mainTicks || MeasureReadLong(&z->otherTicks1k)))
             zones.push_back(z);
     }
     std::string out;
@@ -899,12 +1006,12 @@ std::string FramePerfZones(bool report)
             sprintf_s(item, "%s[\"%s\",%.1f,%u]", n++ ? "," : "", z->name, ms, z->mainCalls);
             out += item;
         }
-        std::sort(zones.begin(), zones.end(), [](BO1ProfZone *a, BO1ProfZone *b) { return a->otherTicks1k > b->otherTicks1k; });
+        std::sort(zones.begin(), zones.end(), [](BO1ProfZone *a, BO1ProfZone *b) { return MeasureReadLong(&a->otherTicks1k) > MeasureReadLong(&b->otherTicks1k); });
         out += "],\"other\":[";
         n = 0;
         for (BO1ProfZone *z : zones)
         {
-            const double ms = (double)z->otherTicks1k * 1024.0 / s_fpTscPerMs;
+            const double ms = (double)MeasureReadLong(&z->otherTicks1k) * 1024.0 / s_fpTscPerMs;
             if (ms < 1.0 || n >= 8)
                 break;
             sprintf_s(item, "%s[\"%s\",%.1f]", n++ ? "," : "", z->name, ms);
@@ -912,7 +1019,7 @@ std::string FramePerfZones(bool report)
         }
         out += "]";
     }
-    for (BO1ProfZone *z = g_bo1ProfZones; z; z = z->next)
+    for (BO1ProfZone *z = MeasureZones(); z; z = z->next)
     {
         z->mainTicks = 0;
         z->mainCalls = 0;
@@ -938,7 +1045,11 @@ void G_SP_FramePerfMark(int mark)
     if (!s_fpTscPerMs)
     {
         FramePerfCalibrate();
+#if defined(__ANDROID__)
+        g_bo1ProfMainThread = BO1_ProfileThreadId();
+#else
         g_bo1ProfMainThread = GetCurrentThreadId();
+#endif
         g_bo1ProfOn = true;
         s_fpReportStart = now;
     }
@@ -1009,6 +1120,36 @@ void G_SP_FramePerfMark(int mark)
         return;
     const size_t frames = s_fpIntervals.size();
     // machine load over the window (the PC may run other work): all CPUs busy % and this process's share, in % of all CPUs
+#if defined(__ANDROID__)
+    bo1::android::SystemCpuTicks cpu{};
+    std::uint64_t processNanoseconds;
+    static bo1::android::SystemCpuTicks previousCpu{};
+    static std::uint64_t previousProcess;
+    static bool haveCpuBaseline;
+    double sysBusy = -1.0, procPct = -1.0;
+    if (bo1::android::ReadSystemCpuTicks(&cpu)
+        && bo1::android::ProcessCpuNanoseconds(&processNanoseconds))
+    {
+        if (haveCpuBaseline && cpu.ticksPerSecond == previousCpu.ticksPerSecond
+            && cpu.total > previousCpu.total && cpu.idle >= previousCpu.idle
+            && processNanoseconds >= previousProcess)
+        {
+            const auto totalDelta = cpu.total - previousCpu.total;
+            const auto idleDelta = cpu.idle - previousCpu.idle;
+            if (idleDelta <= totalDelta)
+            {
+                sysBusy = 100.0 * (1.0 - static_cast<double>(idleDelta) / totalDelta);
+                procPct = 100.0 * static_cast<double>(processNanoseconds - previousProcess)
+                    * cpu.ticksPerSecond / (1000000000.0 * totalDelta);
+            }
+        }
+        previousCpu = cpu;
+        previousProcess = processNanoseconds;
+        haveCpuBaseline = true;
+    }
+    else
+        haveCpuBaseline = false;
+#else
     FILETIME idleF, kernelF, userF, createdF, exitedF, pKernelF, pUserF;
     GetSystemTimes(&idleF, &kernelF, &userF);
     GetProcessTimes(GetCurrentProcess(), &createdF, &exitedF, &pKernelF, &pUserF);
@@ -1021,6 +1162,7 @@ void G_SP_FramePerfMark(int mark)
     s_idle = idle;
     s_total = total;
     s_proc = proc;
+#endif
     Com_Printf(16, "BO1_FRAMEPERF {\"level_time\":%d,\"frames\":%u,\"fps\":%.1f,\"ms_p50\":%.2f,\"ms_p99\":%.2f,\"ms_max\":%.1f,"
         "\"over16\":%u,\"over33\":%u,\"hitches\":%u,\"sv_frames\":%ld,\"sv_ms_max\":%.1f,\"sv_over25\":%ld,"
         "\"sys_busy_pct\":%.0f,\"proc_pct\":%.0f,\"first\":[%ld,%ld,%ld,%ld,%ld,%ld],\"gpu_ms_p50\":%.2f,\"gpu_ms_p99\":%.2f,"
@@ -1065,7 +1207,7 @@ void G_SP_FramePerfServer(long long ticks)
     _InterlockedIncrement(&s_fpSvFrames);
     const long us = (long)(ms * 1000.0);
     long old;
-    while (us > (old = s_fpSvMaxUs) && _InterlockedCompareExchange(&s_fpSvMaxUs, us, old) != old)
+    while (us > (old = MeasureReadLong(&s_fpSvMaxUs)) && _InterlockedCompareExchange(&s_fpSvMaxUs, us, old) != old)
         ;
     if (ms >= 25.0)
         _InterlockedIncrement(&s_fpSvOver25);

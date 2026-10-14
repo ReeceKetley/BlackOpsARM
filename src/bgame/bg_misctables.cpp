@@ -5,6 +5,42 @@
 #include <clientscript/cscr_vm.h>
 #include <client/cl_keys.h>
 #include <qcommon/graph.h>
+#if defined(__ANDROID__)
+#include <vehicle/nitrous_vehicle.h>
+#include <cstddef>
+
+// These configuration offsets describe the retail Win32 vehicle, not a disk
+// record. Only the tail crosses native pointer fields; preserve the original
+// table while addressing the actual native runtime members.
+constexpr int VEH_NativeFieldOffset(int offset)
+{
+    if (offset >= 7348)
+        return offset - 7348 + offsetof(vehicle_info_t, nitrousVehParams);
+    if (offset >= 7328)
+        return offset - 7328 + offsetof(vehicle_info_t, isNitrous);
+    if (offset == 7324)
+        return offsetof(vehicle_info_t, accelGraph);
+    if (offset == 7320)
+        return offsetof(vehicle_info_t, steerGraph);
+    if (offset >= 7268)
+        return offset - 7268 + offsetof(vehicle_info_t, gasButton);
+    return offset;
+}
+static_assert(offsetof(vehicle_info_t, compassIconMaterial) == 7264);
+static_assert(offsetof(vehicle_info_t, type) == 64);
+static_assert(offsetof(vehicle_info_t, cameraMode) == 108);
+static_assert(offsetof(vehicle_info_t, boostMode) == 352);
+static_assert(offsetof(vehicle_info_t, eTeam) == 7188);
+static_assert(offsetof(vehicle_info_t, dropDeployableButton) ==
+              offsetof(vehicle_info_t, gasButton) + 48);
+static_assert(offsetof(vehicle_info_t, noDirectionalDamage) ==
+              offsetof(vehicle_info_t, isNitrous) + 16);
+static_assert(VEH_NativeFieldOffset(7452) ==
+              offsetof(vehicle_info_t, nitrousVehParams) + offsetof(VehicleParameter, m_traction_type));
+#define VEH_FIELD_OFFSET(offset) VEH_NativeFieldOffset(offset)
+#else
+#define VEH_FIELD_OFFSET(offset) offset
+#endif
 
 const char *s_vehicleCameraModes[6] = { "first", "chase", "view", "strafe", "horse", "oldtank" };
 const char *s_vehicleBoostModes[2] = { "burst", "continuous" };
@@ -282,82 +318,82 @@ cspField_t s_vehicleFields[345] =
   { "addToCompass", 7192, 6 },
   { "addToCompassEnemy", 7196, 6 },
   { "compassIcon", 7200, 0 },
-  { "gasButton", 7268, 23 },
-  { "boostButton", 7272, 23 },
-  { "reverseBrakeButton", 7276, 23 },
-  { "handBrakeButton", 7280, 23 },
-  { "attackButton", 7284, 23 },
-  { "attackSecondaryButton", 7288, 23 },
-  { "moveUpButton", 7292, 23 },
-  { "moveDownButton", 7296, 23 },
-  { "switchSeatButton", 7300, 23 },
-  { "specialAbilityButton", 7304, 23 },
-  { "firePickupButton", 7308, 23 },
-  { "swapPickupButton", 7312, 23 },
-  { "dropDeployableButton", 7316, 23 },
-  { "steerGraph", 7320, 24 },
-  { "accelGraph", 7324, 24 },
-  { "isNitrous", 7328, 6 },
-  { "isFourWheelSteering", 7332, 6 },
-  { "noDirectionalDamage", 7344, 6 },
-  { "max_fric_tilt_angle", 7336, 7 },
-  { "max_fric_tilt", 7340, 7 },
-  { "maxSpeed", 7348, 19 },
-  { "accel", 7352, 19 },
-  { "autoHandbrakeMinSpeed", 7448, 19 },
-  { "nitrous_steer_angle_max", 7360, 7 },
-  { "nitrous_steer_speed", 7364, 7 },
-  { "nitrous_body_mass", 7408, 20 },
-  { "nitrous_wheel_radius", 7368, 7 },
-  { "nitrous_susp_adj", 7380, 7 },
-  { "nitrous_susp_spring_k", 7372, 7 },
-  { "nitrous_susp_damp_k", 7376, 7 },
-  { "nitrous_susp_hard_limit", 7384, 7 },
-  { "nitrous_susp_min_height", 7388, 7 },
-  { "nitrous_tire_damp_hand", 7444, 7 },
-  { "nitrous_tire_damp_brake", 7440, 7 },
-  { "nitrous_tire_damp_coast", 7436, 7 },
-  { "nitrous_tire_fric_brake", 7400, 7 },
-  { "nitrous_tire_fric_hand_brake", 7404, 7 },
-  { "nitrous_tire_fric_fwd", 7392, 7 },
-  { "nitrous_tire_fric_side", 7396, 7 },
-  { "nitrous_roll_stability", 7412, 7 },
-  { "nitrous_roll_resistance", 7416, 7 },
-  { "nitrous_yaw_resistance", 7420, 7 },
-  { "nitrous_upright_strength", 7424, 7 },
-  { "nitrous_tilt_fakey", 7428, 7 },
-  { "nitrous_traction_type", 7452, 18 },
-  { "nitrous_peel_out_max_speed", 7432, 7 },
-  { "nitrous_tire_fric_side_max", 7636, 7 },
-  { "nitrous_reverse_scale", 7356, 7 },
-  { "nitrous_water_speed_max", 7580, 19 },
-  { "nitrous_water_accel_max", 7584, 7 },
-  { "nitrous_water_turn_accel", 7588, 7 },
-  { "nitrous_water_turn_speed_max", 7592, 7 },
-  { "nitrous_boat_ebrake_power", 7596, 7 },
-  { "nitrous_bbox_min_x", 7520, 7 },
-  { "nitrous_bbox_min_y", 7524, 7 },
-  { "nitrous_bbox_min_z", 7528, 7 },
-  { "nitrous_bbox_max_x", 7532, 7 },
-  { "nitrous_bbox_max_y", 7536, 7 },
-  { "nitrous_bbox_max_z", 7540, 7 },
-  { "nitrous_mass_center_offset_x", 7544, 7 },
-  { "nitrous_mass_center_offset_y", 7548, 7 },
-  { "nitrous_mass_center_offset_z", 7552, 7 },
-  { "nitrous_buoyancybox_min_x", 7556, 7 },
-  { "nitrous_buoyancybox_min_y", 7560, 7 },
-  { "nitrous_buoyancybox_min_z", 7564, 7 },
-  { "nitrous_buoyancybox_max_x", 7568, 7 },
-  { "nitrous_buoyancybox_max_y", 7572, 7 },
-  { "nitrous_buoyancybox_max_z", 7576, 7 },
-  { "nitrous_boat_speed_rise", 7612, 7 },
-  { "nitrous_boat_speed_tilt", 7616, 7 },
-  { "nitrous_boat_motor_offset_x", 7600, 7 },
-  { "nitrous_boat_motor_offset_y", 7604, 7 },
-  { "nitrous_boat_motor_offset_z", 7608, 7 },
-  { "nitrous_boat_side_fric", 7620, 7 },
-  { "nitrous_boat_forward_fric", 7624, 7 },
-  { "nitrous_boat_vertical_fric", 7628, 7 }
+  { "gasButton", VEH_FIELD_OFFSET(7268), 23 },
+  { "boostButton", VEH_FIELD_OFFSET(7272), 23 },
+  { "reverseBrakeButton", VEH_FIELD_OFFSET(7276), 23 },
+  { "handBrakeButton", VEH_FIELD_OFFSET(7280), 23 },
+  { "attackButton", VEH_FIELD_OFFSET(7284), 23 },
+  { "attackSecondaryButton", VEH_FIELD_OFFSET(7288), 23 },
+  { "moveUpButton", VEH_FIELD_OFFSET(7292), 23 },
+  { "moveDownButton", VEH_FIELD_OFFSET(7296), 23 },
+  { "switchSeatButton", VEH_FIELD_OFFSET(7300), 23 },
+  { "specialAbilityButton", VEH_FIELD_OFFSET(7304), 23 },
+  { "firePickupButton", VEH_FIELD_OFFSET(7308), 23 },
+  { "swapPickupButton", VEH_FIELD_OFFSET(7312), 23 },
+  { "dropDeployableButton", VEH_FIELD_OFFSET(7316), 23 },
+  { "steerGraph", VEH_FIELD_OFFSET(7320), 24 },
+  { "accelGraph", VEH_FIELD_OFFSET(7324), 24 },
+  { "isNitrous", VEH_FIELD_OFFSET(7328), 6 },
+  { "isFourWheelSteering", VEH_FIELD_OFFSET(7332), 6 },
+  { "noDirectionalDamage", VEH_FIELD_OFFSET(7344), 6 },
+  { "max_fric_tilt_angle", VEH_FIELD_OFFSET(7336), 7 },
+  { "max_fric_tilt", VEH_FIELD_OFFSET(7340), 7 },
+  { "maxSpeed", VEH_FIELD_OFFSET(7348), 19 },
+  { "accel", VEH_FIELD_OFFSET(7352), 19 },
+  { "autoHandbrakeMinSpeed", VEH_FIELD_OFFSET(7448), 19 },
+  { "nitrous_steer_angle_max", VEH_FIELD_OFFSET(7360), 7 },
+  { "nitrous_steer_speed", VEH_FIELD_OFFSET(7364), 7 },
+  { "nitrous_body_mass", VEH_FIELD_OFFSET(7408), 20 },
+  { "nitrous_wheel_radius", VEH_FIELD_OFFSET(7368), 7 },
+  { "nitrous_susp_adj", VEH_FIELD_OFFSET(7380), 7 },
+  { "nitrous_susp_spring_k", VEH_FIELD_OFFSET(7372), 7 },
+  { "nitrous_susp_damp_k", VEH_FIELD_OFFSET(7376), 7 },
+  { "nitrous_susp_hard_limit", VEH_FIELD_OFFSET(7384), 7 },
+  { "nitrous_susp_min_height", VEH_FIELD_OFFSET(7388), 7 },
+  { "nitrous_tire_damp_hand", VEH_FIELD_OFFSET(7444), 7 },
+  { "nitrous_tire_damp_brake", VEH_FIELD_OFFSET(7440), 7 },
+  { "nitrous_tire_damp_coast", VEH_FIELD_OFFSET(7436), 7 },
+  { "nitrous_tire_fric_brake", VEH_FIELD_OFFSET(7400), 7 },
+  { "nitrous_tire_fric_hand_brake", VEH_FIELD_OFFSET(7404), 7 },
+  { "nitrous_tire_fric_fwd", VEH_FIELD_OFFSET(7392), 7 },
+  { "nitrous_tire_fric_side", VEH_FIELD_OFFSET(7396), 7 },
+  { "nitrous_roll_stability", VEH_FIELD_OFFSET(7412), 7 },
+  { "nitrous_roll_resistance", VEH_FIELD_OFFSET(7416), 7 },
+  { "nitrous_yaw_resistance", VEH_FIELD_OFFSET(7420), 7 },
+  { "nitrous_upright_strength", VEH_FIELD_OFFSET(7424), 7 },
+  { "nitrous_tilt_fakey", VEH_FIELD_OFFSET(7428), 7 },
+  { "nitrous_traction_type", VEH_FIELD_OFFSET(7452), 18 },
+  { "nitrous_peel_out_max_speed", VEH_FIELD_OFFSET(7432), 7 },
+  { "nitrous_tire_fric_side_max", VEH_FIELD_OFFSET(7636), 7 },
+  { "nitrous_reverse_scale", VEH_FIELD_OFFSET(7356), 7 },
+  { "nitrous_water_speed_max", VEH_FIELD_OFFSET(7580), 19 },
+  { "nitrous_water_accel_max", VEH_FIELD_OFFSET(7584), 7 },
+  { "nitrous_water_turn_accel", VEH_FIELD_OFFSET(7588), 7 },
+  { "nitrous_water_turn_speed_max", VEH_FIELD_OFFSET(7592), 7 },
+  { "nitrous_boat_ebrake_power", VEH_FIELD_OFFSET(7596), 7 },
+  { "nitrous_bbox_min_x", VEH_FIELD_OFFSET(7520), 7 },
+  { "nitrous_bbox_min_y", VEH_FIELD_OFFSET(7524), 7 },
+  { "nitrous_bbox_min_z", VEH_FIELD_OFFSET(7528), 7 },
+  { "nitrous_bbox_max_x", VEH_FIELD_OFFSET(7532), 7 },
+  { "nitrous_bbox_max_y", VEH_FIELD_OFFSET(7536), 7 },
+  { "nitrous_bbox_max_z", VEH_FIELD_OFFSET(7540), 7 },
+  { "nitrous_mass_center_offset_x", VEH_FIELD_OFFSET(7544), 7 },
+  { "nitrous_mass_center_offset_y", VEH_FIELD_OFFSET(7548), 7 },
+  { "nitrous_mass_center_offset_z", VEH_FIELD_OFFSET(7552), 7 },
+  { "nitrous_buoyancybox_min_x", VEH_FIELD_OFFSET(7556), 7 },
+  { "nitrous_buoyancybox_min_y", VEH_FIELD_OFFSET(7560), 7 },
+  { "nitrous_buoyancybox_min_z", VEH_FIELD_OFFSET(7564), 7 },
+  { "nitrous_buoyancybox_max_x", VEH_FIELD_OFFSET(7568), 7 },
+  { "nitrous_buoyancybox_max_y", VEH_FIELD_OFFSET(7572), 7 },
+  { "nitrous_buoyancybox_max_z", VEH_FIELD_OFFSET(7576), 7 },
+  { "nitrous_boat_speed_rise", VEH_FIELD_OFFSET(7612), 7 },
+  { "nitrous_boat_speed_tilt", VEH_FIELD_OFFSET(7616), 7 },
+  { "nitrous_boat_motor_offset_x", VEH_FIELD_OFFSET(7600), 7 },
+  { "nitrous_boat_motor_offset_y", VEH_FIELD_OFFSET(7604), 7 },
+  { "nitrous_boat_motor_offset_z", VEH_FIELD_OFFSET(7608), 7 },
+  { "nitrous_boat_side_fric", VEH_FIELD_OFFSET(7620), 7 },
+  { "nitrous_boat_forward_fric", VEH_FIELD_OFFSET(7624), 7 },
+  { "nitrous_boat_vertical_fric", VEH_FIELD_OFFSET(7628), 7 }
 };
 
 
@@ -425,7 +461,11 @@ int __cdecl VEH_ParseSpecificField(unsigned __int8 *pStruct, const char *pValue,
                         ++ic;
                         continue;
                     }
+#if defined(__ANDROID__)
+                    *(unsigned int *)&pStruct[fieldOffset] = ic;
+#else
                     *((unsigned int *)pStruct + 1863) = ic;
+#endif
                 }
                 break;
             }

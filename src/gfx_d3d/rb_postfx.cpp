@@ -1,9 +1,15 @@
 #include "rb_postfx.h"
+#if defined(__ANDROID__) && defined(BO1_NATIVE_POST_FUSION_TRIAL) && BO1_NATIVE_POST_FUSION_TRIAL
+#include "platform/android/post_fusion_trial.h"
+#endif
 #include "r_dvars.h"
 #include "r_foliage.h"
 #include "r_state.h"
 #include "rb_draw3d.h"
 #include "rb_backend.h"
+#if defined(__ANDROID__)
+#include "platform/android/performance_gpu_overlay.h"
+#endif
 
 bool __cdecl RB_UsingDepthOfFieldFX(const GfxViewInfo *viewInfo)
 {
@@ -1412,11 +1418,18 @@ void __cdecl RB_BloomLDR(const GfxViewInfo *viewInfo)
     R_SetCodeImageTexture(&gfxCmdBufSourceState, 0x22u, gfxRenderTargets[R_RENDERTARGET_RESOLVED_SCENE].image);
     R_SetCodeImageTexture(&gfxCmdBufSourceState, 0x23u, gfxRenderTargets[srcRt].image);
     R_SetCodeImageTexture(&gfxCmdBufSourceState, 0x24u, gfxRenderTargets[R_RENDERTARGET_RESOLVED_SCENE].image);
+#if defined(__ANDROID__) && defined(BO1_NATIVE_POST_FUSION_TRIAL) && BO1_NATIVE_POST_FUSION_TRIAL
+    if (bo1::android::post_fusion_trial::TryBloomColor(viewInfo))
+        return;
+#endif
     RB_Filter(rgp.bloomApplyLDR, viewInfo);
     RB_SetVisionSetColorCorrection(viewInfo);
     R_Resolve(gfxCmdBufContext, gfxRenderTargets[R_RENDERTARGET_RESOLVED_SCENE].image);
     R_SetCodeImageTexture(&gfxCmdBufSourceState, 0xAu, gfxRenderTargets[R_RENDERTARGET_RESOLVED_SCENE].image);
     RB_Filter(rgp.postFxColorMaterial, viewInfo);
+#if defined(__ANDROID__) && defined(BO1_NATIVE_POST_FUSION_TRIAL) && BO1_NATIVE_POST_FUSION_TRIAL
+    bo1::android::post_fusion_trial::EndOriginalColor(viewInfo);
+#endif
 }
 
 bool __cdecl R_UsingDoubleVision(const GfxViewInfo *viewInfo)
@@ -2399,11 +2412,27 @@ void __cdecl RB_ProcessPostEffects(const GfxViewInfo *viewInfo)
   {
     __debugbreak();
   }
+#if defined(__ANDROID__)
+  bo1::android::performance::gpu::Mark(100);
+#endif
+
   RB_GetResolvedScene();
+
+#if defined(__ANDROID__)
+  bo1::android::performance::gpu::Mark(101);
+#endif
   RB_BloomLDR(viewInfo);
+
+#if defined(__ANDROID__)
+  bo1::android::performance::gpu::Mark(102);
+#endif
   if ( RB_UsingPostEffects(viewInfo) )
   {
     RB_GetResolvedScene();
+
+#if defined(__ANDROID__)
+  bo1::android::performance::gpu::Mark(103);
+#endif
     if ( RB_UsingFlameFX(viewInfo) )
     {
         PROF_SCOPED("RB_ApplyFlameFX");
@@ -2449,6 +2478,10 @@ void __cdecl RB_ProcessPostEffects(const GfxViewInfo *viewInfo)
       }
     }
 LABEL_29:
+
+#if defined(__ANDROID__)
+  bo1::android::performance::gpu::Mark(104);
+#endif
     if ( RB_UsingGenericFilter(viewInfo) && !rg.renderHiResShot )
     {
       PROF_SCOPED("genericFilter effect");
@@ -2481,8 +2514,16 @@ LABEL_29:
       RB_SaveScreen_BlendFlashed(&viewInfo->saveScreenFx.blendFlashedParam, viewInfo);
       RB_SaveScreen(&viewInfo->saveScreenFx.saveScreenParam, viewInfo);
     }
+#if defined(__ANDROID__)
+  bo1::android::performance::gpu::Mark(105);
+#endif
+
     R_Resolve(gfxCmdBufContext, gfxRenderTargets[R_RENDERTARGET_RESOLVED_SCENE].image);
     R_SetCodeImageTexture(&gfxCmdBufSourceState, 0xAu, gfxRenderTargets[R_RENDERTARGET_RESOLVED_SCENE].image);
+
+#if defined(__ANDROID__)
+  bo1::android::performance::gpu::Mark(106);
+#endif
   }
 }
 

@@ -1,3 +1,4 @@
+#if !defined(BO1_NATIVE_CD_PATH_ONLY)
 #include "win_common.h"
 
 #include <Windows.h>
@@ -23,11 +24,13 @@ char *__cdecl Sys_Cwd()
     return cwd;
 }
 
+#endif
 const char *__cdecl Sys_DefaultCDPath()
 {
     return "";
 }
 
+#if !defined(BO1_NATIVE_CD_PATH_ONLY)
 char *__cdecl Sys_DefaultInstallPath()
 {
     char *v0; // eax
@@ -288,3 +291,4 @@ void __cdecl Sys_LeaveCriticalSection(CriticalSection critSect)
     LeaveCriticalSection(&s_criticalSection[critSect]);
 }
 
+#endif // BO1_NATIVE_CD_PATH_ONLY

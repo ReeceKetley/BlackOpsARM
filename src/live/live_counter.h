@@ -1,6 +1,12 @@
 #pragma once
 #include "live_storage.h"
+#if defined(__ANDROID__)
+// Public counters only store a manager pointer; lobby container implementations
+// are not a dependency of the counter declarations or expression evaluator.
+struct bdRemoteTaskManager;
+#else
 #include <DemonWare/bdLobbyService.h>
+#endif
 
 struct bdCounterValue : bdTaskResult // sizeof=0x10
 {                                       // XREF: .data:s_serverCounters/r

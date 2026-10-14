@@ -5,6 +5,7 @@
 #include "fx_system.h"
 #include <win32/win_common.h>
 #include <qcommon/common.h>
+#include <platform/bo1_native_width.h>
 
 void __cdecl FX_OffsetSpawnOrigin(
     const FxSpatialFrame *effectFrame,
@@ -707,15 +708,27 @@ void __cdecl FX_AnglesToOrientedAxis(float *anglesInRad, const orientation_t *or
     localDir[0] = cp * cy;
     localDir[1] = cp * sy;
     localDir[2] = -v9;
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+    FX_OrientationDirToWorldDir(orient, localDir, axisOut[0]);
+#else
     FX_OrientationDirToWorldDir(orient, localDir, (float *)axisOut);
+#endif
     localDir[0] = (float)((float)(sr * v9) * cy) - (float)(cr * sy);
     localDir[1] = (float)((float)(sr * v9) * sy) + (float)(cr * cy);
     localDir[2] = sr * cp;
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+    FX_OrientationDirToWorldDir(orient, localDir, axisOut[1]);
+#else
     FX_OrientationDirToWorldDir(orient, localDir, &(*axisOut)[3]);
+#endif
     localDir[0] = (float)((float)(cr * v9) * cy) + (float)(sr * sy);
     localDir[1] = (float)((float)(cr * v9) * sy) - (float)(sr * cy);
     localDir[2] = cr * cp;
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+    FX_OrientationDirToWorldDir(orient, localDir, axisOut[2]);
+#else
     FX_OrientationDirToWorldDir(orient, localDir, &(*axisOut)[6]);
+#endif
 }
 
 void __cdecl FX_GetElemAxis(

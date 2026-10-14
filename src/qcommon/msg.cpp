@@ -4,7 +4,17 @@
 #include "sv_msg_write.h"
 
 #include <cstring>
+#if defined(__ANDROID__)
+#include <cmath>
+#include <bit>
+#include <cstdint>
+#include <cstdlib>
+#include <cfenv>
+#include <climits>
+#pragma STDC FENV_ACCESS ON
+#else
 #include <xmmintrin.h>
+#endif
 
 // zombies: snapshot float quantization (SP 0x00536E90). The decompiler turned
 // FISTP into a truncating cast, shifting negative integer origins by one unit.
@@ -21,6 +31,16 @@ int __cdecl MSG_RoundFloatToInt(float value)
         fistp result
     }
     return result;
+#elif defined(__ANDROID__)
+    // Match the validated x64 conversion's float bias and current rounding
+    // mode, including its invalid-conversion INT_MIN sentinel.
+    const float biased = static_cast<float>(static_cast<double>(value) + bias);
+    const float rounded = std::rint(biased);
+    if (!std::isfinite(rounded) || rounded < -2147483648.0f || rounded >= 2147483648.0f) {
+        std::feraiseexcept(FE_INVALID);
+        return INT_MIN;
+    }
+    return static_cast<int>(rounded);
 #else
     const float biased = (float)((double)value + bias);
     return _mm_cvtss_si32(_mm_set_ss(biased));
@@ -47,6 +67,23 @@ int __cdecl MSG_ReadValueNoXor(msg_t *msg, int bits)
 
 int __cdecl MSG_ReadValue(msg_t *msg, const int *fromF, int *toF, int bits, int size)
 {
+#if defined(__ANDROID__)
+    // Only plain scalar widths reach this reader; special field codes dispatch elsewhere.
+    if (bits < -32 || bits > 32)
+    {
+        Com_Error(ERR_FATAL, "Native MSG_ReadValue: plain field width %d is outside [-32, 32]", bits);
+        std::abort();
+    }
+    const int absbits = bits < 0 ? -bits : bits;
+    const uint32_t mask = absbits == 32 ? UINT32_MAX : (uint32_t{1} << absbits) - uint32_t{1};
+    uint32_t value = static_cast<uint32_t>(MSG_ReadValueNoXor(msg, absbits));
+    value ^= mask & static_cast<uint32_t>(MSG_GetField(fromF, size));
+    if (bits < 0 && (value & (uint32_t{1} << (absbits - 1))))
+        value |= ~mask;
+    static_assert(sizeof(int) == sizeof(uint32_t));
+    return std::bit_cast<int>(value);
+#else
+
     int v6; // [esp+0h] [ebp-14h]
     int mask; // [esp+8h] [ebp-Ch]
     int value; // [esp+10h] [ebp-4h]
@@ -76,10 +113,34 @@ int __cdecl MSG_ReadValue(msg_t *msg, const int *fromF, int *toF, int bits, int 
     if ( bits < 0 && (valuea & (1 << (v6 - 1))) != 0 )
         return valuea | ~mask;
     return valuea;
+#endif
 }
 
 int __cdecl MSG_GetField(const int *i, int size)
 {
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+    switch ( size )
+    {
+        case 1:
+        {
+            signed char value;
+            std::memcpy(&value, i, sizeof(value));
+            return value;
+        }
+        case 2:
+        {
+            std::int16_t value;
+            std::memcpy(&value, i, sizeof(value));
+            return value;
+        }
+        case 4:
+        {
+            std::int32_t value;
+            std::memcpy(&value, i, sizeof(value));
+            return value;
+        }
+    }
+#else
     switch ( size )
     {
         case 1:
@@ -89,6 +150,7 @@ int __cdecl MSG_GetField(const int *i, int size)
         case 4:
             return *i;
     }
+#endif
     if ( !Assert_MyHandler("c:\\projects_pc\\cod\\codsrc\\src\\qcommon\\../qcommon/msg.h", 547, 0, "unknown field size") )
         __debugbreak();
     return 0;
@@ -226,6 +288,29 @@ void __cdecl MSG_CopyFieldOver(const NetField *stateFields, char *from, char *to
     toF = (int *)&to[stateFields[fieldNum].offset];
     Field = MSG_GetField((const int *)&from[stateFields[fieldNum].offset], stateFields[fieldNum].size);
     size = stateFields[fieldNum].size;
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+    switch ( size )
+    {
+        case 1:
+        {
+            const std::uint8_t value = static_cast<std::uint8_t>(Field);
+            std::memcpy(toF, &value, sizeof(value));
+            break;
+        }
+        case 2:
+        {
+            const std::uint16_t value = static_cast<std::uint16_t>(Field);
+            std::memcpy(toF, &value, sizeof(value));
+            break;
+        }
+        case 4:
+        {
+            const std::int32_t value = Field;
+            std::memcpy(toF, &value, sizeof(value));
+            break;
+        }
+    }
+#else
     switch ( size )
     {
         case 1:
@@ -238,6 +323,7 @@ void __cdecl MSG_CopyFieldOver(const NetField *stateFields, char *from, char *to
             *toF = Field;
             break;
     }
+#endif
 }
 
 void __cdecl MSG_ReadDeltaFields(

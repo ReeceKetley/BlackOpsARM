@@ -8,6 +8,20 @@
 #include <qcommon/common.h>
 #include <cstddef>
 #include <cstring>
+#if defined(__ANDROID__)
+#include "cscr_compiler.h"
+#include <cstdint>
+#include <climits>
+
+static_assert(sizeof(VariableUnion) == 4, "native save VM slots remain fixed32");
+static_assert(offsetof(VariableStackBuffer, buf) == 13, "native save stack header remains fixed32");
+
+static void Scr_CheckSaveStackBounds(const VariableStackBuffer *stack)
+{
+    if (!stack || offsetof(VariableStackBuffer, buf) + 5u * stack->size > stack->bufLen)
+        Com_Error(ERR_DROP, "Script save stack payload exceeds its owned allocation");
+}
+#endif
 
 // DERIVED from KB Scr_InitVariables / GetVariableValueAddress: both instances have 0x7FFE parent
 // slots and 0xFFFC-byte save maps, unlike SP's 0x5FFE server / 0x4000 client slots. Access the KB
@@ -32,8 +46,16 @@ static void Scr_SaveId(scriptInstance_t inst, unsigned int id)
         return;
     scrVarPub_t *pub = &gScrVarPub[inst];
     iassert(id < SAVE_OBJECT_LIMIT);
+#if defined(__ANDROID__)
+    if (id > 0xFFFFu)
+        Com_Error(ERR_DROP, "Script save object ID exceeds the fixed16 save map");
+#endif
     if (pub->saveIdMap[id])
         return;
+#if defined(__ANDROID__)
+    if (pub->savecount >= 0xFFFFu)
+        Com_Error(ERR_DROP, "Script save object count exceeds the fixed16 save format");
+#endif
     iassert(pub->savecount + 1 < SAVE_OBJECT_LIMIT);
     pub->saveIdMap[id] = pub->savecount + 1;
     pub->saveIdMapRev[pub->savecount + 1] = (unsigned short)id;
@@ -53,6 +75,9 @@ static void Scr_AddSaveValue(scriptInstance_t inst, int type, VariableUnion valu
 
 static void Scr_AddSaveStack(scriptInstance_t inst, const VariableStackBuffer *stack)
 {
+#if defined(__ANDROID__)
+    Scr_CheckSaveStackBounds(stack);
+#endif
     // zombies: SP 0x0058D770. localId is a ushort in SP, uint in KB; payload entries are five bytes.
     Scr_SaveId(inst, stack->localId);
     const char *buf = stack->buf;
@@ -115,6 +140,9 @@ void Scr_AddSaveObject(scriptInstance_t inst, unsigned int id)
 
 static void Scr_SaveRootStack(scriptInstance_t inst, const VariableStackBuffer *stack)
 {
+#if defined(__ANDROID__)
+    Scr_CheckSaveStackBounds(stack);
+#endif
     // zombies: SP 0x0045B180. Unlike 0x0058D770, expand each reference immediately (game variable).
     Scr_AddSaveObject(inst, stack->localId);
     const char *buf = stack->buf;
@@ -241,7 +269,20 @@ static void Scr_SaveString(ScrSaveContext *ctx, unsigned int stringValue)
 static void Scr_SaveCodepos(ScrSaveContext *ctx, const char *pos)
 {
     // zombies: SP 0x005019C0; null code positions are -1, all others are program-buffer offsets.
+#if defined(__ANDROID__)
+    int offset = -1;
+    if (pos)
+    {
+        const uintptr_t address = reinterpret_cast<uintptr_t>(pos);
+        const uintptr_t base = reinterpret_cast<uintptr_t>(gScrVarPub[ctx->inst].programBuffer);
+        if (!base || address < base || address - base >= gScrCompilePub[ctx->inst].programLen ||
+            address - base > INT_MAX)
+            Com_Error(ERR_DROP, "Script save code position lies outside the retained bytecode");
+        offset = static_cast<int>(address - base);
+    }
+#else
     const int offset = pos ? (int)(pos - gScrVarPub[ctx->inst].programBuffer) : -1;
+#endif
     MemFile_WriteInt(ctx->memFile, offset);
 }
 
@@ -249,6 +290,9 @@ static void Scr_SaveValue(ScrSaveContext *ctx, unsigned int type, VariableUnion 
 
 static void Scr_SaveStack(ScrSaveContext *ctx, const VariableStackBuffer *stack)
 {
+#if defined(__ANDROID__)
+    Scr_CheckSaveStackBounds(stack);
+#endif
     // zombies: SP 0x0045C1B0. DERIVED: KB stack localId is uint and payload starts at 13, not 11.
     Scr_SaveShort(ctx, stack->size);
     Scr_SaveCodepos(ctx, stack->pos);
@@ -475,6 +519,11 @@ static const char *Scr_LoadCodepos(ScrSaveContext *ctx)
 {
     // zombies: SP 0x0043BB20.
     const int offset = Scr_LoadInt(ctx);
+#if defined(__ANDROID__)
+    if (offset < -1 || (offset >= 0 && (!gScrVarPub[ctx->inst].programBuffer ||
+        static_cast<unsigned int>(offset) >= gScrCompilePub[ctx->inst].programLen)))
+        Com_Error(ERR_DROP, "Script load code offset lies outside the retained bytecode");
+#endif
     return offset < 0 ? nullptr : gScrVarPub[ctx->inst].programBuffer + offset;
 }
 
@@ -485,6 +534,10 @@ static VariableStackBuffer *Scr_LoadStack(ScrSaveContext *ctx)
     // zombies: SP 0x005FD3F0. DERIVED: KB uses a uint localId and a 13-byte stack header.
     const unsigned short size = Scr_LoadShort(ctx);
     const unsigned int length = offsetof(VariableStackBuffer, buf) + 5 * size;
+#if defined(__ANDROID__)
+    if (length > 0xFFFFu)
+        Com_Error(ERR_DROP, "Script load stack exceeds the fixed16 allocation length");
+#endif
     iassert(length <= 0xFFFF);
     VariableStackBuffer *stack = (VariableStackBuffer *)MT_Alloc(length, 1, ctx->inst);
     stack->size = size;
@@ -663,6 +716,10 @@ void Scr_Load(scriptInstance_t inst, MemoryFile *memFile)
     for (unsigned int i = 1; i <= pub->savecount; ++i)
     {
         const unsigned int id = AllocObject(inst);
+#if defined(__ANDROID__)
+        if (id > 0xFFFFu)
+            Com_Error(ERR_DROP, "Script load object ID exceeds the fixed16 save map");
+#endif
         pub->saveIdMapRev[i] = (unsigned short)id;
         pub->saveIdMap[id] = (unsigned short)i;
     }

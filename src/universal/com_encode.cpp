@@ -3,6 +3,10 @@
 
 int __cdecl Com_EncodeYEnc(unsigned __int8 *indata, int inlen, char *outdata, int outlen)
 {
+#if defined(__ANDROID__)
+    if (outlen <= 0 || inlen < 0)
+        return 0;
+#endif
     char c; // [esp+3h] [ebp-9h]
     int len; // [esp+4h] [ebp-8h]
     int in; // [esp+8h] [ebp-4h]
@@ -54,6 +58,10 @@ bool __cdecl YEncIsCritical(unsigned __int8 c)
 
 int __cdecl Com_DecodeYEnc(const char *indata, unsigned __int8 *outdata, int outlen)
 {
+#if defined(__ANDROID__)
+    if (outlen < 0)
+        return 0;
+#endif
     unsigned __int8 c; // [esp+3h] [ebp-9h]
     int len; // [esp+4h] [ebp-8h]
     bool escape; // [esp+Bh] [ebp-1h]

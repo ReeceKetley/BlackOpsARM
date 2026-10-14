@@ -67,11 +67,6 @@ void __thiscall broad_phase_base_list::add(broad_phase_base *bpb)
 }
 
 
-jqBatchGroup::jqBatchGroup()
-{
-    this->BatchCount = 0;
-}
-
 void    comp_trace_volume(
                 const phys_vec3 *aabb1_min,
                 const phys_vec3 *aabb1_max,
@@ -2539,7 +2534,12 @@ void __cdecl broad_phase_system_init(
 
     G_BPM = broad_phase_memory::allocate_buffer(bpmi);
 
+#if defined(__ANDROID__)
+    g_axis_aligned_sweep_and_prune = (axis_aligned_sweep_and_prune *)PMM_PERM_ALLOCATE(
+        sizeof(axis_aligned_sweep_and_prune), alignof(axis_aligned_sweep_and_prune));
+#else
     g_axis_aligned_sweep_and_prune = (axis_aligned_sweep_and_prune *)PMM_PERM_ALLOCATE(sizeof(axis_aligned_sweep_and_prune), 4);
+#endif
     g_axis_aligned_sweep_and_prune->m_sap_node_allocator.m_count = 0;
     g_axis_aligned_sweep_and_prune->m_active_pair_allocator.m_count = 0;
 
@@ -3287,7 +3287,11 @@ phys_heap_gjk_cache_system_avl_tree::phys_gjk_cache_info_internal *__thiscall ph
     // phys_gjk_cache_info_internal,phys_heap_gjk_cache_system_avl_tree::phys_gjk_cache_info_internal::avl_tree_accessor>::find(
     v10 = this->m_search_tree.find(key);
     v11 = v10;
+#if defined(__ANDROID__)
+    query_mutex->ReadUnlock();
+#else
     _InterlockedExchangeAdd(&query_mutex->ThisPtr->ReadLockCount, 0xFFFFFFFF);
+#endif
     if ( v10 )
     {
         //phys_gjk_cache_info::update_swapped(v10, (int)&savedregs, swapped);

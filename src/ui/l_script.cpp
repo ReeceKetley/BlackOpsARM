@@ -1,3 +1,6 @@
+#if defined(__ANDROID__)
+#include <platform/android/legacy_crt.h>
+#endif
 #include "l_script.h"
 #include "l_memory.h"
 

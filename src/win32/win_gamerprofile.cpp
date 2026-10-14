@@ -10,7 +10,11 @@
 #include <gfx_d3d/r_dvars.h>
 #include <sound/snd_dvar.h>
 #include <qcommon/common.h>
+#if defined(__ANDROID__)
+#include <client/cl_gamepad.h>
+#else
 #include "win_gamepad.h"
+#endif
 #include <client_mp/cl_main_mp.h>
 #include <cgame_mp/cg_local_mp.h>
 #include <live/live_win.h>
@@ -401,7 +405,11 @@ void __cdecl GamerProfile_UpdateProfileFromDvars(int controllerIndex, profileWri
     gamerSettings[controllerIndex].team_indicator = team_indicator->current.integer;
     gamerSettings[controllerIndex].mature_content = cg_mature->current.enabled;
     gamerSettings[controllerIndex].show_blood = cg_blood->current.enabled;
+#if defined(__ANDROID__)
+    if ( I_stricmp(gpad_buttonsConfig->current.string, "BUTTONS_ZOMBIETRON") )
+#else
     if ( _stricmp(gpad_buttonsConfig->current.string, "BUTTONS_ZOMBIETRON") )
+#endif
         I_strncpyz(gamerSettings[controllerIndex].gpadButtonsConfig, gpad_buttonsConfig->current.string, 256);
     if ( !*(_BYTE *)gpad_buttonsConfig->current.string )
         Dvar_SetString((dvar_s *)gpad_buttonsConfig, "buttons_default");

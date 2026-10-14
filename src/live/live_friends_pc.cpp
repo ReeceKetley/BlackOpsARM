@@ -41,6 +41,9 @@ static unsigned __int64 __cdecl _GetFriendXuid(int index)
     steamFriends = (ISteamFriends *)SteamFriends();
     if (steamFriends)
     {
+#if defined(__ANDROID__)
+        iassert(index >= 0 && index < steamFriends->GetFriendCount(FLAGS));
+#else
         if (index >= steamFriends->GetFriendCount(4)
             && !Assert_MyHandler(
                 "C:\\projects_pc\\cod\\codsrc\\src\\live\\live_friends_pc.cpp",
@@ -51,7 +54,12 @@ static unsigned __int64 __cdecl _GetFriendXuid(int index)
         {
             __debugbreak();
         }
+#endif
+#if defined(__ANDROID__)
+        steamID = steamFriends->GetFriendByIndex(index, FLAGS);
+#else
         steamID = steamFriends->GetFriendByIndex(index, 4);
+#endif
         //if (!CSteamID::IsValid(&steamID)
         //    && !Assert_MyHandler(
         //        "C:\\projects_pc\\cod\\codsrc\\src\\live\\live_friends_pc.cpp",
@@ -77,6 +85,9 @@ static void __cdecl _GetFriendPersonaName(int index, char *buf, int size)
     ISteamFriends *steamFriends; // [esp+Ch] [ebp-4h]
 
     steamFriends = (ISteamFriends *)SteamFriends();
+#if defined(__ANDROID__)
+    iassert(buf && size > 0);
+#endif
     if ((!buf || !size)
         && !Assert_MyHandler("C:\\projects_pc\\cod\\codsrc\\src\\live\\live_friends_pc.cpp", 50, 0, "%s", "buf && size"))
     {
@@ -84,6 +95,9 @@ static void __cdecl _GetFriendPersonaName(int index, char *buf, int size)
     }
     if (steamFriends)
     {
+#if defined(__ANDROID__)
+        iassert(index >= 0 && index < steamFriends->GetFriendCount(FLAGS));
+#else
         if (index >= steamFriends->GetFriendCount(4)
             && !Assert_MyHandler(
                 "C:\\projects_pc\\cod\\codsrc\\src\\live\\live_friends_pc.cpp",
@@ -94,7 +108,12 @@ static void __cdecl _GetFriendPersonaName(int index, char *buf, int size)
         {
             __debugbreak();
         }
+#endif
+#if defined(__ANDROID__)
+        steamID = steamFriends->GetFriendByIndex(index, FLAGS);
+#else
         steamID = steamFriends->GetFriendByIndex(index, 4);
+#endif
         //s = (const char *)((int(__thiscall *)(ISteamFriends *, _DWORD, _DWORD))steamFriends->GetFriendPersonaName)(
         //    steamFriends,
         //    *(_DWORD *)&steamID.m_steamid.m_comp,
@@ -205,6 +224,9 @@ char __cdecl _GetFriendPersonaNameByXuid(unsigned __int64 xuid, char *buf, int s
     ISteamFriends *steamFriends; // [esp+14h] [ebp-4h]
 
     steamFriends = (ISteamFriends *)SteamFriends();
+#if defined(__ANDROID__)
+    iassert(buf && size > 0);
+#endif
     if ((!buf || !size)
         && !Assert_MyHandler("C:\\projects_pc\\cod\\codsrc\\src\\live\\live_friends_pc.cpp", 68, 0, "%s", "buf && size"))
     {
@@ -278,7 +300,11 @@ bool __cdecl Friend_GetByName(int controllerIndex, const char *friendName, unsig
             }
             tmpXuid = _GetFriendXuid<4>(i);
             XUIDToString(&tmpXuid, tmpXuidStr);
+#if defined(__ANDROID__)
+            if ( !I_stricmp(friendName, tmpXuidStr) )
+#else
             if ( !I_stricmp(friendName, friendBuf) )
+#endif
             {
                 *uid = tmpXuid;
                 return 1;
@@ -341,6 +367,9 @@ int __cdecl _GetSortedFriendIndex(int index)
         {
             __debugbreak();
         }
+#if defined(__ANDROID__)
+        iassert(g_sortedNumFriends >= 0 && g_sortedNumFriends <= 256);
+#endif
         onlineInsertIndex = 0;
         offlineInsertIndex = g_sortedNumFriends - 1;
         for ( i = 0; i < g_sortedNumFriends; ++i )
@@ -354,5 +383,8 @@ int __cdecl _GetSortedFriendIndex(int index)
         }
         g_sortedFriendsListDirty = 0;
     }
+#if defined(__ANDROID__)
+    iassert(index >= 0 && index < g_sortedNumFriends);
+#endif
     return g_sortedFriendsRedirect[index];
 }

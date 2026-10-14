@@ -22,6 +22,10 @@
 // - Measurement (always, with a lure out): bo1_lure lines once a second for each live cymbal monkey /
 //   upgraded crossbow bolt: live zombies and their distances to it and to the player.
 #include "g_sp_headless_throw.h"
+#if defined(__ANDROID__)
+#include <iterator>
+#define _countof(array) std::size(array)
+#endif
 #include <game_mp/g_main_mp.h>
 #include <game_mp/g_utils_mp.h>
 #include <game_mp/g_spawn_mp.h>
@@ -129,7 +133,11 @@ void G_SP_HeadlessThrowFields(scriptInstance_t inst)
     if (at && at->current.string && *at->current.string)
     {
         char item[256];
+#if defined(__ANDROID__)
+        I_strncpyz(item,at->current.string,sizeof(item));
+#else
         strncpy_s(item, at->current.string, _TRUNCATE);
+#endif
         char *colon = strchr(item, ':');
         char *sep = colon ? strstr(colon + 1, "::") : nullptr;
         if (sep)
@@ -146,9 +154,17 @@ void G_SP_HeadlessThrowFields(scriptInstance_t inst)
     if (!dvar || !dvar->current.string || !*dvar->current.string)
         return;
     char list[256];
+#if defined(__ANDROID__)
+    I_strncpyz(list,dvar->current.string,sizeof(list));
+#else
     strncpy_s(list, dvar->current.string, _TRUNCATE);
+#endif
     char *context = nullptr;
+#if defined(__ANDROID__)
+    for (char *item = strtok_r(list, ", ", &context); item && s_giveCount < 4; item = strtok_r(nullptr, ", ", &context))
+#else
     for (char *item = strtok_s(list, ", ", &context); item && s_giveCount < 4; item = strtok_s(nullptr, ", ", &context))
+#endif
     {
         char *sep = strstr(item, "::");
         if (!sep)

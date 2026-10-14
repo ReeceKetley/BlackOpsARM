@@ -43,33 +43,8 @@ struct SpawnVar // sizeof=0xA0C
     char spawnVarChars[2048];
 };
 
-struct __declspec(align(8)) SysInfo // sizeof=0x260
-{                                                                             // XREF: .data:sys_info/r
-                                                                                // ?Com_SetRecommended@@YAXHH@Z/r
-        long double cpuGHz;                                 // XREF: Sys_RegisterInfoDvars+DA/r
-                                                                                // Sys_Init(void)+1B7/r ...
-        long double configureGHz;                     // XREF: Com_SetRecommended(int,int)+31/r
-                                                                                // Com_SetRecommended(int,int)+41/w ...
-        int logicalCpuCount;                                // XREF: Sys_Init(void)+13F/r
-                                                                                // Sys_Init(void)+165/r ...
-        int physicalCpuCount;                             // XREF: Sys_Init(void)+17B/r
-                                                                                // Sys_Init(void)+1A1/r
-        int sysMB;                                                    // XREF: Com_SetRecommended(int,int)+49/r
-                                                                                // Com_SetRecommended(int,int)+55/w ...
-        char gpuDescription[512];                     // XREF: Com_SetRecommended(int,int)+125/o
-                                                                                // Sys_HasInfoChanged(void):loc_7D9644/o ...
-        bool SSE;                                                     // XREF: Sys_RegisterInfoDvars+A5/r
-                                                                                // Sys_Init(void)+211/r ...
-        char cpuVendor[13];                                 // XREF: Sys_Init(void):loc_7DA2D7/o
-                                                                                // Sys_FindInfo+90/o
-        char cpuName[49];                                     // XREF: Sys_RegisterInfoDvars+FC/o
-                                                                                // Sys_Init(void)+12B/o ...
-        // padding byte
-        // padding byte
-        // padding byte
-        // padding byte
-        // padding byte
-};
+#include <qcommon/sys_info.h>
+
 
 struct field_t // sizeof=0x118
 {                                                                             // XREF: .data:field_t g_consoleField/r
@@ -227,7 +202,11 @@ const char *__cdecl CS_DisplayName(const clientState_s *cs, int type);
 int __cdecl Com_GetPrivateClients();
 void Com_Printf_NoFilter(const char *fmt, ...);
 
+#if defined(__ANDROID__)
+#include <platform/android/snap_float.h>
+#else
 #include <xmmintrin.h>  // SSE
+#endif
 
 //
 // The default x87 rounding mode for floating point to integer is Round to nearest Even (Banker's rounding)
@@ -239,6 +218,9 @@ void Com_Printf_NoFilter(const char *fmt, ...);
 // Also any call to "ftol" or "ftol_sse" will be doing this ^^ and returning the result in eax
 inline float SnapFloat(float x)
 {
+#if defined(__ANDROID__)
+    return static_cast<float>(bo1::android::SnapFloatToInt32(x));
+#else
 #if defined(BO1_PURE) && defined(_WIN32)
     int i;
     __asm fld x;
@@ -252,12 +234,16 @@ inline float SnapFloat(float x)
     int i;
     i = _mm_cvtss_si32(_mm_set_ss(x));
     return  static_cast<float>(i);
+#endif
 }
 
 // A simpler version of the above that can be used to save a cast afterwards
 // (basically ftol())
 inline int SnapFloatToInt(float x)
 {
+#if defined(__ANDROID__)
+    return bo1::android::SnapFloatToInt32(x);
+#else
 #if defined(BO1_PURE) && defined(_WIN32)
     int i;
     __asm fld x;
@@ -269,6 +255,7 @@ inline int SnapFloatToInt(float x)
     int i;
     i = _mm_cvtss_si32(_mm_set_ss(x));
     return i;
+#endif
 }
 
 

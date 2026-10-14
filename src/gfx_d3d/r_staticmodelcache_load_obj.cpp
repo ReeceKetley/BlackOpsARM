@@ -4,7 +4,12 @@
 #include <xanim/xmodel_utils.h>
 #include <universal/com_memory.h>
 #include "r_xsurface.h"
+#if defined(__ANDROID__)
+#include <bit>
+#include <climits>
+#else
 #include <intrin.h> // _BitScanReverse
+#endif
 
 void __cdecl R_AssignSModelCacheResources(GfxWorld *world)
 {
@@ -96,7 +101,17 @@ unsigned int __cdecl R_OptimalSModelResourceStats(GfxWorld *world, GfxSModelSurf
     }
     if ( !world->dpvs.smodelCount )
         return 0;
+#if defined(__ANDROID__)
+    if (world->dpvs.smodelCount > INT_MAX / sizeof(*drawInstArray))
+    {
+        Com_Error(ERR_DROP, "Static model cache pointer array exceeds allocator range");
+        std::abort();
+    }
+    drawInstArray = (const GfxStaticModelDrawInst **)Hunk_AllocateTempMemory(
+        static_cast<int>(sizeof(*drawInstArray) * world->dpvs.smodelCount), "R_AssignSModelCacheResources");
+#else
     drawInstArray = (const GfxStaticModelDrawInst **)Hunk_AllocateTempMemory(4 * world->dpvs.smodelCount, "R_AssignSModelCacheResources");
+#endif
     for ( smodelIter = 0; smodelIter != world->dpvs.smodelCount; ++smodelIter )
         drawInstArray[smodelIter] = &world->dpvs.smodelDrawInsts[smodelIter];
     //std::_Sort<Material * *,int,bool (__cdecl *)(Material const *,Material const *)>(
@@ -202,8 +217,15 @@ int R_GetSModelCacheAllocBits(const XModel *model, unsigned int lod)
     unsigned long index;
     if (minPoolSize == 0)
         return 4; // safety
+#if defined(__ANDROID__)
+    if (minPoolSize > 1)
+#else
     if (_BitScanReverse(&index, minPoolSize - 1))
+#endif
     {
+#if defined(__ANDROID__)
+        index = 31u - std::countl_zero(minPoolSize - 1);
+#endif
         unsigned int bits = 32 - (index ^ 0x1F); // original xor trick
         return (bits > 4) ? bits : 4;
     }

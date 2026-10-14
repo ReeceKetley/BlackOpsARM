@@ -2,6 +2,15 @@
 #include "rb_state.h"
 #include "r_gfx.h"
 
+#if defined(__ANDROID__)
+#include <atomic>
+using Bo1ShaderFrameStamp = std::atomic<int>;
+#else
+using Bo1ShaderFrameStamp = volatile long;
+#endif
+static_assert(sizeof(Bo1ShaderFrameStamp) == 4);
+extern Bo1ShaderFrameStamp g_scsFrameStamp;
+
 struct ShaderConstantSet // sizeof=0x78
 {                                       // XREF: cpose_t/r
     float value[7][4];

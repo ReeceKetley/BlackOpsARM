@@ -1,4 +1,9 @@
 #include <universal/csp_field_offset.h>
+#if defined(__ANDROID__)
+#include <cstdint>
+#include <cstdlib>
+#include <limits>
+#endif
 #include "flame_system.h"
 #include "flame_class_chunk.h"
 #include "flame_class_fire.h"
@@ -1489,6 +1494,14 @@ void __cdecl Flame_Item_Init(flameGeneric_s *item, unsigned int itemSize)
     flameList_t globalList; // [esp+0h] [ebp-10h]
     flameList_t localList; // [esp+8h] [ebp-8h]
 
+#if defined(__ANDROID__)
+    if (!item || itemSize < sizeof(*item)
+        || reinterpret_cast<std::uintptr_t>(item) % alignof(flameGeneric_s))
+    {
+        Com_Error(ERR_FATAL, "Invalid native flame item storage");
+        std::abort();
+    }
+#endif
     globalList = item->listGlobal;
     localList = item->listLocal;
     memset((unsigned __int8 *)item, 0, itemSize);
@@ -1496,6 +1509,26 @@ void __cdecl Flame_Item_Init(flameGeneric_s *item, unsigned int itemSize)
     item->listLocal = localList;
 }
 
+#if defined(__ANDROID__)
+void __cdecl Flame_List_Init(flameGeneric_s *list, int itemSize, int listSize)
+{
+    if (listSize < 0 || itemSize < static_cast<int>(sizeof(*list))
+        || itemSize % alignof(flameGeneric_s)
+        || (listSize && (!list || reinterpret_cast<std::uintptr_t>(list) % alignof(flameGeneric_s)))
+        || (listSize && static_cast<std::size_t>(listSize) > std::numeric_limits<std::size_t>::max() / static_cast<std::size_t>(itemSize)))
+    {
+        Com_Error(ERR_FATAL, "Invalid native flame pool storage/count/stride");
+        std::abort();
+    }
+    char *const base = reinterpret_cast<char *>(list);
+    for (int i = 0; i < listSize; ++i)
+    {
+        auto *item = reinterpret_cast<flameGeneric_s *>(base + static_cast<std::size_t>(i) * itemSize);
+        item->listGlobal.prev = i ? reinterpret_cast<flameGeneric_s *>(base + static_cast<std::size_t>(i - 1) * itemSize) : nullptr;
+        item->listGlobal.next = i + 1 < listSize ? reinterpret_cast<flameGeneric_s *>(base + static_cast<std::size_t>(i + 1) * itemSize) : nullptr;
+    }
+}
+#else
 void __cdecl Flame_List_Init(flameGeneric_s *list, int itemSize, int listSize)
 {
     int i; // [esp+4h] [ebp-8h]
@@ -1511,6 +1544,7 @@ void __cdecl Flame_List_Init(flameGeneric_s *list, int itemSize, int listSize)
         list = (flameGeneric_s *)((char *)list + itemSize);
     }
 }
+#endif
 
 void __cdecl Flame_List_Move_Global(flameGeneric_s *item, flameGeneric_s **fromList, flameGeneric_s **toList)
 {

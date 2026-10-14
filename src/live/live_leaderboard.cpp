@@ -1,4 +1,9 @@
 #include "live_leaderboard.h"
+#include <platform/bo1_native_width.h>
+#if defined(__ANDROID__)
+#include <cstdlib>
+#include <cstdint>
+#endif
 #include <universal/assertive.h>
 #include <win32/win_shared.h>
 #include <cstring>
@@ -353,6 +358,66 @@ const dvar_s *lb_forceLbWrite;
 
 LbGlob g_lbGlob;
 
+#if defined(__ANDROID__)
+namespace {
+[[noreturn]] void LB_NativeCacheFailure(const char *reason) {
+    Com_Error(ERR_FATAL,"Native leaderboard cache: %s",reason);
+    std::abort();
+}
+Leaderboard &LB_NativeCachedLeaderboard(int type) {
+    static_assert(BO1_NATIVE_64BIT,"native leaderboard cache requires runtime-width ABI");
+    if(type<0 || type>=LB_COUNT)LB_NativeCacheFailure("leaderboard type does not index the actual cache");
+    return g_lbGlob.leaderboards[type];
+}
+void LB_NativeInitializeCache(LbGlob &global) {
+    for(int index=0;index<LB_COUNT;++index) {
+        auto &cache=global.leaderboards[index];
+        cache.lastUpdate=0;
+        cache.filter=3;
+        cache.lbTypeByResetPeriod=LB_RESETPERIOD_COUNT;
+        cache.type=static_cast<LbType>(index);
+        cache.offset=0;
+        cache.curIdx=0;
+        cache.forceRefresh=true;
+    }
+}
+LeaderBoardRow<10> &LB_NativeCachedRow(Leaderboard &cache,LeaderBoardResult<LeaderBoardRow<10>,100> *stats,unsigned index) {
+    if(stats!=&cache.userStats || cache.offset<0 || cache.numResults<0 || cache.numResults>100 || cache.totalResults<0)
+        LB_NativeCacheFailure("invalid actual cache row owner/count/offset");
+    const auto relative=std::int64_t(index)-cache.offset;
+    if(index>=static_cast<unsigned>(cache.totalResults) || relative<0 || relative>=cache.numResults || relative>=100)
+        LB_NativeCacheFailure("selection does not index a populated cache row");
+    return stats->m_leaderBoardEntries[relative];
+}
+int LB_NativeCompareRanks(const void *left,const void *right) {
+    if(!left || !right)LB_NativeCacheFailure("null rank sort row");
+    const auto a=static_cast<const LeaderBoardRow<10> *>(left)->m_rank;
+    const auto b=static_cast<const LeaderBoardRow<10> *>(right)->m_rank;
+    if(!a)return b!=0;
+    if(!b)return -1;
+    return a<b?-1:a>b?1:0;
+}
+LbStatEnum LB_NativeFeederStat(LbType type,int column) {
+    if(type<0 || type>=LB_COUNT || column<5 || column-5>=lbStatCounts[type%8])
+        LB_NativeCacheFailure("display column does not index its registered game-mode stats");
+    return static_cast<LbStatEnum>(LbStatPerLbGameMode[type%8][column-5]);
+}
+}
+#define LB_CACHE(type) (&LB_NativeCachedLeaderboard(type))
+#define LB_CACHE_RESULT(type) (&LB_NativeCachedLeaderboard(type).userStats)
+#define LB_CACHE_INT(type,field,offset) (LB_NativeCachedLeaderboard(type).field)
+#define LB_CACHE_BYTE(type,field,offset) (LB_NativeCachedLeaderboard(type).field)
+#define LB_CACHE_ROW_MEMBER(row,stats,index,type,member) ((row)->member)
+#define LB_FEEDER_STAT(type,column) LB_NativeFeederStat(type,column)
+#else
+#define LB_CACHE(type) ((Leaderboard *)&g_lbGlob.feederText[15520*(type)-248320])
+#define LB_CACHE_RESULT(type) ((LeaderBoardResult<LeaderBoardRow<10>,100> *)&g_lbGlob.feederText[15520*(type)-248320])
+#define LB_CACHE_INT(type,field,offset) (*(unsigned int *)&g_lbGlob.feederText[15520*(type)+(offset)])
+#define LB_CACHE_BYTE(type,field,offset) (g_lbGlob.feederText[15520*(type)+(offset)])
+#define LB_CACHE_ROW_MEMBER(row,stats,index,type,member) ((stats)->m_leaderBoardEntries[(index)-LB_CACHE_INT(type,offset,-233004)].member)
+#define LB_FEEDER_STAT(type,column) (GlobalLbStat[3][17*((type)%8)+14+(column)])
+#endif
+
 bool __cdecl LB_NeedToReadLeaderBoard()
 {
     if ( !lb_LastFetchTime
@@ -370,7 +435,7 @@ bool __cdecl LB_NeedToReadLeaderBoard()
 
 void __cdecl LB_ForceRefresh()
 {
-    g_lbGlob.feederText[15520 * lb_type->current.integer - 232996] = 1;
+    LB_CACHE_BYTE(lb_type->current.integer,forceRefresh,-232996) = 1;
 }
 
 void __cdecl LB_InitStructure(LbStructure *const structure, int type)
@@ -921,10 +986,10 @@ LeaderBoardResult<LeaderBoardRow<10>,100> *__cdecl LB_UpdateLeaderboard(int loca
     unsigned int ms; // [esp+24h] [ebp-8h]
     bool notSamePrestigeMode; // [esp+2Ah] [ebp-2h]
 
-    lb = (Leaderboard *)&g_lbGlob.feederText[15520 * lbType - 248320];
+    lb = LB_CACHE(lbType);
     controllerIndex = Com_LocalClient_GetControllerIndex(localClientNum);
     if ( lb->isUpdating )
-        return (LeaderBoardResult<LeaderBoardRow<10>,100> *)&g_lbGlob.feederText[15520 * lbType - 248320];
+        return LB_CACHE_RESULT(lbType);
     ms = Sys_Milliseconds();
     notSameResetPeriod = lb->lbTypeByResetPeriod != lb_typeByResetPeriod->current.integer;
     notSameFilter = lb->filter != lb_filter->current.integer;
@@ -952,7 +1017,7 @@ LeaderBoardResult<LeaderBoardRow<10>,100> *__cdecl LB_UpdateLeaderboard(int loca
         if ( (int)(ms - lb->lastUpdate) < 30000 && !v6 )
         {
             UI_CloseMenu(localClientNum, "popup_gettinglb");
-            return (LeaderBoardResult<LeaderBoardRow<10>,100> *)&g_lbGlob.feederText[15520 * lbType - 248320];
+            return LB_CACHE_RESULT(lbType);
         }
         filter = lb->filter;
         if ( filter )
@@ -967,7 +1032,7 @@ LeaderBoardResult<LeaderBoardRow<10>,100> *__cdecl LB_UpdateLeaderboard(int loca
             }
             else
             {
-                v4 = va("Unknown filter type: %i\n", *(unsigned int *)&g_lbGlob.feederText[15520 * lbType - 232984]);
+                v4 = va("Unknown filter type: %i\n", LB_CACHE_INT(lbType,filter,-232984));
                 if ( !Assert_MyHandler("C:\\projects_pc\\cod\\codsrc\\src\\live\\live_leaderboard.cpp", 541, 0, v4) )
                     __debugbreak();
             }
@@ -992,7 +1057,7 @@ LeaderBoardResult<LeaderBoardRow<10>,100> *__cdecl LB_UpdateLeaderboard(int loca
             UI_CloseMenu(localClientNum, "popup_gettinglb");
         }
     }
-    return (LeaderBoardResult<LeaderBoardRow<10>,100> *)&g_lbGlob.feederText[15520 * lbType - 248320];
+    return LB_CACHE_RESULT(lbType);
 }
 
 int __cdecl LB_FeederCount(int localClientNum)
@@ -1004,8 +1069,8 @@ int __cdecl LB_FeederCount(int localClientNum)
     Com_LocalClient_GetControllerIndex(localClientNum);
     if ( !LB_NeedToReadLeaderBoard() )
         return 0;
-    LB_UpdateLeaderboard(localClientNum, lbType, *(unsigned int *)&g_lbGlob.feederText[15520 * lbType - 233004]);
-    lb = (Leaderboard *)&g_lbGlob.feederText[15520 * lbType - 248320];
+    LB_UpdateLeaderboard(localClientNum, lbType, LB_CACHE_INT(lbType,offset,-233004));
+    lb = LB_CACHE(lbType);
     if ( lb->isUpdating )
         return 0;
     if ( lb->filter == 1 || lb->filter == 2 )
@@ -1015,7 +1080,7 @@ int __cdecl LB_FeederCount(int localClientNum)
 
 void __cdecl LB_FeederSelection(int index)
 {
-    *(unsigned int *)&g_lbGlob.feederText[15520 * lb_type->current.integer - 233000] = index;
+    LB_CACHE_INT(lb_type->current.integer,curIdx,-233000) = index;
 }
 
 void __cdecl LB_OnSelect(int localClientNum)
@@ -1024,9 +1089,15 @@ void __cdecl LB_OnSelect(int localClientNum)
     LeaderBoardRow<10> *row; // [esp+8h] [ebp-8h]
 
     lbType = (LbType)lb_type->current.integer;
-    if ( !g_lbGlob.feederText[15520 * lbType - 232995] )
+    if ( !LB_CACHE_BYTE(lbType,isUpdating,-232995) )
     {
-        row = &LB_UpdateLeaderboard(localClientNum, lbType, *(unsigned int *)&g_lbGlob.feederText[15520 * lbType - 233000])->m_leaderBoardEntries[*(unsigned int *)&g_lbGlob.feederText[15520 * lbType - 233000] - *(unsigned int *)&g_lbGlob.feederText[15520 * lbType - 233004]];
+        #if defined(__ANDROID__)
+        auto &cache=LB_NativeCachedLeaderboard(lbType);
+        auto *stats=LB_UpdateLeaderboard(localClientNum,lbType,cache.curIdx);
+        row=&LB_NativeCachedRow(cache,stats,cache.curIdx);
+#else
+        row = &LB_UpdateLeaderboard(localClientNum, lbType, LB_CACHE_INT(lbType,curIdx,-233000))->m_leaderBoardEntries[LB_CACHE_INT(lbType,curIdx,-233000) - LB_CACHE_INT(lbType,offset,-233004)];
+#endif
         Live_ShowPlayerProfile(localClientNum, row->m_entityID, row->m_entityName);
     }
 }
@@ -1037,9 +1108,15 @@ void __cdecl LB_GetSelectedPlayerInfo(int localClientNum, LBSelectedPlayerInfo *
     LbType lbType; // [esp+4h] [ebp-Ch]
 
     lbType = (LbType)lb_type->current.integer;
-    if ( !g_lbGlob.feederText[15520 * lbType - 232995] )
+    if ( !LB_CACHE_BYTE(lbType,isUpdating,-232995) )
     {
-        v2 = &LB_UpdateLeaderboard(localClientNum, lbType, *(unsigned int *)&g_lbGlob.feederText[15520 * lbType - 233000])->m_leaderBoardEntries[*(unsigned int *)&g_lbGlob.feederText[15520 * lbType - 233000] - *(unsigned int *)&g_lbGlob.feederText[15520 * lbType - 233004]];
+        #if defined(__ANDROID__)
+        auto &cache=LB_NativeCachedLeaderboard(lbType);
+        auto *stats=LB_UpdateLeaderboard(localClientNum,lbType,cache.curIdx);
+        v2=&LB_NativeCachedRow(cache,stats,cache.curIdx);
+#else
+        v2 = &LB_UpdateLeaderboard(localClientNum, lbType, LB_CACHE_INT(lbType,curIdx,-233000))->m_leaderBoardEntries[LB_CACHE_INT(lbType,curIdx,-233000) - LB_CACHE_INT(lbType,offset,-233004)];
+#endif
         info->playerXuid = v2->m_entityID;
         I_strncpyz(info->gamerTag, v2->m_entityName, 64);
     }
@@ -1080,7 +1157,7 @@ void __cdecl LB_OverrideCursorPos(int viewmax, int *cursorPos, int *startPos)
     {
         __debugbreak();
     }
-    lb = (Leaderboard *)&g_lbGlob.feederText[15520 * lb_type->current.integer - 248320];
+    lb = LB_CACHE(lb_type->current.integer);
     if ( !lb->isUpdating )
     {
         *cursorPos = lb->curIdx;
@@ -1227,10 +1304,15 @@ void __cdecl LB_SortXUserStatsByRank(Leaderboard *lb)
 {
     int count; // [esp+10h] [ebp-4h]
 
+#if defined(__ANDROID__)
+    if(!lb || lb->numResults<0 || lb->numResults>100)LB_NativeCacheFailure("rank sort count exceeds actual cache rows");
+    qsort(lb->userStats.m_leaderBoardEntries,lb->numResults,sizeof(lb->userStats.m_leaderBoardEntries[0]),LB_NativeCompareRanks);
+#else
     qsort(
         lb->userStats.m_leaderBoardEntries,
         lb->numResults, sizeof(*(lb->userStats.m_leaderBoardEntries)),
         (int (__cdecl *)(const void *, const void *))LB_CompareXUserStatsRowRanks);
+#endif
     for ( count = 0; count < lb->numResults && lb->userStats.m_leaderBoardEntries[count].m_rank; ++count )
         ;
     lb->numResults = count;
@@ -1432,7 +1514,11 @@ char __cdecl LB_SetGametypeDvar()
     gtdvar = g_gametype;
     while ( lbTypeEnum_6[gameMode] )
     {
+#if defined(__ANDROID__)
+        if ( !I_stricmp(lbTypeEnum_6[gameMode], gtdvar->current.string) )
+#else
         if ( !_stricmp(lbTypeEnum_6[gameMode], gtdvar->current.string) )
+#endif
         {
             Dvar_SetInt((dvar_s *)lb_type, gameMode + (hardcoreMode ? 8 : 0));
             return 1;
@@ -1719,7 +1805,17 @@ taskCompleteResults __cdecl LB_ReadLeaderboardMatchesCountComplete(unsigned int 
     }
     result = dwReadStatsComplete(readStatsOverlappedIO, &numResults, &totalResults);
     if ( result == TASK_COMPLETE )
+    {
+#if defined(__ANDROID__)
+        auto *cache=static_cast<Leaderboard *>(g_lbGlob.tasks[slot].data);
+        if(!cache)LB_NativeCacheFailure("null matches-count cache task owner");
+        static_assert(sizeof(cache->numMatchesPlayed)==sizeof(std::int32_t));
+        static_assert(sizeof(cache->playerLbRow.m_columns[0])==sizeof(std::int32_t));
+        cache->numMatchesPlayed=cache->playerLbRow.m_columns[0];
+#else
         *((unsigned int *)g_lbGlob.tasks[slot].data + 3878) = *((unsigned int *)g_lbGlob.tasks[slot].data + 3868);
+#endif
+    }
     if ( result )
         TaskManager_ClearTask(readStatsOverlappedIO);
     return result;
@@ -2544,21 +2640,21 @@ char *__cdecl LB_FeederItemText(int localClientNum, unsigned int index, int colu
     if ( !LB_NeedToReadLeaderBoard() )
         return 0;
     stats = LB_UpdateLeaderboard(localClientNum, lbType, index);
-    if ( g_lbGlob.feederText[15520 * lbType - 232995] )
+    if ( LB_CACHE_BYTE(lbType,isUpdating,-232995) )
         return 0;
-    if ( index >= *(unsigned int *)&g_lbGlob.feederText[15520 * lbType - 232968]
+    if ( index >= LB_CACHE_INT(lbType,totalResults,-232968)
         && !Assert_MyHandler(
                     "C:\\projects_pc\\cod\\codsrc\\src\\live\\live_leaderboard.cpp",
                     1915,
                     0,
                     "index doesn't index g_lbGlob.leaderboards[ lbType ].totalResults\n\t%i not in [0, %i)",
                     index,
-                    *(unsigned int *)&g_lbGlob.feederText[15520 * lbType - 232968]) )
+                    LB_CACHE_INT(lbType,totalResults,-232968)) )
     {
         __debugbreak();
     }
     g_lbGlob.feederText[0] = 0;
-    if ( (int)(index - *(unsigned int *)&g_lbGlob.feederText[15520 * lbType - 233004]) < 0
+    if ( (int)(index - LB_CACHE_INT(lbType,offset,-233004)) < 0
         && !Assert_MyHandler(
                     "C:\\projects_pc\\cod\\codsrc\\src\\live\\live_leaderboard.cpp",
                     1919,
@@ -2568,7 +2664,11 @@ char *__cdecl LB_FeederItemText(int localClientNum, unsigned int index, int colu
     {
         __debugbreak();
     }
-    row = &stats->m_leaderBoardEntries[index - *(unsigned int *)&g_lbGlob.feederText[15520 * lbType - 233004]];
+#if defined(__ANDROID__)
+    row=&LB_NativeCachedRow(LB_NativeCachedLeaderboard(lbType),stats,index);
+#else
+    row = &stats->m_leaderBoardEntries[index - LB_CACHE_INT(lbType,offset,-233004)];
+#endif
     switch ( column )
     {
         case 0:
@@ -2576,7 +2676,7 @@ char *__cdecl LB_FeederItemText(int localClientNum, unsigned int index, int colu
                 g_lbGlob.feederText,
                 0x20u,
                 "%lld",
-                stats->m_leaderBoardEntries[index - *(unsigned int *)&g_lbGlob.feederText[15520 * lbType - 233004]].m_rank);
+                LB_CACHE_ROW_MEMBER(row,stats,index,lbType,m_rank));
             result = g_lbGlob.feederText;
             break;
         case 1:
@@ -2591,7 +2691,7 @@ char *__cdecl LB_FeederItemText(int localClientNum, unsigned int index, int colu
             result = g_lbGlob.feederText;
             break;
         case 3:
-            result = stats->m_leaderBoardEntries[index - *(unsigned int *)&g_lbGlob.feederText[15520 * lbType - 233004]].m_entityName;
+            result = LB_CACHE_ROW_MEMBER(row,stats,index,lbType,m_entityName);
             break;
         case 4:
             v7 = (float)((float)LB_GetXUserCol(&g_LbLookup, row, lbType, LB_STAT_SCORE_PER_MINUTE) / 1000.0);
@@ -2599,7 +2699,7 @@ char *__cdecl LB_FeederItemText(int localClientNum, unsigned int index, int colu
             result = g_lbGlob.feederText;
             break;
         default:
-            if ( GlobalLbStat[3][17 * (lbType % 8) + 14 + column] == 8 )
+            if ( LB_FEEDER_STAT(lbType,column) == 8 )
             {
                 v11 = LB_GetXUserCol(&g_LbLookup, row, 0, LB_STAT_DEATHS);
                 if ( v11 > 1 )
@@ -2611,7 +2711,7 @@ char *__cdecl LB_FeederItemText(int localClientNum, unsigned int index, int colu
             }
             else
             {
-                v9 = LB_GetXUserCol(&g_LbLookup, row, lbType, (LbStatEnum)GlobalLbStat[3][17 * (lbType % 8) + 14 + column]);
+                v9 = LB_GetXUserCol(&g_LbLookup, row, lbType, (LbStatEnum)LB_FEEDER_STAT(lbType,column));
                 Com_sprintf(g_lbGlob.feederText, 0x20u, "%i", v9);
             }
             if ( &g_lbGlob == (LbGlob *)-249720
@@ -2770,6 +2870,9 @@ void __cdecl LB_Init()
     Cmd_AddCommandInternal("reportuser", LB_ReportUser, &LB_ReportUser_VAR);
     for ( gpad = 0; gpad < 1; ++gpad )
         LB_ClearPlayerStats(gpad);
+#if defined(__ANDROID__)
+    LB_NativeInitializeCache(g_lbGlob);
+#else
     for ( lbIdx = 0; lbIdx < 16; ++lbIdx )
     {
         *(unsigned int *)&g_lbGlob.feederText[15520 * lbIdx - 232988] = 0;
@@ -2780,6 +2883,7 @@ void __cdecl LB_Init()
         *(unsigned int *)&g_lbGlob.feederText[15520 * lbIdx - 233000] = 0;
         g_lbGlob.feederText[15520 * lbIdx - 232996] = 1;
     }
+#endif
     g_lbGlob.currentLbType = LB_COUNT;
     lb_minrefresh = _Dvar_RegisterInt(
                                         "lb_minrefresh",

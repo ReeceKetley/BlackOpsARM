@@ -5,6 +5,11 @@
 #include <ctime>
 #include <universal/assertive.h>
 #include <universal/q_shared.h>
+#if defined(__ANDROID__)
+#include <platform/android/engine_paths.h>
+#include <platform/android/stdio_services.h>
+#include <string>
+#endif
 
 struct
 {
@@ -25,7 +30,11 @@ void RB_CloseLogFile()
 {
     if ( r_logFileGlob.fp )
     {
+#if defined(__ANDROID__)
+        bo1::android::CloseStdio(r_logFileGlob.fp);
+#else
         fclose(r_logFileGlob.fp);
+#endif
         r_logFileGlob.fp = 0;
     }
 }
@@ -38,13 +47,27 @@ void RB_OpenLogFile()
 
     if ( !r_logFileGlob.fp )
     {
+#if defined(__ANDROID__)
+        const auto path=std::string(Sys_EngineUserRoot())+"/dx.log";
+        r_logFileGlob.fp=bo1::android::OpenStdio(path.c_str(),"wt");
+#else
         r_logFileGlob.fp = fopen("dx.log", "wt");
+#endif
         if ( r_logFileGlob.fp )
         {
+#if defined(__ANDROID__)
+            const auto now=std::time(nullptr);tm local{};char text[26]{};
+            if(!localtime_r(&now,&local) || !asctime_r(&local,text)) {
+                bo1::android::CloseStdio(r_logFileGlob.fp);r_logFileGlob.fp=nullptr;return;
+            }
+            bo1::android::WriteStdio(text,static_cast<unsigned>(strlen(text)),r_logFileGlob.fp);
+            bo1::android::WriteStdio("\n",1,r_logFileGlob.fp);
+#else
             _time64(&aclock);
             newtime = _localtime64(&aclock);
             v0 = asctime(newtime);
             fprintf(r_logFileGlob.fp, "%s\n", v0);
+#endif
             fflush(r_logFileGlob.fp);
         }
     }
@@ -69,7 +92,11 @@ void __cdecl RB_LogPrint(const char *text)
     }
     if ( RB_IsLogging() )
     {
+#if defined(__ANDROID__)
+        bo1::android::WriteStdio(text,static_cast<unsigned>(strlen(text)),r_logFileGlob.fp);
+#else
         fprintf(r_logFileGlob.fp, "%s", text);
+#endif
         fflush(r_logFileGlob.fp);
     }
 }

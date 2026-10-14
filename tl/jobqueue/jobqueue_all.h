@@ -1,5 +1,11 @@
 #include <platform/bo1_native_width.h>
 #pragma once
+#if defined(__ANDROID__)
+#include <cstdint>
+#include <platform/android/jobqueue_atomic.h>
+using LONG64 = std::int64_t;
+static_assert(sizeof(LONG64) == 8);
+#endif
 #include <tl/tl_system.h>
 
 #include <Windows.h>
@@ -148,8 +154,12 @@ struct alignas(8) jqBatchGroup // sizeof=0x8
         unsigned __int64 BatchCount;
     };
 
-    jqBatchGroup();
+    jqBatchGroup()
+    {
+        this->BatchCount = 0;
+    }
 };
+static_assert(sizeof(jqBatchGroup) == 8);
 #if !defined(BO1_PORT_X64)
 static_assert(alignof(jqBatchGroup) == 8, "jqBatchGroup must be 8-byte aligned for atomic 64-bit reads");
 #endif
@@ -314,7 +324,11 @@ struct __declspec(align(8)) jqAtomicQueue//<jqBatch,32> // sizeof=0x50
     bool Pop(jqBatch *p)
     {
         HeadLock.Lock();
+#if defined(__ANDROID__)
+        NodeType *Next = __atomic_load_n(&ThisPtr->Head->Next,__ATOMIC_ACQUIRE);
+#else
         NodeType *Next = ThisPtr->Head->Next;
+#endif
         NodeType *OldHead = ThisPtr->Head;
 
         if (Next)
@@ -344,7 +358,11 @@ struct __declspec(align(8)) jqAtomicQueue//<jqBatch,32> // sizeof=0x50
         Node->Next = nullptr;
 
         TailLock.Lock();
+#if defined(__ANDROID__)
+        __atomic_store_n(&ThisPtr->Tail->Next,Node,__ATOMIC_RELEASE);
+#else
         ThisPtr->Tail->Next = Node;
+#endif
         ThisPtr->Tail = Node;
         TailLock.Unlock();
     }

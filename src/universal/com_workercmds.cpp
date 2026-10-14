@@ -9,6 +9,9 @@
 #include <qcommon/threads.h>
 #include <Windows.h>
 #include <gfx_d3d/r_workercmds.h>
+#if defined(__ANDROID__)
+#include <platform/atomic32.h>
+#endif
 
 // ParamData layout: Win32 [0]=jqWorkerCmd*, [1]=fence, inline data from [2]; x64 widens the pointer to two slots.
 #if BO1_NATIVE_64BIT
@@ -96,7 +99,11 @@ void __cdecl Sys_AddWorkerCmdInternal(jqWorkerCmd *name, unsigned __int8 *data, 
         batch.ConditionalValue = cond->value;
     }
     memcpy(batch.ParamData, &name, sizeof(name));
+#if defined(__ANDROID__)
+    batch.ParamData[JQ_PARAM_FENCE] = bo1::atomic32::ExchangeAdd32(&name->ppu_fence,1u);
+#else
     batch.ParamData[JQ_PARAM_FENCE] = _InterlockedExchangeAdd(&name->ppu_fence, 1u);
+#endif
     jqAddBatch(&batch, name->queue);
 }
 
@@ -122,6 +129,19 @@ void __cdecl Sys_WaitWorkerCmdInternal(jqWorkerCmd *name)
         gMainWaitWorker += tlPcGetTick().QuadPart - startTime;
 }
 
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+// jqAssist invokes these synchronously with the original borrowed context.
+static bool __cdecl BO1_AssistAndWaitWorkerCmdCallback(void *context)
+{
+    return Sys_AssistAndWaitWorkerCmdInternalCallback(static_cast<jqBatchGroup *>(context));
+}
+
+static bool __cdecl BO1_AssistSingleCallback(void *context)
+{
+    return Sys_AssistSingleCallback(static_cast<unsigned int *>(context));
+}
+#endif
+
 void __cdecl Sys_AssistAndWaitWorkerCmdInternal(jqWorkerCmd *name)
 {
     jqBatchGroup *GroupID; // [esp+4h] [ebp-4h]
@@ -130,6 +150,15 @@ void __cdecl Sys_AssistAndWaitWorkerCmdInternal(jqWorkerCmd *name)
         GroupID = &name->module->Group;
     else
         GroupID = 0;
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+    if ( name )
+        jqAssistWithBatches(
+            BO1_AssistAndWaitWorkerCmdCallback,
+            &name->module->Group,
+            GroupID);
+    else
+        jqAssistWithBatches(BO1_AssistAndWaitWorkerCmdCallback, 0, GroupID);
+#else
     if ( name )
         jqAssistWithBatches(
             (bool (__cdecl *)(void *))Sys_AssistAndWaitWorkerCmdInternalCallback,
@@ -137,6 +166,7 @@ void __cdecl Sys_AssistAndWaitWorkerCmdInternal(jqWorkerCmd *name)
             GroupID);
     else
         jqAssistWithBatches((bool (__cdecl *)(void *))Sys_AssistAndWaitWorkerCmdInternalCallback, 0, GroupID);
+#endif
 }
 
 bool __cdecl Sys_AssistAndWaitWorkerCmdInternalCallback(jqBatchGroup *context)
@@ -146,10 +176,17 @@ bool __cdecl Sys_AssistAndWaitWorkerCmdInternalCallback(jqBatchGroup *context)
 
 void __cdecl Sys_AssistSingle()
 {
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+    unsigned int count; // [esp+0h] [ebp-4h] BYREF
+
+    count = 1;
+    jqAssistWithBatches(BO1_AssistSingleCallback, &count, 0);
+#else
     int count; // [esp+0h] [ebp-4h] BYREF
 
     count = 1;
     jqAssistWithBatches((bool (__cdecl *)(void *))Sys_AssistSingleCallback, &count, 0);
+#endif
 }
 
 bool __cdecl Sys_AssistSingleCallback(unsigned int *context)

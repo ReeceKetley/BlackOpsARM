@@ -10,11 +10,19 @@ Glasses *__cdecl GetGlasses_LoadObj()
 {
     if ( !glassesInited )
     {
+#if defined(__ANDROID__)
+        // Allocate complete native runtime elements before publishing the owner.
+        Glass *nativeGlasses = (Glass *)operator new[](sizeof(Glass) * 1000u);
+        memset(&glasses, 0, sizeof(glasses));
+        glasses.glasses = nativeGlasses;
+        glassesInited = 1;
+#else
         glassesInited = 1;
         memset((unsigned __int8 *)&glasses, 0, sizeof(glasses));
         glasses.glasses = (Glass *)operator new[](0x1E460u);
         glasses.numGlasses = 0;
         glasses.name = 0;
+#endif
     }
     return &glasses;
 }

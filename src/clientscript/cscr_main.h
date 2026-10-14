@@ -208,6 +208,9 @@ unsigned int __cdecl Scr_LoadScript(scriptInstance_t inst, char *filename);
 void __cdecl Scr_PostCompileScripts(scriptInstance_t inst);
 void __cdecl Scr_EndLoadScripts(scriptInstance_t inst);
 void __cdecl Scr_PrecacheAnimTrees(scriptInstance_t inst, void *(__cdecl *Alloc)(int), int user, bool modChecksum);
+#if defined(__ANDROID__)
+void __cdecl Scr_PrecacheAnimTrees(scriptInstance_t inst, void *(__cdecl *Alloc)(unsigned int), int user, bool modChecksum);
+#endif
 void __cdecl Scr_EndLoadAnimTrees(scriptInstance_t inst);
 void __cdecl Scr_FreeScripts(scriptInstance_t inst, unsigned __int8 sys);
 void __cdecl Scr_GetGenericField(

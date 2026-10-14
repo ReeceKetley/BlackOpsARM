@@ -4,6 +4,14 @@
 #include <Windows.h> // interlockedexchange
 #include <new>
 #include <universal/q_shared.h>
+#if defined(__ANDROID__)
+#include <platform/android/physics_atomic.h>
+#include <cerrno>
+#include <cstdlib>
+#include <platform/android/oom_error.h>
+#define InterlockedExchange _InterlockedExchange
+#define InterlockedCompareExchangePointer _InterlockedCompareExchangePointer
+#endif
 
 void *g_phys_memory_buffer;
 int g_phys_memory_buffer_size;
@@ -72,21 +80,41 @@ void __cdecl transient_allocator_update_largest_size()
 
 void *phys_memory_manager::allocate(unsigned int size, unsigned int alignment)
 {
+#if defined(__ANDROID__)
+    if (!alignment || (alignment&(alignment-1))) { errno=EINVAL; return nullptr; }
+#endif
     // Pointer-width CAS (Win32 used 32-bit InterlockedCompareExchange on m_buffer_cur).
     const uintptr_t mask = ~(static_cast<uintptr_t>(alignment) - 1);
     const uintptr_t alignMinus1 = static_cast<uintptr_t>(alignment) - 1;
 
     for (;;)
     {
+#if defined(__ANDROID__)
+        char *cur = __atomic_load_n(&this->m_buffer_cur,__ATOMIC_SEQ_CST);
+#else
         char *cur = this->m_buffer_cur;
+#endif
+#if defined(__ANDROID__)
+        if (reinterpret_cast<uintptr_t>(cur)>UINTPTR_MAX-alignMinus1) return nullptr;
+#endif
         const uintptr_t aligned = (reinterpret_cast<uintptr_t>(cur) + alignMinus1) & mask;
         char *next = reinterpret_cast<char *>(aligned + size);
+#if defined(__ANDROID__)
+        const auto end=reinterpret_cast<uintptr_t>(this->m_buffer_end);
+        if (aligned>end || size>end-aligned)
+#else
         if ( next > this->m_buffer_end )
+#endif
             return nullptr;
+#if defined(__ANDROID__)
+        char *expected=cur;
+        if (__atomic_compare_exchange_n(&this->m_buffer_cur,&expected,next,false,__ATOMIC_SEQ_CST,__ATOMIC_SEQ_CST))
+#else
         if ( InterlockedCompareExchangePointer(
                  reinterpret_cast<PVOID *>(&this->m_buffer_cur),
                  next,
                  cur) == cur )
+#endif
             return reinterpret_cast<void *>(aligned);
     }
 }
@@ -199,9 +227,19 @@ void *__cdecl PMM_PERM_ALLOCATE(unsigned int size, unsigned int alignment)
 {
     void *result; // eax
 
+#if defined(__ANDROID__)
+    if (!g_phys_memory_manager || !alignment || (alignment & (alignment - 1)))
+    {
+        _tlAssert(__FILE__, __LINE__, "initialized physics arena and power-of-two alignment", "invalid permanent physics allocation");
+        std::abort();
+    }
+#endif
     result = g_phys_memory_manager->allocate(size, alignment);
     if ( !result )
     {
+#if defined(__ANDROID__)
+        bo1::android::ReportAllocationFailure(__FILE__, __LINE__, "PMM_PERM_ALLOCATE", "physics arena", size, 0, false);
+#endif
         if ( _tlAssert("source/phys_mem_new.cpp", 265, "ptr", "physics memory manager error: out of memory.") )
             __debugbreak();
         return 0;
@@ -256,7 +294,11 @@ void __cdecl PMM_VALIDATE(char *ptr, unsigned int size, unsigned int alignment)
 phys_memory_manager::phys_memory_manager(char *memory_buffer, int memory_buffer_size)
 {
     this->m_slot_pool_map_mutex.m_count = 1;
+#if defined(__ANDROID__)
+    memset(this->m_slot_pool_map.m_hash_table, 0, sizeof(this->m_slot_pool_map.m_hash_table));
+#else
     memset(&this->m_slot_pool_map, 0, 0x100u);
+#endif
     this->m_slot_pool_map.m_mod = 1;
     this->m_slot_pool_map.m_highest_collision = 0;
     this->m_slot_pool_map.m_total_collisions = 0;
@@ -265,7 +307,11 @@ phys_memory_manager::phys_memory_manager(char *memory_buffer, int memory_buffer_
     this->m_buffer_cur = memory_buffer;
     this->m_buffer_end = &memory_buffer[memory_buffer_size];
     this->m_list_slot_pool_count = 0;
+#if defined(__ANDROID__)
+    memset(this->m_slot_pool_map.m_hash_table, 0, sizeof(this->m_slot_pool_map.m_hash_table));
+#else
     memset(&this->m_slot_pool_map, 0, 0x100u);
+#endif
     this->m_slot_pool_map.m_highest_collision = 0;
     this->m_slot_pool_map.m_total_collisions = 0;
     this->m_slot_pool_map.m_mod = 1;
@@ -289,6 +335,30 @@ void __cdecl phys_memory_manager_init(void *const memory_buffer, int memory_buff
     {
         __debugbreak();
     }
+#if defined(__ANDROID__)
+    const uintptr_t buf = reinterpret_cast<uintptr_t>(memory_buffer);
+    constexpr uintptr_t mask = alignof(phys_memory_manager) - 1;
+    if (g_phys_memory_buffer || g_phys_memory_buffer_size || g_phys_memory_manager || !buf ||
+        memory_buffer_size <= 0 || buf > UINTPTR_MAX - static_cast<uintptr_t>(memory_buffer_size) || buf > UINTPTR_MAX - mask)
+    {
+        _tlAssert(__FILE__, __LINE__, "unowned, non-null, valid physics arena span", "invalid physics arena initialization");
+        std::abort();
+    }
+    const uintptr_t aligned = (buf + mask) & ~mask;
+    const uintptr_t end = buf + static_cast<uintptr_t>(memory_buffer_size);
+    if (aligned > end || sizeof(phys_memory_manager) >= end - aligned)
+    {
+        _tlAssert(__FILE__, __LINE__, "physics arena has manager and allocation storage", "physics arena too small");
+        std::abort();
+    }
+    auto *manager = new (reinterpret_cast<void *>(aligned)) phys_memory_manager(
+        reinterpret_cast<char *>(aligned + sizeof(phys_memory_manager)),
+        static_cast<int>(end - aligned - sizeof(phys_memory_manager)));
+    // Constructor does not use the global arena. Publish only its complete state.
+    g_phys_memory_buffer = memory_buffer;
+    g_phys_memory_buffer_size = memory_buffer_size;
+    g_phys_memory_manager = manager;
+#else
     {
         const uintptr_t buf = reinterpret_cast<uintptr_t>(memory_buffer);
         const uintptr_t aligned = (buf + 7) & ~static_cast<uintptr_t>(7);
@@ -303,6 +373,7 @@ void __cdecl phys_memory_manager_init(void *const memory_buffer, int memory_buff
                 reinterpret_cast<char *>(aligned + sizeof(phys_memory_manager)), poolBytes);
         }
     }
+#endif
 }
 
 void phys_slot_pool::extra_info_init(char *slot)
@@ -331,7 +402,11 @@ void phys_slot_pool::extra_info_init(char *slot)
         }
 
         slot = 0;
+#if defined(__ANDROID__)
+        bo1::android::physics_atomic::memoryBarrier();
+#else
         InterlockedExchange((volatile unsigned int *)&slot, 0);
+#endif
     }
 }
 
@@ -398,7 +473,11 @@ void __thiscall phys_slot_pool::extra_info_allocate(char *slot)
         __debugbreak();
     }
 
+#if defined(__ANDROID__)
+    _InterlockedExchangeAdd(&this->m_allocated_slot_count, 1u);
+#else
     _InterlockedExchangeAdd((volatile long *)&this->m_allocated_slot_count, 1u);
+#endif
     if (this->m_allocated_slot_count > this->m_total_slot_count
         && _tlAssert(
             "source/phys_mem_new.cpp",
@@ -494,7 +573,11 @@ void __thiscall phys_slot_pool::extra_info_free(unsigned __int8 *slot)
         __debugbreak();
     }
 
+#if defined(__ANDROID__)
+    _InterlockedExchangeAdd(&this->m_allocated_slot_count, ~0u);
+#else
     _InterlockedExchangeAdd((volatile long *)&this->m_allocated_slot_count, (unsigned long)-1);
+#endif
 
     if (this->m_allocated_slot_count > this->m_total_slot_count
         && _tlAssert(

@@ -5,5 +5,6 @@ namespace bo1::win32 {
 // The future counter must use monotonic nanoseconds to match this frequency.
 // QueryPerformanceCounter itself is intentionally not implemented in Phase 1.
 BOOL QueryPerformanceFrequency(LARGE_INTEGER* frequency);
+BOOL QueryPerformanceCounter(LARGE_INTEGER* counter);
 void Sleep(DWORD milliseconds);
 }

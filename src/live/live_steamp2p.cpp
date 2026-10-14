@@ -50,9 +50,19 @@ int __thiscall LiveSteamP2P::ReadPacket(
     //                 remoteID,
     //                 0);
 
+#if defined(__ANDROID__)
+    if(msgsize) *msgsize=0;
+    if(!buf || !bufsize || !msgsize || !remoteID) return 0;
+    auto *networking=SteamNetworking();
+    if(!networking) return 0;
+    const bool read=networking->ReadP2PPacket(buf,bufsize,msgsize,remoteID,0);
+    if(!read || *msgsize>bufsize) { *msgsize=0; return 0; }
+    return 1;
+#else
     if (!SteamNetworking()) // no-steam: no Steam client, no P2P
         return 0;
     return SteamNetworking()->IsP2PPacketAvailable(msgsize, 0);
+#endif
 }
 
 void __thiscall LiveSteamP2P::OnSessionRequest(P2PSessionRequest_t *sessionRequest)

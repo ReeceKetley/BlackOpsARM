@@ -1,4 +1,7 @@
 #include "ddl_api.h"
+#if defined(__ANDROID__)
+#include <cstdio>
+#endif
 #include <universal/dvar.h>
 #include <cstdarg>
 #include <stdio.h>
@@ -31,10 +34,18 @@ void DDL_Printf(const char *fmt, ...)
     {
         if ( ddl_verbose->current.enabled )
         {
+#if defined(__ANDROID__)
+            std::vsnprintf(msg, 0x100u, fmt, va);
+            Com_Printf(29, "%s", msg);
+#else
             _vsnprintf(msg, 0x100u, fmt, va);
             Com_Printf(29, msg);
+#endif
         }
     }
+#if defined(__ANDROID__)
+    va_end(va);
+#endif
 }
 
 void DDL_NoCheckPrintf(const char *fmt, ...)
@@ -43,8 +54,16 @@ void DDL_NoCheckPrintf(const char *fmt, ...)
     va_list va; // [esp+118h] [ebp+Ch] BYREF
 
     va_start(va, fmt);
+#if defined(__ANDROID__)
+    std::vsnprintf(msg, 0x100u, fmt, va);
+    Com_Printf(29, "%s", msg);
+#else
     _vsnprintf(msg, 0x100u, fmt, va);
     Com_Printf(29, msg);
+#endif
+#if defined(__ANDROID__)
+    va_end(va);
+#endif
 }
 
 void DDL_PrintWarning(const char *fmt, ...)
@@ -57,10 +76,18 @@ void DDL_PrintWarning(const char *fmt, ...)
     {
         if ( ddl_verbose->current.enabled )
         {
+#if defined(__ANDROID__)
+            std::vsnprintf(msg, 0x100u, fmt, va);
+            Com_PrintWarning(29, "%s", msg);
+#else
             _vsnprintf(msg, 0x100u, fmt, va);
             Com_PrintWarning(29, msg);
+#endif
         }
     }
+#if defined(__ANDROID__)
+    va_end(va);
+#endif
 }
 
 void DDL_NoCheckPrintWarning(const char *fmt, ...)
@@ -69,8 +96,16 @@ void DDL_NoCheckPrintWarning(const char *fmt, ...)
     va_list va; // [esp+118h] [ebp+Ch] BYREF
 
     va_start(va, fmt);
+#if defined(__ANDROID__)
+    std::vsnprintf(msg, 0x100u, fmt, va);
+    Com_PrintWarning(29, "%s", msg);
+#else
     _vsnprintf(msg, 0x100u, fmt, va);
     Com_PrintWarning(29, msg);
+#endif
+#if defined(__ANDROID__)
+    va_end(va);
+#endif
 }
 
 void DDL_PrintError(const char *fmt, ...)
@@ -83,10 +118,18 @@ void DDL_PrintError(const char *fmt, ...)
     {
         if ( ddl_verbose->current.enabled )
         {
+#if defined(__ANDROID__)
+            std::vsnprintf(msg, 0x100u, fmt, va);
+            Com_PrintError(29, "%s", msg);
+#else
             _vsnprintf(msg, 0x100u, fmt, va);
             Com_PrintError(29, msg);
+#endif
         }
     }
+#if defined(__ANDROID__)
+    va_end(va);
+#endif
 }
 
 void DDL_NoCheckPrintError(const char *fmt, ...)
@@ -95,8 +138,16 @@ void DDL_NoCheckPrintError(const char *fmt, ...)
     va_list va; // [esp+118h] [ebp+Ch] BYREF
 
     va_start(va, fmt);
+#if defined(__ANDROID__)
+    std::vsnprintf(msg, 0x100u, fmt, va);
+    Com_PrintError(29, "%s", msg);
+#else
     _vsnprintf(msg, 0x100u, fmt, va);
     Com_PrintError(29, msg);
+#endif
+#if defined(__ANDROID__)
+    va_end(va);
+#endif
 }
 
 int __cdecl DDL_IsStateReadyForIO(const ddlState_t *state)
@@ -235,7 +286,11 @@ int DDL_MoveTo(const ddlState_t *searchState, ddlState_t *resultState, int argNu
 {
     const char *v3; // kr00_4
     int i; // [esp+0h] [ebp-Ch]
+#if defined(__ANDROID__)
+    va_list args;
+#else
     char *args; // [esp+8h] [ebp-4h]
+#endif
     va_list va; // [esp+20h] [ebp+14h] BYREF
 
     va_start(va, argNum);
@@ -245,8 +300,20 @@ int DDL_MoveTo(const ddlState_t *searchState, ddlState_t *resultState, int argNu
     {
         v3 = va_arg(args, const char *);
         if ( !DDL_Lookup_MoveTo(resultState, v3, resultState) )
+#if defined(__ANDROID__)
+        {
+            va_end(args);
+            va_end(va);
             return 0;
+        }
+#else
+            return 0;
+#endif
     }
+#if defined(__ANDROID__)
+    va_end(args);
+    va_end(va);
+#endif
     return 1;
 }
 

@@ -24,6 +24,39 @@
 char info1[1024];
 char info2[16384];
 
+#if defined(__ANDROID__)
+// Dvar_ForEach owns the void-context ABI; canonical callbacks keep typed data.
+static void __cdecl Dvar_WriteSingleVariableEnumerated(const dvar_s *dvar, void *context)
+{
+    Dvar_WriteSingleVariable(dvar, static_cast<int *>(context));
+}
+static void __cdecl Dvar_WriteSingleDefaultEnumerated(const dvar_s *dvar, void *context)
+{
+    Dvar_WriteSingleDefault(dvar, static_cast<int *>(context));
+}
+static void __cdecl Dvar_ListSingleEnumerated(const dvar_s *dvar, void *context)
+{
+    Dvar_ListSingle(dvar, static_cast<const char *>(context));
+}
+#if !defined(BO1_STARTUP_SERVICES)
+static void __cdecl SV_SetConfigDvarEnumerated(const dvar_s *dvar, void *context)
+{
+    const auto *info = static_cast<const DvarSetConfigInfo *>(context);
+    // The actual owner consumes an int array. Do not index through struct fields.
+    int values[3] = {info->start, info->max, info->bit};
+    SV_SetConfigDvar(dvar, values);
+}
+static void __cdecl Dvar_InfoStringSingleEnumerated(const dvar_s *dvar, void *context)
+{
+    Dvar_InfoStringSingle(dvar, static_cast<unsigned int *>(context));
+}
+static void __cdecl Dvar_InfoStringSingleBigEnumerated(const dvar_s *dvar, void *context)
+{
+    Dvar_InfoStringSingle_Big(dvar, static_cast<unsigned int *>(context));
+}
+#endif
+#endif
+
 int __cdecl Dvar_Command(bool restricted)
 {
     const char *v1; // eax
@@ -474,7 +507,11 @@ void __cdecl Dvar_Reset_f()
 
 void __cdecl Dvar_WriteVariables(int f)
 {
+    #if defined(__ANDROID__)
+    Dvar_ForEach(Dvar_WriteSingleVariableEnumerated, &f);
+#else
     Dvar_ForEach((void (__cdecl *)(const dvar_s *, void *))Dvar_WriteSingleVariable, &f);
+#endif
 }
 
 void __cdecl Dvar_WriteSingleVariable(const dvar_s *dvar, int *userData)
@@ -495,7 +532,11 @@ void __cdecl Dvar_WriteSingleVariable(const dvar_s *dvar, int *userData)
 
 void __cdecl Dvar_WriteDefaults(int f)
 {
+    #if defined(__ANDROID__)
+    Dvar_ForEach(Dvar_WriteSingleDefaultEnumerated, &f);
+#else
     Dvar_ForEach((void (__cdecl *)(const dvar_s *, void *))Dvar_WriteSingleDefault, &f);
+#endif
 }
 
 void __cdecl Dvar_WriteSingleDefault(const dvar_s *dvar, int *userData)
@@ -522,12 +563,20 @@ void __cdecl Dvar_List_f()
     dvar_count_local = 0;
     if ( Cmd_Argc() <= 1 )
     {
+        #if defined(__ANDROID__)
+        Dvar_ForEach(Dvar_ListSingleEnumerated, 0);
+#else
         Dvar_ForEach((void (__cdecl *)(const dvar_s *, void *))Dvar_ListSingle, 0);
+#endif
     }
     else
     {
         match = (char *)Cmd_Argv(1);
+        #if defined(__ANDROID__)
+        Dvar_ForEach(Dvar_ListSingleEnumerated, match);
+#else
         Dvar_ForEach((void (__cdecl *)(const dvar_s *, void *))Dvar_ListSingle, match);
+#endif
     }
     Com_Printf(0, "\n%i total dvars\n", dvar_count_local);
 }
@@ -667,7 +716,11 @@ void __cdecl SV_SetConfig(int start, int max, int bit)
     info.start = start;
     info.max = max;
     info.bit = bit;
+    #if defined(__ANDROID__)
+    Dvar_ForEach(SV_SetConfigDvarEnumerated, &info);
+#else
     Dvar_ForEach((void (__cdecl *)(const dvar_s *, void *))SV_SetConfigDvar, &info);
+#endif
 }
 #endif
 
@@ -707,7 +760,11 @@ char *__cdecl Dvar_InfoString(int localClientNum, int bit)
 
     clc = CL_GetLocalClientConnection(localClientNum);
     info1[0] = 0;
+    #if defined(__ANDROID__)
+    Dvar_ForEach(Dvar_InfoStringSingleEnumerated, &bit);
+#else
     Dvar_ForEach((void (__cdecl *)(const dvar_s *, void *))Dvar_InfoStringSingle, &bit);
+#endif
     if ( (bit & 2) != 0 )
     {
         index = localClientNum;
@@ -804,7 +861,11 @@ void __cdecl Dvar_InfoStringSingle(const dvar_s *dvar, unsigned int *userData)
 char *__cdecl Dvar_InfoString_Big(int bit)
 {
     info2[0] = 0;
+    #if defined(__ANDROID__)
+    Dvar_ForEach(Dvar_InfoStringSingleBigEnumerated, &bit);
+#else
     Dvar_ForEach((void (__cdecl *)(const dvar_s *, void *))Dvar_InfoStringSingle_Big, &bit);
+#endif
     return info2;
 }
 #endif

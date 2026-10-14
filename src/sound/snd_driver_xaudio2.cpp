@@ -17,10 +17,28 @@ const dvar_t *sd_xa2_can_switch_device;
 const dvar_t *sd_xa2_device_guid;
 const dvar_t *sd_xa2_device_name;
 
+#if defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST)
+#include <atomic>
+#include <SDL.h>
+#include <platform/android/wma_decoder.h>
+#include <array>
+#include <memory>
+#include <new>
+#endif
+
 SoundState g_sd;
+#if defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST)
+// SDK buffers borrow these samples. Retire each actual voice before its owner.
+static std::array<std::unique_ptr<bo1::android::DecodedWma>, SND_MAX_VOICES> sd_wmaSamples;
+#endif
 char sd_xa2_device_names[16][256];
+#if defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST)
+const char *sd_xa2_devices_value_list[17];
+const char *sd_xa2_device_guids_value_list[17];
+#else
 const char *sd_xa2_devices_value_list[16];
 const char *sd_xa2_device_guids_value_list[16];
+#endif
 int sd_xa2_device_indices[16];
 _GUID sd_deviceGUIDs[16];
 char sd_xa2_device_guids[16][256];
@@ -82,7 +100,9 @@ void __cdecl SD_XAudio2Done()
         g_sd.deviceGUIDValid = 0;
         g_sd.deviceIndex = -1;
         memset(&g_sd.deviceGUID, 0, sizeof(g_sd.deviceGUID));
+#if !(defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST))
         CoUninitialize();
+#endif
     }
 }
 
@@ -143,6 +163,9 @@ IXAudio2SubmixVoice *__cdecl SD_CreateBus(
                  &sends,
                  dsp != 0 ? &effects : 0);
 
+#if defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST)
+    if (hr != S_OK || !voice) return nullptr;
+#endif
     iassert(hr == S_OK);
     iassert(inputChannelCount <= 8);
     iassert(outputChannelCount <= 8);
@@ -176,6 +199,9 @@ void __cdecl SD_StopVoice(int voiceIndex)
         g_sd.voices[voiceIndex]->DestroyVoice();
         g_sd.voices[voiceIndex] = 0;
     }
+#if defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST)
+    sd_wmaSamples[voiceIndex].reset(); // DestroyVoice has quiesced all SDK access.
+#endif
     if ( SND_IsStream(voiceIndex) )
     {
         streamVoice = iSND_GetStreamChannel(voiceIndex);
@@ -199,7 +225,13 @@ void __cdecl iSND_ReleaseStreamBuffer(unsigned int streamVoice, unsigned int buf
     iassert(streamVoice < SND_MAX_STREAM_VOICES);
     iassert(bufferIndex < StreamVoice::BUFFER_COUNT);
 
+#if defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST)
+    auto &pointer = g_sd.streamVoices[streamVoice].buffers[bufferIndex].pAudioData;
+    releaseWindow = reinterpret_cast<char *>(const_cast<std::uint8_t *>(
+        std::atomic_ref(pointer).exchange(nullptr, std::memory_order_acq_rel)));
+#else
     releaseWindow = static_cast<char *>(InterlockedExchangePointer(reinterpret_cast<void *volatile *>(const_cast<BYTE **>(&g_sd.streamVoices[streamVoice].buffers[bufferIndex].pAudioData)), nullptr));
+#endif
 
     if (releaseWindow)
     {
@@ -335,10 +367,17 @@ LABEL_11:
             memset(buffer, 0, sizeof(XAUDIO2_BUFFER));
             buffer->AudioBytes = size;
             iassert(!buffer->pAudioData);
+#if defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST)
+            std::atomic_ref(buffer->pAudioData).store(reinterpret_cast<const std::uint8_t *>(data), std::memory_order_release);
+#else
             buffer->pAudioData = (const unsigned __int8 *)data;
+#endif
             buffer->pContext = reinterpret_cast<void *>(static_cast<uintptr_t>(bufferIndex | (streamVoice << 8)));
 
             err = g_sd.voices[voiceIndex]->SubmitSourceBuffer(buffer, header->format != SND_ASSET_FORMAT_WMA ? 0 : &bufferWMA);
+#if defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST)
+            if (err != S_OK) { iSND_ChannelError(voiceIndex); return; }
+#endif
             iassert(err == S_OK); // ADD
             break;
         case SND_STREAM_STARVING:
@@ -373,6 +412,35 @@ int __cdecl iSND_CreateVoice(int voiceIndex, const snd_asset *snd, int isLooping
     XAUDIO2_VOICE_SENDS sendList;            // [esp+F8h] [ebp-10h] BYREF
     XAUDIO2_EFFECT_CHAIN fxChain;            // [esp+100h] [ebp-8h] BYREF
 
+#if defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST)
+    if (!snd || voiceIndex < 0 || voiceIndex >= SND_MAX_VOICES ||
+        snd->channel_count < 1 || snd->channel_count > 2 ||
+        snd->frame_rate < 1000 || snd->frame_rate > 100000 || !snd->frame_count)
+    { Com_PrintError(9, "Invalid native sound asset metadata\n"); return 0; }
+    if (snd->format != SND_ASSET_FORMAT_PCMS16 && snd->format != SND_ASSET_FORMAT_MSADPCM && snd->format != SND_ASSET_FORMAT_WMA)
+    { Com_PrintError(9, "Native sound codec %d unsupported; real decoder required\n", static_cast<int>(snd->format)); return 0; }
+#endif
+#if defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST)
+    if (g_sd.voices[voiceIndex] || sd_wmaSamples[voiceIndex])
+    { Com_PrintError(9, "Native sound voice still owns a prior buffer\n"); return 0; }
+    std::unique_ptr<bo1::android::DecodedWma> decodedWma;
+    if (snd->format == SND_ASSET_FORMAT_WMA)
+    {
+        if (SND_IsStream(voiceIndex) || !snd->data || !snd->seek_table || !snd->seek_table_count)
+        { Com_PrintError(9, "Invalid native resident WMAv2 packet ownership\n"); return 0; }
+        decodedWma.reset(new(std::nothrow) bo1::android::DecodedWma);
+        if (!decodedWma) { Com_PrintError(9, "WMAv2 buffer owner allocation failed\n"); return 0; }
+        const bo1::android::WmaAssetView asset{snd->channel_count, snd->frame_rate,
+            snd->channel_count == 1 ? 2230u : 4096u, snd->frame_count,
+            {snd->seek_table, snd->seek_table_count},
+            {reinterpret_cast<const std::uint8_t *>(snd->data), snd->data_size}};
+        std::string error;
+        if (!bo1::android::DecodeCanonicalWma(asset, *decodedWma, error))
+        { Com_PrintError(9, "Actual native WMAv2 decode failed: %s\n", error.c_str()); return 0; }
+        if (decodedWma->samples.size() > UINT32_MAX / sizeof(float))
+        { Com_PrintError(9, "WMAv2 SDK float buffer size overflow\n"); return 0; }
+    }
+#endif
     isStreaming = SND_IsStream(voiceIndex);
     streamVoice = isStreaming ? iSND_GetStreamChannel(voiceIndex) : -1;
     isStereo = snd->channel_count != 1;
@@ -425,22 +493,44 @@ int __cdecl iSND_CreateVoice(int voiceIndex, const snd_asset *snd, int isLooping
             iassert(!isStreaming);
             iassert(snd->seek_table);
 
+#if defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST)
+            wfx->wFormatTag = FAUDIO_FORMAT_IEEE_FLOAT;
+            wfx->nBlockAlign = snd->channel_count * sizeof(float);
+            wfx->nSamplesPerSec = snd->frame_rate;
+            wfx->nAvgBytesPerSec = wfx->nBlockAlign * wfx->nSamplesPerSec;
+            wfx->wBitsPerSample = 32;
+            wfx->cbSize = 0;
+#else
             wfx->wFormatTag = 353;
             wfx->nBlockAlign = isStereo ? 4096 : 2230;
             wfx->nSamplesPerSec = snd->frame_rate;
             wfx->nAvgBytesPerSec = 6000 * snd->channel_count;
             wfx->wBitsPerSample = 16;
             wfx->cbSize = 0;
+#endif
         }
     }
     else
     {
+#if defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST)
+        wfx->wFormatTag = 1;
+        wfx->wBitsPerSample = 16;
+        wfx->nBlockAlign = snd->channel_count * 2;
+        wfx->nSamplesPerSec = snd->frame_rate;
+        wfx->nAvgBytesPerSec = wfx->nSamplesPerSec * wfx->nBlockAlign;
+        wfx->cbSize = 0;
+        if (!isStreaming && (!snd->data || !snd->data_size ||
+            static_cast<std::uint64_t>(snd->frame_count) * wfx->nBlockAlign > snd->data_size ||
+            snd->data_size % wfx->nBlockAlign))
+        { Com_PrintError(9, "Invalid native PCM16 sample bounds\n"); return 0; }
+#else
         wfx->wFormatTag = 1;
         wfx->nBlockAlign = (snd->channel_count * wfx->wBitsPerSample) / 8;
         wfx->nSamplesPerSec = snd->frame_rate;
         wfx->nAvgBytesPerSec = wfx->nSamplesPerSec * wfx->nBlockAlign;
         wfx->wBitsPerSample = 16;
         wfx->cbSize = 21072;
+#endif
     }
 
     XAUDIO2_BUFFER_WMA bufferWMA;
@@ -452,10 +542,14 @@ int __cdecl iSND_CreateVoice(int voiceIndex, const snd_asset *snd, int isLooping
 
     if (snd->format == SND_ASSET_FORMAT_WMA)
     {
+#if defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST)
+        buffer.AudioBytes = static_cast<UINT32>(decodedWma->samples.size() * sizeof(float));
+#else
         bufferWMA.PacketCount = snd->seek_table_count;
         bufferWMA.pDecodedPacketCumulativeBytes = snd->seek_table;
         buffer.AudioBytes = bufferWMA.PacketCount * wfx->nBlockAlign;
         iassert(buffer.AudioBytes <= snd->data_size);
+#endif
     }
     else
     {
@@ -464,7 +558,12 @@ int __cdecl iSND_CreateVoice(int voiceIndex, const snd_asset *snd, int isLooping
 
     iassert(!buffer.pAudioData);
 
+#if defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST)
+    buffer.pAudioData = decodedWma ? reinterpret_cast<const std::uint8_t *>(decodedWma->samples.data())
+        : reinterpret_cast<const std::uint8_t *>(snd->data);
+#else
     buffer.pAudioData = (const unsigned __int8 *)snd->data;
+#endif
     buffer.LoopCount = isLooping != 0 ? 255 : 0;
 
     outputVoices[0].Flags = 0;
@@ -502,6 +601,10 @@ int __cdecl iSND_CreateVoice(int voiceIndex, const snd_asset *snd, int isLooping
         isStreaming ? &g_sd.streamVoices[streamVoice] : NULL,
         &sendList,
         &fxChain);
+#if defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST)
+    if (hr != S_OK)
+    { Com_PrintError(9, "Native source voice creation failed: 0x%08x\n", static_cast<unsigned>(hr)); return 0; }
+#endif
     iassert(hr == S_OK);
 
     if (g_sd.voices[voiceIndex])
@@ -512,7 +615,20 @@ int __cdecl iSND_CreateVoice(int voiceIndex, const snd_asset *snd, int isLooping
         }
         else
         {
+#if defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST)
+            sd_wmaSamples[voiceIndex] = std::move(decodedWma);
+            hr = g_sd.voices[voiceIndex]->SubmitSourceBuffer(&buffer, nullptr);
+#else
             hr = g_sd.voices[voiceIndex]->SubmitSourceBuffer(&buffer, snd->seek_table != 0 ? &bufferWMA : 0);
+#endif
+#if defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST)
+            if (hr != S_OK)
+            {
+                g_sd.voices[voiceIndex]->DestroyVoice(); g_sd.voices[voiceIndex] = nullptr;
+                sd_wmaSamples[voiceIndex].reset();
+                Com_PrintError(9, "Native sample submit failed: 0x%08x\n", static_cast<unsigned>(hr)); return 0;
+            }
+#endif
             iassert(hr == S_OK);
         }
 
@@ -537,6 +653,9 @@ void __cdecl iSND_ChannelError(int voiceIndex)
 
 char __cdecl SD_Init()
 {
+#if defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST)
+    if (g_sd.xa2) Com_Error(ERR_FATAL, "Native sound already owns a live audio graph");
+#endif
     if ( g_xaudio27 )
     {
         g_sd.deviceIndex = -1;
@@ -557,14 +676,34 @@ char __cdecl SD_Init()
         memset(g_sd.voices, 0, sizeof(g_sd.voices));
         memset(&g_sd.perfData, 0, sizeof(g_sd.perfData));
 
+#if defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST)
+        memset(g_sd.masterDsp.state, 0, sizeof(g_sd.masterDsp.state));
+        memset(g_sd.novoiceDsp.state, 0, sizeof(g_sd.novoiceDsp.state));
+        memset(&g_sd.radverbDsp.state, 0, sizeof(g_sd.radverbDsp.state));
+        memset(&g_sd.masterDsp.params, 0, sizeof(g_sd.masterDsp.params));
+        memset(&g_sd.novoiceDsp.params, 0, sizeof(g_sd.novoiceDsp.params));
+        SND_RvParamsDefault(&g_sd.radverbDsp.params);
+#endif
         SDXA2_VoiceDspAssertUnused();
         if ( SD_XAudio2Init() )
         {
             SND_InitMasterVoice();
+#if defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST)
+            if (!g_sd.masterVoice || !g_sd.masterBus || !g_sd.novoiceBus || !g_sd.radverbBus ||
+                g_sd.xa2->StartEngine() != S_OK)
+            {
+                SND_ShutdownMasterVoice();
+                Com_Error(ERR_FATAL, "Native audio graph initialization failed");
+                return 0;
+            }
+#endif
             return 1;
         }
         else
         {
+#if defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST)
+            Com_Error(ERR_FATAL, "Native audio initialization failed: %s", SDL_GetError());
+#endif
             return 0;
         }
     }
@@ -611,8 +750,63 @@ bool __cdecl SD_XAudio2Init()
     return g_sd.xa2 != 0;
 }
 
+#if defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST)
+static void NativeAudioNameUtf8(const wchar_t *input, char *output, std::size_t capacity)
+{
+    if (!output || !capacity) return;
+    std::size_t out = 0;
+    for (unsigned i = 0; i < 256 && input[i]; ++i)
+    {
+        std::uint32_t code = static_cast<std::uint32_t>(input[i]);
+        if (code >= 0xD800 && code <= 0xDBFF && i + 1 < 256 && input[i + 1] >= 0xDC00 && input[i + 1] <= 0xDFFF)
+            code = 0x10000 + ((code - 0xD800) << 10) + (static_cast<std::uint32_t>(input[++i]) - 0xDC00);
+        else if (code >= 0xD800 && code <= 0xDFFF) code = 0xFFFD;
+        const unsigned bytes = code < 0x80 ? 1 : code < 0x800 ? 2 : code < 0x10000 ? 3 : 4;
+        if (out + bytes >= capacity) break;
+        if (bytes == 1) output[out++] = static_cast<char>(code);
+        else
+        {
+            output[out++] = static_cast<char>((bytes == 2 ? 0xC0 : bytes == 3 ? 0xE0 : 0xF0) | (code >> (6 * (bytes - 1))));
+            for (unsigned remaining = bytes - 1; remaining; --remaining)
+                output[out++] = static_cast<char>(0x80 | ((code >> (6 * (remaining - 1))) & 0x3F));
+        }
+    }
+    output[out] = 0;
+}
+#endif
 char __cdecl SD_XAudio2EnumerateDevices()
 {
+#if defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST)
+    IXAudio2 *audio = nullptr;
+    const auto result = XAudio2Create(&audio, 0, XAUDIO2_ANY_PROCESSOR);
+    if (result != S_OK || !audio)
+    { Com_PrintError(9, "Native audio backend construction failed: %s\n", SDL_GetError()); return 0; }
+    unsigned deviceCount = 0;
+    if (audio->GetDeviceCount(&deviceCount) != S_OK) { audio->Release(); return 0; }
+    Dvar_SetInt(const_cast<dvar_s *>(sd_xa2_num_devices), 0);
+    unsigned selected = 0;
+    int defaultDevice = 0;
+    for (unsigned device = 0; device < deviceCount && selected < 16; ++device)
+    {
+        XAUDIO2_DEVICE_DETAILS details{};
+        if (audio->GetDeviceDetails(device, &details) != S_OK || !SD_XAudio2CheckDevice(audio, &details, device)) continue;
+        NativeAudioNameUtf8(details.DisplayName, sd_xa2_device_names[selected], 256);
+        NativeAudioNameUtf8(details.DeviceID, sd_xa2_device_guids[selected], 256);
+        sd_xa2_devices_value_list[selected] = sd_xa2_device_names[selected];
+        sd_xa2_device_guids_value_list[selected] = sd_xa2_device_guids[selected];
+        sd_xa2_device_indices[selected] = device;
+        if (details.Role == GlobalDefaultDevice) defaultDevice = selected;
+        ++selected;
+    }
+    audio->Release();
+    sd_xa2_devices_value_list[selected] = nullptr;
+    sd_xa2_device_guids_value_list[selected] = nullptr;
+    Dvar_SetInt(const_cast<dvar_s *>(sd_xa2_num_devices), selected);
+    if (!selected) { Com_PrintError(9, "No usable native SDL audio output device\n"); return 0; }
+    sd_xa2_device_guid = _Dvar_RegisterEnum("sd_xa2_device_guid", sd_xa2_device_guids_value_list, defaultDevice, 1, "Native SDL output device ID");
+    sd_xa2_device_name = _Dvar_RegisterEnum("sd_xa2_device_name", sd_xa2_devices_value_list, sd_xa2_device_guid->current.integer, 0, "Available sound devices");
+    return 1;
+#else
     int v1; // [esp+0h] [ebp-45Ch]
     int n; // [esp+10h] [ebp-44Ch]
     unsigned int deviceIndex; // [esp+14h] [ebp-448h]
@@ -672,10 +866,15 @@ char __cdecl SD_XAudio2EnumerateDevices()
     //((void (__thiscall *)(IXAudio2 *, IXAudio2 *))xa2->Release)(xa2, xa2);
     xa2->Release();
     return 1;
+#endif
 }
 
 char __cdecl SD_XAudio2GetDeviceGUID(wchar_t *inGUID, _GUID *guid, char *outGUID, int size)
 {
+#if defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST)
+    Com_PrintError(9, "Windows audio endpoint GUID lookup unsupported by native SDL backend\n");
+    return 0;
+#else
     while ( *inGUID )
     {
         if ( !CLSIDFromString(inGUID, guid) )
@@ -686,6 +885,7 @@ char __cdecl SD_XAudio2GetDeviceGUID(wchar_t *inGUID, _GUID *guid, char *outGUID
         ++inGUID;
     }
     return 0;
+#endif
 }
 
 char __cdecl SD_XAudio2CheckDevice(
@@ -718,6 +918,19 @@ char __cdecl SD_XAudio2CheckDevice(
 
 void SD_SwitchDevice()
 {
+#if defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST)
+    if (!g_sd.xa2 || !sd_xa2_device_guid || sd_xa2_device_guid->current.integer < 0 ||
+        sd_xa2_device_guid->current.integer >= sd_xa2_num_devices->current.integer)
+    { Com_Error(ERR_FATAL, "Invalid native SDL audio device selection"); return; }
+    const unsigned device = sd_xa2_device_indices[sd_xa2_device_guid->current.integer];
+    XAUDIO2_DEVICE_DETAILS details{};
+    if (g_sd.xa2->GetDeviceDetails(device, &details) != S_OK)
+    { Com_Error(ERR_FATAL, "Native SDL audio device details unavailable"); return; }
+    g_sd.deviceIndex = device;
+    g_sd.details = details;
+    g_sd.deviceGUIDValid = 0; // SDL device identities are not Windows endpoint GUIDs.
+    Com_Printf(9, "Native SDL audio output: %s (cinematic audio requires its native binding)\n", sd_xa2_device_names[sd_xa2_device_guid->current.integer]);
+#else
     int deviceIndex; // [esp+0h] [ebp-4h]
 
     if ( sd_xa2_num_devices->current.integer )
@@ -731,6 +944,7 @@ void SD_SwitchDevice()
         g_sd.deviceGUIDValid = 1;
         R_CinematicInitSound(&g_sd.deviceGUID);
     }
+#endif
 }
 
 void SND_InitMasterVoice()
@@ -743,7 +957,11 @@ void SND_InitMasterVoice()
     int inputSampleRate; // [esp+120h] [ebp-4h]
 
     inputChannels = g_sd.details.OutputFormat.Format.nChannels <= 8u ? 0 : 8;
+#if defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST)
+    inputSampleRate = 48000;
+#else
     inputSampleRate = g_sd.details.OutputFormat.Format.nSamplesPerSec > 48000 ? 48000 : 0;
+#endif
 
     hr = g_sd.xa2->CreateMasteringVoice(&g_sd.masterVoice, inputChannels, inputSampleRate, 0, g_sd.deviceIndex < 0 ? 0 : g_sd.deviceIndex, 0);
 
@@ -780,6 +998,9 @@ void SND_InitMasterVoice()
                                                 1u,
                                                 &g_sd.radverbDsp,
                                                 g_sd.novoiceBus);
+#if defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST)
+        if (!g_sd.masterBus || !g_sd.novoiceBus || !g_sd.radverbBus) return;
+#endif
         iassert(g_sd.masterVoiceDetails.InputChannels <= 8);
 
         for ( i = 0; i < 64; ++i )
@@ -867,6 +1088,17 @@ void SD_Shutdown()
 
 void SND_ShutdownMasterVoice()
 {
+#if defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST)
+    if (!g_sd.xa2) return;
+    g_sd.xa2->StopEngine();
+    for (int voice = 0; voice < SND_MAX_VOICES; ++voice) SND_StopVoice(voice);
+    if (g_sd.radverbBus) { g_sd.radverbBus->DestroyVoice(); g_sd.radverbBus = nullptr; }
+    if (g_sd.novoiceBus) { g_sd.novoiceBus->DestroyVoice(); g_sd.novoiceBus = nullptr; }
+    if (g_sd.masterBus) { g_sd.masterBus->DestroyVoice(); g_sd.masterBus = nullptr; }
+    if (g_sd.masterVoice) { g_sd.masterVoice->DestroyVoice(); g_sd.masterVoice = nullptr; }
+    g_sd.xa2->Release(); g_sd.xa2 = nullptr;
+    SDXA2_VoiceDspAssertUnused();
+#else
     g_sd.xa2->StopEngine();
 
     for (int i = 0; i < 74; i = i + 1)
@@ -890,10 +1122,15 @@ void SND_ShutdownMasterVoice()
     g_sd.xa2 = 0;
 
     SDXA2_VoiceDspAssertUnused();
+#endif
 }
 
 void __cdecl SD_PreUpdate()
 {
+#if defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST)
+    if (!g_sd.xa2 || g_sd.xa2->Failure()) Com_Error(ERR_FATAL, "Native audio backend unavailable or failed");
+#endif
+
     unsigned int CurrentReverb; // eax
     float v2; // xmm0_4
     float v3; // [esp+0h] [ebp-24h]

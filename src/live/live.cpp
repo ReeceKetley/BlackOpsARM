@@ -8,7 +8,9 @@
 #include <demo/demo_playback.h>
 #include <qcommon/com_gamemodes.h>
 #include <DW/dwLogOn_pc.h>
+#if !defined(__ANDROID__) || defined(BO1_LIVE)
 #include <DemonWare/bdLobbyService.h>
+#endif
 #include <DW/dwUtils.h>
 
 int __cdecl Live_CountGuestsInUse()

@@ -2,6 +2,9 @@
 #include <stdio.h>
 #include <win32/win_localize.h>
 #include <string.h>
+#if defined(BO1_NATIVE_COM_BOOT)
+int _stricmp(const char *left, const char *right);
+#endif
 
 char buf[128];
 char *__cdecl Com_GetBuildVersion()

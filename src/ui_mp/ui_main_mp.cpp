@@ -444,6 +444,14 @@ void __cdecl UI_GenerateHeatMapTextureCallback(GfxImage *param)
 #endif
 }
 
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+// Resource actions invoke void(void *); preserve the canonical typed payload.
+static void __cdecl UI_GenerateHeatMapTextureCallbackResource(void *data)
+{
+    UI_GenerateHeatMapTextureCallback(static_cast<GfxImage *>(data));
+}
+#endif
+
 void __cdecl UI_GenerateHeatMapTexture(int controllerIndex)
 {
 #ifdef BO1_HEATMAP // probably requires DW? for MatchRecord stuff
@@ -490,7 +498,11 @@ void __cdecl UI_GenerateHeatMapTexture(int controllerIndex)
         }
         MatchRecord_GenerateHeatMapData((unsigned __int8 *)heatmap, 0x10000, img->width, img->height, xuid);
         UI_GenerateHeatMapTextureInternal(img, (unsigned __int8 *)heatmap, 0x10000, xuid, ui_heatMapColorForPlayer);
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+        RB_Resource_CallbackParam(UI_GenerateHeatMapTextureCallbackResource, img);
+#else
         RB_Resource_CallbackParam((void (__cdecl *)(void *))UI_GenerateHeatMapTextureCallback, img);
+#endif
         LargeLocal::~LargeLocal(&heatmap_large_local);
     }
     else

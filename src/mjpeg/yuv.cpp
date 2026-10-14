@@ -10,6 +10,9 @@
 #include <gfx_d3d/rb_backend.h>
 #include <gfx_d3d/r_state_utils.h>
 
+#if defined(__ANDROID__)
+alignas(4)
+#endif
 const unsigned __int8 g_vs30_mjpeg_shader_vtx[172] =
 {
   0u,
@@ -186,6 +189,9 @@ const unsigned __int8 g_vs30_mjpeg_shader_vtx[172] =
   0u
 };
 
+#if defined(__ANDROID__)
+alignas(4)
+#endif
 const unsigned __int8 g_ps30_mjpeg_shader_yuv[496] =
 {
   0u,
@@ -715,6 +721,141 @@ struct //$9B0FD635EC932744DEFCA28AAEF2899C // sizeof=0x3C
     IDirect3DVertexDeclaration9 *vertexDeclaration;
 } yuv_globals;
 
+#if defined(__ANDROID__)
+#include <cstdlib>
+#include <cstdint>
+#include <climits>
+namespace {
+template<class T> void YuvRelease(T *&object) { if(object) { object->Release();object=nullptr; } }
+void YuvDispose() {
+    yuv_globals.init=false;
+    std::free(yuv_globals.outY);std::free(yuv_globals.outU);std::free(yuv_globals.outV);
+    yuv_globals.outY=yuv_globals.outU=yuv_globals.outV=nullptr;
+    YuvRelease(yuv_globals.renderTarget1);YuvRelease(yuv_globals.renderTarget2);
+    YuvRelease(yuv_globals.srcTexture);YuvRelease(yuv_globals.dstTexture);
+    YuvRelease(yuv_globals.pixelShader);YuvRelease(yuv_globals.vertexShader);
+    YuvRelease(yuv_globals.vertexBuffer);YuvRelease(yuv_globals.vertexDeclaration);
+}
+bool YuvCreate() {
+    const int width=yuv_globals.width,height=yuv_globals.height;
+    if(!dx.device || width<=0 || height<=0 || (width&1) || (height&1) || width>65535 || height>65535 ||
+       std::uint64_t(width)*std::uint64_t(height+16)>INT_MAX) return false;
+    const std::size_t bytes=std::size_t(width)*(height+16);
+    yuv_globals.outY=static_cast<unsigned char*>(std::calloc(bytes,1));
+    yuv_globals.outU=static_cast<unsigned char*>(std::calloc(bytes/4,1));
+    yuv_globals.outV=static_cast<unsigned char*>(std::calloc(bytes/4,1));
+    if(!yuv_globals.outY || !yuv_globals.outU || !yuv_globals.outV) return false;
+    if(FAILED(dx.device->CreateTexture(width,height,1,D3DUSAGE_RENDERTARGET,D3DFMT_A8R8G8B8,D3DPOOL_DEFAULT,&yuv_globals.renderTarget1,nullptr))) return false;
+    if(yuv_globals.double_buffer && FAILED(dx.device->CreateTexture(width,height,1,D3DUSAGE_RENDERTARGET,D3DFMT_A8R8G8B8,D3DPOOL_DEFAULT,&yuv_globals.renderTarget2,nullptr))) return false;
+    if(FAILED(dx.device->CreateTexture(width,height,1,D3DUSAGE_RENDERTARGET,D3DFMT_A8R8G8B8,D3DPOOL_DEFAULT,&yuv_globals.srcTexture,nullptr))) return false;
+    if(FAILED(dx.device->CreateTexture(width,height,1,0,D3DFMT_A8R8G8B8,D3DPOOL_SYSTEMMEM,&yuv_globals.dstTexture,nullptr))) return false;
+    if(FAILED(dx.device->CreateVertexBuffer(96,0,0,D3DPOOL_MANAGED,&yuv_globals.vertexBuffer,nullptr))) return false;
+    float *vertices=nullptr;
+    if(FAILED(yuv_globals.vertexBuffer->Lock(0,96,reinterpret_cast<void**>(&vertices),0)) || !vertices) return false;
+    const float quad[24]={-1,-1,0,1,0,1, 1,-1,0,1,1,1, 1,1,0,1,1,0, -1,1,0,1,0,0};
+    std::memcpy(vertices,quad,sizeof(quad));
+    if(FAILED(yuv_globals.vertexBuffer->Unlock())) return false;
+    const D3DVERTEXELEMENT9 elements[3]={{0,0,D3DDECLTYPE_FLOAT4,D3DDECLMETHOD_DEFAULT,D3DDECLUSAGE_POSITION,0},
+        {0,16,D3DDECLTYPE_FLOAT2,D3DDECLMETHOD_DEFAULT,D3DDECLUSAGE_TEXCOORD,0},D3DDECL_END()};
+    return SUCCEEDED(dx.device->CreateVertexDeclaration(elements,&yuv_globals.vertexDeclaration)) &&
+        SUCCEEDED(dx.device->CreateVertexShader(reinterpret_cast<const DWORD*>(g_vs30_mjpeg_shader_vtx),&yuv_globals.vertexShader)) &&
+        SUCCEEDED(dx.device->CreatePixelShader(reinterpret_cast<const DWORD*>(g_ps30_mjpeg_shader_yuv),&yuv_globals.pixelShader));
+}
+}
+void yuv_init_internal() {
+    if(yuv_globals.init) return;
+    if(!YuvCreate()) { YuvDispose();Com_PrintError(16,"YUV capture resource creation failed: real renderer/device resources required\n");return; }
+    yuv_globals.frame=0;yuv_globals.init=true;
+}
+void yuv_init(int width,int height,bool double_buffer) {
+    if(yuv_globals.init) return;
+    yuv_globals.width=width;yuv_globals.height=height;yuv_globals.double_buffer=double_buffer;
+    if(!dx.device) { Com_PrintError(16,"YUV capture requires an initialized D3D device\n");return; }
+    if(Sys_IsRenderThread()) yuv_init_internal();
+    else { RB_Resource_Callback(yuv_init_internal);RB_Resource_Flush(); }
+}
+bool yuv_is_ready() { return yuv_globals.init; }
+void yuv_dimensions(int *width,int *height) { if(width)*width=yuv_globals.width;if(height)*height=yuv_globals.height; }
+// Original shader emits Y into R and quarter-scale U/V into G/B. Keep the
+// canonical four-texel sums; stride is actual LockRect pitch, not width*4.
+bool yuv_unpack(const unsigned char *pixels,int width,int height,std::ptrdiff_t pitch,unsigned char *y,unsigned char *u,unsigned char *v) {
+    if(!pixels || !y || !u || !v || width<=0 || height<=0 || (width&1) || (height&1) || pitch<std::int64_t(width)*4 ||
+       std::uint64_t(height-1)>(std::uint64_t(PTRDIFF_MAX)-std::uint64_t(width)*4)/std::uint64_t(pitch)) return false;
+    for(int row=0;row<height;row+=2) for(int col=0;col<width;col+=2) {
+        const auto *a=pixels+std::size_t(row)*pitch+std::size_t(col)*4;
+        const auto *b=a+pitch;
+        y[std::size_t(row)*width+col]=a[2];y[std::size_t(row)*width+col+1]=a[6];
+        y[std::size_t(row+1)*width+col]=b[2];y[std::size_t(row+1)*width+col+1]=b[6];
+        *u++=static_cast<unsigned char>(a[1]+a[5]+b[1]+b[5]);
+        *v++=static_cast<unsigned char>(a[0]+a[4]+b[0]+b[4]);
+    }
+    return true;
+}
+char yuv_encode_frame() {
+    if(!yuv_globals.init || !Sys_IsRenderThread() || !dx.device) return 0;
+    IDirect3DSurface9 *source=gfxRenderTargets[R_RENDERTARGET_FRAME_BUFFER].surface.color;
+    IDirect3DSurface9 *scratch=nullptr,*target=nullptr,*readback=nullptr,*oldTarget=nullptr,*oldDepth=nullptr;
+    IDirect3DStateBlock9 *saved=nullptr;D3DVIEWPORT9 oldViewport{};bool scene=false,locked=false,restorable=false;D3DLOCKED_RECT rect{};
+    HRESULT result=D3DERR_INVALIDCALL;
+    do {
+        if(!source) break;
+        if(FAILED(yuv_globals.srcTexture->GetSurfaceLevel(0,&scratch))) break;
+        if(FAILED(dx.device->StretchRect(source,nullptr,scratch,nullptr,D3DTEXF_NONE))) break;
+        if(FAILED(dx.device->GetRenderTarget(0,&oldTarget)) || FAILED(dx.device->GetViewport(&oldViewport))) break;
+        const HRESULT depthResult=dx.device->GetDepthStencilSurface(&oldDepth);
+        if(FAILED(depthResult) && depthResult!=D3DERR_NOTFOUND) break;
+        if(FAILED(dx.device->CreateStateBlock(D3DSBT_ALL,&saved)) || FAILED(saved->Capture())) break;
+        restorable=true;
+        auto *writeTexture=!yuv_globals.double_buffer?yuv_globals.renderTarget1:
+            ((yuv_globals.frame&1)?yuv_globals.renderTarget1:yuv_globals.renderTarget2);
+        if(FAILED(writeTexture->GetSurfaceLevel(0,&target))) break;
+        if(FAILED(dx.device->SetDepthStencilSurface(nullptr)) || FAILED(dx.device->SetRenderTarget(0,target))) break;
+        D3DVIEWPORT9 viewport{0,0,static_cast<DWORD>(yuv_globals.width),static_cast<DWORD>(yuv_globals.height),0,1};
+        if(FAILED(dx.device->SetViewport(&viewport)) || FAILED(dx.device->SetTexture(0,yuv_globals.srcTexture)) ||
+           FAILED(dx.device->SetVertexShader(yuv_globals.vertexShader)) || FAILED(dx.device->SetPixelShader(yuv_globals.pixelShader)) ||
+           FAILED(dx.device->SetStreamSource(0,yuv_globals.vertexBuffer,0,24)) || FAILED(dx.device->SetVertexDeclaration(yuv_globals.vertexDeclaration))) break;
+        if(FAILED(dx.device->SetRenderState(D3DRS_ALPHABLENDENABLE,0)) || FAILED(dx.device->SetRenderState(D3DRS_SEPARATEALPHABLENDENABLE,0)) ||
+           FAILED(dx.device->SetRenderState(D3DRS_ALPHATESTENABLE,0)) || FAILED(dx.device->SetRenderState(D3DRS_ZENABLE,0)) ||
+           FAILED(dx.device->SetRenderState(D3DRS_CULLMODE,1)) || FAILED(dx.device->SetRenderState(D3DRS_STENCILENABLE,0)) ||
+           FAILED(dx.device->SetSamplerState(0,D3DSAMP_ADDRESSU,3)) || FAILED(dx.device->SetSamplerState(0,D3DSAMP_ADDRESSV,3))) break;
+        if(FAILED(dx.device->BeginScene())) break;scene=true;
+        result=dx.device->DrawPrimitive(D3DPT_TRIANGLEFAN,0,2);
+        const HRESULT end=dx.device->EndScene();scene=false;
+        if(FAILED(result) || FAILED(end)) { result=E_FAIL;break; }
+        if(yuv_globals.double_buffer && yuv_globals.frame==0) { result=S_FALSE;break; } // Real warmup, no invented black frame.
+        YuvRelease(target);
+        auto *readTexture=!yuv_globals.double_buffer?yuv_globals.renderTarget1:
+            ((yuv_globals.frame&1)?yuv_globals.renderTarget2:yuv_globals.renderTarget1);
+        if(FAILED(readTexture->GetSurfaceLevel(0,&target)) || FAILED(yuv_globals.dstTexture->GetSurfaceLevel(0,&readback))) {result=E_FAIL;break;}
+        if(FAILED(dx.device->GetRenderTargetData(target,readback)) || FAILED(readback->LockRect(&rect,nullptr,D3DLOCK_READONLY))) {result=E_FAIL;break;}
+        locked=true;
+        result=yuv_unpack(static_cast<unsigned char*>(rect.pBits),yuv_globals.width,yuv_globals.height,rect.Pitch,
+            yuv_globals.outY,yuv_globals.outU,yuv_globals.outV)?S_OK:E_FAIL;
+    } while(false);
+    if(locked && FAILED(readback->UnlockRect())) result=E_FAIL;
+    if(scene && FAILED(dx.device->EndScene())) result=E_FAIL;
+    if(restorable) {
+        if(FAILED(dx.device->SetRenderTarget(0,oldTarget))) result=E_FAIL;
+        if(FAILED(dx.device->SetDepthStencilSurface(oldDepth))) result=E_FAIL;
+        if(FAILED(saved->Apply())) result=E_FAIL;
+        if(FAILED(dx.device->SetViewport(&oldViewport))) result=E_FAIL;
+    }
+    YuvRelease(saved);YuvRelease(oldDepth);YuvRelease(oldTarget);YuvRelease(readback);YuvRelease(target);YuvRelease(scratch);
+    if(result==S_OK || result==S_FALSE) ++yuv_globals.frame;
+    if(FAILED(result)) Com_PrintError(16,"YUV capture/render/readback failed; no frame published\n");
+    return result==S_OK;
+}
+void yuv_get_buffers(unsigned char **y,unsigned char **u,unsigned char **v) {
+    if(y)*y=yuv_globals.init?yuv_globals.outY:nullptr;if(u)*u=yuv_globals.init?yuv_globals.outU:nullptr;if(v)*v=yuv_globals.init?yuv_globals.outV:nullptr;
+}
+void yuv_shutdown_internal() { YuvDispose(); }
+void yuv_shutdown() {
+    if(!yuv_globals.init) return;
+    if(Sys_IsRenderThread()) yuv_shutdown_internal();else {RB_Resource_Callback(yuv_shutdown_internal);RB_Resource_Flush();}
+}
+void yuv_lost_device() { if(yuv_globals.init) {yuv_shutdown();yuv_globals.lost_device=true;} }
+void yuv_recover_device() { if(yuv_globals.lost_device) {yuv_init(yuv_globals.width,yuv_globals.height,yuv_globals.double_buffer);if(yuv_globals.init)yuv_globals.lost_device=false;} }
+#else
 void __cdecl yuv_init_internal()
 {
     const char *v0; // eax
@@ -1340,3 +1481,5 @@ void __cdecl yuv_recover_device()
     }
 }
 
+
+#endif

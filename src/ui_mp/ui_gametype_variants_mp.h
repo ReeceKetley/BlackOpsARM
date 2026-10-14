@@ -270,8 +270,13 @@ void __cdecl UI_GV_StartAddingTarget_f();
 void __cdecl UI_GV_StartAddingConditional_f();
 void SetNextPopupToAddOrEditConfirm();
 void __cdecl UI_GV_EditSelectedRule_f();
+#if defined(__ANDROID__)
+GVRule *__cdecl GetSelectedRule(int localClientNum);
+GVRule *__cdecl GetRuleForFeederIndex(int feederIndex);
+#else
 GVGlob *__cdecl GetSelectedRule(int localClientNum);
 GVGlob *__cdecl GetRuleForFeederIndex(int feederIndex);
+#endif
 void __cdecl UI_GV_UpdateRuleFromDvars(GVRule *rule);
 int __cdecl GetEventIndexFromFeederIndex(int feederIndex);
 bool __cdecl IsEventValid(GVEvent *ev);

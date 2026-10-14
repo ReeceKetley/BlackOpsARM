@@ -43,9 +43,9 @@ int __cdecl FS_SV_FOpenFileWrite(char *filename, char *dir)
 
 int __cdecl FS_SV_FOpenFileRead(char *filename, char *dir, int *fp)
 {
-    _iobuf *Binary; // eax
-    _iobuf *v5; // eax
-    _iobuf *v6; // eax
+    FILE *Binary; // eax
+    FILE *v5; // eax
+    FILE *v6; // eax
     char ospath[260]; // [esp+0h] [ebp-110h] BYREF
     const char *basepath; // [esp+108h] [ebp-8h]
     int f; // [esp+10Ch] [ebp-4h]
@@ -966,7 +966,7 @@ void __cdecl FS_ServerSetReferencedFFs(const char *FFSums, const char *FFNames)
                                                                 fs_serverReferencedFFNames);
 }
 
-char basename[64];
+char mapBaseName[64];
 char *__cdecl FS_GetMapBaseName(char *mapname)
 {
     unsigned int v2; // [esp+0h] [ebp-18h]
@@ -981,13 +981,13 @@ char *__cdecl FS_GetMapBaseName(char *mapname)
     len = v2;
     if ( !I_stricmp(&mapname[v2 - 3], "bsp") )
         len = v2 - 7;
-    memcpy((unsigned __int8 *)basename, (unsigned __int8 *)mapname, len);
-    basename[len] = 0;
+    memcpy((unsigned __int8 *)mapBaseName, (unsigned __int8 *)mapname, len);
+    mapBaseName[len] = 0;
     for ( c = 0; c < len; ++c )
     {
-        if ( basename[c] == 37 )
-            basename[c] = 95;
+        if ( mapBaseName[c] == 37 )
+            mapBaseName[c] = 95;
     }
-    return basename;
+    return mapBaseName;
 }
 

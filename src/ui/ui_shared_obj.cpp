@@ -1,3 +1,6 @@
+#if defined(__ANDROID__)
+#include <platform/android/legacy_crt.h>
+#endif
 #include "ui_shared_obj.h"
 #include <universal/com_files.h>
 #include <universal/q_parse.h>

@@ -1,0 +1,7 @@
+{
+  "upstream": "https://github.com/FNA-XNA/FAudio",
+  "release": "25.02",
+  "commit": "af74e661c1bd8b105840d14485cc01d9c782b513",
+  "archive_sha256": "04f66e0cfc9cfed61f4f19fd224501d19b796b0b44d2d5696d6751d2b137881f",
+  "subset": "unchanged include/src/cmake/CMakeLists/LICENSE/README; upstream utilities/tests omitted"
+}

@@ -1,4 +1,5 @@
 #pragma once
+#include <platform/win32_compat/windows_declarations.h>
 
 #include "r_material.h"
 

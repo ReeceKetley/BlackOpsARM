@@ -1,4 +1,7 @@
 #include "cg_draw_debug.h"
+#if defined(__ANDROID__)
+#include <platform/android/legacy_crt.h>
+#endif
 #include <client/screen_placement.h>
 #include <cgame_mp/cg_main_mp.h>
 #include <gfx_d3d/r_font.h>

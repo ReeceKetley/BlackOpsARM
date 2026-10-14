@@ -1,4 +1,7 @@
 #include "demo_common.h"
+#if defined(__ANDROID__)
+#include <ctime>
+#endif
 
 #include <qcommon/cmd.h>
 #include <ui/ui_shared.h>
@@ -766,7 +769,11 @@ void __cdecl Demo_StartRecord_f()
             fileInfo.fileSlot = 6;
             memset(&fileInfo.thumbData, 0, 12);
             fileInfo.fileSize = 0;
+#if defined(__ANDROID__)
+            fileInfo.dataCallback = Demo_StreamUploadDataCallback;
+#else
             fileInfo.dataCallback = (unsigned int (__cdecl *)(void *, unsigned int, unsigned int))Demo_WriteToStream;
+#endif
             fileInfo.successCallback = Demo_StreamingSuccessCallback;
             fileInfo.failureCallback = (void (__cdecl *)(int))Demo_StreamingFailureCallback;
             if ( LiveStorage_FileShare_WriteFile(0, &fileInfo) )
@@ -2407,7 +2414,11 @@ void    Demo_Screenshot_f()
             demo.playback->screenshotInfo.day = systemTime.tm_mday;
             demo.playback->screenshotInfo.hour = systemTime.tm_hour;
             demo.playback->screenshotInfo.min = systemTime.tm_min;
+#if defined(__ANDROID__)
+            demo.playback->screenshotInfo.createTime = static_cast<long long>(std::time(nullptr));
+#else
             demo.playback->screenshotInfo.createTime = _time64(0);
+#endif
             Demo_HiResScreenshot(localClientNum, tiles);
         }
         else

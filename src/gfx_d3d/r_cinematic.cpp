@@ -1,8 +1,12 @@
 #include "r_cinematic.h"
 #include <win32/win_main.h>
 #include <qcommon/common.h>
+#if !defined(__ANDROID__)
 #include <dsound.h>
+#endif
+#if !defined(__ANDROID__)
 #include <win32/win_wndproc.h>
+#endif
 #include "r_init.h"
 #include <qcommon/threads.h>
 #include "rb_resource.h"
@@ -14,6 +18,14 @@
 #include <win32/win_net.h>
 #include "rb_state.h"
 #include "r_material_load_obj.h"
+#if defined(__ANDROID__)
+#include <sound/snd_driver_xaudio2.h>
+#include <universal/dvar.h>
+extern SoundState g_sd;
+static const dvar_t *nativeCinematicBudget;
+#include <cstdio>
+#define _snprintf snprintf
+#endif
 
 struct CinematicGlob // sizeof=0x980
 {                                       // XREF: .data:cinematicGlob/r
@@ -95,7 +107,9 @@ struct CinematicGlob // sizeof=0x980
     int gptr;
 } cinematicGlob;
 
+#if !defined(__ANDROID__)
 LPDIRECTSOUND8 g_cinematicDS;
+#endif
 
 int activeTexture;
 bool g_cinematicInitialized;
@@ -104,17 +118,36 @@ volatile unsigned int cineThreadBlock;
 int r_cinematic_disabled;
 
 volatile unsigned int _UpdateFrameLimit = 1;
+#if defined(__ANDROID__)
+static int __cdecl NativeCinematicUpdateFrameCallback(jqBatch *)
+{
+    // The canonical callback owns frame work and clears cineThreadBlock only
+    // after that work. Forward its real completion result to the job queue.
+    return _UpdateFrameCallback();
+}
+#endif
 jqModule _UpdateFrameModule =
 {
     .Name = "_UpdateFrame",
     .Type = JQ_WORKER_GENERIC,
+#if defined(__ANDROID__)
+    .Code = NativeCinematicUpdateFrameCallback,
+#else
     .Code = (int(__cdecl *)(jqBatch *))_UpdateFrameCallback,
+#endif
     //.Group = 0
 };
 jqWorkerCmd _UpdateFrameWorkerCmd = { &_UpdateFrameModule, sizeof(CINE_JQ_CMD), 0, 0, &_UpdateFrameLimit, NULL, 0u};
+#if defined(__ANDROID__)
+struct NativeCinematicGuard {NativeCinematicGuard(){Sys_EnterCriticalSection(CRITSECT_CINEMATIC);}~NativeCinematicGuard(){Sys_LeaveCriticalSection(CRITSECT_CINEMATIC);}};
+#endif
 
 void __cdecl R_CinematicInitSound(const _GUID *guid)
 {
+#if defined(__ANDROID__)
+    if(Sys_IsHeadless())return;
+    if(!bo1::android::BindBinkAudio(g_sd.xa2,g_sd.masterBus))Com_PrintError(16,"Actual cinematic audio graph unavailable: %s\n",BinkGetError());
+#else
     if ( Sys_IsHeadless() ) // zombies: a headless client opens no sound device (cinematics play silently)
         return;
     if ( g_cinematicDS )
@@ -133,10 +166,30 @@ void __cdecl R_CinematicInitSound(const _GUID *guid)
     {
         Com_PrintError(16, "R_Cinematic_Init: Unable to initialize sound\n");
     }
+#endif
 }
 
 void __cdecl Unlock_Bink_textures2(IDirect3DDevice9 *d3d_device, BINKTEXTURESET *set_textures)
 {
+#if defined(__ANDROID__)
+    iassert(set_textures && set_textures->bink_buffers.FrameNum<2);
+    auto &fb=set_textures->bink_buffers;
+    auto &source=fb.Frames[fb.FrameNum];
+    auto upload=[](IDirect3DTexture9 *texture,BINKPLANE &plane,unsigned width,unsigned height) {
+        iassert(texture && plane.Buffer && plane.BufferPitch>=width);
+        D3DLOCKED_RECT locked{};const HRESULT status=texture->LockRect(0,&locked,nullptr,D3DLOCK_DISCARD);
+        if(status<0 || !locked.pBits || locked.Pitch<static_cast<int>(width)) {
+            if(status>=0)texture->UnlockRect(0);
+            Com_Error(ERR_FATAL,"Actual cinematic texture upload failed (0x%x)",status);return;
+        }
+        for(unsigned y=0;y<height;++y)memcpy(static_cast<unsigned char *>(locked.pBits)+static_cast<std::size_t>(y)*locked.Pitch,static_cast<unsigned char *>(plane.Buffer)+static_cast<std::size_t>(y)*plane.BufferPitch,width);
+        if(texture->UnlockRect(0)<0)Com_Error(ERR_FATAL,"Actual cinematic texture unlock failed");
+    };
+    upload(set_textures->tex_draw.Ytexture,source.YPlane,fb.YABufferWidth,fb.YABufferHeight);
+    upload(set_textures->tex_draw.cRtexture,source.cRPlane,fb.cRcBBufferWidth,fb.cRcBBufferHeight);
+    upload(set_textures->tex_draw.cBtexture,source.cBPlane,fb.cRcBBufferWidth,fb.cRcBBufferHeight);
+    if(set_textures->tex_draw.Atexture)upload(set_textures->tex_draw.Atexture,source.APlane,fb.YABufferWidth,fb.YABufferHeight);
+#else
     signed int m; // [esp+0h] [ebp-30h]
     signed int k; // [esp+4h] [ebp-2Ch]
     signed int j; // [esp+8h] [ebp-28h]
@@ -224,6 +277,7 @@ void __cdecl Unlock_Bink_textures2(IDirect3DDevice9 *d3d_device, BINKTEXTURESET 
         }
         set_textures->tex_draw.Atexture->UnlockRect(0);
     }
+#endif
 }
 
 void __cdecl Unlock_Bink_textures_Callback()
@@ -446,7 +500,12 @@ void __cdecl R_Cinematic_Init()
     iassert(!cinematicGlob.memPool);
     iassert(!g_cinematicInitialized);
 
+    #if defined(__ANDROID__)
+    memset(&cinematicGlob,0,sizeof(cinematicGlob));
+    nativeCinematicBudget=_Dvar_RegisterInt("r_cinematicNativeInputBudgetMiB",256,1,1024,1u,"Maximum owned native cinematic input in MiB");
+#else
     memset((unsigned __int8 *)&cinematicGlob, 0, 0x9F4u);
+#endif
     cinematicGlob.activeImageFrame = -1;
     R_Cinematic_ReserveMemory();
 
@@ -454,8 +513,12 @@ void __cdecl R_Cinematic_Init()
     iassert(cinematicGlob.targetPaused == CINEMATIC_NOT_PAUSED);
 
     g_cinematicInitialized = 1;
+#if defined(__ANDROID__)
+    R_CinematicInitSound(0);
+#else
     if ( !g_cinematicDS )
         R_CinematicInitSound(0);
+#endif
 }
 
 unsigned int *R_Cinematic_ReserveMemory()
@@ -469,20 +532,29 @@ unsigned int *R_Cinematic_ReserveMemory()
 
 void __cdecl R_Cinematic_Shutdown()
 {
+#if defined(__ANDROID__)
+    if(!g_cinematicInitialized && !cinematicGlob.memPool && !cinematicGlob.bink)return;
+#endif
     int setIter; // [esp+0h] [ebp-4h]
 
     R_Cinematic_StopPlayback();
     g_cinematicInitialized = 0;
     Sys_WaitWorkerCmdInternal(&_UpdateFrameWorkerCmd);
+#if defined(__ANDROID__)
+    if(cinematicGlob.bink)R_Cinematic_StopPlayback_Now();
+    cinematicGlob.currentCinematicName[0]=cinematicGlob.targetCinematicName[0]=0;
+#endif
     for (setIter = 0; setIter != 2; ++setIter)
         R_Cinematic_ReleaseImages(&cinematicGlob.textureSets[setIter]);
     Z_Free((char*)cinematicGlob.memPool, 19);
     cinematicGlob.memPool = 0;
+#if !defined(__ANDROID__)
     if (g_cinematicDS)
     {
         g_cinematicDS->Release();
         g_cinematicDS = 0;
     }
+#endif
 }
 
 void __cdecl R_Cinematic_ReleaseImages(CinematicTextureSet *textureSet)
@@ -506,7 +578,11 @@ void __cdecl R_Cinematic_ReleaseImages(CinematicTextureSet *textureSet)
     Image_Release(&textureSet->drawImageA);
 }
 
+#if defined(__ANDROID__)
+void __cdecl R_Cinematic_StartPlayback_Internal(const char *name, unsigned int playbackFlags, float volume)
+#else
 void __cdecl R_Cinematic_StartPlayback_Internal(const char *name, unsigned int playbackFlags, int volume)
+#endif
 {
     Sys_EnterCriticalSection(CRITSECT_CINEMATIC_TARGET_CHANGE);
     I_strncpyz(cinematicGlob.targetCinematicName, name, 256);
@@ -557,6 +633,9 @@ int __cdecl _UpdateFrameCallback()
 
 void __cdecl R_Cinematic_UpdateFrame_Core(bool force_wait)
 {
+#if defined(__ANDROID__)
+    NativeCinematicGuard guard;
+#endif
     bool localTargetChanged; // [esp+3h] [ebp-111h]
     char localTargetCinematic[260]; // [esp+4h] [ebp-110h] BYREF
     unsigned int localTargetPlaybackFlags; // [esp+10Ch] [ebp-8h]
@@ -731,7 +810,13 @@ char __cdecl R_Cinematic_Advance(bool force_wait)
     BINKREALTIME binkRealtime; // [esp+A4h] [ebp-3Ch] BYREF
     unsigned int percentageFull; // [esp+DCh] [ebp-4h]
 
+#if defined(__ANDROID__)
+    Sys_EnterCriticalSection(CRITSECT_CINEMATIC_TARGET_CHANGE);
+    targetPaused=cinematicGlob.targetPaused;
+    Sys_LeaveCriticalSection(CRITSECT_CINEMATIC_TARGET_CHANGE);
+#else
     targetPaused = cinematicGlob.targetPaused;
+#endif
 
     iassert((targetPaused == CINEMATIC_PAUSED || targetPaused == CINEMATIC_SCRIPT_PAUSED || targetPaused == CINEMATIC_NOT_PAUSED));
     iassert((cinematicGlob.currentPaused == CINEMATIC_PAUSED || cinematicGlob.currentPaused == CINEMATIC_SCRIPT_PAUSED || cinematicGlob.currentPaused == CINEMATIC_NOT_PAUSED));
@@ -798,7 +883,11 @@ char __cdecl R_Cinematic_Advance(bool force_wait)
             }
             {
                 PROF_SCOPED("R_Cinematic_Thread2");
+#if defined(__ANDROID__)
+                if(!BinkDoFrame(cinematicGlob.bink)) {Com_Error(ERR_FATAL,"Actual Bink decode failed: %s",BinkGetError());return 0;}
+#else
                 BinkDoFrame(cinematicGlob.bink);
+#endif
                 while (R_Cinematic_BinkShouldSkip(useCustomSkipLogic)
                     && ((cinematicGlob.playbackFlags & 2) != 0 || cinematicGlob.bink->FrameNum != cinematicGlob.bink->Frames))
                 {
@@ -808,7 +897,11 @@ char __cdecl R_Cinematic_Advance(bool force_wait)
                         cinematicGlob.frameNum = cinematicGlob.bink->FrameNum;
                     }
                     BinkNextFrame(cinematicGlob.bink);
-                    BinkDoFrame(cinematicGlob.bink);
+    #if defined(__ANDROID__)
+                if(!BinkDoFrame(cinematicGlob.bink)) {Com_Error(ERR_FATAL,"Actual Bink decode failed: %s",BinkGetError());return 0;}
+#else
+                BinkDoFrame(cinematicGlob.bink);
+#endif
                 }
             }
             
@@ -1037,6 +1130,11 @@ char __cdecl R_Cinematic_StartPlayback_Now(const char *filename, unsigned int pl
     TrackIDsToPlay[2] = 2;
     TrackIDsToPlay[3] = 3;
     TrackIDsToPlay[4] = 4;
+#if defined(__ANDROID__)
+    if(!g_cinematicInitialized || !nativeCinematicBudget || !filename || !*filename)return 0;
+    if(!Sys_IsHeadless() && !bo1::android::BindBinkAudio(g_sd.xa2,g_sd.masterBus))return 0;
+    BinkSetSoundTrack(Sys_IsHeadless()?0:5,Sys_IsHeadless()?nullptr:TrackIDsToPlay);
+#endif
     if (cinematicGlob.bink
         && !Assert_MyHandler(
             "C:\\projects_pc\\cod\\codsrc\\src\\gfx_d3d\\r_cinematic.cpp",
@@ -1073,10 +1171,14 @@ char __cdecl R_Cinematic_StartPlayback_Now(const char *filename, unsigned int pl
         __debugbreak();
     }
     R_Cinematic_CheckBinkError();
+#if !defined(__ANDROID__)
     BinkSetMemory(R_Cinematic_Bink_Alloc, R_Cinematic_Bink_Free);
+#endif
     R_Cinematic_CheckBinkError();
+#if !defined(__ANDROID__)
     if (g_cinematicDS)
         BinkSetSoundSystem(BinkOpenDirectSound, (unsigned int)g_cinematicDS);
+#endif
     R_Cinematic_CheckBinkError();
     R_Cinematic_CheckBinkError();
     if ( Sys_IsHeadless() ) // zombies: headless - no sound tracks, so Bink opens no sound device of its own
@@ -1113,7 +1215,11 @@ char __cdecl R_Cinematic_StartPlayback_Now(const char *filename, unsigned int pl
             __debugbreak();
         }
         R_Cinematic_InitBinkVolumes();
+        #if defined(__ANDROID__)
+        memset(&cinematicGlob.binkTextureSet,0,sizeof(cinematicGlob.binkTextureSet));
+#else
         memset((unsigned __int8 *)&cinematicGlob.binkTextureSet, 0, 0xD8u);
+#endif
         BinkGetFrameBuffersInfo(cinematicGlob.bink, &cinematicGlob.binkTextureSet.bink_buffers);
         R_Cinematic_CheckBinkError();
         R_Cinematic_InitBinkTextures();
@@ -1125,6 +1231,9 @@ char __cdecl R_Cinematic_StartPlayback_Now(const char *filename, unsigned int pl
     else
     {
         Com_PrintWarning(8, "R_Cinematic_BinkOpen '%s' failed: %s; not playing movie.\n", "default", errText);
+#if defined(__ANDROID__)
+        SND_NotifyCinematicEnd();
+#endif
         if (cinematicGlob.activeImageFrame != -1
             && !Assert_MyHandler(
                 "C:\\projects_pc\\cod\\codsrc\\src\\gfx_d3d\\r_cinematic.cpp",
@@ -1409,6 +1518,9 @@ void *__stdcall R_Cinematic_Bink_Alloc(unsigned int bytes)
 
 void __stdcall R_Cinematic_Bink_Free(void *ptr)
 {
+#if defined(__ANDROID__)
+    free(ptr);return;
+#endif
     char v1; // [esp+3h] [ebp-1h]
 
     if (cinematicGlob.binkHunk.lastAllocPtr == ptr)
@@ -1440,8 +1552,13 @@ bool __cdecl R_Cinematic_BinkOpen(const char *filename, char playbackFlags, char
     }
     else
     {
+#if defined(__ANDROID__)
+        _snprintf(filepath[0],sizeof(filepath[0]),"%s/main/video/%s.bik",cwd,filename);
+        _snprintf(filepath[1],sizeof(filepath[1]),"%s/raw/video/%s.bik",cwd,filename);
+#else
         _snprintf(filepath[0], 0x100u, "%s\\main\\video\\%s.%s", cwd, filename, "bik");
         _snprintf(filepath[1], 0x100u, "%s\\raw\\video\\%s.%s", cwd, filename, "bik");
+#endif
     }
     if ( R_Cinematic_BinkOpenPath(filepath[0], playbackFlags, errText, errTextSize) )
         return 1;
@@ -1467,7 +1584,11 @@ char __cdecl R_Cinematic_BinkOpenPath(
                 _snprintf(errText, errTextSize, "Couldn't find rawfile '%s' in db", filepath);
             return 0;
         }
+#if defined(__ANDROID__)
+        cinematicGlob.bink=bo1::android::OpenBinkMemory(rawfile->buffer,rawfile->len>0?static_cast<std::size_t>(rawfile->len):0,68174848,static_cast<std::size_t>(nativeCinematicBudget->current.integer)*1024*1024);
+#else
         cinematicGlob.bink = (BINK *)BinkOpen(rawfile->buffer, 68174848);
+#endif
         if (!cinematicGlob.bink)
             CinematicHunk_Reset(&cinematicGlob.residentHunk);
     }
@@ -1484,8 +1605,12 @@ char __cdecl R_Cinematic_BinkOpenPath(
             __debugbreak();
         }
         cinematicGlob.binkIOSize = CinematicHunk_GetFreeSpace(&cinematicGlob.binkHunk) - 1572864;
+#if defined(__ANDROID__)
+        cinematicGlob.bink=bo1::android::OpenBinkFile(filepath,0x1104400,static_cast<std::size_t>(nativeCinematicBudget->current.integer)*1024*1024);
+#else
         BinkSetIOSize(cinematicGlob.binkIOSize);
         cinematicGlob.bink = (BINK *)BinkOpen(filepath, 0x1104400);
+#endif
         if (!cinematicGlob.bink)
         {
             Error = (const char *)BinkGetError();
@@ -1610,6 +1735,9 @@ void __cdecl R_Cinematic_SetRendererImagesToFrame(int frameToSetTo)
 
 char __cdecl R_Cinematic_GetFilenameAndTimeInMsec(char *outName, int outNameSize, unsigned int *outTimeInMsec)
 {
+#if defined(__ANDROID__)
+    NativeCinematicGuard guard;
+#endif
     if ( !outTimeInMsec
         && !Assert_MyHandler("C:\\projects_pc\\cod\\codsrc\\src\\gfx_d3d\\r_cinematic.cpp", 3248, 0, "%s", "outTimeInMsec") )
     {
@@ -1631,11 +1759,20 @@ char __cdecl R_Cinematic_GetFilenameAndTimeInMsec(char *outName, int outNameSize
 // the frames left over the integer frame rate; a script pause is lifted by the query.
 float __cdecl R_Cinematic_GetTimeRemaining()
 {
+#if defined(__ANDROID__)
+    NativeCinematicGuard guard;
+#endif
     BINK *bink = cinematicGlob.bink;
     if (!bink)
         return 0.0f;
+#if defined(__ANDROID__)
+    Sys_EnterCriticalSection(CRITSECT_CINEMATIC_TARGET_CHANGE);
+#endif
     if (cinematicGlob.targetPaused == CINEMATIC_SCRIPT_PAUSED)
         cinematicGlob.targetPaused = CINEMATIC_NOT_PAUSED;
+#if defined(__ANDROID__)
+    Sys_LeaveCriticalSection(CRITSECT_CINEMATIC_TARGET_CHANGE);
+#endif
     return (float)((double)(bink->Frames - bink->FrameNum) / (double)(bink->FrameRate / bink->FrameRateDiv));
 }
 
@@ -1645,7 +1782,11 @@ float __cdecl R_Cinematic_GetTimeRemaining()
 void __cdecl R_Cinematic_StartPlayback_SP(const char *name, unsigned int playbackFlags, float volume)
 {
     Sys_EnterCriticalSection(CRITSECT_CINEMATIC);
+#if defined(__ANDROID__)
+    R_Cinematic_StartPlayback_Internal(name,playbackFlags,volume);
+#else
     R_Cinematic_StartPlayback_Internal(name, playbackFlags, (int)volume);
+#endif
     Sys_LeaveCriticalSection(CRITSECT_CINEMATIC);
 }
 
@@ -1671,27 +1812,46 @@ void __cdecl R_Cinematic_Unpause_SP(bool byScript)
 
 bool __cdecl R_Cinematic_IsFinished()
 {
+#if defined(__ANDROID__)
+    NativeCinematicGuard guard;
+#endif
     return cinematicGlob.cinematicFinished;
 }
 
 bool __cdecl R_Cinematic_IsStarted()
 {
+#if defined(__ANDROID__)
+    NativeCinematicGuard guard;
+#endif
     return !R_Cinematic_IsFinished() && cinematicGlob.currentCinematicName[0];
 }
 
 bool __cdecl R_Cinematic_IsNextReady()
 {
+#if defined(__ANDROID__)
+    NativeCinematicGuard guard;
+#endif
     return R_Cinematic_IsNextReady_Internal();
 }
 
 char __cdecl R_Cinematic_IsUnderrun()
 {
+#if defined(__ANDROID__)
+    NativeCinematicGuard guard;
+#endif
     return cinematicGlob.underrun;
 }
 
 void __cdecl R_Cinematic_ForceRelinquishIO()
 {
+#if defined(__ANDROID__)
+    NativeCinematicGuard guard;
+#endif
     if (cinematicGlob.fileIoState)
         R_Cinematic_RelinquishIO();
 }
 
+
+#if defined(__ANDROID__)
+bool R_Cinematic_IsInitialized(){return g_cinematicInitialized;}
+#endif

@@ -676,22 +676,38 @@ void __cdecl SV_MasterHeartbeat(int controllerIndex)
 void SV_ReadWhiteListfile()
 {
     char *v0; // eax
+#if defined(__ANDROID__)
+    FILE *fp;
+#else
     _iobuf *fp; // [esp+4h] [ebp-8h]
+#endif
     int i; // [esp+8h] [ebp-4h]
 
     i = 0;
     fp = fopen("reservedslots.txt", "r");
     if ( fp )
     {
+#if defined(__ANDROID__)
+        while (i < sv_numreservedslots->current.integer && i < com_maxclients->current.integer
+            && i < ARRAY_COUNT(s_reservedSlots))
+#else
         while ( !feof(fp) && i < sv_numreservedslots->current.integer && i < com_maxclients->current.integer )
+#endif
         {
+#if defined(__ANDROID__)
+            if (!fgets(s_reservedSlots[i].pass, sizeof(s_reservedSlots[i].pass), fp)) break;
+#else
             fgets(s_reservedSlots[i].pass, 24, fp);
+#endif
             v0 = strchr(s_reservedSlots[i].pass, 0xAu);
             if ( v0 )
                 *v0 = 0;
             ++i;
         }
         s_numslotpasses = i;
+#if defined(__ANDROID__)
+        fclose(fp);
+#endif
     }
     Com_DPrintf(15, "Parsed %i reserved slot passwords\n", s_numslotpasses);
 }

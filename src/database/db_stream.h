@@ -32,6 +32,11 @@ void DB_SetExpandWin32Size(int win32Size);
 void DB_SetExpandElem(int wElem, int nElem);
 // Map a Win32 within-block offset to the native address after expansion drift.
 unsigned __int8 *DB_StreamMapLookup(unsigned int blockIndex, unsigned int win32Within);
+#if defined(__ANDROID__)
+// A baked shared zero blob has four-byte disk pointer slots even when first
+// loaded as scalar/tag data. Resolve its typed native pointer-array extent.
+unsigned __int8 *DB_StreamMapPointerArray(unsigned blockIndex, unsigned win32Within, unsigned count);
+#endif
 // Exact address written at a known Win32 cursor (e.g. XString start); preferred over drift marks.
 void DB_StreamRegisterExact(unsigned int blockIndex, unsigned int win32Off, unsigned __int8 *native);
 unsigned __int8 *DB_StreamExactLookup(unsigned int blockIndex, unsigned int win32Within);

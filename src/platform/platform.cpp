@@ -2,8 +2,12 @@
 
 #include <qcommon/common.h>
 #include <win32/win_shared.h>
+#if !defined(__ANDROID__)
 #include <win32/win_input.h>
 #include <win32/win_main.h>
+#else
+void Platform_Print(char *message);
+#endif
 
 static IPlatform *s_platform = nullptr;
 static IFileSystem *s_fileSystem = nullptr;
@@ -70,26 +74,46 @@ void Platform_LogBootstrap()
 
 unsigned int Platform_Milliseconds()
 {
+#if defined(__ANDROID__)
+    if (s_platform)
+        return s_platform->Milliseconds();
+    return Sys_Milliseconds();
+#else
     if (s_ready && s_platform)
         return s_platform->Milliseconds();
     return Sys_Milliseconds_Win32();
+#endif
 }
 
 unsigned int Platform_MillisecondsRaw()
 {
+#if defined(__ANDROID__)
+    if (s_platform)
+        return s_platform->MillisecondsRaw();
+    return Sys_MillisecondsRaw();
+#else
     if (s_ready && s_platform)
         return s_platform->MillisecondsRaw();
     return Sys_MillisecondsRaw_Win32();
+#endif
 }
 
 void Platform_Print(const char *msg)
 {
+#if defined(__ANDROID__)
+    if (s_platform)
+        s_platform->Print(msg);
+    else if (msg)
+        Platform_Print(const_cast<char *>(msg));
+#else
     if (s_ready && s_platform)
         s_platform->Print(msg);
     else if (msg)
         Sys_Print_Win32(const_cast<char *>(msg));
+#endif
 }
 
+#if !defined(__ANDROID__)
 void Platform_InputFrame()
 {
     if (s_ready && s_input)
@@ -97,3 +121,4 @@ void Platform_InputFrame()
     else
         IN_Frame_Win32();
 }
+#endif

@@ -1,5 +1,11 @@
 #include "assertive.h"
 
+#if defined(BO1_NATIVE_ASSERT_ADDRESS_STATE)
+#include <universal/dvar.h>
+AddressInfo_s g_assertAddress[32];
+int g_assertAddressCount;
+bool shouldQuitOnError;
+#else
 #include <Windows.h>
 #include "com_buildinfo.h"
 #include "q_shared.h"
@@ -572,11 +578,13 @@ char __cdecl SkipLines(int lineCount, _iobuf *fp)
     return 1;
 }
 
+#endif // platform-specific assertion implementations
 void __cdecl Assert_ResetAddressInfo()
 {
     g_assertAddressCount = 0;
 }
 
+#if !defined(BO1_NATIVE_ASSERT_ADDRESS_STATE)
 void __cdecl Assert_SetMonkeyCallbackHandler(void (__cdecl *AssertCallbackFunc)(const char *))
 {
     MonkeyAssertCallback = AssertCallbackFunc;
@@ -760,6 +768,7 @@ void __cdecl Assert_BuildAssertMessage(char *expr, char *filename, int line, int
     Assert_DoStackTrace(startOfStackTrace, skipLevels + 1, type, 0);
 }
 
+#endif // normal assertion implementation
 void __cdecl RefreshQuitOnErrorCondition()
 {
     bool v0; // [esp+0h] [ebp-4h]

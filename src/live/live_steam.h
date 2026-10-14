@@ -12,13 +12,23 @@ bool __cdecl LiveSteam_IsClientSignedInOnline();
 unsigned __int64 __cdecl LiveSteam_GetClientIDAsXUID();
 const char *__cdecl LiveSteam_GetCountryCode();
 unsigned __int64 __cdecl LiveSteam_GetUid();
+#if !defined(__ANDROID__)
 unsigned int __stdcall ShellExecuteThredProc(const char *lpParam);
+#else
+// Implemented by the real native application/Activity service owner.
+bool Platform_LaunchSteamURI(const char *uri);
+void Platform_ShowSteamError(const char *title, const char *message);
+#endif
 bool __cdecl LiveSteam_LaunchOtherApp(const char *cmd);
 void __cdecl LiveSteam_ShowStore();
 void __cdecl LiveSteam_PopOverlayForSteamID(unsigned __int64 steamID);
 void __cdecl LiveSteam_Init();
 void __cdecl LiveSteam_TestFriends_f();
+#if defined(__ANDROID__)
+bool LiveSteam_CreateSteamAppIdFile();
+#else
 FILE *LiveSteam_CreateSteamAppIdFile();
+#endif
 void __cdecl LiveSteam_Shutdown();
 void __cdecl LiveSteam_CheckForP2PMessages();
 void __cdecl LiveSteam_SendP2PMessage(unsigned __int64 uid, unsigned __int8 *payload, unsigned int payloadsize);

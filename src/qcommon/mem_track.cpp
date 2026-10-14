@@ -1,6 +1,48 @@
+#if !defined(BO1_NATIVE_TRACK_INIT_ONLY)
 #include "mem_track.h"
 #include <win32/win_common.h>
 #include <string.h>
+
+#if defined(__ANDROID__)
+#include <universal/com_errors.h>
+#include <array>
+#include <mutex>
+#include <cstring>
+#include <cstdlib>
+#include <limits>
+void Com_Error(errorParm_t, const char *, ...);
+namespace {
+std::mutex userHunkTrackMutex;
+std::array<NativeUserHunkRecord,256> userHunkRecords{};
+NativeUserHunkSnapshot userHunkTotals{};
+[[noreturn]] void UserHunkTrackFail(const char *reason)
+{
+    Com_Error(ERR_FATAL, "Native user hunk tracking: %s", reason);
+    std::abort();
+}
+void RemoveUserHunkRecord(std::size_t index)
+{
+    const auto record=userHunkRecords[index];
+    userHunkTotals.bytes-=record.size;
+    userHunkTotals.typeBytes[record.type]-=record.size;
+    userHunkRecords[index]=userHunkRecords[--userHunkTotals.count];
+    userHunkRecords[userHunkTotals.count]={};
+}
+}
+NativeUserHunkSnapshot track_userhunk_snapshot()
+{
+    std::lock_guard lock(userHunkTrackMutex);
+    return userHunkTotals;
+}
+bool track_userhunk_find(void *position,NativeUserHunkRecord *record)
+{
+    if(!record)UserHunkTrackFail("record output is null");
+    std::lock_guard lock(userHunkTrackMutex);
+    for(std::size_t i=0;i<userHunkTotals.count;++i)
+        if(userHunkRecords[i].position==position){*record=userHunkRecords[i];return true;}
+    return false;
+}
+#endif
 
 // I am stubbing this memtracker out for now
 
@@ -488,6 +530,25 @@ void __cdecl track_temp_high_clear(int permanent)
     //Sys_LeaveCriticalSection(CRITSECT_MEMTRACK);
 }
 
+#if defined(__ANDROID__)
+void __cdecl track_userhunk_freerange(void *low,unsigned int size)
+{
+    const auto begin=reinterpret_cast<std::uintptr_t>(low);
+    if(!size)return;
+    if(!low || begin>std::numeric_limits<std::uintptr_t>::max()-size)
+        UserHunkTrackFail("invalid retirement range");
+    const auto end=begin+size;
+    std::lock_guard lock(userHunkTrackMutex);
+    for(std::size_t i=0;i<userHunkTotals.count;)
+    {
+        const auto &record=userHunkRecords[i];
+        const auto position=reinterpret_cast<std::uintptr_t>(record.position);
+        // Rewinding inside an allocation invalidates that entire owned record.
+        if(position<end && position+record.size>begin)RemoveUserHunkRecord(i);
+        else ++i;
+    }
+}
+#else
 void __cdecl track_userhunk_freerange(void *low, unsigned int size)
 {
     //int i; // [esp+10h] [ebp-8h]
@@ -505,7 +566,21 @@ void __cdecl track_userhunk_freerange(void *low, unsigned int size)
     //}
     //Sys_LeaveCriticalSection(CRITSECT_MEMTRACK);
 }
+#endif
 
+#if defined(__ANDROID__)
+void __cdecl track_userhunk_free(void *ptr)
+{
+    if(!ptr)return;
+    bool found=false;
+    {
+        std::lock_guard lock(userHunkTrackMutex);
+        for(std::size_t i=0;i<userHunkTotals.count;++i)
+            if(userHunkRecords[i].position==ptr){RemoveUserHunkRecord(i);found=true;break;}
+    }
+    if(!found)UserHunkTrackFail("free does not identify an active allocation");
+}
+#else
 void __cdecl track_userhunk_free(void *ptr)
 {
     //int i; // [esp+10h] [ebp-8h]
@@ -532,7 +607,41 @@ void __cdecl track_userhunk_free(void *ptr)
     //}
     //Sys_LeaveCriticalSection(CRITSECT_MEMTRACK);
 }
+#endif
 
+#if defined(__ANDROID__)
+void __cdecl track_userhunk_alloc(int size,void *pos,const char *name,int type)
+{
+    if(size<0 || !pos || !name || !*name || type<0 || type>=54)
+        UserHunkTrackFail("invalid allocation metadata");
+    // A zero-byte result owns no range and may alias the following allocation.
+    if(!size)return;
+    const auto position=reinterpret_cast<std::uintptr_t>(pos);
+    if(position>std::numeric_limits<std::uintptr_t>::max()-static_cast<unsigned>(size))
+        UserHunkTrackFail("allocation range overflow");
+    const auto nameLength=std::strlen(name);
+    if(nameLength>=sizeof(NativeUserHunkRecord::name))UserHunkTrackFail("allocation name exceeds original 127-byte bound");
+    const char *failure=nullptr;
+    {
+        std::lock_guard lock(userHunkTrackMutex);
+        if(userHunkTotals.count==userHunkRecords.size())failure="original 256-record capacity exhausted";
+        for(std::size_t i=0;!failure && i<userHunkTotals.count;++i)
+        {
+            const auto &record=userHunkRecords[i];
+            const auto other=reinterpret_cast<std::uintptr_t>(record.position);
+            if(position<other+record.size && other<position+static_cast<unsigned>(size))failure="allocation overlaps an active tracked range";
+        }
+        if(!failure)
+        {
+            auto &record=userHunkRecords[userHunkTotals.count++];
+            record.position=pos;record.size=static_cast<unsigned>(size);record.type=type;
+            std::memcpy(record.name,name,nameLength+1);
+            userHunkTotals.bytes+=record.size;userHunkTotals.typeBytes[type]+=record.size;
+        }
+    }
+    if(failure)UserHunkTrackFail(failure);
+}
+#else
 void __cdecl track_userhunk_alloc(int size, int pos, const char *name, int type)
 {
     //char v4; // [esp+3h] [ebp-1Dh]
@@ -572,6 +681,7 @@ void __cdecl track_userhunk_alloc(int size, int pos, const char *name, int type)
     //++g_userhunk_track_count;
     //Sys_LeaveCriticalSection(CRITSECT_MEMTRACK);
 }
+#endif
 
 void __cdecl track_hunk_alloc(int size, int pos, const char *name, int type)
 {
@@ -732,170 +842,7 @@ void track_temp_high_reset()
     //g_tempHighMemInfoCount = 0;
 }
 
-void __cdecl track_init()
-{
-    //mem_track_t *mem_track; // [esp+Ch] [ebp-8h]
 
-    //Sys_InitializeCriticalSections();
-    //Sys_EnterCriticalSection(CRITSECT_MEMTRACK);
-    //if ( inited_0 )
-    //{
-    //    Sys_LeaveCriticalSection(CRITSECT_MEMTRACK);
-    //}
-    //else
-    //{
-    //    inited_0 = 1;
-    //    memset((unsigned __int8 *)&g_info, 0, sizeof(g_info));
-    //    memset((unsigned __int8 *)&g_virtualMemInfo, 0, sizeof(g_virtualMemInfo));
-    //    for ( g_staticsMemTrackCount = 0; g_staticsMemTrackCount < 54; ++g_staticsMemTrackCount )
-    //    {
-    //        mem_track = &g_staticsMemTrack[g_staticsMemTrackCount];
-    //        mem_track->size[0] = 0;
-    //        mem_track->size[1] = 0;
-    //        strcpy(mem_track->name, "internal");
-    //        mem_track->type = g_staticsMemTrackCount;
-    //        mem_track->usageType = 4;
-    //        mem_track->filename = "";
-    //    }
-    //    strcpy(g_staticsMemTrack[1].name, "(hunk memory)");
-    //    strcpy(g_staticsMemTrack[23].name, "(agp memory)");
-    //    g_userhunk_track_count = 0;
-    //    g_hunk_track_count = 0;
-    //    g_hunklow_track_count = 0;
-    //    g_mem_track_filename = "scr_memorytree";
-    //    TRACK_scr_memorytree();
-    //    g_mem_track_filename = "scr_debugger";
-    //    TRACK_scr_debugger();
-    //    g_mem_track_filename = "scr_evaluate";
-    //    TRACK_scr_evaluate();
-    //    g_mem_track_filename = "scr_variable";
-    //    TRACK_scr_variable();
-    //    g_mem_track_filename = "scr_compiler";
-    //    TRACK_scr_compiler();
-    //    g_mem_track_filename = "scr_parser";
-    //    TRACK_scr_parser();
-    //    g_mem_track_filename = "scr_animtree";
-    //    TRACK_scr_animtree();
-    //    g_mem_track_filename = "scr_stringlist";
-    //    TRACK_scr_stringlist();
-    //    g_mem_track_filename = "scr_vm";
-    //    TRACK_scr_vm();
-    //    g_mem_track_filename = "net_chan";
-    //    TRACK_net_chan();
-    //    g_mem_track_filename = "xmodel";
-    //    TRACK_xmodel();
-    //    g_mem_track_filename = "sv_main";
-    //    TRACK_sv_main();
-    //    g_mem_track_filename = "cm_load";
-    //    TRACK_cm_load();
-    //    g_mem_track_filename = "cm_showcollision";
-    //    TRACK_cm_showcollision();
-    //    g_mem_track_filename = "cm_world";
-    //    TRACK_cm_world();
-    //    g_mem_track_filename = "cmd";
-    //    TRACK_cmd();
-    //    g_mem_track_filename = "com_files";
-    //    TRACK_com_files();
-    //    g_mem_track_filename = "com_math";
-    //    TRACK_com_math();
-    //    g_mem_track_filename = "fx_draw";
-    //    //BLOPS_NULLSUB();
-    //    g_mem_track_filename = "fx_random";
-    //    TRACK_fx_random();
-    //    g_mem_track_filename = "fx_marks";
-    //    TRACK_fx_marks();
-    //    g_mem_track_filename = "fx_system";
-    //    TRACK_fx_system();
-    //    g_mem_track_filename = "ui_viewer";
-    //    TRACK_ui_viewer();
-    //    g_mem_track_filename = "dvar";
-    //    TRACK_dvar();
-    //    g_mem_track_filename = "dvar_cmds";
-    //    TRACK_dvar_cmds();
-    //    g_mem_track_filename = "msg";
-    //    TRACK_msg();
-    //    g_mem_track_filename = "q_parse";
-    //    TRACK_q_parse();
-    //    g_mem_track_filename = "win_common";
-    //    TRACK_win_common();
-    //    g_mem_track_filename = "win_syscon";
-    //    TRACK_win_syscon();
-    //    g_mem_track_filename = "win_net";
-    //    TRACK_win_net();
-    //    g_mem_track_filename = "g_vehicle_path";
-    //    TRACK_g_vehicle_path();
-    //    g_mem_track_filename = "q_shared";
-    //    TRACK_q_shared();
-    //    g_mem_track_filename = "common";
-    //    TRACK_common();
-    //    g_mem_track_filename = "dobj_management";
-    //    TRACK_dobj_management();
-    //    g_mem_track_filename = "files";
-    //    TRACK_files();
-    //    g_mem_track_filename = "memtrack";
-    //    TRACK_memtrack();
-    //    g_mem_track_filename = "scr_animtree";
-    //    TRACK_scr_animtree();
-    //    g_mem_track_filename = "com_memory";
-    //    TRACK_com_memory();
-    //    g_mem_track_filename = "sv_init";
-    //    //BLOPS_NULLSUB();
-    //    g_mem_track_filename = "zutil";
-    //    //BLOPS_NULLSUB();
-    //    g_mem_track_filename = "memfile";
-    //    //BLOPS_NULLSUB();
-    //    g_mem_track_filename = "cl_main";
-    //    TRACK_cl_main();
-    //    g_mem_track_filename = "cl_console";
-    //    TRACK_cl_console();
-    //    g_mem_track_filename = "cl_input";
-    //    TRACK_cl_input();
-    //    g_mem_track_filename = "cl_keys";
-    //    TRACK_cl_keys();
-    //    g_mem_track_filename = "cl_parse";
-    //    TRACK_cl_parse();
-    //    g_mem_track_filename = "win_input";
-    //    TRACK_win_input();
-    //    g_mem_track_filename = "cl_srcn";
-    //    //BLOPS_NULLSUB();
-    //    g_mem_track_filename = "cl_cgame";
-    //    TRACK_cl_cgame();
-    //    g_mem_track_filename = "statmonitor";
-    //    TRACK_statmonitor();
-    //    g_mem_track_filename = "snd";
-    //    TRACK_snd();
-    //    g_mem_track_filename = "snd_driver";
-    //    //BLOPS_NULLSUB();
-    //    g_mem_track_filename = "stringed_hooks";
-    //    TRACK_stringed_hooks();
-    //    g_mem_track_filename = "devgui";
-    //    TRACK_devgui();
-    //    g_mem_track_filename = "win_gamepad";
-    //    TRACK_win_gamepad();
-    //    g_mem_track_filename = "assertive";
-    //    TRACK_assertive();
-    //    g_mem_track_filename = "db_registry";
-    //    TRACK_db_registry();
-    //    g_mem_track_filename = "com_profilemapload";
-    //    TRACK_com_profilemapload();
-    //    g_mem_track_filename = "profileMem";
-    //    TRACK_profileMem();
-    //    g_mem_track_filename = "missile_attractors";
-    //    TRACK_missile_attractors();
-    //    g_mem_track_filename = "DynEntityCollWorld";
-    //    TRACK_DynEntityCollWorld();
-    //    g_mem_track_filename = "ragdoll";
-    //    TRACK_ragdoll();
-    //    g_mem_track_filename = "flame_system";
-    //    TRACK_flame_system();
-    //    CG_track_init();
-    //    G_track_init();
-    //    UI_track_init();
-    //    R_Track_Init();
-    //    g_mem_track_filename = "";
-    //    Sys_LeaveCriticalSection(CRITSECT_MEMTRACK);
-    //}
-}
 
 void __cdecl track_getbasicinfo(meminfo_t *info)
 {
@@ -1249,3 +1196,170 @@ void __cdecl track_PrintAllInfo()
     //}
 }
 
+
+#endif
+
+void __cdecl track_init()
+{
+    //mem_track_t *mem_track; // [esp+Ch] [ebp-8h]
+
+    //Sys_InitializeCriticalSections();
+    //Sys_EnterCriticalSection(CRITSECT_MEMTRACK);
+    //if ( inited_0 )
+    //{
+    //    Sys_LeaveCriticalSection(CRITSECT_MEMTRACK);
+    //}
+    //else
+    //{
+    //    inited_0 = 1;
+    //    memset((unsigned __int8 *)&g_info, 0, sizeof(g_info));
+    //    memset((unsigned __int8 *)&g_virtualMemInfo, 0, sizeof(g_virtualMemInfo));
+    //    for ( g_staticsMemTrackCount = 0; g_staticsMemTrackCount < 54; ++g_staticsMemTrackCount )
+    //    {
+    //        mem_track = &g_staticsMemTrack[g_staticsMemTrackCount];
+    //        mem_track->size[0] = 0;
+    //        mem_track->size[1] = 0;
+    //        strcpy(mem_track->name, "internal");
+    //        mem_track->type = g_staticsMemTrackCount;
+    //        mem_track->usageType = 4;
+    //        mem_track->filename = "";
+    //    }
+    //    strcpy(g_staticsMemTrack[1].name, "(hunk memory)");
+    //    strcpy(g_staticsMemTrack[23].name, "(agp memory)");
+    //    g_userhunk_track_count = 0;
+    //    g_hunk_track_count = 0;
+    //    g_hunklow_track_count = 0;
+    //    g_mem_track_filename = "scr_memorytree";
+    //    TRACK_scr_memorytree();
+    //    g_mem_track_filename = "scr_debugger";
+    //    TRACK_scr_debugger();
+    //    g_mem_track_filename = "scr_evaluate";
+    //    TRACK_scr_evaluate();
+    //    g_mem_track_filename = "scr_variable";
+    //    TRACK_scr_variable();
+    //    g_mem_track_filename = "scr_compiler";
+    //    TRACK_scr_compiler();
+    //    g_mem_track_filename = "scr_parser";
+    //    TRACK_scr_parser();
+    //    g_mem_track_filename = "scr_animtree";
+    //    TRACK_scr_animtree();
+    //    g_mem_track_filename = "scr_stringlist";
+    //    TRACK_scr_stringlist();
+    //    g_mem_track_filename = "scr_vm";
+    //    TRACK_scr_vm();
+    //    g_mem_track_filename = "net_chan";
+    //    TRACK_net_chan();
+    //    g_mem_track_filename = "xmodel";
+    //    TRACK_xmodel();
+    //    g_mem_track_filename = "sv_main";
+    //    TRACK_sv_main();
+    //    g_mem_track_filename = "cm_load";
+    //    TRACK_cm_load();
+    //    g_mem_track_filename = "cm_showcollision";
+    //    TRACK_cm_showcollision();
+    //    g_mem_track_filename = "cm_world";
+    //    TRACK_cm_world();
+    //    g_mem_track_filename = "cmd";
+    //    TRACK_cmd();
+    //    g_mem_track_filename = "com_files";
+    //    TRACK_com_files();
+    //    g_mem_track_filename = "com_math";
+    //    TRACK_com_math();
+    //    g_mem_track_filename = "fx_draw";
+    //    //BLOPS_NULLSUB();
+    //    g_mem_track_filename = "fx_random";
+    //    TRACK_fx_random();
+    //    g_mem_track_filename = "fx_marks";
+    //    TRACK_fx_marks();
+    //    g_mem_track_filename = "fx_system";
+    //    TRACK_fx_system();
+    //    g_mem_track_filename = "ui_viewer";
+    //    TRACK_ui_viewer();
+    //    g_mem_track_filename = "dvar";
+    //    TRACK_dvar();
+    //    g_mem_track_filename = "dvar_cmds";
+    //    TRACK_dvar_cmds();
+    //    g_mem_track_filename = "msg";
+    //    TRACK_msg();
+    //    g_mem_track_filename = "q_parse";
+    //    TRACK_q_parse();
+    //    g_mem_track_filename = "win_common";
+    //    TRACK_win_common();
+    //    g_mem_track_filename = "win_syscon";
+    //    TRACK_win_syscon();
+    //    g_mem_track_filename = "win_net";
+    //    TRACK_win_net();
+    //    g_mem_track_filename = "g_vehicle_path";
+    //    TRACK_g_vehicle_path();
+    //    g_mem_track_filename = "q_shared";
+    //    TRACK_q_shared();
+    //    g_mem_track_filename = "common";
+    //    TRACK_common();
+    //    g_mem_track_filename = "dobj_management";
+    //    TRACK_dobj_management();
+    //    g_mem_track_filename = "files";
+    //    TRACK_files();
+    //    g_mem_track_filename = "memtrack";
+    //    TRACK_memtrack();
+    //    g_mem_track_filename = "scr_animtree";
+    //    TRACK_scr_animtree();
+    //    g_mem_track_filename = "com_memory";
+    //    TRACK_com_memory();
+    //    g_mem_track_filename = "sv_init";
+    //    //BLOPS_NULLSUB();
+    //    g_mem_track_filename = "zutil";
+    //    //BLOPS_NULLSUB();
+    //    g_mem_track_filename = "memfile";
+    //    //BLOPS_NULLSUB();
+    //    g_mem_track_filename = "cl_main";
+    //    TRACK_cl_main();
+    //    g_mem_track_filename = "cl_console";
+    //    TRACK_cl_console();
+    //    g_mem_track_filename = "cl_input";
+    //    TRACK_cl_input();
+    //    g_mem_track_filename = "cl_keys";
+    //    TRACK_cl_keys();
+    //    g_mem_track_filename = "cl_parse";
+    //    TRACK_cl_parse();
+    //    g_mem_track_filename = "win_input";
+    //    TRACK_win_input();
+    //    g_mem_track_filename = "cl_srcn";
+    //    //BLOPS_NULLSUB();
+    //    g_mem_track_filename = "cl_cgame";
+    //    TRACK_cl_cgame();
+    //    g_mem_track_filename = "statmonitor";
+    //    TRACK_statmonitor();
+    //    g_mem_track_filename = "snd";
+    //    TRACK_snd();
+    //    g_mem_track_filename = "snd_driver";
+    //    //BLOPS_NULLSUB();
+    //    g_mem_track_filename = "stringed_hooks";
+    //    TRACK_stringed_hooks();
+    //    g_mem_track_filename = "devgui";
+    //    TRACK_devgui();
+    //    g_mem_track_filename = "win_gamepad";
+    //    TRACK_win_gamepad();
+    //    g_mem_track_filename = "assertive";
+    //    TRACK_assertive();
+    //    g_mem_track_filename = "db_registry";
+    //    TRACK_db_registry();
+    //    g_mem_track_filename = "com_profilemapload";
+    //    TRACK_com_profilemapload();
+    //    g_mem_track_filename = "profileMem";
+    //    TRACK_profileMem();
+    //    g_mem_track_filename = "missile_attractors";
+    //    TRACK_missile_attractors();
+    //    g_mem_track_filename = "DynEntityCollWorld";
+    //    TRACK_DynEntityCollWorld();
+    //    g_mem_track_filename = "ragdoll";
+    //    TRACK_ragdoll();
+    //    g_mem_track_filename = "flame_system";
+    //    TRACK_flame_system();
+    //    CG_track_init();
+    //    G_track_init();
+    //    UI_track_init();
+    //    R_Track_Init();
+    //    g_mem_track_filename = "";
+    //    Sys_LeaveCriticalSection(CRITSECT_MEMTRACK);
+    //}
+}

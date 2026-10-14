@@ -53,7 +53,11 @@ DObjAnimMat * R_UpdateSceneEntBounds(
     // implemented via integer bitmask trick: (a & mask) | (b & ~mask)
     // where mask = -1 if condition true, 0 otherwise
 
+#if defined(__ANDROID__)
+    if (_InterlockedCompareExchange(&sceneEnt->cull.state, 1u, 0u))
+#else
     if (InterlockedCompareExchange((volatile LONG *)&sceneEnt->cull, 1, 0))
+#endif
     {
         *pLocalSceneEnt = 0;
         if (waitForCullState)

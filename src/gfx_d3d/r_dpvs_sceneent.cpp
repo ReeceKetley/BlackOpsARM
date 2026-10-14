@@ -252,6 +252,7 @@ LABEL_56:
 #endif
 
 
+#if !defined(__ANDROID__)
 static int __cdecl R_CullSphereDpvs(const float *origin, float radius, const DpvsPlane *planes, int planeCount)
 {
     int planeIndex; // [esp+8h] [ebp-4h]
@@ -267,6 +268,8 @@ static int __cdecl R_CullSphereDpvs(const float *origin, float radius, const Dpv
     }
     return 0;
 }
+
+#endif
 
 void R_AddCellSceneEntSurfacesInFrustumCmd(GfxWorldDpvsPlanes *data)
 {

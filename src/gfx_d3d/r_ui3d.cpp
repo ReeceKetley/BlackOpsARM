@@ -1,4 +1,7 @@
 #include "r_ui3d.h"
+#if defined(__ANDROID__)
+#include <platform/win32_compat/win32_time.h>
+#endif
 #include "rb_backend.h"
 #include "r_dvars.h"
 #include "r_foliage.h"
@@ -136,7 +139,11 @@ void __cdecl R_UI3D_Shutdown()
     {
         g_ui3dStatus.initialized = 0;
         while ( g_ui3dStatus.rendering )
+#if defined(__ANDROID__)
+            bo1::win32::Sleep(1u);
+#else
             Sleep(1u);
+#endif
         R_ShutdownUI3DRenderTarget(g_ui3dStatus.hasPingPongBuffer);
         g_ui3dStatus.hasPingPongBuffer = 0;
         g_ui3dStatus.blurRadius = 0.0f;

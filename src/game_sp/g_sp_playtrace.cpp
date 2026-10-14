@@ -1,7 +1,16 @@
 // j1: play-session recorder (TOOL for a playtests, off by default; see g_sp_playtrace.h and notes/playtrace.md).
 // It only reads game state; it never changes it. The client half is src/cgame/cg_sp_playtrace.cpp.
 #include "g_sp_playtrace.h"
+#if !defined(__ANDROID__)
 #include <Windows.h>
+#else
+#include <platform/android/stdio_services.h>
+#include <platform/android/file_services.h>
+#include <mutex>
+#include <sys/stat.h>
+#include <cerrno>
+#include <cstdlib>
+#endif
 #include <cstdio>
 #include <cstdarg>
 #include <ctime>
@@ -25,6 +34,25 @@
 
 namespace
 {
+#if defined(__ANDROID__)
+template<class... Args>
+int TraceFormat(char *buffer,std::size_t size,const char *format,Args... args)
+{
+    if (!size || size > 0xFFFFFFFFu) std::abort();
+    const int count=Com_sprintf(buffer,static_cast<unsigned>(size),format,args...);
+    if (count < 0) {
+        std::fputs("Native playtrace formatting exceeds its owned output buffer\n",stderr);
+        std::abort();
+    }
+    return count;
+}
+template<std::size_t N,class... Args>
+int TraceFormat(char (&buffer)[N],const char *format,Args... args)
+{
+    return TraceFormat(buffer,N,format,args...);
+}
+#define sprintf_s TraceFormat
+#endif
 const dvar_s *s_on;
 const dvar_s *s_ms;
 const dvar_s *s_radius;
@@ -32,7 +60,11 @@ cmd_function_s s_markCmd;
 bool s_registered;
 bool s_openFailed; // one attempt per enable
 FILE *s_file;
+#if defined(__ANDROID__)
+char s_path[4096];
+#else
 char s_path[MAX_PATH];
+#endif
 int s_marks;
 int s_nextSample = -1;
 int s_lastLevelTime = -1;
@@ -46,23 +78,61 @@ int s_deadSince[MAX_ACTORS_CAP]; // L9: level time an actor was first sampled de
 
 struct Lock
 {
+#if defined(__ANDROID__)
+    std::recursive_mutex cs;
+#else
     CRITICAL_SECTION cs;
     Lock() { InitializeCriticalSection(&cs); }
+#endif
 } s_lock;
+void TraceEnter()
+{
+#if defined(__ANDROID__)
+    s_lock.cs.lock();
+#else
+    EnterCriticalSection(&s_lock.cs);
+#endif
+}
+void TraceLeave()
+{
+#if defined(__ANDROID__)
+    s_lock.cs.unlock();
+#else
+    LeaveCriticalSection(&s_lock.cs);
+#endif
+}
 
 void OpenFile()
 {
     const dvar_s *home = Dvar_FindVar("fs_homepath");
     std::string dir = home && home->current.string[0] ? home->current.string : ".";
+#if defined(__ANDROID__)
+    dir=bo1::android::ResolveEngineFilePath((dir+"/playtrace").c_str());
+    if (dir.empty() || (mkdir(dir.c_str(),0700) && errno != EEXIST)) {
+        std::fputs("Native playtrace directory cannot be created\n",stderr);
+        return;
+    }
+#else
     dir += "\\playtrace";
     CreateDirectoryA(dir.c_str(), nullptr);
+#endif
     time_t now = time(nullptr);
     tm local{};
+#if defined(__ANDROID__)
+    if (!localtime_r(&now,&local)) {
+        std::fputs("Native playtrace local time unavailable\n",stderr);
+        return;
+    }
+    sprintf_s(s_path, "%s/playtrace-%04d%02d%02d-%02d%02d%02d.jsonl", dir.c_str(), local.tm_year + 1900,
+        local.tm_mon + 1, local.tm_mday, local.tm_hour, local.tm_min, local.tm_sec);
+    s_file=bo1::android::OpenStdio(s_path,"ab");
+#else
     localtime_s(&local, &now);
     sprintf_s(s_path, "%s\\playtrace-%04d%02d%02d-%02d%02d%02d.jsonl", dir.c_str(), local.tm_year + 1900,
         local.tm_mon + 1, local.tm_mday, local.tm_hour, local.tm_min, local.tm_sec);
     if (fopen_s(&s_file, s_path, "ab"))
         s_file = nullptr;
+#endif
     Com_Printf(16, "PLAYTRACE: %s %s\n", s_file ? "writing" : "could not open", s_path);
 }
 
@@ -262,7 +332,7 @@ int G_SP_PlayTraceIntervalMs()
 
 void G_SP_PlayTraceLine(const char *line)
 {
-    EnterCriticalSection(&s_lock.cs);
+    TraceEnter();
     if (!s_file && !s_openFailed)
     {
         OpenFile();
@@ -270,26 +340,43 @@ void G_SP_PlayTraceLine(const char *line)
     }
     if (s_file)
     {
+#if defined(__ANDROID__)
+        if (fputs(line,s_file)==EOF || fputc('\n',s_file)==EOF || fflush(s_file)) {
+            std::fputs("Native playtrace write failed; retiring output stream\n",stderr);
+            bo1::android::CloseStdio(s_file);
+            s_file=nullptr;
+            s_openFailed=true;
+        }
+#else
         fputs(line, s_file);
         fputc('\n', s_file);
         fflush(s_file);
+#endif
     }
-    LeaveCriticalSection(&s_lock.cs);
+    TraceLeave();
 }
 
 void G_SP_PlayTraceServerFrame()
 {
     if (!s_on || !s_on->current.enabled)
     {
+#if defined(__ANDROID__)
+        TraceEnter();
+        s_openFailed=false;
+        if (s_file) bo1::android::CloseStdio(s_file);
+        s_file=nullptr;
+        TraceLeave();
+#else
         s_openFailed = false;
         if (s_file)
         {
-            EnterCriticalSection(&s_lock.cs);
+            TraceEnter();
             if (s_file)
                 fclose(s_file);
             s_file = nullptr;
-            LeaveCriticalSection(&s_lock.cs);
+            TraceLeave();
         }
+#endif
         return;
     }
     char buf[160];

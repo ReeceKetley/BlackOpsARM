@@ -1,4 +1,15 @@
 #include <universal/profile.h>
+#if defined(__ANDROID__)
+#include <platform/android/legacy_crt.h>
+#include <clientscript/cscr_variable.h>
+#include <platform/win32_compat/win32_time.h>
+#include <atomic>
+#include <platform/android/engine_frame_timing.h>
+namespace nft = bo1::android::frame_timing;
+using SVPerfCounter=bo1::win32::LARGE_INTEGER;
+using bo1::win32::QueryPerformanceCounter;
+using bo1::win32::Sleep;
+#endif
 #include <game_sp/g_sp_loadgame.h>
 #include <game_sp/g_sp_measure.h>
 #include <game_sp/g_sp_savegame.h>
@@ -45,6 +56,9 @@
 #include <win32/win_steam.h>
 #include <game_sp/g_sp_headless_move.h>
 
+#if !defined(__ANDROID__)
+using SVPerfCounter=LARGE_INTEGER;
+#endif
 serverStatic_t svs;
 serverStaticHeader_t svsHeader;
 int svsHeaderValid;
@@ -1136,14 +1150,23 @@ int __cdecl SV_CheckPaused()
 // scripts schedule in ticks (spawn delays, intro waits) drift later, by an amount that depends on real
 // time. Measured: 9-16 such frames per 90 s run unloaded, 219 under load (k1-report). Zombiemode counts
 // wakes and completed frames so SV_WaitServer returns only after the frame of the latest wake has run.
+#if defined(__ANDROID__)
+static_assert(sizeof(LONG)==4 && std::atomic<LONG>::is_always_lock_free);
+static std::atomic<LONG> s_svFramesWoken;
+static std::atomic<LONG> s_svFramesRun;
+#else
 static volatile LONG s_svFramesWoken;
 static volatile LONG s_svFramesRun;
+#endif
 
 void    SV_RunFrame()
 {
     unsigned int v1; // eax
     unsigned int start; // [esp+0h] [ebp-4h]
 
+#if defined(__ANDROID__)
+    nft::Scope runTiming(nft::ServerRun);
+#endif
     start = Sys_Milliseconds();
     SV_ResetSkeletonCache();
     CL_FlushDebugServerData();
@@ -1159,7 +1182,13 @@ void    SV_RunFrame()
         SV_RunEventLoop();
     const bool measure = G_SP_MeasureEnabled();
     const unsigned int gameStart = measure ? Sys_Milliseconds() : 0;
+#if defined(__ANDROID__)
+    { nft::Scope timing(nft::GameRun);
+#endif
     G_RunFrame(svs.time);
+#if defined(__ANDROID__)
+    }
+#endif
     const unsigned int gameEnd = measure ? Sys_Milliseconds() : 0;
     G_SP_HeadlessTestClientFrame(true);
     sv.physicsTime = Phys_GetCurrentTime();
@@ -1247,11 +1276,11 @@ int g_checkServerTime;
 void     SV_ServerThread(unsigned int threadContext)
 {
     void *Value; // eax
-    LARGE_INTEGER v3; // [esp+8h] [ebp-38h] BYREF
+    SVPerfCounter v3; // [esp+8h] [ebp-38h] BYREF
     unsigned intv4; // [esp+10h] [ebp-30h]
     int v5; // [esp+14h] [ebp-2Ch]
     __int64 v6; // [esp+18h] [ebp-28h]
-    LARGE_INTEGER PerformanceCount; // [esp+20h] [ebp-20h] BYREF
+    SVPerfCounter PerformanceCount; // [esp+20h] [ebp-20h] BYREF
     unsigned int CurrentThreadId; // [esp+28h] [ebp-18h]
     int v9; // [esp+2Ch] [ebp-14h]
     unsigned __int64 runStart; // [esp+30h] [ebp-10h]
@@ -1278,6 +1307,10 @@ void     SV_ServerThread(unsigned int threadContext)
     SV_InitThreadVariables();
     Sys_InitServerEvents();
     SV_ClearServerThreadOwnsGame();
+#if defined(__ANDROID__)
+    nft::data.enabled = true;
+    nft::data.windowStart = nft::Now();
+#endif
     Sys_ServerCompleted();
     while ( 1 )
     {
@@ -1285,6 +1318,9 @@ void     SV_ServerThread(unsigned int threadContext)
         timeout = 1000 / sv_network_fps->current.integer;
         {
             PROF_SCOPED("wait start server");
+#if defined(__ANDROID__)
+            nft::Scope idleTiming(nft::ServerIdle);
+#endif
             g_checkServerTime = timeout + Sys_Milliseconds();
             if (sv_assistWorkers->current.enabled)
             {
@@ -1302,7 +1338,11 @@ void     SV_ServerThread(unsigned int threadContext)
                 start = Sys_WaitStartServer(timeout);
                 g_startServer = start;
             }
+#if defined(__ANDROID__)
+            CurrentThreadId = BO1_ProfileThreadId();
+#else
             CurrentThreadId = GetCurrentThreadId();
+#endif
             v9 = 0;
         }
 
@@ -1312,6 +1352,13 @@ void     SV_ServerThread(unsigned int threadContext)
             TaskManager2_PickUpDeferredTasks();
         if ( start )
         {
+#if defined(__ANDROID__)
+            if (level.framenum == 0) {
+                for (auto &value : nft::data.values) value = {};
+                nft::data.windowStart = nft::Now(); // Exclude map loading/startup idle from first frame.
+            }
+            nft::Scope workTiming(nft::ServerWork);
+#endif
             SV_IncServerThreadOwnsGame();
             SV_CalcPings();
             const LONG serving = s_svFramesWoken; // zombies: the wake this frame serves (see s_svFramesWoken)
@@ -1322,7 +1369,13 @@ void     SV_ServerThread(unsigned int threadContext)
                 QueryPerformanceCounter(&PerformanceCount);
                 runStart = PerformanceCount.QuadPart;
                 CG_SP_NetTraceServerFrame(0); // a1 TEST SWITCH bo1_nettrace
+#if defined(__ANDROID__)
+                { nft::Scope timing(nft::ServerPre);
+#endif
                 SV_PreFrame();
+#if defined(__ANDROID__)
+                }
+#endif
                 {
                     PROF_SCOPED("SERVER: run frame");
                     SV_RunFrame();
@@ -1331,10 +1384,17 @@ void     SV_ServerThread(unsigned int threadContext)
                 // (SP 0x0087E498 -> 0x0045A6C0, then 0x0087E4D7 -> 0x004BC500). MP SV_Frame
                 // can return while this thread still runs; saving on the main thread lets the VM
                 // free objects between Scr_SavePre and Scr_Save, leaving stale save IDs.
-                if (G_SP_IsSPLevel())
+                if (G_SP_IsSPLevel()) {
+#if defined(__ANDROID__)
+                    nft::Scope timing(nft::ServerSave);
+#endif
                     G_SP_ProcessSaveQueue();
+                }
                 {
                     PROF_SCOPED("SERVER: post frame");
+#if defined(__ANDROID__)
+                    nft::Scope timing(nft::ServerPost);
+#endif
                     SV_PostFrame();
                 }
                 CG_SP_NetTraceServerFrame(1); // a1 TEST SWITCH bo1_nettrace
@@ -1346,11 +1406,30 @@ void     SV_ServerThread(unsigned int threadContext)
             }
 
             SV_RunEventLoop();
+#if defined(__ANDROID__)
+            workTiming.Stop();
+            if (level.framenum <= 3 || level.framenum % 100 == 0)
+                nft::Dump("server", static_cast<unsigned>(level.framenum), level.time, 1000 / sv_fps->current.integer);
+            if (Sys_IsHeadless() && (level.framenum <= 3 || level.framenum % 100 == 0))
+                Com_Printf(16, "BO1_SERVER_FRAME_WORK_COMPLETE level_time=%d frame=%d script_time=%u serving=%d\n",
+                           level.time, level.framenum, static_cast<unsigned>(gScrVarPub[SCRIPTINSTANCE_SERVER].time),
+                           static_cast<int>(serving));
+#endif
+#if defined(__ANDROID__)
+            { nft::Scope timing(nft::WakeReset);
+#endif
             Sys_SleepServer();
+#if defined(__ANDROID__)
+            }
+#endif
             SV_DecServerThreadOwnsGame();
             // zombies: after Sys_SleepServer's reset of wakeServerEvent, so a wake the main thread sends once it
             // sees this frame done is not cleared by that reset.
+#if defined(__ANDROID__)
+            s_svFramesRun.store(serving,std::memory_order_seq_cst);
+#else
             InterlockedExchange(&s_svFramesRun, serving);
+#endif
         }
         gjk_collision_epilog(1);
         Sys_ServerCompleted();
@@ -1359,13 +1438,26 @@ void     SV_ServerThread(unsigned int threadContext)
 
 void __cdecl SV_PostFrame()
 {
+#if defined(__ANDROID__)
+    { nft::Scope timing(nft::PostDebugger);
+#endif
     Scr_UpdateDebugger(SCRIPTINSTANCE_SERVER);
+#if defined(__ANDROID__)
+    }
+    { nft::Scope timing(nft::PostTimeouts);
+#endif
     SV_CheckTimeouts();
+#if defined(__ANDROID__)
+    }
+#endif
     { SVPROF_SCOPED(SVPROF_SNAP); SV_SendClientMessages(); } // mod (L43): bo1_mod_svprof
 
     // ADD: Steam Periodic Auth Check
     if (IsDedicatedServer())
     {
+#if defined(__ANDROID__)
+        nft::Scope timing(nft::PostAuth);
+#endif
         Steam_CheckClients();
     }
     // END
@@ -1373,6 +1465,9 @@ void __cdecl SV_PostFrame()
 
 void SV_RunEventLoop()
 {
+#if defined(__ANDROID__)
+    nft::Scope eventTiming(nft::NetworkLoop);
+#endif
     if ( !Sys_IsServerThread()
         && !Assert_MyHandler(
                     "C:\\projects_pc\\cod\\codsrc\\src\\server_mp\\sv_main_mp.cpp",
@@ -1383,7 +1478,13 @@ void SV_RunEventLoop()
     {
         __debugbreak();
     }
+#if defined(__ANDROID__)
+    { nft::Scope timing(nft::NetworkWait);
+#endif
     Sys_WaitAllowServerNetworkLoop();
+#if defined(__ANDROID__)
+    }
+#endif
     Sys_ResetServerNetworkCompletedEvent();
     if ( sv.allowNetPackets )
     {
@@ -1395,8 +1496,18 @@ void SV_RunEventLoop()
     Sys_SetServerNetworkCompletedEvent();
 }
 
+#if defined(__ANDROID__)
+__attribute__((no_instrument_function)) static bool SV_TimedCompletionPoll(unsigned timeout)
+{
+    nft::Scope timing(nft::CompletionPoll);
+    return Sys_WaitServer(timeout);
+}
+#endif
 void __cdecl SV_WaitServer()
 {
+#if defined(__ANDROID__)
+    nft::Scope waitTiming(nft::MainServerWait);
+#endif
     bool i; // eax
     unsigned int timeout; // [esp+8h] [ebp-4h]
     unsigned int timeouta; // [esp+8h] [ebp-4h]
@@ -1415,22 +1526,45 @@ void __cdecl SV_WaitServer()
         {
             PROF_SCOPED("wait server");
             timeout = !Sys_AssistNeeded();
+#if defined(__ANDROID__)
+            for (i = SV_TimedCompletionPoll(timeout); !i; i = SV_TimedCompletionPoll(timeouta))
+#else
             for (i = Sys_WaitServer(timeout); !i; i = Sys_WaitServer(timeouta))
+#endif
             {
                 Com_CheckSyncFrame();
+#if defined(__ANDROID__)
+                { nft::Scope timing(nft::AssistWork);
+#endif
                 Sys_AssistSingle();
+#if defined(__ANDROID__)
+                }
+#endif
                 timeouta = !Sys_AssistNeeded();
             }
             // zombies: a completion signal left from an earlier server-thread iteration is not this frame's
             // (see s_svFramesWoken). Bounded so a server thread that stops taking frames cannot hang the caller.
             if (G_SP_IsSPLevel())
             {
+#if defined(__ANDROID__)
+                nft::Scope staleTiming(nft::StaleHandshake);
+#endif
                 const int waitStart = Sys_Milliseconds();
                 while (s_svFramesRun != s_svFramesWoken && (int)(Sys_Milliseconds() - waitStart) < 2000)
                 {
                     Com_CheckSyncFrame();
+#if defined(__ANDROID__)
+                    { nft::Scope timing(nft::AssistWork);
+#endif
                     Sys_AssistSingle();
+#if defined(__ANDROID__)
+                    }
+                    { nft::Scope timing(nft::Yield);
+#endif
                     Sleep(0);
+#if defined(__ANDROID__)
+                    }
+#endif
                 }
             }
         }
@@ -1506,6 +1640,9 @@ void __cdecl SV_PreFrame()
 
 int __cdecl SV_Frame(int controllerIndex, int msec)
 {
+#if defined(__ANDROID__)
+    nft::Scope mainTiming(nft::MainSVFrame);
+#endif
     Hunk_CheckTempMemoryClear();
     Hunk_CheckTempMemoryHighClear();
     if ( g_shouldKillLocalServer )
@@ -1568,6 +1705,9 @@ void __cdecl SV_FrameInternal(int controllerIndex, int msec)
         __debugbreak();
     }
     frameMsec = 1000 / sv_fps->current.integer;
+#if defined(__ANDROID__)
+    nft::data.frameMsec = frameMsec;
+#endif
     if ( sv.timeResidual >= frameMsec
         && !Assert_MyHandler(
                     "C:\\projects_pc\\cod\\codsrc\\src\\server_mp\\sv_main_mp.cpp",
@@ -1646,7 +1786,12 @@ void SV_WakeServer()
     if ( !com_inServerFrame )
     {
         com_inServerFrame = 1;
+#if defined(__ANDROID__)
+        s_svFramesWoken.fetch_add(1,std::memory_order_seq_cst);
+        ++nft::data.wakes;
+#else
         InterlockedIncrement(&s_svFramesWoken); // zombies: counted handshake, see s_svFramesWoken
+#endif
         Sys_WakeServer();
         SV_AllowPackets(1);
     }
@@ -1761,7 +1906,13 @@ void __cdecl SV_AllowPackets(bool allow)
 
     PROF_SCOPED("SV_AllowPackets");
 
+#if defined(__ANDROID__)
+    { nft::Scope timing(nft::NetworkWait);
+#endif
     Sys_WaitServerNetworkCompleted();
+#if defined(__ANDROID__)
+    }
+#endif
     Sys_ResetServerAllowNetworkEvent();
     sv.allowNetPackets = allow;
     Sys_SetServerAllowNetworkEvent();

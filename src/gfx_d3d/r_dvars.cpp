@@ -1,4 +1,13 @@
+#if defined(__ANDROID__) && defined(BO1_NATIVE_FULLSCREEN_TRIANGLE) && BO1_NATIVE_FULLSCREEN_TRIANGLE
+#include "platform/android/fullscreen_triangle.h"
+#endif
+#if defined(BO1_NATIVE_RENDER_WORKER_DVAR_ONLY)
+#include <universal/dvar.h>
+#else
 #include "r_dvars.h"
+#if defined(__ANDROID__) && defined(BO1_NATIVE_POST_FUSION_TRIAL) && BO1_NATIVE_POST_FUSION_TRIAL
+#include "platform/android/post_fusion_trial.h"
+#endif
 #include "r_sky.h"
 
 #include <cstddef>
@@ -416,7 +425,12 @@ const dvar_s *r_outdoorFeather;
 const dvar_s *r_sun_from_dvars;
 const dvar_s *developer;
 //const dvar_s *sv_cheats;
+#endif // BO1_NATIVE_RENDER_WORKER_DVAR_ONLY
+
 const dvar_s *com_statmon;
+
+#if !defined(BO1_NATIVE_RENDER_WORKER_DVAR_ONLY)
+
 const dvar_s *r_sse_skinning;
 const dvar_s *r_monitor;
 const dvar_s *r_aspectRatio;
@@ -467,7 +481,7 @@ const dvar_s *r_extracam_shadowmap_enable;
 const dvar_s *r_shader_constant_set_debug_range;
 const dvar_s *r_shader_constant_set_enable;
 const dvar_s *r_sky_intensity_showDebugDisplay;
-const dvar_s *r_reflectionProbeGenerate;
+
 const dvar_s *r_ignoreHwGamma;
 const dvar_s *r_sky_intensity_useDebugValues;
 const dvar_s *r_sky_intensity_angle0;
@@ -481,7 +495,12 @@ const dvar_s *r_remotescreen_renderlastframe;
 const dvar_s *r_offscreenCasterLodScale;
 const dvar_s *r_dynSModelBurnValueDisplayRange;
 const dvar_s *r_useHidePartbits;
+#endif // BO1_NATIVE_RENDER_WORKER_DVAR_ONLY
+
 const dvar_s *r_smp_worker_threads;
+
+#if !defined(BO1_NATIVE_RENDER_WORKER_DVAR_ONLY)
+
 const dvar_s *r_smp_worker_thread[8];
 
 const char *showCollisionGroupsNames[4] =
@@ -593,6 +612,12 @@ const char *showPixelCostNames[5] =
 
 void __cdecl R_RegisterDvars()
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_FULLSCREEN_TRIANGLE) && BO1_NATIVE_FULLSCREEN_TRIANGLE
+    bo1::android::fullscreen_triangle::RegisterControls();
+#endif
+#if defined(__ANDROID__) && defined(BO1_NATIVE_POST_FUSION_TRIAL) && BO1_NATIVE_POST_FUSION_TRIAL
+    bo1::android::post_fusion_trial::RegisterControls();
+#endif
     int value; // eax
     signed int i; // [esp+20h] [ebp-4h]
 
@@ -2938,3 +2963,7 @@ char __cdecl R_CheckDvarModified(const dvar_s *dvar)
     return 1;
 }
 
+
+#endif // BO1_NATIVE_RENDER_WORKER_DVAR_ONLY
+
+const dvar_s *r_reflectionProbeGenerate;

@@ -7,6 +7,12 @@
 //--------------------------------------------------------------------------------------
 
 #include "CImageSurface.h"
+#if defined(__ANDROID__)
+#include <bit>
+#include <cstdio>
+#include <limits>
+#include <cstdlib>
+#endif
 
 
 
@@ -57,7 +63,11 @@ float32 CPf16Tof32(uint16 aVal)
    rawFloat32Data = (signVal << 31) |  (exponent << 23) | mantissa ;
    
    //treat raw data as a 32 bit float
+#if defined(__ANDROID__)
+   return std::bit_cast<float32>(rawFloat32Data);
+#else
    return *((float32 *) &rawFloat32Data );
+#endif
 }
 
 
@@ -79,7 +89,11 @@ float32 CPf16Tof32(uint16 aVal)
 //--------------------------------------------------------------------------------------
 uint16 CPf32Tof16(float32 aVal)
 {
+#if defined(__ANDROID__)
+   uint32 rawf32Data = std::bit_cast<uint32>(aVal);
+#else
    uint32 rawf32Data = *((uint32 *)&aVal); //raw binary float32 data
+#endif
 
    uint32 signVal = (rawf32Data >> 31);              //sign bit in MSB
    uint32 exponent = ((rawf32Data >> 23) & 0xff);    //next 8 bits after signbit
@@ -228,7 +242,19 @@ void CImageSurface::FatalError(WCHAR *a_Msg)
 {
    //MessageBoxW(NULL, a_Msg, L"Error: Application Terminating", MB_OK);
 
+#if defined(__ANDROID__)
+   std::fputs("CImageSurface fatal error: ", stderr);
+   if (a_Msg) for (const wchar_t *text = a_Msg; *text; ++text)
+   {
+      const auto code = static_cast<unsigned int>(*text);
+      if (code >= 32 && code < 127) std::fputc(code, stderr);
+      else std::fprintf(stderr, "\\u%04x", code);
+   }
+   std::fputc('\n', stderr);
+   std::fflush(stderr);
+#else
    OutputMessageString((wchar_t *)L"CImageSurface Error: Application Terminating", a_Msg);
+#endif
    exit(EM_FATAL_ERROR);
 
 }
@@ -272,7 +298,19 @@ void CImageSurface::Init(int32 a_Width, int32 a_Height, int32 a_NumChannels )
 
    try 
    {
+#if defined(__ANDROID__)
+      if (m_Width < 0 || m_Height < 0 || m_NumChannels < 0)
+         FatalError((wchar_t *)L"Negative CImageSurface dimensions.");
+      const std::size_t width = static_cast<std::size_t>(m_Width);
+      const std::size_t height = static_cast<std::size_t>(m_Height);
+      const std::size_t channels = static_cast<std::size_t>(m_NumChannels);
+      constexpr auto indexLimit = static_cast<std::size_t>(INT32_MAX);
+      if ((height && width > indexLimit / height) || (channels && width * height > indexLimit / channels))
+         FatalError((wchar_t *)L"CImageSurface dimensions exceed signed32 pixel indexing.");
+      m_ImgData = new CP_ITYPE[width * height * channels];
+#else
       m_ImgData = new CP_ITYPE [ m_Width * m_Height * m_NumChannels];   //assume tight data packing
+#endif
    }
    catch ( ... )
    {

@@ -1524,12 +1524,16 @@ void __cdecl LiveStats_PublishNews(int controllerIndex)
                 {
                     targetValue = StringTable_GetColumnValueForRow(statsMilestonestable, rowNum, 2);
                     name = s_statsMilestonesCompleted[controllerIndex][j].name;
+#if defined(__ANDROID__)
+                    I_strncat(statsName, sizeof(statsName), name);
+#else
                     v17 = (unsigned int)&name[strlen(name) + 1];
                     v14 = (char *)&newRank + 3;
                     while ( *++v14 )
                         ;
                     v15 = s_statsMilestonesCompleted[controllerIndex][j].name;
                     memcpy(v14, v15, v17 - (unsigned int)v15);
+#endif
                     v11 = va(
                                     "userPublishNews TICKER_STATSMILESTONEUPDATE %s %s %s\n",
                                     localized_weaponname_string,

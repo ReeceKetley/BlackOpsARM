@@ -1,4 +1,13 @@
+#if defined(__ANDROID__)
+#include <atomic>
+#endif
 #if !defined(BO1_FAST_CRIT_SECT_GATE)
+#if defined(__ANDROID__)
+#include <platform/android/legacy_crt.h>
+#include <platform/android/file_services.h>
+#include <platform/android/command_line_services.h>
+int DeleteFileA(const char *);
+#endif
 #if defined(BO1_STRINGTABLE_OWNER_GATE)
 #include "db_asset_pool.h"
 #include "db_asset_entry_types.h"
@@ -24,6 +33,9 @@ static bool DB_IsLevelSingletonType(XAssetType);
 #include <cstring>
 #else
 #include "db_registry.h"
+#if defined(__ANDROID__)
+#include "db_stream.h"
+#endif
 #include <universal/com_stringtable_sort.h>
 #include <cstdio>
 #include <universal/profile.h>
@@ -499,6 +511,16 @@ static void FREE_NULLSUB(void *, XAssetHeader)
 //    header.xmodelPieces->name = (const char *)oldFreeHead;
 //}
 
+#if defined(__ANDROID__)
+// Table dispatch must use its actual (void *, XAssetHeader) function type.
+// Preserve each original typed owner's cleanup and pool publication sequence.
+template<void (__cdecl *FreeOwner)(XAssetPoolEntry<EmblemSet> **, XAssetHeader)>
+static void __cdecl DB_NativeFreeXAssetHeader(void *pool, XAssetHeader header)
+{
+    FreeOwner(static_cast<XAssetPoolEntry<EmblemSet> **>(pool), header);
+}
+#endif
+
 // casting all cuz it's easier
 #endif
 #if !defined(BO1_STRINGTABLE_OWNER_GATE) || defined(BO1_ENTRY_ALLOC_GATE)
@@ -559,9 +581,17 @@ void(__cdecl *DB_FreeXAssetHeaderHandler[43])(void *, XAssetHeader) =
   DB_FreeXAssetHeader_EmblemSet_,
   DB_FreeXAssetHeader_EmblemSet_,
   DB_FreeXAssetHeader_EmblemSet_,
+#if defined(__ANDROID__)
+  DB_NativeFreeXAssetHeader<DB_FreeMaterial>,
+#else
   (void(*)(void*, XAssetHeader))DB_FreeMaterial,
+#endif
   DB_FreeXAssetHeader_EmblemSet_,
+#if defined(__ANDROID__)
+  DB_NativeFreeXAssetHeader<DB_FreeGfxImage>,
+#else
   (void(*)(void*, XAssetHeader))DB_FreeGfxImage,
+#endif
   DB_FreeXAssetHeader_EmblemSet_,
   DB_FreeXAssetHeader_EmblemSet_,
   (void(*)(void*, XAssetHeader))FREE_NULLSUB,
@@ -575,7 +605,11 @@ void(__cdecl *DB_FreeXAssetHeaderHandler[43])(void *, XAssetHeader) =
   (void(*)(void*, XAssetHeader))NULL,
   DB_FreeXAssetHeader_EmblemSet_,
   DB_FreeXAssetHeader_EmblemSet_,
+#if defined(__ANDROID__)
+  DB_NativeFreeXAssetHeader<DB_FreeMenu>,
+#else
   (void(*)(void*, XAssetHeader))DB_FreeMenu,
+#endif
   DB_FreeXAssetHeader_EmblemSet_,
   DB_FreeXAssetHeader_EmblemSet_,
   (void(*)(void*, XAssetHeader))NULL,
@@ -592,7 +626,11 @@ void(__cdecl *DB_FreeXAssetHeaderHandler[43])(void *, XAssetHeader) =
   DB_FreeXAssetHeader_EmblemSet_,
   DB_FreeXAssetHeader_EmblemSet_,
   DB_FreeXAssetHeader_EmblemSet_,
+#if defined(__ANDROID__)
+  DB_NativeFreeXAssetHeader<DB_FreeXGlobals>,
+#else
   (void(*)(void*, XAssetHeader))DB_FreeXGlobals,
+#endif
   DB_FreeXAssetHeader_EmblemSet_,
   DB_FreeXAssetHeader_EmblemSet_,
   DB_FreeXAssetHeader_EmblemSet_
@@ -807,7 +845,11 @@ bool g_isRecoveringLostDevice;
 #endif
 #if !defined(BO1_STRINGTABLE_OWNER_GATE)
 
-bool g_initializing;
+#if defined(__ANDROID__)
+extern std::atomic<bool> g_initializing;
+#else
+extern bool g_initializing;
+#endif
 bool s_usageUpToDate[43];
 int s_usageCounts[43];
 #endif
@@ -830,6 +872,97 @@ char g_debugZoneName[64];
 
 int g_zoneCount;
 XZone g_zones[32];
+
+#if defined(__ANDROID__)
+// Temporary bounded recovery diagnostic: observing ownership never changes the
+// canonical load/mark/default-replacement behavior or promotes readiness.
+static bool DB_NativeRecoverySpan(const void *address, size_t bytes,
+                                  unsigned *zone, unsigned *block, size_t *offset)
+{
+    const uintptr_t value = reinterpret_cast<uintptr_t>(address);
+    for (int zi = 0; zi <= g_zoneCount; ++zi)
+    {
+        const XBlock *blocks = zi == g_zoneCount ? g_streamBlocks : g_zones[zi].blocks;
+        if (!blocks) continue;
+        for (unsigned bi = 0; bi < 7; ++bi)
+        {
+            const uintptr_t start = reinterpret_cast<uintptr_t>(blocks[bi].data);
+            if (start && value >= start && value - start <= blocks[bi].size &&
+                bytes <= blocks[bi].size - (value - start))
+            {
+                *zone = zi == g_zoneCount ? g_zoneIndex : g_zones[zi].index;
+                *block = bi;
+                *offset = static_cast<size_t>(value - start);
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+void DB_NativeAuditWeaponModelArray(const char *stage, const char *name,
+                                   const WeaponDef *def, const char *member,
+                                   XModel *const *models, unsigned diskOffset)
+{
+    if (!models) return;
+    unsigned zone = 0, block = 0;
+    size_t offset = 0;
+    const bool owned = DB_NativeRecoverySpan(models, 16 * sizeof(XModel *),
+                                             &zone, &block, &offset);
+    if (!owned)
+    {
+        Bo1_Diag("ASSET_RECOVERY_ARRAY stage=%s weapon=%s def=%p member=%s array=%p owned=0 disk=%08X",
+                 stage, name, static_cast<const void *>(def), member,
+                 static_cast<const void *>(models), diskOffset);
+        return; // Only the diagnostic declines an unsafe read; canonical code remains unchanged.
+    }
+    const uintptr_t first = reinterpret_cast<uintptr_t>(g_XModelPool.entries);
+    const uintptr_t end = first + sizeof(g_XModelPool.entries);
+    for (unsigned i = 0; i < 16; ++i)
+    {
+        uintptr_t model = 0;
+        memcpy(&model, models + i, sizeof(model));
+        if (!model || (model >= first && model < end &&
+                       (model - first) % sizeof(g_XModelPool.entries[0]) == 0))
+            continue;
+        Bo1_Diag("ASSET_RECOVERY_MODEL stage=%s weapon=%s def=%p member=%s array=%p slot=%u model=%016llX array_zone=%u block=%u native_offset=%zu disk=%08X pool=%p..%p",
+                 stage, name, static_cast<const void *>(def), member,
+                 static_cast<const void *>(models), i, static_cast<unsigned long long>(model),
+                 zone, block, offset, diskOffset, reinterpret_cast<void *>(first),
+                 reinterpret_cast<void *>(end));
+        if (diskOffset != 0 && diskOffset != ~0u)
+            Bo1_Diag("ASSET_RECOVERY_MAPPING disk=%08X segments=%s", diskOffset,
+                     DB_StreamDescribe((diskOffset - 1) >> 29, (diskOffset - 1) & 0x1fffffffu));
+    }
+}
+
+static void DB_NativeAuditRegisteredWeaponModels(const char *stage)
+{
+    unsigned weapons = 0;
+    for (unsigned hash = 0; hash < ARRAY_COUNT(db_hashTable); ++hash)
+        for (unsigned index = db_hashTable[hash]; index; index = g_assetEntryPool[index].entry.nextHash)
+        {
+            const XAssetEntry &entry = g_assetEntryPool[index].entry;
+            if (entry.asset.type != ASSET_TYPE_WEAPON || !entry.asset.header.weapon->weapDef)
+                continue;
+            ++weapons;
+            const WeaponVariantDef *variant = entry.asset.header.weapon;
+            unsigned zone = 0, block = 0;
+            size_t offset = 0;
+            if (!DB_NativeRecoverySpan(variant->weapDef, sizeof(WeaponDef), &zone, &block, &offset))
+            {
+                Bo1_Diag("ASSET_RECOVERY_DEF stage=%s weapon=%s entry_zone=%u def=%p owned=0",
+                         stage, variant->szInternalName, entry.zoneIndex, static_cast<const void *>(variant->weapDef));
+                continue;
+            }
+            DB_NativeAuditWeaponModelArray(stage, variant->szInternalName, variant->weapDef,
+                                           "gunXModel", variant->weapDef->gunXModel, ~0u);
+            DB_NativeAuditWeaponModelArray(stage, variant->szInternalName, variant->weapDef,
+                                           "worldModel", variant->weapDef->worldModel, ~0u);
+        }
+    Bo1_Diag("ASSET_RECOVERY_BOUNDARY stage=%s registered_weapons=%u", stage, weapons);
+}
+#endif
 
 #endif
 #if !defined(BO1_STRINGTABLE_OWNER_GATE) || defined(BO1_REGISTRY_ADD_GATE)
@@ -1736,7 +1869,7 @@ XAssetHeader __cdecl DB_FindXAssetHeader(XAssetType type, char *name, bool error
                 assEntry = DB_FindXAssetEntry(type, so_name);
             else
                 assEntry = DB_FindXAssetEntry(type, name);
-            assetEntry = &assEntry->entry;
+            assetEntry = assEntry ? &assEntry->entry : nullptr;
             Sys_LeaveCriticalSection(CRITSECT_DBHASH);
             if (use_so_name)
                 DB_RegisteredReorderAsset(type, so_name, assetEntry);
@@ -1825,7 +1958,7 @@ LABEL_62:
         v8 = DB_FindXAssetEntry(type, so_name);
     else
         v8 = DB_FindXAssetEntry(type, name);
-    assetEntry = &v8->entry;
+    assetEntry = v8 ? &v8->entry : nullptr;
     if (v8)
     {
         if (!assetEntry->asset.header.xmodelPieces
@@ -2533,15 +2666,9 @@ void __cdecl DB_Update()
     }
 }
 
-void __cdecl DB_SetInitializing(bool inUse)
-{
-    g_initializing = inUse;
-}
 
-bool __cdecl DB_GetInitializing()
-{
-    return g_initializing;
-}
+
+
 
 bool __cdecl DB_IsXAssetDefault(XAssetType type, const char *name)
 {
@@ -3871,7 +3998,13 @@ void __cdecl DB_LoadXAssets(XZoneInfo *zoneInfo, unsigned int zoneCount, int syn
                         DB_ArchiveAssets();
                         Sys_EnterCriticalSection(CRITSECT_DBHASH);
                     }
+#if defined(__ANDROID__)
+                    DB_NativeAuditRegisteredWeaponModels("before_unload");
+#endif
                     DB_UnloadXZone(zone, 1);
+#if defined(__ANDROID__)
+                    DB_NativeAuditRegisteredWeaponModels("after_replacement");
+#endif
                 }
             }
         }
@@ -6021,3 +6154,18 @@ void __cdecl Sys_UnlockWrite(FastCriticalSection *critSect)
 }
 
 #endif
+
+#if defined(__ANDROID__)
+std::atomic<bool> g_initializing;
+#else
+bool g_initializing;
+#endif
+void __cdecl DB_SetInitializing(bool inUse)
+{
+    g_initializing = inUse;
+}
+
+bool __cdecl DB_GetInitializing()
+{
+    return g_initializing;
+}

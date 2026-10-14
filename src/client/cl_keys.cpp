@@ -1,3 +1,4 @@
+#include <platform/bo1_native_width.h>
 #if !defined(BO1_STARTUP_SERVICES)
 #include <game_sp/g_sp_loadgame.h>
 #include "cl_keys.h"
@@ -10,7 +11,10 @@
 #include <universal/com_files.h>
 #include "splitscreen.h"
 #include <universal/com_memory.h>
+#include <client/cl_gamepad.h>
+#if !defined(__ANDROID__)
 #include <win32/win_gamepad.h>
+#endif
 #include "cl_main.h"
 #include <devgui/devgui.h>
 #include <cgame_mp/cg_newDraw_mp.h>
@@ -2424,7 +2428,11 @@ int __cdecl CL_GetKeyBindingInternal(
     int bindCount; // [esp+8h] [ebp-4h]
 
     Sys_EnterCriticalSection(CRITSECT_KEY_BINDINGS);
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+    keyNames[1][0] = 0;
+#else
     (*keyNames)[128] = 0;
+#endif
     bindCount = Key_GetCommandAssignmentInternal(localClientNum, command, keys, gamePadOnly, bindNum);
     if ( (unsigned int)bindCount > 2
         && !Assert_MyHandler(
@@ -2440,13 +2448,23 @@ int __cdecl CL_GetKeyBindingInternal(
     }
     if ( bindCount )
     {
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+        Key_KeynumToStringBuf(keys[0], keyNames[0], 128);
+        if ( bindCount == 2 )
+            Key_KeynumToStringBuf(keys[1], keyNames[1], 128);
+#else
         Key_KeynumToStringBuf(keys[0], (char *)keyNames, 128);
         if ( bindCount == 2 )
             Key_KeynumToStringBuf(keys[1], &(*keyNames)[128], 128);
+#endif
     }
     else
     {
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+        strcpy(keyNames[0], "KEY_UNBOUND");
+#else
         strcpy((char *)keyNames, "KEY_UNBOUND");
+#endif
     }
     Sys_LeaveCriticalSection(CRITSECT_KEY_BINDINGS);
     return bindCount;

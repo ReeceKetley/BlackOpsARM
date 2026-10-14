@@ -1,6 +1,9 @@
 #include <platform/fast_critical_section.h>
 #include "live_pcache.h"
 #include <ctime>
+#if defined(__ANDROID__)
+#include <platform/android/calendar_time.h>
+#endif
 #include "live_pcache_profile.h"
 #include <qcommon/threads.h>
 #include "live_storage_win.h"
@@ -23,13 +26,22 @@ PCacheEntry s_entries[256];
 
 PCacheComponentPool s_componentPools[2] =
 {
+#if defined(__ANDROID__)
+  { 256, sizeof(PCachePublicProfile), &s_publicProfiles, 600u, NULL },
+  { 32, sizeof(PCachePlayerEmblem), &s_playerEmblems, 600u, &PCache_ReleasePlayerEmblem }
+#else
   { 256, 288, &s_publicProfiles, 600u, NULL },
   { 32, 432, &s_playerEmblems, 600u, &PCache_ReleasePlayerEmblem }
+#endif
 };
 
 __int64 __cdecl PCache_Time()
 { 
+#if defined(__ANDROID__)
+    return bo1::android::WallTime64();
+#else
     return _time64(0);
+#endif
 }
 
 void __cdecl PCache_Lock()
@@ -757,4 +769,3 @@ LABEL_2:
         return -1;
     }
 }
-

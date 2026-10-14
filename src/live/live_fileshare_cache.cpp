@@ -1,4 +1,8 @@
 #include "live_fileshare_cache.h"
+#if defined(__ANDROID__)
+#include <new>
+#include <cstdint>
+#endif
 #include <universal/com_memory.h>
 
 fshCacheFileDetails_t *s_fshCache;
@@ -29,15 +33,39 @@ bool __cdecl Live_FileShare_CacheInit()
     {
         __debugbreak();
     }
+#if defined(__ANDROID__)
+    auto *files = reinterpret_cast<fshCacheFileDetails_t *>(
+        Hunk_Alloc(sizeof(fshCacheFileDetails_t) * 300, "fileShareCache", 36));
+    auto *ratings = reinterpret_cast<fshCacheRatingDetails_t *>(
+        Hunk_Alloc(sizeof(fshCacheRatingDetails_t) * 300, "fileShareCache", 36));
+    if (!files || !ratings) return false;
+    for (unsigned int i = 0; i < 300; ++i)
+    {
+        new (&files[i]) fshCacheFileDetails_t{};
+        new (&ratings[i]) fshCacheRatingDetails_t{};
+    }
+    s_fshCache = files;
+    s_fshRatingCache = ratings;
+    s_fshCacheFileCount = s_fshCacheRatingCount = 0;
+    return true;
+#else
     s_fshCache = (fshCacheFileDetails_t *)Hunk_Alloc(0x9AB00u, "fileShareCache", 36);
     s_fshCacheFileCount = 0;
     s_fshRatingCache = (fshCacheRatingDetails_t *)Hunk_Alloc(0xFD20u, "fileShareCache", 36);
     s_fshCacheRatingCount = 0;
     return s_fshCache && s_fshRatingCache;
+#endif
 }
 
 void __cdecl Live_FileShare_CacheShutdown()
 {
+#if defined(__ANDROID__)
+    for (unsigned int i = 0; i < 300; ++i)
+    {
+        if (s_fshCache) s_fshCache[i].~fshCacheFileDetails_t();
+        if (s_fshRatingCache) s_fshRatingCache[i].~fshCacheRatingDetails_t();
+    }
+#endif
     s_fshCache = 0;
     s_fshCacheFileCount = 0;
     s_fshRatingCache = 0;
@@ -46,7 +74,12 @@ void __cdecl Live_FileShare_CacheShutdown()
 
 int __cdecl Live_FileShare_Hash(unsigned __int64 fileID, fileShareLocation location)
 {
+#if defined(__ANDROID__)
+    const auto key = static_cast<std::uint32_t>(location) ^ static_cast<std::uint32_t>(fileID) ^ static_cast<std::uint32_t>(fileID >> 32);
+    return static_cast<int>(key % 300);
+#else
     return (int)(location ^ fileID ^ HIDWORD(fileID)) % 300;
+#endif
 }
 
 char __cdecl Live_FileShare_IsCached(unsigned __int64 fileID, fileShareLocation location, int *index)
@@ -78,7 +111,11 @@ void __cdecl Live_FileShareCache_AddDescriptor(
     {
         v3 = Live_FileShare_Hash(fileID, location);
         s_fshCache[v3].location = location;
+#if defined(__ANDROID__)
+        s_fshCache[v3].descriptor = *descriptor;
+#else
         memcpy(&s_fshCache[v3], descriptor, 0x838u);
+#endif
     }
 }
 
@@ -92,7 +129,11 @@ char __cdecl Live_FileShareCache_GetDescriptor(
     index = 0;
     if ( !Live_FileShare_IsCached(fileID, location, &index) )
         return 0;
+#if defined(__ANDROID__)
+    *descriptor = s_fshCache[index].descriptor;
+#else
     memcpy(descriptor, &s_fshCache[index], sizeof(bdFileMetaData));
+#endif
     return 1;
 }
 
@@ -126,7 +167,11 @@ void __cdecl Live_FileShareCache_AddRating(
         index = Live_FileShare_Hash(fileID, location);
         s_fshRatingCache[index].location = location;
         s_fshRatingCache[index].fileID = fileID;
+#if defined(__ANDROID__)
+        s_fshRatingCache[index].rating = *rating;
+#else
         memcpy(&s_fshRatingCache[index].rating, rating, sizeof(s_fshRatingCache[index].rating));
+#endif
     }
 }
 
@@ -140,7 +185,11 @@ char __cdecl Live_FileShareCache_GetRating(
     index = 0;
     if ( !Live_FileShare_IsRatingCached(fileID, location, &index) )
         return 0;
+#if defined(__ANDROID__)
+    *rating = s_fshRatingCache[index].rating;
+#else
     memcpy(rating, &s_fshRatingCache[index].rating, sizeof(bdVoteRankStatsInfo));
+#endif
     return 1;
 }
 

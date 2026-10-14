@@ -3,6 +3,9 @@
 #include "win_local.h"
 
 #include <cstdint>
+#if defined(__ANDROID__)
+#include <atomic>
+#endif
 #include "win_net.h"
 #include <universal/q_shared.h>
 
@@ -32,5 +35,10 @@ void Steam_OnClientDropped(uint64_t steamID64);
 
 void Steam_SV_AddTestCommands();
 
+#if defined(__ANDROID__)
+extern std::atomic<bool> g_steamInitialized;
+extern std::atomic<bool> g_steamAPIInitialized;
+#else
 extern bool g_steamInitialized;
 extern bool g_steamAPIInitialized; // no-steam: SteamAPI_InitEx succeeded (Steam client running); see win_steam.cpp
+#endif

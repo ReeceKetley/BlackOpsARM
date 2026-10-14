@@ -2,7 +2,11 @@
 #include "devgui_input.h"
 #include "devgui.h"
 #include <qcommon/cmd.h>
+#if defined(__ANDROID__)
+#include <client/cl_gamepad.h>
+#else
 #include <win32/win_gamepad.h>
+#endif
 #include <client_mp/cl_input_mp.h>
 #include <client/cl_keys.h>
 #include <qcommon/com_clients.h>

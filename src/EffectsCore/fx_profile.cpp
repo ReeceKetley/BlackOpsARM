@@ -2,6 +2,16 @@
 #include "fx_system.h"
 #include "fx_draw.h"
 #include "fx_archive.h"
+#if defined(__ANDROID__)
+static int FX_CompareProfileEntriesNative(const void *first, const void *second)
+{
+    return FX_CompareProfileEntries(static_cast<const FxProfileEntry *>(first), static_cast<const FxProfileEntry *>(second));
+}
+static int FX_ComparePriorityDebugEntriesNative(const void *first, const void *second)
+{
+    return FX_ComparePriorityDebugEntries(static_cast<const FxPriorityDebugEntry *>(first), static_cast<const FxPriorityDebugEntry *>(second));
+}
+#endif
 
 void __cdecl FX_DrawProfile(int clientIndex, void (__cdecl *drawFunc)(char *), float *profilePos)
 {
@@ -35,7 +45,11 @@ void __cdecl FX_DrawProfile(int clientIndex, void (__cdecl *drawFunc)(char *), f
         }
         if ( !_InterlockedDecrement(&system->shared->iteratorCount) )
             FX_RunGarbageCollectionAndPrioritySort(system);
+#if defined(__ANDROID__)
+        qsort(entryPool, entryCount, sizeof(*(entryPool)), FX_CompareProfileEntriesNative);
+#else
         qsort(entryPool, entryCount, sizeof(*(entryPool)), (int (__cdecl *)(const void *, const void *))FX_CompareProfileEntries);
+#endif
         v11 = system->shared->firstNewEffect - system->shared->firstActiveEffect;
         v3 = va(
                      "%4i of %4i effect objects in use (%.0f%%; %i free)",
@@ -273,7 +287,11 @@ void __cdecl FX_DrawPriorityDebug(int clientIndex, void (__cdecl *drawFunc)(char
     }
     if ( !_InterlockedDecrement(&system->system.shared->iteratorCount) )
         FX_RunGarbageCollectionAndPrioritySort(&system->system);
+#if defined(__ANDROID__)
+    qsort(base, num, sizeof(FxPriorityDebugEntry), FX_ComparePriorityDebugEntriesNative);
+#else
     qsort(base, num, sizeof(FxPriorityDebugEntry), (int (__cdecl *)(const void *, const void *))FX_ComparePriorityDebugEntries); // {effect def, count} pairs
+#endif
     v18 = system->system.priorityInfo.warningHigh[system->system.priorityInfo.readIndex];
     v13 = system->system.shared->firstNewEffect - system->system.shared->firstActiveEffect;
     v3 = va("%4i of %4i effect objects in use (%.0f%%; %i free)", v13, 1024, (float)((float)v13 * 0.09765625), 1024 - v13);

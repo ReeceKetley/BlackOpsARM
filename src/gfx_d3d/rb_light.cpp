@@ -115,12 +115,16 @@ bool __cdecl R_SortedHistoryEntry(
         added = addHash((const unsigned __int16 (*)[3])gsp);
         result = added != 0;
     }
+#if defined(__ANDROID__)
+    lightGridMutex.Unlock();
+#else
     if ( !--lightGridMutex.LockCount )
     {
         Target[0] = 0;
         InterlockedExchange(Target, 0);
         lightGridMutex.ThreadId = 0;
     }
+#endif
     return result;
 }
 
@@ -1550,12 +1554,16 @@ void __cdecl R_InitLightVisHistory(const char *bspName)
                     gsp[2] = buffer[i][2];
                     addHash((const unsigned __int16 (*)[3])gsp);
                 }
+#if defined(__ANDROID__)
+                lightGridMutex.Unlock();
+#else
                 if (!--lightGridMutex.LockCount)
                 {
                     Target[0] = 0;
                     InterlockedExchange(Target, 0);
                     lightGridMutex.ThreadId = 0;
                 }
+#endif
             }
             FS_FreeFile(buffer);
         }

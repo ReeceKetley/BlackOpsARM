@@ -1,4 +1,7 @@
 #include "cm_mapkit.h"
+#if defined(__ANDROID__)
+#include <platform/android/aligned_memory.h>
+#endif
 #include "cm_trace.h"
 #include "cm_load.h"
 #include "common.h"
@@ -653,7 +656,11 @@ void CM_Mapkit_ExtendSubmodels()
     cm.leafbrushNodes = s_retailNodes;
     cm.leafbrushNodesCount = s_retailNodeCount;
     free(s_bmCmodels);
+#if defined(__ANDROID__)
+    bo1::android::FreeAligned(s_bmBrushes);
+#else
     _aligned_free(s_bmBrushes);
+#endif
     free(s_bmNodes);
     s_bmCmodels = 0;
     s_bmBrushes = 0;
@@ -719,8 +726,19 @@ void CM_Mapkit_ExtendSubmodels()
         return;
     }
     s_bmCmodels = (cmodel_t *)malloc((s_retailNumSub + count) * sizeof(cmodel_t));
+#if defined(__ANDROID__)
+    s_bmBrushes = (cbrush_t *)bo1::android::AllocateAligned((s_retailNumBrushes + count) * sizeof(cbrush_t), 16);
+#else
     s_bmBrushes = (cbrush_t *)_aligned_malloc((s_retailNumBrushes + count) * sizeof(cbrush_t), 16);
+#endif
     s_bmNodes = (cLeafBrushNode_s *)malloc((s_retailNodeCount + count) * sizeof(cLeafBrushNode_s));
+#if defined(__ANDROID__)
+    if (!s_bmCmodels || !s_bmBrushes || !s_bmNodes) {
+        free(s_bmCmodels); bo1::android::FreeAligned(s_bmBrushes); free(s_bmNodes);
+        s_bmCmodels=nullptr; s_bmBrushes=nullptr; s_bmNodes=nullptr;
+        Com_PrintError(1,"mapkit: cannot allocate layout brush collision data\n"); return;
+    }
+#endif
     memcpy(s_bmCmodels, s_retailCmodels, s_retailNumSub * sizeof(cmodel_t));
     memcpy(s_bmBrushes, s_retailBrushes, s_retailNumBrushes * sizeof(cbrush_t));
     memcpy(s_bmNodes, s_retailNodes, s_retailNodeCount * sizeof(cLeafBrushNode_s));

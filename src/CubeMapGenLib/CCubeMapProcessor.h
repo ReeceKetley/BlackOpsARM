@@ -14,6 +14,10 @@
 #include <stdio.h>
 #include <assert.h>
 #include <windows.h>
+#if defined(__ANDROID__)
+#include <platform/android/filter_worker.h>
+#include <mutex>
+#endif
 
 #include "Types.h"
 #include "VectorMacros.h"
@@ -143,14 +147,38 @@ struct CPCubeMapNeighbor
 struct SFilterProgress
 {
    //status of current cube map processing
-   int32    m_CurrentFace; 
-   int32    m_CurrentRow;
-   int32    m_CurrentMipLevel; 
+#if defined(__ANDROID__)
+   std::atomic<int32> m_CurrentFace{};
+#else
+   int32 m_CurrentFace;
+#endif 
+#if defined(__ANDROID__)
+   std::atomic<int32> m_CurrentRow{};
+#else
+   int32 m_CurrentRow;
+#endif
+#if defined(__ANDROID__)
+   std::atomic<int32> m_CurrentMipLevel{};
+#else
+   int32 m_CurrentMipLevel;
+#endif 
 
-   int32    m_StartFace;
-   int32    m_EndFace;
+#if defined(__ANDROID__)
+   std::atomic<int32> m_StartFace{};
+#else
+   int32 m_StartFace;
+#endif
+#if defined(__ANDROID__)
+   std::atomic<int32> m_EndFace{};
+#else
+   int32 m_EndFace;
+#endif
 
-   float32  m_FractionCompleted;    //Approximate fraction of work completed for this thread
+#if defined(__ANDROID__)
+   std::atomic<float32> m_FractionCompleted{};
+#else
+   float32 m_FractionCompleted;
+#endif
 };
 
 
@@ -195,12 +223,22 @@ class CCubeMapProcessor
 public:
 
    //cubemap processor status
-   int32             m_Status;
+#if defined(__ANDROID__)
+   std::atomic<int32> m_Status{};
+#else
+   int32 m_Status;
+#endif
 
    //information about threads actively processing the cubemap
    int32             m_NumFilterThreads;
    bool8             m_bThreadInitialized[CP_MAX_FILTER_THREADS];
+#if defined(__ANDROID__)
+   bo1::android::FilterWorker *m_ThreadHandle[CP_MAX_FILTER_THREADS]{};
+   std::mutex m_WorkerMutex;
+   std::atomic<bool> m_CancelRequested{true};
+#else
    HANDLE            m_ThreadHandle[CP_MAX_FILTER_THREADS];
+#endif
    DWORD             m_ThreadID[CP_MAX_FILTER_THREADS];
    SFilterProgress  m_ThreadProgress[CP_MAX_FILTER_THREADS];
    WCHAR             m_ProgressString[CP_MAX_PROGRESS_STRING];

@@ -5,6 +5,9 @@
 #include "rb_shade.h"
 #include "r_water.h"
 #include <universal/profile.h>
+#if defined(__ANDROID__)
+#include <cstdio>
+#endif
 
 bool Use_R_SetVertexShaderConstantFromCode_New = true;
 
@@ -992,7 +995,12 @@ void __cdecl R_SetupPass(GfxCmdBufContext context, unsigned int passIndex)
     if ( g_bo1ProfOn ) // p1: bo1_frameperf first-use counts (measurement only)
     {
         char name[128];
+#if defined(__ANDROID__)
+        std::snprintf(name, sizeof(name), "%s:%s", material->info.name,
+            context.state->technique->name ? context.state->technique->name : "?");
+#else
         _snprintf_s(name, _TRUNCATE, "%s:%s", material->info.name, context.state->technique->name ? context.state->technique->name : "?");
+#endif
         BO1_ProfFirstUse(BO1_FIRST_PASS, (unsigned long long)(size_t)pass, name);
         BO1_ProfFirstUse(BO1_FIRST_VS, (unsigned long long)(size_t)pass->vertexShader, 0);
         BO1_ProfFirstUse(BO1_FIRST_PS, (unsigned long long)(size_t)pass->pixelShader, 0);

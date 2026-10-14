@@ -2,9 +2,27 @@
 #pragma once
 #include <universal/assertive.h>
 #include <cstring>
+#include <new>
 
+#if defined(__ANDROID__)
+#include <platform/android/physics_atomic.h>
+#define BO1_PHYS_CAS32(p,e,c) bo1::android::physics_atomic::compareExchange(p,e,c)
+#define BO1_PHYS_LOAD32(p) bo1::android::physics_atomic::load(p)
+#define BO1_PHYS_COMPILER_BARRIER() bo1::android::physics_atomic::compilerBarrier()
+#define BO1_PHYS_MEMORY_BARRIER() bo1::android::physics_atomic::memoryBarrier()
+#else
 #include <Windows.h> // interlockedxchg
+#define BO1_PHYS_CAS32(p,e,c) _InterlockedCompareExchange((volatile LONG *)(p),e,c)
+#define BO1_PHYS_LOAD32(p) (*(p))
+#define BO1_PHYS_COMPILER_BARRIER() _ReadWriteBarrier()
+#define BO1_PHYS_MEMORY_BARRIER() MemoryBarrier()
+#endif
 #include <cmath>
+#if defined(__ANDROID__)
+#define BO1_PHYS_AVL_ASSERT(e,f,l,m) vassert(e, "%s:%d %s", f,l,m)
+#else
+#define BO1_PHYS_AVL_ASSERT(e,f,l,m) iassert(e,f,l,m)
+#endif
 
 struct phys_vec2 // sizeof=0x8
 {                                                                             // XREF: contact_manifold_mesh_point/r
@@ -260,20 +278,20 @@ struct minspec_mutex // sizeof=0x4
 
     inline void Lock()
     {
-        while (_InterlockedCompareExchange((volatile LONG *)&m_token, 1, 0) != 0)
+        while (BO1_PHYS_CAS32(&m_token, 1, 0) != 0)
             ;
         // acquire barrier � no reads/writes below can move above this
-        _ReadWriteBarrier();
-        MemoryBarrier();
+        BO1_PHYS_COMPILER_BARRIER();
+        BO1_PHYS_MEMORY_BARRIER();
     }
 
     inline void Unlock()
     {
-        iassert(m_token == 1);
+        iassert(BO1_PHYS_LOAD32(&m_token) == 1);
         // release barrier � no reads/writes above can move below this
-        _ReadWriteBarrier();
-        MemoryBarrier();
-        LONG prev = _InterlockedCompareExchange((volatile LONG *)&m_token, 0, 1);
+        BO1_PHYS_COMPILER_BARRIER();
+        BO1_PHYS_MEMORY_BARRIER();
+        unsigned int prev = BO1_PHYS_CAS32(&m_token, 0, 1);
         iassert(prev == 1);
     }
 };
@@ -294,12 +312,12 @@ struct minspec_read_write_mutex // sizeof=0x4
         do
         {
             do
-                count = m_count;
+                count = BO1_PHYS_LOAD32(&m_count);
             while (count == 0); // spin while writer holds
-        } while (_InterlockedCompareExchange((volatile LONG *)&m_count, count + 1, count) != (LONG)count);
+        } while (BO1_PHYS_CAS32(&m_count, count + 1, count) != count);
         // full barrier
-        _ReadWriteBarrier();
-        MemoryBarrier();
+        BO1_PHYS_COMPILER_BARRIER();
+        BO1_PHYS_MEMORY_BARRIER();
     }
 
     void ReadUnlock()
@@ -307,29 +325,29 @@ struct minspec_read_write_mutex // sizeof=0x4
         unsigned int count;
         do
         {
-            count = m_count;
+            count = BO1_PHYS_LOAD32(&m_count);
             iassert(count > 1);
-        } while (_InterlockedCompareExchange((volatile LONG *)&m_count, count - 1, count) != (LONG)count);
+        } while (BO1_PHYS_CAS32(&m_count, count - 1, count) != count);
     }
 
     inline void WriteLock()
     {
         // must wait until exactly idle (count == 1), then CAS to 0
-        while (_InterlockedCompareExchange((volatile LONG *)&m_count, 0, 1) != 1)
+        while (BO1_PHYS_CAS32(&m_count, 0, 1) != 1)
             ;
         // full barrier after acquisition
-        _ReadWriteBarrier();
-        MemoryBarrier();
+        BO1_PHYS_COMPILER_BARRIER();
+        BO1_PHYS_MEMORY_BARRIER();
     }
 
     void WriteUnlock()
     {
-        iassert(m_count == 0);
+        iassert(BO1_PHYS_LOAD32(&m_count) == 0);
         // full barrier before release
-        _ReadWriteBarrier();
-        MemoryBarrier();
+        BO1_PHYS_COMPILER_BARRIER();
+        BO1_PHYS_MEMORY_BARRIER();
         // restore to idle
-        LONG prev = _InterlockedCompareExchange((volatile LONG *)&m_count, 1, 0);
+        unsigned int prev = BO1_PHYS_CAS32(&m_count, 1, 0);
         iassert(prev == 0);
     }
 };
@@ -474,6 +492,11 @@ struct phys_link_list // sizeof=0xC
     {
         p->m_next_link = nullptr;
 
+#if defined(__ANDROID__)
+        bo1::atomic32::Increment32(&m_alloc_count);
+        T **prev = __atomic_exchange_n(&m_last_next_ptr, &p->m_next_link, __ATOMIC_SEQ_CST);
+        __atomic_store_n(prev, p, __ATOMIC_RELEASE);
+#else
         InterlockedIncrement(reinterpret_cast<volatile LONG *>(&m_alloc_count));
 
         T **prev = (T **)InterlockedExchangePointer(
@@ -482,6 +505,7 @@ struct phys_link_list // sizeof=0xC
         );
 
         *prev = p;
+#endif
     }
 };
 
@@ -1224,7 +1248,7 @@ struct phys_inplace_avl_tree
         {
             T2 *root = *cur_item->m_node;
 
-            iassert(cur_item + 1 - the_stack < 32,
+            BO1_PHYS_AVL_ASSERT(cur_item + 1 - the_stack < 32,
                 "phys_avl_tree.h", 103, "cur_item + 1 - the_stack < 32");
 
             stack_item *next_item = cur_item + 1;
@@ -1236,7 +1260,7 @@ struct phys_inplace_avl_tree
             }
             else
             {
-                iassert(Accessor::less(root, key),
+                BO1_PHYS_AVL_ASSERT(Accessor::less(root, key),
                     "phys_avl_tree.h", 112, "key > accessor::get_avl_key(root)");
 
                 cur_item->m_child = +1;
@@ -1265,7 +1289,7 @@ struct phys_inplace_avl_tree
 
             if (ni(*m_node)->m_balance == -2)
             {
-                iassert(ni(ni(*m_node)->m_left)->m_balance == -1
+                BO1_PHYS_AVL_ASSERT(ni(ni(*m_node)->m_left)->m_balance == -1
                     || ni(ni(*m_node)->m_left)->m_balance == +1,
                     "phys_avl_tree.h", 130,
                     "accessor::get_avl_node(accessor::get_avl_node(root)->m_left)->m_balance == -1 || ...== 1");
@@ -1274,12 +1298,12 @@ struct phys_inplace_avl_tree
                     rotate_left(&ni(*m_node)->m_left);
                 rotate_right(m_node);
 
-                iassert(ni(*m_node)->m_balance == 0,
+                BO1_PHYS_AVL_ASSERT(ni(*m_node)->m_balance == 0,
                     "phys_avl_tree.h", 134, "accessor::get_avl_node(root)->m_balance == 0");
             }
             else if (ni(*m_node)->m_balance == 2)
             {
-                iassert(ni(ni(*m_node)->m_right)->m_balance == -1
+                BO1_PHYS_AVL_ASSERT(ni(ni(*m_node)->m_right)->m_balance == -1
                     || ni(ni(*m_node)->m_right)->m_balance == +1,
                     "phys_avl_tree.h", 138,
                     "accessor::get_avl_node(accessor::get_avl_node(root)->m_right)->m_balance == -1 || ...== 1");
@@ -1288,7 +1312,7 @@ struct phys_inplace_avl_tree
                     rotate_right(&ni(*m_node)->m_right);
                 rotate_left(m_node);
 
-                iassert(ni(*m_node)->m_balance == 0,
+                BO1_PHYS_AVL_ASSERT(ni(*m_node)->m_balance == 0,
                     "phys_avl_tree.h", 142, "accessor::get_avl_node(root)->m_balance == 0");
             }
         } while (ni(*cur_item->m_node)->m_balance != 0);
@@ -1310,9 +1334,9 @@ struct phys_inplace_avl_tree
         {
             T2 *root = *cur_item->m_node;
 
-            iassert(root != nullptr,
+            BO1_PHYS_AVL_ASSERT(root != nullptr,
                 "phys_avl_tree.h", 161, "root");
-            iassert(cur_item + 1 - the_stack < 32,
+            BO1_PHYS_AVL_ASSERT(cur_item + 1 - the_stack < 32,
                 "phys_avl_tree.h", 162, "cur_item + 1 - the_stack < 32");
 
             stack_item *next_item = cur_item + 1;
@@ -1331,7 +1355,7 @@ struct phys_inplace_avl_tree
             }
             else
             {
-                iassert(Accessor::equals(root, key),
+                BO1_PHYS_AVL_ASSERT(Accessor::equals(root, key),
                     "phys_avl_tree.h", 176, "key == accessor::get_avl_key(root)");
                 break;
             }
@@ -1350,7 +1374,7 @@ struct phys_inplace_avl_tree
 
             while (ni(*cur_item->m_node)->m_left)
             {
-                iassert(cur_item + 1 - the_stack < 32,
+                BO1_PHYS_AVL_ASSERT(cur_item + 1 - the_stack < 32,
                     "phys_avl_tree.h", 191, "cur_item + 1 - the_stack < 32");
 
                 stack_item *next_item = cur_item + 1;
@@ -1397,7 +1421,7 @@ struct phys_inplace_avl_tree
                     rotate_left(&ni(*m_node)->m_left);
                 rotate_right(m_node);
 
-                iassert((unsigned int)ni(*m_node)->m_balance < 2u,
+                BO1_PHYS_AVL_ASSERT((unsigned int)ni(*m_node)->m_balance < 2u,
                     "phys_avl_tree.h", 218,
                     "accessor::get_avl_node(root)->m_balance == 0 || accessor::get_avl_node(root)->m_balance == +1");
 
@@ -1410,7 +1434,7 @@ struct phys_inplace_avl_tree
                     rotate_right(&ni(*m_node)->m_right);
                 rotate_left(m_node);
 
-                iassert(ni(*m_node)->m_balance == 0 || ni(*m_node)->m_balance == -1,
+                BO1_PHYS_AVL_ASSERT(ni(*m_node)->m_balance == 0 || ni(*m_node)->m_balance == -1,
                     "phys_avl_tree.h", 225,
                     "accessor::get_avl_node(root)->m_balance == 0 || accessor::get_avl_node(root)->m_balance == -1");
 
@@ -1838,9 +1862,9 @@ inline void Phys_Vec3ToNitrousVec(const float * const inVector, phys_vec3 *outVe
 
 inline void __cdecl Phys_AxisToNitrousMat(float (*axis)[3], phys_mat44 *outMat)
 {
-    Phys_Vec3ToNitrousVec((float *)axis, &outMat->x);
-    Phys_Vec3ToNitrousVec(&(*axis)[3], &outMat->y);
-    Phys_Vec3ToNitrousVec(&(*axis)[6], &outMat->z);
+    Phys_Vec3ToNitrousVec(axis[0], &outMat->x);
+    Phys_Vec3ToNitrousVec(axis[1], &outMat->y);
+    Phys_Vec3ToNitrousVec(axis[2], &outMat->z);
 }
 
 inline float Abs(const phys_vec3 &vec)
@@ -1877,3 +1901,10 @@ static const float PHYS_PI_TIMES_2 = 3.1415927 * 2.0;// 6.2831855f;
 static const float PHYS_PI_OVER_2 = 3.1415927 / 2.0;// 1.5707964f;
 
 #define PHYS_ALIGNOF(type) alignof(type)
+
+#undef BO1_PHYS_CAS32
+#undef BO1_PHYS_LOAD32
+#undef BO1_PHYS_COMPILER_BARRIER
+#undef BO1_PHYS_MEMORY_BARRIER
+
+#undef BO1_PHYS_AVL_ASSERT

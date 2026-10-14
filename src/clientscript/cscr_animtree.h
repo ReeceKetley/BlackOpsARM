@@ -165,6 +165,14 @@ void __cdecl Scr_LoadAnimTreeAtIndex(
                 void *(__cdecl *Alloc)(int),
                 int user,
                 bool modCheckSum);
+#if defined(__ANDROID__)
+void __cdecl Scr_LoadAnimTreeAtIndex(
+                scriptInstance_t inst,
+                unsigned int index,
+                void *(__cdecl *Alloc)(unsigned int),
+                int user,
+                bool modCheckSum);
+#endif
 unsigned int __cdecl GetVariableName(scriptInstance_t inst, unsigned int id);
 int __cdecl Scr_GetAnimTreeSize(scriptInstance_t inst, unsigned int parentNode);
 unsigned int __cdecl FindFirstSibling(scriptInstance_t inst, unsigned int id);
@@ -240,6 +248,16 @@ int __cdecl Scr_CreateAllAnimTreeData(
                 unsigned int filenameId,
                 unsigned int index,
                 void *(__cdecl *Alloc)(int));
+#if defined(__ANDROID__)
+int __cdecl Scr_CreateAllAnimTreeData(
+                scriptInstance_t inst,
+                unsigned int rootData,
+                unsigned int names,
+                scr_animtree_t *animtree,
+                unsigned int filenameId,
+                unsigned int index,
+                void *(__cdecl *Alloc)(unsigned int));
+#endif
 int __cdecl Scr_CreateAnimationTree(
                 scriptInstance_t inst,
                 unsigned int parentNode,
@@ -254,6 +272,22 @@ int __cdecl Scr_CreateAnimationTree(
                 unsigned __int16 flags,
                 void *(__cdecl *Alloc)(int),
                 unsigned int paramMap);
+#if defined(__ANDROID__)
+int __cdecl Scr_CreateAnimationTree(
+                scriptInstance_t inst,
+                unsigned int parentNode,
+                unsigned int rootData,
+                unsigned int names,
+                XAnim_s *anims,
+                unsigned int childIndex,
+                const char *parentName,
+                unsigned int parentIndex,
+                unsigned int filename,
+                int treeIndex,
+                unsigned __int16 flags,
+                void *(__cdecl *Alloc)(unsigned int),
+                unsigned int paramMap);
+#endif
 void __cdecl Scr_ProcessNodeValues(
                 scriptInstance_t inst,
                 XAnim_s *anims,

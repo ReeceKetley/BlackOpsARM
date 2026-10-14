@@ -1,4 +1,8 @@
 #include <platform/bo1_native_width.h>
+#if defined(__ANDROID__)
+#include <climits>
+#include <cstdlib>
+#endif
 #include <qcommon/cm_mapkit.h>
 #include <database/db_registry.h>
 #include <game_sp/g_sp_measure.h>
@@ -1920,6 +1924,23 @@ void __cdecl CG_RegisterDvars()
 
 int cg_entArrayCount = MAX_GENTITIES; // mod (L43): see cg_local_mp.h
 
+#if defined(__ANDROID__)
+// Match actual native object alignment while retaining each canonical minimum.
+template <typename T> static constexpr int CGMemoryAlignment(int original)
+{
+    return alignof(T) > static_cast<size_t>(original) ? static_cast<int>(alignof(T)) : original;
+}
+static size_t CGMemoryBlockBudget(size_t count, size_t stride, size_t alignment)
+{
+    if (count > (static_cast<size_t>(INT_MAX) - (alignment - 1)) / stride)
+    {
+        Com_Error(ERR_FATAL, "Native CG client memory block exceeds Hunk_UserAlloc integer size");
+        std::abort();
+    }
+    return count * stride + alignment - 1;
+}
+#endif
+
 int __cdecl CG_AllocateClientMemory_SizeRequired(int maxLocalClients)
 {
     int localClientNum; // [esp+0h] [ebp-8h]
@@ -1929,6 +1950,33 @@ int __cdecl CG_AllocateClientMemory_SizeRequired(int maxLocalClients)
     cg_entArrayCount = Dvar_GetInt("bo1_mod_netents") ? MAX_CL_ENTNUM : MAX_GENTITIES;
     // Retail (Win32) budget per client: 907268 + 1062080 (+ the bo1_mod_netents extras). x64 structs that hold pointers are
     // larger, so also sum the real CG_AllocateClientMemory allocations (max(sizeof(T), win32 size) each) and take the larger.
+#if defined(__ANDROID__)
+    if (maxLocalClients < 0 || maxLocalClients > MAX_LOCAL_CLIENTS)
+    {
+        Com_Error(ERR_FATAL, "Native CG local client count exceeds canonical slots");
+        std::abort();
+    }
+    if (!maxLocalClients) return 0;
+    size_t native = 0;
+    native += CGMemoryBlockBudget(maxLocalClients, Bo1_MaxSize(sizeof(cg_s), 466048), CGMemoryAlignment<cg_s>(128));
+    native += CGMemoryBlockBudget(maxLocalClients, sizeof(cgs_t), CGMemoryAlignment<cgs_t>(8));
+    native += CGMemoryBlockBudget(512 * maxLocalClients, Bo1_MaxSize(sizeof(fake_centity_s), 812), CGMemoryAlignment<fake_centity_s>(4));
+    native += CGMemoryBlockBudget(maxLocalClients, Bo1_MaxSize(sizeof(ViewModelInfo), 52), CGMemoryAlignment<ViewModelInfo>(4));
+    for (int client = 0; client < maxLocalClients; ++client)
+    {
+        native += CGMemoryBlockBudget(2048, Bo1_MaxSize(sizeof(weaponInfo_s), 36), CGMemoryAlignment<weaponInfo_s>(4));
+        native += CGMemoryBlockBudget(cg_entArrayCount, sizeof(centity_s), CGMemoryAlignment<centity_s>(4));
+        native += CGMemoryBlockBudget(cg_entArrayCount > MAX_GENTITIES ? MAX_CL_ENTNUM : 1536, sizeof(float[3]), 4);
+        native += CGMemoryBlockBudget(144, Bo1_MaxSize(sizeof(Destructible), 172), CGMemoryAlignment<Destructible>(4));
+        native += CGMemoryBlockBudget(32, Bo1_MaxSize(sizeof(IKState), 3680), CGMemoryAlignment<IKState>(16));
+    }
+    if (native > INT_MAX)
+    {
+        Com_Error(ERR_FATAL, "Native CG client memory budget exceeds Hunk_UserAlloc integer size");
+        std::abort();
+    }
+    return static_cast<int>(native);
+#else
     size = 0;
     for ( localClientNum = 0; localClientNum < maxLocalClients; ++localClientNum )
     {
@@ -1948,28 +1996,77 @@ int __cdecl CG_AllocateClientMemory_SizeRequired(int maxLocalClients)
         size += retail > actual ? retail : actual;
     }
     return size;
+#endif
 }
 
 void __cdecl CG_AllocateClientMemory(HunkUser *hunk, int maxLocalClients)
 {
     int localClientNum; // [esp+0h] [ebp-4h]
 
-    cgArray = (cg_s *)Hunk_UserAlloc(hunk, (int)Bo1_MaxSize(sizeof(cg_s), 466048) * maxLocalClients, 128, "cgArray");
+    cgArray = (cg_s *)Hunk_UserAlloc(hunk, (int)Bo1_MaxSize(sizeof(cg_s), 466048) * maxLocalClients,
+#if defined(__ANDROID__)
+        CGMemoryAlignment<cg_s>(128),
+#else
+        128,
+#endif
+        "cgArray");
     // zombies: was 12712 * maxLocalClients (the MP exe's sizeof(cgs_t)); cgs_t holds 32 actor corpses now
     // (MAX_ACTOR_CORPSES_SP), and the literal let cgsArray overrun into the next hunk block.
     #if !BO1_NATIVE_64BIT
     static_assert(sizeof(cg_s) <= 466048, "cgArray literal");
     #endif
-    cgsArray = (cgs_t *)Hunk_UserAlloc(hunk, sizeof(cgs_t) * maxLocalClients, 8, "cgsArray");
-    cg_fakeEntitiesArray = (fake_centity_s *)Hunk_UserAlloc(hunk, 512 * (int)Bo1_MaxSize(sizeof(fake_centity_s), 812) * maxLocalClients, 4, "cg_fakeEntitiesArray");
-    cg_viewModelArray = (ViewModelInfo *)Hunk_UserAlloc(hunk, (int)Bo1_MaxSize(sizeof(ViewModelInfo), 52) * maxLocalClients, 4, "cg_viewModelArray");
+    cgsArray = (cgs_t *)Hunk_UserAlloc(hunk, sizeof(cgs_t) * maxLocalClients,
+#if defined(__ANDROID__)
+        CGMemoryAlignment<cgs_t>(8),
+#else
+        8,
+#endif
+        "cgsArray");
+    cg_fakeEntitiesArray = (fake_centity_s *)Hunk_UserAlloc(hunk, 512 * (int)Bo1_MaxSize(sizeof(fake_centity_s), 812) * maxLocalClients,
+#if defined(__ANDROID__)
+        CGMemoryAlignment<fake_centity_s>(4),
+#else
+        4,
+#endif
+        "cg_fakeEntitiesArray");
+    cg_viewModelArray = (ViewModelInfo *)Hunk_UserAlloc(hunk, (int)Bo1_MaxSize(sizeof(ViewModelInfo), 52) * maxLocalClients,
+#if defined(__ANDROID__)
+        CGMemoryAlignment<ViewModelInfo>(4),
+#else
+        4,
+#endif
+        "cg_viewModelArray");
     for ( localClientNum = 0; localClientNum < maxLocalClients; ++localClientNum )
     {
-        cg_weaponsArray[localClientNum] = (weaponInfo_s *)Hunk_UserAlloc(hunk, 2048 * (int)Bo1_MaxSize(sizeof(weaponInfo_s), 36), 4, "cg_weaponsArray");
-        cg_entitiesArray[localClientNum] = (centity_s *)Hunk_UserAlloc(hunk, cg_entArrayCount * sizeof(centity_s), 4, "cg_entitiesArray"); // mod (L43): retail 827392
+        cg_weaponsArray[localClientNum] = (weaponInfo_s *)Hunk_UserAlloc(hunk, 2048 * (int)Bo1_MaxSize(sizeof(weaponInfo_s), 36),
+#if defined(__ANDROID__)
+        CGMemoryAlignment<weaponInfo_s>(4),
+#else
+        4,
+#endif
+        "cg_weaponsArray");
+        cg_entitiesArray[localClientNum] = (centity_s *)Hunk_UserAlloc(hunk, cg_entArrayCount * sizeof(centity_s),
+#if defined(__ANDROID__)
+        CGMemoryAlignment<centity_s>(4),
+#else
+        4,
+#endif
+        "cg_entitiesArray"); // mod (L43): retail 827392
         cg_entityOriginArray[localClientNum] = (float (*)[3])Hunk_UserAlloc(hunk, (cg_entArrayCount > MAX_GENTITIES ? MAX_CL_ENTNUM : 1536) * 12, 4, "cg_entityOriginArray"); // mod (L43): retail 18432
-        cg_destructibles[localClientNum] = (Destructible *)Hunk_UserAlloc(hunk, 144 * (int)Bo1_MaxSize(sizeof(Destructible), 172), 4, "cg_destructibles");
-        cg_ikBuf[localClientNum] = (unsigned __int8 *)Hunk_UserAlloc(hunk, 32 * (int)Bo1_MaxSize(sizeof(IKState), 3680), 16, "ikStatesArray");
+        cg_destructibles[localClientNum] = (Destructible *)Hunk_UserAlloc(hunk, 144 * (int)Bo1_MaxSize(sizeof(Destructible), 172),
+#if defined(__ANDROID__)
+        CGMemoryAlignment<Destructible>(4),
+#else
+        4,
+#endif
+        "cg_destructibles");
+        cg_ikBuf[localClientNum] = (unsigned __int8 *)Hunk_UserAlloc(hunk, 32 * (int)Bo1_MaxSize(sizeof(IKState), 3680),
+#if defined(__ANDROID__)
+        CGMemoryAlignment<IKState>(16),
+#else
+        16,
+#endif
+        "ikStatesArray");
         memset(cg_ikBuf[localClientNum], 0, 32 * (int)Bo1_MaxSize(sizeof(IKState), 3680));
         IK_AllocateLocalClientMemory(cg_ikBuf[localClientNum], localClientNum);
     }
@@ -1987,6 +2084,13 @@ void __cdecl CG_FreeClientMemory(HunkUser *hunk, int maxLocalClients)
         Hunk_UserFree(hunk, cg_entityOriginArray[localClientNum]);
         Hunk_UserFree(hunk, cg_entitiesArray[localClientNum]);
         Hunk_UserFree(hunk, cg_weaponsArray[localClientNum]);
+#if defined(__ANDROID__)
+        cg_ikBuf[localClientNum] = nullptr;
+        cg_destructibles[localClientNum] = nullptr;
+        cg_entityOriginArray[localClientNum] = nullptr;
+        cg_entitiesArray[localClientNum] = nullptr;
+        cg_weaponsArray[localClientNum] = nullptr;
+#endif
     }
     if ( hunk )
     {
@@ -2005,6 +2109,9 @@ void __cdecl CG_FreeClientMemory(HunkUser *hunk, int maxLocalClients)
         Hunk_UserFree(hunk, cgsArray);
         Hunk_UserFree(hunk, cgArray);
     }
+#if defined(__ANDROID__)
+    cg_fakeEntitiesArray = nullptr;
+#endif
     cgArray = 0;
     cgsArray = 0;
     cg_weaponsArray[0] = 0;
@@ -2461,6 +2568,18 @@ char __cdecl CGScr_LoadScriptAndLabel(
     }
 }
 
+#if defined(__ANDROID__)
+static void *__cdecl CGScr_AllocateAnimTreeNative(int size)
+{
+    if(size<0)
+    {
+        Com_Error(ERR_FATAL,"Native CGame anim-tree allocation requires a nonnegative byte count");
+        std::abort();
+    }
+    return Hunk_AllocXAnimCreate(static_cast<unsigned int>(size));
+}
+#endif
+
 void __cdecl CGScr_LoadScripts(const char *mapname, const char *gametype, ScriptFunctions *functions)
 {
     Scr_BeginLoadScripts(SCRIPTINSTANCE_SERVER, 0);
@@ -2479,7 +2598,11 @@ void __cdecl CGScr_LoadScripts(const char *mapname, const char *gametype, Script
     G_ResetEntityParsePoint();
     Scr_PostCompileScripts(SCRIPTINSTANCE_SERVER);
     Scr_EndLoadScripts(SCRIPTINSTANCE_SERVER);
+#if defined(__ANDROID__)
+    Scr_PrecacheAnimTrees(SCRIPTINSTANCE_SERVER, CGScr_AllocateAnimTreeNative, 0, 1);
+#else
     Scr_PrecacheAnimTrees(SCRIPTINSTANCE_SERVER, (void *(__cdecl *)(int))Hunk_AllocXAnimCreate, 0, 1);
+#endif
 }
 
 void __cdecl CGScr_LoadLevelScript(scriptInstance_t inst, const char *mapname, ScriptFunctions *functions)
@@ -2554,7 +2677,11 @@ static void CGScr_LoadClientScripts_SP(const char *mapname, ScriptFunctions *fun
     }
     Scr_PostCompileScripts(SCRIPTINSTANCE_CLIENT);
     CScr_PostLoadScripts();
+#if defined(__ANDROID__)
+    Scr_PrecacheAnimTrees(SCRIPTINSTANCE_CLIENT, CGScr_AllocateAnimTreeNative, 0, 1);
+#else
     Scr_PrecacheAnimTrees(SCRIPTINSTANCE_CLIENT, (void *(__cdecl *)(int))Hunk_AllocXAnimCreate, 0, 1);
+#endif
 }
 
 void __cdecl CGScr_LoadClientScripts(const char *mapname, ScriptFunctions *functions)
@@ -2610,7 +2737,11 @@ void __cdecl CGScr_LoadClientScripts(const char *mapname, ScriptFunctions *funct
     CGScr_LoadLevelScript(SCRIPTINSTANCE_CLIENT, mapname, functions);
     Scr_PostCompileScripts(SCRIPTINSTANCE_CLIENT);
     CScr_PostLoadScripts();
+#if defined(__ANDROID__)
+    Scr_PrecacheAnimTrees(SCRIPTINSTANCE_CLIENT, CGScr_AllocateAnimTreeNative, 0, 1);
+#else
     Scr_PrecacheAnimTrees(SCRIPTINSTANCE_CLIENT, (void *(__cdecl *)(int))Hunk_AllocXAnimCreate, 0, 1);
+#endif
 }
 
 void __cdecl CGScr_LoadClientScriptsAndAnims()
@@ -3740,7 +3871,11 @@ void __cdecl CG_InitEntities(int localClientNum)
         }
         cent->pose.localClientNum = localClientNum;
     }
+#if defined(__ANDROID__)
+    memset(&cg_fakeEntitiesArray[512 * localClientNum], 0, 512 * sizeof(fake_centity_s));
+#else
     memset((unsigned __int8 *)&cg_fakeEntitiesArray[512 * localClientNum], 0, 0x65800u);
+#endif
     CG_InitFakeEntities(localClientNum, 1);
     LocalClientGlobals = CG_GetLocalClientGlobals(localClientNum);
     LocalClientGlobals->predictedPlayerEntity.pose.localClientNum = localClientNum;

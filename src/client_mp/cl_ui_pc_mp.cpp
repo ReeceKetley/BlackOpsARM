@@ -135,7 +135,11 @@ void __cdecl LAN_GetServerInfo(int source, int n, char *buf, int buflen)
     int i; // [esp+8BCh] [ebp-4DCh]
     int numFriends; // [esp+8C0h] [ebp-4D8h] BYREF
     int stringpos; // [esp+8C4h] [ebp-4D4h]
+#if defined(__ANDROID__)
+    char userString[128]{}; // Empty friend lists publish a real empty string.
+#else
     char userString[128]; // [esp+8C8h] [ebp-4D0h] BYREF
+#endif
     char xuidstring[64]; // [esp+948h] [ebp-450h] BYREF
     char info[1024]; // [esp+988h] [ebp-410h] BYREF
     serverInfo_t *server; // [esp+D8Ch] [ebp-Ch]
@@ -215,18 +219,34 @@ void __cdecl LAN_GetServerInfo(int source, int n, char *buf, int buflen)
                 HIDWORD(v29) = HIDWORD(userIDs[i]);
                 LODWORD(v29) = userIDs[i];
                 Friends_GetByID(0, v29, &finfo);
+#if defined(__ANDROID__)
+                v27 = std::snprintf(strptr, 128 - stringpos, "%s\n", finfo.name);
+                if(v27<0) { *strptr=0; break; }
+                if(v27>=128-stringpos) { stringpos=127;strptr=&userString[stringpos];break; }
+#else
                 v27 = sprintf_s(strptr, 128 - stringpos, "%s\n", finfo.name);
+#endif
                 stringpos += v27;
                 strptr = &userString[stringpos];
             }
             if ( numFriends <= 3 )
             {
+#if defined(__ANDROID__)
+                if ( stringpos>0 && *--strptr == 10 )
+#else
                 if ( *--strptr == 10 )
+#endif
                     *strptr = 0;
             }
             else
             {
+#if defined(__ANDROID__)
+                v28 = std::snprintf(strptr, 128 - stringpos, "...");
+                if(v28<0) { *strptr=0;v28=0; }
+                else if(v28>=128-stringpos)v28=127-stringpos;
+#else
                 v28 = sprintf_s(strptr, 128 - stringpos, "...");
+#endif
                 stringpos += v28;
                 strptr = &userString[stringpos];
             }

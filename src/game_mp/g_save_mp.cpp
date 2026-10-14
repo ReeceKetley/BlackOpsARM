@@ -12,7 +12,13 @@ void __cdecl MemFile_WriteShort(MemoryFile *memFile, __int16 value)
 {
     if ( (unsigned int)(memFile->cacheBufferUsed + 2) >= 0x7FF8 )
         MemFile_WriteDataFlushInternal(memFile);
+#if defined(__ANDROID__)
+    // Cache position can be odd; preserve the original two-byte encoding
+    // without requiring an aligned native short pointer.
+    memcpy(&memFile->cacheBuffer[memFile->cacheBufferUsed], &value, sizeof(value));
+#else
     *(_WORD *)&memFile->cacheBuffer[memFile->cacheBufferUsed] = value;
+#endif
     memFile->cacheBufferUsed += 2;
 }
 

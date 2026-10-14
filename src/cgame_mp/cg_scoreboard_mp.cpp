@@ -1,3 +1,4 @@
+#include <platform/bo1_native_width.h>
 #include <cgame/cg_sp_hud.h>
 #include "cg_scoreboard_mp.h"
 #include <universal/assertive.h>
@@ -715,7 +716,11 @@ const score_s *__cdecl UI_GetScoreAtRank(int localClientNum, int rank)
     cgameGlob = CG_GetLocalClientGlobals(localClientNum);
     if ( rank < 1 || rank > 32 )
         return 0;
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+    clientNum = cgameGlob->scoreOrder[rank - 1];
+#else
     clientNum = cgameGlob->teamPlayers[rank + 3];
+#endif
     if ( clientNum >= 0x20 )
         return 0;
     if ( cgameGlob->bgs.clientinfo[clientNum].infoValid )

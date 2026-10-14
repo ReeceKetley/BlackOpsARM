@@ -434,6 +434,8 @@ build-x64*/
 x64_diag.log
 
 # Android development outputs and machine-local configuration
+*.o
+/docs/port/evidence/**/*.exe
 /.gradle/
 /android/.gradle/
 /android/.kotlin/

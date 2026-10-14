@@ -14,10 +14,20 @@
 #include "live_steamp2p.h"
 #include "live_steam_client.h"
 #include <win32/win_steam.h>
+#if defined(__ANDROID__)
+#include <unistd.h>
+#include <cerrno>
+#include <atomic>
+#include <cstdlib>
+#endif
 
-const dvar_t *livesteam_sv_vac;
+extern const dvar_t *livesteam_sv_vac;
 
-bool g_liveSteamInitialized;
+#if defined(__ANDROID__)
+extern std::atomic<bool> g_liveSteamInitialized;
+#else
+extern bool g_liveSteamInitialized;
+#endif
 LiveSteamP2P s_SteamP2P;
 LiveSteamClient *g_liveLocalSteamClient;
 
@@ -37,7 +47,11 @@ void __cdecl    LiveSteam_Quit(bool showErrorMessage)
     {
         v2 = Win_LocalizeRef("WIN_ERROR");
         v1 = Win_LocalizeRef("WIN_NO_STEAM");
+#if defined(__ANDROID__)
+        Platform_ShowSteamError(v2,v1);
+#else
         MessageBoxA(0, v1, v2, 0x10u);
+#endif
     }
     Sys_Quit();
 }
@@ -102,7 +116,11 @@ unsigned __int64 __cdecl LiveSteam_GetClientIDAsXUID()
         //}
         //v2 = SteamUser();
         //return v2->GetSteamID(v2, v4)->m_steamid;
+#if defined(__ANDROID__)
+        return SteamUser()->GetSteamID().ConvertToUint64();
+#else
         return SteamUser()->GetSteamID().GetAccountID(); // BO1TODO: prob wrong
+#endif
     }
     else
     {
@@ -135,7 +153,11 @@ unsigned __int64 __cdecl LiveSteam_GetUid()
     {
         //v1 = SteamUser();
         //return v1->GetSteamID(v1, v2)->m_steamid;
+#if defined(__ANDROID__)
+        return SteamUser()->GetSteamID().ConvertToUint64();
+#else
         return SteamUser()->GetSteamID().GetAccountID(); // BO1TODO: prob wrong
+#endif
     }
     else
     {
@@ -143,6 +165,7 @@ unsigned __int64 __cdecl LiveSteam_GetUid()
     }
 }
 
+#if !defined(__ANDROID__)
 int g_ShellExecuteErr;
 volatile unsigned int g_ShellExecuteInProgress;
 unsigned int __stdcall ShellExecuteThredProc(const char *lpParam)
@@ -155,8 +178,21 @@ unsigned int __stdcall ShellExecuteThredProc(const char *lpParam)
     return 0;
 }
 
+#endif
+
 bool __cdecl LiveSteam_LaunchOtherApp(const char *cmd)
 {
+#if defined(__ANDROID__)
+    if(!cmd) { Com_PrintError(16,"Steam launch received null command\n"); return false; }
+    if(Sys_IsHeadless()) {
+        Com_Printf_NoFilter((char*)"Steam_LaunchOtherApp: bo1_headless, not launching '%s'\n",cmd); return false;
+    }
+    const char *uri=nullptr;
+    if(!I_stricmp(cmd,"CoDSP_rd.exe")) uri="steam://run/42700";
+    else if(!I_stricmp(cmd,"CoDMP_rd.exe")) uri="steam://run/42710";
+    if(!uri) { Com_PrintError(16,"Unknown exe '%s' to launch through Steam\n",cmd); return false; }
+    return Platform_LaunchSteamURI(uri);
+#else
     const char *v1; // eax
     const char *url; // [esp+0h] [ebp-Ch]
     int result; // [esp+4h] [ebp-8h]
@@ -190,6 +226,7 @@ LABEL_8:
     if ( !Assert_MyHandler("C:\\projects_pc\\cod\\codsrc\\src\\live\\live_steam.cpp", 195, 0, v1) )
         __debugbreak();
     return 0;
+#endif
 }
 
 void __cdecl LiveSteam_ShowStore()
@@ -228,16 +265,7 @@ void __cdecl LiveSteam_PopOverlayForSteamID(unsigned __int64 steamID)
     SteamFriends()->ActivateGameOverlayToUser("steamid", sID);
 }
 
-void __cdecl LiveSteam_Init()
-{
-    LiveSteam_CreateSteamAppIdFile();
-    // no-steam: retail LiveSteam_Init starts SteamAPI here and quits (LiveSteam_Quit, WIN_NO_STEAM) when it fails;
-    // KB starts it earlier in Steam_Init (win_steam.cpp) and keeps running without Steam. "Initialized" keeps the
-    // retail meaning, SteamAPI is up, so the Steam-only paths behind it (Live_IsSignedIn's signed-in assert,
-    // LiveSteam_DWUserNameFromSteamID, LiveSteam_AuthRequestTicket) stay off without the Steam client.
-    g_liveSteamInitialized = g_steamAPIInitialized;
-    livesteam_sv_vac = _Dvar_RegisterBool("sv_vac", 1, 1u, "Enable VAC on this server");
-}
+
 
 void __cdecl LiveSteam_TestFriends_f()
 {
@@ -272,26 +300,7 @@ void __cdecl LiveSteam_TestFriends_f()
 #endif
 }
 
-_iobuf *LiveSteam_CreateSteamAppIdFile()
-{
-    _iobuf *result; // eax
-    _iobuf *f; // [esp+0h] [ebp-4h]
 
-    DeleteFileA("steam_appid.txt");
-    result = fopen("noship_create_steam_appid.txt", "r");
-    if ( result )
-    {
-        fclose(result);
-        result = fopen("steam_appid.txt", "w");
-        f = result;
-        if ( result )
-        {
-            fprintf(result, "42710");
-            return (_iobuf *)fclose(f);
-        }
-    }
-    return result;
-}
 
 void __cdecl LiveSteam_Shutdown()
 {
@@ -321,7 +330,13 @@ void __cdecl LiveSteam_CheckForP2PMessages()
         if ( v0 >= 10 )
             break;
         //LiveSteamP2P::ReadPacket(&s_SteamP2P, messageBuffer, 0x40u, &messagesize, &remoteID);
+#if defined(__ANDROID__)
+        if(!s_SteamP2P.ReadPacket(messageBuffer,64,&messagesize,&remoteID) || messagesize>64) {
+            Com_PrintWarning(16,"Steam P2P receive failed or exceeded protocol storage\n"); break;
+        }
+#else
         s_SteamP2P.ReadPacket(messageBuffer, 64, &messagesize, &remoteID);
+#endif
         Live_DispatchP2PMessage(messageBuffer, messagesize, remoteID.ConvertToUint64());
     }
 }
@@ -373,11 +388,19 @@ char __cdecl LiveSteam_DWUserNameFromSteamID(char *dwUserName)
     {
         //v2 = SteamUser();
         //steamid = v2->GetSteamID(v2, v3)->m_steamid.m_unAll64Bits;
+#if defined(__ANDROID__)
+        if(!dwUserName || !SteamUser()) return 0;
+        snprintf(dwUserName,64,"steam%llx",static_cast<unsigned long long>(SteamUser()->GetSteamID().ConvertToUint64()));
+#else
         sprintf_s(dwUserName, 0x40u, "%s%I64x", "steam", SteamUser()->GetSteamID().ConvertToUint64());
+#endif
         return 1;
     }
     else
     {
+#if defined(__ANDROID__)
+        if(!dwUserName) return 0;
+#endif
         *dwUserName = 0;
         return 0;
     }
@@ -401,7 +424,11 @@ char __cdecl LiveSteam_AuthRequestTicket(const void *authBlob, unsigned int auth
     }
     //LiveSteamClient::RequestEncryptedAppTicket(g_liveLocalSteamClient, authBlob, authBlobSize);
     g_liveLocalSteamClient->RequestEncryptedAppTicket(authBlob, authBlobSize);
+#if defined(__ANDROID__)
+    return g_liveLocalSteamClient->m_SteamCallResultEncryptedAppTicket.IsActive();
+#else
     return 1;
+#endif
 }
 
 char __cdecl LiveSteam_AuthGetRequestedTicket(void *ticketBuf, unsigned int ticketBufSize, unsigned int *ticketSize)
@@ -443,3 +470,67 @@ void LiveSteam_Client_SteamDisconnect()
 #endif
 }
 
+
+const dvar_t *livesteam_sv_vac;
+#if defined(__ANDROID__)
+std::atomic<bool> g_liveSteamInitialized{false};
+#else
+bool g_liveSteamInitialized;
+#endif
+#if defined(__ANDROID__)
+bool LiveSteam_CreateSteamAppIdFile()
+#else
+_iobuf *LiveSteam_CreateSteamAppIdFile()
+#endif
+{
+#if defined(__ANDROID__)
+    // No dangling FILE pointer or integer status reinterpreted as a pointer.
+    if(unlink("steam_appid.txt")!=0 && errno!=ENOENT) return false;
+    FILE *marker=fopen("noship_create_steam_appid.txt","r");
+    if(!marker) return errno==ENOENT;
+    if(fclose(marker)!=0) return false;
+    FILE *file=fopen("steam_appid.txt","w");
+    if(!file) return false;
+    const bool written=fwrite("42710",1,5,file)==5;
+    const bool flushed=fflush(file)==0;
+    const bool closed=fclose(file)==0;
+    return written && flushed && closed;
+#else
+    _iobuf *result; // eax
+    _iobuf *f; // [esp+0h] [ebp-4h]
+
+    DeleteFileA("steam_appid.txt");
+    result = fopen("noship_create_steam_appid.txt", "r");
+    if ( result )
+    {
+        fclose(result);
+        result = fopen("steam_appid.txt", "w");
+        f = result;
+        if ( result )
+        {
+            fprintf(result, "42710");
+            return (_iobuf *)fclose(f);
+        }
+    }
+    return result;
+#endif
+}
+
+void __cdecl LiveSteam_Init()
+{
+#if defined(__ANDROID__)
+    if(!LiveSteam_CreateSteamAppIdFile()) { Com_Error(ERR_FATAL,"Steam application-ID file operation failed"); std::abort(); }
+#else
+    LiveSteam_CreateSteamAppIdFile();
+#endif
+    // no-steam: retail LiveSteam_Init starts SteamAPI here and quits (LiveSteam_Quit, WIN_NO_STEAM) when it fails;
+    // KB starts it earlier in Steam_Init (win_steam.cpp) and keeps running without Steam. "Initialized" keeps the
+    // retail meaning, SteamAPI is up, so the Steam-only paths behind it (Live_IsSignedIn's signed-in assert,
+    // LiveSteam_DWUserNameFromSteamID, LiveSteam_AuthRequestTicket) stay off without the Steam client.
+#if defined(__ANDROID__)
+    g_liveSteamInitialized.store(g_steamAPIInitialized.load(std::memory_order_acquire),std::memory_order_release);
+#else
+    g_liveSteamInitialized = g_steamAPIInitialized;
+#endif
+    livesteam_sv_vac = _Dvar_RegisterBool("sv_vac", 1, 1u, "Enable VAC on this server");
+}

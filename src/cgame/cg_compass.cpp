@@ -1,3 +1,4 @@
+#if !defined(BO1_NATIVE_REFERENCE_QUERY_ONLY)
 #include "cg_compass.h"
 #include <qcommon/common.h>
 #include <cgame_mp/cg_newDraw_mp.h>
@@ -4026,6 +4027,7 @@ char __cdecl CalcCompassPointerSizeObjective(
     return shouldRotateWithView;
 }
 
+#endif
 bool __cdecl CG_IsShowingZombieMap()
 {
     return 0;

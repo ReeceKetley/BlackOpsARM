@@ -2462,7 +2462,14 @@ int __cdecl GetMinBitCountForNum(unsigned int num)
 {
     int v2; // eax
 
+#if defined(__ANDROID__)
+    unsigned int highestBit;
+    const bool found = _BitScanReverse(&highestBit, num);
+    if (found) v2 = static_cast<int>(highestBit);
+    if (!found)
+#else
     if (!_BitScanReverse((unsigned long *)&v2, num))
+#endif
     {
         //v2 = `CountLeadingZeros'::`2': : notFound;
         v2 = 63;
@@ -2726,7 +2733,12 @@ unsigned int __cdecl MSG_CompressWithZLib(
     stream.next_out = to;
     stream.avail_out = outSizeBytes;
     memset(&stream.zalloc, 0, 16);
+#if defined(__ANDROID__)
+    stream.zalloc=nullptr;stream.zfree=nullptr;stream.opaque=nullptr;
+    err = deflateInit2_(&stream, 9, 8, -13, 1, 0, "1.2.3", sizeof(stream));
+#else
     err = deflateInit2_(&stream, 9, 8, -13, 1, 0, "1.2.3", 52);
+#endif
     if ( !err )
     {
         erra = deflate(&stream, 4u);
@@ -2816,7 +2828,12 @@ unsigned int __cdecl MSG_DecompressWithZLib(
     stream.next_out = to;
     stream.avail_out = outSizeBytes;
     memset(&stream.zalloc, 0, 16);
+#if defined(__ANDROID__)
+    stream.zalloc=nullptr;stream.zfree=nullptr;stream.opaque=nullptr;
+    err = inflateInit2_(&stream, -13, "1.2.3", sizeof(stream));
+#else
     err = inflateInit2_(&stream, -13, "1.2.3", 52);
+#endif
     if ( !err )
     {
         erra = inflate(&stream, 4);
@@ -2968,7 +2985,11 @@ void __cdecl MSG_WriteShort(msg_t *msg, unsigned short c)
     }
     else
     {
+#if defined(__ANDROID__)
+        std::memcpy(&msg->data[msg->cursize], &c, sizeof(c));
+#else
         *(_WORD *)&msg->data[msg->cursize] = c;
+#endif
         msg->cursize = newsize;
     }
 }
@@ -2989,7 +3010,12 @@ void __cdecl MSG_WriteLong(msg_t *msg, int c)
     }
     else
     {
+#if defined(__ANDROID__)
+        static_assert(sizeof(c) == 4);
+        std::memcpy(&msg->data[msg->cursize], &c, sizeof(c));
+#else
         *(unsigned int *)&msg->data[msg->cursize] = c;
+#endif
         msg->cursize = newsize;
     }
 }
@@ -3023,7 +3049,12 @@ void __cdecl MSG_WriteInt64(msg_t *msg, unsigned __int64 c)
     }
     else
     {
+#if defined(__ANDROID__)
+        const auto little = LittleLong64(c);
+        std::memcpy(&msg->data[msg->cursize], &little, sizeof(little));
+#else
         *(_QWORD *)&msg->data[msg->cursize] = LittleLong64(c);
+#endif
         msg->cursize = newsize;
     }
 }
@@ -3878,6 +3909,25 @@ int __cdecl MSG_ReadEntityIndex(msg_t *msg, unsigned int indexBits)
     return msg->lastEntityRef;
 }
 
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+namespace
+{
+// NetField offsets describe owned bytes, including the entity clientLinkInfo
+// composite at offset218 (aligned2). Never dereference them as scalar pointers.
+template <typename T> T Bo1_MsgReadFieldLoad(const void *field)
+{
+    T value;
+    std::memcpy(&value, field, sizeof(value));
+    return value;
+}
+
+template <typename T> void Bo1_MsgReadFieldStore(void *field, T value)
+{
+    std::memcpy(field, &value, sizeof(value));
+}
+}
+#endif
+
 void __cdecl MSG_ReadDeltaField(
                 msg_t *msg,
                 int time,
@@ -3887,6 +3937,516 @@ void __cdecl MSG_ReadDeltaField(
                 int print,
                 bool noXor)
 {
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+    int Bit; // eax
+    int Byte; // eax
+    int Long; // eax
+    int v10; // eax
+    int v11; // eax
+    int v12; // eax
+    int v13; // eax
+    int v14; // eax
+    double RangedFloat; // st7
+    double v16; // st7
+    double v17; // st7
+    double v18; // st7
+    double v19; // st7
+    int EFlags; // eax
+    int DeltaTime; // eax
+    unsigned int MinBitCountForNum; // eax
+    int Bits; // esi
+    int v24; // eax
+    double OriginFloat; // st7
+    double OriginZFloat; // st7
+    double v27; // st7
+    double v28; // st7
+    double DemoRoundedFloat; // st7
+    double v30; // st7
+    double Angle; // st7
+    double DeltaAngle; // st7
+    double Angle16; // st7
+    int v34; // eax
+    int v35; // [esp+18h] [ebp-D4h]
+    int v36; // [esp+1Ch] [ebp-D0h]
+    int v37; // [esp+20h] [ebp-CCh]
+    int v38; // [esp+24h] [ebp-C8h]
+    int v39; // [esp+28h] [ebp-C4h]
+    int v40; // [esp+2Ch] [ebp-C0h]
+    int v41; // [esp+30h] [ebp-BCh]
+    int v42; // [esp+34h] [ebp-B8h]
+    int v43; // [esp+38h] [ebp-B4h]
+    int size; // [esp+3Ch] [ebp-B0h]
+    float v45; // [esp+40h] [ebp-ACh]
+    float v46; // [esp+44h] [ebp-A8h]
+    float v47; // [esp+48h] [ebp-A4h]
+    int v48; // [esp+5Ch] [ebp-90h]
+    int v49; // [esp+68h] [ebp-84h]
+    int v50; // [esp+70h] [ebp-7Ch]
+    int ValueNoXor; // [esp+78h] [ebp-74h]
+    int v52; // [esp+80h] [ebp-6Ch]
+    int v53; // [esp+88h] [ebp-64h]
+    int DeltaEventParamField; // [esp+90h] [ebp-5Ch]
+    int DeltaEventField; // [esp+98h] [ebp-54h]
+    int DeltaGroundEntity; // [esp+A0h] [ebp-4Ch]
+    float v57; // [esp+A8h] [ebp-44h]
+    float v58; // [esp+B0h] [ebp-3Ch]
+    float v59; // [esp+B8h] [ebp-34h]
+    const hudelem_color_t *fromColor; // [esp+C8h] [ebp-24h]
+    hudelem_color_t *toColora; // [esp+CCh] [ebp-20h]
+    hudelem_color_t *toColor; // [esp+CCh] [ebp-20h]
+    int delta; // [esp+D0h] [ebp-1Ch]
+    int zeroVal; // [esp+D8h] [ebp-14h] BYREF
+    int trunc; // [esp+DCh] [ebp-10h]
+    int *toF; // [esp+E0h] [ebp-Ch]
+    const int *fromF; // [esp+E4h] [ebp-8h]
+    int value; // [esp+E8h] [ebp-4h]
+
+    zeroVal = 0;
+    if ( noXor )
+        fromF = &zeroVal;
+    else
+        fromF = (const int *)&from[field->offset];
+    toF = (int *)&to[field->offset];
+    if ( msg->overflowed
+        && !Assert_MyHandler("C:\\projects_pc\\cod\\codsrc\\src\\qcommon\\msg_mp.cpp", 1895, 0, "%s", "!msg->overflowed") )
+    {
+        __debugbreak();
+    }
+    if ( msg->overflowed
+        && !Assert_MyHandler("C:\\projects_pc\\cod\\codsrc\\src\\qcommon\\msg_mp.cpp", 1922, 0, "%s", "!msg->overflowed") )
+    {
+        __debugbreak();
+    }
+    switch ( field->bits )
+    {
+        case 0:
+            if ( MSG_ReadBit(msg) )
+            {
+                if ( MSG_ReadBit(msg) )
+                {
+                    Long = MSG_ReadLong(msg);
+                    Bo1_MsgReadFieldStore<int>(toF, Long);
+                    Bo1_MsgReadFieldStore<int>(toF, Bo1_MsgReadFieldLoad<int>(toF) ^ Bo1_MsgReadFieldLoad<int>(fromF));
+                    if ( print )
+                        Com_Printf(16, "%s:%f ", field->name, Bo1_MsgReadFieldLoad<float>(toF));
+                }
+                else
+                {
+                    trunc = MSG_ReadBits(msg, 5u);
+                    Byte = MSG_ReadByte(msg);
+                    trunc += 32 * Byte;
+                    trunc ^= (int)Bo1_MsgReadFieldLoad<float>(fromF) + 4096;
+                    trunc -= 4096;
+                    Bo1_MsgReadFieldStore<float>(toF, (float)trunc);
+                    if ( print )
+                        Com_Printf(16, "%s:%i ", field->name, trunc);
+                }
+            }
+            else
+            {
+                Bit = MSG_ReadBit(msg);
+                Bo1_MsgReadFieldStore<int>(toF, Bit << 31);
+                if ( Bo1_MsgReadFieldLoad<float>(toF) != 0.0
+                    && !Assert_MyHandler(
+                                "C:\\projects_pc\\cod\\codsrc\\src\\qcommon\\msg_mp.cpp",
+                                1929,
+                                0,
+                                "%s",
+                                "*reinterpret_cast< float * >( toF ) == 0.0f") )
+                {
+                    __debugbreak();
+                }
+            }
+            return;
+        case -63:
+        case -61:
+LABEL_25:
+            v10 = MSG_ReadLong(msg);
+            Bo1_MsgReadFieldStore<int>(toF, v10);
+            return;
+        case -89:
+            if ( MSG_ReadBit(msg) )
+            {
+                v12 = MSG_ReadLong(msg);
+                Bo1_MsgReadFieldStore<int>(toF, v12);
+                Bo1_MsgReadFieldStore<int>(toF, Bo1_MsgReadFieldLoad<int>(toF) ^ Bo1_MsgReadFieldLoad<int>(fromF));
+                if ( print )
+                    Com_Printf(16, "%s:%f ", field->name, Bo1_MsgReadFieldLoad<float>(toF));
+            }
+            else
+            {
+                trunc = MSG_ReadBits(msg, 5u);
+                v11 = MSG_ReadByte(msg);
+                trunc += 32 * v11;
+                trunc ^= (int)Bo1_MsgReadFieldLoad<float>(fromF) + 4096;
+                trunc -= 4096;
+                Bo1_MsgReadFieldStore<float>(toF, (float)trunc);
+                if ( print )
+                    Com_Printf(16, "%s:%i ", field->name, trunc);
+            }
+            break;
+        case -88:
+            v13 = MSG_ReadLong(msg);
+            Bo1_MsgReadFieldStore<int>(toF, v13);
+            Bo1_MsgReadFieldStore<int>(toF, Bo1_MsgReadFieldLoad<int>(toF) ^ Bo1_MsgReadFieldLoad<int>(fromF));
+            if ( print )
+                Com_Printf(16, "%s:%f ", field->name, Bo1_MsgReadFieldLoad<float>(toF));
+            break;
+        case -99:
+            if ( MSG_ReadBit(msg) )
+            {
+                if ( MSG_ReadBit(msg) )
+                {
+                    value = MSG_ReadLong(msg);
+                    value ^= Bo1_MsgReadFieldLoad<int>(fromF);
+                    Bo1_MsgReadFieldStore<int>(toF, value);
+                    if ( print )
+                        Com_Printf(16, "%s:%f ", field->name, Bo1_MsgReadFieldLoad<float>(toF));
+                }
+                else
+                {
+                    trunc = MSG_ReadBits(msg, 4u);
+                    v14 = MSG_ReadByte(msg);
+                    trunc += 16 * v14;
+                    trunc ^= (int)Bo1_MsgReadFieldLoad<float>(fromF) + 2048;
+                    trunc -= 2048;
+                    Bo1_MsgReadFieldStore<float>(toF, (float)trunc);
+                    if ( print )
+                        Com_Printf(16, "%s:%i ", field->name, trunc);
+                }
+            }
+            else
+            {
+                Bo1_MsgReadFieldStore<int>(toF, 0);
+                if ( Bo1_MsgReadFieldLoad<float>(toF) != 0.0
+                    && !Assert_MyHandler(
+                                "C:\\projects_pc\\cod\\codsrc\\src\\qcommon\\msg_mp.cpp",
+                                2008,
+                                0,
+                                "%s",
+                                "*reinterpret_cast< float * >( toF ) == 0.0f") )
+                {
+                    __debugbreak();
+                }
+            }
+            if ( (unsigned int)(__int64)(Bo1_MsgReadFieldLoad<float>(toF) + 2048.0) >= 0x1000
+                && !Assert_MyHandler(
+                            "C:\\projects_pc\\cod\\codsrc\\src\\qcommon\\msg_mp.cpp",
+                            2040,
+                            0,
+                            "Bo1_MsgReadFieldLoad<float>(toF) + HUDELEM_COORD_BIAS doesn't index 1 << HUDELEM_COORD_BITS\n\t%i not in [0, %i)",
+                            (int)(float)(Bo1_MsgReadFieldLoad<float>(toF) + 2048.0),
+                            4096) )
+            {
+                __debugbreak();
+            }
+            break;
+        case -81:
+            RangedFloat = MSG_ReadRangedFloat(msg, Bo1_MsgReadFieldLoad<float>(fromF), 0.0, 1.0, 100, 0);
+            Bo1_MsgReadFieldStore<float>(toF, RangedFloat);
+            return;
+        case -80:
+            v16 = MSG_ReadRangedFloat(msg, Bo1_MsgReadFieldLoad<float>(fromF), 0.0, 1.0, 1000, 0);
+            Bo1_MsgReadFieldStore<float>(toF, v16);
+            return;
+        case -77:
+            v17 = MSG_ReadRangedFloat(msg, Bo1_MsgReadFieldLoad<float>(fromF), -1.0, 1.0, 100, 0);
+            Bo1_MsgReadFieldStore<float>(toF, v17);
+            return;
+        case -76:
+            v59 = MSG_ReadRangedFloat(msg, (float)Bo1_MsgReadFieldLoad<__int16>(fromF) * 0.000030517578, -1.0, 1.0, 10, 0);
+            v47 = floor(v59 * 32768.0 + 0.5);
+            Bo1_MsgReadFieldStore<unsigned __int16>(toF, (int)v47);
+            return;
+        case -75:
+            v58 = MSG_ReadRangedFloat(msg, (float)Bo1_MsgReadFieldLoad<__int16>(fromF) * 0.0054931641, -90.0, 90.0, 10, 0);
+            v46 = floor(v58 * 182.04445 + 0.5);
+            Bo1_MsgReadFieldStore<unsigned __int16>(toF, (int)v46);
+            return;
+        case -74:
+            v57 = MSG_ReadRangedFloat(msg, (float)Bo1_MsgReadFieldLoad<__int16>(fromF) * 0.0054931641, -180.0, 180.0, 10, 0);
+            v45 = floor(v57 * 182.04445 + 0.5);
+            Bo1_MsgReadFieldStore<unsigned __int16>(toF, (int)v45);
+            return;
+        case -73:
+            v18 = MSG_ReadRangedFloat(msg, Bo1_MsgReadFieldLoad<float>(fromF), -12.0, 12.0, 10, 0);
+            Bo1_MsgReadFieldStore<float>(toF, v18);
+            return;
+        case -72:
+            v19 = MSG_ReadRangedFloat(msg, Bo1_MsgReadFieldLoad<float>(fromF), -6000.0, 6000.0, 10, 0);
+            Bo1_MsgReadFieldStore<float>(toF, v19);
+            return;
+        case -98:
+            EFlags = MSG_ReadEFlags(msg, Bo1_MsgReadFieldLoad<int>(fromF));
+            Bo1_MsgReadFieldStore<int>(toF, EFlags);
+            return;
+        case -97:
+        case -71:
+        case -70:
+        case -68:
+            DeltaTime = MSG_ReadDeltaTime(msg, time);
+            Bo1_MsgReadFieldStore<int>(toF, DeltaTime);
+            return;
+        case -69:
+        case -67:
+            goto LABEL_25;
+        case -96:
+            DeltaGroundEntity = MSG_ReadDeltaGroundEntity(msg);
+            size = field->size;
+            switch ( size )
+            {
+                case 1:
+                    Bo1_MsgReadFieldStore<unsigned __int8>(toF, DeltaGroundEntity);
+                    break;
+                case 2:
+                    Bo1_MsgReadFieldStore<unsigned __int16>(toF, DeltaGroundEntity);
+                    break;
+                case 4:
+                    Bo1_MsgReadFieldStore<int>(toF, DeltaGroundEntity);
+                    break;
+            }
+            break;
+        case -94:
+            DeltaEventField = MSG_ReadDeltaEventField(msg);
+            v43 = field->size;
+            switch ( v43 )
+            {
+                case 1:
+                    Bo1_MsgReadFieldStore<unsigned __int8>(toF, DeltaEventField);
+                    break;
+                case 2:
+                    Bo1_MsgReadFieldStore<unsigned __int16>(toF, DeltaEventField);
+                    break;
+                case 4:
+                    Bo1_MsgReadFieldStore<int>(toF, DeltaEventField);
+                    break;
+            }
+            break;
+        case -93:
+            DeltaEventParamField = MSG_ReadDeltaEventParamField(msg);
+            v42 = field->size;
+            switch ( v42 )
+            {
+                case 1:
+                    Bo1_MsgReadFieldStore<unsigned __int8>(toF, DeltaEventParamField);
+                    break;
+                case 2:
+                    Bo1_MsgReadFieldStore<unsigned __int16>(toF, DeltaEventParamField);
+                    break;
+                case 4:
+                    Bo1_MsgReadFieldStore<int>(toF, DeltaEventParamField);
+                    break;
+            }
+            break;
+        case -59:
+            if ( MSG_ReadBit(msg) == 1 )
+            {
+                MinBitCountForNum = GetMinBitCountForNum(0x10u);
+                Bits = MSG_ReadBits(msg, MinBitCountForNum);
+                v53 = MSG_GetField(fromF, field->size) + Bits + 1;
+                v41 = field->size;
+                switch ( v41 )
+                {
+                    case 1:
+                        Bo1_MsgReadFieldStore<unsigned __int8>(toF, v53);
+                        break;
+                    case 2:
+                        Bo1_MsgReadFieldStore<unsigned __int16>(toF, v53);
+                        break;
+                    case 4:
+                        Bo1_MsgReadFieldStore<int>(toF, v53);
+                        break;
+                }
+            }
+            else
+            {
+                v52 = MSG_ReadValue(msg, fromF, toF, 8, field->size);
+                v40 = field->size;
+                switch ( v40 )
+                {
+                    case 1:
+                        Bo1_MsgReadFieldStore<unsigned __int8>(toF, v52);
+                        break;
+                    case 2:
+                        Bo1_MsgReadFieldStore<unsigned __int16>(toF, v52);
+                        break;
+                    case 4:
+                        Bo1_MsgReadFieldStore<int>(toF, v52);
+                        break;
+                }
+            }
+            break;
+        case -95:
+            v24 = MSG_ReadBits(msg, 7u);
+            Bo1_MsgReadFieldStore<int>(toF, 100 * v24);
+            break;
+        case -58:
+            ValueNoXor = MSG_ReadValueNoXor(msg, 8);
+            v39 = field->size;
+            switch ( v39 )
+            {
+                case 1:
+                    Bo1_MsgReadFieldStore<unsigned __int8>(toF, ValueNoXor);
+                    break;
+                case 2:
+                    Bo1_MsgReadFieldStore<unsigned __int16>(toF, ValueNoXor);
+                    break;
+                case 4:
+                    Bo1_MsgReadFieldStore<int>(toF, ValueNoXor);
+                    break;
+            }
+            break;
+        case -92:
+        case -91:
+        case -66:
+        case -65:
+            OriginFloat = MSG_ReadOriginFloat(field->bits, msg, Bo1_MsgReadFieldLoad<float>(fromF));
+            Bo1_MsgReadFieldStore<float>(toF, OriginFloat);
+            if ( print )
+                Com_Printf(16, "%s:%f ", field->name, Bo1_MsgReadFieldLoad<float>(toF));
+            break;
+        case -90:
+        case -64:
+            OriginZFloat = MSG_ReadOriginZFloat(msg, Bo1_MsgReadFieldLoad<float>(fromF));
+            Bo1_MsgReadFieldStore<float>(toF, OriginZFloat);
+            if ( print )
+                Com_Printf(16, "%s:%f ", field->name, Bo1_MsgReadFieldLoad<float>(toF));
+            break;
+        case -106:
+            v27 = MSG_ReadRangedFloat(msg, Bo1_MsgReadFieldLoad<float>(fromF), 0.0, 255.0, 100, 0);
+            Bo1_MsgReadFieldStore<float>(toF, v27);
+            break;
+        case -107:
+            v28 = MSG_ReadRangedFloat(msg, Bo1_MsgReadFieldLoad<float>(fromF), 0.0, 60.0, 100, 0);
+            Bo1_MsgReadFieldStore<float>(toF, v28);
+            break;
+        case -103:
+        case -102:
+        case -101:
+            DemoRoundedFloat = MSG_ReadDemoRoundedFloat(msg, field->bits, Bo1_MsgReadFieldLoad<float>(fromF), 5u, 0x10u);
+            Bo1_MsgReadFieldStore<float>(toF, DemoRoundedFloat);
+            if ( print )
+                Com_Printf(16, "%s:%f ", field->name, Bo1_MsgReadFieldLoad<float>(toF));
+            break;
+        case -104:
+            v30 = MSG_ReadDemoRoundedFloat(msg, field->bits, Bo1_MsgReadFieldLoad<float>(fromF), 7u, 0xCu);
+            Bo1_MsgReadFieldStore<float>(toF, v30);
+            if ( print )
+                Com_Printf(16, "%s:%f ", field->name, Bo1_MsgReadFieldLoad<float>(toF));
+            break;
+        case -105:
+            Angle = MSG_ReadAngle(msg, 0xAu);
+            Bo1_MsgReadFieldStore<float>(toF, Angle);
+            break;
+        case -100:
+        case -62:
+            DeltaAngle = MSG_ReadDeltaAngle(msg, Bo1_MsgReadFieldLoad<float>(fromF));
+            Bo1_MsgReadFieldStore<float>(toF, DeltaAngle);
+            break;
+        case -87:
+            Angle16 = MSG_ReadAngle16(msg);
+            Bo1_MsgReadFieldStore<float>(toF, Angle16);
+            break;
+        case -60:
+            if ( MSG_ReadBit(msg) == 1 )
+            {
+                delta = MSG_ReadBits(msg, 5u);
+                v50 = MSG_GetField(fromF, field->size) + delta - 16;
+                v38 = field->size;
+                switch ( v38 )
+                {
+                    case 1:
+                        Bo1_MsgReadFieldStore<unsigned __int8>(toF, v50);
+                        break;
+                    case 2:
+                        Bo1_MsgReadFieldStore<unsigned __int16>(toF, v50);
+                        break;
+                    case 4:
+                        Bo1_MsgReadFieldStore<int>(toF, v50);
+                        break;
+                }
+            }
+            else
+            {
+                v49 = MSG_ReadValue(msg, fromF, toF, -8, field->size);
+                v37 = field->size;
+                switch ( v37 )
+                {
+                    case 1:
+                        Bo1_MsgReadFieldStore<unsigned __int8>(toF, v49);
+                        break;
+                    case 2:
+                        Bo1_MsgReadFieldStore<unsigned __int16>(toF, v49);
+                        break;
+                    case 4:
+                        Bo1_MsgReadFieldStore<int>(toF, v49);
+                        break;
+                }
+            }
+            break;
+        case -86:
+            v34 = MSG_ReadBits(msg, 6u);
+            Bo1_MsgReadFieldStore<float>(toF, (float)((float)((float)v34 * 1.0) / 10.0) + 1.0);
+            break;
+        case -85:
+            if ( MSG_ReadBit(msg) )
+            {
+                fromColor = (const hudelem_color_t *)fromF;
+                toColora = (hudelem_color_t *)toF;
+                Bo1_MsgReadFieldStore<int>(toF, Bo1_MsgReadFieldLoad<int>(fromF));
+                toColora->a = fromColor->a != 0 ? 0 : -1;
+            }
+            else
+            {
+                toColor = (hudelem_color_t *)toF;
+                if ( !MSG_ReadBit(msg) )
+                {
+                    toColor->r = MSG_ReadByte(msg);
+                    toColor->g = MSG_ReadByte(msg);
+                    toColor->b = MSG_ReadByte(msg);
+                }
+                toColor->a = 8 * MSG_ReadBits(msg, 5u);
+                toColor->a |= ((int)toColor->a >> 5) & 7;
+            }
+            break;
+        default:
+            if ( MSG_ReadBit(msg) )
+            {
+                v48 = MSG_ReadValue(msg, fromF, toF, field->bits, field->size);
+                v35 = field->size;
+                switch ( v35 )
+                {
+                    case 1:
+                        Bo1_MsgReadFieldStore<unsigned __int8>(toF, v48);
+                        break;
+                    case 2:
+                        Bo1_MsgReadFieldStore<unsigned __int16>(toF, v48);
+                        break;
+                    case 4:
+                        Bo1_MsgReadFieldStore<int>(toF, v48);
+                        break;
+                }
+            }
+            else
+            {
+                v36 = field->size;
+                switch ( v36 )
+                {
+                    case 1:
+                        Bo1_MsgReadFieldStore<unsigned __int8>(toF, 0);
+                        break;
+                    case 2:
+                        Bo1_MsgReadFieldStore<unsigned __int16>(toF, 0);
+                        break;
+                    case 4:
+                        Bo1_MsgReadFieldStore<int>(toF, 0);
+                        break;
+                }
+            }
+            break;
+    }
+#else
+
     int Bit; // eax
     int Byte; // eax
     int Long; // eax
@@ -4007,13 +4567,13 @@ void __cdecl MSG_ReadDeltaField(
                 }
             }
             return;
-        case 0xFFFFFFC1:
-        case 0xFFFFFFC3:
+        case -63:
+        case -61:
 LABEL_25:
             v10 = MSG_ReadLong(msg);
             *toF = v10;
             return;
-        case 0xFFFFFFA7:
+        case -89:
             if ( MSG_ReadBit(msg) )
             {
                 v12 = MSG_ReadLong(msg);
@@ -4034,14 +4594,14 @@ LABEL_25:
                     Com_Printf(16, "%s:%i ", field->name, trunc);
             }
             break;
-        case 0xFFFFFFA8:
+        case -88:
             v13 = MSG_ReadLong(msg);
             *toF = v13;
             *toF ^= *fromF;
             if ( print )
                 Com_Printf(16, "%s:%f ", field->name, *(float *)toF);
             break;
-        case 0xFFFFFF9D:
+        case -99:
             if ( MSG_ReadBit(msg) )
             {
                 if ( MSG_ReadBit(msg) )
@@ -4090,56 +4650,56 @@ LABEL_25:
                 __debugbreak();
             }
             break;
-        case 0xFFFFFFAF:
+        case -81:
             RangedFloat = MSG_ReadRangedFloat(msg, *(float *)fromF, 0.0, 1.0, 100, 0);
             *(float *)toF = RangedFloat;
             return;
-        case 0xFFFFFFB0:
+        case -80:
             v16 = MSG_ReadRangedFloat(msg, *(float *)fromF, 0.0, 1.0, 1000, 0);
             *(float *)toF = v16;
             return;
-        case 0xFFFFFFB3:
+        case -77:
             v17 = MSG_ReadRangedFloat(msg, *(float *)fromF, -1.0, 1.0, 100, 0);
             *(float *)toF = v17;
             return;
-        case 0xFFFFFFB4:
+        case -76:
             v59 = MSG_ReadRangedFloat(msg, (float)*(__int16 *)fromF * 0.000030517578, -1.0, 1.0, 10, 0);
             v47 = floor(v59 * 32768.0 + 0.5);
             *(_WORD *)toF = (int)v47;
             return;
-        case 0xFFFFFFB5:
+        case -75:
             v58 = MSG_ReadRangedFloat(msg, (float)*(__int16 *)fromF * 0.0054931641, -90.0, 90.0, 10, 0);
             v46 = floor(v58 * 182.04445 + 0.5);
             *(_WORD *)toF = (int)v46;
             return;
-        case 0xFFFFFFB6:
+        case -74:
             v57 = MSG_ReadRangedFloat(msg, (float)*(__int16 *)fromF * 0.0054931641, -180.0, 180.0, 10, 0);
             v45 = floor(v57 * 182.04445 + 0.5);
             *(_WORD *)toF = (int)v45;
             return;
-        case 0xFFFFFFB7:
+        case -73:
             v18 = MSG_ReadRangedFloat(msg, *(float *)fromF, -12.0, 12.0, 10, 0);
             *(float *)toF = v18;
             return;
-        case 0xFFFFFFB8:
+        case -72:
             v19 = MSG_ReadRangedFloat(msg, *(float *)fromF, -6000.0, 6000.0, 10, 0);
             *(float *)toF = v19;
             return;
-        case 0xFFFFFF9E:
+        case -98:
             EFlags = MSG_ReadEFlags(msg, *fromF);
             *toF = EFlags;
             return;
-        case 0xFFFFFF9F:
-        case 0xFFFFFFB9:
-        case 0xFFFFFFBA:
-        case 0xFFFFFFBC:
+        case -97:
+        case -71:
+        case -70:
+        case -68:
             DeltaTime = MSG_ReadDeltaTime(msg, time);
             *toF = DeltaTime;
             return;
-        case 0xFFFFFFBB:
-        case 0xFFFFFFBD:
+        case -69:
+        case -67:
             goto LABEL_25;
-        case 0xFFFFFFA0:
+        case -96:
             DeltaGroundEntity = MSG_ReadDeltaGroundEntity(msg);
             size = field->size;
             switch ( size )
@@ -4155,7 +4715,7 @@ LABEL_25:
                     break;
             }
             break;
-        case 0xFFFFFFA2:
+        case -94:
             DeltaEventField = MSG_ReadDeltaEventField(msg);
             v43 = field->size;
             switch ( v43 )
@@ -4171,7 +4731,7 @@ LABEL_25:
                     break;
             }
             break;
-        case 0xFFFFFFA3:
+        case -93:
             DeltaEventParamField = MSG_ReadDeltaEventParamField(msg);
             v42 = field->size;
             switch ( v42 )
@@ -4187,7 +4747,7 @@ LABEL_25:
                     break;
             }
             break;
-        case 0xFFFFFFC5:
+        case -59:
             if ( MSG_ReadBit(msg) == 1 )
             {
                 MinBitCountForNum = GetMinBitCountForNum(0x10u);
@@ -4225,11 +4785,11 @@ LABEL_25:
                 }
             }
             break;
-        case 0xFFFFFFA1:
+        case -95:
             v24 = MSG_ReadBits(msg, 7u);
             *toF = 100 * v24;
             break;
-        case 0xFFFFFFC6:
+        case -58:
             ValueNoXor = MSG_ReadValueNoXor(msg, 8);
             v39 = field->size;
             switch ( v39 )
@@ -4245,58 +4805,58 @@ LABEL_25:
                     break;
             }
             break;
-        case 0xFFFFFFA4:
-        case 0xFFFFFFA5:
-        case 0xFFFFFFBE:
-        case 0xFFFFFFBF:
+        case -92:
+        case -91:
+        case -66:
+        case -65:
             OriginFloat = MSG_ReadOriginFloat(field->bits, msg, *(float *)fromF);
             *(float *)toF = OriginFloat;
             if ( print )
                 Com_Printf(16, "%s:%f ", field->name, *(float *)toF);
             break;
-        case 0xFFFFFFA6:
-        case 0xFFFFFFC0:
+        case -90:
+        case -64:
             OriginZFloat = MSG_ReadOriginZFloat(msg, *(float *)fromF);
             *(float *)toF = OriginZFloat;
             if ( print )
                 Com_Printf(16, "%s:%f ", field->name, *(float *)toF);
             break;
-        case 0xFFFFFF96:
+        case -106:
             v27 = MSG_ReadRangedFloat(msg, *(float *)fromF, 0.0, 255.0, 100, 0);
             *(float *)toF = v27;
             break;
-        case 0xFFFFFF95:
+        case -107:
             v28 = MSG_ReadRangedFloat(msg, *(float *)fromF, 0.0, 60.0, 100, 0);
             *(float *)toF = v28;
             break;
-        case 0xFFFFFF99:
-        case 0xFFFFFF9A:
-        case 0xFFFFFF9B:
+        case -103:
+        case -102:
+        case -101:
             DemoRoundedFloat = MSG_ReadDemoRoundedFloat(msg, field->bits, *(float *)fromF, 5u, 0x10u);
             *(float *)toF = DemoRoundedFloat;
             if ( print )
                 Com_Printf(16, "%s:%f ", field->name, *(float *)toF);
             break;
-        case 0xFFFFFF98:
+        case -104:
             v30 = MSG_ReadDemoRoundedFloat(msg, field->bits, *(float *)fromF, 7u, 0xCu);
             *(float *)toF = v30;
             if ( print )
                 Com_Printf(16, "%s:%f ", field->name, *(float *)toF);
             break;
-        case 0xFFFFFF97:
+        case -105:
             Angle = MSG_ReadAngle(msg, 0xAu);
             *(float *)toF = Angle;
             break;
-        case 0xFFFFFF9C:
-        case 0xFFFFFFC2:
+        case -100:
+        case -62:
             DeltaAngle = MSG_ReadDeltaAngle(msg, *(float *)fromF);
             *(float *)toF = DeltaAngle;
             break;
-        case 0xFFFFFFA9:
+        case -87:
             Angle16 = MSG_ReadAngle16(msg);
             *(float *)toF = Angle16;
             break;
-        case 0xFFFFFFC4:
+        case -60:
             if ( MSG_ReadBit(msg) == 1 )
             {
                 delta = MSG_ReadBits(msg, 5u);
@@ -4333,11 +4893,11 @@ LABEL_25:
                 }
             }
             break;
-        case 0xFFFFFFAA:
+        case -86:
             v34 = MSG_ReadBits(msg, 6u);
             *(float *)toF = (float)((float)((float)v34 * 1.0) / 10.0) + 1.0;
             break;
-        case 0xFFFFFFAB:
+        case -85:
             if ( MSG_ReadBit(msg) )
             {
                 fromColor = (const hudelem_color_t *)fromF;
@@ -4394,6 +4954,7 @@ LABEL_25:
             }
             break;
     }
+#endif
 }
 
 int __cdecl MSG_ReadDeltaTime(msg_t *msg, int timeBase)

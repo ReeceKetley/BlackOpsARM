@@ -1,0 +1,30 @@
+# Native transient allocator empty-state arithmetic
+
+2026-10-14. Production source is frozen and released to root for SDK462/stage34 integration. Only `src/physics/phys_transient_allocator.cpp` changed. SHA256 `E5FF5EBC979E966424C084DBCF715158AB51BE1188737F73BC28402D64C98DE1`. No master build, device, assets, provider, configuration, header or layout edits were performed by this repair task. Root owns the build, device, Ledger and STATE handoff.
+
+## Actual trigger
+
+SDK461/stage33 BuildId `6f56e48691d11a65ac309de2b8558c2ad197de51`, engine PID16859/SDLThread16932, reached CA_ACTIVE at81589ms. The matched live log reports `phys_transient_allocator.cpp:120:12: applying non-zero offset 112 to null pointer`. This occurs in client prediction: `allocate → gjk_query_prims → gjk_query → cached_query_resize/prolog → gjkcc_prolog → Pmove → CG_PredictPlayerState → CG_DrawActiveFrame → Com_Frame`. It is not a claimed physics timestep failure. The crash file contains older unrelated failures; the task extracted the matched PID/time/BuildId section into `sdk461-matched-crash.txt` and its relevant frames into `sdk461-matched-stack.txt`.
+
+Canonical constructor/reset deliberately set `m_cur`/`m_end` null. Before the repair, `allocate` aligned the null cursor, then evaluated `aligned + size` before reaching `resize`. The write-lock retry in `mt_allocate` did the same. The previously integer-bounded Android CAS helper still accepted an empty zero-size request up to a null-pointer CAS expression. Callers in `phys_gjk_collision_detection.cpp`, `phys_collision.cpp`, `phys_broad_phase.cpp` and `phys_constraint_solver_multithreaded.cpp` request real engine allocations; the observed112-byte request fits the normal block after first growth.
+
+## Repair
+
+An Android-only `TransientAllocationFits` helper guards all five immediate allocation attempts: the two ordinary attempts, two multithread write-lock attempts and the read-lock CAS attempt. It rejects null cursors even for size0, negative sizes, nonpositive/non-power-of-two alignment, reversed bounds, integer alignment overflow and extents beyond the current block. It computes capacity through integer subtraction before deriving any pointer. On success it derives the aligned pointer from the owned current cursor, after proving the alignment padding and requested extent fit. Existing `aligned + size` publications and the CAS next-pointer expression now execute only after that proof.
+
+Empty/reset requests still follow canonical resize. Real0x4000 blocks, the native-sized block header, slot-pool owner/cache, linked block list, accounting and reset freeing are unchanged. Existing assertions and `no_error` policy are retained, including the too-large/failure assertion after the retry. Size0 within a valid block retains the original nonconsuming behavior; size0 from empty state now grows first. The CAS loop retains its sequentially consistent atomic cursor load and pointer compare/exchange, recomputing bounds on a changed cursor. Read/write locks and growth under the write lock are retained. Windows paths remain textually identical after preprocessing.
+
+## Verification
+
+- Canonical production Android ARM64 whole TU passes with the existing O0/debug/function instrumentation/UBSan/no-recovery flags. Win32 and Win64 whole TUs pass in this worktree.
+- Eight preprocessing executions pass: native before/after and Windows before/after/read-only BlackOps64 oracle for both ABIs. All seven Windows function bodies match both before and oracle exactly. Native reset, reset_to_state, resize and legacy align helper are unchanged; all five attempts use the bounded helper, and assertion/lock/CAS/resize call counts are retained.
+- Source-extracted native allocation-family host fixture passes350 checks. It uses the canonical allocator declaration and extracts actual helper/reset/resize/allocate/mt_allocate_internal/mt_allocate bodies; fixture-only host slot-pool/assert/mutex/atomic services are explicitly labeled. Coverage includes empty112-byte and empty0-byte requests, first growth, alignment/capacity/overflow rejection, exact-fit and in-block0-byte behavior, rollover preserving the older block, reset and reuse, allocation failure/assertions, too-large requests, a forced changed-cursor CAS retry and four host threads allocating160 disjoint aligned slots. Seven actual host blocks are grown and freed. This is host fixture evidence; it does not claim Android allocator/mutex/CAS runtime execution or engine gameplay success.
+- Exact inverse substitution reconstructs the before source bytes. CP1252 high bytes/BOM are preserved; untouched original CRLF and16 remaining bareLF lines are preserved. The previously native8-line LF section was replaced by a3-line LF section, explaining21→16 bareLF lines without rewriting unrelated layout. The canonical header and structures are unchanged.
+
+Initial evidence-script failures were harness-only: the first replacement expected CRLF in an existing LF native section and stopped before writing source; a shell-edit quoting attempt also failed without modifying production. The first comparison extractor matched another class's `allocate`, and its failure JSON is preserved as `check-results-initial-extractor-failure.json`. Qualifying the class corrected the extractor; production stayed at the frozen hash throughout verification.
+
+## Evidence and limits
+
+Evidence folder: `build-android-audit/native_transient_allocator_empty1/`. Important files: `repair-manifest.json`, `final-manifest.json`, `source.diff`, `check-results.json`, native/Windows command and compile logs, preprocessing outputs, `fixture-results.json`, `family-fixture.cpp` and `fixture-x64-run.log`. Source before hash `57F409CDFEFE6B711B6CB48B707512888FFD4BA92A101AA8B8A0BC6CBF81C5CE`; read-only BlackOps64 oracle hash `4B86E2A3BE147005075482CA47782E68E271D920FB01F46088BD1455C8D9E0CA`.
+
+Actual device verification remains pending root's next combined SDK run. No assertion/UBSan weakening, bypass, fake success/readiness, retail asset change, layout change or independently copied engine implementation was added.

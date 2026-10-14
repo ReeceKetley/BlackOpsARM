@@ -1,4 +1,8 @@
 #include "snd_occlusion.h"
+#if defined(__ANDROID__)
+#include <platform/android/occlusion_worker.h>
+#define InterlockedExchange _InterlockedExchange
+#endif
 #include <universal/profile.h>
 #include <qcommon/cm_trace.h>
 #include <cgame/cg_world.h>
@@ -8,6 +12,23 @@
 #include <win32/win_common.h>
 #include <qcommon/threads.h>
 #include <win32/win_net.h>
+
+static int SND_OcclusionRunning()
+{
+#if defined(__ANDROID__)
+    return __atomic_load_n(&g_snd.occlusionRunning,__ATOMIC_SEQ_CST);
+#else
+    return g_snd.occlusionRunning;
+#endif
+}
+static void SND_SetOcclusionRunning(int running)
+{
+#if defined(__ANDROID__)
+    __atomic_store_n(&g_snd.occlusionRunning,running,__ATOMIC_SEQ_CST);
+#else
+    g_snd.occlusionRunning=running;
+#endif
+}
 
 double __cdecl SND_LosOcclusionTrace(bool fancy, int *cache, const float *listener, const float *playback)
 {
@@ -523,7 +544,7 @@ void __cdecl SND_LosOcclusionCmd()
     int savedregs; // [esp+10h] [ebp+0h] BYREF
 
     Sys_EnterCriticalSection(CRITSEC_SOUND_OCCLUSION);
-    if ( g_snd.occlusionRunning )
+    if ( SND_OcclusionRunning() )
     {
         for ( i = 0; i < 0x4A; ++i )
         {
@@ -612,12 +633,17 @@ void __cdecl SND_LosOcclusionUpdate()
 
 void __cdecl SND_LosOcclusionThreadMain()
 {
+#if defined(__ANDROID__)
+    // The quit event is initially unsignaled and becomes signaled on quit.
+    while ( !Sys_QueryWin32QuitEvent() )
+#else
     while ( Sys_QueryWin32QuitEvent() )
+#endif
     {
-        while ( g_snd.occlusionRunning )
+        while ( SND_OcclusionRunning() )
         {
             Sys_WaitForOcclusion();
-            if ( !g_snd.occlusionRunning )
+            if ( !SND_OcclusionRunning() )
                 return;
             Sys_EnterCriticalSection(CRITSEC_SOUND_OCCLUSION);
             Sys_LeaveCriticalSection(CRITSEC_SOUND_OCCLUSION);
@@ -631,6 +657,11 @@ void __cdecl SND_LosOcclusionThreadMain()
     }
 }
 
+static void __cdecl SND_OcclusionThreadEntry(unsigned int)
+{
+    SND_LosOcclusionThreadMain();
+}
+
 void __cdecl SND_LosOcclusionInit()
 {
     LONG Target; // [esp+0h] [ebp-8h] BYREF
@@ -639,22 +670,25 @@ void __cdecl SND_LosOcclusionInit()
     memset((unsigned __int8 *)g_snd.occlusionTraces, 0, sizeof(g_snd.occlusionTraces));
     for (i = 0; i < 0x4A; ++i)
         g_snd.occlusionTraces[i].id = -1;
-    g_snd.occlusionRunning = 1;
+    SND_SetOcclusionRunning(1);
     Target = 0;
     InterlockedExchange(&Target, 0);
-    Sys_SpawnOcclusion((void(__cdecl *)(unsigned int))SND_LosOcclusionThreadMain);
+    Sys_SpawnOcclusion(SND_OcclusionThreadEntry);
 }
 
 void __cdecl SND_LosOcclusionFini()
 {
     LONG Target; // [esp+0h] [ebp-4h] BYREF
 
-    g_snd.occlusionRunning = 0;
+    SND_SetOcclusionRunning(0);
     Target = 0;
     InterlockedExchange(&Target, 0);
     Sys_EnterCriticalSection(CRITSEC_SOUND_OCCLUSION);
     Sys_SetOcclusion();
     Sys_LeaveCriticalSection(CRITSEC_SOUND_OCCLUSION);
+    #if defined(__ANDROID__)
+    bo1::android::JoinRetiredOcclusionThread();
+    #endif
     g_snd.traceSequence = 0;
     g_snd.lastTraceSequence = 0;
 }

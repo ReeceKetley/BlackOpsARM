@@ -1,3 +1,33 @@
+bool g_allowMature = true;
+static bool s_headless;
+extern int s_nosnd;
+static bool s_headlessClient;
+static int Sys_CmdlineIntValue(const char *, const char *);
+#if defined(BO1_NATIVE_HEADLESS_POLICY)
+#include <cstring>
+#include <cstdlib>
+#include <platform/android/headless_policy.h>
+#if defined(__ANDROID__) && defined(BO1_NATIVE_SDL_RENDERED_ENTRY)
+#include <platform/android/controller_service.h>
+#endif
+#if defined(BO1_NATIVE_RENDER_OWNER_DISPATCH)
+#include <platform/android/renderer_window.h>
+#endif
+#include <monkey/monkey.h>
+#if defined(BO1_NATIVE_SYSTEM_CORE)
+#include <platform/android/system_initialization.h>
+#include <platform/android/headless_diagnostics.h>
+#include <qcommon/sys_info.h>
+#include <qcommon/cmd.h>
+#include <win32/win_net.h>
+#include <gfx_d3d/r_init.h>
+#include <gfx_d3d/r_dvars.h>
+#include <mjpeg/mjpeg.h>
+#include <mjpeg/avi.h>
+void Sys_In_Restart_f();
+void Sys_Net_Restart_f();
+#endif
+#else
 #include "win_main.h"
 #include <platform/bo1_arch.hpp>
 #include "win_net.h"
@@ -46,15 +76,15 @@
 #include <ui_mp/ui_main_mp.h>
 #include <platform/platform.hpp>
 
-const dvar_t *sys_configureGHz;
-const dvar_t *sys_sysMB;
-const dvar_t *sys_gpu;
-const dvar_t *sys_configSum;
-const dvar_t *sys_SSE;
 
-bool g_allowMature = true;
 
-int s_nosnd;
+
+
+
+
+
+
+
 SysInfo sys_info;
 
 // zombies: bo1_headless - a windowless test mode that never takes the desktop.
@@ -74,38 +104,17 @@ SysInfo sys_info;
 // mouse or gamepad reads and no cursor moves, no focus change, no "display required" power request, and no
 // DirectDraw exclusive mode for the video memory probe. Screenshots read the game's own back buffer, never the
 // screen (r_screenshot.cpp).
-static bool s_headless;
-static bool s_headlessClient;
+
+
 static const dvar_t *bo1_autoquit;
 static int s_autoquitStartMs;
 
-bool __cdecl Sys_IsHeadless()
-{
-    return s_headless;
-}
 
-bool __cdecl Sys_IsHeadlessClient()
-{
-    return s_headlessClient;
-}
+
+
 
 // value of '<name> <int>' in a raw command line ('+set name 1'); the last whole-word match wins
-static int Sys_CmdlineIntValue(const char *cmdline, const char *name)
-{
-    int value = 0;
-    size_t len = strlen(name);
-    for (const char *p = strstr(cmdline, name); p; p = strstr(p + len, name))
-    {
-        bool startsWord = p == cmdline || p[-1] == ' ' || p[-1] == '+' || p[-1] == '"';
-        const char *v = p + len;
-        if (!startsWord || (*v != ' ' && *v != '"'))
-            continue;
-        while (*v == ' ' || *v == '"')
-            ++v;
-        value = atoi(v);
-    }
-    return value;
-}
+
 
 // x6c38: <exe directory>\main\<name>. The emergency copy is found next to the exe in every run (a normal launch may
 // start in another working directory; headless runs start in the exe's directory, so nothing changes there).
@@ -1217,108 +1226,9 @@ int eventHead;
 int eventTail;
 char sys_processSemaphoreFile[260];
 
-bool __cdecl PC_StartWithNoSounds()
-{
-    if ( G_ExitAfterToolComplete() )
-        s_nosnd = 1;
-    if ( !SD_Xaudio2CanInit() )
-        s_nosnd = 1;
-    return s_nosnd != 0;
-}
 
-void __cdecl Sys_GetInfo(SysInfo *info)
-{
-    memcpy(info, &sys_info, sizeof(SysInfo));
-}
 
-bool __cdecl Sys_HasConfigureChecksumChanged(int checksum)
-{
-    bool changed; // [esp+3h] [ebp-1h]
 
-    Sys_RegisterInfoDvars();
-    if ( G_OnlyConnectingPaths() )
-        return 0;
-    changed = 0;
-    if ( sys_configSum->current.integer && sys_configSum->current.integer != checksum )
-        changed = Sys_ShouldUpdateForConfigChange();
-    if ( !sys_configSum->current.integer || sys_configSum->current.integer != checksum )
-        Dvar_SetInt((dvar_s *)sys_configSum, checksum);
-    return changed;
-}
-
-bool __cdecl Sys_ShouldUpdateForConfigChange()
-{
-    HWND ActiveWindow; // eax
-    char *v2; // [esp-Ch] [ebp-Ch]
-    char *v3; // [esp-8h] [ebp-8h]
-
-    if ( Sys_IsHeadless() ) // zombies: headless never prompts
-        return 0;
-    v3 = Win_LocalizeRef("WIN_CONFIGURE_UPDATED_TITLE");
-    v2 = Win_LocalizeRef("WIN_CONFIGURE_UPDATED_BODY");
-    ActiveWindow = GetActiveWindow();
-    return MessageBoxA(ActiveWindow, v2, v3, 0x44u) == 6;
-}
-
-void Sys_RegisterInfoDvars()
-{
-    float value; // xmm0_4
-
-    sys_configureGHz = _Dvar_RegisterFloat(
-                                             "sys_configureGHz",
-                                             0.0,
-                                             -3.4028235e38,
-                                             3.4028235e38,
-                                             0x11u,
-                                             "Normalized total CPU power, based on cpu type, count, and speed; used in autoconfigure");
-    sys_sysMB = _Dvar_RegisterInt("sys_sysMB", 0, 0x80000000, 0x7FFFFFFF, 0x11u, "Physical memory in the system");
-    sys_gpu = _Dvar_RegisterString("sys_gpu", (char *)"", 0x11u, "GPU description");
-    sys_configSum = _Dvar_RegisterInt("sys_configSum", 0, 0x80000000, 0x7FFFFFFF, 0x11u, "Configuration checksum");
-    sys_SSE = _Dvar_RegisterBool("sys_SSE", sys_info.SSE, 0x40u, "Operating system allows Streaming SIMD Extensions");
-    value = sys_info.cpuGHz;
-    _Dvar_RegisterFloat("sys_cpuGHz", value, -3.4028235e38, 3.4028235e38, 0x40u, "Measured CPU speed");
-    _Dvar_RegisterString("sys_cpuName", sys_info.cpuName, 0x40u, "CPU name description");
-}
-
-bool __cdecl Sys_HasInfoChanged()
-{
-    Sys_RegisterInfoDvars();
-    return (sys_configureGHz->current.value > sys_info.configureGHz * 1.100000023841858
-             || sys_info.configureGHz * 0.8999999761581421 > sys_configureGHz->current.value
-             || sys_sysMB->current.integer > sys_info.sysMB + 32
-             || sys_sysMB->current.integer < sys_info.sysMB - 32
-             || strcmp(sys_gpu->current.string, sys_info.gpuDescription))
-            && Sys_ShouldUpdateForInfoChange();
-}
-
-bool __cdecl Sys_ShouldUpdateForInfoChange()
-{
-    HWND ActiveWindow; // eax
-    char *v2; // [esp-Ch] [ebp-Ch]
-    char *v3; // [esp-8h] [ebp-8h]
-
-    Sys_ArchiveInfo(0);
-    // Automated weapon sweeps use a disposable profile and keep the launcher settings.
-    if ( G_OnlyConnectingPaths() || Sys_IsHeadless()
-        || (Dvar_GetBool("bo1_testclient_realwindow") && Dvar_GetString("bo1_weaponsweep")[0]) )
-        return 0;
-    v3 = Win_LocalizeRef("WIN_COMPUTER_CHANGE_TITLE");
-    v2 = Win_LocalizeRef("WIN_COMPUTER_CHANGE_BODY");
-    ActiveWindow = GetActiveWindow();
-    return MessageBoxA(ActiveWindow, v2, v3, 0x44u) == 6;
-}
-
-void __cdecl Sys_ArchiveInfo(int checksum)
-{
-    float value; // xmm0_4
-
-    Sys_RegisterInfoDvars();
-    value = sys_info.configureGHz;
-    Dvar_SetFloat((dvar_s *)sys_configureGHz, value);
-    Dvar_SetInt((dvar_s *)sys_sysMB, sys_info.sysMB);
-    Dvar_SetString((dvar_s *)sys_gpu, sys_info.gpuDescription);
-    Dvar_SetInt((dvar_s *)sys_configSum, checksum);
-}
 
 void __cdecl    Sys_DirectXFatalError()
 {
@@ -1368,12 +1278,20 @@ void __cdecl    Sys_OutOfMemErrorInternal(const char *filename, int line)
     exit(-1);
 }
 
+#endif // preceding normal Win32 helpers
+#if !defined(BO1_NATIVE_HEADLESS_POLICY) || defined(BO1_NATIVE_SYSTEM_SHUTDOWN)
+#if defined(BO1_NATIVE_SYSTEM_SHUTDOWN)
+#include <platform/android/shutdown_services.h>
+#include <universal/q_shared.h>
+#endif
 void __cdecl Sys_QuitAndStartProcess(const char *exeName)
 {
     I_strncpyz(sys_exitCmdLine, exeName, 1024);
     Cbuf_AddText(0, "quit\n");
 }
 
+#endif // canonical deferred process command
+#if !defined(BO1_NATIVE_HEADLESS_POLICY)
 void __cdecl Sys_OpenURL(const char *url, int doexit)
 {
 #if 0 // BO1TODO: re-enable this later when it's rewritten
@@ -1448,17 +1366,45 @@ void    Sys_Error(char *error, ...)
     exit(0);
 }
 
+#endif // preceding normal Win32 bodies
+#if !defined(BO1_NATIVE_HEADLESS_POLICY) || defined(BO1_NATIVE_SYSTEM_SHUTDOWN)
+#if defined(BO1_NATIVE_SYSTEM_SHUTDOWN)
+#include <platform/android/shutdown_services.h>
+#include <platform/android/system_initialization.h>
+#include <platform/android/headless_diagnostics.h>
+#include <live/live_steam.h>
+#include <client_mp/cl_main_mp.h>
+#include <client/cl_keys.h>
+#include <client/cl_console.h>
+#include <client/con_channels.h>
+#include <qcommon/mem_track.h>
+#include <win32/win_localize.h>
+#include <clientscript/cscr_stringlist.h>
+#include <universal/com_memory.h>
+#include <universal/assertive.h>
+void Sys_ShutdownEvents();
+#endif
 void __cdecl    Sys_Quit()
 {
+#if defined(__ANDROID__)
+    bo1::android::BeginFinalSystemCleanup();
+#else
     Sys_EnterCriticalSection(CRITSECT_COM_ERROR);
     timeEndPeriod(1u);
+#endif
     Sys_SpawnQuitProcess();
     LiveSteam_Shutdown();
     CL_ShutdownAll();
+#if defined(__ANDROID__)
+    bo1::android::ShutdownInputIfInitialized();
+#else
     IN_Shutdown();
+#endif
     Key_Shutdown();
     Sys_DestroyConsole();
+#if !defined(__ANDROID__)
     Sys_NormalExit();
+#endif
     Win_ShutdownLocalization();
     RefreshQuitOnErrorCondition();
     Dvar_Shutdown();
@@ -1471,9 +1417,15 @@ void __cdecl    Sys_Quit()
     if ( !com_errorEntered )
         track_shutdown(0);
     Con_ShutdownChannels();
+#if defined(__ANDROID__)
+    bo1::android::FinishSystemQuit();
+#else
     exit(0);
+#endif
 }
 
+#endif // canonical final quit lifecycle
+#if !defined(BO1_NATIVE_HEADLESS_POLICY)
 void Sys_SpawnQuitProcess()
 {
     char *v0; // eax
@@ -1540,6 +1492,16 @@ char *__cdecl Sys_GetClipboardData()
     return data;
 }
 
+#endif // normal Win32 bodies before shared event queue
+#if defined(BO1_NATIVE_HEADLESS_POLICY)
+#include <win32/win_local.h>
+#include <platform/common_boot_api.h>
+#include <platform/android/quit_services.h>
+#include <universal/memory_services.h>
+sysEvent_t eventQue[256];
+unsigned int eventHead,eventTail;
+sysEvent_t *Win_GetEvent(sysEvent_t *result);
+#endif
 void __cdecl Sys_QueEvent(unsigned int time, sysEventType_t type, int value, int value2, int ptrLength, void *ptr)
 {
     sysEvent_t *ev; // [esp+0h] [ebp-4h]
@@ -1570,7 +1532,11 @@ void Sys_ShutdownEvents()
     sysEvent_t *ev; // [esp+0h] [ebp-4h]
 
     Sys_EnterCriticalSection(CRITSECT_SYS_EVENT_QUEUE);
+#if defined(BO1_NATIVE_HEADLESS_POLICY)
+    while ( eventHead != eventTail )
+#else
     while ( eventHead > eventTail )
+#endif
     {
         ev = &eventQue[(unsigned __int8)eventTail++];
         if ( ev->evPtr )
@@ -1579,8 +1545,12 @@ void Sys_ShutdownEvents()
     Sys_LeaveCriticalSection(CRITSECT_SYS_EVENT_QUEUE);
 }
 
+#if !defined(BO1_NATIVE_HEADLESS_POLICY) || defined(BO1_NATIVE_SYSTEM_CORE)
 void __cdecl Sys_LoadingKeepAlive()
 {
+#if defined(BO1_NATIVE_RENDER_OWNER_DISPATCH)
+    bo1::android::PumpRendererOwnerRequestsIfOwner();
+#endif
     sysEvent_t result; // [esp+0h] [ebp-48h] BYREF
     sysEvent_t v1; // [esp+18h] [ebp-30h]
     sysEvent_t ev; // [esp+30h] [ebp-18h]
@@ -1590,12 +1560,35 @@ void __cdecl Sys_LoadingKeepAlive()
     {
         v1 = *Win_GetEvent(&result);
         ev = v1;
+#if defined(__ANDROID__)
+        // Loading discards these events; retire their actual tagged payloads.
+        if (ev.evPtr) Z_Free(static_cast<char *>(ev.evPtr), 11);
+#endif
     }
     while ( v1.evType );
 }
 
+#endif
 sysEvent_t *__cdecl Win_GetEvent(sysEvent_t *result)
 {
+#if defined(BO1_NATIVE_HEADLESS_POLICY)
+    if(!result)std::abort();
+    Sys_EnterCriticalSection(CRITSECT_SYS_EVENT_QUEUE);
+    if(eventHead==eventTail && Sys_IsQuitRequested()) {
+        Sys_LeaveCriticalSection(CRITSECT_SYS_EVENT_QUEUE);
+        Com_Quit_f();
+        std::abort(); // Com_Quit_f is terminal; do not fabricate an event if it returns.
+    }
+    if(eventHead!=eventTail) {
+        *result=eventQue[static_cast<unsigned char>(eventTail++)];
+        eventQue[static_cast<unsigned char>(eventTail-1)]={};
+    } else {
+        *result={};result->evTime=Sys_Milliseconds();
+    }
+    Sys_LeaveCriticalSection(CRITSECT_SYS_EVENT_QUEUE);
+    return result;
+#else
+
     int v2; // [esp+0h] [ebp-50h]
     char *b; // [esp+10h] [ebp-40h]
     tagMSG msg; // [esp+18h] [ebp-38h] BYREF
@@ -1653,6 +1646,7 @@ sysEvent_t *__cdecl Win_GetEvent(sysEvent_t *result)
         *result = ev;
         return result;
     }
+#endif
 }
 
 sysEvent_t *__cdecl Sys_GetEvent(sysEvent_t *result)
@@ -1665,6 +1659,7 @@ sysEvent_t *__cdecl Sys_GetEvent(sysEvent_t *result)
     return result;
 }
 
+#if !defined(BO1_NATIVE_HEADLESS_POLICY) || defined(BO1_NATIVE_SYSTEM_CORE)
 void __cdecl Sys_Mjpeg()
 {
     const char *v0; // eax
@@ -1699,6 +1694,9 @@ cmd_function_s Sys_Mjpeg_VAR;
 cmd_function_s Sys_MjpegClose_VAR;
 cmd_function_s Sys_Listen_f_VAR;
 cmd_function_s Sys_Connect_f_VAR;
+
+#endif
+#if !defined(BO1_NATIVE_HEADLESS_POLICY)
 
 // zombies: headless evidence - drive the menus through the game's own UI entry points, never OS input:
 // 'bo1_uikey <keynum>' sends a key down + up through UI_KeyEvent (what a key press reaches the menus by), and
@@ -1884,15 +1882,20 @@ static cmd_function_s Sys_HeadlessMenuAction_f_VAR;
 static cmd_function_s Sys_HeadlessItemKey_f_VAR;
 static cmd_function_s Sys_HeadlessMenuSweep_f_VAR;
 
+#endif
+#if !defined(BO1_NATIVE_HEADLESS_POLICY) || defined(BO1_NATIVE_SYSTEM_CORE)
+
 void __cdecl Sys_Init()
 {
     const char *BuildDisplayNameR; // eax
     char *v1; // eax
     const char *v2; // eax
     char *v3; // eax
+#if !defined(__ANDROID__)
     _OSVERSIONINFOA osversion; // [esp+14h] [ebp-A0h] BYREF
-
     timeBeginPeriod(1u);
+#endif
+#if !defined(__ANDROID__)
     bo1_autoquit = _Dvar_RegisterInt("bo1_autoquit", 0, 0, 0x7FFFFFFF, 0, "zombies: quit this many ms after init (0 = off); for headless test runs");
     bo1_quitnotify = _Dvar_RegisterString("bo1_quitnotify", "", 0, "L20: headless - quit <level ms> of level time after level notify <name> fired <count> times (\"start_of_round,3,20000\"; empty = off)");
     bo1_dvardump = _Dvar_RegisterBool("bo1_dvardump", false, 0, "zombies: print every dvar (type, flags, reset, current) when bo1_autoquit fires");
@@ -1910,12 +1913,17 @@ void __cdecl Sys_Init()
         Cmd_AddCommandInternal("bo1_wmclose", Sys_HeadlessWmClose_f, &Sys_HeadlessWmClose_f_VAR);
         Cmd_AddCommandInternal("bo1_uimouse", Sys_HeadlessUiMouse_f, &Sys_HeadlessUiMouse_f_VAR);
     }
+#endif
     Cmd_AddCommandInternal("in_restart", Sys_In_Restart_f, &Sys_In_Restart_f_VAR);
     Cmd_AddCommandInternal("net_restart", Sys_Net_Restart_f, &Sys_Net_Restart_f_VAR);
     Cmd_AddCommandInternal("movie_start", Sys_Mjpeg, &Sys_Mjpeg_VAR);
     Cmd_AddCommandInternal("movie_stop", Sys_MjpegClose, &Sys_MjpegClose_VAR);
     Cmd_AddCommandInternal("net_listen", Sys_Listen_f, &Sys_Listen_f_VAR);
     Cmd_AddCommandInternal("net_connect", Sys_Connect_f, &Sys_Connect_f_VAR);
+#if defined(__ANDROID__)
+    bo1::android::RegisterDiagnosticsDvars();
+    bo1::android::InitializeSystemOS();
+#else
     osversion.dwOSVersionInfoSize = 148;
 #pragma warning(push)
 #pragma warning(disable : 4996) // cannot call GetVersionExA nowadays without this warning suppression
@@ -1934,6 +1942,7 @@ void __cdecl Sys_Init()
         v3 = va("%s doesn't run on Win32s", v2);
         Sys_Error(v3);
     }
+#endif
     Com_Printf(16, "CPU vendor is \"%s\"\n", sys_info.cpuVendor);
     Com_Printf(16, "CPU name is \"%s\"\n", sys_info.cpuName);
     if ( sys_info.logicalCpuCount == 1 )
@@ -1944,8 +1953,13 @@ void __cdecl Sys_Init()
         Com_Printf(16, "%i physical CPU%s detected\n", 1, "");
     else
         Com_Printf(16, "%i physical CPU%s detected\n", sys_info.physicalCpuCount, "s");
+#if defined(__ANDROID__)
+    Com_Printf(16, "Maximum CPU frequency reported by OS is %.2Lf GHz\n", sys_info.cpuGHz);
+    Com_Printf(16, "Reference CPU configuration estimate is %.2Lf GHz\n", sys_info.configureGHz);
+#else
     Com_Printf(16, "Measured CPU speed is %.2lf GHz\n", sys_info.cpuGHz);
     Com_Printf(16, "Total CPU performance is estimated as %.2lf GHz\n", sys_info.configureGHz);
+#endif
     Com_Printf(16, "System memory is %i MB (capped at 1 GB)\n", sys_info.sysMB);
     Com_Printf(16, "Video card is \"%s\"\n", sys_info.gpuDescription);
     if ( sys_info.SSE )
@@ -1956,7 +1970,11 @@ void __cdecl Sys_Init()
     IN_Init();
     // Port layer: register Windows backends that forward to existing Sys_/FS_/IN_* code.
     // Gameplay call sites are unchanged; Godot/Android will swap these implementations later.
+#if defined(__ANDROID__)
+    bo1::android::BootstrapNativePlatform();
+#else
     Platform_BootstrapWindows();
+#endif
 }
 
 void __cdecl Sys_In_Restart_f()
@@ -1969,6 +1987,9 @@ void __cdecl Sys_Net_Restart_f()
 {
     NET_Restart();
 }
+
+#endif
+#if !defined(BO1_NATIVE_HEADLESS_POLICY)
 
 int __cdecl Sys_CheckCrashOrRerun()
 {
@@ -2647,3 +2668,215 @@ bool __cdecl StartingDedicatedServer(char *cmdline)
     return atoi(p) != 0;
 }
 
+
+#endif
+
+bool __cdecl Sys_IsHeadless()
+{
+    return s_headless;
+}
+
+bool __cdecl Sys_IsHeadlessClient()
+{
+    return s_headlessClient;
+}
+
+static int Sys_CmdlineIntValue(const char *cmdline, const char *name)
+{
+    int value = 0;
+    size_t len = strlen(name);
+    for (const char *p = strstr(cmdline, name); p; p = strstr(p + len, name))
+    {
+        bool startsWord = p == cmdline || p[-1] == ' ' || p[-1] == '+' || p[-1] == '"';
+        const char *v = p + len;
+        if (!startsWord || (*v != ' ' && *v != '"'))
+            continue;
+        while (*v == ' ' || *v == '"')
+            ++v;
+        value = atoi(v);
+    }
+    return value;
+}
+
+#if defined(BO1_NATIVE_HEADLESS_POLICY)
+void Sys_InitializeHeadlessPolicy(const char *commandLine) {
+    s_headless = Sys_CmdlineIntValue(commandLine, "bo1_headless") != 0;
+    s_headlessClient = Sys_CmdlineIntValue(commandLine, "bo1_headless_client") != 0;
+    if (!s_headless || s_headlessClient) {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_SDL_RENDERED_ENTRY)
+        if (!s_headless && !s_headlessClient && Sys_CmdlineIntValue(commandLine, "dedicated") == 0) {
+            // Admission validates completed SDK adoption. Canonical Sys_Init and
+            // Com_Init still own actual input, video, device and audio creation.
+            if (bo1::android::SDLJavaSetupComplete() && bo1::android::SDLActivityAdopted())
+                return;
+            std::fputs("Native rendered entry requires actual completed SDLActivity adoption\n", stderr);
+            std::abort();
+        }
+        std::fputs("Native entry supports dedicated headless or adopted SDLActivity rendered mode; headless client is unsupported\n", stderr);
+#else
+        std::fputs("Native entry currently requires dedicated headless mode\n", stderr);
+#endif
+        std::abort();
+    }
+}
+#endif
+
+#if defined(BO1_NATIVE_HEADLESS_POLICY)
+#include <platform/startup_services_api.h>
+#include <qcommon/sys_info.h>
+#endif
+const dvar_t *sys_configureGHz;
+const dvar_t *sys_sysMB;
+const dvar_t *sys_gpu;
+const dvar_t *sys_configSum;
+const dvar_t *sys_SSE;
+
+#if !defined(BO1_NATIVE_HEADLESS_POLICY) || defined(BO1_NATIVE_SYSTEM_CORE)
+void Sys_RegisterInfoDvars();
+#if defined(__ANDROID__)
+#include <platform/android/ui_platform.h>
+#include <win32/win_localize.h>
+bool G_OnlyConnectingPaths();
+#endif
+void Sys_ArchiveInfo(int checksum);
+bool Sys_ShouldUpdateForConfigChange();
+bool Sys_ShouldUpdateForInfoChange();
+bool __cdecl Sys_HasConfigureChecksumChanged(int checksum)
+{
+    bool changed; // [esp+3h] [ebp-1h]
+
+    Sys_RegisterInfoDvars();
+    if ( G_OnlyConnectingPaths() )
+        return 0;
+    changed = 0;
+    if ( sys_configSum->current.integer && sys_configSum->current.integer != checksum )
+        changed = Sys_ShouldUpdateForConfigChange();
+    if ( !sys_configSum->current.integer || sys_configSum->current.integer != checksum )
+        Dvar_SetInt((dvar_s *)sys_configSum, checksum);
+    return changed;
+}
+
+bool __cdecl Sys_ShouldUpdateForConfigChange()
+{
+#if defined(__ANDROID__)
+    if (Sys_IsHeadless()) return false;
+    return bo1::android::ConfirmConfigurationChange(
+        Win_LocalizeRef("WIN_CONFIGURE_UPDATED_TITLE"),
+        Win_LocalizeRef("WIN_CONFIGURE_UPDATED_BODY"));
+#else
+    HWND ActiveWindow; // eax
+    char *v2; // [esp-Ch] [ebp-Ch]
+    char *v3; // [esp-8h] [ebp-8h]
+
+    if ( Sys_IsHeadless() ) // zombies: headless never prompts
+        return 0;
+    v3 = Win_LocalizeRef("WIN_CONFIGURE_UPDATED_TITLE");
+    v2 = Win_LocalizeRef("WIN_CONFIGURE_UPDATED_BODY");
+    ActiveWindow = GetActiveWindow();
+    return MessageBoxA(ActiveWindow, v2, v3, 0x44u) == 6;
+#endif
+}
+
+
+
+bool __cdecl Sys_HasInfoChanged()
+{
+    Sys_RegisterInfoDvars();
+    return (sys_configureGHz->current.value > sys_info.configureGHz * 1.100000023841858
+             || sys_info.configureGHz * 0.8999999761581421 > sys_configureGHz->current.value
+             || sys_sysMB->current.integer > sys_info.sysMB + 32
+             || sys_sysMB->current.integer < sys_info.sysMB - 32
+             || strcmp(sys_gpu->current.string, sys_info.gpuDescription))
+            && Sys_ShouldUpdateForInfoChange();
+}
+
+bool __cdecl Sys_ShouldUpdateForInfoChange()
+{
+#if defined(__ANDROID__)
+    Sys_ArchiveInfo(0);
+    if (G_OnlyConnectingPaths() || Sys_IsHeadless()
+        || (Dvar_GetBool("bo1_testclient_realwindow") && Dvar_GetString("bo1_weaponsweep")[0]))
+        return false;
+    return bo1::android::ConfirmConfigurationChange(
+        Win_LocalizeRef("WIN_COMPUTER_CHANGE_TITLE"),
+        Win_LocalizeRef("WIN_COMPUTER_CHANGE_BODY"));
+#else
+    HWND ActiveWindow; // eax
+    char *v2; // [esp-Ch] [ebp-Ch]
+    char *v3; // [esp-8h] [ebp-8h]
+
+    Sys_ArchiveInfo(0);
+    // Automated weapon sweeps use a disposable profile and keep the launcher settings.
+    if ( G_OnlyConnectingPaths() || Sys_IsHeadless()
+        || (Dvar_GetBool("bo1_testclient_realwindow") && Dvar_GetString("bo1_weaponsweep")[0]) )
+        return 0;
+    v3 = Win_LocalizeRef("WIN_COMPUTER_CHANGE_TITLE");
+    v2 = Win_LocalizeRef("WIN_COMPUTER_CHANGE_BODY");
+    ActiveWindow = GetActiveWindow();
+    return MessageBoxA(ActiveWindow, v2, v3, 0x44u) == 6;
+#endif
+}
+
+
+
+
+void __cdecl Sys_GetInfo(SysInfo *info)
+{
+    memcpy(info, &sys_info, sizeof(SysInfo));
+}
+
+void __cdecl Sys_ArchiveInfo(int checksum)
+{
+    float value; // xmm0_4
+
+    Sys_RegisterInfoDvars();
+    value = sys_info.configureGHz;
+    Dvar_SetFloat((dvar_s *)sys_configureGHz, value);
+    Dvar_SetInt((dvar_s *)sys_sysMB, sys_info.sysMB);
+    Dvar_SetString((dvar_s *)sys_gpu, sys_info.gpuDescription);
+    Dvar_SetInt((dvar_s *)sys_configSum, checksum);
+}
+#endif
+
+void Sys_RegisterInfoDvars()
+{
+    float value; // xmm0_4
+
+    sys_configureGHz = _Dvar_RegisterFloat(
+                                             "sys_configureGHz",
+                                             0.0,
+                                             -3.4028235e38,
+                                             3.4028235e38,
+                                             0x11u,
+                                             "Normalized total CPU power, based on cpu type, count, and speed; used in autoconfigure");
+    sys_sysMB = _Dvar_RegisterInt("sys_sysMB", 0, 0x80000000, 0x7FFFFFFF, 0x11u, "Physical memory in the system");
+    sys_gpu = _Dvar_RegisterString("sys_gpu", (char *)"", 0x11u, "GPU description");
+    sys_configSum = _Dvar_RegisterInt("sys_configSum", 0, 0x80000000, 0x7FFFFFFF, 0x11u, "Configuration checksum");
+    sys_SSE = _Dvar_RegisterBool("sys_SSE", sys_info.SSE, 0x40u, "Operating system allows Streaming SIMD Extensions");
+    value = sys_info.cpuGHz;
+    _Dvar_RegisterFloat("sys_cpuGHz", value, -3.4028235e38, 3.4028235e38, 0x40u, "Measured CPU speed");
+    _Dvar_RegisterString("sys_cpuName", sys_info.cpuName, 0x40u, "CPU name description");
+}
+
+#if defined(BO1_NATIVE_HEADLESS_POLICY)
+#include <sound/snd_driver_api.h>
+bool __cdecl G_ExitAfterToolComplete();
+#endif
+int s_nosnd;
+bool __cdecl PC_StartWithNoSounds()
+{
+    if ( G_ExitAfterToolComplete() )
+        s_nosnd = 1;
+    if ( !SD_Xaudio2CanInit() )
+        s_nosnd = 1;
+    return s_nosnd != 0;
+}
+
+#if defined(BO1_NATIVE_SYSTEM_CORE)
+void Sys_InitializeNativeDiagnostics(const char *commandLine) {
+    bo1::android::ConfigureDiagnostics(
+        Sys_CmdlineIntValue(commandLine, "bo1_frameperf"),
+        Sys_CmdlineIntValue(commandLine, "bo1_hitchwatch"),
+        Sys_CmdlineIntValue(commandLine, "bo1_threaddump"));
+}
+#endif

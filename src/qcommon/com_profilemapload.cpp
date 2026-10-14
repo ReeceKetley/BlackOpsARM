@@ -1,3 +1,14 @@
+#if defined(BO1_NATIVE_COM_BOOT)
+#include "com_profilemapload.h"
+#include <platform/common_boot_api.h>
+using bo1::win32::LARGE_INTEGER;
+#include <algorithm>
+#include <functional>
+#include <universal/timing.h>
+#include <gfx_d3d/r_font.h>
+#include <ui/ui_main.h>
+#include <ui/ui_atoms.h>
+#else
 #include "com_profilemapload.h"
 
 #include <Windows.h>
@@ -11,6 +22,8 @@
 #include <gfx_d3d/r_font.h>
 #include <ui/ui_main.h>
 #include <ui/ui_atoms.h>
+
+#endif
 
 const float PROFLOAD_BACKGROUND_COLOR[4] = { 0.0, 0.0, 0.0, 0.8f };
 const float PROFLOAD_TEXT_COLOR[4] = { 0.0, 1.0, 0.0, 1.0 };
@@ -88,6 +101,7 @@ void __cdecl ProfLoad_EndTrackedValueTicks(MapProfileElement *value, unsigned __
     value->ticksStart = 0;
 }
 
+#if !defined(BO1_NATIVE_COM_BOOT) || defined(BO1_NATIVE_PROFILE_LIFECYCLE)
 void __cdecl ProfLoad_Init()
 {
     com_profileLoading = _Dvar_RegisterBool("profile_show_loading", 0, 0, "Show map load profiler");
@@ -131,7 +145,11 @@ void __cdecl ProfLoad_Deactivate()
     {
         __debugbreak();
     }
+#if defined(__ANDROID__)
+    QueryPerformanceCounter(&PerformanceCount);
+#else
     v0 = (MapProfileEntry *)QueryPerformanceCounter(&PerformanceCount);
+#endif
     mapLoadProfile.ticksFinish = PerformanceCount.QuadPart;
     mapLoadProfile.isLoading = 0;
     ProfLoad_Print();
@@ -354,7 +372,11 @@ void ProfLoad_PrintHotSpots()
 
 bool __cdecl ProfLoad_CompareHotSpotNames(const MapProfileHotSpot &hotSpot0, const MapProfileHotSpot &hotSpot1)
 {
+#if defined(__ANDROID__)
+    return std::less<const char *>{}(hotSpot1.label, hotSpot0.label);
+#else
     return hotSpot1.label < hotSpot0.label;
+#endif
 }
 
 bool __cdecl ProfLoad_CompareHotSpotTicks(const MapProfileHotSpot &hotSpot0, const MapProfileHotSpot &hotSpot1)
@@ -362,13 +384,21 @@ bool __cdecl ProfLoad_CompareHotSpotTicks(const MapProfileHotSpot &hotSpot0, con
     return hotSpot0.ticksSelf > hotSpot1.ticksSelf;
 }
 
+#endif
+
+#include <universal/assertive.h>
 void __cdecl ProfLoad_Begin(const char *label)
 {
     int v1; // [esp+0h] [ebp-10h]
     LARGE_INTEGER PerformanceCount; // [esp+4h] [ebp-Ch] BYREF
     MapProfileEntry *entry; // [esp+Ch] [ebp-4h]
 
+#if defined(__ANDROID__)
+    // Main owns this state; a database worker must not read it concurrently.
+    if ( Sys_IsMainThread() && mapLoadProfile.isLoading )
+#else
     if ( mapLoadProfile.isLoading && Sys_IsMainThread() )
+#endif
     {
         entry = Com_GetEntryForNewLabel(label);
         ++entry->accessCount;
@@ -422,7 +452,12 @@ void __cdecl ProfLoad_End()
     unsigned __int64 timeStepInTicks; // [esp+Ch] [ebp-10h]
     unsigned __int64 currentTimeInTicks; // [esp+14h] [ebp-8h]
 
+#if defined(__ANDROID__)
+    // Main owns this state; a database worker must not read it concurrently.
+    if ( Sys_IsMainThread() && mapLoadProfile.isLoading )
+#else
     if ( mapLoadProfile.isLoading && Sys_IsMainThread() )
+#endif
     {
         entry = mapLoadProfile.currentEntry;
         if ( !mapLoadProfile.currentEntry
@@ -451,6 +486,7 @@ void __cdecl ProfLoad_End()
     }
 }
 
+#if !defined(BO1_NATIVE_COM_BOOT) || defined(BO1_NATIVE_PROFILE_LIFECYCLE)
 void __cdecl ProfLoad_DrawOverlay(rectDef_s *rect)
 {
     MapProfileEntry *v1; // eax
@@ -590,7 +626,11 @@ void __cdecl ProfLoad_DrawOverlay(rectDef_s *rect)
 
 int    ProfLoad_DrawTree()
 {
+#if defined(__ANDROID__)
+    int result = 0;
+#else
     int result; // eax
+#endif
     int v2; // [esp+1Ch] [ebp-124h]
     float textx; // [esp+24h] [ebp-11Ch]
     float texty; // [esp+28h] [ebp-118h]
@@ -619,3 +659,5 @@ int    ProfLoad_DrawTree()
     return result;
 }
 
+
+#endif

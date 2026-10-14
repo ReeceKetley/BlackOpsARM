@@ -1,4 +1,8 @@
 #pragma once
+#if defined(__ANDROID__)
+#include <atomic>
+static_assert(sizeof(std::atomic<bool>)==sizeof(bool) && std::atomic<bool>::is_always_lock_free);
+#endif
 #include <client/screen_placement.h>
 #include "r_rendercmds.h"
 #include "rb_state.h"
@@ -29,9 +33,17 @@ struct Ui3dTextureWindow // sizeof=0x9C
 
 struct Ui3dStatus // sizeof=0x14
 {                                       // XREF: .data:Ui3dStatus g_ui3dStatus/r
+#if defined(__ANDROID__)
+    std::atomic<bool> initialized;
+#else
     bool initialized;                   // XREF: R_UI3D_CheckRenderTarget(void)+3C/r
+#endif
                                         // R_UI3D_OnetimeInit(ushort,ushort,bool,int,bool)+4/r ...
+#if defined(__ANDROID__)
+    std::atomic<bool> rendering;
+#else
     bool rendering;                     // XREF: R_UI3D_Shutdown(void):loc_A8B2A5/r
+#endif
                                         // RB_UI3D_RenderToTexture(void const *,GfxUI3DBackend const *,GfxCmdBufInput const *):loc_A8BBA7/w ...
     unsigned __int16 width;             // XREF: R_UI3D_CheckRenderTarget(void)+18/w
                                         // R_UI3D_CheckRenderTarget(void)+61/r ...

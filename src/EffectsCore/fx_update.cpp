@@ -1,4 +1,5 @@
 #include <platform/engine_random.h>
+#include <platform/bo1_native_width.h>
 #include "fx_update.h"
 #include <cgame/cg_sp_client_ext.h>
 #include "fx_random.h"
@@ -3409,6 +3410,74 @@ void __cdecl FX_SetupCamera(
                 float tanHalfFovY,
                 float zfar)
 {
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+    double v6; // st7
+    const char *v7; // eax
+    float cosHalfFov; // [esp+60h] [ebp-8h]
+    float cosHalfFova; // [esp+60h] [ebp-8h]
+    unsigned int planeIndex; // [esp+64h] [ebp-4h]
+
+    camera->origin[0] = *vieworg;
+    camera->origin[1] = vieworg[1];
+    camera->origin[2] = vieworg[2];
+    AxisCopy(viewaxis, camera->axis);
+    camera->frustum[0][0] = viewaxis[0][0];
+    camera->frustum[0][1] = viewaxis[0][1];
+    camera->frustum[0][2] = viewaxis[0][2];
+    cosHalfFov = 1.0 / sqrtf((float)(tanHalfFovX * tanHalfFovX) + 1.0);
+    camera->frustum[1][0] = (float)((float)(tanHalfFovX * cosHalfFov) * viewaxis[0][0])
+                                                + (float)(cosHalfFov * (float)viewaxis[1][0]);
+    camera->frustum[1][1] = (float)((float)(tanHalfFovX * cosHalfFov) * (float)viewaxis[0][1])
+                                                + (float)(cosHalfFov * (float)viewaxis[1][1]);
+    camera->frustum[1][2] = (float)((float)(tanHalfFovX * cosHalfFov) * (float)viewaxis[0][2])
+                                                + (float)(cosHalfFov * (float)viewaxis[1][2]);
+    camera->frustum[2][0] = (float)((float)(tanHalfFovX * cosHalfFov) * viewaxis[0][0])        + (float)((-(cosHalfFov)) * (float)viewaxis[1][0]);
+    camera->frustum[2][1] = (float)((float)(tanHalfFovX * cosHalfFov) * (float)viewaxis[0][1]) + (float)((-(cosHalfFov)) * (float)viewaxis[1][1]);
+    camera->frustum[2][2] = (float)((float)(tanHalfFovX * cosHalfFov) * (float)viewaxis[0][2]) + (float)((-(cosHalfFov)) * (float)viewaxis[1][2]);
+    cosHalfFova = 1.0 / sqrtf((float)(tanHalfFovY * tanHalfFovY) + 1.0);
+    camera->frustum[3][0] = (float)((float)(tanHalfFovY * cosHalfFova) * viewaxis[0][0])
+                                                + (float)(cosHalfFova * (float)viewaxis[2][0]);
+    camera->frustum[3][1] = (float)((float)(tanHalfFovY * cosHalfFova) * (float)viewaxis[0][1])
+                                                + (float)(cosHalfFova * (float)viewaxis[2][1]);
+    camera->frustum[3][2] = (float)((float)(tanHalfFovY * cosHalfFova) * (float)viewaxis[0][2])
+                                                + (float)(cosHalfFova * (float)viewaxis[2][2]);
+    camera->frustum[4][0] = (float)((float)(tanHalfFovY * cosHalfFova) * viewaxis[0][0]) +        (float)((-(cosHalfFova)) * (float)viewaxis[2][0]);
+camera->frustum[4][1] = (float)((float)(tanHalfFovY * cosHalfFova) * (float)viewaxis[0][1]) +     (float)((-(cosHalfFova)) * (float)viewaxis[2][1]);
+    camera->frustum[4][2] = (float)((float)(tanHalfFovY * cosHalfFova) * (float)viewaxis[0][2]) + (float)((-(cosHalfFova)) * (float)viewaxis[2][2]);
+    camera->frustumPlaneCount = 5;
+    for ( planeIndex = 0; planeIndex < camera->frustumPlaneCount; ++planeIndex )
+    {
+        if ( !Vec3IsNormalized(camera->frustum[planeIndex]) )
+        {
+            v6 = Vec3Length(camera->frustum[planeIndex]);
+            v7 = va(
+                         "(%g %g %g) len %g",
+                         camera->frustum[planeIndex][0],
+                         camera->frustum[planeIndex][1],
+                         camera->frustum[planeIndex][2],
+                         v6);
+            if ( !Assert_MyHandler(
+                            "C:\\projects_pc\\cod\\codsrc\\src\\EffectsCore\\fx_update.cpp",
+                            2737,
+                            0,
+                            "%s\n\t%s",
+                            "Vec3IsNormalized( camera->frustum[planeIndex] )",
+                            v7) )
+                __debugbreak();
+        }
+        camera->frustum[planeIndex][3] = (float)((float)(camera->origin[0] * camera->frustum[planeIndex][0])
+                                                                                     + (float)(camera->origin[1] * camera->frustum[planeIndex][1]))
+                                                                     + (float)(camera->origin[2] * camera->frustum[planeIndex][2]);
+    }
+    if ( zfar > 0.0 )
+    {
+        (camera->frustum[5][0]) = -(viewaxis[0][0]);
+        (camera->frustum[5][1]) = -(viewaxis[0][1]);
+        (camera->frustum[5][2]) = -(viewaxis[0][2]);
+        camera->frustum[5][3] = (-(camera->frustum[0][3])) - zfar;
+        camera->frustumPlaneCount = 6;
+    }
+#else
     double v6; // st7
     const char *v7; // eax
     float cosHalfFov; // [esp+60h] [ebp-8h]
@@ -3475,6 +3544,7 @@ camera->frustum[4][1] = (float)((float)(tanHalfFovY * cosHalfFova) * (float)(*vi
         camera->frustum[5][3] = (-(camera->frustum[0][3])) - zfar;
         camera->frustumPlaneCount = 6;
     }
+#endif
 }
 
 void __cdecl FX_SetNextUpdateCamera(int localClientNum, const FxCameraUpdate *cameraUpdate)

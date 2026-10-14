@@ -1,4 +1,5 @@
 #include <cstdint>
+#include <new>
 #pragma once
 
 #include <cstdint>

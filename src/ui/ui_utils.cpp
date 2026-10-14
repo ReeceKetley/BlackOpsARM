@@ -123,11 +123,18 @@ int __cdecl Item_IsVisible(int localClientNum, int contextIndex, itemDef_s *item
         return 0;
     if ( (item->dvarFlags & 0xC) != 0 && !Item_EnableShowViaDvar(item, 4) )
         return 0;
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+    // The original showBits + 4 read spans two fields at only four-byte alignment.
+    // Compare the real aligned fields, preserving both original mask predicates.
+    if ((sharedUiInfo.visibilityBits[localClientNum] & item->showBits) != item->showBits
+        || (sharedUiInfo.visibilityBits[localClientNum] | item->hideBits) != item->hideBits)
+#else
     if ((sharedUiInfo.visibilityBits[localClientNum] & LODWORD(item->showBits)) != LODWORD(item->showBits)
         || __PAIR64__(
             LODWORD(sharedUiInfo.visibilityBits[localClientNum]) | LODWORD(item->hideBits),
             HIDWORD(sharedUiInfo.visibilityBits[localClientNum]) & HIDWORD(item->showBits)) != *(unsigned __int64 *)((char *)&item->showBits + 4)
         || (HIDWORD(sharedUiInfo.visibilityBits[localClientNum]) | HIDWORD(item->hideBits)) != HIDWORD(item->hideBits))
+#endif
     {
         return 0;
     }

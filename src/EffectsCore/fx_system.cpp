@@ -129,7 +129,11 @@ void __cdecl FX_InitSystem(int localClientNum)
     {
         __debugbreak();
     }
+#if defined(__ANDROID__)
+    memset(&system->system, 0, sizeof(system->system));
+#else
     memset((unsigned __int8 *)system, 0, 0x360u);
+#endif
     system->system.shared = &system->shared;
     systemBuffers = FX_GetSystemBuffers(localClientNum);
     if ( !systemBuffers
@@ -274,7 +278,11 @@ void __cdecl FX_ShutdownSystem(int localClientNum)
     {
         __debugbreak();
     }
+#if defined(__ANDROID__)
+    memset(&system->system, 0, sizeof(system->system));
+#else
     memset((unsigned __int8 *)system, 0, 0x360u);
+#endif
     if ( !systemBuffers
         && !Assert_MyHandler("C:\\projects_pc\\cod\\codsrc\\src\\EffectsCore\\fx_system.cpp", 558, 0, "%s", "systemBuffers") )
     {

@@ -47,7 +47,7 @@
 #include <client/cl_rank.h>
 #include <live/live_ticker.h>
 #include <database/db_file_load.h>
-#include <sound/snd_driver_xaudio2.h>
+#include <sound/snd_driver_api.h>
 #include <game_mp/g_main_mp.h>
 #include <live/live_win.h>
 #include <stringed/stringed_hooks.h>
@@ -125,7 +125,7 @@ const dvar_t *emblem_scroll_delay_first;
 const dvar_t *emblem_scroll_delay_rest;
 
 uiInfo_s uiInfoArray[1];
-const serverFilter_s serverFilters[1];
+const serverFilter_s serverFilters[1] = {};
 
 bool g_ingameMenusLoaded[1];
 
@@ -439,7 +439,12 @@ void __cdecl UI_DrawHighlightRect(
     v10 = size;
     dy = size;
     ScrPlace_ApplyRect(scrPlace, &dummyX, &dummyY, &v10, &dy, horzAlign, vertAlign);
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+    verts[0][0] = x;
+    verts[0][1] = y;
+#else
     *(_QWORD *)&verts[0][0] = __PAIR64__(LODWORD(y), LODWORD(x));
+#endif
     verts[1][0] = x + w;
     verts[1][1] = y;
     verts[2][0] = (float)(x + w) - v10;
@@ -447,7 +452,12 @@ void __cdecl UI_DrawHighlightRect(
     verts[3][0] = x + v10;
     verts[3][1] = y + dy;
     R_AddCmdDrawQuadPic(verts, hiColor, sharedUiInfo.assets.whiteMaterial);
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+    verts[0][0] = x;
+    verts[0][1] = y;
+#else
     *(_QWORD *)&verts[0][0] = __PAIR64__(LODWORD(y), LODWORD(x));
+#endif
     verts[1][0] = x + v10;
     verts[1][1] = y + dy;
     verts[2][0] = x + v10;

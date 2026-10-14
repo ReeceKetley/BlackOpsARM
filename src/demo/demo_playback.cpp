@@ -52,7 +52,11 @@
 #include <ui_mp/ui_gametype_custom_mp.h>
 #include <live/live_counter.h>
 #include <sound/snd_public_async.h>
+#if defined(__ANDROID__)
+#include <client/cl_gamepad.h>
+#else
 #include <win32/win_gamepad.h>
+#endif
 #include <game/g_scr_helicopter.h>
 
 unsigned __int8 *g_JpegBuf;

@@ -1,0 +1,1371 @@
+cmake_minimum_required(VERSION 3.22.1)
+project(BlackOpsNativeEngineEntry LANGUAGES C CXX)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+option(BO1_NATIVE_FULL_DATABASE "Link the original full registry and database startup" OFF)
+option(BO1_NATIVE_SDL_APP "Build the real SDLActivity engine shared library" OFF)
+option(BO1_NATIVE_OPTIMIZE_REVERB "Optimize the measured rendered audio reverb TU with checks retained" ON)
+option(BO1_NATIVE_GPU_PASS_PROFILE "Collect bounded native GPU phase timings for diagnosis" OFF)
+if(BO1_NATIVE_SDL_APP AND NOT BO1_NATIVE_FULL_DATABASE)
+    message(FATAL_ERROR "SDLActivity requires the complete native engine")
+endif()
+get_filename_component(BO1_ROOT "${CMAKE_CURRENT_LIST_DIR}/../../.." ABSOLUTE)
+add_subdirectory("${BO1_ROOT}/android/cmake/native-startup-services" startup-services EXCLUDE_FROM_ALL)
+if(BO1_NATIVE_FULL_DATABASE)
+    add_subdirectory("${BO1_ROOT}/android/cmake/native-faudio" faudio-dependency EXCLUDE_FROM_ALL)
+    add_subdirectory("${BO1_ROOT}/android/cmake/native-media" media-dependency EXCLUDE_FROM_ALL)
+    add_subdirectory("${BO1_ROOT}/android/cmake/native-vpx" vpx-dependency EXCLUDE_FROM_ALL)
+    add_subdirectory("${BO1_ROOT}/android/cmake/native-speex" speex-dependency EXCLUDE_FROM_ALL)
+    target_link_libraries(bo1_native_startup_services PUBLIC bo1_native_vpx_codec)
+    add_library(bo1_native_dxvk_d3d9 SHARED IMPORTED GLOBAL)
+    set_target_properties(bo1_native_dxvk_d3d9 PROPERTIES IMPORTED_LOCATION
+        "${BO1_ROOT}/../DXVK-Native/android/app/src/main/jniLibs/arm64-v8a/libdxvk_d3d9.so")
+    add_library(bo1_native_steam_api SHARED IMPORTED GLOBAL)
+    set_target_properties(bo1_native_steam_api PROPERTIES IMPORTED_LOCATION
+        "${BO1_ROOT}/src/steam/redistributable_bin/androidarm64/libsteam_api.so")
+
+    add_executable(bo1_native_render_handoff_tests
+        "${BO1_ROOT}/tools/port/tests/native_render_handoff_tests.cpp"
+        "${BO1_ROOT}/src/qcommon/threads.cpp"
+        "${BO1_ROOT}/src/platform/android/stream_worker.cpp")
+    target_include_directories(bo1_native_render_handoff_tests PRIVATE "${BO1_ROOT}/src" "${BO1_ROOT}"
+        "${BO1_ROOT}/../DXVK-Native/include/native/directx"
+        "${BO1_ROOT}/../DXVK-Native/include/native/windows")
+    target_compile_features(bo1_native_render_handoff_tests PRIVATE cxx_std_20)
+    target_compile_options(bo1_native_render_handoff_tests PRIVATE -fms-extensions -fsigned-char
+        -ffunction-sections -fdata-sections -include "${BO1_ROOT}/src/platform/win32_compat/msvc_compat.h"
+        -fsanitize=undefined -fno-sanitize-recover=all)
+    target_link_options(bo1_native_render_handoff_tests PRIVATE -Wl,--gc-sections -fsanitize=undefined -static-libstdc++)
+    target_compile_definitions(bo1_native_render_handoff_tests PRIVATE BO1_NATIVE_CPU_QUERIES=1 BO1_NATIVE_RENDER_HANDOFF=1)
+    add_executable(bo1_native_renderer_jpeg_tests
+        "${BO1_ROOT}/tools/port/tests/native_renderer_jpeg_tests.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_jpeg.cpp")
+    target_include_directories(bo1_native_renderer_jpeg_tests PRIVATE "${BO1_ROOT}/src" "${BO1_ROOT}"
+        "${BO1_ROOT}/../DXVK-Native/include/native/directx"
+        "${BO1_ROOT}/../DXVK-Native/include/native/windows")
+    target_compile_features(bo1_native_renderer_jpeg_tests PRIVATE cxx_std_20)
+    target_compile_options(bo1_native_renderer_jpeg_tests PRIVATE -fms-extensions -fsigned-char
+        -ffunction-sections -fdata-sections -include "${BO1_ROOT}/src/platform/win32_compat/msvc_compat.h"
+        -fsanitize=undefined -fno-sanitize-recover=all)
+    target_link_options(bo1_native_renderer_jpeg_tests PRIVATE -Wl,--gc-sections -fsanitize=undefined -static-libstdc++)
+    target_link_libraries(bo1_native_renderer_jpeg_tests PRIVATE bo1_native_jpeg_codec)
+    add_executable(bo1_native_surface_image_save_tests
+        "${BO1_ROOT}/tools/port/tests/native_surface_image_save_tests.cpp"
+        "${BO1_ROOT}/src/platform/android/surface_image_save.cpp")
+    target_include_directories(bo1_native_surface_image_save_tests PRIVATE "${BO1_ROOT}/src" "${BO1_ROOT}"
+        "${BO1_ROOT}/../DXVK-Native/include/native/directx"
+        "${BO1_ROOT}/../DXVK-Native/include/native/windows")
+    target_compile_features(bo1_native_surface_image_save_tests PRIVATE cxx_std_20)
+    target_compile_options(bo1_native_surface_image_save_tests PRIVATE -fms-extensions -fsigned-char
+        -ffunction-sections -fdata-sections -include "${BO1_ROOT}/src/platform/win32_compat/msvc_compat.h"
+        -fsanitize=undefined -fno-sanitize-recover=all)
+    target_link_options(bo1_native_surface_image_save_tests PRIVATE -Wl,--gc-sections -fsanitize=undefined -static-libstdc++)
+    target_link_libraries(bo1_native_surface_image_save_tests PRIVATE bo1_native_jpeg_codec)
+    target_link_options(bo1_native_surface_image_save_tests PRIVATE -Wl,--wrap=malloc,--wrap=calloc,--wrap=free)
+    add_executable(bo1_native_debug_tcp_tests
+        "${BO1_ROOT}/tools/port/tests/native_debug_tcp_tests.cpp"
+        "${BO1_ROOT}/src/win32/win_net.cpp"
+        "${BO1_ROOT}/src/platform/android/debug_tcp.cpp")
+    target_include_directories(bo1_native_debug_tcp_tests PRIVATE "${BO1_ROOT}/src" "${BO1_ROOT}"
+        "${BO1_ROOT}/../DXVK-Native/include/native/directx"
+        "${BO1_ROOT}/../DXVK-Native/include/native/windows")
+    target_compile_features(bo1_native_debug_tcp_tests PRIVATE cxx_std_20)
+    target_compile_options(bo1_native_debug_tcp_tests PRIVATE -fms-extensions -fsigned-char
+        -ffunction-sections -fdata-sections -include "${BO1_ROOT}/src/platform/win32_compat/msvc_compat.h"
+        -fsanitize=undefined -fno-sanitize-recover=all)
+    target_link_options(bo1_native_debug_tcp_tests PRIVATE -Wl,--gc-sections -fsanitize=undefined -static-libstdc++)
+    target_compile_definitions(bo1_native_debug_tcp_tests PRIVATE BO1_NATIVE_COM_BOOT=1 BO1_NATIVE_UDP_ENGINE=1)
+    add_executable(bo1_native_renderer_jpeg_decode_tests
+        "${BO1_ROOT}/tools/port/tests/native_renderer_jpeg_decode_tests.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_jpeg.cpp")
+    target_include_directories(bo1_native_renderer_jpeg_decode_tests PRIVATE "${BO1_ROOT}/src" "${BO1_ROOT}"
+        "${BO1_ROOT}/../DXVK-Native/include/native/directx"
+        "${BO1_ROOT}/../DXVK-Native/include/native/windows")
+    target_compile_features(bo1_native_renderer_jpeg_decode_tests PRIVATE cxx_std_20)
+    target_compile_options(bo1_native_renderer_jpeg_decode_tests PRIVATE -fms-extensions -fsigned-char
+        -ffunction-sections -fdata-sections -include "${BO1_ROOT}/src/platform/win32_compat/msvc_compat.h"
+        -fsanitize=undefined -fno-sanitize-recover=all)
+    target_link_options(bo1_native_renderer_jpeg_decode_tests PRIVATE -Wl,--gc-sections -fsanitize=undefined -static-libstdc++)
+    target_link_libraries(bo1_native_renderer_jpeg_decode_tests PRIVATE bo1_native_jpeg_codec)
+    add_executable(bo1_native_jpeg_codec_tests "${BO1_ROOT}/tools/port/tests/native_jpeg_codec_tests.cpp")
+    target_include_directories(bo1_native_jpeg_codec_tests PRIVATE "${BO1_ROOT}/src")
+    target_compile_features(bo1_native_jpeg_codec_tests PRIVATE cxx_std_20)
+    target_compile_options(bo1_native_jpeg_codec_tests PRIVATE -fms-extensions -fsigned-char
+        -fsanitize=undefined -fno-sanitize-recover=all)
+    target_link_options(bo1_native_jpeg_codec_tests PRIVATE -fsanitize=undefined -static-libstdc++)
+    target_link_libraries(bo1_native_jpeg_codec_tests PRIVATE bo1_native_jpeg_codec)
+    add_executable(bo1_native_live_favourites_tests
+        "${BO1_ROOT}/tools/port/tests/native_live_favourites_tests.cpp"
+        "${BO1_ROOT}/src/live/live_win.cpp"
+        "${BO1_ROOT}/src/universal/UserInfo.cpp")
+    target_include_directories(bo1_native_live_favourites_tests PRIVATE "${BO1_ROOT}/src" "${BO1_ROOT}"
+        "${BO1_ROOT}/../DXVK-Native/include/native/directx"
+        "${BO1_ROOT}/../DXVK-Native/include/native/windows")
+    target_compile_features(bo1_native_live_favourites_tests PRIVATE cxx_std_20)
+    target_compile_options(bo1_native_live_favourites_tests PRIVATE -fms-extensions -fsigned-char
+        -ffunction-sections -fdata-sections -include "${BO1_ROOT}/src/platform/win32_compat/msvc_compat.h"
+        -fsanitize=undefined -fno-sanitize-recover=all)
+    target_link_options(bo1_native_live_favourites_tests PRIVATE -Wl,--gc-sections -Wl,--wrap=_Z18CL_SetFavourites_fv -fsanitize=undefined -static-libstdc++)
+    add_executable(bo1_native_publisher_decompression_tests
+        "${BO1_ROOT}/tools/port/tests/native_publisher_decompression_tests.cpp"
+        "${BO1_ROOT}/src/live/live_storage_pub.cpp"
+        "${BO1_ROOT}/src/server/sv_autoplaylist.cpp")
+    target_include_directories(bo1_native_publisher_decompression_tests PRIVATE "${BO1_ROOT}/src" "${BO1_ROOT}"
+        "${BO1_ROOT}/../DXVK-Native/include/native/directx"
+        "${BO1_ROOT}/../DXVK-Native/include/native/windows")
+    target_compile_features(bo1_native_publisher_decompression_tests PRIVATE cxx_std_20)
+    target_compile_options(bo1_native_publisher_decompression_tests PRIVATE -fms-extensions -fsigned-char -fno-inline
+        -ffunction-sections -fdata-sections -include "${BO1_ROOT}/src/platform/win32_compat/msvc_compat.h"
+        -fsanitize=undefined -fno-sanitize-recover=all)
+    target_link_options(bo1_native_publisher_decompression_tests PRIVATE -Wl,--gc-sections
+        -fsanitize=undefined -static-libstdc++)
+    target_link_libraries(bo1_native_publisher_decompression_tests PRIVATE bo1_native_database_inflate)
+    add_executable(bo1_native_recent_player_time_tests
+        "${BO1_ROOT}/tools/port/tests/native_recent_player_time_tests.cpp"
+        "${BO1_ROOT}/src/live/live_meetplayer.cpp")
+    target_include_directories(bo1_native_recent_player_time_tests PRIVATE "${BO1_ROOT}/src" "${BO1_ROOT}"
+        "${BO1_ROOT}/../DXVK-Native/include/native/directx"
+        "${BO1_ROOT}/../DXVK-Native/include/native/windows")
+    target_compile_features(bo1_native_recent_player_time_tests PRIVATE cxx_std_20)
+    target_compile_options(bo1_native_recent_player_time_tests PRIVATE -fms-extensions -fsigned-char -fno-inline
+        -ffunction-sections -fdata-sections -include "${BO1_ROOT}/src/platform/win32_compat/msvc_compat.h"
+        -fsanitize=undefined -fno-sanitize-recover=all)
+    target_link_options(bo1_native_recent_player_time_tests PRIVATE -Wl,--gc-sections
+        -fsanitize=undefined -static-libstdc++)
+    add_executable(bo1_native_cubemap_worker_tests
+        "${BO1_ROOT}/tools/port/tests/native_cubemap_worker_tests.cpp"
+        "${BO1_ROOT}/src/CubeMapGenLib/CImageSurface.cpp"
+        "${BO1_ROOT}/src/CubeMapGenLib/CCubeMapProcessor.cpp"
+        "${BO1_ROOT}/src/CubeMapGenLib/CBBoxInt32.cpp"
+        "${BO1_ROOT}/src/platform/win32_compat/win32_time.cpp"
+        "${BO1_ROOT}/src/platform/win32_compat/win32_errors.cpp")
+    target_include_directories(bo1_native_cubemap_worker_tests PRIVATE "${BO1_ROOT}/src" "${BO1_ROOT}"
+        "${BO1_ROOT}/../DXVK-Native/include/native/directx"
+        "${BO1_ROOT}/../DXVK-Native/include/native/windows")
+    target_compile_features(bo1_native_cubemap_worker_tests PRIVATE cxx_std_20)
+    target_compile_options(bo1_native_cubemap_worker_tests PRIVATE -fms-extensions -fsigned-char -fno-inline
+        -ffunction-sections -fdata-sections -include "${BO1_ROOT}/src/platform/win32_compat/msvc_compat.h"
+        -fsanitize=undefined -fno-sanitize-recover=all)
+    target_link_options(bo1_native_cubemap_worker_tests PRIVATE -Wl,--gc-sections
+        -fsanitize=undefined -static-libstdc++)
+    add_executable(bo1_native_cubemap_image_tests
+        "${BO1_ROOT}/tools/port/tests/native_cubemap_image_tests.cpp"
+        "${BO1_ROOT}/src/CubeMapGenLib/CImageSurface.cpp")
+    target_include_directories(bo1_native_cubemap_image_tests PRIVATE "${BO1_ROOT}/src" "${BO1_ROOT}"
+        "${BO1_ROOT}/../DXVK-Native/include/native/directx"
+        "${BO1_ROOT}/../DXVK-Native/include/native/windows")
+    target_compile_features(bo1_native_cubemap_image_tests PRIVATE cxx_std_20)
+    target_compile_options(bo1_native_cubemap_image_tests PRIVATE -fms-extensions -fsigned-char -fno-inline
+        -ffunction-sections -fdata-sections -include "${BO1_ROOT}/src/platform/win32_compat/msvc_compat.h"
+        -fsanitize=undefined -fno-sanitize-recover=all)
+    target_link_options(bo1_native_cubemap_image_tests PRIVATE -Wl,--gc-sections
+        -fsanitize=undefined -static-libstdc++)
+    add_executable(bo1_native_fileshare_cache_tests
+        "${BO1_ROOT}/tools/port/tests/native_fileshare_cache_tests.cpp"
+        "${BO1_ROOT}/src/live/live_fileshare_cache.cpp")
+    target_include_directories(bo1_native_fileshare_cache_tests PRIVATE "${BO1_ROOT}/src" "${BO1_ROOT}"
+        "${BO1_ROOT}/../DXVK-Native/include/native/directx"
+        "${BO1_ROOT}/../DXVK-Native/include/native/windows")
+    target_compile_features(bo1_native_fileshare_cache_tests PRIVATE cxx_std_20)
+    target_compile_options(bo1_native_fileshare_cache_tests PRIVATE -fms-extensions -fsigned-char -fno-inline
+        -ffunction-sections -fdata-sections -include "${BO1_ROOT}/src/platform/win32_compat/msvc_compat.h"
+        -fsanitize=undefined -fno-sanitize-recover=all)
+    target_link_options(bo1_native_fileshare_cache_tests PRIVATE -Wl,--gc-sections
+        -fsanitize=undefined -static-libstdc++)
+    add_executable(bo1_native_ui_arena_read_tests
+        "${BO1_ROOT}/tools/port/tests/native_ui_arena_read_tests.cpp"
+        "${BO1_ROOT}/src/game_mp/ui_gameinfo_mp.cpp")
+    target_include_directories(bo1_native_ui_arena_read_tests PRIVATE "${BO1_ROOT}/src" "${BO1_ROOT}"
+        "${BO1_ROOT}/../DXVK-Native/include/native/directx"
+        "${BO1_ROOT}/../DXVK-Native/include/native/windows")
+    target_compile_features(bo1_native_ui_arena_read_tests PRIVATE cxx_std_20)
+    target_compile_options(bo1_native_ui_arena_read_tests PRIVATE -fms-extensions -fsigned-char -fno-inline
+        -ffunction-sections -fdata-sections -include "${BO1_ROOT}/src/platform/win32_compat/msvc_compat.h"
+        -fsanitize=undefined -fno-sanitize-recover=all)
+    target_link_options(bo1_native_ui_arena_read_tests PRIVATE -Wl,--gc-sections
+        -Wl,--wrap=_Z13UI_ParseInfosPKciPPc -fsanitize=undefined -static-libstdc++)
+    add_executable(bo1_native_live_storage_clock_tests
+        "${BO1_ROOT}/tools/port/tests/native_live_storage_clock_tests.cpp"
+        "${BO1_ROOT}/src/live/live_storage.cpp"
+        "${BO1_ROOT}/src/live/live_storage_win.cpp")
+    target_include_directories(bo1_native_live_storage_clock_tests PRIVATE "${BO1_ROOT}/src" "${BO1_ROOT}"
+        "${BO1_ROOT}/../DXVK-Native/include/native/directx"
+        "${BO1_ROOT}/../DXVK-Native/include/native/windows")
+    target_compile_features(bo1_native_live_storage_clock_tests PRIVATE cxx_std_20)
+    target_compile_options(bo1_native_live_storage_clock_tests PRIVATE -fms-extensions -fsigned-char
+        -ffunction-sections -fdata-sections -include "${BO1_ROOT}/src/platform/win32_compat/msvc_compat.h"
+        -fsanitize=undefined -fno-sanitize-recover=all)
+    target_link_options(bo1_native_live_storage_clock_tests PRIVATE -Wl,--gc-sections -fsanitize=undefined -static-libstdc++)
+    add_executable(bo1_native_udp_socket_tests
+        "${BO1_ROOT}/tools/port/tests/native_udp_socket_tests.cpp"
+        "${BO1_ROOT}/src/platform/android/udp_socket.cpp"
+        "${BO1_ROOT}/src/platform/android/network_addresses.cpp"
+        "${BO1_ROOT}/src/win32/win_net.cpp")
+    target_include_directories(bo1_native_udp_socket_tests PRIVATE "${BO1_ROOT}/src" "${BO1_ROOT}"
+        "${BO1_ROOT}/../DXVK-Native/include/native/directx"
+        "${BO1_ROOT}/../DXVK-Native/include/native/windows")
+    target_compile_features(bo1_native_udp_socket_tests PRIVATE cxx_std_20)
+    target_compile_definitions(bo1_native_udp_socket_tests PRIVATE BO1_NATIVE_COM_BOOT=1)
+    target_compile_options(bo1_native_udp_socket_tests PRIVATE -fms-extensions -fsigned-char
+        -ffunction-sections -fdata-sections -include "${BO1_ROOT}/src/platform/win32_compat/msvc_compat.h"
+        -fsanitize=undefined -fno-sanitize-recover=all)
+    target_link_options(bo1_native_udp_socket_tests PRIVATE -Wl,--gc-sections -fsanitize=undefined -static-libstdc++)
+    add_executable(bo1_native_network_address_tests
+        "${BO1_ROOT}/tools/port/tests/native_network_address_tests.cpp"
+        "${BO1_ROOT}/src/platform/android/network_addresses.cpp"
+        "${BO1_ROOT}/src/win32/win_net.cpp")
+    target_include_directories(bo1_native_network_address_tests PRIVATE "${BO1_ROOT}/src" "${BO1_ROOT}"
+        "${BO1_ROOT}/../DXVK-Native/include/native/directx"
+        "${BO1_ROOT}/../DXVK-Native/include/native/windows")
+    target_compile_features(bo1_native_network_address_tests PRIVATE cxx_std_20)
+    target_compile_definitions(bo1_native_network_address_tests PRIVATE BO1_NATIVE_COM_BOOT=1)
+    target_compile_options(bo1_native_network_address_tests PRIVATE -fms-extensions -fsigned-char
+        -ffunction-sections -fdata-sections -include "${BO1_ROOT}/src/platform/win32_compat/msvc_compat.h"
+        -fsanitize=undefined -fno-sanitize-recover=all)
+    target_link_options(bo1_native_network_address_tests PRIVATE -Wl,--gc-sections -fsanitize=undefined -static-libstdc++)
+    add_executable(bo1_native_stack_trace_tests
+        "${BO1_ROOT}/tools/port/tests/native_stack_trace_tests.cpp"
+        "${BO1_ROOT}/src/platform/android/stack_trace.cpp")
+    target_include_directories(bo1_native_stack_trace_tests PRIVATE "${BO1_ROOT}/src")
+    target_compile_features(bo1_native_stack_trace_tests PRIVATE cxx_std_20)
+    target_compile_options(bo1_native_stack_trace_tests PRIVATE -fsanitize=undefined -fno-sanitize-recover=all)
+    target_link_options(bo1_native_stack_trace_tests PRIVATE -fsanitize=undefined -static-libstdc++)
+    add_executable(bo1_native_fatal_error_tests
+        "${BO1_ROOT}/tools/port/tests/native_fatal_error_tests.cpp"
+        "${BO1_ROOT}/src/platform/android/fatal_error.cpp")
+    target_compile_features(bo1_native_fatal_error_tests PRIVATE cxx_std_20)
+    target_compile_options(bo1_native_fatal_error_tests PRIVATE -fsanitize=undefined -fno-sanitize-recover=all)
+    target_link_options(bo1_native_fatal_error_tests PRIVATE -fsanitize=undefined -static-libstdc++)
+    add_executable(bo1_native_common_time_tests
+        "${BO1_ROOT}/tools/port/tests/native_common_time_tests.cpp"
+        "${BO1_ROOT}/src/universal/com_shared.cpp")
+    target_include_directories(bo1_native_common_time_tests PRIVATE "${BO1_ROOT}/src"
+        "${BO1_ROOT}/../DXVK-Native/include/native/directx"
+        "${BO1_ROOT}/../DXVK-Native/include/native/windows")
+    target_compile_features(bo1_native_common_time_tests PRIVATE cxx_std_20)
+    target_compile_definitions(bo1_native_common_time_tests PRIVATE BO1_STARTUP_SERVICES=1 BO1_NATIVE_COM_BOOT=1)
+    target_compile_options(bo1_native_common_time_tests PRIVATE -fms-extensions -fsigned-char
+        -ffunction-sections -fdata-sections -include "${BO1_ROOT}/src/platform/win32_compat/msvc_compat.h"
+        -fsanitize=undefined -fno-sanitize-recover=all)
+    target_link_options(bo1_native_common_time_tests PRIVATE -Wl,--gc-sections -fsanitize=undefined -static-libstdc++)
+    add_executable(bo1_native_scalar_conversion_tests
+        "${BO1_ROOT}/tools/port/tests/native_scalar_conversion_tests.cpp")
+    target_include_directories(bo1_native_scalar_conversion_tests PRIVATE "${BO1_ROOT}/src")
+    target_compile_features(bo1_native_scalar_conversion_tests PRIVATE cxx_std_20)
+    target_compile_options(bo1_native_scalar_conversion_tests PRIVATE -fsanitize=undefined -fno-sanitize-recover=all)
+    target_link_options(bo1_native_scalar_conversion_tests PRIVATE -fsanitize=undefined -static-libstdc++)
+    add_executable(bo1_native_process_resources_tests
+        "${BO1_ROOT}/tools/port/tests/native_process_resources_tests.cpp"
+        "${BO1_ROOT}/src/platform/android/process_resources.cpp")
+    target_include_directories(bo1_native_process_resources_tests PRIVATE "${BO1_ROOT}/src")
+    target_compile_features(bo1_native_process_resources_tests PRIVATE cxx_std_20)
+    target_compile_options(bo1_native_process_resources_tests PRIVATE -fsanitize=undefined -fno-sanitize-recover=all)
+    target_link_options(bo1_native_process_resources_tests PRIVATE -fsanitize=undefined)
+    add_library(bo1_native_sdl2 SHARED IMPORTED)
+    set_target_properties(bo1_native_sdl2 PROPERTIES IMPORTED_LOCATION
+        "${BO1_ROOT}/../DXVK-Native/android/app/src/main/jniLibs/arm64-v8a/libSDL2.so")
+    add_subdirectory("${BO1_ROOT}/android/cmake/native-shader-compiler" shader-compiler EXCLUDE_FROM_ALL)
+    add_executable(bo1_native_occlusion_worker_tests
+        "${BO1_ROOT}/tools/port/tests/native_occlusion_worker_tests.cpp"
+        "${BO1_ROOT}/src/platform/android/occlusion_worker.cpp"
+        "${BO1_ROOT}/src/platform/android/thread_services.cpp"
+        "${BO1_ROOT}/src/platform/android/hunk_services.cpp"
+        "${BO1_ROOT}/src/platform/android/stream_worker.cpp"
+        "${BO1_ROOT}/src/universal/q_shared.cpp"
+        "${BO1_ROOT}/src/qcommon/cmd.cpp"
+        "${BO1_ROOT}/src/qcommon/threads.cpp")
+    target_compile_definitions(bo1_native_occlusion_worker_tests PRIVATE
+        _DEBUG=1 BO1_NATIVE_THREAD_DATA=1 BO1_NATIVE_CPU_QUERIES=1)
+    target_include_directories(bo1_native_occlusion_worker_tests PRIVATE "${BO1_ROOT}/src" "${BO1_ROOT}"
+        "${BO1_ROOT}/../DXVK-Native/include/native/directx"
+        "${BO1_ROOT}/../DXVK-Native/include/native/windows")
+    target_compile_features(bo1_native_occlusion_worker_tests PRIVATE cxx_std_20)
+    target_compile_options(bo1_native_occlusion_worker_tests PRIVATE -fms-extensions -fsigned-char
+        -ffunction-sections -fdata-sections -fsanitize=undefined -fno-sanitize-recover=all
+        -include "${BO1_ROOT}/src/platform/win32_compat/msvc_compat.h")
+    target_link_options(bo1_native_occlusion_worker_tests PRIVATE -static-libstdc++ -Wl,--gc-sections
+        -Wl,--error-limit=0 -fsanitize=undefined)
+    add_executable(bo1_native_render_services_tests
+        "${BO1_ROOT}/tools/port/tests/native_render_services_tests.cpp"
+        "${BO1_ROOT}/tools/port/engine/unavailable_services.cpp")
+    target_compile_definitions(bo1_native_render_services_tests PRIVATE
+        _DEBUG=1 BO1_NATIVE_FULL_DATABASE=1 BO1_STARTUP_SERVICES=1 BO1_NATIVE_COM_BOOT=1)
+    target_compile_features(bo1_native_render_services_tests PRIVATE cxx_std_20)
+    target_compile_options(bo1_native_render_services_tests PRIVATE -fms-extensions -fsigned-char
+        -ffunction-sections -fdata-sections -fsanitize=undefined -fno-sanitize-recover=all
+        -include "${BO1_ROOT}/src/platform/win32_compat/msvc_compat.h")
+    target_link_options(bo1_native_render_services_tests PRIVATE -Wl,--gc-sections -Wl,--error-limit=0 -fsanitize=undefined)
+    target_link_libraries(bo1_native_render_services_tests PRIVATE
+        bo1_native_entry_state bo1_native_startup_services bo1_native_database)
+    add_executable(bo1_native_filesystem_startup_tests
+        "${BO1_ROOT}/tools/port/tests/native_filesystem_startup_tests.cpp"
+        "${BO1_ROOT}/tools/port/engine/unavailable_services.cpp")
+    target_compile_definitions(bo1_native_filesystem_startup_tests PRIVATE
+        _DEBUG=1 BO1_NATIVE_FULL_DATABASE=1 BO1_STARTUP_SERVICES=1 BO1_NATIVE_COM_BOOT=1)
+    target_include_directories(bo1_native_filesystem_startup_tests PRIVATE "${BO1_ROOT}/src"
+        "${BO1_ROOT}/../DXVK-Native/include/native/directx" "${BO1_ROOT}/../DXVK-Native/include/native/windows")
+    target_compile_features(bo1_native_filesystem_startup_tests PRIVATE cxx_std_20)
+    target_compile_options(bo1_native_filesystem_startup_tests PRIVATE -fms-extensions -fsigned-char
+        -ffunction-sections -fdata-sections -fsanitize=undefined -fno-sanitize-recover=all
+        -include "${BO1_ROOT}/src/platform/win32_compat/msvc_compat.h")
+    target_link_options(bo1_native_filesystem_startup_tests PRIVATE -Wl,--gc-sections -Wl,--error-limit=0 -fsanitize=undefined)
+    target_link_libraries(bo1_native_filesystem_startup_tests PRIVATE
+        bo1_native_entry_state bo1_native_startup_services bo1_native_database)
+    add_executable(bo1_native_filesystem_integration_tests
+        "${BO1_ROOT}/tools/port/tests/native_filesystem_integration_tests.cpp"
+        "${BO1_ROOT}/tools/port/engine/unavailable_services.cpp")
+    target_compile_definitions(bo1_native_filesystem_integration_tests PRIVATE
+        _DEBUG=1 BO1_NATIVE_FULL_DATABASE=1 BO1_STARTUP_SERVICES=1 BO1_NATIVE_COM_BOOT=1)
+    target_include_directories(bo1_native_filesystem_integration_tests PRIVATE "${BO1_ROOT}/src")
+    target_compile_features(bo1_native_filesystem_integration_tests PRIVATE cxx_std_20)
+    target_compile_options(bo1_native_filesystem_integration_tests PRIVATE -fms-extensions -fsigned-char
+        -ffunction-sections -fdata-sections -fsanitize=undefined -fno-sanitize-recover=all
+        -include "${BO1_ROOT}/src/platform/win32_compat/msvc_compat.h")
+    target_link_options(bo1_native_filesystem_integration_tests PRIVATE -Wl,--gc-sections -Wl,--error-limit=0 -fsanitize=undefined)
+    target_link_libraries(bo1_native_filesystem_integration_tests PRIVATE
+        bo1_native_entry_state bo1_native_startup_services bo1_native_database)
+    # The full registry owns these same canonical lock/state bodies. Do not
+    # compile the selected registry a second time or keep parallel pool state.
+    get_target_property(BO1_FAST_SOURCES bo1_native_fast_critical_section SOURCES)
+    list(REMOVE_ITEM BO1_FAST_SOURCES "${BO1_ROOT}/src/database/db_registry.cpp")
+    set_property(TARGET bo1_native_fast_critical_section PROPERTY SOURCES "${BO1_FAST_SOURCES}")
+    # Full production restores normal engine bodies. Standalone startup-services
+    # retains its historical isolation defines in its own CMake project.
+    get_target_property(BO1_FULL_STARTUP_DEFINITIONS bo1_native_startup_services COMPILE_DEFINITIONS)
+    list(REMOVE_ITEM BO1_FULL_STARTUP_DEFINITIONS BO1_STARTUP_SERVICES=1 BO1_STRING_POOL_GATE=1)
+    set_property(TARGET bo1_native_startup_services PROPERTY COMPILE_DEFINITIONS "${BO1_FULL_STARTUP_DEFINITIONS}")
+    target_compile_definitions(bo1_native_startup_services PRIVATE BO1_NATIVE_SCHEDULING_SERVICES=1)
+    target_sources(bo1_native_startup_services PRIVATE "${BO1_ROOT}/src/platform/android/scheduling_services.cpp")
+    get_target_property(BO1_STARTUP_SOURCES bo1_native_startup_services SOURCES)
+    list(REMOVE_ITEM BO1_STARTUP_SOURCES "${BO1_ROOT}/src/universal/com_math.cpp")
+    list(REMOVE_ITEM BO1_STARTUP_SOURCES "${BO1_ROOT}/src/client/cl_keys.cpp")
+    list(REMOVE_ITEM BO1_STARTUP_SOURCES "${BO1_ROOT}/src/universal/com_memory.cpp")
+    list(REMOVE_ITEM BO1_STARTUP_SOURCES "${BO1_ROOT}/src/qcommon/dvar_cmds.cpp")
+    list(REMOVE_ITEM BO1_STARTUP_SOURCES "${BO1_ROOT}/src/universal/q_shared.cpp")
+    list(REMOVE_ITEM BO1_STARTUP_SOURCES "${BO1_ROOT}/src/clientscript/cscr_debugger.cpp")
+    target_compile_definitions(bo1_native_startup_services PRIVATE
+        BO1_NATIVE_STRING_UTILS=1 BO1_NATIVE_COMMON_ASSET_LIFECYCLE=1 BO1_NATIVE_CBUF_EXECUTE=1)
+    set_property(TARGET bo1_native_startup_services PROPERTY SOURCES "${BO1_STARTUP_SOURCES}")
+    target_compile_definitions(bo1_native_startup_services PRIVATE BO1_NATIVE_ASSET_ENUM=1)
+    target_include_directories(bo1_native_startup_services PRIVATE
+        "${BO1_ROOT}/../DXVK-Native/include/native/directx"
+        "${BO1_ROOT}/../DXVK-Native/include/native/windows")
+    add_library(bo1_native_database STATIC
+        "${BO1_ROOT}/src/platform/android/udp_socket.cpp"
+        "${BO1_ROOT}/src/platform/android/debug_tcp.cpp"
+        "${BO1_ROOT}/src/platform/android/surface_image_save.cpp"
+        "${BO1_ROOT}/src/universal/reliablemsg.cpp"
+        "${BO1_ROOT}/src/bgame/bg_weapons_attachment.cpp"
+        "${BO1_ROOT}/src/bgame/bg_misctables.cpp"
+        "${BO1_ROOT}/src/bgame/bg_vehicles_mp.cpp"
+        "${BO1_ROOT}/src/universal/com_encode.cpp"
+        "${BO1_ROOT}/src/universal/CurveManager.cpp"
+        "${BO1_ROOT}/src/game/g_weapon_load_obj.cpp"
+        "${BO1_ROOT}/src/game/g_actor_prone.cpp"
+        "${BO1_ROOT}/src/game/actor_function_table.cpp"
+        "${BO1_ROOT}/src/game_sp/actor_sp_event_listeners.cpp"
+        "${BO1_ROOT}/src/game_sp/g_sp_vision.cpp"
+        "${BO1_ROOT}/src/cgame/cg_scr_sp_blur_commands.cpp"
+        "${BO1_ROOT}/src/cgame/cg_effects_load_obj.cpp"
+        "${BO1_ROOT}/src/flame/flame_cull.cpp"
+        "${BO1_ROOT}/src/flame/flame_damage.cpp"
+        "${BO1_ROOT}/src/flame/flame_sound.cpp"
+        "${BO1_ROOT}/src/EffectsCore/fx_profile.cpp"
+        "${BO1_ROOT}/src/game/actor_negotiation.cpp"
+        "${BO1_ROOT}/src/game/actor_zombie_dog_exposed.cpp"
+        "${BO1_ROOT}/src/game_sp/g_sp_playtrace.cpp"
+        "${BO1_ROOT}/src/game_sp/g_sp_headless_move.cpp"
+        "${BO1_ROOT}/src/game_sp/g_sp_headless_throw.cpp"
+        "${BO1_ROOT}/src/game_sp/g_sp_headless_dice.cpp"
+        "${BO1_ROOT}/src/game_sp/g_sp_headless_replay.cpp"
+        "${BO1_ROOT}/src/game_sp/g_sp_headless_labs.cpp"
+        "${BO1_ROOT}/src/game_sp/g_sp_testplan.cpp"
+        "${BO1_ROOT}/src/game_sp/g_sp_weapon_sweep.cpp"
+        "${BO1_ROOT}/src/cgame/cg_sp_playtrace.cpp"
+        "${BO1_ROOT}/src/clientscript/cscr_save.cpp"
+        "${BO1_ROOT}/src/clientscript/cscr_readwrite.cpp"
+        "${BO1_ROOT}/src/client/cl_gamepad.cpp"
+        "${BO1_ROOT}/src/win32/win_gamepad.cpp"
+        "${BO1_ROOT}/src/platform/android/controller_service.cpp"
+        "${BO1_ROOT}/src/platform/android/steam_ui.cpp"
+        "${BO1_ROOT}/src/platform/android/renderer_window.cpp"
+        "${BO1_ROOT}/src/platform/android/faudio_bridge.cpp"
+        "${BO1_ROOT}/src/sound/snd_driver_xaudio2.cpp"
+        "${BO1_ROOT}/src/sound/snd_driver_xaudio2_dsp.cpp"
+        "${BO1_ROOT}/src/sound/snd_dsp.cpp"
+        "${BO1_ROOT}/src/sound/snd_radverb.cpp"
+        "${BO1_ROOT}/src/mjpeg/mjpeg.cpp"
+        "${BO1_ROOT}/src/mjpeg/avi.cpp"
+        "${BO1_ROOT}/src/mjpeg/yuv.cpp"
+        "${BO1_ROOT}/src/mjpeg/native_jpeg.cpp"
+        "${BO1_ROOT}/src/vpx/vpx.cpp"
+        "${BO1_ROOT}/src/cgame/cg_gamepad.cpp"
+        "${BO1_ROOT}/src/demo/demo_recording.cpp"
+        "${BO1_ROOT}/src/demo/demo_profile.cpp"
+        "${BO1_ROOT}/src/qcommon/msg_anim_commands.cpp"
+        "${BO1_ROOT}/src/live/live_sessions.cpp"
+        "${BO1_ROOT}/src/live/live_steamp2p.cpp"
+        "${BO1_ROOT}/src/live/live_steam_client.cpp"
+        "${BO1_ROOT}/src/live/live_steam_server.cpp"
+        "${BO1_ROOT}/src/live/live_steam_achievements.cpp"
+        "${BO1_ROOT}/src/live/live_friends_pc.cpp"
+        "${BO1_ROOT}/src/live/live_clans.cpp"
+        "${BO1_ROOT}/src/win32/win_tasks.cpp"
+        "${BO1_ROOT}/src/win32/win_voice.cpp"
+        "${BO1_ROOT}/src/groupvoice/encode.cpp"
+        "${BO1_ROOT}/src/groupvoice/decode.cpp"
+        "${BO1_ROOT}/src/groupvoice/record.cpp"
+        "${BO1_ROOT}/src/groupvoice/play.cpp"
+        "${BO1_ROOT}/src/groupvoice/record_dsound.cpp"
+        "${BO1_ROOT}/src/groupvoice/play_dsound.cpp"
+        "${BO1_ROOT}/src/platform/android/voice_audio.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_cinematic.cpp"
+        "${BO1_ROOT}/src/platform/android/bink_service.cpp"
+        "${BO1_ROOT}/src/platform/android/ui_platform.cpp"
+        "${BO1_ROOT}/src/platform/android/rendered_input.cpp"
+        "${BO1_ROOT}/src/win32/win_input.cpp"
+        "${BO1_ROOT}/src/platform/platform.cpp"
+        "${BO1_ROOT}/src/platform/android/system_initialization.cpp"
+        "${BO1_ROOT}/src/monkey/monkey_comm.cpp"
+        "${BO1_ROOT}/src/platform/android/monkey_transport.cpp"
+        "${BO1_ROOT}/src/platform/android/input_initialization.cpp"
+        "${BO1_ROOT}/src/platform/android/network_addresses.cpp"
+        "${BO1_ROOT}/src/universal/com_tasks.cpp"
+        "${BO1_ROOT}/src/platform/android/stack_trace.cpp"
+        "${BO1_ROOT}/src/universal/assertive.cpp"
+        "${BO1_ROOT}/src/platform/android/fatal_error.cpp"
+        "${BO1_ROOT}/src/platform/android/assertion_services.cpp"
+        "${BO1_ROOT}/src/database/db_registry.cpp"
+        "${BO1_ROOT}/src/client/cl_main.cpp"
+        "${BO1_ROOT}/src/client/cl_parse.cpp"
+        "${BO1_ROOT}/tl/gdt_remote.cpp"
+        "${BO1_ROOT}/tl/physics/rbc_def_custom.cpp"
+        "${BO1_ROOT}/src/physics/phys_constraint_solver_multithreaded.cpp"
+        "${BO1_ROOT}/src/vehicle/nitrous_vehicle_controller.cpp"
+        "${BO1_ROOT}/src/vehicle/nitrous_vehicle_effects.cpp"
+        "${BO1_ROOT}/src/client_mp/console_mp.cpp"
+        "${BO1_ROOT}/src/cgame/cg_clouds.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_caps.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_texturemem.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_cmds.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_setstate_d3d.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/rb_compositing.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/rb_showcollision.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/rb_stream.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/rb_imagetouch.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_hw_nvidia.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_staticmodel.cpp"
+        "${BO1_ROOT}/src/win32/win_content.cpp"
+        "${BO1_ROOT}/src/client/cl_cin.cpp"
+        "${BO1_ROOT}/src/client/cl_voice.cpp"
+        "${BO1_ROOT}/src/server_mp/sv_voice_mp.cpp"
+        "${BO1_ROOT}/src/client/cl_keys.cpp"
+        "${BO1_ROOT}/src/client/screen_placement.cpp"
+        "${BO1_ROOT}/src/universal/com_expressions.cpp"
+        "${BO1_ROOT}/src/ui/ui_server.cpp"
+        "${BO1_ROOT}/src/client_mp/cl_scrn_mp.cpp"
+        "${BO1_ROOT}/src/client_mp/cl_ui_mp.cpp"
+        "${BO1_ROOT}/src/cgame_mp/cg_newDraw_mp.cpp"
+        "${BO1_ROOT}/src/client_mp/cl_main_pc_mp.cpp"
+        "${BO1_ROOT}/src/ui/ui_main.cpp"
+        "${BO1_ROOT}/src/ui/ui_shared.cpp"
+        "${BO1_ROOT}/src/ui/ui_localvars.cpp"
+        "${BO1_ROOT}/src/ui/ui_utils.cpp"
+        "${BO1_ROOT}/src/ui/ui_atoms.cpp"
+        "${BO1_ROOT}/src/ui/ui_main_pc.cpp"
+        "${BO1_ROOT}/src/ui/ui_shared_obj.cpp"
+        "${BO1_ROOT}/src/ui/ui_feeders.cpp"
+        "${BO1_ROOT}/src/ui/l_precomp.cpp"
+        "${BO1_ROOT}/src/ui/l_memory.cpp"
+        "${BO1_ROOT}/src/universal/mem_largelocal.cpp"
+        "${BO1_ROOT}/src/universal/com_memory.cpp"
+        "${BO1_ROOT}/src/ui/l_script.cpp"
+        "${BO1_ROOT}/src/ui_mp/ui_main_mp.cpp"
+        "${BO1_ROOT}/src/ui_mp/ui_gametype_variants_mp.cpp"
+        "${BO1_ROOT}/src/cgame_mp/cg_consolecmds_mp.cpp"
+        "${BO1_ROOT}/src/cgame_mp/cg_main_mp.cpp"
+        "${BO1_ROOT}/src/qcommon/msg.cpp"
+        "${BO1_ROOT}/src/qcommon/msg_mp.cpp"
+        "${BO1_ROOT}/src/qcommon/huffman.cpp"
+        "${BO1_ROOT}/src/qcommon/com_clients.cpp"
+        "${BO1_ROOT}/src/universal/com_constantconfigstrings.cpp"
+        "${BO1_ROOT}/src/universal/com_stringtable.cpp"
+        "${BO1_ROOT}/src/DynEntity/DynEntity_pieces.cpp"
+        "${BO1_ROOT}/src/cgame_mp/cg_draw_mp.cpp"
+        "${BO1_ROOT}/src/qcommon/sv_msg_write.cpp"
+        "${BO1_ROOT}/src/qcommon/sv_msg_write_mp.cpp"
+        "${BO1_ROOT}/src/server_mp/sv_snapshot_mp.cpp"
+        "${BO1_ROOT}/src/server_mp/sv_net_chan_mp.cpp"
+        "${BO1_ROOT}/src/server_mp/sv_snapshot_profile_mp.cpp"
+        "${BO1_ROOT}/src/server_mp/sv_main_pc_mp.cpp"
+        "${BO1_ROOT}/src/server/sv_live_stats.cpp"
+        "${BO1_ROOT}/src/server_mp/sv_bot_mp.cpp"
+        "${BO1_ROOT}/src/server_mp/sv_archive_mp.cpp"
+        "${BO1_ROOT}/src/cgame_mp/cg_predict_mp.cpp"
+        "${BO1_ROOT}/src/game/g_load_utils.cpp"
+        "${BO1_ROOT}/src/game_mp/g_active_mp.cpp"
+        "${BO1_ROOT}/src/game_mp/g_combat_mp.cpp"
+        "${BO1_ROOT}/src/game/g_mover.cpp"
+        "${BO1_ROOT}/src/game/g_weapon.cpp"
+        "${BO1_ROOT}/src/game/g_missile.cpp"
+        "${BO1_ROOT}/src/game/g_items.cpp"
+        "${BO1_ROOT}/src/game/bullet.cpp"
+        "${BO1_ROOT}/src/flame/flame_physics.cpp"
+        "${BO1_ROOT}/src/glass/glass_load_obj.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_stream_util.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_xsurface_optimize.cpp"
+        "${BO1_ROOT}/src/universal/aabbtree.cpp"
+        "${BO1_ROOT}/src/game_mp/g_scr_main_mp.cpp"
+        "${BO1_ROOT}/src/game_mp/g_spawn_mp.cpp"
+        "${BO1_ROOT}/src/client_mp/g_client_mp.cpp"
+        "${BO1_ROOT}/src/client_mp/sv_client_mp.cpp"
+        "${BO1_ROOT}/src/server_mp/sv_ccmds_mp.cpp"
+        "${BO1_ROOT}/src/client_mp/cl_net_chan_mp.cpp"
+        "${BO1_ROOT}/src/cgame/cg_playerstate.cpp"
+        "${BO1_ROOT}/src/clientscript/cscr_main.cpp"
+        "${BO1_ROOT}/src/ui_mp/ui_gametype_custom_mp.cpp"
+        "${BO1_ROOT}/src/clientscript/cscr_evaluate.cpp"
+        "${BO1_ROOT}/src/clientscript/cscr_yacc.cpp"
+        "${BO1_ROOT}/src/game_sp/g_sp_ext.cpp"
+        "${BO1_ROOT}/src/game/sentient.cpp"
+        "${BO1_ROOT}/src/game_mp/actor_mp.cpp"
+        "${BO1_ROOT}/src/game/actor_state.cpp"
+        "${BO1_ROOT}/src/game/actor_spawner.cpp"
+        "${BO1_ROOT}/src/game/actor_scripted.cpp"
+        "${BO1_ROOT}/src/game/actor_orientation.cpp"
+        "${BO1_ROOT}/src/game/actor_senses.cpp"
+        "${BO1_ROOT}/src/game/actor_physics.cpp"
+        "${BO1_ROOT}/src/game/actor_death.cpp"
+        "${BO1_ROOT}/src/game/actor_corpse.cpp"
+        "${BO1_ROOT}/src/game/actor_generic.cpp"
+        "${BO1_ROOT}/src/game/actor_animapi.cpp"
+        "${BO1_ROOT}/src/game/actor_navigation.cpp"
+        "${BO1_ROOT}/src/game/actor_exposed.cpp"
+        "${BO1_ROOT}/src/game/actor_events.cpp"
+        "${BO1_ROOT}/src/game/actor_event_listeners.cpp"
+        "${BO1_ROOT}/src/game/pathnode.cpp"
+        "${BO1_ROOT}/src/game/pathnode_load_obj.cpp"
+        "${BO1_ROOT}/src/game/actor_badplace.cpp"
+        "${BO1_ROOT}/src/game/g_mapkit_path.cpp"
+        "${BO1_ROOT}/src/game_sp/g_sp_savegame.cpp"
+        "${BO1_ROOT}/src/game_sp/g_sp_loadgame.cpp"
+        "${BO1_ROOT}/src/game_sp/g_scr_sp_entity.cpp"
+        "${BO1_ROOT}/src/game_sp/g_actor_model_state.cpp"
+        "${BO1_ROOT}/src/game_sp/g_mapkit.cpp"
+        "${BO1_ROOT}/src/game_sp/g_sp_level_exit.cpp"
+        "${BO1_ROOT}/src/game_sp/actor_sp_ext.cpp"
+        "${BO1_ROOT}/src/game_mp/g_spawnsystem_mp.cpp"
+        "${BO1_ROOT}/src/game/g_targets.cpp"
+        "${BO1_ROOT}/src/game/turret.cpp"
+        "${BO1_ROOT}/src/game/g_svcmds.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_draw_cmdbuf.cpp"
+        "${BO1_ROOT}/src/universal/memfile.cpp"
+        "${BO1_ROOT}/src/minilzo/minilzo.cpp"
+        "${BO1_ROOT}/src/game_sp/g_sp_levelstart.cpp"
+        "${BO1_ROOT}/src/game_sp/g_sp_measure.cpp"
+        "${BO1_ROOT}/src/game_sp/g_sp_client.cpp"
+        "${BO1_ROOT}/src/game_sp/g_anim_commands_sp.cpp"
+        "${BO1_ROOT}/src/cgame_mp/cg_anim_commands.cpp"
+        "${BO1_ROOT}/src/cgame_mp/cg_actor_model_state.cpp"
+        "${BO1_ROOT}/src/cgame_mp/cg_actors_mp.cpp"
+        "${BO1_ROOT}/src/game_mp/g_trigger_mp.cpp"
+        "${BO1_ROOT}/src/game/g_client_fields.cpp"
+        "${BO1_ROOT}/src/game/actor_fields.cpp"
+        "${BO1_ROOT}/src/game/sentient_fields.cpp"
+        "${BO1_ROOT}/src/qcommon/graph.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_adszscale.cpp"
+        "${BO1_ROOT}/src/client/cl_milestone.cpp"
+        "${BO1_ROOT}/src/cgame_mp/cg_scr_main_mp.cpp"
+        "${BO1_ROOT}/src/cgame/cg_sp_servercmds.cpp"
+        "${BO1_ROOT}/src/demo/demo_files.cpp"
+        "${BO1_ROOT}/src/clientscript/cscr_debugger.cpp"
+        "${BO1_ROOT}/src/clientscript/cscr_parsetree.cpp"
+        "${BO1_ROOT}/src/game_sp/scr_sp_tables.cpp"
+        "${BO1_ROOT}/src/game_sp/g_scr_sp_players.cpp"
+        "${BO1_ROOT}/src/game_sp/g_scr_sp_anim.cpp"
+        "${BO1_ROOT}/src/game_sp/g_scr_sp_ai.cpp"
+        "${BO1_ROOT}/src/game_sp/g_scr_sp_notported.cpp"
+        "${BO1_ROOT}/src/cgame/cg_scr_sp_client.cpp"
+        "${BO1_ROOT}/src/cgame/cg_scr_sp_notported.cpp"
+        "${BO1_ROOT}/src/game/actor_script_cmd.cpp"
+        "${BO1_ROOT}/src/game/actor_aim.cpp"
+        "${BO1_ROOT}/src/game/actor_lookat.cpp"
+        "${BO1_ROOT}/src/game/actor_threat.cpp"
+        "${BO1_ROOT}/src/game/actor_pain.cpp"
+        "${BO1_ROOT}/src/game/actor_team_move.cpp"
+        "${BO1_ROOT}/src/bgame/bg_actor_prone.cpp"
+        "${BO1_ROOT}/src/game_sp/g_scr_sp_ai_cmds.cpp"
+        "${BO1_ROOT}/src/game_sp/scr_sp_debug.cpp"
+        "${BO1_ROOT}/src/cgame/cg_sp_nettrace.cpp"
+        "${BO1_ROOT}/src/cgame/cg_sp_feeltrace.cpp"
+        "${BO1_ROOT}/src/game/actor_dog_exposed.cpp"
+        "${BO1_ROOT}/src/game/actor_zombie_exposed.cpp"
+        "${BO1_ROOT}/src/game/g_scr_mover.cpp"
+        "${BO1_ROOT}/src/game/g_helicopter1.cpp"
+        "${BO1_ROOT}/src/game/g_scr_helicopter.cpp"
+        "${BO1_ROOT}/src/bgame/bg_dog_animations_mp.cpp"
+        "${BO1_ROOT}/src/cgame/cg_bolt.cpp"
+        "${BO1_ROOT}/src/cgame/cg_vehicle.cpp"
+        "${BO1_ROOT}/src/cgame/cg_scr_sp_blur.cpp"
+        "${BO1_ROOT}/src/cgame_mp/cg_draw_net_mp.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/rb_imagefilter.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_cmdbuf.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/rb_depthprepass.cpp"
+        "${BO1_ROOT}/src/client/cl_medal.cpp"
+        "${BO1_ROOT}/src/clientscript/cscr_parser.cpp"
+        "${BO1_ROOT}/src/clientscript/cscr_compiler.cpp"
+        "${BO1_ROOT}/src/game_mp/g_team_mp.cpp"
+        "${BO1_ROOT}/src/game_mp/g_misc_mp.cpp"
+        "${BO1_ROOT}/src/game_mp/g_cmds_mp.cpp"
+        "${BO1_ROOT}/src/game/g_player_corpse.cpp"
+        "${BO1_ROOT}/src/game_mp/g_save_mp.cpp"
+        "${BO1_ROOT}/src/glass/glass_server.cpp"
+        "${BO1_ROOT}/src/DynEntity/DynEntity_server.cpp"
+        "${BO1_ROOT}/src/cgame/cg_spawn.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_staticmodel_load_obj.cpp"
+        "${BO1_ROOT}/src/aim_assist/aim_assist.cpp"
+        "${BO1_ROOT}/src/aim_assist/aim_target.cpp"
+        "${BO1_ROOT}/src/game/g_vehicle_path.cpp"
+        "${BO1_ROOT}/src/ddl/ddl_api.cpp"
+        "${BO1_ROOT}/src/ddl/ddl_buffer.cpp"
+        "${BO1_ROOT}/src/ddl/ddl_lookup.cpp"
+        "${BO1_ROOT}/src/ddl/ddl_converter.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_exposure.cpp"
+        "${BO1_ROOT}/src/cgame/cg_camerashake.cpp"
+        "${BO1_ROOT}/src/common/brush_edges.cpp"
+        "${BO1_ROOT}/src/qcommon/cm_showcollision.cpp"
+        "${BO1_ROOT}/src/qcommon/radiant_remote.cpp"
+        "${BO1_ROOT}/src/qcommon/dl_main.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_xsurface_load_obj.cpp"
+        "${BO1_ROOT}/src/demo/demo_ui.cpp"
+        "${BO1_ROOT}/src/xanim/xanim_clientnotify.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_add_cmdbuf.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_draw_lit.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/rb_postfx.cpp"
+        "${BO1_ROOT}/src/bgame/bg_unlockable_items.cpp"
+        "${BO1_ROOT}/src/clientscript/cscr_animtree.cpp"
+        "${BO1_ROOT}/src/cgame_mp/cg_animscripted_mp.cpp"
+        "${BO1_ROOT}/src/cgame/cg_laser.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_light_load_obj.cpp"
+        "${BO1_ROOT}/src/EffectsCore/FxCurve_load_obj.cpp"
+        "${BO1_ROOT}/src/EffectsCore/FxCurve.cpp"
+        "${BO1_ROOT}/src/live/live_pcache.cpp"
+        "${BO1_ROOT}/src/live/live_pcache_profile.cpp"
+        "${BO1_ROOT}/src/live/live_storage.cpp"
+        "${BO1_ROOT}/src/live/live_storage_win.cpp"
+        "${BO1_ROOT}/src/live/live_stats.cpp"
+        "${BO1_ROOT}/src/live/live_win.cpp"
+        "${BO1_ROOT}/src/live/live_groups_dw.cpp"
+        "${BO1_ROOT}/src/live/live_counter.cpp"
+        "${BO1_ROOT}/src/live/live_storage_pub.cpp"
+        "${BO1_ROOT}/src/live/live_presence_win.cpp"
+        "${BO1_ROOT}/src/live/live_ticker.cpp"
+        "${BO1_ROOT}/src/server/sv_autoplaylist.cpp"
+        "${BO1_ROOT}/src/live/live_contracts.cpp"
+        "${BO1_ROOT}/src/live/live_leaderboard.cpp"
+        "${BO1_ROOT}/src/live/live_combatrecord.cpp"
+        "${BO1_ROOT}/src/cgame/cg_info.cpp"
+        "${BO1_ROOT}/src/game_mp/player_use_mp.cpp"
+        "${BO1_ROOT}/src/game_sp/g_sp_lookat.cpp"
+        "${BO1_ROOT}/src/game_mp/g_client_script_cmd_mp.cpp"
+        "${BO1_ROOT}/src/ui/ui_friends.cpp"
+        "${BO1_ROOT}/src/live/live_news.cpp"
+        "${BO1_ROOT}/src/live/live_meetplayer.cpp"
+        "${BO1_ROOT}/src/ddl/ddl_cmd.cpp"
+        "${BO1_ROOT}/src/qcommon/profanityfilter.cpp"
+        "${BO1_ROOT}/src/qcommon/legacyhacks.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_devgui.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_globalgfxdata.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_fog.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_material_consts.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_screenshot.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_jpeg.cpp"
+        "${BO1_ROOT}/src/CubeMapGenLib/CImageSurface.cpp"
+        "${BO1_ROOT}/src/CubeMapGenLib/CBBoxInt32.cpp"
+        "${BO1_ROOT}/src/CubeMapGenLib/CCubeMapProcessor.cpp"
+        "${BO1_ROOT}/src/live/live.cpp"
+        "${BO1_ROOT}/src/live/live_fileshare.cpp"
+        "${BO1_ROOT}/src/live/live_fileshare_cache.cpp"
+        "${BO1_ROOT}/src/live/live_fileshare_search.cpp"
+        "${BO1_ROOT}/src/live/live_sessions_win.cpp"
+        "${BO1_ROOT}/src/universal/UserInfo.cpp"
+        "${BO1_ROOT}/src/win32/win_gamerprofile.cpp"
+        "${BO1_ROOT}/src/client/cl_devgui.cpp"
+        "${BO1_ROOT}/src/ui/ui_commands.cpp"
+        "${BO1_ROOT}/src/ui/ui_keyboard.cpp"
+        "${BO1_ROOT}/src/game_mp/ui_gameinfo_mp.cpp"
+        "${BO1_ROOT}/src/universal/base64.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_staticmodelcache_load_obj.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_draw_model_util.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_sky_load_obj.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_sprite.cpp"
+        "${BO1_ROOT}/src/game_sp/g_sp_player_state.cpp"
+        "${BO1_ROOT}/src/cgame_mp/cg_snapshot_mp.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/rb_tess.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_draw_bsp.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_draw_xmodel.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_draw_staticmodel.cpp"
+        "${BO1_ROOT}/src/cgame/cg_draw_reticles.cpp"
+        "${BO1_ROOT}/src/cgame/cg_draw_names.cpp"
+        "${BO1_ROOT}/src/cgame/cg_draw_indicators.cpp"
+        "${BO1_ROOT}/src/clientscript/cscr_tempmemory.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_rendertarget.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/rb_draw3d.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_state.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_state_utils.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_shade.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_wind.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/rb_state.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/rb_stats.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/rb_pixelcost.cpp"
+        "${BO1_ROOT}/src/cgame_mp/cg_ui_animate_mp.cpp"
+        "${BO1_ROOT}/src/ragdoll/ragdoll.cpp"
+        "${BO1_ROOT}/src/ragdoll/ragdoll_update.cpp"
+        "${BO1_ROOT}/src/ragdoll/ragdoll_quat.cpp"
+        "${BO1_ROOT}/src/ragdoll/ragdoll_cmds.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_utils.cpp"
+        "${BO1_ROOT}/src/database/db_file_load.cpp"
+        "${BO1_ROOT}/src/database/db_assetnames.cpp"
+        "${BO1_ROOT}/src/database/db_memory.cpp"
+        "${BO1_ROOT}/src/database/db_auth.cpp"
+        "${BO1_ROOT}/src/database/db_stream.cpp"
+        "${BO1_ROOT}/src/database/db_stream_load.cpp"
+        "${BO1_ROOT}/src/database/db_expand.cpp"
+        "${BO1_ROOT}/src/database/db_load.cpp"
+        "${BO1_ROOT}/src/database/db_stringtable_load.cpp"
+        "${BO1_ROOT}/src/universal/com_stringtable_sort.cpp"
+        "${BO1_ROOT}/src/platform/win32_compat/sort16.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_material.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_image.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_stream.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/rb_resource.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_buffers.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_image_load_common.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_image_load_obj.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_streamalloc.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_dvars.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/rb_logfile.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_staticmodelcache.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_water.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_workercmds.cpp"
+        "${BO1_ROOT}/src/xanim/dobj.cpp"
+        "${BO1_ROOT}/src/xanim/xanim.cpp"
+        "${BO1_ROOT}/src/xanim/xmodel.cpp"
+        "${BO1_ROOT}/src/xanim/xmodel_utils.cpp"
+        "${BO1_ROOT}/src/xanim/dobj_utils.cpp"
+        "${BO1_ROOT}/src/xanim/dobj_skel.cpp"
+        "${BO1_ROOT}/src/xanim/xanim_calc.cpp"
+        "${BO1_ROOT}/src/ik/ik.cpp"
+        "${BO1_ROOT}/src/ik/ik_import.cpp"
+        "${BO1_ROOT}/src/ik/ik_math.cpp"
+        "${BO1_ROOT}/src/ik/ik_process.cpp"
+        "${BO1_ROOT}/src/physics/rope.cpp"
+        "${BO1_ROOT}/src/physics/phys_main.cpp"
+        "${BO1_ROOT}/src/physics/phys_collision.cpp"
+        "${BO1_ROOT}/src/physics/physics_system.cpp"
+        "${BO1_ROOT}/src/physics/physics_system_internal.cpp"
+        "${BO1_ROOT}/src/physics/phys_mem_new.cpp"
+        "${BO1_ROOT}/src/physics/phys_assert.cpp"
+        "${BO1_ROOT}/src/physics/phys_util.cpp"
+        "${BO1_ROOT}/src/physics/phys_render.cpp"
+        "${BO1_ROOT}/src/physics/phys_broad_phase.cpp"
+        "${BO1_ROOT}/src/physics/phys_gjk_collision_detection.cpp"
+        "${BO1_ROOT}/src/physics/phys_gjk_sep_dir.cpp"
+        "${BO1_ROOT}/src/physics/phys_transient_allocator.cpp"
+        "${BO1_ROOT}/src/vehicle/nitrous_vehicle.cpp"
+        "${BO1_ROOT}/src/physics/rigid_body.cpp"
+        "${BO1_ROOT}/tl/physics/rbc_def_vehicle.cpp"
+        "${BO1_ROOT}/tl/physics/rbc_def_contact.cpp"
+        "${BO1_ROOT}/tl/physics/rbc_def_generic.cpp"
+        "${BO1_ROOT}/src/bgame/bg_animation.cpp"
+        "${BO1_ROOT}/src/bgame/bg_misc.cpp"
+        "${BO1_ROOT}/src/bgame/bg_jump.cpp"
+        "${BO1_ROOT}/src/bgame/bg_mantle.cpp"
+        "${BO1_ROOT}/src/bgame/bg_dtp.cpp"
+        "${BO1_ROOT}/src/bgame/bg_dog.cpp"
+        "${BO1_ROOT}/src/bgame/bg_vehicle_anim.cpp"
+        "${BO1_ROOT}/src/bgame/bg_perks.cpp"
+        "${BO1_ROOT}/src/bgame/bg_fire.cpp"
+        "${BO1_ROOT}/src/bgame/bg_wind.cpp"
+        "${BO1_ROOT}/src/bgame/bg_weapons.cpp"
+        "${BO1_ROOT}/src/bgame/bg_weapons_def.cpp"
+        "${BO1_ROOT}/src/bgame/bg_weapons_ammo.cpp"
+        "${BO1_ROOT}/src/cgame/cg_main.cpp"
+        "${BO1_ROOT}/src/clientscript/cscr_vm.cpp"
+        "${BO1_ROOT}/src/clientscript/cscr_variable.cpp"
+        "${BO1_ROOT}/src/bgame/bg_slidemove.cpp"
+        "${BO1_ROOT}/src/bgame/bg_pmove.cpp"
+        "${BO1_ROOT}/src/cgame_mp/cg_servercmds_mp.cpp"
+        "${BO1_ROOT}/src/physics/destructibledef_load_obj.cpp"
+        "${BO1_ROOT}/src/physics/physconstraints_load_obj.cpp"
+        "${BO1_ROOT}/src/xanim/xmodel_load_phys_collmap.cpp"
+        "${BO1_ROOT}/src/flame/flame_class_chunk.cpp"
+        "${BO1_ROOT}/src/flame/flame_class_fire.cpp"
+        "${BO1_ROOT}/src/flame/flame_class_smoke.cpp"
+        "${BO1_ROOT}/src/flame/flame_class_drips.cpp"
+        "${BO1_ROOT}/src/physics/phys_effects.cpp"
+        "${BO1_ROOT}/src/physics/phys_traverse.cpp"
+        "${BO1_ROOT}/src/physics/phys_convex_hull.cpp"
+        "${BO1_ROOT}/src/physics/phys_auto_rigid_body.cpp"
+        "${BO1_ROOT}/src/physics/phys_collision_multithreaded.cpp"
+        "${BO1_ROOT}/src/vehicle/nitrous_vehicle_constraint.cpp"
+        "${BO1_ROOT}/src/ik/ik_layers.cpp"
+        "${BO1_ROOT}/src/xanim/xanim_load_obj.cpp"
+        "${BO1_ROOT}/tl/physics/rbc_def_ragdoll.cpp"
+        "${BO1_ROOT}/src/physics/phys_task_manager.cpp"
+        "${BO1_ROOT}/src/universal/surfaceflags.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/rb_debug.cpp"
+        "${BO1_ROOT}/src/win32/win_workercmds.cpp"
+        "${BO1_ROOT}/src/qcommon/statmonitor.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_foliage.cpp"
+        "${BO1_ROOT}/src/cgame/cg_event.cpp"
+        "${BO1_ROOT}/src/cgame/cg_hudelem.cpp"
+        "${BO1_ROOT}/src/client/cl_console.cpp"
+        "${BO1_ROOT}/src/client/con_channels.cpp"
+        "${BO1_ROOT}/src/universal/eval.cpp"
+        "${BO1_ROOT}/src/ui/ui_playlists.cpp"
+        "${BO1_ROOT}/src/ui_mp/ui_feeders_mp.cpp"
+        "${BO1_ROOT}/src/client_mp/cl_ui_pc_mp.cpp"
+        "${BO1_ROOT}/src/demo/demo_version.cpp"
+        "${BO1_ROOT}/src/demo/demo_common.cpp"
+        "${BO1_ROOT}/src/demo/demo_playback.cpp"
+        "${BO1_ROOT}/src/cgame/cg_perf.cpp"
+        "${BO1_ROOT}/src/cgame/cg_colltree.cpp"
+        "${BO1_ROOT}/src/cgame_mp/cg_scoreboard_mp.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_water_load_obj.cpp"
+        "${BO1_ROOT}/src/cgame/cg_sp_hud.cpp"
+        "${BO1_ROOT}/src/cgame/cg_world.cpp"
+        "${BO1_ROOT}/src/cgame/cg_draw_debug.cpp"
+        "${BO1_ROOT}/src/cgame/cg_ammocounter.cpp"
+        "${BO1_ROOT}/src/cgame/cg_spikeacoustic.cpp"
+        "${BO1_ROOT}/src/cgame/offhandweapons.cpp"
+        "${BO1_ROOT}/src/cgame/cg_shellshock.cpp"
+        "${BO1_ROOT}/src/cgame/cg_scr_main.cpp"
+        "${BO1_ROOT}/src/glass/glass_allocator.cpp"
+        "${BO1_ROOT}/src/physics/phys_contact_manifold.cpp"
+        "${BO1_ROOT}/src/bgame/bg_weapons_view.cpp"
+        "${BO1_ROOT}/src/bgame/bg_weapons_util.cpp"
+        "${BO1_ROOT}/src/devgui/devgui.cpp"
+        "${BO1_ROOT}/src/devgui/devgui_util.cpp"
+        "${BO1_ROOT}/src/devgui/devgui_input.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_ui3d.cpp"
+        "${BO1_ROOT}/src/ui/ui_viewer.cpp"
+        "${BO1_ROOT}/src/bgame/bg_animconditions.cpp"
+        "${BO1_ROOT}/src/cgame/cg_weapon_options.cpp"
+        "${BO1_ROOT}/src/cgame/cg_visionsets.cpp"
+        "${BO1_ROOT}/src/turret/turret_placement.cpp"
+        "${BO1_ROOT}/src/cgame_mp/cg_view_mp.cpp"
+        "${BO1_ROOT}/src/cgame_mp/cg_compassfriendlies_mp.cpp"
+        "${BO1_ROOT}/src/xanim/xmodel_load_obj.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_font_load_obj.cpp"
+        "${BO1_ROOT}/src/cgame_mp/cg_vehicles_mp.cpp"
+        "${BO1_ROOT}/src/game/g_debug.cpp"
+        "${BO1_ROOT}/src/game/enthandle.cpp"
+        "${BO1_ROOT}/src/server_mp/sv_main_mp.cpp"
+        "${BO1_ROOT}/src/server_mp/sv_init_mp.cpp"
+        "${BO1_ROOT}/src/server/sv_game.cpp"
+        "${BO1_ROOT}/src/client_mp/cl_parse_mp.cpp"
+        "${BO1_ROOT}/src/client_mp/cl_input_mp.cpp"
+        "${BO1_ROOT}/src/cgame_mp/cg_animtree_mp.cpp"
+        "${BO1_ROOT}/src/game/g_hudelem.cpp"
+        "${BO1_ROOT}/src/server/sv_world.cpp"
+        "${BO1_ROOT}/src/game_mp/g_utils_mp.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/rb_sky.cpp"
+        "${BO1_ROOT}/src/game/g_scr_vehicle.cpp"
+        "${BO1_ROOT}/src/ui/ui_emblem.cpp"
+        "${BO1_ROOT}/src/client/cl_rank.cpp"
+        "${BO1_ROOT}/src/bgame/bg_emblems.cpp"
+        "${BO1_ROOT}/src/bgame/bg_weapons_load_obj.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_bsp_load_obj.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_font.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/rb_shade.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/rb_backend.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_add_bsp.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_add_staticmodel.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_pretess.cpp"
+        "${BO1_ROOT}/src/universal/com_stringtable_obj.cpp"
+        "${BO1_ROOT}/src/universal/com_convexhull.cpp"
+        "${BO1_ROOT}/src/universal/q_shared.cpp"
+        "${BO1_ROOT}/src/EffectsCore/fx_convert.cpp"
+        "${BO1_ROOT}/src/universal/com_loadutils.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_outdoor.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_pixelcost_load_obj.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_world_lod.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_extracam.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/rb_fog.cpp"
+        "${BO1_ROOT}/src/qcommon/net_chan_mp.cpp"
+        "${BO1_ROOT}/src/DynEntity/DynEntity_gamestate.cpp"
+        "${BO1_ROOT}/src/physics/rope_gamestate.cpp"
+        "${BO1_ROOT}/src/cgame/cg_camera.cpp"
+        "${BO1_ROOT}/src/cgame/cg_sp_client_ext.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_pointlights.cpp"
+        "${BO1_ROOT}/src/cgame/cg_localents.cpp"
+        "${BO1_ROOT}/src/cgame_mp/cg_players_mp.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_rope_render.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_mapkit_render.cpp"
+        "${BO1_ROOT}/src/flame/flame_system.cpp"
+        "${BO1_ROOT}/src/flame/flame_class_stream.cpp"
+        "${BO1_ROOT}/src/qcommon/com_bsp_load_obj.cpp"
+        "${BO1_ROOT}/src/qcommon/dvar_cmds.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_reflection_probe.cpp"
+        "${BO1_ROOT}/src/universal/com_expressions_eval.cpp"
+        "${BO1_ROOT}/src/cgame/cg_sound.cpp"
+        "${BO1_ROOT}/src/glass/glass_renderer.cpp"
+        "${BO1_ROOT}/src/clientscript/scr_const.cpp"
+        "${BO1_ROOT}/src/sound/snd_bank.cpp"
+        "${BO1_ROOT}/src/sound/snd.cpp"
+        "${BO1_ROOT}/src/sound/snd_occlusion.cpp"
+        "${BO1_ROOT}/src/sound/snd_stream.cpp"
+        "${BO1_ROOT}/src/sound/snd_local.cpp"
+        "${BO1_ROOT}/src/sound/snd_debug.cpp"
+        "${BO1_ROOT}/src/sound/snd_db.cpp"
+        "${BO1_ROOT}/src/sound/snd_globals.cpp"
+        "${BO1_ROOT}/src/sound/snd_utils.cpp"
+        "${BO1_ROOT}/src/sound/snd_log.cpp"
+        "${BO1_ROOT}/src/sound/snd_bo1_trace.cpp"
+        "${BO1_ROOT}/src/sound/snd_dvar.cpp"
+        "${BO1_ROOT}/src/sound/snd_public_async.cpp"
+        "${BO1_ROOT}/src/sound/snd_public_async_q.cpp"
+        "${BO1_ROOT}/src/physics/phys_colgeom.cpp"
+        "${BO1_ROOT}/src/physics/phys_gjk.cpp"
+        "${BO1_ROOT}/src/glass/glass_client.cpp"
+        "${BO1_ROOT}/src/EffectsCore/fx_update.cpp"
+        "${BO1_ROOT}/src/EffectsCore/fx_system.cpp"
+        "${BO1_ROOT}/src/EffectsCore/fx_archive.cpp"
+        "${BO1_ROOT}/src/EffectsCore/fx_draw.cpp"
+        "${BO1_ROOT}/src/EffectsCore/fx_marks.cpp"
+        "${BO1_ROOT}/src/EffectsCore/fx_load_obj.cpp"
+        "${BO1_ROOT}/src/EffectsCore/fx_beam.cpp"
+        "${BO1_ROOT}/src/EffectsCore/fx_postlight.cpp"
+        "${BO1_ROOT}/src/EffectsCore/fx_sprite.cpp"
+        "${BO1_ROOT}/src/EffectsCore/fx_sort.cpp"
+        "${BO1_ROOT}/src/EffectsCore/fx_random.cpp"
+        "${BO1_ROOT}/src/EffectsCore/fx_wind.cpp"
+        "${BO1_ROOT}/src/EffectsCore/fx_update_util.cpp"
+        "${BO1_ROOT}/src/EffectsCore/fx_dvars.cpp"
+        "${BO1_ROOT}/src/EffectsCore/fx_unique_handle.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_rendercmds.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_model.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_model_lod.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_draw_method.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_light.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_primarylights.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_xsurface.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_skybox.cpp"
+        "${BO1_ROOT}/src/client/cl_debugdata.cpp"
+        "${BO1_ROOT}/src/client/cl_compositing.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_debug.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_debug_alloc.cpp"
+        "${BO1_ROOT}/src/cgame/cg_drawtools.cpp"
+        "${BO1_ROOT}/src/cgame/cg_pose_utils.cpp"
+        "${BO1_ROOT}/src/cgame_mp/cg_pose_mp.cpp"
+        "${BO1_ROOT}/src/cgame_mp/cg_ents_mp.cpp"
+        "${BO1_ROOT}/src/client_mp/cl_pose_mp.cpp"
+        "${BO1_ROOT}/src/client_mp/cl_cgame_mp.cpp"
+        "${BO1_ROOT}/src/client_mp/cl_main_mp.cpp"
+        "${BO1_ROOT}/src/game_mp/g_main_mp.cpp"
+        "${BO1_ROOT}/src/cgame/cg_weapons.cpp"
+        "${BO1_ROOT}/src/ragdoll/ragdoll_controller.cpp"
+        "${BO1_ROOT}/src/physics/destructible.cpp"
+        "${BO1_ROOT}/src/physics/xdoll.cpp"
+        "${BO1_ROOT}/src/glass/glass_shard.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_material_load_obj.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_warn.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_shader_constant_set.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_drawsurf.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_scene.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_workercmds_common.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_dobj_skin.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_model_skin.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_model_skin_sse.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_model_pose.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_model_lighting.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_dpvs_static.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_dpvs.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_dpvs_dynmodel.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_dpvs_entity.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_dpvs_sceneent.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_spotshadow.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_draw_material.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_char_tech_util.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_draw_shadowablelight.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_draw_sunshadow.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/rb_spotshadow.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/rb_sunshadow.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/rb_superflare.cpp"
+        "${BO1_ROOT}/src/ui/ui_screenshot.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/rb_light.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_meshdata.cpp"
+        "${BO1_ROOT}/src/universal/com_pack.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_marks.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_water_sim.cpp"
+        "${BO1_ROOT}/src/platform/android/water_mutex.cpp"
+        "${BO1_ROOT}/src/platform/android/narrow32_android.cpp"
+        "${BO1_ROOT}/src/platform/android/d3dx_buffer.cpp"
+        "${BO1_ROOT}/src/platform/android/d3dx_semantics.cpp"
+        "${BO1_ROOT}/src/platform/android/d3dx_ctab.cpp"
+        "${BO1_ROOT}/src/platform/android/d3dx_compile.cpp"
+        "${BO1_ROOT}/src/platform/android/shader_cache.cpp"
+        "${BO1_ROOT}/src/universal/fft.cpp"
+        "${BO1_ROOT}/src/universal/curve.cpp"
+        "${BO1_ROOT}/src/qcommon/dobj_management.cpp"
+        "${BO1_ROOT}/src/qcommon/cm_load.cpp"
+        "${BO1_ROOT}/src/qcommon/cm_staticmodel.cpp"
+        "${BO1_ROOT}/src/qcommon/cm_staticmodel_load_obj.cpp"
+        "${BO1_ROOT}/src/qcommon/cm_load_obj.cpp"
+        "${BO1_ROOT}/src/qcommon/cm_noperks.cpp"
+        "${BO1_ROOT}/src/physics/physpreset_load_obj.cpp"
+        "${BO1_ROOT}/src/game_sp/g_scr_sp_players_x1.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_sky.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_sunshadow.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/rb_corona.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_vertexstream2.cpp"
+        "${BO1_ROOT}/src/qcommon/cm_trace.cpp"
+        "${BO1_ROOT}/src/qcommon/cm_mapkit.cpp"
+        "${BO1_ROOT}/src/qcommon/cm_mesh.cpp"
+        "${BO1_ROOT}/src/qcommon/cm_tracebox.cpp"
+        "${BO1_ROOT}/src/qcommon/cm_test.cpp"
+        "${BO1_ROOT}/src/qcommon/cm_world.cpp"
+        "${BO1_ROOT}/src/platform/android/aligned_memory.cpp"
+        "${BO1_ROOT}/src/DynEntity/DynEntity_load_obj.cpp"
+        "${BO1_ROOT}/src/DynEntity/DynEntity_client.cpp"
+        "${BO1_ROOT}/src/DynEntity/DynEntity_coll.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_init.cpp"
+        "${BO1_ROOT}/src/platform/android/renderer_errors.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_bsp.cpp"
+        "${BO1_ROOT}/src/qcommon/com_bsp.cpp"
+        "${BO1_ROOT}/src/game/g_bsp.cpp"
+        "${BO1_ROOT}/src/universal/com_math.cpp"
+        "${BO1_ROOT}/src/universal/com_math_anglevectors.cpp"
+        "${BO1_ROOT}/src/universal/com_workercmds.cpp"
+        "${BO1_ROOT}/src/universal/com_files.cpp"
+        "${BO1_ROOT}/src/qcommon/unzip.cpp"
+        "${BO1_ROOT}/src/qcommon/files.cpp"
+        "${BO1_ROOT}/src/qcommon/md4.cpp"
+        "${BO1_ROOT}/src/stringed/stringed_hooks.cpp"
+        "${BO1_ROOT}/src/stringed/stringed_ingame.cpp"
+        "${BO1_ROOT}/src/stringed/stringed_interface.cpp"
+        "${BO1_ROOT}/src/stringed/stringed_remote.cpp"
+        "${BO1_ROOT}/src/client/splitscreen.cpp"
+        "${BO1_ROOT}/src/cgame/cg_compass.cpp"
+        "${BO1_ROOT}/src/win32/win_common.cpp"
+        "${BO1_ROOT}/src/gfx_d3d/r_image_wavelet.cpp"
+        "${BO1_ROOT}/src/platform/android/engine_random.cpp"
+        "${BO1_ROOT}/tl/jobqueue/jobqueue_all.cpp"
+        "${BO1_ROOT}/tl/tl_system.cpp"
+        "${BO1_ROOT}/src/platform/android/tl_memory.cpp"
+        "${BO1_ROOT}/src/platform/android/jobqueue_worker.cpp"
+        "${BO1_ROOT}/src/platform/android/cpu_profile.cpp"
+        "${BO1_ROOT}/src/platform/android/window_lifecycle.cpp"
+        "${BO1_ROOT}/src/qcommon/mem_track.cpp"
+        "${BO1_ROOT}/src/platform/android/zone_heap.cpp"
+        "${BO1_ROOT}/src/platform/android/virtual_memory.cpp"
+        "${BO1_ROOT}/src/platform/android/directory_services.cpp"
+        "${BO1_ROOT}/src/universal/mem_userhunk.cpp"
+        "${BO1_ROOT}/src/universal/mem_firstfit.cpp"
+        "${BO1_ROOT}/src/universal/mem_fixed.cpp"
+        "${BO1_ROOT}/src/platform/android/database_diagnostics.cpp")
+    set_source_files_properties("${BO1_ROOT}/src/win32/win_common.cpp"
+        PROPERTIES COMPILE_DEFINITIONS BO1_NATIVE_CD_PATH_ONLY=1)
+    # Use the engine's modified z_stream and matching six inflate sources.
+    # Linking Android's system libz would give this loader a different ABI.
+    add_library(bo1_native_jpeg_codec STATIC)
+    foreach(BO1_JPEG_NAME IN ITEMS jcapimin jcapistd jccoefct jccolor jcdctmgr jchuff jcinit jcmainct jcmarker jcmaster jcomapi jcparam jcphuff jcprepct jcsample jctrans jdapimin jdapistd jdatadst jdatasrc jdcoefct jdcolor jddctmgr jdhuff jdinput jdmainct jdmarker jdmaster jdmerge jdphuff jdpostct jdsample jdtrans jerror jfdctflt jfdctfst jfdctint jidctflt jidctfst jidctint jidctred jmemansi jmemmgr jquant1 jquant2 jutils)
+        target_sources(bo1_native_jpeg_codec PRIVATE "${BO1_ROOT}/src/jpeg/${BO1_JPEG_NAME}.c")
+    endforeach()
+    set_target_properties(bo1_native_jpeg_codec PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED YES)
+    target_compile_options(bo1_native_jpeg_codec PRIVATE -fms-extensions -fsigned-char
+        -ffunction-sections -fdata-sections -fsanitize=undefined -fno-sanitize-recover=all)
+    target_link_libraries(bo1_native_database PRIVATE bo1_native_jpeg_codec)
+    target_link_libraries(bo1_native_database PRIVATE bo1_native_steam_api)
+    target_link_libraries(bo1_native_database PRIVATE bo1_native_dxvk_d3d9)
+    set_property(SOURCE "${BO1_ROOT}/src/gfx_d3d/r_init.cpp" APPEND PROPERTY
+        COMPILE_OPTIONS -UBO1_NATIVE_RENDER_GLOBALS)
+    target_compile_definitions(bo1_native_database PRIVATE BO1_NATIVE_RENDERED_INPUT=1)
+    if(BO1_NATIVE_SDL_APP AND BO1_NATIVE_OPTIMIZE_REVERB)
+        # Preserve strict math, debug symbols, instrumentation, assertions and UBSan.
+        set_property(SOURCE "${BO1_ROOT}/src/sound/snd_radverb.cpp" TARGET_DIRECTORY bo1_native_database APPEND PROPERTY
+            COMPILE_OPTIONS -O2)
+    endif()
+    target_link_libraries(bo1_native_database PUBLIC FAudio-static)
+    target_link_libraries(bo1_native_database PUBLIC bo1_native_media_format)
+    target_link_libraries(bo1_native_database PUBLIC bo1_native_vpx_codec)
+    target_link_libraries(bo1_native_database PUBLIC bo1_native_speex)
+    target_include_directories(bo1_native_database PUBLIC
+        "${BO1_ROOT}/third_party/faudio-25.02/include"
+        "${BO1_ROOT}/third_party/faudio-25.02/src")
+    add_library(bo1_native_database_inflate STATIC)
+    foreach(BO1_ZLIB_NAME IN ITEMS inflate inffast inftrees deflate trees adler32 crc32 zutil uncompr)
+        target_sources(bo1_native_database_inflate PRIVATE "${BO1_ROOT}/src/zlib/${BO1_ZLIB_NAME}.c")
+    endforeach()
+    set_target_properties(bo1_native_database_inflate PROPERTIES C_STANDARD 99 C_STANDARD_REQUIRED YES)
+    target_compile_options(bo1_native_database_inflate PRIVATE -fsigned-char
+        -ffunction-sections -fdata-sections -fsanitize=undefined -fno-sanitize-recover=all)
+    target_link_libraries(bo1_native_database PRIVATE bo1_native_database_inflate)
+    target_link_libraries(bo1_native_database PRIVATE bo1_native_shader_compiler)
+    target_link_libraries(bo1_native_database PRIVATE bo1_native_sdl2)
+    target_include_directories(bo1_native_database PUBLIC
+        "${BO1_ROOT}/../DXVK-Native/third_party/sdl-prefix/include/SDL2")
+    target_include_directories(bo1_native_database PRIVATE "${BO1_ROOT}/src" "${BO1_ROOT}"
+        "${BO1_ROOT}/../DXVK-Native/include/native/directx"
+        "${BO1_ROOT}/../DXVK-Native/include/native/windows")
+    target_compile_features(bo1_native_database PRIVATE cxx_std_20)
+    set_property(SOURCE "${BO1_ROOT}/src/universal/assertive.cpp" APPEND PROPERTY
+        COMPILE_DEFINITIONS BO1_NATIVE_ASSERT_ADDRESS_STATE=1)
+    set_property(SOURCE "${BO1_ROOT}/src/win32/win_net.cpp" APPEND PROPERTY
+        COMPILE_DEFINITIONS BO1_NATIVE_NET_ADDRESS_POLICY=1 BO1_NATIVE_UDP_ENGINE=1)
+    set_property(SOURCE "${BO1_ROOT}/src/qcommon/com_profilemapload.cpp" APPEND PROPERTY
+        COMPILE_DEFINITIONS BO1_NATIVE_PROFILE_LIFECYCLE=1)
+    target_compile_definitions(bo1_native_database PRIVATE _DEBUG=1
+        BO1_NATIVE_RENDER_GLOBALS=1 BO1_NATIVE_RENDER_CONFIG=1)
+    target_compile_options(bo1_native_database PRIVATE -fms-extensions -fsigned-char
+        -ffunction-sections -fdata-sections -finstrument-functions
+        -fsanitize=undefined -fno-sanitize-recover=all
+        -include "${BO1_ROOT}/src/platform/win32_compat/msvc_compat.h")
+endif()
+target_compile_definitions(bo1_native_startup_services PRIVATE BO1_NATIVE_COM_BOOT=1)
+target_compile_options(bo1_native_startup_services PRIVATE -finstrument-functions)
+target_include_directories(bo1_native_startup_services PRIVATE "${BO1_ROOT}")
+add_library(bo1_native_entry_state STATIC
+    "${BO1_ROOT}/src/client_mp/cl_main_mp.cpp"
+    "${BO1_ROOT}/src/clientscript/cscr_variable.cpp"
+    "${BO1_ROOT}/src/xanim/xanim.cpp"
+    "${BO1_ROOT}/src/game_mp/g_main_mp.cpp"
+    "${BO1_ROOT}/src/game_mp/pregame.cpp"
+    "${BO1_ROOT}/src/live/live_steam.cpp"
+    "${BO1_ROOT}/src/live/live_win_common.cpp"
+    "${BO1_ROOT}/src/win32/win_steam.cpp"
+    "${BO1_ROOT}/src/platform/android/file_delete.cpp"
+    "${BO1_ROOT}/src/platform/android/file_services.cpp"
+    "${BO1_ROOT}/src/ik/ik.cpp"
+    "${BO1_ROOT}/src/ik/ik_import.cpp"
+    "${BO1_ROOT}/src/qcommon/cm_load.cpp"
+    "${BO1_ROOT}/src/qcommon/cm_trace.cpp"
+    "${BO1_ROOT}/src/gfx_d3d/r_dvars.cpp"
+    "${BO1_ROOT}/src/gfx_d3d/r_reflection_probe.cpp"
+    "${BO1_ROOT}/src/qcommon/com_gamemodes.cpp"
+    "${BO1_ROOT}/src/qcommon/mem_track.cpp"
+    "${BO1_ROOT}/src/universal/physicalmemory.cpp"
+    "${BO1_ROOT}/src/universal/com_buildinfo.cpp"
+    "${BO1_ROOT}/src/win32/win_localize.cpp"
+    "${BO1_ROOT}/src/win32/win_configure.cpp"
+    "${BO1_ROOT}/src/win32/win_net.cpp"
+    "${BO1_ROOT}/src/win32/win_main.cpp"
+    "${BO1_ROOT}/src/win32/win_shared.cpp"
+    "${BO1_ROOT}/src/win32/win_stream.cpp"
+    "${BO1_ROOT}/src/platform/android/stream_worker.cpp"
+    "${BO1_ROOT}/src/platform/android/render_worker.cpp"
+    "${BO1_ROOT}/src/platform/android/occlusion_worker.cpp"
+    "${BO1_ROOT}/src/platform/android/database_worker.cpp"
+    "${BO1_ROOT}/src/universal/profile.cpp"
+    "${BO1_ROOT}/src/platform/android/profile_services.cpp"
+    "${BO1_ROOT}/src/platform/android/profiling_diagnostics.cpp"
+    "${BO1_ROOT}/src/platform/android/process_resources.cpp"
+    "${BO1_ROOT}/src/platform/android/server_profiler_sampler.cpp"
+    "${BO1_ROOT}/src/qcommon/threads.cpp"
+    "${BO1_ROOT}/src/monkey/monkey.cpp"
+    "${BO1_ROOT}/src/client/cl_console.cpp"
+    "${BO1_ROOT}/src/platform/android/console_output.cpp"
+    $<$<BOOL:${BO1_NATIVE_FULL_DATABASE}>:${BO1_ROOT}/src/platform/android/oom_error.cpp>
+    $<$<BOOL:${BO1_NATIVE_FULL_DATABASE}>:${BO1_ROOT}/src/platform/android/headless_diagnostics.cpp>
+    "${BO1_ROOT}/src/platform/android/quit_services.cpp"
+    "${BO1_ROOT}/src/platform/android/console_input.cpp"
+    "${BO1_ROOT}/src/platform/android/machine_info.cpp"
+    "${BO1_ROOT}/src/universal/timing.cpp"
+    "${BO1_ROOT}/src/universal/com_fileaccess.cpp"
+    "${BO1_ROOT}/src/qcommon/com_profilemapload.cpp"
+    "${BO1_ROOT}/src/stringed/stringed_hooks.cpp"
+    "${BO1_ROOT}/src/platform/android/stdio_services.cpp"
+    "${BO1_ROOT}/src/platform/android/startup_clock.cpp"
+    "${BO1_ROOT}/src/platform/android/command_line_services.cpp"
+    "${BO1_ROOT}/src/platform/android/engine_paths.cpp"
+    "${BO1_ROOT}/src/platform/android/pmem_mapping.cpp"
+    "${BO1_ROOT}/src/platform/win32_compat/win32_time.cpp"
+    "${BO1_ROOT}/src/platform/win32_compat/win32_errors.cpp")
+target_compile_definitions(bo1_native_entry_state PRIVATE _DEBUG=1
+    BO1_STARTUP_SERVICES=1 BO1_NATIVE_COM_BOOT=1 BO1_NATIVE_CLIENT_STATE=1
+    BO1_SCRIPT_VARIABLE_LIMITS_ONLY=1 BO1_XANIM_LIMITS_ONLY=1
+    BO1_NATIVE_MAPNAME_GLOBAL_ONLY=1 BO1_NATIVE_RENDER_WORKER_DVAR_ONLY=1
+    $<$<NOT:$<BOOL:${BO1_NATIVE_FULL_DATABASE}>>:BO1_NATIVE_GAMEMODE_GLOBAL_ONLY=1>
+    $<$<BOOL:${BO1_NATIVE_FULL_DATABASE}>:BO1_NATIVE_PREGAME_IMPLEMENTATION=1>
+    $<$<BOOL:${BO1_NATIVE_FULL_DATABASE}>:BO1_NATIVE_SYSTEM_CORE=1>
+    $<$<BOOL:${BO1_NATIVE_FULL_DATABASE}>:BO1_NATIVE_SERVER_THREAD=1>
+    $<$<BOOL:${BO1_NATIVE_FULL_DATABASE}>:BO1_NATIVE_SYSTEM_SHUTDOWN=1>
+    $<$<BOOL:${BO1_NATIVE_FULL_DATABASE}>:BO1_NATIVE_RENDER_OWNER_DISPATCH=1>
+    BO1_NATIVE_TRACK_INIT_ONLY=1 BO1_NATIVE_PMEM=1
+    BO1_NATIVE_MACHINE_INFO=1 BO1_NATIVE_HEADLESS_POLICY=1 BO1_NATIVE_CPU_QUERIES=1 BO1_NATIVE_RENDER_HANDOFF=1
+    BO1_NATIVE_IK_INIT=1 BO1_NATIVE_CLIPMAP_STATE=1 BO1_NATIVE_STREAM_WORKER=1
+    $<$<NOT:$<BOOL:${BO1_NATIVE_FULL_DATABASE}>>:BO1_NATIVE_SOCKET_ROUTER_FRAME=1>)
+target_include_directories(bo1_native_entry_state PUBLIC "${BO1_ROOT}/src" "${BO1_ROOT}"
+    "${BO1_ROOT}/../DXVK-Native/include/native/directx"
+    "${BO1_ROOT}/../DXVK-Native/include/native/windows")
+# Lightweight fixed-cache measurements do not inherit function instrumentation.
+add_library(bo1_native_performance_overlay STATIC
+    "${BO1_ROOT}/src/platform/android/performance_overlay.cpp"
+    "${BO1_ROOT}/src/platform/android/performance_gpu_overlay.cpp")
+target_include_directories(bo1_native_performance_overlay PRIVATE
+    "${BO1_ROOT}/../DXVK-Native/include/native/directx"
+    "${BO1_ROOT}/../DXVK-Native/include/native/windows")
+set_target_properties(bo1_native_performance_overlay PROPERTIES POSITION_INDEPENDENT_CODE ON)
+target_compile_features(bo1_native_performance_overlay PRIVATE cxx_std_20)
+if(BO1_NATIVE_SDL_APP AND BO1_NATIVE_GPU_PASS_PROFILE)
+    target_compile_definitions(bo1_native_performance_overlay PRIVATE BO1_NATIVE_GPU_PASS_PROFILE=1)
+endif()
+target_compile_options(bo1_native_performance_overlay PRIVATE -Wall -Wextra -Werror
+    -fsanitize=undefined -fno-sanitize-recover=all)
+target_link_libraries(bo1_native_entry_state PUBLIC bo1_native_performance_overlay)
+target_compile_features(bo1_native_entry_state PUBLIC cxx_std_20)
+target_include_directories(bo1_native_entry_state PRIVATE
+    "${BO1_ROOT}/../DXVK-Native/third_party/sdl-prefix/include/SDL2")
+target_compile_options(bo1_native_entry_state PRIVATE -fms-extensions -fsigned-char
+    -ffunction-sections -fdata-sections -finstrument-functions
+    -fsanitize=undefined -fno-sanitize-recover=all
+    -include "${BO1_ROOT}/src/platform/win32_compat/msvc_compat.h")
+add_library(bo1_native_engine_runtime STATIC
+    "${BO1_ROOT}/src/platform/android/native_engine_runtime.cpp")
+set_target_properties(bo1_native_engine_runtime PROPERTIES POSITION_INDEPENDENT_CODE ON)
+target_compile_definitions(bo1_native_engine_runtime PRIVATE _DEBUG=1 BO1_NATIVE_COM_BOOT=1
+    $<$<BOOL:${BO1_NATIVE_FULL_DATABASE}>:BO1_NATIVE_FULL_DATABASE=1>)
+target_compile_options(bo1_native_engine_runtime PRIVATE -fms-extensions -fsigned-char
+    -fsanitize=undefined -fno-sanitize-recover=all
+    -include "${BO1_ROOT}/src/platform/win32_compat/msvc_compat.h")
+target_link_libraries(bo1_native_engine_runtime PUBLIC bo1_native_entry_state bo1_native_startup_services)
+
+add_executable(bo1_native_engine_entry
+    "${BO1_ROOT}/tools/port/engine/native_engine_main.cpp"
+    "${BO1_ROOT}/tools/port/engine/native_engine_trace.cpp"
+    "${BO1_ROOT}/tools/port/engine/unavailable_services.cpp")
+target_compile_definitions(bo1_native_engine_entry PRIVATE _DEBUG=1 BO1_STARTUP_SERVICES=1 BO1_NATIVE_COM_BOOT=1)
+target_include_directories(bo1_native_engine_entry PRIVATE "${BO1_ROOT}/src" "${BO1_ROOT}")
+target_compile_features(bo1_native_engine_entry PRIVATE cxx_std_20)
+target_compile_options(bo1_native_engine_entry PRIVATE -fms-extensions -fsigned-char
+    -fsanitize=undefined -fno-sanitize-recover=all
+    -include "${BO1_ROOT}/src/platform/win32_compat/msvc_compat.h")
+target_link_options(bo1_native_engine_entry PRIVATE -Wl,--gc-sections
+    -Wl,--error-limit=0
+    -Wl,-Map,${CMAKE_CURRENT_BINARY_DIR}/native-engine-entry.map -fsanitize=undefined)
+target_link_libraries(bo1_native_engine_entry PRIVATE bo1_native_engine_runtime)
+if(BO1_NATIVE_FULL_DATABASE)
+    target_link_libraries(bo1_native_engine_runtime PUBLIC bo1_native_database)
+    target_link_libraries(bo1_native_entry_state PRIVATE bo1_native_steam_api)
+    target_link_libraries(bo1_native_entry_state PRIVATE FAudio-static)
+    target_link_libraries(bo1_native_entry_state PUBLIC bo1_native_wmav2_codec)
+    target_link_libraries(bo1_native_engine_entry PRIVATE bo1_native_wmav2_codec)
+    target_link_libraries(bo1_native_entry_state PUBLIC bo1_native_media_format)
+    target_link_libraries(bo1_native_engine_entry PRIVATE bo1_native_media_format)
+    target_link_libraries(bo1_native_entry_state PUBLIC bo1_native_speex)
+    target_link_libraries(bo1_native_engine_entry PRIVATE bo1_native_speex)
+    target_sources(bo1_native_entry_state PRIVATE
+        "${BO1_ROOT}/src/platform/android/server_thread.cpp"
+        "${BO1_ROOT}/src/platform/android/process_guard.cpp"
+        "${BO1_ROOT}/src/platform/android/shutdown_services.cpp"
+        "${BO1_ROOT}/src/platform/android/wma_decoder.cpp")
+    target_include_directories(bo1_native_entry_state PRIVATE
+        "${BO1_ROOT}/third_party/faudio-25.02/include"
+        "${BO1_ROOT}/third_party/faudio-25.02/src")
+    get_target_property(BO1_ENTRY_SOURCES bo1_native_entry_state SOURCES)
+    list(REMOVE_ITEM BO1_ENTRY_SOURCES "${BO1_ROOT}/src/qcommon/mem_track.cpp")
+    list(REMOVE_ITEM BO1_ENTRY_SOURCES "${BO1_ROOT}/src/stringed/stringed_hooks.cpp")
+    list(REMOVE_ITEM BO1_ENTRY_SOURCES "${BO1_ROOT}/src/gfx_d3d/r_dvars.cpp"
+        "${BO1_ROOT}/src/qcommon/cm_load.cpp")
+    list(REMOVE_ITEM BO1_ENTRY_SOURCES "${BO1_ROOT}/src/xanim/xanim.cpp")
+    list(REMOVE_ITEM BO1_ENTRY_SOURCES "${BO1_ROOT}/src/qcommon/cm_trace.cpp")
+    list(REMOVE_ITEM BO1_ENTRY_SOURCES "${BO1_ROOT}/src/ik/ik.cpp" "${BO1_ROOT}/src/ik/ik_import.cpp")
+    list(REMOVE_ITEM BO1_ENTRY_SOURCES "${BO1_ROOT}/src/client_mp/cl_main_mp.cpp" "${BO1_ROOT}/src/game_mp/g_main_mp.cpp")
+    list(REMOVE_ITEM BO1_ENTRY_SOURCES "${BO1_ROOT}/src/clientscript/cscr_variable.cpp")
+    list(REMOVE_ITEM BO1_ENTRY_SOURCES "${BO1_ROOT}/src/client/cl_console.cpp")
+    list(REMOVE_ITEM BO1_ENTRY_SOURCES "${BO1_ROOT}/src/gfx_d3d/r_reflection_probe.cpp")
+    set_property(TARGET bo1_native_entry_state PROPERTY SOURCES "${BO1_ENTRY_SOURCES}")
+    target_compile_definitions(bo1_native_engine_entry PRIVATE BO1_NATIVE_FULL_DATABASE=1)
+    target_link_libraries(bo1_native_engine_entry PRIVATE bo1_native_database)
+    add_executable(bo1_native_full_database_init_tests
+        "${BO1_ROOT}/tools/port/tests/native_full_database_init_tests.cpp"
+        "${BO1_ROOT}/tools/port/engine/unavailable_services.cpp")
+    target_compile_definitions(bo1_native_full_database_init_tests PRIVATE
+        _DEBUG=1 BO1_NATIVE_FULL_DATABASE=1 BO1_STARTUP_SERVICES=1 BO1_NATIVE_COM_BOOT=1)
+    target_include_directories(bo1_native_full_database_init_tests PRIVATE
+        "${BO1_ROOT}/../DXVK-Native/include/native/directx"
+        "${BO1_ROOT}/../DXVK-Native/include/native/windows")
+    target_compile_features(bo1_native_full_database_init_tests PRIVATE cxx_std_20)
+    target_compile_options(bo1_native_full_database_init_tests PRIVATE -fms-extensions -fsigned-char
+        -ffunction-sections -fdata-sections -fsanitize=undefined -fno-sanitize-recover=all
+        -include "${BO1_ROOT}/src/platform/win32_compat/msvc_compat.h")
+    target_link_options(bo1_native_full_database_init_tests PRIVATE -Wl,--gc-sections -Wl,--error-limit=0 -fsanitize=undefined)
+    target_link_libraries(bo1_native_full_database_init_tests PRIVATE
+        bo1_native_entry_state bo1_native_startup_services bo1_native_database)
+    add_executable(bo1_native_enum_localization_tests
+        "${BO1_ROOT}/tools/port/tests/native_full_database_init_tests.cpp"
+        "${BO1_ROOT}/tools/port/engine/unavailable_services.cpp")
+    target_compile_definitions(bo1_native_enum_localization_tests PRIVATE
+        _DEBUG=1 BO1_NATIVE_FULL_DATABASE=1 BO1_STARTUP_SERVICES=1 BO1_NATIVE_COM_BOOT=1
+        BO1_NATIVE_ENUM_LOCALIZATION_PROBE=1)
+    target_include_directories(bo1_native_enum_localization_tests PRIVATE
+        "${BO1_ROOT}/../DXVK-Native/include/native/directx"
+        "${BO1_ROOT}/../DXVK-Native/include/native/windows")
+    target_compile_features(bo1_native_enum_localization_tests PRIVATE cxx_std_20)
+    target_compile_options(bo1_native_enum_localization_tests PRIVATE -fms-extensions -fsigned-char
+        -ffunction-sections -fdata-sections -fsanitize=undefined -fno-sanitize-recover=all
+        -include "${BO1_ROOT}/src/platform/win32_compat/msvc_compat.h")
+    target_link_options(bo1_native_enum_localization_tests PRIVATE -Wl,--gc-sections -Wl,--error-limit=0 -fsanitize=undefined)
+    target_link_libraries(bo1_native_enum_localization_tests PRIVATE
+        bo1_native_entry_state bo1_native_startup_services bo1_native_database)
+    add_executable(bo1_native_jobqueue_tests "${BO1_ROOT}/tools/port/tests/native_jobqueue_tests.cpp"
+        "${BO1_ROOT}/tools/port/engine/unavailable_services.cpp")
+    target_compile_definitions(bo1_native_jobqueue_tests PRIVATE
+        _DEBUG=1 BO1_NATIVE_FULL_DATABASE=1 BO1_STARTUP_SERVICES=1 BO1_NATIVE_COM_BOOT=1)
+    target_include_directories(bo1_native_jobqueue_tests PRIVATE
+        "${BO1_ROOT}/../DXVK-Native/include/native/directx" "${BO1_ROOT}/../DXVK-Native/include/native/windows")
+    target_compile_features(bo1_native_jobqueue_tests PRIVATE cxx_std_20)
+    target_compile_options(bo1_native_jobqueue_tests PRIVATE -fms-extensions -fsigned-char
+        -ffunction-sections -fdata-sections -fsanitize=undefined -fno-sanitize-recover=all
+        -include "${BO1_ROOT}/src/platform/win32_compat/msvc_compat.h")
+    target_link_options(bo1_native_jobqueue_tests PRIVATE -Wl,--gc-sections -Wl,--error-limit=0 -fsanitize=undefined)
+    target_link_libraries(bo1_native_jobqueue_tests PRIVATE
+        bo1_native_entry_state bo1_native_startup_services bo1_native_database)
+endif()
+
+if(BO1_NATIVE_SDL_APP)
+    set_property(SOURCE "${BO1_ROOT}/src/qcommon/common.cpp" TARGET_DIRECTORY bo1_native_startup_services APPEND PROPERTY
+        COMPILE_DEFINITIONS BO1_NATIVE_RENDERED_INPUT=1)
+    if(NOT TARGET blackopsarm_environment)
+        add_library(blackopsarm_environment SHARED "${BO1_ROOT}/src/platform/android/environment.cpp")
+        target_compile_features(blackopsarm_environment PRIVATE cxx_std_20)
+        target_compile_options(blackopsarm_environment PRIVATE -Wall -Wextra -Werror)
+    endif()
+    execute_process(COMMAND "${CMAKE_CXX_COMPILER}" --print-resource-dir
+        OUTPUT_VARIABLE BO1_CLANG_RESOURCE_DIR OUTPUT_STRIP_TRAILING_WHITESPACE
+        COMMAND_ERROR_IS_FATAL ANY)
+    set(BO1_UBSAN_LIBRARY "${BO1_CLANG_RESOURCE_DIR}/lib/linux/libclang_rt.ubsan_standalone-aarch64-android.so")
+    if(NOT EXISTS "${BO1_UBSAN_LIBRARY}")
+        message(FATAL_ERROR "Actual NDK ARM64 UBSan runtime is required for this development APK")
+    endif()
+    add_library(bo1_native_ubsan SHARED IMPORTED)
+    set_target_properties(bo1_native_ubsan PROPERTIES IMPORTED_LOCATION "${BO1_UBSAN_LIBRARY}")
+    # Compile the canonical engine once; both entries use its same PIC archives.
+    # Adoption is a real SDK publication, so the CLI's headless policy is retained.
+    target_compile_definitions(bo1_native_entry_state PRIVATE BO1_NATIVE_SDL_RENDERED_ENTRY=1)
+    add_library(blackopsarm_engine SHARED
+        "${BO1_ROOT}/src/platform/android/native_sdl_engine_entry.cpp"
+        "${BO1_ROOT}/src/platform/android/sdl_activity_bootstrap.cpp"
+        "${BO1_ROOT}/tools/port/engine/native_engine_trace.cpp"
+        "${BO1_ROOT}/tools/port/engine/unavailable_services.cpp")
+    target_compile_definitions(blackopsarm_engine PRIVATE _DEBUG=1
+        BO1_NATIVE_COM_BOOT=1 BO1_NATIVE_FULL_DATABASE=1)
+    target_compile_options(blackopsarm_engine PRIVATE -fms-extensions -fsigned-char
+        -fsanitize=undefined -fno-sanitize-recover=all
+        -include "${BO1_ROOT}/src/platform/win32_compat/msvc_compat.h")
+    target_link_options(blackopsarm_engine PRIVATE -Wl,--gc-sections -Wl,--no-undefined
+        -Wl,--error-limit=0 -Wl,-Map,${CMAKE_CURRENT_BINARY_DIR}/blackopsarm-engine.map
+        "-Wl,--version-script=${BO1_ROOT}/src/platform/android/native_engine_exports.map"
+        -fsanitize=undefined)
+    set_property(TARGET blackopsarm_engine APPEND PROPERTY LINK_DEPENDS
+        "${BO1_ROOT}/src/platform/android/native_engine_exports.map")
+    target_link_libraries(blackopsarm_engine PRIVATE bo1_native_engine_runtime bo1_native_ubsan)
+endif()
+
+add_executable(bo1_native_database_services_tests
+    "${BO1_ROOT}/tools/port/tests/native_database_services_tests.cpp")
+target_compile_options(bo1_native_database_services_tests PRIVATE -fms-extensions -fsigned-char
+    -fsanitize=undefined -fno-sanitize-recover=all
+    -include "${BO1_ROOT}/src/platform/win32_compat/msvc_compat.h")
+target_link_options(bo1_native_database_services_tests PRIVATE -Wl,--gc-sections -fsanitize=undefined)
+target_link_libraries(bo1_native_database_services_tests PRIVATE bo1_native_entry_state bo1_native_startup_services)

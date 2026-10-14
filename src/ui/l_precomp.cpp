@@ -1,3 +1,6 @@
+#if defined(__ANDROID__)
+#include <platform/android/legacy_crt.h>
+#endif
 #include "l_precomp.h"
 #include <qcommon/common.h>
 #include "l_memory.h"
@@ -114,7 +117,11 @@ token_s *__cdecl PC_CopyToken(token_s *token)
     if ( t )
     {
         memcpy(t, token, sizeof(token_s));
+#if defined(__ANDROID__)
+        reinterpret_cast<token_s *>(t)->next = nullptr;
+#else
         t[266] = 0;
+#endif
         ++numtokens;
         return (token_s *)t;
     }
@@ -429,8 +436,18 @@ int __cdecl PC_ExpandBuiltinDefine(
             token->type = 4;
             goto LABEL_8;
         case 3:
+#if defined(__ANDROID__)
+            t = time(nullptr);
+            curtime = t == -1 ? nullptr : bo1::crt::OwnedCtime64(t);
+            if (!curtime) {
+                PC_FreeToken(token);
+                *firsttoken = *lasttoken = nullptr;
+                return 0;
+            }
+#else
             t = _time64(0);
             curtime = _ctime64(&t);
+#endif
             strcpy(token->string, "\"");
             strncat(token->string, curtime + 4, 7u);
             strncat(&token->string[7], curtime + 20, 4u);
@@ -439,8 +456,18 @@ int __cdecl PC_ExpandBuiltinDefine(
             token->type = 4;
             goto LABEL_8;
         case 4:
+#if defined(__ANDROID__)
+            t = time(nullptr);
+            curtime = t == -1 ? nullptr : bo1::crt::OwnedCtime64(t);
+            if (!curtime) {
+                PC_FreeToken(token);
+                *firsttoken = *lasttoken = nullptr;
+                return 0;
+            }
+#else
             t = _time64(0);
             curtime = _ctime64(&t);
+#endif
             strcpy(token->string, "\"");
             strncat(token->string, curtime + 11, 8u);
             strcat(token->string, "\"");

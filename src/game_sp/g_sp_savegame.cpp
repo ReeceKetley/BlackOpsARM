@@ -17,7 +17,9 @@
 #include <universal/com_shared.h>
 #include <win32/win_common.h>
 #include <win32/win_net.h>
+#if !defined(__ANDROID__)
 #include <intrin.h>
+#endif
 #include <database/db_registry.h>
 #include <game/g_hudelem.h>
 #include "g_sp_level_exit.h"

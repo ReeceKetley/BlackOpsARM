@@ -34,6 +34,17 @@ RadiantCommand gCommands[24];
 int cgCommandCount;
 RadiantCommand cgCommands[24];
 
+#if defined(__ANDROID__)
+#include <cstring>
+static void ValidateNativeRadiantCommand(const RadiantCommand *command)
+{
+    iassert(command);
+    iassert(static_cast<unsigned>(command->type) <= RADIANT_COMMAND_CAMERA);
+    iassert(command->liveUpdateId <= 128);
+    iassert(std::memchr(command->strCommand, 0, sizeof(command->strCommand)));
+}
+#endif
+
 static void __cdecl NULLSUB(const RadiantCommand *command, SpawnVar *spawnVar)
 {
 
@@ -102,6 +113,9 @@ char *__cdecl GetPairValue(const SpawnVar *spawnVar, const char *key)
 
 void __cdecl AddSavedCommand(const RadiantCommand *command)
 {
+#if defined(__ANDROID__)
+    ValidateNativeRadiantCommand(command);
+#endif
     int i; // [esp+0h] [ebp-4h]
 
     if ( command->liveUpdateId && !runningSavedCommands )
@@ -148,12 +162,18 @@ void __cdecl RunSavedRadiantCmds()
 
 void __cdecl G_AssignGameIdMapping(int liveUpdateId, int gameId)
 {
+#if defined(__ANDROID__)
+    iassert(liveUpdateId <= 128);
+#endif
     if ( liveUpdateId > 0 )
         gObjectMapping[liveUpdateId - 1].gameId = gameId;
 }
 
 int __cdecl G_GetGameIdMapping(int liveUpdateId)
 {
+#if defined(__ANDROID__)
+    iassert(liveUpdateId <= 128);
+#endif
     if ( liveUpdateId <= 0 )
         return -1;
     else
@@ -162,12 +182,18 @@ int __cdecl G_GetGameIdMapping(int liveUpdateId)
 
 void __cdecl CG_AssignGameIdMapping(int liveUpdateId, int gameId)
 {
+#if defined(__ANDROID__)
+    iassert(liveUpdateId <= 128);
+#endif
     if ( liveUpdateId > 0 )
         gObjectMapping[liveUpdateId - 1].cg_gameId = gameId;
 }
 
 int __cdecl CG_GetGameIdMapping(int liveUpdateId)
 {
+#if defined(__ANDROID__)
+    iassert(liveUpdateId <= 128);
+#endif
     if ( liveUpdateId <= 0 )
         return -1;
     else
@@ -951,6 +977,9 @@ void __cdecl CG_ClearSelection(void (__cdecl *ignoreFunc)())
 
 void __cdecl CG_ProcessRadiantCmd(const RadiantCommand *command)
 {
+#if defined(__ANDROID__)
+    ValidateNativeRadiantCommand(command);
+#endif
     char *classname; // [esp+10h] [ebp-A24h]
     const RadiantCommandProcessor *p; // [esp+14h] [ebp-A20h]
     RadiantCommandType commandType; // [esp+18h] [ebp-A1Ch]
@@ -1013,6 +1042,9 @@ CommandProcessorType __cdecl GetCommandProcessorType(const SpawnVar *spawnVar)
 
 void __cdecl G_ProcessRadiantCmd(const RadiantCommand *command)
 {
+#if defined(__ANDROID__)
+    ValidateNativeRadiantCommand(command);
+#endif
     char *classname; // [esp+10h] [ebp-A24h]
     const RadiantCommandProcessor *p; // [esp+14h] [ebp-A20h]
     RadiantCommandType commandType; // [esp+18h] [ebp-A1Ch]

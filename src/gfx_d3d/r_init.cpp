@@ -1,8 +1,31 @@
 #include "r_init.h"
+#if defined(__ANDROID__) && defined(BO1_NATIVE_FULLSCREEN_TRIANGLE) && BO1_NATIVE_FULLSCREEN_TRIANGLE
+#include "platform/android/fullscreen_triangle.h"
+#endif
+#if defined(__ANDROID__) && defined(BO1_NATIVE_POST_FUSION_TRIAL) && BO1_NATIVE_POST_FUSION_TRIAL
+#include "platform/android/post_fusion_trial.h"
+#endif
+#if defined(BO1_NATIVE_RENDER_CONFIG)
+#include <qcommon/common.h>
+#include <database/db_registry.h>
+#include <gfx_d3d/r_dvars.h>
+#include <gfx_d3d/r_rendercmds.h>
+#endif
+#if !defined(BO1_NATIVE_RENDER_GLOBALS)
 #include <win32/win_main.h>
 #include <qcommon/common.h>
 
+#if !defined(__ANDROID__)
 #include <dxerr.h>
+#else
+#include <cstdio>
+#include <cstdint>
+#include <cstdlib>
+#include <platform/android/renderer_window.h>
+#include <platform/android/render_worker.h>
+#include <platform/android/performance_gpu_overlay.h>
+#include <platform/win32_compat/win32_time.h>
+#endif
 #include <d3d9.h>
 #include "rb_backend.h"
 #include "r_dvars.h"
@@ -53,6 +76,41 @@
 #include "r_state_utils.h"
 #include "r_hw_nvidia.h"
 
+#endif
+
+#if defined(__ANDROID__) && !defined(BO1_NATIVE_RENDER_GLOBALS)
+namespace {
+template<class F> auto R_SDLOwner(F operation, bool requireVideo = false) -> decltype(operation()) {
+    using Result = decltype(operation());
+    struct Call { F *operation; bool requireVideo; Result result{}; } call{&operation,requireVideo};
+    if (!bo1::android::RunRendererOwnerTask([](void *opaque) {
+        auto &call = *static_cast<Call *>(opaque);
+        if (call.requireVideo && !bo1::android::PrepareRendererVideo()) return false;
+        call.result = (*call.operation)();
+        return true;
+    }, &call)) {
+        Com_Error(ERR_FATAL, "renderer SDL owner: %s", SDL_GetError());
+        std::abort();
+    }
+    return call.result;
+}
+bo1::android::RendererWindowSpec R_SDLWindowSpec(const GfxWindowParms &parms) {
+    return {Com_GetBuildOfficialNameR(), parms.x, parms.y, parms.displayWidth,
+        parms.displayHeight, parms.hz, parms.fullscreen != 0, parms.borderless != 0, false};
+}
+void R_SDLWindowFailure(const char *operation) {
+    Com_Error(ERR_FATAL, "renderer %s: %s", operation, SDL_GetError());
+    std::abort();
+}
+}
+#endif
+
+#if defined(__ANDROID__) && !defined(BO1_NATIVE_RENDER_GLOBALS)
+#define R_WSI_CALL(expression) R_SDLOwner([&] { return (expression); }, true)
+#else
+#define R_WSI_CALL(expression) (expression)
+#endif
+
 int g_destroy_window;
 
 GfxConfiguration gfxCfg;
@@ -74,29 +132,12 @@ const dvar_t *r_displayRefresh;
 
 int g_disableRendering;
 
-void __cdecl    R_FatalInitError(const char *msg)
-{
-    Com_Printf(8, "********** DirectX returned an unrecoverable error code during initialization    **********\n");
-    Com_Printf(8, "********** Initialization also happens while playing if DirectX loses a device **********\n");
-    Com_Printf(8, "********** Consult the readme for how to continue from this problem                        **********\n");
-    Com_Printf(8, "\n%s\n", msg);
-    Sys_DirectXFatalError();
-}
+#if !defined(BO1_NATIVE_RENDER_GLOBALS)
 
-void __cdecl    R_FatalLockError(HRESULT hr)
-{
-    const char *unitScaleValue; // eax
 
-    Com_Printf(8, "********** DirectX failed a call to lock a vertex buffer or an index buffer **********\n");
-    unitScaleValue = R_ErrorDescription(hr);
-    Com_Printf(8, "********** error information:    %s\n", unitScaleValue);
-    Sys_DirectXFatalError();
-}
 
-const char *__cdecl R_ErrorDescription(HRESULT hr)
-{
-    return DXGetErrorDescriptionA(hr);
-}
+
+
 
 void __cdecl R_SetColorMappings()
 {
@@ -141,6 +182,8 @@ void __cdecl R_CalcGammaRamp(GfxGammaRamp *gammaRamp)
     }
 }
 
+#endif // normal renderer bodies before shared configuration
+#if !defined(BO1_NATIVE_RENDER_GLOBALS) || defined(BO1_NATIVE_RENDER_CONFIG)
 void __cdecl R_MakeDedicated(const GfxConfiguration *config)
 {
     SetGfxConfig(config);
@@ -184,8 +227,19 @@ void __cdecl SetGfxConfig(const GfxConfiguration *config)
     memcpy(&gfxCfg, config, sizeof(gfxCfg));
 }
 
+#endif // shared renderer configuration
+#if !defined(BO1_NATIVE_RENDER_GLOBALS)
 void __cdecl R_ReleaseForShutdownOrReset()
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_POST_FUSION_TRIAL) && BO1_NATIVE_POST_FUSION_TRIAL
+    bo1::android::post_fusion_trial::Release();
+#endif
+#if defined(__ANDROID__) && defined(BO1_NATIVE_FULLSCREEN_TRIANGLE) && BO1_NATIVE_FULLSCREEN_TRIANGLE
+    bo1::android::fullscreen_triangle::Release();
+#endif
+#if defined(__ANDROID__)
+    bo1::android::performance::gpu::Release();
+#endif
     IDirect3DSurface9 *v0; // [esp+0h] [ebp-24h]
     int i; // [esp+4h] [ebp-20h]
     int gpuIdx; // [esp+8h] [ebp-1Ch]
@@ -206,11 +260,17 @@ void __cdecl R_ReleaseForShutdownOrReset()
             }
             varCopy = dx.windows[windowIndex].swapChain;
             dx.windows[windowIndex].swapChain = 0;
+#if defined(__ANDROID__)
+            iassert(varCopy);
+            auto remaining=R_SDLOwner([&] { return varCopy->Release(); });
+            iassert(!remaining);
+#else
             R_ReleaseAndSetNULL<IDirect3DIndexBuffer9>(
                 (IDirect3DSurface9 *)varCopy,
                 "dx.windows[windowIndex].swapChain",
                 "C:\\projects_pc\\cod\\codsrc\\src\\gfx_d3d\\r_init.cpp",
                 1374);
+#endif
         } while (alwaysfails);
     }
 
@@ -231,6 +291,13 @@ void __cdecl R_ReleaseForShutdownOrReset()
         {
             if (r_logFile && r_logFile->current.integer)
                 RB_LogPrint("dx.flushGpuQuery->Release()\n");
+#if defined(__ANDROID__)
+            auto *query=dx.flushGpuQuery;
+            dx.flushGpuQuery=nullptr;
+            iassert(query);
+            auto remaining=query->Release();
+            iassert(!remaining);
+#else
             var = (IDirect3DSurface9 *)dx.flushGpuQuery;
             dx.flushGpuQuery = 0;
             R_ReleaseAndSetNULL<IDirect3DIndexBuffer9>(
@@ -238,6 +305,7 @@ void __cdecl R_ReleaseForShutdownOrReset()
                 "dx.flushGpuQuery",
                 "C:\\projects_pc\\cod\\codsrc\\src\\gfx_d3d\\r_init.cpp",
                 1392);
+#endif
         } while (alwaysfails);
     }
     for (fenceIter = 0; fenceIter < ARRAY_COUNT(dx.fencePool); ++fenceIter)
@@ -248,6 +316,13 @@ void __cdecl R_ReleaseForShutdownOrReset()
             {
                 if (r_logFile && r_logFile->current.integer)
                     RB_LogPrint("dx.fencePool[fenceIter]->Release()\n");
+#if defined(__ANDROID__)
+                auto *query=dx.fencePool[fenceIter];
+                dx.fencePool[fenceIter]=nullptr;
+                iassert(query);
+                auto remaining=query->Release();
+                iassert(!remaining);
+#else
                 v3 = (IDirect3DSurface9 *)dx.fencePool[fenceIter];
                 dx.fencePool[fenceIter] = 0;
                 R_ReleaseAndSetNULL<IDirect3DIndexBuffer9>(
@@ -255,6 +330,7 @@ void __cdecl R_ReleaseForShutdownOrReset()
                     "dx.fencePool[fenceIter]",
                     "C:\\projects_pc\\cod\\codsrc\\src\\gfx_d3d\\r_init.cpp",
                     1398);
+#endif
             } while (alwaysfails);
         }
     }
@@ -276,6 +352,13 @@ void __cdecl R_ReleaseForShutdownOrReset()
             {
                 if (r_logFile && r_logFile->current.integer)
                     RB_LogPrint("gfxAssets.pixelCountQuery[gpuIdx]->Release()\n");
+#if defined(__ANDROID__)
+                auto *query=gfxAssets.pixelCountQuery[i];
+                gfxAssets.pixelCountQuery[i]=nullptr;
+                iassert(query);
+                auto remaining=query->Release();
+                iassert(!remaining);
+#else
                 v0 = (IDirect3DSurface9 *)gfxAssets.pixelCountQuery[i];
                 gfxAssets.pixelCountQuery[i] = 0;
                 R_ReleaseAndSetNULL<IDirect3DIndexBuffer9>(
@@ -283,6 +366,7 @@ void __cdecl R_ReleaseForShutdownOrReset()
                     "gfxAssets.pixelCountQuery[gpuIdx]",
                     "C:\\projects_pc\\cod\\codsrc\\src\\gfx_d3d\\r_init.cpp",
                     1426);
+#endif
             } while (alwaysfails);
         }
     }
@@ -477,12 +561,16 @@ HRESULT __cdecl R_CreateDeviceInternal(HWND__ *hwnd, unsigned int behavior, _D3D
         //             d3dpp,
         //             &dx.device);
         if ( Sys_IsHeadlessClient() ) // zombies: a 9Ex device (see R_PreCreateWindow); windowed, so no display mode
-            hr = ((IDirect3D9Ex *)dx.d3d9)->CreateDeviceEx(dx.adapterIndex, (D3DDEVTYPE)DeviceType, hwnd, behavior, d3dpp, NULL, (IDirect3DDevice9Ex **)&dx.device);
+            hr = R_WSI_CALL(((IDirect3D9Ex *)dx.d3d9)->CreateDeviceEx(dx.adapterIndex, (D3DDEVTYPE)DeviceType, hwnd, behavior, d3dpp, NULL, (IDirect3DDevice9Ex **)&dx.device));
         else
-        hr = dx.d3d9->CreateDevice(dx.adapterIndex, (D3DDEVTYPE)DeviceType, hwnd, behavior, d3dpp, &dx.device);
+        hr = R_WSI_CALL(dx.d3d9->CreateDevice(dx.adapterIndex, (D3DDEVTYPE)DeviceType, hwnd, behavior, d3dpp, &dx.device));
         if ( hr >= 0 )
             break;
+        #if defined(__ANDROID__)
+        bo1::win32::Sleep(0x64u);
+#else
         Sleep(0x64u);
+#endif
         if ( hr != -2005530520 )
             ++attempt;
         if ( attempt == 20 )
@@ -495,12 +583,14 @@ HRESULT __cdecl R_CreateDeviceInternal(HWND__ *hwnd, unsigned int behavior, _D3D
     }
     dx.nvStereoActivated = 0;
     dx.nvStereoHandle = 0;
+#if !defined(__ANDROID__)
     if ( !NvAPI_Stereo_CreateHandleFromIUnknown(dx.device, &dx.nvStereoHandle) )
     {
         NvAPI_Stereo_IsActivated(dx.nvStereoHandle, &res);
         dx.nvStereoActivated = res != 0;
     }
-    getModeSuccessCode = dx.d3d9->GetAdapterDisplayMode(dx.adapterIndex, &getModeResult);
+#endif
+    getModeSuccessCode = R_WSI_CALL(dx.d3d9->GetAdapterDisplayMode(dx.adapterIndex, &getModeResult));
     if ( getModeSuccessCode < 0 )
     {
         dx.adapterFullscreenWidth = d3dpp->BackBufferWidth;
@@ -516,6 +606,17 @@ HRESULT __cdecl R_CreateDeviceInternal(HWND__ *hwnd, unsigned int behavior, _D3D
 
 bool __cdecl R_GetMonitorDimensions(int *width, int *height)
 {
+#if defined(__ANDROID__)
+    if (!width || !height || !dx.d3d9) return false;
+    auto monitor = R_SDLOwner([&] { return dx.d3d9->GetAdapterMonitor(dx.adapterIndex); });
+    intptr_t encoded = reinterpret_cast<intptr_t>(monitor);
+    bo1::android::RendererDisplay display{};
+    if (encoded <= 0 || encoded - 1 > INT32_MAX || !bo1::android::GetRendererDisplay(static_cast<int>(encoded - 1), &display)) {
+        *width = *height = 0; return false;
+    }
+    *width = display.width; *height = display.height; return true;
+#else
+
     tagMONITORINFO mi; // [esp+0h] [ebp-2Ch] BYREF
     HMONITOR__ *adapterMonitor; // [esp+28h] [ebp-4h]
 
@@ -533,6 +634,8 @@ bool __cdecl R_GetMonitorDimensions(int *width, int *height)
         *height = GetSystemMetrics(1);
         return *width > 0 && *height > 0;
     }
+
+#endif
 }
 
 int __cdecl R_GetDeviceType()
@@ -544,7 +647,7 @@ int __cdecl R_GetDeviceType()
     dx.adapterIndex = 0;
     for ( Adapter = 0; ; ++Adapter )
     {
-        v0 = dx.d3d9->GetAdapterCount();
+        v0 = R_WSI_CALL(dx.d3d9->GetAdapterCount());
         if ( Adapter >= v0 )
             break;
         if ( dx.d3d9->GetAdapterIdentifier(Adapter, 0, &id) >= 0 )
@@ -588,6 +691,12 @@ static bool R_BorderlessWanted()
 // borderless later by vid_restart keeps the awareness it was created with (R_BorderlessLogWindow prints it).
 static void R_BorderlessMakeDpiAware()
 {
+#if defined(__ANDROID__)
+    // Windows process DPI awareness has no Android counterpart. SDL drawable
+    // dimensions and actual display DPI are queried instead.
+    Com_Printf(8, "borderless: Android uses SDL drawable sizing\n");
+#else
+
     typedef BOOL(WINAPI * SetProcessDpiAwarenessContextFn)(HANDLE value);
     typedef BOOL(WINAPI * SetProcessDPIAwareFn)();
     HMODULE user32;
@@ -611,11 +720,17 @@ static void R_BorderlessMakeDpiAware()
         how = "system";
     s_borderlessDpiAware = IsProcessDPIAware() ? 1 : 0;
     Com_Printf(8, "borderless: process DPI awareness set: %s (DPI aware %i)\n", how, s_borderlessDpiAware);
+
+#endif
 }
 
 // borderless: the DPI awareness of a window (0 unaware, 1 system, 2 per monitor; -1 unknown before Windows 10 1607)
 static int R_BorderlessWindowDpiAwareness(HWND hwnd)
 {
+#if defined(__ANDROID__)
+    return -1;
+#else
+
     typedef HANDLE(WINAPI * GetWindowDpiAwarenessContextFn)(HWND hwnd);
     typedef int(WINAPI * GetAwarenessFromDpiAwarenessContextFn)(HANDLE value);
     HMODULE user32;
@@ -630,6 +745,8 @@ static int R_BorderlessWindowDpiAwareness(HWND hwnd)
     if ( !getContext || !getAwareness )
         return -1;
     return getAwareness(getContext(hwnd));
+
+#endif
 }
 
 // borderless: L21 - a borderless run behaves as if r_mode were the back buffer's (the monitor's) size. vidConfig
@@ -661,6 +778,18 @@ static void R_BorderlessSyncMode(int width, int height)
 // borderless: the window parms - the monitor at (vid_xpos, vid_ypos), else the primary; its full rect, no frame
 static void R_BorderlessSetWndParms(GfxWindowParms *wndParms)
 {
+#if defined(__ANDROID__)
+    bo1::android::RendererDisplay display{};
+    if (!bo1::android::ChooseRendererDisplay(0, Dvar_GetInt("vid_xpos"), Dvar_GetInt("vid_ypos"), &display))
+        R_SDLWindowFailure("borderless display selection");
+    wndParms->displayWidth = wndParms->sceneWidth = display.width;
+    wndParms->displayHeight = wndParms->sceneHeight = display.height;
+    R_BorderlessSyncMode(display.width, display.height);
+    wndParms->hz = display.refreshRate;
+    wndParms->x = display.x; wndParms->y = display.y;
+    wndParms->hwnd = 0; wndParms->aaSamples = r_aaSamples->current.integer;
+#else
+
     POINT pt;
     MONITORINFO mi;
 
@@ -684,12 +813,28 @@ static void R_BorderlessSetWndParms(GfxWindowParms *wndParms)
     wndParms->y = mi.rcMonitor.top;
     wndParms->hwnd = 0;
     wndParms->aaSamples = r_aaSamples->current.integer;
+
+#endif
 }
 
 // borderless: one line of evidence - the window's style, its client rect on screen against its monitor's rect, the back
 // buffer, whether it is minimized, and the DPI awareness. Only for the borderless window.
 void __cdecl R_BorderlessLogWindow(const char *when)
 {
+#if defined(__ANDROID__)
+    if (!s_borderlessWindow || !dx.windows[0].hwnd) return;
+    bo1::android::RendererWindowInfo window{};
+    bo1::android::RendererDisplay display{};
+    if (!bo1::android::InspectRendererWindow(reinterpret_cast<SDL_Window *>(dx.windows[0].hwnd), &window)
+        || !bo1::android::GetRendererDisplay(window.displayIndex, &display)) {
+        Com_Printf(8, "borderless %s: actual SDL query failed: %s\n", when, SDL_GetError()); return;
+    }
+    Com_Printf(8, "borderless %s: SDL flags 0x%08x logical (%i,%i) %ix%i drawable %ix%i display (%i,%i) %ix%i dpi %.1f back buffer %ix%i\n",
+        when, window.flags, window.x, window.y, window.width, window.height,
+        window.drawableWidth, window.drawableHeight, display.x, display.y, display.width,
+        display.height, display.dpi, dx.windows[0].width, dx.windows[0].height);
+#else
+
     HWND hwnd;
     RECT client;
     POINT origin;
@@ -732,6 +877,8 @@ void __cdecl R_BorderlessLogWindow(const char *when)
         GetForegroundWindow() == hwnd ? 1 : 0,
         IsProcessDPIAware() ? 1 : 0,
         R_BorderlessWindowDpiAwareness(hwnd));
+
+#endif
 }
 
 void __cdecl R_CheckResizeWindow()
@@ -779,6 +926,10 @@ void __cdecl R_ResizeWindow()
     R_SetWndParms(&wndParms);
     dx.windows[0].width = wndParms.displayWidth;
     dx.windows[0].height = wndParms.displayHeight;
+#if defined(__ANDROID__)
+    if (!bo1::android::ConfigureRendererWindow(reinterpret_cast<SDL_Window *>(hwnd), R_SDLWindowSpec(wndParms)))
+        R_SDLWindowFailure("window resize");
+#else
     if (wndParms.borderless)
     {
         // borderless: WS_POPUP, no frame, not topmost (HWND_NOTOPMOST below, as the window)
@@ -809,6 +960,7 @@ void __cdecl R_ResizeWindow()
         rc.right - rc.left,
         rc.bottom - rc.top,
         0x60u);
+#endif
     s_borderlessWindow = wndParms.borderless; // borderless
     if (wndParms.borderless)
     {
@@ -977,6 +1129,25 @@ void __cdecl R_SetWndParms(GfxWindowParms *wndParms)
 
 int __cdecl R_ClosestRefreshRateForMode(unsigned int width, unsigned int height, int refreshRate)
 {
+#if defined(__ANDROID__)
+    if (!width || !height || width > INT32_MAX || height > INT32_MAX || refreshRate < 0 || !dx.displayModeCount || dx.displayModeCount > 256)
+        R_FatalInitError("Invalid refresh-rate search parameters");
+    int bot=0, top=static_cast<int>(dx.displayModeCount)-1;
+    while (bot <= top) {
+        int mid=bot+(top-bot)/2;
+        const auto &mode=dx.displayModes[mid];
+        int comparison=mode.Width < width ? -1 : mode.Width > width ? 1
+            : mode.Height < height ? -1 : mode.Height > height ? 1
+            : mode.RefreshRate < static_cast<unsigned>(refreshRate) ? -1 : mode.RefreshRate > static_cast<unsigned>(refreshRate) ? 1 : 0;
+        if (!comparison) return refreshRate;
+        if(comparison >= 0) top=mid-1; else bot=mid+1;
+    }
+    if (top >= 0 && dx.displayModes[top].Width == width && dx.displayModes[top].Height == height) return dx.displayModes[top].RefreshRate;
+    if (bot < static_cast<int>(dx.displayModeCount) && dx.displayModes[bot].Width == width && dx.displayModes[bot].Height == height) return dx.displayModes[bot].RefreshRate;
+    R_FatalInitError("Requested fullscreen resolution is absent from actual display modes");
+    std::abort();
+#else
+
     const char *v4; // eax
     int top; // [esp+0h] [ebp-10h]
     int bot; // [esp+4h] [ebp-Ch]
@@ -1044,6 +1215,8 @@ int __cdecl R_ClosestRefreshRateForMode(unsigned int width, unsigned int height,
             __debugbreak();
     }
     return dx.displayModes[bot].RefreshRate;
+
+#endif
 }
 
 bool __cdecl R_SetCustomResolution(GfxWindowParms *wndParms)
@@ -1062,6 +1235,8 @@ bool __cdecl R_SetCustomResolution(GfxWindowParms *wndParms)
             || wndParms->displayWidth <= monitorWidth && wndParms->displayHeight <= monitorHeight;
 }
 
+#endif // normal renderer bodies before shared configuration
+#if !defined(BO1_NATIVE_RENDER_GLOBALS) || defined(BO1_NATIVE_RENDER_CONFIG)
 void __cdecl R_AllocateMinimalResources()
 {
     g_allocateMinimalResources = 1;
@@ -1072,6 +1247,8 @@ void __cdecl R_SetIsMultiplayer(bool isMp)
     r_glob.isMultiplayer = isMp;
 }
 
+#endif // shared renderer configuration
+#if !defined(BO1_NATIVE_RENDER_GLOBALS)
 void __cdecl R_InitThreads()
 {
     if ( r_glob.isRenderingRemoteUpdate
@@ -1124,7 +1301,11 @@ void R_InitGraphicsApi()
     {
         if ( R_BorderlessWanted() ) // borderless: DPI aware before the adapter / monitor choice and the window
             R_BorderlessMakeDpiAware();
+#if defined(__ANDROID__)
+        if (!R_PreCreateWindow()) { R_FatalInitError("Couldn't initialize actual SDL/DXVK renderer"); std::abort(); }
+#else
         R_PreCreateWindow();
+#endif
         while ( 1 )
         {
             R_SetWndParms(&wndParms);
@@ -1153,6 +1334,9 @@ void R_InitSystems()
 char __cdecl R_PreCreateWindow()
 {
     _D3DADAPTER_IDENTIFIER9 adapterId; // [esp+4h] [ebp-458h] BYREF
+#if defined(__ANDROID__)
+    if (!bo1::android::PrepareRendererVideo()) { Com_Printf(8, "SDL video unavailable: %s\n", SDL_GetError()); return 0; }
+#endif
 
     if ( dx.d3d9 )
     {
@@ -1173,13 +1357,13 @@ char __cdecl R_PreCreateWindow()
             // renders there and Present returns S_PRESENT_OCCLUDED (MEASURED with build\probe\d3dprobe.cpp, notes/x5-client-report.md).
             // 9Ex has no managed pool: r_image.cpp makes those textures dynamic default-pool ones in this mode.
             IDirect3D9Ex *d3d9ex = NULL;
-            HRESULT hrEx = Direct3DCreate9Ex(D3D_SDK_VERSION, &d3d9ex);
+            HRESULT hrEx = R_WSI_CALL(Direct3DCreate9Ex(D3D_SDK_VERSION, &d3d9ex));
             if ( hrEx < 0 )
                 Com_Printf(8, "bo1_headless_client: Direct3DCreate9Ex failed: %s (0x%08x)\n", R_ErrorDescription(hrEx), hrEx);
             dx.d3d9 = d3d9ex;
         }
         else
-        dx.d3d9 = Direct3DCreate9(0x20u);
+        dx.d3d9 = R_WSI_CALL(Direct3DCreate9(0x20u));
         if ( !dx.d3d9 )
         {
             Com_Printf(8, "Direct3D 9 failed to initialize\n");
@@ -1193,8 +1377,10 @@ char __cdecl R_PreCreateWindow()
     if ( !dx.d3d9->GetAdapterIdentifier(dx.adapterIndex, 0, &adapterId) )
     {
         dx.vendorId = adapterId.VendorId;
+#if !defined(__ANDROID__)
         if ( adapterId.VendorId == 4318 )
             dx.nvInitialized = NvAPI_Initialize() == 0;
+#endif
     }
     return 1;
 }
@@ -1245,7 +1431,11 @@ void __cdecl R_GetDirect3DCaps(unsigned int adapterIndex, _D3DCAPS9 *caps)
         hr = dx.d3d9->GetDeviceCaps(adapterIndex, D3DDEVTYPE_HAL, caps);
         if ( hr >= 0 )
             break;
+        #if defined(__ANDROID__)
+        bo1::win32::Sleep(0x64u);
+#else
         Sleep(0x64u);
+#endif
         if ( ++attempt == 20 )
         {
             v2 = R_ErrorDescription(hr);
@@ -1354,23 +1544,72 @@ void __cdecl R_EnumDisplayModes(unsigned int adapterIndex)
     int refreshRateIndex; // [esp+C28h] [ebp-8h]
     int defaultResolutionIndex; // [esp+C2Ch] [ebp-4h]
 
-    modeCountReported = dx.d3d9->GetAdapterModeCount(adapterIndex, D3DFMT_X8R8G8B8);
+    modeCountReported = R_WSI_CALL(dx.d3d9->GetAdapterModeCount(adapterIndex, D3DFMT_X8R8G8B8));
+#if defined(__ANDROID__)
+    _D3DDISPLAYMODE currentDisplayMode{};
+    HRESULT currentDisplayModeResult = R_WSI_CALL(dx.d3d9->GetAdapterDisplayMode(adapterIndex, &currentDisplayMode));
+    Com_Printf(8, "Android D3D display: adapter %u enumerated %u current hr 0x%08x %ux%u refresh %u format %u fullscreen %i\n",
+        adapterIndex, modeCountReported, static_cast<unsigned>(currentDisplayModeResult), currentDisplayMode.Width,
+        currentDisplayMode.Height, currentDisplayMode.RefreshRate, static_cast<unsigned>(currentDisplayMode.Format), Dvar_GetBool("r_fullscreen"));
+    R_SDLOwner([&] {
+        const int displays = SDL_GetNumVideoDisplays();
+        const intptr_t monitor = reinterpret_cast<intptr_t>(dx.d3d9->GetAdapterMonitor(adapterIndex));
+        const int display = monitor > 0 && monitor <= displays ? static_cast<int>(monitor - 1) : -1;
+        Com_Printf(8, "Android SDL display: driver %s count %i selected %i\n", SDL_GetCurrentVideoDriver(), displays, display);
+        if (display >= 0) {
+            SDL_DisplayMode current{}, desktop{};
+            const int currentResult = SDL_GetCurrentDisplayMode(display, &current);
+            const int desktopResult = SDL_GetDesktopDisplayMode(display, &desktop);
+            const int modes = SDL_GetNumDisplayModes(display);
+            Com_Printf(8, "Android SDL current: result %i %ix%i refresh %i format %s bpp %i; desktop result %i %ix%i refresh %i format %s bpp %i; modes %i\n",
+                currentResult, current.w, current.h, current.refresh_rate, SDL_GetPixelFormatName(current.format), SDL_BITSPERPIXEL(current.format),
+                desktopResult, desktop.w, desktop.h, desktop.refresh_rate, SDL_GetPixelFormatName(desktop.format), SDL_BITSPERPIXEL(desktop.format), modes);
+            for (int index = 0; index < modes && index < 8; ++index) {
+                SDL_DisplayMode mode{};
+                const int result = SDL_GetDisplayMode(display, index, &mode);
+                Com_Printf(8, "Android SDL mode %i: result %i %ix%i refresh %i format %s bpp %i\n", index, result,
+                    mode.w, mode.h, mode.refresh_rate, SDL_GetPixelFormatName(mode.format), SDL_BITSPERPIXEL(mode.format));
+            }
+        }
+        return true;
+    }, true);
+#endif
     dx.displayModeCount = 0;
     for ( modeIndex = 0; modeIndex < modeCountReported && dx.displayModeCount < 0x100; ++modeIndex )
     {
-        hr = dx.d3d9->EnumAdapterModes(
+        hr = R_WSI_CALL(dx.d3d9->EnumAdapterModes(
                      adapterIndex,
                      D3DFMT_X8R8G8B8,
                      modeIndex,
-                     &dx.displayModes[dx.displayModeCount]);
+                     &dx.displayModes[dx.displayModeCount]));
         if ( hr >= 0 )
         {
+#if defined(__ANDROID__)
+            const auto &mode=dx.displayModes[dx.displayModeCount];
+            if (!mode.Width || !mode.Height || mode.Width > INT32_MAX || mode.Height > INT32_MAX || mode.RefreshRate > INT32_MAX)
+                R_FatalInitError("DXVK reported an invalid display mode");
+#endif
+#if !defined(__ANDROID__)
             if ( !dx.displayModes[dx.displayModeCount].RefreshRate )
                 dx.displayModes[dx.displayModeCount].RefreshRate = 60;
+#else
+            if (modeIndex < 8)
+                Com_Printf(8, "Android D3D mode %u: %ux%u refresh %u format %u\n", modeIndex, mode.Width, mode.Height, mode.RefreshRate, static_cast<unsigned>(mode.Format));
+#endif
             ++dx.displayModeCount;
         }
     }
+#if defined(__ANDROID__)
+    qsort(dx.displayModes, dx.displayModeCount, sizeof(dx.displayModes[0]), [](const void *a, const void *b) {
+        const auto &left=*static_cast<const _D3DDISPLAYMODE *>(a);
+        const auto &right=*static_cast<const _D3DDISPLAYMODE *>(b);
+        if(left.Width != right.Width) return left.Width < right.Width ? -1 : 1;
+        if(left.Height != right.Height) return left.Height < right.Height ? -1 : 1;
+        return left.RefreshRate < right.RefreshRate ? -1 : left.RefreshRate > right.RefreshRate ? 1 : 0;
+    });
+#else
     qsort(dx.displayModes, dx.displayModeCount, sizeof(*(dx.displayModes)), (int (__cdecl *)(const void *, const void *))R_CompareDisplayModes);
+#endif
     resolutionCount = 0;
     refreshRateCount = 0;
     for ( modeIndex = 0; modeIndex < dx.displayModeCount; ++modeIndex )
@@ -1385,6 +1624,24 @@ void __cdecl R_EnumDisplayModes(unsigned int adapterIndex)
                                                  refreshRateCount,
                                                  availableRefreshRates);
     }
+#if defined(__ANDROID__)
+    if (!resolutionCount && !Dvar_GetBool("r_fullscreen") && currentDisplayModeResult >= 0 &&
+        currentDisplayMode.Width >= 800 && currentDisplayMode.Width <= INT32_MAX &&
+        currentDisplayMode.Height >= 600 && currentDisplayMode.Height <= INT32_MAX &&
+        currentDisplayMode.RefreshRate > 0 && currentDisplayMode.RefreshRate <= INT32_MAX &&
+        currentDisplayMode.Format == D3DFMT_X8R8G8B8) {
+        // Android may expose a 16-bit SurfaceView display mode before the real
+        // Vulkan window is created. DXVK's 32-bit exclusive-mode enumeration
+        // can then be empty. Its genuine current mode still sizes a windowed
+        // renderer; never insert it into the exclusive display-mode table.
+        resolutionCount = R_AddValidResolution(static_cast<int>(currentDisplayMode.Width),
+            static_cast<int>(currentDisplayMode.Height), resolutionCount, availableResolutions);
+        refreshRateCount = R_AddValidRefreshRate(static_cast<int>(currentDisplayMode.RefreshRate),
+            refreshRateCount, availableRefreshRates);
+        Com_Printf(8, "Android windowed resolution uses actual D3D current display %ux%u refresh %u; exclusive modes remain %u\n",
+            currentDisplayMode.Width, currentDisplayMode.Height, currentDisplayMode.RefreshRate, dx.displayModeCount);
+    }
+#endif
     modeText = dx.modeText;
     if ( !resolutionCount )
     {
@@ -1395,7 +1652,13 @@ void __cdecl R_EnumDisplayModes(unsigned int adapterIndex)
     for ( resolutionIndex = 0; resolutionIndex < resolutionCount; ++resolutionIndex )
     {
         dx.resolutionNameTable[resolutionIndex] = modeText;
+        #if defined(__ANDROID__)
+        size_t remaining=sizeof(dx.modeText)-static_cast<size_t>(modeText-dx.modeText);
+        v2 = std::snprintf(modeText, remaining, "%ix%i", availableResolutions[resolutionIndex][0], availableResolutions[resolutionIndex][1]);
+        if (v2 < 0 || static_cast<size_t>(v2) >= remaining) R_FatalInitError("Display mode text exceeds actual storage");
+#else
         v2 = sprintf(modeText, "%ix%i", availableResolutions[resolutionIndex][0], availableResolutions[resolutionIndex][1]);
+#endif
         modeText += v2 + 1;
         if ( availableResolutions[defaultResolutionIndex][0] < 640 || availableResolutions[defaultResolutionIndex][1] < 480 )
             defaultResolutionIndex = resolutionIndex;
@@ -1407,12 +1670,25 @@ void __cdecl R_EnumDisplayModes(unsigned int adapterIndex)
                          defaultResolutionIndex,
                          0x21u,
                          "Direct X resolution mode");
+#if defined(__ANDROID__)
+    qsort(availableRefreshRates, refreshRateCount, sizeof(availableRefreshRates[0]), [](const void *a, const void *b) {
+        int left=*static_cast<const int *>(a), right=*static_cast<const int *>(b);
+        return left < right ? -1 : left > right ? 1 : 0;
+    });
+#else
     qsort(availableRefreshRates, refreshRateCount, sizeof(*(availableRefreshRates)), (int (__cdecl *)(const void *, const void *))R_CompareRefreshRates);
+#endif
     defaultRefreshRateIndex = 0;
     for ( refreshRateIndex = 0; refreshRateIndex < refreshRateCount; ++refreshRateIndex )
     {
         dx.refreshRateNameTable[refreshRateIndex] = modeText;
+        #if defined(__ANDROID__)
+        size_t remaining=sizeof(dx.modeText)-static_cast<size_t>(modeText-dx.modeText);
+        v3 = std::snprintf(modeText, remaining, "%i Hz", availableRefreshRates[refreshRateIndex]);
+        if (v3 < 0 || static_cast<size_t>(v3) >= remaining) R_FatalInitError("Display mode text exceeds actual storage");
+#else
         v3 = sprintf(modeText, "%i Hz", availableRefreshRates[refreshRateIndex]);
+#endif
         modeText += v3 + 1;
         if ( availableRefreshRates[defaultRefreshRateIndex] < 60 )
             defaultRefreshRateIndex = refreshRateIndex;
@@ -1442,6 +1718,9 @@ int __cdecl R_CompareDisplayModes(unsigned int *e0, unsigned int *e1)
 
 int __cdecl R_AddValidRefreshRate(int refreshRate, int rateCount, int *availableRefreshRates)
 {
+#if defined(__ANDROID__)
+    if (!availableRefreshRates || rateCount < 0 || rateCount > 256 || refreshRate < 0) R_FatalInitError("Invalid refresh table bounds");
+#endif
     int rateIndex; // [esp+4h] [ebp-4h]
     int rateIndexa; // [esp+4h] [ebp-4h]
 
@@ -1450,6 +1729,9 @@ int __cdecl R_AddValidRefreshRate(int refreshRate, int rateCount, int *available
         if ( availableRefreshRates[rateIndex] == refreshRate )
             return rateCount;
     }
+#if defined(__ANDROID__)
+    if (rateCount == 256) R_FatalInitError("Refresh table is full");
+#endif
     for ( rateIndexa = rateCount; rateIndexa > 0 && availableRefreshRates[rateIndexa - 1] > refreshRate; --rateIndexa )
         availableRefreshRates[rateIndexa] = availableRefreshRates[rateIndexa - 1];
     availableRefreshRates[rateIndexa] = refreshRate;
@@ -1463,6 +1745,15 @@ int __cdecl R_CompareRefreshRates(unsigned int *e0, unsigned int *e1)
 
 int __cdecl R_AddValidResolution(int width, int height, int resolutionCount, int (*availableResolutions)[2])
 {
+#if defined(__ANDROID__)
+    if (!availableResolutions || resolutionCount < 0 || resolutionCount > 256) R_FatalInitError("Invalid resolution table bounds");
+    if (resolutionCount && availableResolutions[resolutionCount-1][0] == width && availableResolutions[resolutionCount-1][1] == height) return resolutionCount;
+    if (width < 800 || height < 600) return resolutionCount;
+    if (resolutionCount == 256) R_FatalInitError("Resolution table is full");
+    availableResolutions[resolutionCount][0]=width; availableResolutions[resolutionCount][1]=height;
+    return resolutionCount+1;
+#else
+
     if ( resolutionCount < 0
         && !Assert_MyHandler(
                     "C:\\projects_pc\\cod\\codsrc\\src\\gfx_d3d\\r_init.cpp",
@@ -1485,6 +1776,8 @@ int __cdecl R_AddValidResolution(int width, int height, int resolutionCount, int
     (*availableResolutions)[2 * resolutionCount] = width;
     (*availableResolutions)[2 * resolutionCount + 1] = height;
     return resolutionCount + 1;
+
+#endif
 }
 
 unsigned int __cdecl R_ChooseAdapter()
@@ -1497,12 +1790,12 @@ unsigned int __cdecl R_ChooseAdapter()
 
     desiredMonitor = R_ChooseMonitor();
     foundAdapterIndex = 0;
-    adapterCount = dx.d3d9->GetAdapterCount();
+    adapterCount = R_WSI_CALL(dx.d3d9->GetAdapterCount());
     for ( adapterIndex = 0; adapterIndex < adapterCount; ++adapterIndex )
     {
         if ( desiredMonitor )
         {
-            if ( dx.d3d9->GetAdapterMonitor(adapterIndex) != desiredMonitor )
+            if ( R_WSI_CALL(dx.d3d9->GetAdapterMonitor(adapterIndex)) != desiredMonitor )
                 continue;
             foundAdapterIndex = adapterIndex;
         }
@@ -1523,6 +1816,14 @@ struct GfxEnumMonitors // sizeof=0x8
 
 HMONITOR__ *__cdecl R_ChooseMonitor()
 {
+#if defined(__ANDROID__)
+    bo1::android::RendererDisplay display{};
+    int preferred = Dvar_GetBool("r_fullscreen") ? r_monitor->current.integer : 0;
+    if (!bo1::android::ChooseRendererDisplay(preferred, Dvar_GetInt("vid_xpos"), Dvar_GetInt("vid_ypos"), &display))
+        R_SDLWindowFailure("display selection");
+    return reinterpret_cast<HMONITOR__ *>(static_cast<intptr_t>(display.index) + 1);
+#else
+
     POINT pt; // [esp+0h] [ebp-10h]
     GfxEnumMonitors enumData; // [esp+8h] [ebp-8h] BYREF
 
@@ -1537,6 +1838,8 @@ HMONITOR__ *__cdecl R_ChooseMonitor()
     pt.x = Dvar_GetInt("vid_xpos");
     pt.y = Dvar_GetInt("vid_ypos");
     return MonitorFromPoint(pt, 1u);
+
+#endif
 }
 
 int __stdcall R_MonitorEnumCallback(HMONITOR__ *monitorHandle, HDC__ *hdc, tagRECT *rect, LPARAM userData)
@@ -1565,11 +1868,30 @@ char __cdecl R_CreateGameWindow(GfxWindowParms *wndParms)
     if ( !R_CreateWindow(wndParms) )
         return 0;
 
-    if ( !R_InitHardware(wndParms) )
+    if ( !R_InitHardware(wndParms) ) {
+#if defined(__ANDROID__)
+        // Failed hardware initialization may own render resources and an implicit
+        // swapchain before R_FinishAttachingToWindow publishes windowCount.
+        if (dx.device) {
+            R_ReleaseForShutdownOrReset();
+            if (dx.windows[0].swapChain) {
+                auto *chain=dx.windows[0].swapChain; dx.windows[0].swapChain=nullptr;
+                R_SDLOwner([&] { return chain->Release(); });
+            }
+            R_SDLOwner([&] { return dx.device->Release(); }); dx.device=nullptr;
+        }
+        if (!bo1::android::DestroyRendererWindow(reinterpret_cast<SDL_Window *>(wndParms->hwnd))) R_SDLWindowFailure("failed window retirement");
+        wndParms->hwnd=nullptr;
+#endif
         return 0;
+    }
 
     dx.targetWindowIndex = 0;
+#if defined(__ANDROID__)
+    if (!bo1::android::ShowRendererWindow(reinterpret_cast<SDL_Window *>(wndParms->hwnd))) R_SDLWindowFailure("show window");
+#else
     ShowWindow(wndParms->hwnd, 5);
+#endif
     R_BorderlessLogWindow("created"); // borderless
     return 1;
 }
@@ -1589,7 +1911,7 @@ char __cdecl R_InitHardware(const GfxWindowParms *wndParms)
         DB_LoadGraphicsAssetsForPC();
     R_UpdateGpuSyncType();
     dx.gpuCount = 1;
-#ifdef BO1_MULTI_GPU
+#if defined(BO1_MULTI_GPU) && !defined(__ANDROID__)
     if ( r_multiGpu->current.enabled )
     {
         if ( dx.vendorId == 4318 )
@@ -1740,6 +2062,32 @@ IDirect3DQuery9 *__cdecl RB_HW_AllocOcclusionQuery()
 
 char __cdecl R_CreateWindow(GfxWindowParms *wndParms)
 {
+#if defined(__ANDROID__)
+    if (!wndParms || wndParms->hwnd) {
+        Com_Error(ERR_FATAL, "renderer: invalid window creation state"); std::abort();
+    }
+    // The Windows private desktop has no Android equivalent. Do not expose a
+    // supposedly headless client window on the user's actual Activity.
+    if (Sys_IsHeadless()) {
+        Com_Error(ERR_FATAL, "renderer: Android headless window creation is unsupported"); std::abort();
+    }
+    SDL_Window *window{};
+    auto spec = R_SDLWindowSpec(*wndParms);
+    if (!bo1::android::CreateRendererWindow(spec, &window)) {
+        Com_Printf(8, "Couldn't create SDL Vulkan window: %s\n", SDL_GetError()); return 0;
+    }
+    bo1::android::RendererWindowInfo info{};
+    if (!bo1::android::InspectRendererWindow(window, &info)) {
+        if (!bo1::android::DestroyRendererWindow(window)) R_SDLWindowFailure("invalid drawable cleanup");
+        Com_Printf(8, "SDL window has no usable drawable: %s\n", SDL_GetError()); return 0;
+    }
+    wndParms->displayWidth=info.drawableWidth; wndParms->displayHeight=info.drawableHeight;
+    wndParms->hwnd = reinterpret_cast<HWND__ *>(window);
+    s_borderlessWindow = wndParms->borderless;
+    Com_Printf(8, "Game SDL Vulkan window successfully created.\n");
+    return 1;
+#else
+
     const char *BuildOfficialNameR; // eax
     int x; // [esp-20h] [ebp-3Ch]
     int y; // [esp-1Ch] [ebp-38h]
@@ -1830,6 +2178,8 @@ char __cdecl R_CreateWindow(GfxWindowParms *wndParms)
         Com_Printf(8, "Couldn't create a window.\n");
         return 0;
     }
+
+#endif
 }
 
 char __cdecl R_ReduceWindowSettings()
@@ -1941,6 +2291,22 @@ void R_ShutdownDirect3D()
 
 void R_ShutdownDirect3DInternal()
 {
+#if defined(__ANDROID__)
+    R_FreeWaterSimulationBuffers();
+    if (useFastFile->current.enabled) R_UnloadGraphicsAssets();
+    R_Cinematic_Shutdown();
+    R_ReleaseForShutdownOrReset();
+    if (dx.device) { R_SDLOwner([&] { return dx.device->Release(); }); dx.device = nullptr; }
+    dx.nvStereoHandle = nullptr; dx.nvStereoActivated = false; dx.nvInitialized = false;
+    if (dx.d3d9) { R_SDLOwner([&] { return dx.d3d9->Release(); }); dx.d3d9 = nullptr; }
+    while (dx.windowCount) {
+        auto &window = dx.windows[dx.windowCount - 1];
+        if (!bo1::android::DestroyRendererWindow(reinterpret_cast<SDL_Window *>(window.hwnd))) R_SDLWindowFailure("window destruction");
+        window.hwnd = nullptr; --dx.windowCount;
+    }
+    if (!bo1::android::RetireRendererVideo()) R_SDLWindowFailure("video retirement");
+#else
+
     R_FreeWaterSimulationBuffers();
     if (useFastFile->current.enabled)
         R_UnloadGraphicsAssets();
@@ -1976,6 +2342,8 @@ void R_ShutdownDirect3DInternal()
         dx.d3d9->Release();
         dx.d3d9 = 0;
     }
+
+#endif
 }
 
 void R_UnloadGraphicsAssets()
@@ -1985,6 +2353,22 @@ void R_UnloadGraphicsAssets()
 
 void __cdecl R_Shutdown(int destroyWindow)
 {
+#if defined(__ANDROID__)
+    if (!bo1::android::HasSpawnedRenderThread())
+    {
+        // Dedicated startup owns database assets but creates no renderer/event
+        // consumer. Never send a teardown request to an absent worker.
+        if (!Sys_IsMainThread() || rg.registered || r_glob.startedRenderThread
+            || dx.device || dx.d3d9 || dx.windowCount || dx.nvStereoHandle)
+        {
+            Com_Error(ERR_FATAL, "Renderer resources exist without an actual shutdown worker");
+            std::abort();
+        }
+        g_destroy_window = destroyWindow;
+        R_ShutdownInternal();
+        return;
+    }
+#endif
     if ( Sys_QueryD3DShutdownEvent()
         && !Assert_MyHandler(
                     "C:\\projects_pc\\cod\\codsrc\\src\\gfx_d3d\\r_init.cpp",
@@ -2001,16 +2385,7 @@ void __cdecl R_Shutdown(int destroyWindow)
         NET_Sleep(1u);
 }
 
-void __cdecl R_UnloadWorld()
-{
-    if ( !useFastFile->current.enabled
-        && !Assert_MyHandler("C:\\projects_pc\\cod\\codsrc\\src\\gfx_d3d\\r_init.cpp", 3408, 0, "%s", "IsFastFileLoad()") )
-    {
-        __debugbreak();
-    }
-    if ( rgp.world )
-        Sys_Error((char*)"Cannot unload bsp while it is in use");
-}
+
 
 void __cdecl R_BeginRegistrationInternal()
 {
@@ -2083,11 +2458,15 @@ void __cdecl R_EndRegistration()
     }
 }
 
+#endif // normal renderer bodies before shared configuration
+#if !defined(BO1_NATIVE_RENDER_GLOBALS) || defined(BO1_NATIVE_RENDER_CONFIG)
 void __cdecl R_TrackStatistics(trStatistics_t *stats)
 {
     rg.globalstats = stats;
 }
 
+#endif // shared renderer configuration
+#if !defined(BO1_NATIVE_RENDER_GLOBALS)
 void __cdecl R_SyncGpu()
 {
     R_FinishGpuFence();
@@ -2099,12 +2478,16 @@ void __cdecl R_UpdateTeamColors(const float *color_allies, const float *color_ax
     Byte4PackRgba(color_axis, (unsigned __int8 *)&rg.color_axis);
 }
 
+#endif // normal renderer bodies before shared configuration
+#if !defined(BO1_NATIVE_RENDER_GLOBALS) || defined(BO1_NATIVE_RENDER_CONFIG)
 void __cdecl R_ConfigureRenderer(const GfxConfiguration *config)
 {
     SetGfxConfig(config);
     R_InitRenderCommands();
 }
 
+#endif // shared renderer configuration
+#if !defined(BO1_NATIVE_RENDER_GLOBALS)
 char __cdecl R_ReleaseLostDeviceAssets2()
 {
 
@@ -2186,8 +2569,12 @@ char __cdecl R_ResetDevice()
         Com_Printf(8, "Resetting %i x %i window.\n", d3dpp.BackBufferWidth, d3dpp.BackBufferHeight);
     else
         Com_Printf(8, "Resetting %i x %i fullscreen.\n", d3dpp.BackBufferWidth, d3dpp.BackBufferHeight);
-    if (dx.device->Reset(&d3dpp))
+    if (R_WSI_CALL(dx.device->Reset(&d3dpp)))
         return 0;
+#if defined(__ANDROID__)
+    if (!bo1::android::ConfigureRendererWindow(reinterpret_cast<SDL_Window *>(wndParms.hwnd), R_SDLWindowSpec(wndParms)))
+        R_SDLWindowFailure("window reset sizing");
+#else
     if (wndParms.fullscreen)
     {
         SetWindowPos(wndParms.hwnd, (HWND)(/*HWND_MESSAGE*/-3 | 0x2), 0, 0, 0, 0, 3u);
@@ -2206,6 +2593,7 @@ char __cdecl R_ResetDevice()
         AdjustWindowRectEx(&rc, 0xC80000u, 0, 0);
         SetWindowPos(wndParms.hwnd, HWND_NOTOPMOST, wndParms.x, wndParms.y, rc.right - rc.left, rc.bottom - rc.top, 0x62u);
     }
+#endif
     if (!R_CreateForInitOrReset())
         R_FatalInitError("Couldn't reinitialize after a lost Direct3D device");
     R_BorderlessLogWindow("reset"); // borderless
@@ -2217,6 +2605,13 @@ char __cdecl R_ResetDevice()
     return 1;
 }
 
+#endif // normal reset before shared renderer error cleanup
+#if !defined(BO1_NATIVE_RENDER_GLOBALS) || defined(BO1_NATIVE_RENDER_CONFIG)
+#if defined(BO1_NATIVE_RENDER_CONFIG)
+#include <win32/win_main.h>
+#include <qcommon/threads.h>
+#include <gfx_d3d/rb_logfile.h>
+#endif
 void __cdecl R_ComErrorCleanup()
 {
     const char *v1; // eax
@@ -2248,8 +2643,66 @@ void __cdecl R_ComErrorCleanup()
     }
 }
 
+// Stereo query shares the configuration/error-cleanup selection.
 bool __cdecl R_StereoActivated()
 {
     return dx.nvStereoActivated;
 }
 
+
+#endif
+
+#if defined(BO1_NATIVE_RENDER_GLOBALS)
+#include <qcommon/common.h>
+#include <win32/win_main.h>
+#include <cstdio>
+#include <cstdint>
+#include <cstdlib>
+#endif
+void __cdecl    R_FatalInitError(const char *msg)
+{
+    Com_Printf(8, "********** DirectX returned an unrecoverable error code during initialization    **********\n");
+    Com_Printf(8, "********** Initialization also happens while playing if DirectX loses a device **********\n");
+    Com_Printf(8, "********** Consult the readme for how to continue from this problem                        **********\n");
+    Com_Printf(8, "\n%s\n", msg);
+    Sys_DirectXFatalError();
+#if defined(__ANDROID__)
+    std::abort(); // Do not publish renderer state if the fatal callback returns.
+#endif
+}
+
+const char *__cdecl R_ErrorDescription(HRESULT hr)
+{
+#if defined(__ANDROID__)
+    thread_local char text[48];
+    static_assert(sizeof(hr)==sizeof(std::uint32_t));
+    std::snprintf(text,sizeof(text),"Direct3D HRESULT 0x%08x",static_cast<std::uint32_t>(hr));
+    return text;
+#else
+    return DXGetErrorDescriptionA(hr);
+#endif
+}
+
+void __cdecl R_UnloadWorld()
+{
+    if ( !useFastFile->current.enabled
+        && !Assert_MyHandler("C:\\projects_pc\\cod\\codsrc\\src\\gfx_d3d\\r_init.cpp", 3408, 0, "%s", "IsFastFileLoad()") )
+    {
+        __debugbreak();
+    }
+    if ( rgp.world )
+        Sys_Error((char*)"Cannot unload bsp while it is in use");
+}
+
+void __cdecl    R_FatalLockError(HRESULT hr)
+{
+    const char *unitScaleValue; // eax
+
+    Com_Printf(8, "********** DirectX failed a call to lock a vertex buffer or an index buffer **********\n");
+    unitScaleValue = R_ErrorDescription(hr);
+    Com_Printf(8, "********** error information:    %s\n", unitScaleValue);
+    Sys_DirectXFatalError();
+#if defined(__ANDROID__)
+    std::abort(); // Do not publish renderer state if the fatal callback returns.
+#endif
+}

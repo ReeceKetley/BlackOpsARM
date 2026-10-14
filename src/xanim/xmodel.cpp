@@ -11,6 +11,9 @@
 #include "xmodel_utils.h"
 #include "dobj_utils.h"
 #include <cgame/cg_drawtools.h>
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+#include <cstring>
+#endif
 
 Material *g_materials[1];
 XModelDefault g_default;
@@ -222,10 +225,16 @@ int __cdecl XModelTraceLine(
     if ( model->collLod >= 0 )
     {
         partIndex = -1;
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+        // Copy three float components while preserving the fourth trace-vector lane.
+        std::memcpy(boneExtents.start.vec.v, localStart, 3 * sizeof(float));
+        std::memcpy(boneExtents.end.vec.v, localEnd, 3 * sizeof(float));
+#else
         *(_QWORD *)boneExtents.start.vec.v = *(_QWORD *)localStart;
         boneExtents.start.vec.v[2] = localStart[2];
         *(_QWORD *)boneExtents.end.vec.v = *(_QWORD *)localEnd;
         boneExtents.end.vec.v[2] = localEnd[2];
+#endif
         CM_CalcTraceExtents(&boneExtents);
         delta[0] = boneExtents.end.vec.v[0] - boneExtents.start.vec.v[0];
         delta[1] = boneExtents.end.vec.v[1] - boneExtents.start.vec.v[1];
@@ -383,10 +392,16 @@ int __cdecl XModelTraceLineAnimated(
                             : (v13 = 1),
                                 v13) )
                     {
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+                        // Copy three float components while preserving the fourth trace-vector lane.
+                        std::memcpy(boneExtents.start.vec.v, localStart, 3 * sizeof(float));
+                        std::memcpy(boneExtents.end.vec.v, localEnd, 3 * sizeof(float));
+#else
                         *(_QWORD *)boneExtents.start.vec.v = *(_QWORD *)localStart;
                         boneExtents.start.vec.v[2] = localStart[2];
                         *(_QWORD *)boneExtents.end.vec.v = *(_QWORD *)localEnd;
                         boneExtents.end.vec.v[2] = localEnd[2];
+#endif
                     }
                     else
                     {
@@ -526,6 +541,20 @@ void __cdecl ConvertQuatToInverseMat(const DObjAnimMat *mat, float (*axis)[3])
     yw = scaledQuat[1] * mat->quat[3];
     zz = scaledQuat[2] * mat->quat[2];
     zw = scaledQuat[2] * mat->quat[3];
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+    axis[0][0] = 1.0 - (float)(yy + zz);
+    axis[0][1] = xy - zw;
+    axis[0][2] = xz + yw;
+    axis[1][0] = xy + zw;
+    axis[1][1] = 1.0 - (float)(xx + zz);
+    axis[1][2] = yz - xw;
+    axis[2][0] = xz - yw;
+    axis[2][1] = yz + xw;
+    axis[2][2] = 1.0 - (float)(xx + yy);
+    (axis[3][0]) =  -((float)((float)(mat->trans[0] * axis[0][0]) + (float)(mat->trans[1] * axis[1][0])) + (float)(mat->trans[2] * axis[2][0]));
+    (axis[3][1]) = -((float)((float)(mat->trans[0] * axis[0][1]) + (float)(mat->trans[1] * axis[1][1])) + (float)(mat->trans[2] * axis[2][1]));
+    (axis[3][2]) = -((float)((float)(mat->trans[0] * axis[0][2]) + (float)(mat->trans[1] * axis[1][2])) + (float)(mat->trans[2] * axis[2][2]));
+#else
     (*axis)[0] = 1.0 - (float)(yy + zz);
     (*axis)[1] = xy - zw;
     (*axis)[2] = xz + yw;
@@ -538,6 +567,7 @@ void __cdecl ConvertQuatToInverseMat(const DObjAnimMat *mat, float (*axis)[3])
     ((*axis)[9]) =  -((float)((float)(mat->trans[0] * (*axis)[0]) + (float)(mat->trans[1] * (*axis)[3])) + (float)(mat->trans[2] * (*axis)[6]));
     ((*axis)[10]) = -((float)((float)(mat->trans[0] * (*axis)[1]) + (float)(mat->trans[1] * (*axis)[4])) + (float)(mat->trans[2] * (*axis)[7]));
     ((*axis)[11]) = -((float)((float)(mat->trans[0] * (*axis)[2]) + (float)(mat->trans[1] * (*axis)[5])) + (float)(mat->trans[2] * (*axis)[8]));
+#endif
 }
 
 void __cdecl XModelTraceLineAnimatedPartBits(
@@ -790,7 +820,11 @@ void __cdecl PrefetchArrayIndexed(char *mem, unsigned int elementCount, unsigned
                 (uintptr_t)memIter <= ((umem + size_t(elementSize) * elementCount - 1) & ~uintptr_t(127));
                 memIter += 128 )
     {
+#if defined(__ANDROID__)
+        __builtin_prefetch((const char *)memIter,0,1);
+#else
         _mm_prefetch((const char *)memIter, 1);
+#endif
     }
 }
 

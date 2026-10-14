@@ -2219,11 +2219,19 @@ void __cdecl yy_load_buffer_state()
     yy_hold_char = *yy_c_buf_p;
 }
 
+#if defined(__ANDROID__)
+yy_buffer_state *__cdecl yy_create_buffer(FILE *file, unsigned int size)
+#else
 yy_buffer_state *__cdecl yy_create_buffer(_iobuf *file, unsigned int size)
+#endif
 {
     yy_buffer_state *b; // [esp+0h] [ebp-4h]
 
+#if defined(__ANDROID__)
+    b = (yy_buffer_state *)yy_flex_alloc(sizeof(yy_buffer_state));
+#else
     b = (yy_buffer_state *)yy_flex_alloc(0x28u);
+#endif
     if ( !b )
         yy_fatal_error("out of dynamic memory in yy_create_buffer()");
     b->yy_buf_size = size;
@@ -2235,7 +2243,11 @@ yy_buffer_state *__cdecl yy_create_buffer(_iobuf *file, unsigned int size)
     return b;
 }
 
+#if defined(__ANDROID__)
+void __cdecl yy_init_buffer(yy_buffer_state *b, FILE *file)
+#else
 void __cdecl yy_init_buffer(yy_buffer_state *b, _iobuf *file)
+#endif
 {
     yy_flush_buffer(b);
     b->yy_input_file = file;

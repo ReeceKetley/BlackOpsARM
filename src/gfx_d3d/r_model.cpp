@@ -383,7 +383,7 @@ int    R_SkinXModel(
         if ( v14 )
         {
             *(unsigned int *)v17 = -3;
-            v17 += 4;
+            v17 += GFX_MODEL_HIDDEN_SURFACE_SIZE;
         }
         else
         {
@@ -403,7 +403,11 @@ LABEL_42:
             v17 += sizeof(GfxModelRigidSurface);
         }
     }
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+    v10 = R_AllocModelSurfaces(static_cast<unsigned int>(v17 - v18));
+#else
     v10 = _InterlockedExchangeAdd(&frontEndDataOut->surfPos, v17 - v18);
+#endif
     if ( v17 - v18 + v10 <= 0x40000 )
     {
         if ( (v10 & 3) != 0
@@ -460,9 +464,25 @@ void __cdecl R_ShutdownModels()
     R_ReleaseAllModels();
 }
 
+#if defined(__ANDROID__)
+// DB enumeration invokes (header, context); the canonical owners take header only.
+static void __cdecl R_ReleaseModelEnumerated(XAssetHeader header, void *)
+{
+    R_ReleaseModel(header);
+}
+static void __cdecl R_OptimizeModelEnumerated(XAssetHeader header, void *)
+{
+    R_OptimizeModel(header);
+}
+#endif
+
 void __cdecl R_ReleaseAllModels()
 {
+    #if defined(__ANDROID__)
+    DB_EnumXAssets(ASSET_TYPE_XMODEL, R_ReleaseModelEnumerated, 0, 1);
+#else
     DB_EnumXAssets(ASSET_TYPE_XMODEL, (void (__cdecl *)(XAssetHeader, void *))R_ReleaseModel, 0, 1);
+#endif
 }
 
 void __cdecl R_ReleaseModel(XAssetHeader header)
@@ -474,7 +494,11 @@ void __cdecl R_ReleaseModel(XAssetHeader header)
 void __cdecl R_OptimizeAllModels()
 {
     if ( r_loadForRenderer->current.enabled )
+        #if defined(__ANDROID__)
+        DB_EnumXAssets(ASSET_TYPE_XMODEL, R_OptimizeModelEnumerated, 0, 1);
+#else
         DB_EnumXAssets(ASSET_TYPE_XMODEL, (void (__cdecl *)(XAssetHeader, void *))R_OptimizeModel, 0, 1);
+#endif
 }
 
 void __cdecl R_OptimizeModel(XAssetHeader header)

@@ -22,6 +22,9 @@
 #include <game_mp/g_combat_mp.h>
 #include <xanim/xanim.h>
 #include <sound/snd_bank.h>
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+#include <cstring>
+#endif
 
 const dvar_t *turret_KillstreakTargetTime;
 const dvar_t *turret_SentryTargetTime;
@@ -681,8 +684,12 @@ void __cdecl Turret_FillWeaponParms(
         angles[2] = ent->r.currentAngles[2];
         angles[0] = ent->r.currentAngles[0] + ent->s.lerp.u.turret.gunAngles[0];
         AngleVectors(angles, wp->forward, wp->right, wp->up);
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+        std::memcpy(wp->gunForward, flashTag[0], sizeof(wp->gunForward));
+#else
         *(_QWORD *)wp->gunForward = *(_QWORD *)&flashTag[0][0];
         wp->gunForward[2] = flashTag[0][2];
+#endif
         wp->muzzleTrace[0] = flashTag[3][0];
         wp->muzzleTrace[1] = flashTag[3][1];
         wp->muzzleTrace[2] = flashTag[3][2];

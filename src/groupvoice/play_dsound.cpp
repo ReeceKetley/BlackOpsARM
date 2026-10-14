@@ -1,3 +1,48 @@
+#if defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST)
+#include "play_dsound.h"
+#include "record_dsound.h"
+#include <platform/android/voice_audio.h>
+#include <sound/snd_driver_xaudio2.h>
+#include <qcommon/common.h>
+#include <new>
+#include <platform/android/window_lifecycle.h>
+extern SoundState g_sd;
+bool dsoundplay_initialized;
+int MIN_COMFORTABLE_BUFFER_AMOUNT=320,MAX_COMFORTABLE_BUFFER_AMOUNT=10000,COMFORTABLE_BUFFER_AMOUNT=6000;
+unsigned g_sound_playBufferSize=51200;
+float maxScalingUpMultiplier=.01f,maxScalingDownMultiplier=.01f;
+int DSound_GetBytesLeft(dsound_sample_t *sample){return sample && sample->DSB?sample->DSB->BufferedBytes():-1;}
+unsigned DSound_UpdateSample(dsound_sample_t *sample,char *data,int length){
+    if(!dsoundplay_initialized || !sample || !sample->DSB || length<0)return static_cast<unsigned>(-1);
+    const int queued=sample->DSB->Queue(reinterpret_cast<const std::int16_t *>(data),length,sample->dwBufferSize);
+    if(queued>=0)sample->bytesBuffered=sample->DSB->BufferedBytes();return queued;
+}
+void DSound_AdjustSamplePlayback(dsound_sample_t *sample,int){DSound_SampleFrame(sample);}
+bool DSound_BufferUnderrunOccurred(dsound_sample_t *sample){return DSound_GetBytesLeft(sample)==0;}
+void DSound_HandleBufferUnderrun(dsound_sample_t *sample){DSound_StopSample(sample);}
+void DSound_SampleFrame(dsound_sample_t *sample){
+    if(!dsoundplay_initialized || !sample || !sample->DSB)return;
+    if(!sample->DSB->Frame(COMFORTABLE_BUFFER_AMOUNT,MIN_COMFORTABLE_BUFFER_AMOUNT,MAX_COMFORTABLE_BUFFER_AMOUNT,COMFORTABLE_BUFFER_AMOUNT,maxScalingUpMultiplier,maxScalingDownMultiplier))
+        Com_Error(ERR_FATAL,"Actual FAudio talker playback failed");
+    sample->bytesBuffered=sample->DSB->BufferedBytes();sample->playing=sample->DSB->Playing();
+}
+dsound_sample_t *DSound_NewSample(){
+    if(!dsoundplay_initialized)return nullptr;auto *sample=DSOUNDRecord_NewSample();if(!sample)return nullptr;
+    sample->dwBufferSize=g_sound_playBufferSize;
+    sample->DSB=new(std::nothrow) bo1::android::VoicePlayback(g_sd.xa2,g_sd.masterBus,sample->frequency,sample->channels);
+    if(!sample->DSB || !sample->DSB->Live()){DSOUNDRecord_DestroySample(sample);return nullptr;}
+    return sample;
+}
+char DSound_StopSample(dsound_sample_t *sample){
+    if(!dsoundplay_initialized || !sample || !sample->DSB)return 0;
+    if(!sample->DSB->Stop())return 0;sample->playing=false;sample->bytesBuffered=0;sample->stopPosition=-1;sample->channel=-1;return 1;
+}
+int DSound_Init(bool,HWND__ *){
+    if(!bo1::android::IsSDLEventOwner() || !g_sd.xa2 || !g_sd.masterBus || g_sd.xa2->Failure()){Com_PrintError(9,"Voice playback requires actual live canonical FAudio graph\n");return 0;}
+    dsoundplay_initialized=true;return 1;
+}
+void DSound_Shutdown(){BO1_VoiceRetirePlaybackSamples();dsoundplay_initialized=false;}
+#else
 #include "play_dsound.h"
 #include <universal/assertive.h>
 #include <qcommon/common.h>
@@ -419,3 +464,5 @@ void __cdecl DSound_Shutdown()
     }
 }
 
+
+#endif

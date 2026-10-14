@@ -23,6 +23,14 @@ void __cdecl CL_CompositeSetupImageCallback(GfxImage **param)
     *param = CL_CompositeSetupImage();
 }
 
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+// Resource actions invoke void(void *); preserve the canonical typed payload.
+static void __cdecl CL_CompositeSetupImageCallbackResource(void *data)
+{
+    CL_CompositeSetupImageCallback(static_cast<GfxImage **>(data));
+}
+#endif
+
 GfxImage *__cdecl CL_CompositeSetupImage()
 {
     return R_StreamAlloc_SetupTempImage(D3DFMT_A8R8G8B8, 0, 0x80u, 0x80u);
@@ -276,7 +284,11 @@ void __cdecl CL_CompositeRender()
                         job->state = COMPOSITE_STATE_IDLE;
                         continue;
                     }
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+                    RB_Resource_CallbackParam(CL_CompositeSetupImageCallbackResource, &job->resultImage);
+#else
                     RB_Resource_CallbackParam((void(__cdecl *)(void *))CL_CompositeSetupImageCallback, &job->resultImage);
+#endif
                     RB_Resource_Flush();
                     if (!job->resultImage)
                     {

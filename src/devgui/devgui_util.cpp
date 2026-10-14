@@ -1,3 +1,4 @@
+#include <platform/bo1_native_width.h>
 #include "devgui_util.h"
 
 #include <client_mp/cl_main_mp.h>
@@ -242,6 +243,16 @@ void __cdecl DevGui_DrawQuad(const int (*vtxs)[2], const float *color)
 {
     float xy[4][2]; // [esp+0h] [ebp-20h] BYREF
 
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+    xy[0][0] = (float)vtxs[0][0];
+    xy[0][1] = (float)vtxs[0][1];
+    xy[1][0] = (float)vtxs[1][0];
+    xy[1][1] = (float)vtxs[1][1];
+    xy[2][0] = (float)vtxs[2][0];
+    xy[2][1] = (float)vtxs[2][1];
+    xy[3][0] = (float)vtxs[3][0];
+    xy[3][1] = (float)vtxs[3][1];
+#else
     xy[0][0] = (float)(*vtxs)[0];
     xy[0][1] = (float)(*vtxs)[1];
     xy[1][0] = (float)(*vtxs)[2];
@@ -250,6 +261,7 @@ void __cdecl DevGui_DrawQuad(const int (*vtxs)[2], const float *color)
     xy[2][1] = (float)(*vtxs)[5];
     xy[3][0] = (float)(*vtxs)[6];
     xy[3][1] = (float)(*vtxs)[7];
+#endif
     R_AddCmdDrawQuadPic(xy, color, cls.whiteMaterial);
 }
 

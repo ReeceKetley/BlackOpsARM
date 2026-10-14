@@ -1,4 +1,5 @@
 #include "r_sunshadow.h"
+#include <platform/bo1_native_width.h>
 #include "r_dvars.h"
 #include "r_dpvs_static.h"
 #include <universal/com_convexhull.h>
@@ -502,7 +503,11 @@ void __cdecl R_SetupSunShadowMapProjection(
     sizeInSunProj[0] = maxsInSunProj[0][0] - minsInSunProj[0][0];
     sizeInSunProj[1] = maxsInSunProj[0][1] - minsInSunProj[0][1];
 
+#if defined(__ANDROID__)
+    maxSizeInSunProj = sizeInSunProj[0]>sizeInSunProj[1]?sizeInSunProj[0]:sizeInSunProj[1];
+#else
     maxSizeInSunProj = max(sizeInSunProj[0], sizeInSunProj[1]);
+#endif
 
     sampleSizeNear = sm_sunSampleSizeNear->current.value; // Default: 0.25f
     sampleSizeFar = sampleSizeNear * rg.sunShadowPartitionRatio; // rg.sunShadowPartitionRatio Typically 4.0f
@@ -776,8 +781,13 @@ void __cdecl R_SetupSunShadowBoundingPoly(
         boundingPoly->pointIsNear[pointIndex] = 0;
         for ( nearPointIndex = 4; nearPointIndex < pointCount; ++nearPointIndex )
         {
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+            if ( frustumBoundingPolyInSunProj[pointIndex][0] == frustumPointsInSunProj[nearPointIndex][0]
+                && frustumBoundingPolyInSunProj[pointIndex][1] == frustumPointsInSunProj[nearPointIndex][1] )
+#else
             if ( frustumBoundingPolyInSunProj[pointIndex][0] == (*frustumPointsInSunProj)[2 * nearPointIndex]
                 && frustumBoundingPolyInSunProj[pointIndex][1] == (*frustumPointsInSunProj)[2 * nearPointIndex + 1] )
+#endif
             {
                 boundingPoly->pointIsNear[pointIndex] = 1;
                 break;
@@ -793,6 +803,24 @@ void __cdecl R_SetupSunShadowMapViewMatrix(
                 const float (*sunAxis)[3],
                 GfxSunShadowProjection *sunProj)
 {
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+    (sunProj->viewMatrix[0][0]) = (-sunAxis[1][0]);
+    (sunProj->viewMatrix[1][0]) = (-sunAxis[1][1]);
+    (sunProj->viewMatrix[2][0]) = (-sunAxis[1][2]);
+    (sunProj->viewMatrix[3][0]) = -*snappedViewOrgInSunProj;
+    sunProj->viewMatrix[0][1] = sunAxis[2][0];
+    sunProj->viewMatrix[1][1] = sunAxis[2][1];
+    sunProj->viewMatrix[2][1] = sunAxis[2][2];
+    (sunProj->viewMatrix[3][1]) = -snappedViewOrgInSunProj[1];
+    sunProj->viewMatrix[0][2] = (*sunAxis)[0];
+    sunProj->viewMatrix[1][2] = (*sunAxis)[1];
+    sunProj->viewMatrix[2][2] = (*sunAxis)[2];
+    sunProj->viewMatrix[3][2] = 0.0f;
+    sunProj->viewMatrix[0][3] = 0.0f;
+    sunProj->viewMatrix[1][3] = 0.0f;
+    sunProj->viewMatrix[2][3] = 0.0f;
+    sunProj->viewMatrix[3][3] = 1.0f;
+#else
     (sunProj->viewMatrix[0][0]) = (-(*sunAxis)[3]);
     (sunProj->viewMatrix[1][0]) = (-(*sunAxis)[4]);
     (sunProj->viewMatrix[2][0]) = (-(*sunAxis)[5]);
@@ -809,6 +837,7 @@ void __cdecl R_SetupSunShadowMapViewMatrix(
     sunProj->viewMatrix[1][3] = 0.0f;
     sunProj->viewMatrix[2][3] = 0.0f;
     sunProj->viewMatrix[3][3] = 1.0f;
+#endif
 }
 
 void __cdecl R_SetupSunShadowMapPartitionFraction(

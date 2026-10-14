@@ -1,3 +1,4 @@
+#include <platform/bo1_native_width.h>
 #include <universal/narrow32.h>
 #include "r_add_staticmodel.h"
 #include "r_gfx.h"
@@ -821,8 +822,13 @@ void __cdecl R_SkinStaticModelsCamera(
             model,
             primaryLightIndex,
             modelFade,
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+            staticModelLodList[surfTypeIndex],
+            staticModelLodCount[surfTypeIndex],
+#else
             (unsigned __int16 (*)[128])(*staticModelLodList)[4 * surfTypeIndex],
             &(*staticModelLodCount)[4 * surfTypeIndex],
+#endif
             surfTypeIndex + 2,
             prepassSizeCull,
             surfData,
@@ -851,7 +857,11 @@ void __cdecl R_SkinStaticModelsCameraForSurface(
                 model,
                 primaryLightIndex,
                 modelFade,
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+                (unsigned __int8 *)staticModelLodList[lod],
+#else
                 (unsigned __int8 *)&(*staticModelLodList)[128 * lod],
+#endif
                 staticModelLodCount[lod],
                 surfType,
                 lod,
@@ -1360,8 +1370,13 @@ void __cdecl R_SkinStaticModelsShadow(
     for ( surfTypeIndex = 0; surfTypeIndex < 4; ++surfTypeIndex )
         R_SkinStaticModelsShadowForSurface(
             model,
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+            staticModelLodList[surfTypeIndex],
+            staticModelLodCount[surfTypeIndex],
+#else
             (unsigned __int16 (*)[128])(*staticModelLodList)[4 * surfTypeIndex],
             &(*staticModelLodCount)[4 * surfTypeIndex],
+#endif
             surfTypeIndex + 2,
             surfData);
 }
@@ -1380,7 +1395,11 @@ void __cdecl R_SkinStaticModelsShadowForSurface(
         if ( staticModelLodCount[lod] )
             R_SkinStaticModelsShadowForLod(
                 model,
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+                (unsigned __int8 *)staticModelLodList[lod],
+#else
                 (unsigned __int8 *)&(*staticModelLodList)[128 * lod],
+#endif
                 staticModelLodCount[lod],
                 surfType,
                 lod,

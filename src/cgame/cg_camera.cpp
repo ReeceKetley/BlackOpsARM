@@ -1,3 +1,4 @@
+#include <platform/bo1_native_width.h>
 #include "cg_camera.h"
 
 #include "cg_weapons.h"
@@ -1156,7 +1157,11 @@ void __cdecl CG_OffsetVehicleGunner(int localClientNum, cg_s *cgameGlob)
             weapDef = BG_GetWeaponDef(weapon);
             if (weapDef)
             {
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+                memcpy(viewPos, tagMtx[3], 2 * sizeof(float));
+#else
                 *(_QWORD *)viewPos = *(_QWORD *)&tagMtx[3][0];
+#endif
                 viewPos[2] = tagMtx[3][2];
                 BG_CalcVehicleTurretWeaponPosOffset(ps->fWeaponPosFrac, weapDef, offset);
                 viewPos[0] = (float)(offset[2] * tagMtx[2][0])
@@ -1611,7 +1616,11 @@ void __cdecl CG_CalcVehicleViewValues(int localClientNum)
          || CG_DObjGetWorldTagMatrix(&vehicle->pose, obj, scr_const.tag_barrel, barrelMtx, barrelMtx[3]))
         && CG_DObjGetWorldTagMatrix(&vehicle->pose, obj, scr_const.tag_player, playerMtx, playerMtx[3]) )
     {
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+        memcpy(tagMtx[0], bodyMtx[0], 2 * sizeof(float));
+#else
         *(_QWORD *)&tagMtx[0][0] = *(_QWORD *)&bodyMtx[0][0];
+#endif
         tagMtx[0][2] = bodyMtx[0][2];
         tagMtx[1][0] = bodyMtx[1][0];
         tagMtx[1][1] = bodyMtx[1][1];
@@ -1643,7 +1652,11 @@ void __cdecl CG_CalcVehicleViewValues(int localClientNum)
             MatrixTranspose(tagMtx, cgameGlob->prevVehicleInvAxis);
             weapon = CG_GetPlayerWeapon(ps, localClientNum);
             weapDef = BG_GetWeaponDef(weapon);
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+            memcpy(desiredCamPos, tagMtx[3], 2 * sizeof(float));
+#else
             *(_QWORD *)desiredCamPos = *(_QWORD *)&tagMtx[3][0];
+#endif
             desiredCamPos[2] = tagMtx[3][2];
             if ( (ps->eFlags2 & 0x10000000) != 0 )
             {
@@ -1757,7 +1770,11 @@ void __cdecl CG_CalcVehicleViewValues(int localClientNum)
             }
             if ( ps->vehicleType == 2 )
             {
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+                memcpy(viewAxis[0], barrelMtx[0], 2 * sizeof(float));
+#else
                 *(_QWORD *)&viewAxis[0][0] = *(_QWORD *)&barrelMtx[0][0];
+#endif
                 viewAxis[0][2] = barrelMtx[0][2];
                 viewAxis[1][0] = barrelMtx[1][0];
                 viewAxis[1][1] = barrelMtx[1][1];
@@ -2207,7 +2224,11 @@ void __cdecl CG_Calc3rdPersonVehicleViewValues(int localClientNum)
         else
         {
             AnglesToAxis(ps->viewangles, axis);
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+            memcpy(newLookDir, axis[0], 2 * sizeof(float));
+#else
             *(_QWORD *)newLookDir = *(_QWORD *)&axis[0][0];
+#endif
             newLookDir[2] = axis[0][2];
         }
         vectoangles(newLookDir, newLookAngles);
@@ -2759,7 +2780,11 @@ void __cdecl MovieCameraViewTrace(int localClientNum, int contentMask)
         if ( i >= numplanes )
         {
             v6 = planes[numplanes];
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+            memcpy(v6, trace.normal.vec.v, 2 * sizeof(float));
+#else
             *(_QWORD *)v6 = *(_QWORD *)trace.normal.vec.v;
+#endif
             v6[2] = trace.normal.vec.v[2];
             into = PM_PermuteRestrictiveClipPlanes(cgameGlob->movieCameraVelocity, ++numplanes, planes, permutation);
             if ( into < 0.1 )
@@ -3135,11 +3160,20 @@ void __cdecl RotatePoint(float *point, const float (*mat)[3])
     tvec = *point;
     tvec_4 = point[1];
     tvec_8 = point[2];
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+    *point = (float)((float)(mat[0][0] * *point) + (float)((float)mat[0][1] * tvec_4))
+                 + (float)((float)mat[0][2] * tvec_8);
+    point[1] = (float)((float)((float)mat[1][0] * tvec) + (float)((float)mat[1][1] * tvec_4))
+                     + (float)((float)mat[1][2] * tvec_8);
+    point[2] = (float)((float)((float)mat[2][0] * tvec) + (float)((float)mat[2][1] * tvec_4))
+                     + (float)((float)mat[2][2] * tvec_8);
+#else
     *point = (float)((float)((*mat)[0] * *point) + (float)((float)(*mat)[1] * tvec_4))
                  + (float)((float)(*mat)[2] * tvec_8);
     point[1] = (float)((float)((float)(*mat)[3] * tvec) + (float)((float)(*mat)[4] * tvec_4))
                      + (float)((float)(*mat)[5] * tvec_8);
     point[2] = (float)((float)((float)(*mat)[6] * tvec) + (float)((float)(*mat)[7] * tvec_4))
                      + (float)((float)(*mat)[8] * tvec_8);
+#endif
 }
 

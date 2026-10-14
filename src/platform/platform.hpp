@@ -32,7 +32,8 @@ void Platform_SetBackends(
     IVideoBackend *video);
 void Platform_LogBootstrap();
 
-// True after a successful bootstrap.
+// True when all seven descriptors are registered. This is registry completeness,
+// not evidence of initialized audio/graphics hardware or an online connection.
 bool Platform_IsReady();
 
 // Preferred call-site helpers. Use the registered backends when ready; otherwise

@@ -16,22 +16,22 @@ void __cdecl ikMatrixIdentity44(float (*out)[4])
 
 void __cdecl ikMatrixSet44(float (*out)[4], const float *origin, const float (*axis)[3], float scale)
 {
-    (*out)[0] = (*axis)[0] * scale;
-    (*out)[1] = (float)(*axis)[1] * scale;
-    (*out)[2] = (float)(*axis)[2] * scale;
-    (*out)[3] = 0.0f;
-    (*out)[4] = (float)(*axis)[3] * scale;
-    (*out)[5] = (float)(*axis)[4] * scale;
-    (*out)[6] = (float)(*axis)[5] * scale;
-    (*out)[7] = 0.0f;
-    (*out)[8] = (float)(*axis)[6] * scale;
-    (*out)[9] = (float)(*axis)[7] * scale;
-    (*out)[10] = (float)(*axis)[8] * scale;
-    (*out)[11] = 0.0f;
-    (*out)[12] = *origin;
-    (*out)[13] = origin[1];
-    (*out)[14] = origin[2];
-    (*out)[15] = 1.0f;
+    out[0][0] = axis[0][0] * scale;
+    out[0][1] = (float)axis[0][1] * scale;
+    out[0][2] = (float)axis[0][2] * scale;
+    out[0][3] = 0.0f;
+    out[1][0] = (float)axis[1][0] * scale;
+    out[1][1] = (float)axis[1][1] * scale;
+    out[1][2] = (float)axis[1][2] * scale;
+    out[1][3] = 0.0f;
+    out[2][0] = (float)axis[2][0] * scale;
+    out[2][1] = (float)axis[2][1] * scale;
+    out[2][2] = (float)axis[2][2] * scale;
+    out[2][3] = 0.0f;
+    out[3][0] = *origin;
+    out[3][1] = origin[1];
+    out[3][2] = origin[2];
+    out[3][3] = 1.0f;
 }
 
 void __cdecl ikMatrixTransformVector34(const float *in1, const float (*in2)[4], float *out)
@@ -2066,23 +2066,9 @@ void __cdecl ikMatrixLerp44(float (*from)[4], float (*to)[4], float lerp, float 
     float axis[3][3]; // [esp+70h] [ebp-30h] BYREF
     float aTo[3]; // [esp+94h] [ebp-Ch] BYREF
 
-    *(_QWORD *)&axis[0][0] = *(_QWORD *)&(*from)[0];
-    axis[0][2] = (*from)[2];
-    axis[1][0] = (*from)[4];
-    axis[1][1] = (*from)[5];
-    axis[1][2] = (*from)[6];
-    axis[2][0] = (*from)[8];
-    axis[2][1] = (*from)[9];
-    axis[2][2] = (*from)[10];
+    for (int row=0; row<3; ++row) memcpy(axis[row],from[row],sizeof(axis[row]));
     AxisToAngles(axis, aFrom);
-    *(_QWORD *)&axis[0][0] = *(_QWORD *)&(*to)[0];
-    axis[0][2] = (*to)[2];
-    axis[1][0] = (*to)[4];
-    axis[1][1] = (*to)[5];
-    axis[1][2] = (*to)[6];
-    axis[2][0] = (*to)[8];
-    axis[2][1] = (*to)[9];
-    axis[2][2] = (*to)[10];
+    for (int row=0; row<3; ++row) memcpy(axis[row],to[row],sizeof(axis[row]));
     AxisToAngles(axis, aTo);
     v6 = aFrom[0];
     aLerped[0] = AngleNormalize180(aTo[0] - aFrom[0]) * lerp + v6;
@@ -2091,7 +2077,7 @@ void __cdecl ikMatrixLerp44(float (*from)[4], float (*to)[4], float lerp, float 
     v4 = aFrom[2];
     aLerped[2] = AngleNormalize180(aTo[2] - aFrom[2]) * lerp + v4;
     AnglesToAxis(aLerped, axis);
-    Vec3Lerp(&(*from)[12], &(*to)[12], lerp, pLerped);
+    Vec3Lerp(from[3], to[3], lerp, pLerped);
     ikMatrixSet44(res, pLerped, axis, 1.0);
 }
 

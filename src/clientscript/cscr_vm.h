@@ -170,7 +170,13 @@ struct function_stack_t // sizeof=0x14
 
 struct scrVmGlob_t // sizeof=0x2028
 {                                       // XREF: .data:scrVmGlob_t * gScrVmGlob/r
+#if defined(__ANDROID__)
+    // One owned sentinel followed by the original two logical eval slots.
+    // top is advanced/retired within this single array, never before an array.
+    VariableValue eval_stack_storage[3];
+#else
     VariableValue eval_stack[2];        // XREF: IncInParam+155/o
+#endif
                                         // GetEntityFieldValue(scriptInstance_t,uint,int,ushort,int)+9A/w ...
     const char *dialog_error_message;   // XREF: Scr_ClearErrorMessage(scriptInstance_t)+1C/w
                                         // VM_Notify+597/r ...
@@ -178,7 +184,13 @@ struct scrVmGlob_t // sizeof=0x2028
                                         // Scr_SetLoading(int,scriptInstance_t)+F/w ...
     int starttime;                      // XREF: Scr_VM_Init+87/o
                                         // Scr_ExecThread(scriptInstance_t,int,uint)+48/o ...
+#if defined(__ANDROID__)
+    // The empty local cursor and 2048 variable IDs share one actual array.
+    // starttime remains the independent script timeout clock.
+    unsigned int localVarsStack_storage[2049];
+#else
     unsigned int localVarsStack[2048];
+#endif
     bool recordPlace;                   // XREF: Scr_VM_Init+1A2/w
                                         // VM_Execute_0+3144/r
     // padding byte

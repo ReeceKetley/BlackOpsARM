@@ -1,4 +1,6 @@
 #include "r_image.h"
+#include "r_image_globals.h"
+#include <cstdint>
 #include <universal/com_memory.h>
 #include <xanim/xmodel.h>
 #include <qcommon/threads.h>
@@ -16,6 +18,9 @@
 #include <algorithm>
 #include "rb_state.h"
 #include <qcommon/common.h>
+#if defined(__ANDROID__)
+#include <platform/android/legacy_crt.h>
+#endif
 
 const char *g_imageProgNames[29] =
 {
@@ -52,14 +57,7 @@ const char *g_imageProgNames[29] =
 
 
 //$240FF632105687D15E57E43F247C9BAA imageGlobals;
-struct //$240FF632105687D15E57E43F247C9BAA // sizeof=0x2014
-{                                       // XREF: .data:imageGlobals/r
-    GfxImage *imageHashTable[2048];     // XREF: Image_AllocProg(int,uchar,uchar)+AE/w
-    int picmip;                         // XREF: Image_PicmipForSemantic(uchar,Picmip *):$LN6_197/r
-    int picmipBump;                     // XREF: Image_PicmipForSemantic(uchar,Picmip *):$LN5_202/r
-    int picmipSpec;                     // XREF: Image_PicmipForSemantic(uchar,Picmip *):$LN4_244/r
-    CardMemory totalMemory;             // XREF: Image_TrackTotalMemory(GfxImage *,int,int)+2A/r
-} imageGlobals;
+ImageGlobals imageGlobals;
 
 int Image_TrackBytes;
 GfxImage g_imageProgs[29];
@@ -75,6 +73,22 @@ bool __cdecl Image_IsCodeImage(int track)
     return track >= 0 && (track <= 1 || track == 4);
 }
 
+#if defined(__ANDROID__)
+// Keep the enumerator signature exact and pass its context to the typed owner.
+static void __cdecl R_AddImageToListEnumerated(XAssetHeader header, void *data)
+{
+    R_AddImageToList(header, static_cast<ImageList *>(data));
+}
+static void __cdecl R_FreeLostImageEnumerated(XAssetHeader header, void *)
+{
+    R_FreeLostImage(header);
+}
+static void __cdecl R_RebuildLostImageEnumerated(XAssetHeader header, void *)
+{
+    R_RebuildLostImage(header);
+}
+#endif
+
 void __cdecl R_GetImageList(ImageList *imageList)
 {
     if ( !imageList
@@ -83,7 +97,11 @@ void __cdecl R_GetImageList(ImageList *imageList)
         __debugbreak();
     }
     imageList->count = 0;
+#if defined(__ANDROID__)
+    DB_EnumXAssets(ASSET_TYPE_IMAGE, R_AddImageToListEnumerated, imageList, 1);
+#else
     DB_EnumXAssets(ASSET_TYPE_IMAGE, (void (__cdecl *)(XAssetHeader, void *))R_AddImageToList, imageList, 1);
+#endif
 }
 
 void __cdecl R_AddImageToList(XAssetHeader header, ImageList *data)
@@ -357,7 +375,11 @@ void __cdecl R_ShutdownImages()
 
 bool __cdecl Image_IsProg(GfxImage *image)
 {
-    return image >= g_imageProgs && image < &g_imageProgs[30];
+    // Preserve the reference's 30-slot address interval without constructing an
+    // out-of-bounds pointer into its 29-element array or comparing unrelated pointers.
+    const auto address=reinterpret_cast<std::uintptr_t>(image);
+    const auto begin=reinterpret_cast<std::uintptr_t>(g_imageProgs);
+    return address>=begin && address-begin<30*sizeof(g_imageProgs[0]);
 }
 
 void __cdecl Image_Free(GfxImage *image)
@@ -966,7 +988,11 @@ GfxImage *__cdecl Image_Register_FastFile(const char *imageName)
 
 void __cdecl R_ReleaseLostImages()
 {
+#if defined(__ANDROID__)
+    DB_EnumXAssets(ASSET_TYPE_IMAGE, R_FreeLostImageEnumerated, 0, 1);
+#else
     DB_EnumXAssets(ASSET_TYPE_IMAGE, (void (__cdecl *)(XAssetHeader, void *))R_FreeLostImage, 0, 1);
+#endif
 }
 
 void __cdecl R_FreeLostImage(XAssetHeader header)
@@ -992,7 +1018,11 @@ void __cdecl R_FreeLostImage(XAssetHeader header)
 
 void __cdecl R_ReloadLostImages()
 {
+#if defined(__ANDROID__)
+    DB_EnumXAssets(ASSET_TYPE_IMAGE, R_RebuildLostImageEnumerated, 0, 1);
+#else
     DB_EnumXAssets(ASSET_TYPE_IMAGE, (void (__cdecl *)(XAssetHeader, void *))R_RebuildLostImage, 0, 1);
+#endif
 }
 
 void __cdecl R_RebuildLostImage(XAssetHeader header)

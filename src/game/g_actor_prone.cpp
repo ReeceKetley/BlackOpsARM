@@ -6,7 +6,13 @@ void __cdecl G_InitActorProneInfo(actor_s *actor)
 {
     if ( !actor && !Assert_MyHandler("C:\\projects_pc\\cod\\codsrc\\src\\game\\g_actor_prone.cpp", 65, 0, "%s", "actor") )
         __debugbreak();
+#if defined(__ANDROID__)
+    actor->ProneInfo.bCorpseOrientation = false;
+    actor->ProneInfo.orientPitch = false;
+    actor->ProneInfo.prone = false;
+#else
     *(unsigned int *)&actor->ProneInfo.bCorpseOrientation = 0;
+#endif
     actor->ProneInfo.iProneTime = 0;
     actor->ProneInfo.iProneTrans = 0;
     actor->ProneInfo.fBodyHeight = 0.0;

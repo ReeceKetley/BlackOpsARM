@@ -14,11 +14,20 @@
 #include <steam/steam_api.h>
 #include <steam/isteamgameserver.h>
 #include <sys/stat.h>
+#if defined(__ANDROID__)
+#include <fcntl.h>
+#include <unistd.h>
+#include <cerrno>
+#include <new>
+#endif
 
 #include <atomic>
 #include <mutex>
 #include <vector>
 #include <qcommon/cmd.h>
+#if defined(__ANDROID__)
+#include <qcommon/threads.h>
+#endif
 
 #ifdef BO1_MP
 #include <server_mp/server_mp.h>
@@ -36,10 +45,14 @@
 #define APPID_STR "42710"
 
 
+#if defined(__ANDROID__)
+std::atomic<bool> g_steamInitialized{false};
+#else
 bool g_steamInitialized = false;
+#endif
 // no-steam: SteamAPI_InitEx succeeded (the Steam client is running), whether or not the user is logged on.
 // Without it every Steam interface accessor (SteamUser(), SteamFriends(), ...) returns NULL.
-bool g_steamAPIInitialized = false;
+
 uint64_t g_steamID = 0;
 char g_steamName[64]{ 0 };
 
@@ -64,6 +77,9 @@ bool Steam_GetRawClientTicket(unsigned char **pBuffer, uint32 *pSize)
 		return false;
 	}
 
+#if defined(__ANDROID__)
+    if(!pBuffer || !pSize || steamClientTicketSize>sizeof(steamClientTicket)) return false;
+#endif
 	*pSize = steamClientTicketSize;
 	*pBuffer = steamClientTicket;
 
@@ -152,10 +168,32 @@ void Steam_CheckClients()
 // callback hook for debug text emitted from the Steam API
 extern "C" void __cdecl SteamAPIDebugTextHook(int nSeverity, const char *pchDebugText)
 {
+#if defined(__ANDROID__)
+	Com_Printf(0, "%s", pchDebugText ? pchDebugText : "");
+#else
 	Com_Printf(0, pchDebugText);
+#endif
 }
 
 // This Creates a "steam_appid.txt" next to the executable for the Steam API to read
+#if defined(__ANDROID__)
+static bool Steam_NativeCreateAppIdFile()
+{
+    const int descriptor=open("steam_appid.txt",O_WRONLY|O_CREAT|O_EXCL|O_CLOEXEC,0644);
+    if(descriptor<0) {
+        if(errno!=EEXIST) return false;
+        struct stat info{};
+        return stat("steam_appid.txt",&info)==0 && S_ISREG(info.st_mode);
+    }
+    const char appid[]=APPID_STR;
+    const bool written=write(descriptor,appid,sizeof(appid)-1)==sizeof(appid)-1;
+    const bool flushed=written && fsync(descriptor)==0;
+    const bool closed=close(descriptor)==0;
+    if(!written || !flushed || !closed) { unlink("steam_appid.txt"); return false; }
+    return true;
+}
+#endif
+
 static void CreateAppIdFile()
 {
 	// Check if File Exists Already
@@ -187,6 +225,45 @@ void Steam_PrintInitStatus()
 
 void Steam_Init()
 {
+#if defined(__ANDROID__)
+    if(!Sys_IsMainThread()) { Com_Error(ERR_FATAL,"Steam initialization requires the main thread"); std::abort(); }
+    if(g_steamAPIInitialized.load(std::memory_order_acquire)) return;
+    if(!Steam_NativeCreateAppIdFile() || setenv("SteamAppId",APPID_STR,1)!=0 ||
+       setenv("SteamGameId",APPID_STR,1)!=0 || setenv("SteamOverlayGameId",APPID_STR,1)!=0) {
+        Com_sprintf(s_steamInitStatus,sizeof(s_steamInitStatus),"Steam native file/environment setup failed");
+        return;
+    }
+    SteamErrMsg errMsg{};
+    const ESteamAPIInitResult result=SteamAPI_InitEx(&errMsg);
+    if(result!=k_ESteamAPIInitResult_OK) {
+        Com_sprintf(s_steamInitStatus,sizeof(s_steamInitStatus),"SteamAPI_Init failed (%d: %s)",static_cast<int>(result),errMsg);
+        return;
+    }
+    auto *user=SteamUser();
+    auto *friends=SteamFriends();
+    auto *client=SteamClient();
+    if(!user || !friends || !client) {
+        SteamAPI_Shutdown();
+        Com_sprintf(s_steamInitStatus,sizeof(s_steamInitStatus),"SteamAPI initialized without required user/friends/client interfaces");
+        return;
+    }
+    g_steamAPIInitialized.store(true,std::memory_order_release);
+    if(!user->BLoggedOn()) {
+        Com_sprintf(s_steamInitStatus,sizeof(s_steamInitStatus),"SteamAPI_Init ok, user not logged on (persona \"%s\")",friends->GetPersonaName());
+        return;
+    }
+    auto *handler=new(std::nothrow) SteamCallbackHandler();
+    if(!handler) {
+        g_steamAPIInitialized.store(false,std::memory_order_release); SteamAPI_Shutdown();
+        Com_sprintf(s_steamInitStatus,sizeof(s_steamInitStatus),"Steam callback allocation failed"); return;
+    }
+    callbackHandler=handler;
+    client->SetWarningMessageHook(&SteamAPIDebugTextHook);
+    I_strncpyz(g_steamName,friends->GetPersonaName(),sizeof(g_steamName));
+    g_steamID=user->GetSteamID().ConvertToUint64();
+    Com_sprintf(s_steamInitStatus,sizeof(s_steamInitStatus),"SteamAPI_Init ok, logged on, persona \"%s\"",g_steamName);
+    g_steamInitialized.store(true,std::memory_order_release);
+#else
 #if defined(BO1_PORT_X64)
 	// x64: Steam is stubbed (x64_vendor_stubs.cpp); there is no client to hand an app id to, so do not touch the
 	// environment block or write steam_appid.txt.
@@ -226,11 +303,23 @@ void Steam_Init()
 	g_steamID = SteamUser()->GetSteamID().ConvertToUint64();
 
 	callbackHandler = new SteamCallbackHandler();
+#endif
 }
 
 // (Currently Unused)
 void Steam_Shutdown()
 {
+#if defined(__ANDROID__)
+    if(!Sys_IsMainThread()) { Com_Error(ERR_FATAL,"Steam shutdown requires the main thread"); std::abort(); }
+    // The controlling caller must retire users/workers before SDK shutdown.
+    g_steamInitialized.store(false,std::memory_order_release);
+    if(g_steamAPIInitialized.load(std::memory_order_acquire)) Steam_CancelClientTicket();
+    delete callbackHandler; callbackHandler=nullptr;
+    if(g_steamAPIInitialized.exchange(false,std::memory_order_acq_rel)) SteamAPI_Shutdown();
+    steamClientAuthTicket=0; steamClientTicketSize=0;
+    memset(steamClientTicket,0,sizeof(steamClientTicket)); memset(g_steamName,0,sizeof(g_steamName)); g_steamID=0;
+    std::lock_guard<std::mutex> lock(kickPlayerMutex); steamIDsToKick.clear();
+#else
 	SteamAPI_Shutdown();
 
 	delete callbackHandler;
@@ -239,6 +328,7 @@ void Steam_Shutdown()
 	g_steamAPIInitialized = false;
 	memset(g_steamName, 0, 64);
 	g_steamID = 0;
+#endif
 }
 
 bool Steam_UpdateClientAuthTicket(netadr_t serverIpv4)
@@ -250,14 +340,30 @@ bool Steam_UpdateClientAuthTicket(netadr_t serverIpv4)
 
 	SteamNetworkingIdentity snid;
 	uint32 ip32 = 0;
+#if defined(__ANDROID__)
+	ip32 = (static_cast<uint32>(serverIpv4.ip[0]) << 24) | (static_cast<uint32>(serverIpv4.ip[1]) << 16) |
+	    (static_cast<uint32>(serverIpv4.ip[2]) << 8) | static_cast<uint32>(serverIpv4.ip[3]);
+#else
 	ip32 |= (serverIpv4.ip[0] << 24);
 	ip32 |= (serverIpv4.ip[1] << 16);
 	ip32 |= (serverIpv4.ip[2] << 8);
 	ip32 |= (serverIpv4.ip[3]);
+#endif
 	snid.SetIPv4Addr(ip32, serverIpv4.port);
 
+#if defined(__ANDROID__)
+    auto *user=SteamUser();
+    if(!user) return false;
+    Steam_CancelClientTicket();
+    steamClientTicketSize=0;
+    memset(steamClientTicket,0,sizeof(steamClientTicket));
+    steamClientAuthTicket=user->GetAuthSessionTicket(steamClientTicket,sizeof(steamClientTicket),&steamClientTicketSize,&snid);
+    if(steamClientAuthTicket==k_HAuthTicketInvalid || !steamClientTicketSize || steamClientTicketSize>sizeof(steamClientTicket)) {
+        Steam_CancelClientTicket(); steamClientTicketSize=0; return false;
+    }
+#else
 	steamClientAuthTicket = SteamUser()->GetAuthSessionTicket(steamClientTicket, sizeof(steamClientTicket), &steamClientTicketSize, &snid);
-
+#endif
 	return steamClientAuthTicket != k_HAuthTicketInvalid;
 }
 
@@ -330,3 +436,8 @@ void Steam_SV_AddTestCommands()
 	Cmd_AddCommandInternal("steam_testkick", Cbuf_AddServerText_f, &Steam_SV_TestSteamKick);
 	Cmd_AddServerCommandInternal("steam_testkick", Steam_SV_TestKick, &Steam_SV_TestSteamKick_SERVER);
 }
+#if defined(__ANDROID__)
+std::atomic<bool> g_steamAPIInitialized{false};
+#else
+bool g_steamAPIInitialized = false;
+#endif

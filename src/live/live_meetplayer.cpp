@@ -1,4 +1,8 @@
 #include "live_meetplayer.h"
+#if defined(__ANDROID__)
+#include <platform/android/file_time.h>
+#include <cstdlib>
+#endif
 #include "live_storage.h"
 #include <win32/win_shared.h>
 #include "live_win.h"
@@ -217,9 +221,17 @@ void __cdecl LiveMeetPlayer_UpdateMeetPlayerList(
     }
 }
 
-void __cdecl LiveMeetPlayer_SetCurrentTime(_FILETIME *currentTime)
+void __cdecl LiveMeetPlayer_SetCurrentTime(Bo1MeetPlayerTime *currentTime)
 {
+#if defined(__ANDROID__)
+    if (!bo1::android::ReadFileTime(currentTime))
+    {
+        Com_Error(ERR_FATAL, "Recent-player wall clock failed: %d", errno);
+        std::abort();
+    }
+#else
     GetSystemTimeAsFileTime(currentTime);
+#endif
 }
 
 char __cdecl LiveMeetPlayer_AddPlayerAtSlot(
@@ -257,25 +269,45 @@ char __cdecl LiveMeetPlayer_AddPlayerAtSlot(
         return 0;
     if ( !*playername )
         return 0;
+#if defined(__ANDROID__)
+    if (localControllerIndex != 0 || slot < 0)
+    {
+        if (!Assert_MyHandler(__FILE__, __LINE__, 0, "%s", "controller == 0 && slot >= 0")) __debugbreak();
+        return 0;
+    }
+    auto &record = metPlayersXuidinfo[localControllerIndex].playersXuidInfo[slot];
+    record.playerXuids = playeruid;
+    I_strncpyz(record.gamertag, playername, sizeof(record.gamertag));
+    LiveMeetPlayer_SetCurrentTime(&record.systemTime);
+#else
     v5 = localControllerIndex;
     v6 = slot;
     LODWORD(metPlayersXuidinfo[v5].playersXuidInfo[v6].playerXuids) = playeruid;
     *(unsigned int *)(v5 * 2416 + v6 * 48 + 173153028) = HIDWORD(playeruid);
     I_strncpyz((char *)(2416 * localControllerIndex + 48 * slot + 173153032), playername, 32);
     LiveMeetPlayer_SetCurrentTime((_FILETIME *)(2416 * localControllerIndex + 48 * slot + 173153064));
+#endif
     Live_RequestSessionsFromRecentPlayers();
     return 1;
 }
 
 unsigned int __cdecl LiveMeetPlayer_GetLastMetTime(int localControllerIndex, int index)
 {
-    _FILETIME sysTime1; // [esp+44h] [ebp-14h]
-    _FILETIME sysTime2; // [esp+50h] [ebp-8h] BYREF
+    Bo1MeetPlayerTime sysTime1; // [esp+44h] [ebp-14h]
+    Bo1MeetPlayerTime sysTime2; // [esp+50h] [ebp-8h] BYREF
 
     sysTime1.dwLowDateTime = metPlayersXuidinfo[localControllerIndex].playersXuidInfo[index].systemTime.dwLowDateTime;
     sysTime1.dwHighDateTime = metPlayersXuidinfo[localControllerIndex].playersXuidInfo[index].systemTime.dwHighDateTime;
     LiveMeetPlayer_SetCurrentTime(&sysTime2);
+#if defined(__ANDROID__)
+    const std::uint64_t now = (std::uint64_t(sysTime2.dwHighDateTime) << 32) | sysTime2.dwLowDateTime;
+    const std::uint64_t then = (std::uint64_t(sysTime1.dwHighDateTime) << 32) | sysTime1.dwLowDateTime;
+    if (now < then) return 0; // Wall clock can move backwards; elapsed time cannot.
+    const auto seconds = (now-then) / 10000000;
+    return seconds > UINT32_MAX ? UINT32_MAX : static_cast<unsigned int>(seconds);
+#else
     return (__int64)((double)(unsigned __int64)(*(_QWORD *)&sysTime2 - *(_QWORD *)&sysTime1) / pow(10.0, 7.0));
+#endif
 }
 
 XuidInfo *__cdecl LiveMeetPlayer_GetMetFriendInfo(XuidInfo *result, int localControllerIndex, int index)

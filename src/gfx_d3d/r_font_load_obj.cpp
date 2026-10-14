@@ -1,4 +1,8 @@
 #include "r_font_load_obj.h"
+#if defined(__ANDROID__)
+#include <climits>
+#include <cstring>
+#endif
 #include "r_material.h"
 #include <universal/com_files.h>
 #include <universal/com_memory.h>
@@ -24,15 +28,42 @@ Font_s *__cdecl R_LoadFont(const char *fontName, int imageTrack)
         if ( fileLen >= 16 )
         {
             varMemSize = fileLen - 16;
+#if defined(__ANDROID__)
+            if(varMemSize>INT_MAX-static_cast<int>(sizeof(Font_s))) {
+                FS_FCloseFile(file);Com_PrintError(8,"ERROR: Font file '%s' allocation is too large\n",fontName);return nullptr;
+            }
+            totalMemSize = varMemSize + sizeof(Font_s);
+#else
             totalMemSize = fileLen - 16 + 24;
+#endif
             font = (Font_s *)Hunk_Alloc(totalMemSize, "R_LoadFont", 23);
             variableFontData = (char *)&font[1];
+#if defined(__ANDROID__)
+            if(FS_Read((unsigned __int8 *)&fontNameOffset,4u,file)!=4
+                || FS_Read((unsigned __int8 *)&font->pixelHeight,4u,file)!=4
+                || FS_Read((unsigned __int8 *)&font->glyphCount,4u,file)!=4
+                || FS_Read((unsigned __int8 *)&materialNameOffset,4u,file)!=4
+                || FS_Read((unsigned __int8 *)variableFontData,varMemSize,file)!=varMemSize) {
+                FS_FCloseFile(file);Com_PrintError(8,"ERROR: Font file '%s' is truncated\n",fontName);return nullptr;
+            }
+#else
             FS_Read((unsigned __int8 *)&fontNameOffset, 4u, file);
             FS_Read((unsigned __int8 *)&font->pixelHeight, 4u, file);
             FS_Read((unsigned __int8 *)&font->glyphCount, 4u, file);
             FS_Read((unsigned __int8 *)&materialNameOffset, 4u, file);
             FS_Read((unsigned __int8 *)variableFontData, varMemSize, file);
+#endif
             FS_FCloseFile(file);
+#if defined(__ANDROID__)
+            if(font->pixelHeight<=0 || font->glyphCount<0 || font->glyphCount>varMemSize/static_cast<int>(sizeof(Glyph))
+                || fontNameOffset<16 || fontNameOffset>=fileLen || materialNameOffset<16 || materialNameOffset>=fileLen
+                || fontNameOffset-16<font->glyphCount*static_cast<int>(sizeof(Glyph))
+                || materialNameOffset-16<font->glyphCount*static_cast<int>(sizeof(Glyph))
+                || !std::memchr(variableFontData+fontNameOffset-16,0,fileLen-fontNameOffset)
+                || !std::memchr(variableFontData+materialNameOffset-16,0,fileLen-materialNameOffset)) {
+                Com_PrintError(8,"ERROR: Font file '%s' has invalid glyph/string metadata\n",fontName);return nullptr;
+            }
+#endif
             font->glyphs = (Glyph *)variableFontData;
             font->fontName = &variableFontData[fontNameOffset - 16];
             materialName = &variableFontData[materialNameOffset - 16];

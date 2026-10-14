@@ -86,7 +86,11 @@ void __cdecl SND_DspScaleCache(unsigned int count, float a, float *c)
 
 void __cdecl I_dcbt(int offset, const char *base)
 {
+#if defined(__ANDROID__)
+    __builtin_prefetch(&base[offset], 0, 3);
+#else
     _mm_prefetch(&base[offset], 1);
+#endif
 }
 
 void __cdecl SND_DspScale(unsigned int count, float a, const float *b, float *c)
@@ -1034,7 +1038,11 @@ void __cdecl SND_DspDynamo(
 }
 
 void __cdecl SND_DspFxSourceMono(
+#if defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST)
+                const snd_dsp_source_params *sourceParams,
+#else
                 const snd_dsp_futz_param *params,
+#endif
                 snd_dsp_source_state *state,
                 unsigned int frameCount,
                 float *frames,
@@ -1047,12 +1055,24 @@ void __cdecl SND_DspFxSourceMono(
     float b0; // [esp+20h] [ebp-4h] BYREF
 
     v6 = state;
+#if defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST)
+    const snd_dsp_futz_param *params = &sourceParams->futz;
+    v7 = sourceParams;
+    if (v7->lpfAttenuation < -0.0000152879)
+#else
     v7 = (const snd_dsp_source_params *)params;
     if ( params->bpfF < -0.0000152879 )
+#endif
     {
         PROF_SCOPED("lpf");
+#if defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST)
+        float a1;
+        SND_OcclusionLpfCoef(v7->lpfAttenuation, v7->lpfRatio, v7->frameRate, &b0, &a1);
+        SND_DspOnePoleFilterMono(frameCount, frames, b0, a1, &v6->lpfy);
+#else
         SND_OcclusionLpfCoef(v7->lpfAttenuation, v7->lpfRatio, v7->frameRate, &b0, (float *)&params);
         SND_DspOnePoleFilterMono(frameCount, frames, b0, *(float *)&params, &v6->lpfy);
+#endif
     }
     blend = v7->futz.blend;
     params = &v7->futz;

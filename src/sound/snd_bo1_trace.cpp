@@ -13,6 +13,12 @@
 #include <win32/win_common.h>
 #include <win32/win_shared.h>
 #include <Windows.h>
+#if defined(__ANDROID__)
+#include <mutex>
+#include <cstdio>
+#define _snprintf std::snprintf
+#define _vsnprintf std::vsnprintf
+#endif
 
 // zombies (a1): see snd_bo1_trace.h. Called from the main (client) and server threads, serialised by one lock;
 // nothing here feeds back into game or sound state.
@@ -26,12 +32,21 @@ const dvar_s *s_audio;
 const dvar_s *s_nodevLength; // bo1_snd_nodevice_length (see the header)
 const dvar_s *s_voices; // zombies (L16): bo1_audio_voices
 bool s_suppress; // main thread (CG_PumpEntityLoopSound) only
+#if defined(__ANDROID__)
+std::mutex s_lock;
+#else
 SRWLOCK s_lock = SRWLOCK_INIT;
+#endif
 
 struct Lock
 {
+#if defined(__ANDROID__)
+    Lock() { s_lock.lock(); }
+    ~Lock() { s_lock.unlock(); }
+#else
     Lock() { AcquireSRWLockExclusive(&s_lock); }
     ~Lock() { ReleaseSRWLockExclusive(&s_lock); }
+#endif
 };
 
 // hash -> name for requests made by name (SND_FindAliasId), so missing aliases print their name

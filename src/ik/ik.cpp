@@ -1,3 +1,8 @@
+#if defined(BO1_NATIVE_IK_INIT)
+#include <ik/ik_system.h>
+void IKImport_InitVars(IKSystem *);
+void IKImport_GetBoneStrings(char **);
+#else
 #include "ik.h"
 #include "ik_import.h"
 #include <win32/win_common.h>
@@ -5,32 +10,7 @@
 #include "ik_math.h"
 #include "ik_process.h"
 
-IKBoneNames IKBoneParents[23] =
-{
-  IKBONE_NONE,
-  IKBONE_FIRST,
-  IKBONE_PELVIS,
-  IKBONE_SPINE,
-  IKBONE_SPINE1,
-  IKBONE_SPINE2,
-  IKBONE_NECK,
-  IKBONE_SPINE2,
-  IKBONE_LCLAVICLE,
-  IKBONE_LUPPERARM,
-  IKBONE_LFOREARM,
-  IKBONE_LFOREARM,
-  IKBONE_SPINE2,
-  IKBONE_RCLAVICLE,
-  IKBONE_RUPPERARM,
-  IKBONE_RFOREARM,
-  IKBONE_PELVIS,
-  IKBONE_LTHIGH,
-  IKBONE_LCALF,
-  IKBONE_PELVIS,
-  IKBONE_RTHIGH,
-  IKBONE_RCALF,
-  IKBONE_RHAND
-};
+
 
 bool ikEssentialBones[28] =
 {
@@ -117,7 +97,7 @@ bool (__cdecl *ikStatusFunctions[10])(IKState *) =
 
 
 IKState *ikStates[2];
-IKSystem ikSystem;
+
 
 
 void __cdecl IK_AllocateLocalClientMemory(void *ikStatesBuf, int localClientIndex)
@@ -125,33 +105,7 @@ void __cdecl IK_AllocateLocalClientMemory(void *ikStatesBuf, int localClientInde
     ikStates[localClientIndex + 1] = (IKState*)ikStatesBuf;
 }
 
-void __cdecl IK_InitSystem()
-{
-    int i; // [esp+4h] [ebp-4h]
 
-    IKImport_InitVars(&ikSystem);
-    IKImport_GetBoneStrings(ikSystem.boneStrings);
-    for ( i = 0; i < 23; ++i )
-        ikSystem.ikBoneParents[i] = IKBoneParents[i];
-    ikSystem.joints[0].childBone = IKBONE_LHAND;
-    ikSystem.joints[0].jointBone = IKBONE_LFOREARM;
-    ikSystem.joints[0].parentBone = IKBONE_LUPPERARM;
-    ikSystem.joints[0].baseBone = IKBONE_LCLAVICLE;
-    ikSystem.joints[1].childBone = IKBONE_RHAND;
-    ikSystem.joints[1].jointBone = IKBONE_RFOREARM;
-    ikSystem.joints[1].parentBone = IKBONE_RUPPERARM;
-    ikSystem.joints[1].baseBone = IKBONE_RCLAVICLE;
-    ikSystem.joints[2].childBone = IKBONE_LFOOT;
-    ikSystem.joints[2].jointBone = IKBONE_LCALF;
-    ikSystem.joints[2].parentBone = IKBONE_LTHIGH;
-    ikSystem.joints[2].baseBone = IKBONE_PELVIS;
-    ikSystem.joints[3].childBone = IKBONE_RFOOT;
-    ikSystem.joints[3].jointBone = IKBONE_RCALF;
-    ikSystem.joints[3].parentBone = IKBONE_RTHIGH;
-    ikSystem.joints[3].baseBone = IKBONE_PELVIS;
-    ikSystem.inViewer = 0;
-    ikSystem.bInitialized = 1;
-}
 
 IKState *__cdecl IK_GetIKStateForEntity(int entityNum, unsigned __int8 *model, bool bScanAll)
 {
@@ -610,3 +564,59 @@ void __cdecl IK_UpdateEntity(unsigned int entityNum, unsigned __int8 *model, boo
     }
 }
 
+
+#endif
+IKBoneNames IKBoneParents[23] =
+{
+  IKBONE_NONE,
+  IKBONE_FIRST,
+  IKBONE_PELVIS,
+  IKBONE_SPINE,
+  IKBONE_SPINE1,
+  IKBONE_SPINE2,
+  IKBONE_NECK,
+  IKBONE_SPINE2,
+  IKBONE_LCLAVICLE,
+  IKBONE_LUPPERARM,
+  IKBONE_LFOREARM,
+  IKBONE_LFOREARM,
+  IKBONE_SPINE2,
+  IKBONE_RCLAVICLE,
+  IKBONE_RUPPERARM,
+  IKBONE_RFOREARM,
+  IKBONE_PELVIS,
+  IKBONE_LTHIGH,
+  IKBONE_LCALF,
+  IKBONE_PELVIS,
+  IKBONE_RTHIGH,
+  IKBONE_RCALF,
+  IKBONE_RHAND
+};
+IKSystem ikSystem;
+void __cdecl IK_InitSystem()
+{
+    int i; // [esp+4h] [ebp-4h]
+
+    IKImport_InitVars(&ikSystem);
+    IKImport_GetBoneStrings(ikSystem.boneStrings);
+    for ( i = 0; i < 23; ++i )
+        ikSystem.ikBoneParents[i] = IKBoneParents[i];
+    ikSystem.joints[0].childBone = IKBONE_LHAND;
+    ikSystem.joints[0].jointBone = IKBONE_LFOREARM;
+    ikSystem.joints[0].parentBone = IKBONE_LUPPERARM;
+    ikSystem.joints[0].baseBone = IKBONE_LCLAVICLE;
+    ikSystem.joints[1].childBone = IKBONE_RHAND;
+    ikSystem.joints[1].jointBone = IKBONE_RFOREARM;
+    ikSystem.joints[1].parentBone = IKBONE_RUPPERARM;
+    ikSystem.joints[1].baseBone = IKBONE_RCLAVICLE;
+    ikSystem.joints[2].childBone = IKBONE_LFOOT;
+    ikSystem.joints[2].jointBone = IKBONE_LCALF;
+    ikSystem.joints[2].parentBone = IKBONE_LTHIGH;
+    ikSystem.joints[2].baseBone = IKBONE_PELVIS;
+    ikSystem.joints[3].childBone = IKBONE_RFOOT;
+    ikSystem.joints[3].jointBone = IKBONE_RCALF;
+    ikSystem.joints[3].parentBone = IKBONE_RTHIGH;
+    ikSystem.joints[3].baseBone = IKBONE_PELVIS;
+    ikSystem.inViewer = 0;
+    ikSystem.bInitialized = 1;
+}

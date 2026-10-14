@@ -5,6 +5,9 @@
 #include <game_sp/g_sp_testplan.h>
 #include <game_sp/scr_sp_debug.h>
 #include "g_client_script_cmd_mp.h"
+#if defined(__ANDROID__)
+#include <cstdio>
+#endif
 #include "g_main_mp.h"
 #include <clientscript/cscr_vm.h>
 #include <game/g_weapon.h>
@@ -403,7 +406,11 @@ void __cdecl PlayerCmd_giveWeapon(scr_entref_t entref)
     }
     if ( G_GivePlayerWeapon(&pSelf->client->ps, weaponIndex, weaponModel, weaponOptions) )
     {
+#if defined(__ANDROID__)
+        std::snprintf(svcmd, 0x40u, "%c \"%i\"", 74, 1);
+#else
         _snprintf(svcmd, 0x40u, "%c \"%i\"", 74, 1);
+#endif
         svcmd[63] = 0;
         SV_GameSendServerCommand(pSelf - g_entities, SV_CMD_CAN_IGNORE, svcmd);
         G_InitializeAmmo(pSelf, weaponIndex, weaponModel, hadWeapon);
@@ -796,7 +803,11 @@ void __cdecl PlayerCmd_giveWeaponNextAttachmentDEVONLY(scr_entref_t entref)
                     {
                         if ( originalWeapon != weaponIndex )
                             BG_TakePlayerWeapon(ps, originalWeapon);
-                        _snprintf(svcmd, 0x40u, "%c \"%i\"", 74, 1);
+                #if defined(__ANDROID__)
+        std::snprintf(svcmd, 0x40u, "%c \"%i\"", 74, 1);
+#else
+        _snprintf(svcmd, 0x40u, "%c \"%i\"", 74, 1);
+#endif
                         svcmd[63] = 0;
                         SV_GameSendServerCommand(pSelf - g_entities, SV_CMD_CAN_IGNORE, svcmd);
                         G_InitializeAmmo(pSelf, weaponIndex, 0, 0);
@@ -4770,7 +4781,11 @@ void __cdecl PlayerCmd_OpenMenu(scr_entref_t entref)
         {
             __debugbreak();
         }
+#if defined(__ANDROID__)
+        std::snprintf(svcmd, 0x40u, "%c %i", 116, iMenuIndex);
+#else
         _snprintf(svcmd, 0x40u, "%c %i", 116, iMenuIndex);
+#endif
         svcmd[63] = 0;
         SV_GameSendServerCommand(entref.entnum, SV_CMD_RELIABLE, svcmd);
         Scr_AddInt(1, SCRIPTINSTANCE_SERVER);
@@ -4827,7 +4842,11 @@ void __cdecl PlayerCmd_OpenMenuNoMouse(scr_entref_t entref)
         {
             __debugbreak();
         }
+#if defined(__ANDROID__)
+        std::snprintf(svcmd, 0x40u, "%c %i 1", 116, iMenuIndex);
+#else
         _snprintf(svcmd, 0x40u, "%c %i 1", 116, iMenuIndex);
+#endif
         svcmd[63] = 0;
         SV_GameSendServerCommand(entref.entnum, SV_CMD_RELIABLE, svcmd);
         Scr_AddInt(1, SCRIPTINSTANCE_SERVER);
@@ -4865,7 +4884,11 @@ void __cdecl PlayerCmd_CloseMenu(scr_entref_t entref)
             Scr_ObjectError(v1, SCRIPTINSTANCE_SERVER);
         }
     }
+#if defined(__ANDROID__)
+    std::snprintf(svcmd, 0x40u, "%c", 117);
+#else
     _snprintf(svcmd, 0x40u, "%c", 117);
+#endif
     svcmd[63] = 0;
     SV_GameSendServerCommand(entref.entnum, SV_CMD_RELIABLE, svcmd);
 }
@@ -4897,7 +4920,11 @@ void __cdecl PlayerCmd_CloseInGameMenu(scr_entref_t entref)
             Scr_ObjectError(v1, SCRIPTINSTANCE_SERVER);
         }
     }
+#if defined(__ANDROID__)
+    std::snprintf(svcmd, 0x20u, "%c", 76);
+#else
     _snprintf(svcmd, 0x20u, "%c", 76);
+#endif
     svcmd[31] = 0;
     SV_GameSendServerCommand(entref.entnum, SV_CMD_RELIABLE, svcmd);
 }
@@ -5254,7 +5281,11 @@ void __cdecl iclientprintln(scr_entref_t entref)
             Scr_ObjectError(v1, SCRIPTINSTANCE_SERVER);
         }
     }
+#if defined(__ANDROID__)
+    std::snprintf(svcmd, 0x20u, "%c", 102);
+#else
     _snprintf(svcmd, 0x20u, "%c", 102);
+#endif
     svcmd[31] = 0;
     Scr_MakeGameMessage(entref.entnum, svcmd);
 }
@@ -5286,7 +5317,11 @@ void __cdecl iclientprintlnbold(scr_entref_t entref)
             Scr_ObjectError(v1, SCRIPTINSTANCE_SERVER);
         }
     }
+#if defined(__ANDROID__)
+    std::snprintf(svcmd, 0x20u, "%c", 103);
+#else
     _snprintf(svcmd, 0x20u, "%c", 103);
+#endif
     svcmd[31] = 0;
     Scr_MakeGameMessage(entref.entnum, svcmd);
 }
@@ -6407,7 +6442,11 @@ void __cdecl ScrCmd_PlayLocalSound(scr_entref_t entref)
     String = Scr_GetString(0, SCRIPTINSTANCE_SERVER);
     AliasId = SND_FindAliasId(String);
     SND_BO1Trace("sv", "playlocalsound", AliasId, entref.entnum, g_entities[entref.entnum].r.currentOrigin); // zombies (a1): bo1_audio, trace only
+#if defined(__ANDROID__)
+    std::snprintf(svcmd, 0x40u, "%c %i", 115, AliasId);
+#else
     _snprintf(svcmd, 0x40u, "%c %i", 115, AliasId);
+#endif
     svcmd[63] = 0;
     SV_GameSendServerCommand(entref.entnum, SV_CMD_CAN_IGNORE, svcmd);
 }
@@ -6443,7 +6482,11 @@ void __cdecl ScrCmd_StopLocalSound(scr_entref_t entref)
     }
     pszSoundName = Scr_GetString(0, SCRIPTINSTANCE_SERVER);
     soundIndex = SND_FindAliasId(pszSoundName);
+#if defined(__ANDROID__)
+    std::snprintf(svcmd, 0x40u, "%c %i", 107, soundIndex);
+#else
     _snprintf(svcmd, 0x40u, "%c %i", 107, soundIndex);
+#endif
     svcmd[63] = 0;
     SV_GameSendServerCommand(entref.entnum, SV_CMD_CAN_IGNORE, svcmd);
 }
@@ -6981,7 +7024,11 @@ void __cdecl PlayerCmd_GetXuid(scr_entref_t entref)
     if ( pSelf->client )
     {
         PlayerXuid = SV_GetPlayerXuid(pSelf->client->sess.cs.clientIndex);
+#if defined(__ANDROID__)
+        std::snprintf(svcmd, 0x80u, "%llx", PlayerXuid);
+#else
         _snprintf(svcmd, 0x80u, "%llx", PlayerXuid);
+#endif
         svcmd[127] = 0;
         Scr_AddString(svcmd, SCRIPTINSTANCE_SERVER);
     }

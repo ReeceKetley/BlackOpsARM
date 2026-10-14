@@ -5,6 +5,9 @@
 #include "bg_unlockable_items.h"
 #include <game_mp/g_main_mp.h>
 #include <universal/q_parse.h>
+#if defined(__ANDROID__)
+#include <database/database.h>
+#endif
 
 const char *s_attachmentPointNames[5] =
 { "none", "top", "bottom", "trigger", "muzzle" };
@@ -461,7 +464,13 @@ void __cdecl BG_LoadWeaponAttachmentTable()
     if ( !G_ExitAfterToolComplete() )
     {
         attachmentTable = 0;
+#if defined(__ANDROID__)
+        XAssetHeader attachmentAsset = {};
+        StringTable_GetAsset("mp/attachmenttable.csv", &attachmentAsset);
+        attachmentTable = attachmentAsset.stringTable;
+#else
         StringTable_GetAsset("mp/attachmenttable.csv", (XAssetHeader *)&attachmentTable);
+#endif
         if ( !attachmentTable->columnCount || !attachmentTable->rowCount )
             Com_Error(ERR_DROP, "Couldn't load file or file is invalid '%s'", "mp/attachmenttable.csv");
         count = 0;

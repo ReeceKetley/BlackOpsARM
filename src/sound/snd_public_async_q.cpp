@@ -1,4 +1,5 @@
 #include "snd_public_async_q.h"
+#include <platform/bo1_native_width.h>
 
 #include <cstring>
 #include <win32/win_common.h>
@@ -355,12 +356,21 @@ void __cdecl SND_CommandProcess(const snd_command *cmd)
             break;
         case SND_COMMAND_SET_LISTENER:
             //PIXBeginNamedEvent(-1, "SNDL_SetListener");
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+            SNDL_SetListener(
+                cmd->context.set_listener.listener,
+                cmd->context.set_listener.clientNum,
+                cmd->context.set_listener.team,
+                cmd->context.set_listener.origin,
+                cmd->context.set_listener.axis);
+#else
             SNDL_SetListener(
                 cmd->context.stop_alias.ent.handle,
                 cmd->context.play.fadeTimeMs,
                 cmd->context.set_listener.team,
                 cmd->context.set_listener.origin,
                 (const float (*)[3])&cmd->context.play.position[1]);
+#endif
             //if ( g_DXDeviceThread == GetCurrentThreadId() )
                 goto LABEL_65;
             break;
@@ -443,11 +453,19 @@ void __cdecl SND_CommandProcess(const snd_command *cmd)
             break;
         case SND_COMMAND_SET_ENT_STATE:
             //PIXBeginNamedEvent(-1, "SNDL_SetEntState");
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+            SNDL_SetEntState(
+                cmd->context.set_ent_state.handle,
+                cmd->context.set_ent_state.origin,
+                cmd->context.set_ent_state.velocity,
+                cmd->context.set_ent_state.orientation);
+#else
             SNDL_SetEntState(
                 cmd->context.stop_alias.ent,
                 &cmd->context.set_playback_attenuation.attenuation,
                 &cmd->context.set_listener.origin[1],
                 (const float (*)[3])&cmd->context.play.position[2]);
+#endif
             //if ( g_DXDeviceThread == GetCurrentThreadId() )
                 goto LABEL_65;
             break;

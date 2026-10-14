@@ -1,4 +1,5 @@
 #include "cg_weapon_options.h"
+#include <platform/bo1_native_width.h>
 #include <gfx_d3d/r_shader_constant_set.h>
 #include <gfx_d3d/r_scene.h>
 #include <gfx_d3d/r_model_lod.h>
@@ -107,8 +108,10 @@ void __thiscall WeaponOptions::InitWeaponOptionColors(
                 int colorsCol,
                 float (*colors)[4])
 {
+#if !BO1_NATIVE_64BIT || defined(_WIN32)
     float *v6; // [esp+14h] [ebp-60h]
     float *v7; // [esp+1Ch] [ebp-58h]
+#endif
     const char *colorsStr; // [esp+20h] [ebp-54h]
     int j; // [esp+24h] [ebp-50h]
     unsigned int i; // [esp+28h] [ebp-4Ch]
@@ -118,11 +121,18 @@ void __thiscall WeaponOptions::InitWeaponOptionColors(
 
     for ( i = 0; i < 0x10; ++i )
     {
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+        colors[i][0] = -1.0f;
+        colors[i][1] = -1.0f;
+        colors[i][2] = -1.0f;
+        colors[i][3] = -1.0f;
+#else
         v7 = &(*colors)[4 * i];
         *v7 = -1.0f;
         v7[1] = -1.0f;
         v7[2] = -1.0f;
         v7[3] = -1.0f;
+#endif
     }
     StringTable_GetAsset(tableName, (XAssetHeader *)&tablePtr);
     nRows = StringTable_Find(tablePtr, rows, 16, labelCol, label, -1, 0);
@@ -133,12 +143,20 @@ void __thiscall WeaponOptions::InitWeaponOptionColors(
         {
             if ( strlen(colorsStr) )
             {
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+                sscanf(colorsStr, "%f %f %f", &colors[j][0], &colors[j][1], &colors[j][2]);
+                colors[j][0] = 0.0039215689 * colors[j][0];
+                colors[j][1] = 0.0039215689 * colors[j][1];
+                colors[j][2] = 0.0039215689 * colors[j][2];
+                colors[j][3] = 0.0039215689 * colors[j][3];
+#else
                 sscanf(colorsStr, "%f %f %f", &(*colors)[4 * j], &(*colors)[4 * j + 1], &(*colors)[4 * j + 2]);
                 v6 = &(*colors)[4 * j];
                 *v6 = 0.0039215689 * *v6;
                 v6[1] = 0.0039215689 * v6[1];
                 v6[2] = 0.0039215689 * v6[2];
                 v6[3] = 0.0039215689 * v6[3];
+#endif
             }
         }
     }

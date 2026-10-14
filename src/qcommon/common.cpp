@@ -1,8 +1,12 @@
-#if defined(BO1_STARTUP_SERVICES)
+#if defined(BO1_NATIVE_COM_BOOT)
+#include <platform/common_boot_api.h>
+#include <qcommon/common.h>
+#elif defined(BO1_STARTUP_SERVICES)
 #include <platform/startup_services_api.h>
 #endif
 
 int logfile;
+static void Com_InitContentPacks_SP();
 
 #if !defined(BO1_STARTUP_SERVICES)
 #include "common.h"
@@ -40,6 +44,9 @@ int logfile;
 #include "com_clients.h"
 #include <client/cl_keys.h>
 #include <win32/win_local.h>
+#if defined(BO1_NATIVE_RENDERED_INPUT)
+#include <platform/android/rendered_input.h>
+#endif
 #include <client/splitscreen.h>
 #include <universal/q_parse.h>
 #include <clientscript/cscr_vm.h>
@@ -71,6 +78,13 @@ int logfile;
 #include <bgame/bg_emblems.h>
 #include <demo/demo_files.h>
 #include <mjpeg/mjpeg.h>
+#if defined(__ANDROID__)
+#include <platform/android/shutdown_services.h>
+#include <platform/android/headless_diagnostics.h>
+#include <platform/android/engine_frame_timing.h>
+#include <platform/android/performance_overlay.h>
+#include <platform/android/server_thread.h>
+#endif
 #include <game_mp/pregame.h>
 #include <database/db_file_load.h>
 #include <database/db_registry.h>
@@ -78,7 +92,15 @@ int logfile;
 #include <ui/ui_viewer.h>
 #include <clientscript/cscr_debugger.h>
 #include <clientscript/cscr_memorytree.h>
+#if !defined(__ANDROID__)
 #include <win32/win_wndproc.h>
+#else
+#include <limits.h>
+#include <cstddef>
+#include <mutex>
+#include <new>
+#include <platform/profile_services.h>
+#endif
 #include <tl/gdt_remote.h>
 #include <stringed/stringed_remote.h>
 #include <client/cl_main.h>
@@ -104,6 +126,9 @@ int logfile;
 #include <cgame/cg_sp_playtrace.h>
 #include <bgame/bg_misc.h>
 
+#endif // normal common includes
+
+#if !defined(BO1_STARTUP_SERVICES) || defined(BO1_NATIVE_COM_BOOT)
 cmd_function_s Com_Error_f_VAR;
 cmd_function_s Com_Crash_f_VAR;
 cmd_function_s Com_Freeze_f_VAR;
@@ -263,14 +288,134 @@ int com_lastFrameTime[1];
 int com_lastFrameIndex;
 
 HunkUser *liveMemHunk;
+#if defined(__ANDROID__)
+alignas(std::max_align_t) char s_liveAllocatorMem[0x40000];
+#else
 char s_liveAllocatorMem[0x40000];
+#endif
 
 char com_errorMessage[4096];
 errorParm_t errorcode;
 
 const dvar_t *ui_errorMessage;
 const dvar_t *ui_errorTitle;
+#endif
 
+#if !defined(BO1_STARTUP_SERVICES)
+
+
+#if defined(__ANDROID__)
+// Actual allocation headers reside in the original first-fit live hunk. This
+// lock serializes initialization/publication and header membership/lifetimes.
+struct alignas(std::max_align_t) ComNativeLiveAllocation
+{
+    ComNativeLiveAllocation *next;
+    unsigned int size;
+};
+static std::mutex com_nativeLiveMutex;
+static ComNativeLiveAllocation *com_nativeLiveAllocations;
+
+static void *Com_NativeLiveAllocateLocked(unsigned int size)
+{
+    if (size > sizeof(s_liveAllocatorMem) - sizeof(ComNativeLiveAllocation))
+        return nullptr;
+    if (!liveMemHunk)
+        liveMemHunk = Hunk_UserCreateFromBuffer(s_liveAllocatorMem, sizeof(s_liveAllocatorMem), HU_SCHEME_FIRSTFIT, 0, nullptr, "LiveAllocator", 0);
+    if (!liveMemHunk)
+        return nullptr;
+    void *storage = Hunk_UserAlloc(liveMemHunk, static_cast<int>(size + sizeof(ComNativeLiveAllocation)), alignof(ComNativeLiveAllocation), nullptr);
+    if (!storage)
+        return nullptr;
+    auto *allocation = new (storage) ComNativeLiveAllocation{com_nativeLiveAllocations, size};
+    com_nativeLiveAllocations = allocation;
+    return allocation + 1;
+}
+
+static ComNativeLiveAllocation **Com_NativeLiveFindLocked(void *pointer)
+{
+    auto **link = &com_nativeLiveAllocations;
+    while (*link && *link + 1 != pointer)
+        link = &(*link)->next;
+    return *link ? link : nullptr;
+}
+
+static bool Com_NativeLiveFreeLocked(void *pointer)
+{
+    if (!pointer)
+        return true;
+    auto **link = Com_NativeLiveFindLocked(pointer);
+    if (!link)
+        return false;
+    auto *allocation = *link;
+    *link = allocation->next;
+    allocation->~ComNativeLiveAllocation();
+    Hunk_UserFree(liveMemHunk, allocation);
+    return true;
+}
+
+void *__cdecl Com_LiveAllocate(unsigned int size)
+{
+    std::lock_guard<std::mutex> lock(com_nativeLiveMutex);
+    return Com_NativeLiveAllocateLocked(size);
+}
+
+void __cdecl Com_LiveDeallocate(void *data)
+{
+    bool owned;
+    {
+        std::lock_guard<std::mutex> lock(com_nativeLiveMutex);
+        owned = Com_NativeLiveFreeLocked(data);
+    }
+    if (!owned)
+    {
+        Com_Error(ERR_FATAL, "Live allocation is not owned by this allocator");
+        std::abort();
+    }
+}
+
+unsigned __int8 *__cdecl Com_LiveRealloc(unsigned __int8 *pointer, unsigned int size)
+{
+    {
+        std::lock_guard<std::mutex> lock(com_nativeLiveMutex);
+        if (!pointer)
+            return static_cast<unsigned __int8 *>(Com_NativeLiveAllocateLocked(size));
+        if (!size)
+        {
+            if (Com_NativeLiveFreeLocked(pointer))
+                return nullptr;
+        }
+        else
+        {
+            auto **link = Com_NativeLiveFindLocked(pointer);
+            if (link)
+            {
+                const unsigned int oldSize = (*link)->size;
+                auto *replacement = static_cast<unsigned __int8 *>(Com_NativeLiveAllocateLocked(size));
+                if (!replacement)
+                    return nullptr;
+                memcpy(replacement, pointer, oldSize < size ? oldSize : size);
+                Com_NativeLiveFreeLocked(pointer);
+                return replacement;
+            }
+        }
+    }
+    // Reporting may log/reenter the allocator or leave through engine recovery;
+    // the ownership mutex is already released on this error path.
+    Com_Error(ERR_FATAL, "Live allocation is not owned by this allocator");
+    std::abort();
+}
+
+unsigned __int8 *__cdecl Com_LiveCalloc(unsigned int num, unsigned int size)
+{
+    if (num && size > (sizeof(s_liveAllocatorMem) - sizeof(ComNativeLiveAllocation)) / num)
+        return nullptr;
+    const unsigned int bytes = num * size;
+    auto *memory = static_cast<unsigned __int8 *>(Com_LiveAllocate(bytes));
+    if (memory)
+        memset(memory, 0, bytes);
+    return memory;
+}
+#else
 void *__cdecl Com_LiveAllocate(unsigned int size)
 {
     if ( !liveMemHunk )
@@ -317,6 +462,13 @@ unsigned __int8 *__cdecl Com_LiveCalloc(unsigned int num, unsigned int size)
     return p;
 }
 
+#endif
+
+#endif // normal-only helpers before shared SP map policy
+#if !defined(BO1_STARTUP_SERVICES) || defined(BO1_NATIVE_COM_BOOT)
+#if defined(BO1_NATIVE_COM_BOOT)
+#include <universal/q_shared.h>
+#endif
 bool __cdecl Com_IsRunningMenuLevel(const char *name)
 {
     if ( !name )
@@ -368,6 +520,8 @@ bool __cdecl Com_IsSPLevel()
     return Com_IsSPFrontEndRunning();
 }
 
+#endif // shared SP map policy
+#if !defined(BO1_STARTUP_SERVICES) || defined(BO1_NATIVE_COM_BOOT)
 // zombies: MP reserves entities 32..35 for player clones and 36..43 for actor corpse clones (G_SpawnActorClone),
 // so its first free entity is 44. SP turns the actor entity itself into the corpse and allows 32 corpses
 // (see MAX_ACTOR_CORPSES_SP). KB ports that (G_CorpseFromActor) but still reserves 36..67 on an SP level, unused
@@ -387,11 +541,15 @@ int __cdecl Com_GetFirstFreeEntityNum()
     return 36 + Com_GetMaxActorCorpses(); // ACTOR_CORPSES + corpse slots
 }
 
+#endif // normal helpers before shared zombie map policy
+#if !defined(BO1_STARTUP_SERVICES) || defined(BO1_NATIVE_COM_BOOT)
 bool __cdecl Com_IsZombieMap(const char *mapName)
 {
     return mapName && !I_strncmp(mapName, "zombie", 6);
 }
 
+#endif // shared zombie map policy
+#if !defined(BO1_STARTUP_SERVICES)
 void __cdecl Com_BeginRedirect(char *buffer, unsigned int buffersize, void (__cdecl *flush)(char *))
 {
     if ( buffer && buffersize )
@@ -415,192 +573,74 @@ void __cdecl Com_EndRedirect()
     rd_flush = 0;
 }
 
-void __cdecl Com_PrintMessage(int channel, char *msg, int error)
-{
-    char v3; // [esp+23h] [ebp-25h]
-    char *v4; // [esp+28h] [ebp-20h]
-    char *v5; // [esp+2Ch] [ebp-1Ch]
-    bool v6; // [esp+40h] [ebp-8h]
 
-    v6 = channel >= 31 && !Con_IsChannelVisible(CON_DEST_CONSOLE, channel, 0);
-    if ( !v6 || error == 2 || error == 3 )
-    {
-        //PbCaptureConsoleOutput(msg, 4096);
-        Sys_EnterCriticalSection(CRITSECT_CONSOLE);
-        if ( (int)(strlen(msg) + 1) <= 256 )
-        {
-            v5 = msg;
-            v4 = com_consoleBuffer[com_consoleBufferCurLine];
-            do
-            {
-                v3 = *v5;
-                *v4++ = *v5++;
-            }
-            while ( v3 );
-        }
-        else
-        {
-            strncpy(com_consoleBuffer[com_consoleBufferCurLine], msg, 0xFFu);
-            com_consoleBuffer[com_consoleBufferCurLine][255] = 0;
-        }
-        if ( ++com_consoleBufferCurLine >= 100 )
-            com_consoleBufferCurLine = 0;
-        Sys_LeaveCriticalSection(CRITSECT_CONSOLE);
-        if ( rd_buffer )
-        {
-            if ( channel != 6 )
-            {
-                Sys_EnterCriticalSection(CRITSECT_RD_BUFFER);
-                if ( strlen(rd_buffer) + strlen(msg) > rd_buffersize - 1 )
-                {
-                    rd_flush(rd_buffer);
-                    *rd_buffer = 0;
-                }
-                I_strncat(rd_buffer, rd_buffersize, msg);
-                Sys_LeaveCriticalSection(CRITSECT_RD_BUFFER);
-            }
-        }
-        else
-        {
-            if ( channel != 6  )
-            {
-                if (Sys_IsRemoteDebugServer() && Sys_DebugSocketReady(0))
-                {
-                    Sys_WriteDebugSocketMessageType(0x2Au);
-                    Sys_WriteDebugSocketString(msg);
-                    Sys_EndWriteDebugSocket();
-                }
-                
-                if (!IsDedicatedServer())
-                {
-                    CL_ConsolePrint(0, channel, msg, 0, 0, 32 * error);
-                }
-            }
 
-            if ( *msg == 94 && msg[1] )
-                msg += 2;
-            if ( channel != 6
-                && (!com_filter_output
-                 || !com_filter_output->current.enabled
-                 || Con_IsChannelVisible(CON_DEST_CONSOLE, channel, 3)) )
-            {
-                Platform_Print(msg);
-            }
-            if ( Monkey_IsRunning() )
-            {
-                Sys_EnterCriticalSection(CRITSECT_CONSOLE);
-                Monkey_ComPrintHook(msg);
-                Sys_LeaveCriticalSection(CRITSECT_CONSOLE);
-            }
-            if ( channel != 7 && com_logfile && com_logfile->current.integer )
-                Com_LogPrintMessage(channel, msg);
-        }
-    }
-}
 
-void __cdecl Com_LogPrintMessage(int channel, char *msg)
-{
-    Sys_EnterCriticalSection(CRITSECT_CONSOLE);
-    if ( FS_Initialized() )
-    {
-        if ( !logfile )
-            Com_OpenLogFile();
-        if ( logfile )
-        {
-            FS_WriteToDemo(msg, strlen(msg), logfile);
-            if ( com_logfile->current.integer > 1 )
-                FS_Flush(logfile);
-        }
-    }
-    Sys_LeaveCriticalSection(CRITSECT_CONSOLE);
-}
 
 void Com_OpenLogFile()
 {
     int BuildNumber; // eax
     const char *v1; // [esp-4h] [ebp-14h]
+#if defined(__ANDROID__)
+    time_t aclock;
+    tm nativeLocalTime;
+    char nativeTime[32];
+#else
     __int64 aclock; // [esp+0h] [ebp-10h] BYREF
+#endif
     tm *newtime; // [esp+Ch] [ebp-4h]
 
     if ( Sys_IsMainThread() && !opening_qconsole )
     {
         opening_qconsole = 1;
+#if defined(__ANDROID__)
+        aclock = time(nullptr);
+        newtime = localtime_r(&aclock, &nativeLocalTime);
+        if (aclock == static_cast<time_t>(-1) || !newtime)
+        {
+            Sys_Error((char*)"Unable to obtain local time for console log");
+            std::abort();
+        }
+#else
         _time64(&aclock);
         newtime = _localtime64(&aclock);
+#endif
         if ( log_append && log_append->current.enabled )
             logfile = FS_FOpenFileAppend((char*)"console_mp.log");
         else
             logfile = FS_FOpenTextFileWrite((char*)"console_mp.log");
         com_consoleLogOpenFailed = logfile == 0;
+#if defined(__ANDROID__)
+        v1 = asctime_r(newtime, nativeTime);
+        if (!v1)
+        {
+            Sys_Error((char*)"Unable to format local time for console log");
+            std::abort();
+        }
+#else
         v1 = asctime(newtime);
+#endif
         BuildNumber = Com_GetBuildNumber();
         Com_Printf(16, "Build %d\nlogfile opened on %s\n", BuildNumber, v1);
         opening_qconsole = 0;
     }
 }
 
-void Com_Printf(int channel, const char *fmt, ...)
-{
-    char string[4100]; // [esp+8h] [ebp-1008h] BYREF
-    va_list va; // [esp+1020h] [ebp+10h] BYREF
 
-    va_start(va, fmt);
-    if ( channel < 31 || Con_IsChannelVisible(CON_DEST_CONSOLE, channel, 0) )
-    {
-        _vsnprintf(string, 0x1000u, fmt, va);
-        string[4095] = 0;
-        Com_PrintMessage(channel, string, 0);
-    }
-}
 
-void Com_DPrintf(int channel, const char *fmt, ...)
-{
-    char string[4100]; // [esp+8h] [ebp-1008h] BYREF
-    va_list va; // [esp+1020h] [ebp+10h] BYREF
 
-    va_start(va, fmt);
-    if ( com_developer
-        && com_developer->current.integer
-        && (channel < 31 || Con_IsChannelVisible(CON_DEST_CONSOLE, channel, 0)) )
-    {
-        _vsnprintf(string, 0x1000u, fmt, va);
-        string[4095] = 0;
-        Com_Printf(channel, "%s", string);
-    }
-}
 
-void Com_PrintError(int channel, const char *fmt, ...)
-{
-    char dest[4096]; // [esp+14h] [ebp-1008h] BYREF
-    int v3; // [esp+1018h] [ebp-4h]
-    va_list va; // [esp+102Ch] [ebp+10h] BYREF
 
-    va_start(va, fmt);
-    if (I_stristr(fmt, "error"))
-        I_strncpyz(dest, "^1", 4096);
-    else
-        I_strncpyz(dest, "^1Error: ", 4096);
-    v3 = &dest[strlen(dest) + 1] - &dest[1];
-    _vsnprintf(&dest[v3], 4096 - v3, fmt, va);
-    dest[4095] = 0;
-    ++com_errorPrintsCount;
-    Com_PrintMessage(channel, dest, 3);
-}
 
-void Com_PrintWarning(int channel, const char *fmt, ...)
-{
-    char dest[4096]; // [esp+14h] [ebp-1008h] BYREF
-    int v3; // [esp+1018h] [ebp-4h]
-    va_list va; // [esp+102Ch] [ebp+10h] BYREF
 
-    va_start(va, fmt);
-    I_strncpyz(dest, "^3", 4096);
-    v3 = &dest[strlen(dest) + 1] - &dest[1];
-    _vsnprintf(&dest[v3], 4096 - v3, fmt, va);
-    dest[4095] = 0;
-    Com_PrintMessage(channel, dest, 2);
-}
 
+#endif // normal log opening before shared shutdown
+#if !defined(BO1_STARTUP_SERVICES) || defined(BO1_NATIVE_COMMON_ASSET_LIFECYCLE)
+#if defined(BO1_NATIVE_COM_BOOT)
+#include <server_mp/sv_main_mp.h>
+#include <client_mp/cl_main_mp.h>
+#include <server_mp/sv_init_mp.h>
+#endif
 void __cdecl Com_Shutdown(const char *finalmsg)
 {
     Com_ShutdownInternal(finalmsg);
@@ -629,6 +669,16 @@ void __cdecl Com_ShutdownInternal(const char *finalmsg)
     CL_FreePerLocalClientMemory();
 }
 
+#endif // normal helpers before dynamic memory lifecycle
+#if !defined(BO1_STARTUP_SERVICES) || defined(BO1_NATIVE_COM_BOOT)
+#if defined(BO1_NATIVE_COM_BOOT)
+#include <gfx_d3d/r_water_sim.h>
+#include <gfx_d3d/r_extracam.h>
+#include <gfx_d3d/r_ui3d.h>
+#include <gfx_d3d/rb_resource.h>
+#include <glass/glass_client.h>
+#include <demo/demo_playback.h>
+#endif
 void __cdecl Com_InitDynamicRender()
 {
     bool IsMenuLevel; // al
@@ -670,6 +720,10 @@ void __cdecl Com_ShutdownDynamicMemorySystems()
     R_FreeWaterSimulationBuffers();
 }
 
+#endif // shared dynamic memory lifecycle
+#if !defined(BO1_STARTUP_SERVICES)
+#endif // normal helpers before shared time-scale access
+#if !defined(BO1_STARTUP_SERVICES) || defined(BO1_NATIVE_COM_BOOT)
 double __cdecl Com_GetTimeScale()
 {
     return com_codeTimeScale;
@@ -680,6 +734,20 @@ void __cdecl Com_SetTimeScale(float timescale)
     com_codeTimeScale = timescale;
 }
 
+#endif // shared time-scale access
+#if !defined(BO1_STARTUP_SERVICES) || defined(BO1_NATIVE_COMMON_ASSET_LIFECYCLE)
+#if defined(BO1_NATIVE_COM_BOOT)
+#include <game_mp/g_main_mp.h>
+#include <monkey/monkey.h>
+#include <demo/demo_playback.h>
+#include <glass/glass_client.h>
+#include <universal/com_tasks.h>
+#include <qcommon/statmonitor.h>
+#include <platform/android/stack_trace.h>
+#include <client/cl_console.h>
+#include <win32/win_main.h>
+#include <win32/win_shared.h>
+#endif
 void __cdecl Com_SetLocalizedErrorMessage(const char *localizedErrorMessage, const char *titleToken)
 {
     char *translation; // [esp+0h] [ebp-4h]
@@ -732,30 +800,64 @@ char __cdecl Com_ErrorIsNotice(const char *errorMessage)
 
 void __cdecl Com_PrintStackTrace()
 {
+#if defined(__ANDROID__)
+    bo1::android::CaptureStackTrace(g_stackTrace, sizeof(g_stackTrace), 2);
+#else
     Assert_DoStackTrace(g_stackTrace, 1, 2, 0);
+#endif
     Com_Printf(16, "STACKBEGIN -------------------------------------------------------------------\n");
+#if defined(__ANDROID__)
+    Com_Printf(16, "%s", g_stackTrace);
+#else
     Com_Printf(16, g_stackTrace);
+#endif
     Com_Printf(16, "STACKEND ---------------------------------------------------------------------\n");
 }
 
+#endif // normal stack trace before shared fatal abort
+#if !defined(BO1_STARTUP_SERVICES) || defined(BO1_NATIVE_COMMON_ASSET_LIFECYCLE)
 void __cdecl    Com_ErrorAbort()
 {
     Sys_Error((char*)"%s", com_errorMessage);
 }
 
+#endif // shared fatal abort
+#if !defined(BO1_STARTUP_SERVICES) || defined(BO1_NATIVE_COMMON_ASSET_LIFECYCLE)
 void Com_Error(errorParm_t code, const char *fmt, ...)
 {
+#if !defined(__ANDROID__)
     _iobuf *v2; // eax
+#endif
     jmp_buf *Value; // eax
     va_list va; // [esp+18h] [ebp+10h] BYREF
 
     va_start(va, fmt);
+#if defined(__ANDROID__)
+    char formatted[4096]{};
+    if (std::vsnprintf(formatted, sizeof(formatted), fmt, va) < 0)
+        I_strncpyz(formatted, "Engine error message formatting failed", sizeof(formatted));
+    formatted[sizeof(formatted) - 1] = 0;
+    va_end(va);
+#endif
     if ( (code == ERR_DROP || code == ERR_SCRIPT_DROP) && G_ExitAfterToolComplete() )
     {
+#if defined(__ANDROID__)
+        I_strncpyz(com_errorMessage, formatted, sizeof(com_errorMessage));
+#else
         _vsnprintf(com_errorMessage, 0x1000u, fmt, va);
+#endif
         com_errorMessage[4095] = 0;
+#if defined(__ANDROID__)
+        printf("%s", com_errorMessage);
+#else
         printf(com_errorMessage);
-        Com_Printf(16, com_errorMessage);
+#endif
+        
+#if defined(__ANDROID__)
+            Com_Printf(16, "%s", com_errorMessage);
+#else
+            Com_Printf(16, com_errorMessage);
+#endif
         Com_PrintStackTrace();
     }
     else
@@ -771,11 +873,20 @@ void Com_Error(errorParm_t code, const char *fmt, ...)
         if ( com_errorEntered )
             Sys_Error((char*)"%s", com_errorMessage);
         com_errorEntered = 1;
+#if defined(__ANDROID__)
+        I_strncpyz(com_errorMessage, formatted, sizeof(com_errorMessage));
+#else
         _vsnprintf(com_errorMessage, 0x1000u, fmt, va);
+#endif
         com_errorMessage[4095] = 0;
         if ( code != ERR_DISCONNECT && Monkey_IsRunning() )
         {
+            
+#if defined(__ANDROID__)
+            Com_Printf(16, "%s", com_errorMessage);
+#else
             Com_Printf(16, com_errorMessage);
+#endif
             Monkey_Error(0);
             exit(-1);
         }
@@ -807,7 +918,11 @@ void Com_Error(errorParm_t code, const char *fmt, ...)
                 //v2 = __iob_func();
                 //fflush(v2 + 1);
                 fflush(stdout);
+#if defined(__ANDROID__)
+                std::_Exit(-1);
+#else
                 ExitProcess(0xFFFFFFFF);
+#endif
             }
             TaskManager2_ComErrorCleanup();
             GlassCl_WaitUpdate();
@@ -822,7 +937,12 @@ void Com_Error(errorParm_t code, const char *fmt, ...)
         if ( cls.uiStarted )
         {
             Com_SetErrorMessage(com_errorMessage);
+#if defined(__ANDROID__)
+            static_assert(sizeof(cls.scriptError) == 4);
+            __atomic_exchange_n(&cls.scriptError, 1u, __ATOMIC_SEQ_CST);
+#else
             _InterlockedExchange(&cls.scriptError, 1);
+#endif
         }
         com_errorEntered = 0;
         Sys_LeaveCriticalSection(CRITSECT_COM_ERROR);
@@ -844,14 +964,29 @@ void __cdecl Com_CheckError()
     }
 }
 
+#endif // shared error classification and check
+#if !defined(BO1_STARTUP_SERVICES)
 void __cdecl    Com_Quit_f()
 {
+#if defined(__ANDROID__)
+    bo1::android::RequireInitializedQuitEntry();
+    bo1::android::StopDiagnostics();
+#endif
     int localClientNum; // [esp+0h] [ebp-4h]
 
     Com_Printf(0, "quitting...\n");
     Sys_SetQuitRequested(); // L5: lets a render thread parked on a lost D3D device end the process (win_main.cpp)
     R_PopRemoteScreenUpdate();
+#if defined(__ANDROID__)
+    // Drain capture while its render resource consumer can still respond.
+    // Retire/join the real encoder before renderer teardown or the error lock.
+    mjpeg_shutdown();
+#endif
     Com_SyncThreads();
+#if defined(__ANDROID__)
+    bo1::android::ParkServerForTerminalShutdown();
+    bo1::android::QuitPreludeCompleted();
+#endif
     Sys_EnterCriticalSection(CRITSECT_COM_ERROR);
     GScr_Shutdown();
     if ( !com_errorEntered )
@@ -878,12 +1013,19 @@ void __cdecl    Com_Quit_f()
     Sys_Quit();
 }
 
+#endif // normal quit before shared temp-memory cleanup
+#if !defined(BO1_STARTUP_SERVICES) || defined(BO1_NATIVE_COMMON_ASSET_LIFECYCLE)
+#if defined(BO1_NATIVE_COM_BOOT)
+#include <universal/com_memory.h>
+#endif
 void Com_ClearTempMemory()
 {
     Hunk_ClearTempMemory();
     Hunk_ClearTempMemoryHigh();
 }
 
+#endif // normal helpers before shared safe-mode policy
+#if !defined(BO1_STARTUP_SERVICES) || defined(BO1_NATIVE_COM_BOOT)
 int __cdecl Com_SafeMode()
 {
     const char *v0; // eax
@@ -917,101 +1059,81 @@ void __cdecl Com_ForceSafeMode()
     com_safemode = 1;
 }
 
-void __cdecl Com_StartupVariable(const char *match)
-{
-    const char *v1; // eax
-    const char *v2; // eax
-    int lineIndex; // [esp+2Ch] [ebp-4h]
 
-    for ( lineIndex = 0; lineIndex < com_numConsoleLines; ++lineIndex )
-    {
-        if ( !Com_StartupProcessSetCommand(lineIndex, match) )
-        {
-            Cmd_TokenizeString(com_consoleLines[lineIndex]);
-            if ( !match || !strcmp(Cmd_Argv(1), match) )
-            {
-                v1 = Cmd_Argv(0);
-                if ( I_stricmp(v1, "set") )
-                {
-                    v2 = Cmd_Argv(0);
-                    if ( !I_stricmp(v2, "seta") )
-                        Dvar_SetA_f();
-                }
-                else
-                {
-                    Dvar_Set_f();
-                }
-            }
-            Cmd_EndTokenizedString();
-        }
-    }
-}
 
-bool __cdecl Com_StartupProcessSetCommand(int lineIndex, const char *match)
-{
-    const char *v2; // eax
-    const char *v3; // eax
-    unsigned int v5; // [esp+0h] [ebp-178h]
-    int len; // [esp+58h] [ebp-120h]
-    int i; // [esp+5Ch] [ebp-11Ch]
-    char combined[260]; // [esp+60h] [ebp-118h] BYREF
-    const dvar_s *dvar; // [esp+168h] [ebp-10h]
-    int c; // [esp+16Ch] [ebp-Ch]
-    const char *dvarName; // [esp+170h] [ebp-8h]
-    bool result; // [esp+177h] [ebp-1h]
 
-    result = 0;
-    Cmd_TokenizeString(com_consoleLines[lineIndex]);
-    if ( !match || !strcmp(Cmd_Argv(1), match) )
-    {
-        v2 = Cmd_Argv(0);
-        if ( !I_stricmp(v2, "set") )
-        {
-            c = Cmd_Argc();
-            if ( c >= 3 )
-            {
-                dvarName = Cmd_Argv(1);
-                if ( Dvar_IsValidName(dvarName) )
-                {
-                    dvar = Dvar_FindVar(dvarName);
-                    if ( dvar && (dvar->flags & 0x10) != 0 )
-                    {
-                        combined[0] = 0;
-                        i = 2;
-                        len = 0;
-                        while ( i < c )
-                        {
-                            v5 = strlen(Cmd_Argv(i));
-                            if ( v5 + 1 + len >= 0xFE )
-                                break;
-                            v3 = Cmd_Argv(i);
-                            I_strncat(combined, 256, v3);
-                            if ( i != c - 1 )
-                                I_strncat(combined, 256, " ");
-                            len += v5 + 1;
-                            ++i;
-                        }
-                        Dvar_SetFromString((dvar_s *)dvar, combined);
-                        result = 1;
-                    }
-                }
-                else
-                {
-                    Com_Printf(0, "invalid variable name: %s\n", dvarName);
-                }
-            }
-            else
-            {
-                Com_Printf(0, "USAGE: set <variable> <value>\n");
-            }
-        }
-    }
-    Cmd_EndTokenizedString();
-    return result;
-}
 
+#endif // shared safe-mode policy
+#if !defined(BO1_STARTUP_SERVICES)
 void __cdecl Info_Print(const char *s)
 {
+#if defined(__ANDROID__)
+    if (!s)
+    {
+        Com_PrintWarning(16, "WARNING: null info string\n");
+        return;
+    }
+    if (*s == '\\')
+        ++s;
+    while (*s)
+    {
+        char key[512];
+        char value[516];
+        size_t keyLength = 0;
+        size_t valueLength = 0;
+        bool oversized = false;
+        while (*s && *s != '\\')
+        {
+            if (keyLength < sizeof(key) - 1)
+                key[keyLength++] = *s;
+            else
+                oversized = true;
+            ++s;
+        }
+        key[keyLength] = 0;
+        if (!*s)
+        {
+            if (oversized)
+                Com_PrintWarning(16, "WARNING: oversized info key rejected\n");
+            else
+            {
+                if (keyLength < 20)
+                {
+                    memset(key + keyLength, ' ', 20 - keyLength);
+                    key[20] = 0;
+                }
+                Com_Printf(0, "%s", key);
+            }
+            Com_Printf(16, "MISSING VALUE\n");
+            return;
+        }
+        ++s;
+        while (*s && *s != '\\')
+        {
+            if (valueLength < sizeof(value) - 1)
+                value[valueLength++] = *s;
+            else
+                oversized = true;
+            ++s;
+        }
+        value[valueLength] = 0;
+        if (*s)
+            ++s;
+        if (oversized)
+        {
+            Com_PrintWarning(16, "WARNING: oversized info key/value pair rejected\n");
+            continue;
+        }
+        if (keyLength < 20)
+        {
+            memset(key + keyLength, ' ', 20 - keyLength);
+            key[20] = 0;
+        }
+        Com_Printf(0, "%s", key);
+        Com_Printf(0, "%s\n", value);
+    }
+#else
+
     unsigned __int8 *o; // [esp+0h] [ebp-410h]
     char *oa; // [esp+0h] [ebp-410h]
     char key[512]; // [esp+8h] [ebp-408h] BYREF
@@ -1048,6 +1170,7 @@ void __cdecl Info_Print(const char *s)
             ++s;
         Com_Printf(0, "%s\n", value);
     }
+#endif
 }
 
 unsigned int *__cdecl Com_AllocEvent(int size)
@@ -1095,6 +1218,11 @@ void __cdecl Com_EventLoop()
     {
         v1 = *Sys_GetEvent(&result);
         ev = v1;
+#if defined(BO1_NATIVE_RENDERED_INPUT)
+        if (bo1::android::DispatchRenderedTouchPointerEvent(
+                static_cast<int>(ev.evType), ev.evTime, ev.evValue, ev.evValue2, ev.evPtrLength))
+            continue;
+#endif
         switch (v1.evType)
         {
         case SE_NONE:
@@ -1162,22 +1290,39 @@ void __cdecl Com_DispatchClientPacketEvent(netadr_t adr, msg_t *netmsg)
     CL_PacketEvent(0, adr, netmsg, Sys_Milliseconds(), 0);
 }
 
+#endif // normal common bodies before key services
+#if !defined(BO1_STARTUP_SERVICES) || defined(BO1_NATIVE_COM_BOOT)
+#if defined(BO1_NATIVE_COM_BOOT)
+#include <universal/com_fileaccess.h>
+#include <client/splitscreen.h>
+int Com_ClearCDKey();
+void CL_ConvertRegKeytoDWKey(char *,unsigned int);
+#endif
 void __cdecl Com_ReadCDKey()
 {
     unsigned int size; // [esp+0h] [ebp-2Ch]
-    _iobuf *f; // [esp+4h] [ebp-28h]
+    FILE *f; // [esp+4h] [ebp-28h]
     char regkey[32]; // [esp+8h] [ebp-24h] BYREF
 
+#if defined(__ANDROID__)
+    f = FS_FileOpenReadText("dwclientkey.txt");
+#else
     f = fopen("dwclientkey.txt", "rt");
+#endif
     if ( f )
     {
+#if defined(__ANDROID__)
+        size = FS_FileRead(regkey,0x14u,f);
+        FS_FileClose(f);
+#else
         size = fread(regkey, 1u, 0x14u, f);
         fclose(f);
+#endif
         if ( size == 20
             && (regkey[20] = 0,
                     memcpy((unsigned __int8 *)cl_cdkey, (unsigned __int8 *)regkey, 0x15u),
                     cl_cdkey[22] = 0,
-                    *(unsigned int *)cl_cdkeychecksum = *(unsigned int *)&regkey[16],
+                    memcpy(cl_cdkeychecksum,&regkey[16],sizeof(unsigned int)),
                     //byte_E0AA3C = 0,
                     CL_LocalClient_GetActiveCount()) )
         {
@@ -1203,11 +1348,13 @@ void __cdecl CL_ConvertRegKeytoDWKey(char *key, unsigned int size)
     memcpy((unsigned __int8 *)cl_cdkey_dw, (unsigned __int8 *)key, size);
     for (i = 4; i < 24; i += 5)
     {
-        memcpy((unsigned __int8 *)&cl_cdkey_dw[i + 1], (unsigned __int8 *)&cl_cdkey_dw[i], 25 - i);
+        memmove((unsigned __int8 *)&cl_cdkey_dw[i + 1], (unsigned __int8 *)&cl_cdkey_dw[i], 25 - i);
         cl_cdkey_dw[i] = '-';
     }
 }
 
+#endif // key services
+#if !defined(BO1_STARTUP_SERVICES)
 void __cdecl Com_SetRecommended(int localClientNum, int restart)
 {
     int filesize; // [esp+Ch] [ebp-274h]
@@ -1249,13 +1396,11 @@ void __cdecl Com_SetRecommended(int localClientNum, int restart)
 
 int __cdecl Com_ConfigureChecksum(const char *csv, int filesize)
 {
-    int checksum; // [esp+0h] [ebp-8h]
-    int i; // [esp+4h] [ebp-4h]
-
-    checksum = 0;
-    for ( i = 0; i < filesize; ++i )
-        checksum = csv[i] + 31337 * checksum;
-    return (checksum & 0xFFFFFFF) + 1;
+    // Preserve the original wrapping 32-bit hash without signed-overflow UB.
+    unsigned int checksum = 0;
+    for (int i = 0; i < filesize; ++i)
+        checksum = static_cast<unsigned int>(static_cast<int>(csv[i])) + 31337u * checksum;
+    return static_cast<int>(checksum & 0xFFFFFFFu) + 1;
 }
 
 char __cdecl Com_SetRecommendedCpu(int localClientNum, const SysInfo *info, char **text)
@@ -1345,7 +1490,7 @@ int __cdecl Com_GetConfigureDvarNames(const char **text, char (*dvarNames)[32])
             Com_Error(ERR_FATAL, "configure_mp.csv: dvar name \"%s\" longer than %i", token, 31);
         if ( dvarCount >= 64 )
             Com_Error(ERR_FATAL, "configure_mp.csv: more than %i dvars", 64);
-        I_strncpyz(&(*dvarNames)[32 * dvarCount], token->token, 32);
+        I_strncpyz(dvarNames[dvarCount], token->token, 32);
     }
     return dvarCount;
 }
@@ -1366,7 +1511,7 @@ void __cdecl Com_GetConfigureDvarValues(int dvarCount, const char **text, char (
         if ( strlen(token->token) > 0x1F )
             Com_Error(ERR_FATAL, "configure_mp.csv: entry \"%s\" in davr value column %i is loinger than %i", token, dvarIndex, 31);
         if ( dvarValues )
-            I_strncpyz(&(*dvarValues)[32 * dvarIndex], token->token, 32);
+            I_strncpyz(dvarValues[dvarIndex], token->token, 32);
     }
     tokena = Com_ParseOnLine(text);
     if ( tokena->token[0] )
@@ -1381,11 +1526,11 @@ void __cdecl Com_SetConfigureDvars(int dvarCount, const char (*dvarNames)[32], c
     for ( dvarIndex = 0; dvarIndex < dvarCount; ++dvarIndex )
     {
         Dvar_SetFromStringByNameFromSource(
-            &(*dvarNames)[32 * dvarIndex],
-            (char *)&(*dvarValues)[32 * dvarIndex],
+            dvarNames[dvarIndex],
+            (char *)dvarValues[dvarIndex],
             DVAR_SOURCE_EXTERNAL,
             0);
-        dvar = Dvar_FindVar(&(*dvarNames)[32 * dvarIndex]);
+        dvar = Dvar_FindVar(dvarNames[dvarIndex]);
         Dvar_AddFlags(dvar, 1);
     }
 }
@@ -1540,16 +1685,7 @@ bool __cdecl Com_HasConfigureFileChanged()
     return Sys_HasConfigureChecksumChanged(checksum);
 }
 
-void __cdecl Com_SetScriptSettings()
-{
-    bool v0; // [esp+0h] [ebp-Ch]
-    int abort_on_error; // [esp+4h] [ebp-8h]
 
-    v0 = com_developer->current.integer || com_logfile->current.integer;
-    abort_on_error = com_developer->current.integer;
-    Scr_Settings(v0, com_developer_script->current.color[0], abort_on_error, SCRIPTINSTANCE_SERVER);
-    Scr_Settings(v0, com_developer_script->current.color[0], abort_on_error, SCRIPTINSTANCE_CLIENT);
-}
 
 void __cdecl Com_RunAutoExec(int localClientNum, int controllerIndex)
 {
@@ -1660,6 +1796,14 @@ void __cdecl Com_ExecStartupConfigs(int localClientNum, const char *configFile)
     Cbuf_Execute(localClientNum, Com_LocalClient_GetControllerIndex(localClientNum));
 }
 
+#endif // normal configuration before shared UI asset startup
+#if !defined(BO1_STARTUP_SERVICES) || defined(BO1_NATIVE_COMMON_ASSET_LIFECYCLE)
+#if defined(BO1_NATIVE_COM_BOOT)
+#include <gfx_d3d/rb_resource.h>
+#include <gfx_d3d/r_ui3d.h>
+#include <gfx_d3d/r_dvars.h>
+#include <database/db_file_load.h>
+#endif
 void __cdecl Com_InitUI3DCallback()
 {
     R_UI3D_OnetimeInit(vidConfig.displayWidth, vidConfig.displayHeight, 1, 1, 1);
@@ -1682,6 +1826,8 @@ void __cdecl Com_InitUIAndCommonXAssets()
     DB_LoadFastFilesForPC();
 }
 
+#endif // shared UI asset startup
+#if !defined(BO1_STARTUP_SERVICES)
 unsigned int __cdecl Com_CalculateStreamBuffer()
 {
     return 402653184;
@@ -1694,99 +1840,28 @@ unsigned int __cdecl Com_CalculateStreamBuffer()
 // dlc5 (zombie_moon). A pack that is not installed leaves its dvar unregistered (reads false). The front end's
 // levels_zombie picks its rows with dlc2..dlc5. KB has no Steam DLC query: a pack counts as installed when its map
 // zone is in the zone folder (bo1_zombies only; MP registers none, as before).
-static void Com_InitContentPacks_SP()
-{
-    static const struct { int pack; const char *zone; } packs[] = {
-        { 8, "zombie_cosmodrome" }, { 16, "zombie_coast" }, { 32, "zombie_temple" }, { 4, "zombie_cod5_prototype" },
-        { 64, "zombie_moon" },
-    };
 
-    if ( !bo1_zombies || !bo1_zombies->current.enabled )
-        return;
-    for ( int i = 0; i < ARRAY_COUNT(packs); ++i )
-    {
-        if ( !DB_FileExists(packs[i].zone, FFD_DEFAULT) )
-        {
-            Com_Printf(16, "content pack %d not installed (%s.ff missing)\n", packs[i].pack, packs[i].zone);
-            continue;
-        }
-        switch ( packs[i].pack )
-        {
-        case 4:
-            _Dvar_RegisterBool("dlc1", 1, 0, "");
-            break;
-        case 8:
-            _Dvar_RegisterBool("dlc2", 1, 0, "");
-            break;
-        case 16:
-            _Dvar_RegisterBool("dlc3", 1, 0, "");
-            break;
-        case 32:
-            _Dvar_RegisterBool("dlc4", 1, 0, "");
-            break;
-        case 64:
-            _Dvar_RegisterBool("dlc1", 1, 0, "");
-            _Dvar_RegisterBool("dlc5", 1, 0, "");
-            break;
-        }
-    }
-}
 
-void __cdecl Com_Init(char *commandLine)
-{
-    if ( _setjmp(*(jmp_buf *)Sys_GetValue(2)) )
-    {
-        Sys_Error(va("Error during initialization:\n%s\n", com_errorMessage));
-    }
 
-    Com_Init_Try_Block_Function(commandLine);
 
-    Monkey_Start();
-
-    if ( !_setjmp(*(jmp_buf *)Sys_GetValue(2)) )
-        Com_AddStartupCommands();
-
-    if ( !I_strcmp(sv_mapname->current.string, "") )
-        Com_InitUIAndCommonXAssets();
-
-    if ( com_errorEntered )
-        Com_ErrorCleanup();
-
-#ifndef BO1_DEDICATED
-    if (!com_sv_running->current.enabled && !IsDedicatedServer())
-    {
-        if (_setjmp(*(jmp_buf *)Sys_GetValue(2)))
-        {
-            Sys_Error(va("Error during initialization:\n%s\n", com_errorMessage));
-        }
-
-        if (!cls.rendererStarted)
-        {
-            CL_InitRenderer();
-        }
-
-        R_BeginRemoteScreenUpdate();
-        CL_StartHunkUsers();
-        R_EndRemoteScreenUpdate(NULL);
-    }
+#endif // normal stream policy before shared error cleanup
+#if !defined(BO1_STARTUP_SERVICES) || defined(BO1_NATIVE_COMMON_ASSET_LIFECYCLE)
+#if defined(BO1_NATIVE_COM_BOOT)
+#include <universal/com_memory.h>
+#include <gfx_d3d/r_rendercmds.h>
+#include <qcommon/files.h>
+#include <ui_mp/ui_main_mp.h>
+#include <bgame/bg_fire.h>
+#include <EffectsCore/fx_load_obj.h>
+#include <qcommon/com_profilemapload.h>
+#include <qcommon/com_bsp_load_obj.h>
+#include <qcommon/com_clients.h>
+#include <client/cl_debugdata.h>
+#include <client_mp/cl_scrn_mp.h>
+#include <win32/win_net.h>
+#include <universal/q_parse.h>
+#include <bgame/bg_local.h>
 #endif
-
-    if ( !com_sv_running->current.enabled )
-    {
-        if ( *Dvar_GetString("com_errorMessage") )
-            Com_LoadUiFastFile();
-        //BLOPS_NULLSUB();
-        Com_LoadFrontEnd();
-    }
-
-    if (IsDedicatedServer())
-    {
-        UI_LoadArenas();
-        UI_LoadCustomMatchGameTypes();
-        UI_LoadMaps();
-    }
-}
-
 int lastErrorTime;
 int errorCount;
 void Com_ErrorCleanup()
@@ -1910,628 +1985,47 @@ void Com_ErrorCleanup()
     bgs = NULL;
     com_fixedConsolePosition = 0;
     NET_RestartDebug();
+#if defined(__ANDROID__)
+    Sys_EnterCriticalSection(CRITSECT_COM_ERROR);
     com_errorEntered = 0;
+    Sys_LeaveCriticalSection(CRITSECT_COM_ERROR);
+#else
+    com_errorEntered = 0;
+#endif
     if ( errorcode == ERR_DISCONNECT )
         Monkey_Event("disconnected");
 }
 
-void Com_AddStartupCommands()
-{
-    int ControllerIndex; // eax
-    int i; // [esp+0h] [ebp-414h]
-    char localBuffer[1036]; // [esp+4h] [ebp-410h] BYREF
-
-    for ( i = 0; i < com_numConsoleLines; ++i )
-    {
-        if ( *com_consoleLines[i] )
-        {
-            if ( !Com_StartupProcessSetCommand(i, 0) )
-            {
-                Com_sprintf(localBuffer, 0x401u, "%s\n", com_consoleLines[i]);
-                ControllerIndex = Com_LocalClient_GetControllerIndex(0);
-                Cbuf_ExecuteBuffer(0, ControllerIndex, localBuffer);
-            }
-        }
-    }
-}
-
-void __cdecl Com_Init_Try_Block_Function(char *commandLine)
-{
-    char *BuildVersion; // eax
-    int ControllerIndex; // eax
-    void *v5; // ecx
-    unsigned int v6; // eax
-    const char *max; // [esp+8h] [ebp-5Ch]
-    LARGE_INTEGER PerformanceCount; // [esp+18h] [ebp-4Ch] BYREF
-    int localClientNum; // [esp+58h] [ebp-Ch]
-    int initStartTime; // [esp+60h] [ebp-4h]
-
-    max = Com_GetBuildName();
-    BuildVersion = Com_GetBuildVersion();
-    Com_Printf(16, "%s %s build %s %s\n", BuildVersion, max, "win-x86", "Nov    5 2010");
-    Com_ParseCommandLine(commandLine);
-    SL_Init(SCRIPTINSTANCE_SERVER);
-    SL_Init(SCRIPTINSTANCE_CLIENT);
-    Swap_Init();
-    Cbuf_Init();
-    Cmd_Init();
-    Com_StartupVariable(0);
-    Com_InitDvars();
-    IK_InitSystem();
-    initStartTime = 0;
-
-    if ( useFastFile->current.enabled )
-    {
-        PMem_Init();
-        LiveSteam_Init();
-        DB_SetInitializing(1);
-        Com_Printf(7, "begin $init\n");
-        initStartTime = Sys_Milliseconds();
-        PMem_BeginAlloc("$init", 1u, TRACK_MISC);
-    }
-
-    Stream_Init();
-    //BLOPS_NULLSUB();
-
-    if ( useFastFile->current.enabled )
-        Com_InitCodeXAssets();
-
-    CL_InitKeyCommands();
-    CL_InitGamepadCommands();
-    CL_InitGamepadAxisBindings();
-
-    FS_InitFilesystem(1);
-
-    Con_InitChannels();
-    TaskManager2_Init();
-
-#ifdef BO1_LIVE
-    dwInit();
-#endif
-
-    DDL_Init();
-    Com_InitClientGameStates();
-    Con_Restricted_SecureConfigs();
-
-    for ( localClientNum = 0; localClientNum < 1; ++localClientNum )
-    {
-        Com_LocalClient_SetControllerIndex(localClientNum, localClientNum);
-        Com_StartupConfigs(localClientNum);
-    }
-
-    ControllerIndex = Com_LocalClient_GetControllerIndex(0);
-    Cbuf_Execute(0, ControllerIndex);
-    Con_Restricted_InitLists();
-
-    if ( (dvar_modifiedFlags & 0x20) != 0 )
-        Com_InitDvars();
-
-    Com_InitContentPacks_SP(); // zombies: SP Com_Init 0x0082CF01 -> 0x004E8350
-
-    R_StreamSetInitData(Com_CalculateStreamBuffer());
-    com_recommendedSet = _Dvar_RegisterBool("com_recommendedSet", 0, 1u, "Use recommended settings");
-    Com_CheckSetRecommended(0);
-    Com_StartupVariable(0);
-
-    if ( !useFastFile->current.enabled )
-        SEH_UpdateLanguageInfo();
-
-    if (IsDedicatedServer())
-    {
-        CL_InitDedicated();
-    }
-
-    Com_InitHunkMemory();
-    Hunk_UserStartup();
-
-    dvar_modifiedFlags &= ~1u;
-
-    com_codeTimeScale = 1.0f;
-
-    collectors = _Dvar_RegisterBool("collectors", 0, 0x40u, "Set to true if the player has the collector's edition");
-    primaryWeaponOffset = _Dvar_RegisterInt(
-                                                    "primaryWeaponOffset",
-                                                    0,
-                                                    0,
-                                                    7,
-                                                    0x40u,
-                                                    "Primary Weapon Offset for CE and Presell");
-    scr_xpcollectorsscale = _Dvar_RegisterInt("scr_xpcollectorsscale", 1, 0, 9, 0x40u, "");
-    scr_xpscale = _Dvar_RegisterInt("scr_xpscale", 1, 0, 9, 0x40u, "");
-    scr_xpzmscale = _Dvar_RegisterInt("scr_xpzmscale", 1, 0, 9, 0x40u, "");
-    scr_codpointsxpscale = _Dvar_RegisterFloat("scr_codpointsxpscale", 0.1, 0.1, 0.1, 0x40u, "");
-    scr_codpointsmatchscale = _Dvar_RegisterFloat("scr_codpointsmatchscale", 0.1, 0.1, 0.1, 0x40u, "");
-    scr_codpointsperchallenge = _Dvar_RegisterFloat("scr_codpointsperchallenge", 0.1, 0.1, 0.1, 0x40u, "");
-    scr_rankXpCap = _Dvar_RegisterInt("scr_rankXpCap", 0, 0, 0, 0x40u, "");
-    scr_codPointsCap = _Dvar_RegisterInt("scr_codPointsCap", 0, 0, 0, 0x40u, "");
-
-    ProfLoad_Init();
-
-    if ( com_developer->current.integer )
-    {
-        Cmd_AddCommandInternal("error", Com_Error_f, &Com_Error_f_VAR);
-        Cmd_AddCommandInternal("crash", Com_Crash_f, &Com_Crash_f_VAR);
-        Cmd_AddCommandInternal("freeze", Com_Freeze_f, &Com_Freeze_f_VAR);
-        Cmd_AddCommandInternal("assert", Com_Assert_f, &Com_Assert_f_VAR);
-    }
-
-    Cmd_AddCommandInternal("quit", (void(__cdecl *)())Com_Quit_f, &Com_Quit_f_VAR);
-    Cmd_AddCommandInternal("writeconfig", Com_WriteConfig_f, &Com_WriteConfig_f_VAR);
-    Cmd_AddCommandInternal("writekeyconfig", Com_WriteKeyConfig_f, &Com_WriteKeyConfig_f_VAR);
-    Cmd_AddCommandInternal("savekeys", Com_SaveKeys_f, &Com_SaveKeys_f_VAR);
-    Cmd_AddCommandInternal("restorekeys", Com_RestoreKeys_f, &Com_RestoreKeys_f_VAR);
-    Cmd_AddCommandInternal("writedefaults", Com_WriteDefaults_f, &Com_WriteDefaults_f_VAR);
-
-    version = _Dvar_RegisterString("version", (char *)"", 0x40u, "Game version");
-    if (bo1_zombies->current.enabled)
-    {
-        // zombies: SP's version (SP 0x0082D0BD): Com_GetBuildDisplayName (SP 0x00565860), Com_GetBuildName
-        // (SP 0x00583610) and Com_GetBuildVersion (SP 0x005CBC30: build 152, CL 966072, SP's machine and time).
-        char spBuildVersion[128];
-        Com_sprintf(spBuildVersion, sizeof(spBuildVersion), "%s.%s.%d CL(%d) %s %s", "7", "0", 152, 966072,
-            "CODPCAB-V64 CEG", "Thu Sep 01 16:06:17 2011");
-        Dvar_SetString((dvar_s *)version, va("%s %s build %s %s", "Call of Duty Singleplayer - Ship", "COD_T5_S SP",
-            spBuildVersion, "win-x86"));
-    }
-    else
-        Dvar_SetString((dvar_s *)version, va("%s %s build %s %s", Com_GetBuildDisplayName(), Com_GetBuildName(), Com_GetBuildVersion(), "win-x86"));
-    shortversion = _Dvar_RegisterString("shortversion", "7", 0x44u, "Short game version");
-
-    Sys_Init();
-    QueryPerformanceCounter(&PerformanceCount);
-    Netchan_Init(PerformanceCount.QuadPart);
-
-    // mod: bo1_mod_scriptvars N (command line; read once here) grows the server script object pool:
-    // 1 -> parents 0xFFFE (children at variableList[0x10000]), 2 -> 0x1FFFE, 3 -> 0x3FFFE; 0 = retail 0x7FFE
-    // and layout. The child (value) pool: retail 0x3FFFE for 0 and 1, 0x17FFFE for 2 (measured
-    // L25: ~720-1150 values and ~90 objects per horde actor; 348 actors filled the retail child pool, 810 used 928K).
-    // Any N > 0 also uses the 16384-entry anim info pool (retail 4096).
-    {
-        const int modScriptVars = _Dvar_RegisterInt("bo1_mod_scriptvars", 0, 0, 2, 0x10u, // 3 (8x both) crashed at startup (L25 g3)
-            "mod: horde pools: grow the server script pools (1 = 2x objects, 2 = 4x objects + 6x values) and 4x the anim info pool; set on the command line")->current.integer;
-        if (modScriptVars > 0)
-        {
-            g_scrVarChildBegin[SCRIPTINSTANCE_SERVER] = 0x8000u << modScriptVars;
-            if (modScriptVars >= 2)
-                g_scrVarChildSize[SCRIPTINSTANCE_SERVER] = 0x17FFFE; // hash % 0x17FFFD
-            g_xAnimInfoCount = XANIM_INFO_MAX; // anim info pool 4096 -> 16384 (XAnimInit below, and again at restart)
-        }
-        // mod (L43): read by Scr_ModPatchSource (cscr_parser.cpp) when a server script file is loaded
-        _Dvar_RegisterInt("bo1_mod_scriptperf", 0, 0, 1, 0,
-            "mod: rewrite Five's O(n^2) script loops (get_enemy_count, find_flesh's crowd count) to natives with the same result");
-    }
-    Scr_InitVariables(SCRIPTINSTANCE_SERVER);
-    Scr_Init(SCRIPTINSTANCE_SERVER);
-
-    Com_SetScriptSettings();
-    XAnimInit();
-    DObjInit();
-    SV_Init();
-    NET_Init();
-    RMsg_Init();
-
-#ifndef BO1_DEDICATED
-    Dvar_ClearModified((dvar_s *)dedicated);
-#endif
-
-    if (!IsDedicatedServer())
-    {
-        CL_InitOnceForAllClients();
-        for (int localClientNum = 0; localClientNum < 1; ++localClientNum)
-        {
-            CL_Init(localClientNum);
-        }
-        Com_LocalClient_SetPrimary(0, 1);
-    }
-    else
-    {
-        CL_InitOnceForAllClients();
-        Com_LocalClient_SetPrimary(0, 1);
-    }
 
 
-    com_frameTime = Sys_Milliseconds();
-    Com_StartupVariable(0);
 
-#ifndef BO1_DEDICATED
-    if (IsDedicatedServer())
-    {
-        R_InitWorkerThreads();
-    }
-    else
-    {
-        r_smp_worker_threads = _Dvar_RegisterInt("r_smp_worker_threads",
-            Sys_GetDefaultWorkerThreadsCount(),
-            2,
-            8,
-            0,
-            "Number of worker threads");
 
-        R_InitThreads();
 
-        //BO1_NULLSUB();
-        CL_InitRenderer();
-        Expression_Init();
-        //BO1_NULLSUB();
-        iassert(!cls.soundStarted);
-        cls.soundStarted = 1;
-        SND_Init();
-        CG_SndGameReset();
-        Voice_Init();
-        R_Cinematic_Init();
-    }
-#else
-    R_InitWorkerThreads();
-#endif
 
-    // zombies: SP Com_Init registers two front-end dvars here (SP 0x0082d25f..0x0082d28b, flags 0x4000). The SP
-    // front end's main.menu onOpen tests ui_skipMainLockout (openMenuOnDvar ... "main_lockout" / "main_text");
-    // SP UI_SetActiveMenu sets it. MP menus never read them.
-    _Dvar_RegisterBool("ui_skipMainLockout", 0, 0x4000u, "");
-    _Dvar_RegisterBool("ui_playCoastOutroMovie", 0, 0x4000u, "");
 
-    Sys_LoadingKeepAlive();
-    Live_Init();
-    PC_InitSigninState();
-    // zombies: SP signs the local controller in here (SP 0x004D2E30 -> 0x004E63C0); see live_win.cpp.
-    if ( bo1_zombies->current.enabled && !IsDedicatedServer() )
-        Live_LogInProfileLocally_SP(0);
-    Playlist_Init();
-    R_BeginRemoteScreenUpdate();
-    BG_EmblemsInit();
-    SV_InitServerThread();
-    Demo_InitFileHandlerSystem();
-    mjpeg_initonce();
-    COM_PlayIntroMovies();
 
-    if ( useFastFile->current.enabled )
-    {
-        PMem_EndAlloc("$init", 1u);
-        DB_SetInitializing(0);
-        v6 = Sys_Milliseconds();
-        Com_Printf(16, "end $init %d ms\n", v6 - initStartTime);
-    }
 
-    R_EndRemoteScreenUpdate(0);
-    com_fullyInitialized = 1;
-    Com_Printf(16, "--- Common Initialization Complete ---\n");
-    Com_DvarDump(6, 0);
-}
 
-void __cdecl Com_ParseCommandLine(char *commandLine)
-{
-    com_consoleLines[0] = commandLine;
-    com_numConsoleLines = 1;
-    while ( *commandLine )
-    {
-        if ( *commandLine == 43 || *commandLine == 10 )
-        {
-            if ( com_numConsoleLines == 64 ) // mod (L43): retail 32
-                return;
-            com_consoleLines[com_numConsoleLines++] = commandLine + 1;
-            *commandLine = 0;
-        }
-        ++commandLine;
-    }
-}
 
-void __cdecl Com_Error_f()
-{
-    if ( Cmd_Argc() <= 1 )
-        Com_Error(ERR_FATAL, "Testing fatal error");
-    else
-        Com_Error(ERR_DROP, "Testing drop error");
-}
 
-void __cdecl Com_Freeze_f()
-{
-    const char *v0; // eax
-    unsigned int start; // [esp+10h] [ebp-Ch]
-    float s; // [esp+18h] [ebp-4h]
 
-    if ( Cmd_Argc() == 2 )
-    {
-        v0 = Cmd_Argv(1);
-        s = atof(v0);
-        start = Sys_Milliseconds();
-        while ( (double)(int)(Sys_Milliseconds() - start) * 0.001 <= s )
-            ;
-    }
-    else
-    {
-        Com_Printf(0, "freeze <seconds>\n");
-    }
-}
 
-void __cdecl Com_Crash_f()
-{
-    //MEMORY[0] = 305419896;
-    int *ptr = NULL;
-    *ptr = 0x12345678;
-}
 
-void __cdecl Com_Assert_f()
-{
-    ;
-}
 
-void COM_PlayIntroMovies()
-{
-    if (!IsDedicatedServer())
-    {
-        // BO1TODO: intro movies
-    }
-}
 
-static const char *g_dedicatedEnumNames[4] = { "listen server", "dedicated LAN server", "dedicated internet server", NULL }; // idb
 
-void Com_InitDvars()
-{
-    unsigned int CpuCount; // eax
 
-    com_maxclients = _Dvar_RegisterInt("com_maxclients", 18, 1, 32, 0x44u, "Maximum amount of clients on the server");
-    com_freemoveScale = _Dvar_RegisterFloat(
-                                                "com_freemoveScale",
-                                                1.0,
-                                                0.0,
-                                                5.0,
-                                                0x80u,
-                                                "Scale how fast you move in com_freemove mode");
-    disconnected_ctrls = _Dvar_RegisterString(
-                                                 "disconnected_ctrls",
-                                                 (char *)"",
-                                                 0,
-                                                 "String representing the disconnected controllers");
-    // BO1TODO: cg_playerState (#1)
-    com_first_time = _Dvar_RegisterInt(
-                                         "com_first_time",
-                                         0,
-                                         0,
-                                         1,
-                                         0x4000u,
-                                         "non zero if the profile has never run the game before (only accurate after the iis)");
-    com_first_time_pc = _Dvar_RegisterInt(
-                                                "com_first_time_pc",
-                                                1,
-                                                0,
-                                                1,
-                                                1u,
-                                                "non zero if the profile has never run the game before (only accurate after the iis)");
-    // BO1TODO: cg_playerState (#2)
-#ifndef BO1_DEDICATED
-    dedicated = _Dvar_RegisterEnum("dedicated", g_dedicatedEnumNames, 0, 32, "Dedicated Server");
-    if (dedicated->current.integer)
-        _Dvar_RegisterEnum("dedicated", g_dedicatedEnumNames, 0, 64, "Dedicated Server");
-#endif
-    com_maxfps = _Dvar_RegisterInt("com_maxfps", 85, 0, 1000, 1u, "Cap frames per second");
-    arcademode = _Dvar_RegisterBool("arcademode", 0, 0x100u, "Current game is an arcade mode game");
-    zombiemode = _Dvar_RegisterBool("zombiemode", 0, 0x40u, "Current game is an zombie game");
-    // zombies: command-line switch that adds SP's code zones (code_post_gfx, patch; SP exe 0x00571DB0) after the MP
-    // ones, which this exe needs. Five's scripts (maps/_load.gsc, common_scripts/utility.gsc, ...) live in SP's
-    // code_post_gfx. Both sets together need the localize pool raise and the SndDriverGlobals rule in db_registry.cpp.
-    // Read once, at boot, by DB_LoadGraphicsAssetsForPC / DB_LoadFastFilesForPC / Load_SndDriverGlobalsAsset.
-    bo1_zombies = _Dvar_RegisterBool("bo1_zombies", 0, 0x10u, "Boot with the SP code zones (zombies); set on the command line");
-    bo1_writeconfig = _Dvar_RegisterBool("bo1_writeconfig", 0, 0, "p1 test switch: a headless -Client run writes the player config");
-    legacy_zombiemode = _Dvar_RegisterBool("legacy_zombiemode", 0, 0x40u, "Current game is a legacy zombie game");
-    zombieStopSplitScreen = _Dvar_RegisterBool(
-                                                        "zombieStopSplitScreen",
-                                                        0,
-                                                        0x40u,
-                                                        "Force Split Screen to Fullscreen (for HUD)");
-    zombietron = _Dvar_RegisterBool("zombietron", 0, 0x40u, "Current game is an zombietron top down game");
-    // zombies: SP Com_Init (SP 0x0082BCFF..0x0082BD69) registers both "discovered" dvars with 1 and the two
-    // _override dvars (1, flags 0x4000); SP GamerProfile_UpdateDvarsFromProfile (SP 0x0061F665..0x0061F6B8)
-    // sets discovered = profile value || override. So on PC Five and Dead Ops Arcade are always selectable:
-    // the front end's levels_zombie shows the Five row only when zombiefive_discovered is 1. MP registers 0.
-    // menu-1: deliberate deviation from SP (a deliberate choice): Dead Ops Arcade is not offered, so under bo1_zombies
-    // zombietron_discovered and its override are 0 (SP: 1 and 1), and zombietron_discovered is read only (0x40,
-    // not archived) so the players config's `seta zombietron_discovered "1"` cannot flip it back; the profile path
-    // (GamerProfile_UpdateDvarsFromProfile) leaves it 0 too. levels_zombie hides its row when it is not 1.
-    const bool spDiscovered = bo1_zombies && bo1_zombies->current.enabled;
-    zombietron_discovered = _Dvar_RegisterBool("zombietron_discovered", 0, spDiscovered ? 0x4040u : 0x4001u, "Zombietron mode discovered");
-    zombiefive_discovered = _Dvar_RegisterBool("zombiefive_discovered", spDiscovered, 0x4001u, "Zombie Five map discovered");
-    if (spDiscovered)
-    {
-        zombietron_discovered_override = _Dvar_RegisterBool("zombietron_discovered_override", 0, 0x4000u, "");
-        zombiefive_discovered_override = _Dvar_RegisterBool("zombiefive_discovered_override", 1, 0x4000u, "");
-    }
 
-    // BO1TODO
-    //zombiemode_path_minz_bias
-
-    _Dvar_RegisterBool(
-        "zombiefive_norandomchar",
-        0,
-        0x4000u,
-        "Forces no random character when following the end game credits");
-    blackopsmode = _Dvar_RegisterBool("blackopsmode", 0, 0x100u, "Current game is a blackops game");
-    spmode = _Dvar_RegisterBool("spmode", 0, 0x100u, "Current game is a sp game");
-#ifdef BO1_DEDICATED
-    onlinegame = _Dvar_RegisterBool(
-                                 "onlinegame",
-                                 1,
-                                 0x40u,
-                                 "Current game is an online game with stats, custom classes, unlocks");
-#else
-    if (IsDedicatedServer())
-    {
-        onlinegame = _Dvar_RegisterBool(
-            "onlinegame",
-            // Headless zombie tests are local sessions. SP player counts (0x005E6B20,
-            // 0x00642850) use the party service only for online/systemlink sessions.
-            !(Sys_IsHeadless() && bo1_zombies->current.enabled),
-            0x40u,
-            "Current game is an online game with stats, custom classes, unlocks");
-    }
-    else
-    {
-        onlinegame = _Dvar_RegisterBool(
-            "onlinegame",
-            false,
-            0,
-            "Current game is an online game with stats, custom classes, unlocks");
-    }
-#endif
-    xblive_rankedmatch = _Dvar_RegisterBool("xblive_rankedmatch", 0, 4u, "Current game is a ranked match");
-    xblive_privatematch = _Dvar_RegisterBool("xblive_privatematch", 0, 4u, "Current game is a private match");
-    useFastFile = _Dvar_RegisterBool("useFastFile", 1, 0x10u, "Enables loading data from fast files.");
-    sys_lockThreads = _Dvar_RegisterBool(
-                                            "sys_lockThreads",
-                                            0,
-                                            0,
-                                            "Prevents threads from changing CPUs; improves profiling and may fix some bugs, but can hurt performance");
-    // mod (L64): listen-server thread on the P-cores of a hybrid CPU (Sys_ModApplyPCore, threads.cpp); no-op elsewhere
-    bo1_mod_pcore = _Dvar_RegisterInt("bo1_mod_pcore", 0, 0, 2, 0,
-        "mod: hybrid CPUs: 1 = server thread on P-cores + above-normal priority, 2 = also the client threads; no-op on non-hybrid CPUs");
-    bo1_mod_priority = _Dvar_RegisterInt("bo1_mod_priority", 0, 0, 2, 0,
-        "mod: 1 = process priority class above normal + main thread above normal, 2 = high class; 0 = as started");
-    CpuCount = Sys_GetCpuCount();
-    sys_smp_allowed = _Dvar_RegisterBool("sys_smp_allowed", CpuCount > 1, 0x10u, "Allow multi-threading");
-#ifdef _DEBUG
-    com_developer = _Dvar_RegisterInt("developer", 1, 0, 2, 0, "Enable development options");
-#else 
-    com_developer = _Dvar_RegisterInt("developer", 0, 0, 2, 0, "Enable development options");
-#endif
-    com_developer_script = _Dvar_RegisterBool("developer_script", 0, 0, "Enable developer script comments");
-    com_script_debugger_smoke_test = _Dvar_RegisterBool(
-                                                                         "script_debugger_smoke_test",
-                                                                         0,
-                                                                         0,
-                                                                         "perform script debugger smoke test and exit");
-    com_logfile = _Dvar_RegisterInt(
-                                    "logfile",
-                                    1,
-                                    0,
-                                    2,
-                                    0,
-                                    "Write to log file - 0 = disabled, 1 = async file write, 2 = Sync every write");
-    if ( com_logfile && !com_logfile->current.integer )
-        Dvar_SetInt((dvar_s *)com_logfile, 1);
-    com_statmon = _Dvar_RegisterBool("com_statmon", 0, 0, "Draw stats monitor");
-    com_timescale = _Dvar_RegisterFloat("com_timescale", 1.0, 0.001, 10.0, 0x11C0u, "Scale time of each frame");
-    dev_timescale = _Dvar_RegisterFloat("timescale", 1.0, 0.001, 10.0, 0x180u, "Scale time of each frame");
-    com_fixedtime = _Dvar_RegisterInt("fixedtime", 0, 0, 1000, 0x80u, "Use a fixed time rate for each frame");
-    com_maxFrameTime = _Dvar_RegisterInt(
-                                             "com_maxFrameTime",
-                                             100,
-                                             50,
-                                             5000,
-                                             0,
-                                             "Time slows down if a frame takes longer than this many milliseconds");
-    long_blocking_call = _Dvar_RegisterBool("long_blocking_call", 0, 0, "Enable SCR_DrawPleaseWait dialog");
-    sv_network_warning = _Dvar_RegisterBool("sv_network_warning", 0, 0, "Alternative enable SCR_DrawPleaseWait dialog");
-    cl_network_warning = _Dvar_RegisterBool("cl_network_warning", 0, 0, "Alternative enable SCR_DrawPleaseWait dialog");
-    sv_paused = _Dvar_RegisterInt("sv_paused", 0, 0, 2, 0x40u, "Pause the server");
-    cl_paused = _Dvar_RegisterInt("cl_paused", 0, 0, 2, 0, "Pause the client");
-    cl_paused_simple = _Dvar_RegisterBool(
-                                             "cl_paused_simple",
-                                             0,
-                                             0,
-                                             "Toggling pause won't do any additional special processing if true.");
-    com_sv_running = _Dvar_RegisterBool("sv_running", 0, 0x40u, "Server is running");
-    com_show_tty_timestamps = _Dvar_RegisterBool("show_tty_timestamps", 0, 0, "Show timestamps in tty output");
-    com_voip_resume_time = _Dvar_RegisterInt("com_voip_resume_time", 0, 0, 0x7FFFFFFF, 0, "Time at which voip can resume");
-    com_voip_bandwidth_restricted = _Dvar_RegisterBool(
-                                                                        "com_voip_bandwidth_restricted",
-                                                                        1,
-                                                                        0x40u,
-                                                                        "Use VOIP inhibitor during high bandwidth usage");
-    com_voip_disable_threshold = _Dvar_RegisterInt(
-                                                                 "com_voip_disable_threshold",
-                                                                 1200,
-                                                                 0,
-                                                                 0x7FFFFFFF,
-                                                                 0,
-                                                                 "Message size at which voip becomes disabled");
-    com_filter_output = _Dvar_RegisterBool("com_filter_output", 0, 0, "Use console filters for filtering output.");
-    com_introPlayed = _Dvar_RegisterBool("com_introPlayed", 0, 0, "Intro movie has been played");
-    com_startupIntroPlayed = _Dvar_RegisterBool(
-                                                         "com_startupIntroPlayed",
-                                                         0,
-                                                         1u,
-                                                         "Game startup intro movie(s) has been played");
-    com_desiredMenu = _Dvar_RegisterInt(
-                                            "com_desiredMenu",
-                                            0,
-                                            0,
-                                            0x7FFFFFFF,
-                                            0,
-                                            "Target menu to navigate to when possible");
-    com_skipMovies = _Dvar_RegisterBool("com_skipMovies", 0, 0, "Skip intro movies");
-    com_animCheck = _Dvar_RegisterBool("com_animCheck", 0, 0, "Check anim tree");
-    com_hiDef = _Dvar_RegisterBool("hiDef", 1, 0x40u, "True if the game video is running in high-def.");
-    com_wideScreen = _Dvar_RegisterBool(
-                                         "wideScreen",
-                                         1,
-                                         0x40u,
-                                         "True if the game video is running in 16x9 aspect, false if 4x3.");
-    doublesided_raycasts = _Dvar_RegisterBool("doublesided_raycasts", 0, 0x80u, "turn on double sided ray casts");
-    log_append = _Dvar_RegisterBool("log_append", 0, 1u, "Open log file in append mode");
-    com_waitForStreamer = _Dvar_RegisterInt(
-                                                    "waitForStreamer",
-                                                    1,
-                                                    0,
-                                                    2,
-                                                    0,
-                                                    "1) wait for initial lowmips, 2) wait for full initial texture load.");
-    dec20_Enabled = _Dvar_RegisterBool("dec20_Enabled", 0, 0x5000u, "enable dec20 terminal");
-    band_demosystem = _Dvar_RegisterInt("band_demosystem", 64000, 0, 0x7FFFFFFF, 0, "demo system bandwidth req'd");
-    band_2players = _Dvar_RegisterInt("band_2players", 64000, 0, 0x7FFFFFFF, 0, "2 player bandwidth req'd");
-    band_4players = _Dvar_RegisterInt("band_4players", 128000, 0, 0x7FFFFFFF, 0, "4 player bandwidth req'd");
-    band_6players = _Dvar_RegisterInt("band_6players", 192000, 0, 0x7FFFFFFF, 0, "8 player bandwidth req'd");
-    band_8players = _Dvar_RegisterInt("band_8players", 256000, 0, 0x7FFFFFFF, 0, "8 player bandwidth req'd");
-    band_12players = _Dvar_RegisterInt("band_12players", 384000, 0, 0x7FFFFFFF, 0, "12 player bandwidth req'd");
-    band_18players = _Dvar_RegisterInt("band_18players", 580000, 0, 0x7FFFFFFF, 0, "18 player bandwidth req'd");
-    band_lotsplayers = _Dvar_RegisterInt("band_lotsplayers", 900000, 0, 0x7FFFFFFF, 0, ">18 player bandwidth req'd");
-    band_dedicated = _Dvar_RegisterInt("band_dedicated", 2048000, 0, 0x7FFFFFFF, 0, ">18 player bandwidth req'd");
-    G_RegisterRegisterToolDvars();
-    Pregame_RegisterDvars();
-
-    // BO1TODO: add cheats
-    //dword_355E974 = _Dvar_RegisterBool("sv_EnableDevCheats", 0, 0x4000, &String);
-    //dword_35A03DC = _Dvar_RegisterBool("sv_NoClip", 0, 0x4000, &String);
-    //dword_359FB44 = _Dvar_RegisterBool("sv_FullAmmo", 0, 0x4000, &String);
-    //dword_359EB1C = _Dvar_RegisterBool("sv_InfiniteSprint", 0, 0x4000, &String);
-    //dword_359EB04 = _Dvar_RegisterBool("sv_RadarAlwaysOn", 0, 0x4000, &String);
-    //dword_355E8F0 = _Dvar_RegisterBool("sv_Invisible", 0, 0x4000, &String);
-    //dword_359EB0C = _Dvar_RegisterBool("sv_SuperPenetrate", 0, 0x4000, &String);
-    //dword_35A03B8 = _Dvar_RegisterBool("sv_TripleBullet", 0, 0x4000, &String);
-    //dword_355E8B0 = _Dvar_RegisterBool("sv_QuickHealthRecharge", 0, 0x4000, &String);
-    //dword_355E958 = _Dvar_RegisterBool("sv_InstantReload", 0, 0x4000, &String);
-    //dword_35A0364 = _Dvar_RegisterBool("sv_3xEXP", 0, 0x4000, &String);
-    //dword_359EA10 = _Dvar_RegisterBool("sv_UnlockAllIntel", 0, 0x4000, &String);
-    //dword_35B03F4 = _Dvar_RegisterBool("sv_UnlockAllSlots", 0, 0x4000, &String);
-    //dword_35A03A4 = _Dvar_RegisterBool("sv_DoubleCodPoints", 0, 0x4000, &String);
-    //dword_355E8C0 = _Dvar_RegisterBool("sv_SetAllFree", 0, 0x4000, &String);
-    //dword_35B03FC = _Dvar_RegisterBool("sv_EnableSuperuser", 0, 0x4000, &String);
-    //dword_359EA28 = _Dvar_RegisterBool("sv_MakeMeHost", 0, 0x4000, &String);
-    //dword_35A035C = _Dvar_RegisterBool("sv_DisableTheatre", 0, 0x4000, &String);
-}
-
+#endif // shared error cleanup
+#if !defined(BO1_STARTUP_SERVICES)
 // zombies: SP keeps the player's settings in players\<fs_game>\config.cfg (no mod: players\config.cfg, as the retail
 // install has it); MP in players\config_mp.cfg. SP Com_WriteConfiguration (SP 0x0082C680) and the "config.cfg" case
 // of SP Cmd_Exec_f (SP 0x0082A228..0x0082A269) both build the name with Com_sprintf("%s/%s", fs_game, "config.cfg").
 // With an empty fs_game SP's name is "/config.cfg", which its FS resolves to players\config.cfg; KB's FS does not
 // strip a leading '/', so the empty case uses the bare name (same file).
-const char *__cdecl Com_PlayerConfigName()
-{
-    return bo1_zombies && bo1_zombies->current.enabled ? "config.cfg" : "config_mp.cfg";
-}
 
-void __cdecl Com_PlayerConfigPath(char *path, int size)
-{
-    const char *fsGame = Dvar_GetString("fs_game");
 
-    // mod: bo1_mod_sharedconfig 1 (the launcher sets it; +set on the command line, read before the startup exec):
-    // one player config for every mod - players\config.cfg - so binds / sensitivity follow the player into horde,
-    // zinfo, mapkit... (User: a mapkit map came up with default controls). 0 / unset = retail per-fs_game config.
-    if ( Dvar_GetBool("bo1_mod_sharedconfig") )
-        fsGame = 0;
-    if ( bo1_zombies && bo1_zombies->current.enabled && fsGame && *fsGame )
-        Com_sprintf(path, size, "%s/%s", fsGame, "config.cfg");
-    else
-        I_strncpyz(path, Com_PlayerConfigName(), size);
-}
+
 
 // mod: bo1_mod_fov (0 = off = retail; 65-120) is one value for every mode. config.cfg is per fs_game
 // (players\config.cfg, players\mods\horde\config.cfg, ...), so the value also lives in players\bo1_shared.cfg under
@@ -2540,12 +2034,20 @@ static float com_modFovShared = -1.0f;
 
 static void Com_ModFov_SharedPath(char *path, int size)
 {
+#if defined(__ANDROID__)
+    Com_sprintf(path, size, "%s/players/bo1_shared.cfg", fs_homepath->current.string);
+#else
     Com_sprintf(path, size, "%s\\players\\bo1_shared.cfg", fs_homepath->current.string);
+#endif
 }
 
 static void Com_ModFov_ReadShared()
 {
+#if defined(__ANDROID__)
+    char path[PATH_MAX];
+#else
     char path[MAX_PATH];
+#endif
     char text[256];
     FILE *f;
     size_t len;
@@ -2575,7 +2077,11 @@ static void Com_ModFov_ReadShared()
 
 void __cdecl Com_ModFov_SaveShared(float value)
 {
+#if defined(__ANDROID__)
+    char path[PATH_MAX];
+#else
     char path[MAX_PATH];
+#endif
     FILE *f;
 
     if ( value == com_modFovShared || (com_modFovShared < 0.0f && value == 0.0f) ) // no file and off: nothing to save
@@ -2609,28 +2115,8 @@ void __cdecl Com_StartupConfigs(int localClientNum)
     Com_ModFov_ReadShared();
 }
 
-int g_loadedPreXAssets = 0;
-void __cdecl Com_InitCodeXAssets()
-{
-    XZoneInfo zoneInfo[4]; // [esp+0h] [ebp-34h] BYREF
-    unsigned int zoneCount; // [esp+30h] [ebp-4h]
 
-    DB_InitThread();
-    if ( !g_loadedPreXAssets )
-    {
-        g_loadedPreXAssets = 1;
-        // zombies: code_pre_gfx_mp in both modes. SP's Com_InitCodeXAssets (0x00457300) loads code_pre_gfx, but that
-        // holds SP configs only; this exe's init needs its own (default_mp.cfg, init_dvars_pc_dedicated_mp.cfg and the
-        // mp/devconsole_restrict_access_*.csv tables, which are requested before code_post_gfx brings the default
-        // stringtable). It adds 68 localize entries and no snddriverglobals, so the SP post-gfx set still fits.
-        zoneInfo[0].name = "code_pre_gfx_mp";
-        zoneInfo[0].allocFlags = 1;
-        zoneInfo[0].freeFlags = 0;
-        zoneCount = 1;
-        DB_LoadXAssets(zoneInfo, 1u, 0);
-        DB_SyncXAssets();
-    }
-}
+
 
 void __cdecl Com_WriteDefaultsToFile(char *filename)
 {
@@ -2788,6 +2274,8 @@ void __cdecl Com_WriteDefaults_f()
     }
 }
 
+#endif // normal helpers before shared sound time policy
+#if !defined(BO1_STARTUP_SERVICES) || defined(BO1_NATIVE_COM_BOOT)
 double __cdecl Com_GetTimescaleForSnd()
 {
     if ( com_fixedtime->current.integer )
@@ -2796,6 +2284,27 @@ double __cdecl Com_GetTimescaleForSnd()
         return com_timescale->current.value * dev_timescale->current.value * com_codeTimeScale;
 }
 
+#endif // shared sound time policy
+#if !defined(BO1_STARTUP_SERVICES) || defined(BO1_NATIVE_COMMON_ASSET_LIFECYCLE)
+#if defined(BO1_NATIVE_COM_BOOT)
+#include <database/db_registry.h>
+#include <database/db_file_load.h>
+#include <qcommon/com_clients.h>
+#include <client/cl_main.h>
+#include <universal/com_loadutils.h>
+#include <universal/q_parse.h>
+#include <ui/ui_shared.h>
+#include <ui/ui_viewer.h>
+#include <ui_mp/ui_main_mp.h>
+#include <client/splitscreen.h>
+#include <server_mp/sv_init_mp.h>
+#include <bgame/bg_misc.h>
+#include <bgame/bg_jump.h>
+#include <aim_assist/aim_assist.h>
+#include <live/live_win.h>
+#include <gfx_d3d/rb_resource.h>
+#include <gfx_d3d/r_ui3d.h>
+#endif
 void Com_LoadUiFastFile()
 {
     // this doesn't show in IDA, but you can actually find it in the asm here
@@ -3255,6 +2764,8 @@ void __cdecl Com_Frame_CheckFrontEnd_SP()
         Com_CheckFrontEndAfterError();
 }
 
+#endif // normal helpers before shared frame clock reset
+#if !defined(BO1_STARTUP_SERVICES) || defined(BO1_NATIVE_COM_BOOT)
 void __cdecl Com_ResetFrametime()
 {
     unsigned int timeMsec; // [esp+0h] [ebp-8h]
@@ -3265,6 +2776,8 @@ void __cdecl Com_ResetFrametime()
         com_lastFrameTime[0] = timeMsec;
 }
 
+#endif // shared frame clock reset
+#if !defined(BO1_STARTUP_SERVICES)
 void __cdecl Com_CheckSyncFrame()
 {
     PROF_SCOPED("Com_CheckSyncFrame"); // ADD
@@ -3276,6 +2789,9 @@ void __cdecl Com_CheckSyncFrame()
 
 void __cdecl Com_Frame()
 {
+#if defined(__ANDROID__)
+    const auto nativePerformanceMainBegin = bo1::android::performance::MainBegin();
+#endif
     void *Value; // eax
 
     proftimer_physics_frame_advance.reset();
@@ -3306,6 +2822,9 @@ void __cdecl Com_Frame()
         Sys_LeaveCriticalSection(CRITSECT_COM_ERROR);
     }
     Com_Frame_CheckFrontEnd_SP(); // zombies: SP 0x0082C9DB
+#if defined(__ANDROID__)
+    bo1::android::performance::MainEnd(nativePerformanceMainBegin);
+#endif
 
     FrameMark;
 }
@@ -3324,6 +2843,13 @@ unsigned int Com_Frame_Try_Block_Function()
     int minMsec;
 
     iassert(Cmd_Args()->nesting == -1);
+#if defined(__ANDROID__)
+    namespace nft = bo1::android::frame_timing;
+    nft::MainBegin(com_sv_running && com_sv_running->current.enabled);
+    const nft::Sample mainTimingStart = nft::data.enabled ? nft::Now() : nft::Sample{};
+    const unsigned timingWakesStart = nft::data.wakes;
+    nft::Scope mainTiming(nft::MainFrame);
+#endif
 
     PROF_SCOPED("Com_Frame");
 
@@ -3371,7 +2897,13 @@ unsigned int Com_Frame_Try_Block_Function()
             msec = com_frameTime - com_lastFrameTime[lastFrameIndex];
             if (msec >= minMsec)
                 break;
+#if defined(__ANDROID__)
+            { nft::Scope timing(nft::PacingSleep);
+#endif
             NET_Sleep(1u);
+#if defined(__ANDROID__)
+            }
+#endif
         }
         com_lastFrameTime[lastFrameIndex] = com_frameTime;
     }
@@ -3389,7 +2921,13 @@ unsigned int Com_Frame_Try_Block_Function()
             {
                 break;
             }
+#if defined(__ANDROID__)
+            { nft::Scope timing(nft::PacingSleep);
+#endif
             NET_Sleep(1u);
+#if defined(__ANDROID__)
+            }
+#endif
         }
 
         int v4;
@@ -3451,7 +2989,7 @@ unsigned int Com_Frame_Try_Block_Function()
             }
             //BG_EvalVehicleName(0);
         }
-        
+
         RMsg_SendMessages();
         G_SP_FramePerfMark(FRAMEPERF_PRE);
 
@@ -3480,8 +3018,16 @@ unsigned int Com_Frame_Try_Block_Function()
         R_WaitEndTime();
         G_SP_FramePerfMark(FRAMEPERF_END);
     }
-    
+
+#if defined(__ANDROID__)
+    result = static_cast<unsigned int>(BO1_ProfileThreadId());
+#else
     result = GetCurrentThreadId();
+#endif
+#if defined(__ANDROID__)
+    mainTiming.Stop();
+    nft::MainEnd(timingWakesStart, mainTimingStart);
+#endif
     return result;
 }
 
@@ -3533,8 +3079,12 @@ int __cdecl Com_ModifyMsec(int msec)
         msec = 1;
     if (IsDedicatedServer())
     {
-        if (msec > 500 && msec < 500000)
+        if (msec > 500 && msec < 500000) {
+#if defined(__ANDROID__)
+            bo1::android::frame_timing::Hitch(msec);
+#endif
             Com_PrintWarning(16, "Hitch warning: %i msec frame time\n", msec);
+        }
         clampTime = 5000;
     }
     else if (com_sv_running->current.enabled)
@@ -3668,6 +3218,8 @@ void __cdecl Com_Close()
     Hunk_UserShutdown();
 }
 
+#endif // normal shutdown before shared console field clearing
+#if !defined(BO1_STARTUP_SERVICES) || defined(BO1_NATIVE_COM_BOOT)
 void __cdecl Field_Clear(field_t *edit)
 {
     memset((unsigned __int8 *)edit->buffer, 0, sizeof(edit->buffer));
@@ -3676,6 +3228,23 @@ void __cdecl Field_Clear(field_t *edit)
     edit->drawWidth = 256;
 }
 
+#endif // shared console field clearing
+#if !defined(BO1_STARTUP_SERVICES) || defined(BO1_NATIVE_COMMON_ASSET_LIFECYCLE)
+#if defined(BO1_NATIVE_COM_BOOT)
+#include <universal/com_memory.h>
+#include <database/db_registry.h>
+#include <client/cl_debugdata.h>
+#include <server/sv_game.h>
+#include <qcommon/com_bsp_load_obj.h>
+#include <qcommon/cm_load.h>
+#include <qcommon/dobj_management.h>
+#include <ui/ui_screenshot.h>
+#include <clientscript/cscr_memorytree.h>
+#include <cgame_mp/cg_ents_mp.h>
+#include <bgame/bg_weapons_def.h>
+#include <xanim/xanim.h>
+#include <xanim/dobj.h>
+#endif
 void __cdecl Com_Restart()
 {
     XZoneInfo zoneInfo[1]; // [esp+4h] [ebp-Ch] BYREF
@@ -3711,14 +3280,38 @@ void __cdecl Com_Restart()
     Flame_Init();
 }
 
+#if defined(__ANDROID__)
+#include <climits>
+static void *Com_NativeAllocSmallAnimTree(unsigned int size)
+{
+    if (size > INT_MAX)
+    {
+        Com_Error(ERR_DROP, "Small animation tree allocation exceeds native allocator range");
+        std::abort();
+    }
+    return CG_AllocAnimTree(static_cast<int>(size));
+}
+static void Com_NativeFreeSmallAnimTree(void *memory, int size, scriptInstance_t inst)
+{
+    MT_Free(static_cast<_BYTE *>(memory), size, inst);
+}
+#endif
 XAnimTree_s *__cdecl Com_XAnimCreateSmallTree(XAnim_s *anims)
 {
+#if defined(__ANDROID__)
+    return XAnimCreateTree(anims, Com_NativeAllocSmallAnimTree);
+#else
     return XAnimCreateTree(anims, (void *(__cdecl *)(unsigned int))CG_AllocAnimTree);
+#endif
 }
 
 void __cdecl Com_XAnimFreeSmallTree(XAnimTree_s *animtree)
 {
+#if defined(__ANDROID__)
+    XAnimFreeTree(animtree, Com_NativeFreeSmallAnimTree, SCRIPTINSTANCE_SERVER);
+#else
     XAnimFreeTree(animtree, (void (__cdecl *)(void *, int, scriptInstance_t))MT_Free, SCRIPTINSTANCE_SERVER);
+#endif
 }
 
 void __cdecl Com_SetWeaponInfoMemory(int source)
@@ -3735,6 +3328,8 @@ void __cdecl Com_FreeWeaponInfoMemory(int source)
     }
 }
 
+#endif // normal restart before shared command string construction
+#if !defined(BO1_STARTUP_SERVICES) || defined(BO1_NATIVE_COM_BOOT)
 int __cdecl Com_AddToString(const char *add, char *msg, int len, int maxlen, int mayAddQuotes)
 {
     int addQuotes; // [esp+0h] [ebp-8h]
@@ -3769,6 +3364,11 @@ int __cdecl Com_AddToString(const char *add, char *msg, int len, int maxlen, int
     return len;
 }
 
+#endif // shared command string construction
+#if !defined(BO1_STARTUP_SERVICES) || defined(BO1_NATIVE_COM_BOOT)
+#if defined(BO1_NATIVE_COM_BOOT)
+#include <stringed/stringed_hooks.h>
+#endif
 char __cdecl Com_GetDecimalDelimiter()
 {
     int lang; // [esp+0h] [ebp-4h]
@@ -3801,17 +3401,43 @@ void __cdecl Com_LocalizedFloatToString(float f, char *buffer, unsigned int maxl
     }
 }
 
+#endif // normal bodies before shared thread synchronization
+#if !defined(BO1_STARTUP_SERVICES) || defined(BO1_NATIVE_COM_BOOT)
+#if defined(BO1_NATIVE_COM_BOOT)
+#include <gfx_d3d/r_rendercmds.h>
+#include <universal/com_workercmds.h>
+#include <server_mp/sv_main_mp.h>
+#endif
 void __cdecl Com_SyncThreads()
 {
+#if defined(__ANDROID__) && !defined(BO1_STARTUP_SERVICES)
+    namespace nft = bo1::android::frame_timing;
+    nft::Scope syncTiming(nft::SyncThreads);
+    { nft::Scope timing(nft::SyncRenderer);
+#endif
     R_SyncRenderThread();
+#if defined(__ANDROID__) && !defined(BO1_STARTUP_SERVICES)
+    }
+#endif
     if ( com_sv_running && com_sv_running->current.enabled )
     {
         SV_WaitServer();
         SV_AllowPackets(0);
     }
+#if defined(__ANDROID__) && !defined(BO1_STARTUP_SERVICES)
+    { nft::Scope timing(nft::SyncWorkers);
+#endif
     R_WaitWorkerCmds();
+#if defined(__ANDROID__) && !defined(BO1_STARTUP_SERVICES)
+    }
+#endif
 }
 
+#endif // shared thread synchronization
+#if !defined(BO1_STARTUP_SERVICES) || defined(BO1_NATIVE_COM_BOOT)
+#if defined(BO1_NATIVE_COM_BOOT)
+#include <client_mp/client_mp.h>
+#endif
 const char *__cdecl Com_DisplayName(const char *name, const char *clanAbbrev, int type)
 {
     if ( !*clanAbbrev )
@@ -3833,6 +3459,8 @@ const char *__cdecl CS_DisplayName(const clientState_s *cs, int type)
     return Com_DisplayName(cs->name, cs->clanAbbrev, type);
 }
 
+#endif // shared display-name helpers
+#if !defined(BO1_STARTUP_SERVICES)
 int __cdecl Com_GetPrivateClients()
 {
     if ( !com_maxclients->current.integer
@@ -3866,4 +3494,1029 @@ void Com_Printf_NoFilter(const char *fmt, ...)
 bool __cdecl Com_LogFileOpen()
 {
     return logfile != 0;
+}
+
+#if !defined(BO1_STARTUP_SERVICES) || defined(BO1_NATIVE_COM_BOOT)
+static const char *g_dedicatedEnumNames[4] = { "listen server", "dedicated LAN server", "dedicated internet server", NULL }; // idb
+
+void __cdecl Com_Init(char *commandLine)
+{
+    if ( _setjmp(*(jmp_buf *)Sys_GetValue(2)) )
+    {
+        Sys_Error(va("Error during initialization:\n%s\n", com_errorMessage));
+    }
+
+    Com_Init_Try_Block_Function(commandLine);
+
+    Monkey_Start();
+
+    if ( !_setjmp(*(jmp_buf *)Sys_GetValue(2)) )
+        Com_AddStartupCommands();
+
+    if ( !I_strcmp(sv_mapname->current.string, "") )
+        Com_InitUIAndCommonXAssets();
+
+    if ( com_errorEntered )
+        Com_ErrorCleanup();
+
+#ifndef BO1_DEDICATED
+    if (!com_sv_running->current.enabled && !IsDedicatedServer())
+    {
+        if (_setjmp(*(jmp_buf *)Sys_GetValue(2)))
+        {
+            Sys_Error(va("Error during initialization:\n%s\n", com_errorMessage));
+        }
+
+        if (!cls.rendererStarted)
+        {
+            CL_InitRenderer();
+        }
+
+        R_BeginRemoteScreenUpdate();
+        CL_StartHunkUsers();
+        R_EndRemoteScreenUpdate(NULL);
+    }
+#endif
+
+    if ( !com_sv_running->current.enabled )
+    {
+        if ( *Dvar_GetString("com_errorMessage") )
+            Com_LoadUiFastFile();
+        //BLOPS_NULLSUB();
+        Com_LoadFrontEnd();
+    }
+
+    if (IsDedicatedServer())
+    {
+        UI_LoadArenas();
+        UI_LoadCustomMatchGameTypes();
+        UI_LoadMaps();
+    }
+}
+
+void __cdecl Com_Init_Try_Block_Function(char *commandLine)
+{
+    char *BuildVersion; // eax
+    int ControllerIndex; // eax
+    void *v5; // ecx
+    unsigned int v6; // eax
+    const char *max; // [esp+8h] [ebp-5Ch]
+#if defined(BO1_NATIVE_COM_BOOT)
+    bo1::win32::LARGE_INTEGER PerformanceCount;
+#else
+    LARGE_INTEGER PerformanceCount; // [esp+18h] [ebp-4Ch] BYREF
+#endif
+    int localClientNum; // [esp+58h] [ebp-Ch]
+    int initStartTime; // [esp+60h] [ebp-4h]
+
+    max = Com_GetBuildName();
+    BuildVersion = Com_GetBuildVersion();
+    Com_Printf(16, "%s %s build %s %s\n", BuildVersion, max, "win-x86", "Nov    5 2010");
+    Com_ParseCommandLine(commandLine);
+    SL_Init(SCRIPTINSTANCE_SERVER);
+    SL_Init(SCRIPTINSTANCE_CLIENT);
+    Swap_Init();
+    Cbuf_Init();
+    Cmd_Init();
+    Com_StartupVariable(0);
+    Com_InitDvars();
+    IK_InitSystem();
+    initStartTime = 0;
+
+    if ( useFastFile->current.enabled )
+    {
+        PMem_Init();
+        LiveSteam_Init();
+        DB_SetInitializing(1);
+        Com_Printf(7, "begin $init\n");
+        initStartTime = Sys_Milliseconds();
+        PMem_BeginAlloc("$init", 1u, TRACK_MISC);
+    }
+
+    Stream_Init();
+    //BLOPS_NULLSUB();
+
+    if ( useFastFile->current.enabled )
+        Com_InitCodeXAssets();
+
+    CL_InitKeyCommands();
+    CL_InitGamepadCommands();
+    CL_InitGamepadAxisBindings();
+
+    FS_InitFilesystem(1);
+
+    Con_InitChannels();
+    TaskManager2_Init();
+
+#ifdef BO1_LIVE
+    dwInit();
+#endif
+
+    DDL_Init();
+    Com_InitClientGameStates();
+    Con_Restricted_SecureConfigs();
+
+    for ( localClientNum = 0; localClientNum < 1; ++localClientNum )
+    {
+        Com_LocalClient_SetControllerIndex(localClientNum, localClientNum);
+        Com_StartupConfigs(localClientNum);
+    }
+
+    ControllerIndex = Com_LocalClient_GetControllerIndex(0);
+    Cbuf_Execute(0, ControllerIndex);
+    Con_Restricted_InitLists();
+
+    if ( (dvar_modifiedFlags & 0x20) != 0 )
+        Com_InitDvars();
+
+    Com_InitContentPacks_SP(); // zombies: SP Com_Init 0x0082CF01 -> 0x004E8350
+
+    R_StreamSetInitData(Com_CalculateStreamBuffer());
+    com_recommendedSet = _Dvar_RegisterBool("com_recommendedSet", 0, 1u, "Use recommended settings");
+    Com_CheckSetRecommended(0);
+    Com_StartupVariable(0);
+
+    if ( !useFastFile->current.enabled )
+        SEH_UpdateLanguageInfo();
+
+    if (IsDedicatedServer())
+    {
+        CL_InitDedicated();
+    }
+
+    Com_InitHunkMemory();
+    Hunk_UserStartup();
+
+    dvar_modifiedFlags &= ~1u;
+
+    com_codeTimeScale = 1.0f;
+
+    collectors = _Dvar_RegisterBool("collectors", 0, 0x40u, "Set to true if the player has the collector's edition");
+    primaryWeaponOffset = _Dvar_RegisterInt(
+                                                    "primaryWeaponOffset",
+                                                    0,
+                                                    0,
+                                                    7,
+                                                    0x40u,
+                                                    "Primary Weapon Offset for CE and Presell");
+    scr_xpcollectorsscale = _Dvar_RegisterInt("scr_xpcollectorsscale", 1, 0, 9, 0x40u, "");
+    scr_xpscale = _Dvar_RegisterInt("scr_xpscale", 1, 0, 9, 0x40u, "");
+    scr_xpzmscale = _Dvar_RegisterInt("scr_xpzmscale", 1, 0, 9, 0x40u, "");
+    scr_codpointsxpscale = _Dvar_RegisterFloat("scr_codpointsxpscale", 0.1, 0.1, 0.1, 0x40u, "");
+    scr_codpointsmatchscale = _Dvar_RegisterFloat("scr_codpointsmatchscale", 0.1, 0.1, 0.1, 0x40u, "");
+    scr_codpointsperchallenge = _Dvar_RegisterFloat("scr_codpointsperchallenge", 0.1, 0.1, 0.1, 0x40u, "");
+    scr_rankXpCap = _Dvar_RegisterInt("scr_rankXpCap", 0, 0, 0, 0x40u, "");
+    scr_codPointsCap = _Dvar_RegisterInt("scr_codPointsCap", 0, 0, 0, 0x40u, "");
+
+    ProfLoad_Init();
+
+    if ( com_developer->current.integer )
+    {
+        Cmd_AddCommandInternal("error", Com_Error_f, &Com_Error_f_VAR);
+        Cmd_AddCommandInternal("crash", Com_Crash_f, &Com_Crash_f_VAR);
+        Cmd_AddCommandInternal("freeze", Com_Freeze_f, &Com_Freeze_f_VAR);
+        Cmd_AddCommandInternal("assert", Com_Assert_f, &Com_Assert_f_VAR);
+    }
+
+    Cmd_AddCommandInternal("quit", (void(__cdecl *)())Com_Quit_f, &Com_Quit_f_VAR);
+    Cmd_AddCommandInternal("writeconfig", Com_WriteConfig_f, &Com_WriteConfig_f_VAR);
+    Cmd_AddCommandInternal("writekeyconfig", Com_WriteKeyConfig_f, &Com_WriteKeyConfig_f_VAR);
+    Cmd_AddCommandInternal("savekeys", Com_SaveKeys_f, &Com_SaveKeys_f_VAR);
+    Cmd_AddCommandInternal("restorekeys", Com_RestoreKeys_f, &Com_RestoreKeys_f_VAR);
+    Cmd_AddCommandInternal("writedefaults", Com_WriteDefaults_f, &Com_WriteDefaults_f_VAR);
+
+    version = _Dvar_RegisterString("version", (char *)"", 0x40u, "Game version");
+    if (bo1_zombies->current.enabled)
+    {
+        // zombies: SP's version (SP 0x0082D0BD): Com_GetBuildDisplayName (SP 0x00565860), Com_GetBuildName
+        // (SP 0x00583610) and Com_GetBuildVersion (SP 0x005CBC30: build 152, CL 966072, SP's machine and time).
+        char spBuildVersion[128];
+        Com_sprintf(spBuildVersion, sizeof(spBuildVersion), "%s.%s.%d CL(%d) %s %s", "7", "0", 152, 966072,
+            "CODPCAB-V64 CEG", "Thu Sep 01 16:06:17 2011");
+        Dvar_SetString((dvar_s *)version, va("%s %s build %s %s", "Call of Duty Singleplayer - Ship", "COD_T5_S SP",
+            spBuildVersion, "win-x86"));
+    }
+    else
+        Dvar_SetString((dvar_s *)version, va("%s %s build %s %s", Com_GetBuildDisplayName(), Com_GetBuildName(), Com_GetBuildVersion(), "win-x86"));
+    shortversion = _Dvar_RegisterString("shortversion", "7", 0x44u, "Short game version");
+
+    Sys_Init();
+#if defined(BO1_NATIVE_COM_BOOT)
+    ::QueryPerformanceCounter(&PerformanceCount);
+#else
+    QueryPerformanceCounter(&PerformanceCount);
+#endif
+    Netchan_Init(PerformanceCount.QuadPart);
+
+    // mod: bo1_mod_scriptvars N (command line; read once here) grows the server script object pool:
+    // 1 -> parents 0xFFFE (children at variableList[0x10000]), 2 -> 0x1FFFE, 3 -> 0x3FFFE; 0 = retail 0x7FFE
+    // and layout. The child (value) pool: retail 0x3FFFE for 0 and 1, 0x17FFFE for 2 (measured
+    // L25: ~720-1150 values and ~90 objects per horde actor; 348 actors filled the retail child pool, 810 used 928K).
+    // Any N > 0 also uses the 16384-entry anim info pool (retail 4096).
+    {
+        const int modScriptVars = _Dvar_RegisterInt("bo1_mod_scriptvars", 0, 0, 2, 0x10u, // 3 (8x both) crashed at startup (L25 g3)
+            "mod: horde pools: grow the server script pools (1 = 2x objects, 2 = 4x objects + 6x values) and 4x the anim info pool; set on the command line")->current.integer;
+        if (modScriptVars > 0)
+        {
+            g_scrVarChildBegin[SCRIPTINSTANCE_SERVER] = 0x8000u << modScriptVars;
+            if (modScriptVars >= 2)
+                g_scrVarChildSize[SCRIPTINSTANCE_SERVER] = 0x17FFFE; // hash % 0x17FFFD
+            g_xAnimInfoCount = XANIM_INFO_MAX; // anim info pool 4096 -> 16384 (XAnimInit below, and again at restart)
+        }
+        // mod (L43): read by Scr_ModPatchSource (cscr_parser.cpp) when a server script file is loaded
+        _Dvar_RegisterInt("bo1_mod_scriptperf", 0, 0, 1, 0,
+            "mod: rewrite Five's O(n^2) script loops (get_enemy_count, find_flesh's crowd count) to natives with the same result");
+    }
+    Scr_InitVariables(SCRIPTINSTANCE_SERVER);
+    Scr_Init(SCRIPTINSTANCE_SERVER);
+
+    Com_SetScriptSettings();
+    XAnimInit();
+    DObjInit();
+    SV_Init();
+    NET_Init();
+    RMsg_Init();
+
+#ifndef BO1_DEDICATED
+    Dvar_ClearModified((dvar_s *)dedicated);
+#endif
+
+    if (!IsDedicatedServer())
+    {
+        CL_InitOnceForAllClients();
+        for (int localClientNum = 0; localClientNum < 1; ++localClientNum)
+        {
+            CL_Init(localClientNum);
+        }
+        Com_LocalClient_SetPrimary(0, 1);
+    }
+    else
+    {
+        CL_InitOnceForAllClients();
+        Com_LocalClient_SetPrimary(0, 1);
+    }
+
+
+    com_frameTime = Sys_Milliseconds();
+    Com_StartupVariable(0);
+
+#ifndef BO1_DEDICATED
+    if (IsDedicatedServer())
+    {
+        R_InitWorkerThreads();
+    }
+    else
+    {
+        r_smp_worker_threads = _Dvar_RegisterInt("r_smp_worker_threads",
+            Sys_GetDefaultWorkerThreadsCount(),
+            2,
+            8,
+            0,
+            "Number of worker threads");
+
+        R_InitThreads();
+
+        //BO1_NULLSUB();
+        CL_InitRenderer();
+        Expression_Init();
+        //BO1_NULLSUB();
+        iassert(!cls.soundStarted);
+        cls.soundStarted = 1;
+        SND_Init();
+        CG_SndGameReset();
+        Voice_Init();
+        R_Cinematic_Init();
+    }
+#else
+    R_InitWorkerThreads();
+#endif
+
+    // zombies: SP Com_Init registers two front-end dvars here (SP 0x0082d25f..0x0082d28b, flags 0x4000). The SP
+    // front end's main.menu onOpen tests ui_skipMainLockout (openMenuOnDvar ... "main_lockout" / "main_text");
+    // SP UI_SetActiveMenu sets it. MP menus never read them.
+    _Dvar_RegisterBool("ui_skipMainLockout", 0, 0x4000u, "");
+    _Dvar_RegisterBool("ui_playCoastOutroMovie", 0, 0x4000u, "");
+
+    Sys_LoadingKeepAlive();
+    Live_Init();
+    PC_InitSigninState();
+    // zombies: SP signs the local controller in here (SP 0x004D2E30 -> 0x004E63C0); see live_win.cpp.
+    if ( bo1_zombies->current.enabled && !IsDedicatedServer() )
+        Live_LogInProfileLocally_SP(0);
+    Playlist_Init();
+    R_BeginRemoteScreenUpdate();
+    BG_EmblemsInit();
+    SV_InitServerThread();
+    Demo_InitFileHandlerSystem();
+    mjpeg_initonce();
+    COM_PlayIntroMovies();
+
+    if ( useFastFile->current.enabled )
+    {
+        PMem_EndAlloc("$init", 1u);
+        DB_SetInitializing(0);
+        v6 = Sys_Milliseconds();
+        Com_Printf(16, "end $init %d ms\n", v6 - initStartTime);
+    }
+
+    R_EndRemoteScreenUpdate(0);
+    com_fullyInitialized = 1;
+    Com_Printf(16, "--- Common Initialization Complete ---\n");
+    Com_DvarDump(6, 0);
+}
+
+void Com_InitDvars()
+{
+    unsigned int CpuCount; // eax
+
+    com_maxclients = _Dvar_RegisterInt("com_maxclients", 18, 1, 32, 0x44u, "Maximum amount of clients on the server");
+    com_freemoveScale = _Dvar_RegisterFloat(
+                                                "com_freemoveScale",
+                                                1.0,
+                                                0.0,
+                                                5.0,
+                                                0x80u,
+                                                "Scale how fast you move in com_freemove mode");
+    disconnected_ctrls = _Dvar_RegisterString(
+                                                 "disconnected_ctrls",
+                                                 (char *)"",
+                                                 0,
+                                                 "String representing the disconnected controllers");
+    // BO1TODO: cg_playerState (#1)
+    com_first_time = _Dvar_RegisterInt(
+                                         "com_first_time",
+                                         0,
+                                         0,
+                                         1,
+                                         0x4000u,
+                                         "non zero if the profile has never run the game before (only accurate after the iis)");
+    com_first_time_pc = _Dvar_RegisterInt(
+                                                "com_first_time_pc",
+                                                1,
+                                                0,
+                                                1,
+                                                1u,
+                                                "non zero if the profile has never run the game before (only accurate after the iis)");
+    // BO1TODO: cg_playerState (#2)
+#ifndef BO1_DEDICATED
+    dedicated = _Dvar_RegisterEnum("dedicated", g_dedicatedEnumNames, 0, 32, "Dedicated Server");
+    if (dedicated->current.integer)
+        _Dvar_RegisterEnum("dedicated", g_dedicatedEnumNames, 0, 64, "Dedicated Server");
+#endif
+    com_maxfps = _Dvar_RegisterInt("com_maxfps", 85, 0, 1000, 1u, "Cap frames per second");
+    arcademode = _Dvar_RegisterBool("arcademode", 0, 0x100u, "Current game is an arcade mode game");
+    zombiemode = _Dvar_RegisterBool("zombiemode", 0, 0x40u, "Current game is an zombie game");
+    // zombies: command-line switch that adds SP's code zones (code_post_gfx, patch; SP exe 0x00571DB0) after the MP
+    // ones, which this exe needs. Five's scripts (maps/_load.gsc, common_scripts/utility.gsc, ...) live in SP's
+    // code_post_gfx. Both sets together need the localize pool raise and the SndDriverGlobals rule in db_registry.cpp.
+    // Read once, at boot, by DB_LoadGraphicsAssetsForPC / DB_LoadFastFilesForPC / Load_SndDriverGlobalsAsset.
+    bo1_zombies = _Dvar_RegisterBool("bo1_zombies", 0, 0x10u, "Boot with the SP code zones (zombies); set on the command line");
+    bo1_writeconfig = _Dvar_RegisterBool("bo1_writeconfig", 0, 0, "p1 test switch: a headless -Client run writes the player config");
+    legacy_zombiemode = _Dvar_RegisterBool("legacy_zombiemode", 0, 0x40u, "Current game is a legacy zombie game");
+    zombieStopSplitScreen = _Dvar_RegisterBool(
+                                                        "zombieStopSplitScreen",
+                                                        0,
+                                                        0x40u,
+                                                        "Force Split Screen to Fullscreen (for HUD)");
+    zombietron = _Dvar_RegisterBool("zombietron", 0, 0x40u, "Current game is an zombietron top down game");
+    // zombies: SP Com_Init (SP 0x0082BCFF..0x0082BD69) registers both "discovered" dvars with 1 and the two
+    // _override dvars (1, flags 0x4000); SP GamerProfile_UpdateDvarsFromProfile (SP 0x0061F665..0x0061F6B8)
+    // sets discovered = profile value || override. So on PC Five and Dead Ops Arcade are always selectable:
+    // the front end's levels_zombie shows the Five row only when zombiefive_discovered is 1. MP registers 0.
+    // menu-1: deliberate deviation from SP (a deliberate choice): Dead Ops Arcade is not offered, so under bo1_zombies
+    // zombietron_discovered and its override are 0 (SP: 1 and 1), and zombietron_discovered is read only (0x40,
+    // not archived) so the players config's `seta zombietron_discovered "1"` cannot flip it back; the profile path
+    // (GamerProfile_UpdateDvarsFromProfile) leaves it 0 too. levels_zombie hides its row when it is not 1.
+    const bool spDiscovered = bo1_zombies && bo1_zombies->current.enabled;
+    zombietron_discovered = _Dvar_RegisterBool("zombietron_discovered", 0, spDiscovered ? 0x4040u : 0x4001u, "Zombietron mode discovered");
+    zombiefive_discovered = _Dvar_RegisterBool("zombiefive_discovered", spDiscovered, 0x4001u, "Zombie Five map discovered");
+    if (spDiscovered)
+    {
+        zombietron_discovered_override = _Dvar_RegisterBool("zombietron_discovered_override", 0, 0x4000u, "");
+        zombiefive_discovered_override = _Dvar_RegisterBool("zombiefive_discovered_override", 1, 0x4000u, "");
+    }
+
+    // BO1TODO
+    //zombiemode_path_minz_bias
+
+    _Dvar_RegisterBool(
+        "zombiefive_norandomchar",
+        0,
+        0x4000u,
+        "Forces no random character when following the end game credits");
+    blackopsmode = _Dvar_RegisterBool("blackopsmode", 0, 0x100u, "Current game is a blackops game");
+    spmode = _Dvar_RegisterBool("spmode", 0, 0x100u, "Current game is a sp game");
+#ifdef BO1_DEDICATED
+    onlinegame = _Dvar_RegisterBool(
+                                 "onlinegame",
+                                 1,
+                                 0x40u,
+                                 "Current game is an online game with stats, custom classes, unlocks");
+#else
+    if (IsDedicatedServer())
+    {
+        onlinegame = _Dvar_RegisterBool(
+            "onlinegame",
+            // Headless zombie tests are local sessions. SP player counts (0x005E6B20,
+            // 0x00642850) use the party service only for online/systemlink sessions.
+            !(Sys_IsHeadless() && bo1_zombies->current.enabled),
+            0x40u,
+            "Current game is an online game with stats, custom classes, unlocks");
+    }
+    else
+    {
+        onlinegame = _Dvar_RegisterBool(
+            "onlinegame",
+            false,
+            0,
+            "Current game is an online game with stats, custom classes, unlocks");
+    }
+#endif
+    xblive_rankedmatch = _Dvar_RegisterBool("xblive_rankedmatch", 0, 4u, "Current game is a ranked match");
+    xblive_privatematch = _Dvar_RegisterBool("xblive_privatematch", 0, 4u, "Current game is a private match");
+    useFastFile = _Dvar_RegisterBool("useFastFile", 1, 0x10u, "Enables loading data from fast files.");
+    sys_lockThreads = _Dvar_RegisterBool(
+                                            "sys_lockThreads",
+                                            0,
+                                            0,
+                                            "Prevents threads from changing CPUs; improves profiling and may fix some bugs, but can hurt performance");
+    // mod (L64): listen-server thread on the P-cores of a hybrid CPU (Sys_ModApplyPCore, threads.cpp); no-op elsewhere
+    bo1_mod_pcore = _Dvar_RegisterInt("bo1_mod_pcore", 0, 0, 2, 0,
+        "mod: hybrid CPUs: 1 = server thread on P-cores + above-normal priority, 2 = also the client threads; no-op on non-hybrid CPUs");
+    bo1_mod_priority = _Dvar_RegisterInt("bo1_mod_priority", 0, 0, 2, 0,
+        "mod: 1 = process priority class above normal + main thread above normal, 2 = high class; 0 = as started");
+    CpuCount = Sys_GetCpuCount();
+    sys_smp_allowed = _Dvar_RegisterBool("sys_smp_allowed", CpuCount > 1, 0x10u, "Allow multi-threading");
+#ifdef _DEBUG
+    com_developer = _Dvar_RegisterInt("developer", 1, 0, 2, 0, "Enable development options");
+#else
+    com_developer = _Dvar_RegisterInt("developer", 0, 0, 2, 0, "Enable development options");
+#endif
+    com_developer_script = _Dvar_RegisterBool("developer_script", 0, 0, "Enable developer script comments");
+    com_script_debugger_smoke_test = _Dvar_RegisterBool(
+                                                                         "script_debugger_smoke_test",
+                                                                         0,
+                                                                         0,
+                                                                         "perform script debugger smoke test and exit");
+    com_logfile = _Dvar_RegisterInt(
+                                    "logfile",
+                                    1,
+                                    0,
+                                    2,
+                                    0,
+                                    "Write to log file - 0 = disabled, 1 = async file write, 2 = Sync every write");
+    if ( com_logfile && !com_logfile->current.integer )
+        Dvar_SetInt((dvar_s *)com_logfile, 1);
+    com_statmon = _Dvar_RegisterBool("com_statmon", 0, 0, "Draw stats monitor");
+    com_timescale = _Dvar_RegisterFloat("com_timescale", 1.0, 0.001, 10.0, 0x11C0u, "Scale time of each frame");
+    dev_timescale = _Dvar_RegisterFloat("timescale", 1.0, 0.001, 10.0, 0x180u, "Scale time of each frame");
+    com_fixedtime = _Dvar_RegisterInt("fixedtime", 0, 0, 1000, 0x80u, "Use a fixed time rate for each frame");
+    com_maxFrameTime = _Dvar_RegisterInt(
+                                             "com_maxFrameTime",
+                                             100,
+                                             50,
+                                             5000,
+                                             0,
+                                             "Time slows down if a frame takes longer than this many milliseconds");
+    long_blocking_call = _Dvar_RegisterBool("long_blocking_call", 0, 0, "Enable SCR_DrawPleaseWait dialog");
+    sv_network_warning = _Dvar_RegisterBool("sv_network_warning", 0, 0, "Alternative enable SCR_DrawPleaseWait dialog");
+    cl_network_warning = _Dvar_RegisterBool("cl_network_warning", 0, 0, "Alternative enable SCR_DrawPleaseWait dialog");
+    sv_paused = _Dvar_RegisterInt("sv_paused", 0, 0, 2, 0x40u, "Pause the server");
+    cl_paused = _Dvar_RegisterInt("cl_paused", 0, 0, 2, 0, "Pause the client");
+    cl_paused_simple = _Dvar_RegisterBool(
+                                             "cl_paused_simple",
+                                             0,
+                                             0,
+                                             "Toggling pause won't do any additional special processing if true.");
+    com_sv_running = _Dvar_RegisterBool("sv_running", 0, 0x40u, "Server is running");
+    com_show_tty_timestamps = _Dvar_RegisterBool("show_tty_timestamps", 0, 0, "Show timestamps in tty output");
+    com_voip_resume_time = _Dvar_RegisterInt("com_voip_resume_time", 0, 0, 0x7FFFFFFF, 0, "Time at which voip can resume");
+    com_voip_bandwidth_restricted = _Dvar_RegisterBool(
+                                                                        "com_voip_bandwidth_restricted",
+                                                                        1,
+                                                                        0x40u,
+                                                                        "Use VOIP inhibitor during high bandwidth usage");
+    com_voip_disable_threshold = _Dvar_RegisterInt(
+                                                                 "com_voip_disable_threshold",
+                                                                 1200,
+                                                                 0,
+                                                                 0x7FFFFFFF,
+                                                                 0,
+                                                                 "Message size at which voip becomes disabled");
+    com_filter_output = _Dvar_RegisterBool("com_filter_output", 0, 0, "Use console filters for filtering output.");
+    com_introPlayed = _Dvar_RegisterBool("com_introPlayed", 0, 0, "Intro movie has been played");
+    com_startupIntroPlayed = _Dvar_RegisterBool(
+                                                         "com_startupIntroPlayed",
+                                                         0,
+                                                         1u,
+                                                         "Game startup intro movie(s) has been played");
+    com_desiredMenu = _Dvar_RegisterInt(
+                                            "com_desiredMenu",
+                                            0,
+                                            0,
+                                            0x7FFFFFFF,
+                                            0,
+                                            "Target menu to navigate to when possible");
+    com_skipMovies = _Dvar_RegisterBool("com_skipMovies", 0, 0, "Skip intro movies");
+    com_animCheck = _Dvar_RegisterBool("com_animCheck", 0, 0, "Check anim tree");
+    com_hiDef = _Dvar_RegisterBool("hiDef", 1, 0x40u, "True if the game video is running in high-def.");
+    com_wideScreen = _Dvar_RegisterBool(
+                                         "wideScreen",
+                                         1,
+                                         0x40u,
+                                         "True if the game video is running in 16x9 aspect, false if 4x3.");
+    doublesided_raycasts = _Dvar_RegisterBool("doublesided_raycasts", 0, 0x80u, "turn on double sided ray casts");
+    log_append = _Dvar_RegisterBool("log_append", 0, 1u, "Open log file in append mode");
+    com_waitForStreamer = _Dvar_RegisterInt(
+                                                    "waitForStreamer",
+                                                    1,
+                                                    0,
+                                                    2,
+                                                    0,
+                                                    "1) wait for initial lowmips, 2) wait for full initial texture load.");
+    dec20_Enabled = _Dvar_RegisterBool("dec20_Enabled", 0, 0x5000u, "enable dec20 terminal");
+    band_demosystem = _Dvar_RegisterInt("band_demosystem", 64000, 0, 0x7FFFFFFF, 0, "demo system bandwidth req'd");
+    band_2players = _Dvar_RegisterInt("band_2players", 64000, 0, 0x7FFFFFFF, 0, "2 player bandwidth req'd");
+    band_4players = _Dvar_RegisterInt("band_4players", 128000, 0, 0x7FFFFFFF, 0, "4 player bandwidth req'd");
+    band_6players = _Dvar_RegisterInt("band_6players", 192000, 0, 0x7FFFFFFF, 0, "8 player bandwidth req'd");
+    band_8players = _Dvar_RegisterInt("band_8players", 256000, 0, 0x7FFFFFFF, 0, "8 player bandwidth req'd");
+    band_12players = _Dvar_RegisterInt("band_12players", 384000, 0, 0x7FFFFFFF, 0, "12 player bandwidth req'd");
+    band_18players = _Dvar_RegisterInt("band_18players", 580000, 0, 0x7FFFFFFF, 0, "18 player bandwidth req'd");
+    band_lotsplayers = _Dvar_RegisterInt("band_lotsplayers", 900000, 0, 0x7FFFFFFF, 0, ">18 player bandwidth req'd");
+    band_dedicated = _Dvar_RegisterInt("band_dedicated", 2048000, 0, 0x7FFFFFFF, 0, ">18 player bandwidth req'd");
+    G_RegisterRegisterToolDvars();
+    Pregame_RegisterDvars();
+
+    // BO1TODO: add cheats
+    //dword_355E974 = _Dvar_RegisterBool("sv_EnableDevCheats", 0, 0x4000, &String);
+    //dword_35A03DC = _Dvar_RegisterBool("sv_NoClip", 0, 0x4000, &String);
+    //dword_359FB44 = _Dvar_RegisterBool("sv_FullAmmo", 0, 0x4000, &String);
+    //dword_359EB1C = _Dvar_RegisterBool("sv_InfiniteSprint", 0, 0x4000, &String);
+    //dword_359EB04 = _Dvar_RegisterBool("sv_RadarAlwaysOn", 0, 0x4000, &String);
+    //dword_355E8F0 = _Dvar_RegisterBool("sv_Invisible", 0, 0x4000, &String);
+    //dword_359EB0C = _Dvar_RegisterBool("sv_SuperPenetrate", 0, 0x4000, &String);
+    //dword_35A03B8 = _Dvar_RegisterBool("sv_TripleBullet", 0, 0x4000, &String);
+    //dword_355E8B0 = _Dvar_RegisterBool("sv_QuickHealthRecharge", 0, 0x4000, &String);
+    //dword_355E958 = _Dvar_RegisterBool("sv_InstantReload", 0, 0x4000, &String);
+    //dword_35A0364 = _Dvar_RegisterBool("sv_3xEXP", 0, 0x4000, &String);
+    //dword_359EA10 = _Dvar_RegisterBool("sv_UnlockAllIntel", 0, 0x4000, &String);
+    //dword_35B03F4 = _Dvar_RegisterBool("sv_UnlockAllSlots", 0, 0x4000, &String);
+    //dword_35A03A4 = _Dvar_RegisterBool("sv_DoubleCodPoints", 0, 0x4000, &String);
+    //dword_355E8C0 = _Dvar_RegisterBool("sv_SetAllFree", 0, 0x4000, &String);
+    //dword_35B03FC = _Dvar_RegisterBool("sv_EnableSuperuser", 0, 0x4000, &String);
+    //dword_359EA28 = _Dvar_RegisterBool("sv_MakeMeHost", 0, 0x4000, &String);
+    //dword_35A035C = _Dvar_RegisterBool("sv_DisableTheatre", 0, 0x4000, &String);
+}
+
+void __cdecl Com_ParseCommandLine(char *commandLine)
+{
+    com_consoleLines[0] = commandLine;
+    com_numConsoleLines = 1;
+    while ( *commandLine )
+    {
+        if ( *commandLine == 43 || *commandLine == 10 )
+        {
+            if ( com_numConsoleLines == 64 ) // mod (L43): retail 32
+                return;
+            com_consoleLines[com_numConsoleLines++] = commandLine + 1;
+            *commandLine = 0;
+        }
+        ++commandLine;
+    }
+}
+
+void __cdecl Com_StartupVariable(const char *match)
+{
+    const char *v1; // eax
+    const char *v2; // eax
+    int lineIndex; // [esp+2Ch] [ebp-4h]
+
+    for ( lineIndex = 0; lineIndex < com_numConsoleLines; ++lineIndex )
+    {
+        if ( !Com_StartupProcessSetCommand(lineIndex, match) )
+        {
+            Cmd_TokenizeString(com_consoleLines[lineIndex]);
+            if ( !match || !strcmp(Cmd_Argv(1), match) )
+            {
+                v1 = Cmd_Argv(0);
+                if ( I_stricmp(v1, "set") )
+                {
+                    v2 = Cmd_Argv(0);
+                    if ( !I_stricmp(v2, "seta") )
+                        Dvar_SetA_f();
+                }
+                else
+                {
+                    Dvar_Set_f();
+                }
+            }
+            Cmd_EndTokenizedString();
+        }
+    }
+}
+
+bool __cdecl Com_StartupProcessSetCommand(int lineIndex, const char *match)
+{
+    const char *v2; // eax
+    const char *v3; // eax
+    unsigned int v5; // [esp+0h] [ebp-178h]
+    int len; // [esp+58h] [ebp-120h]
+    int i; // [esp+5Ch] [ebp-11Ch]
+    char combined[260]; // [esp+60h] [ebp-118h] BYREF
+    const dvar_s *dvar; // [esp+168h] [ebp-10h]
+    int c; // [esp+16Ch] [ebp-Ch]
+    const char *dvarName; // [esp+170h] [ebp-8h]
+    bool result; // [esp+177h] [ebp-1h]
+
+    result = 0;
+    Cmd_TokenizeString(com_consoleLines[lineIndex]);
+    if ( !match || !strcmp(Cmd_Argv(1), match) )
+    {
+        v2 = Cmd_Argv(0);
+        if ( !I_stricmp(v2, "set") )
+        {
+            c = Cmd_Argc();
+            if ( c >= 3 )
+            {
+                dvarName = Cmd_Argv(1);
+                if ( Dvar_IsValidName(dvarName) )
+                {
+                    dvar = Dvar_FindVar(dvarName);
+                    if ( dvar && (dvar->flags & 0x10) != 0 )
+                    {
+                        combined[0] = 0;
+                        i = 2;
+                        len = 0;
+                        while ( i < c )
+                        {
+                            v5 = strlen(Cmd_Argv(i));
+                            if ( v5 + 1 + len >= 0xFE )
+                                break;
+                            v3 = Cmd_Argv(i);
+                            I_strncat(combined, 256, v3);
+                            if ( i != c - 1 )
+                                I_strncat(combined, 256, " ");
+                            len += v5 + 1;
+                            ++i;
+                        }
+                        Dvar_SetFromString((dvar_s *)dvar, combined);
+                        result = 1;
+                    }
+                }
+                else
+                {
+                    Com_Printf(0, "invalid variable name: %s\n", dvarName);
+                }
+            }
+            else
+            {
+                Com_Printf(0, "USAGE: set <variable> <value>\n");
+            }
+        }
+    }
+    Cmd_EndTokenizedString();
+    return result;
+}
+
+void __cdecl Com_PrintMessage(int channel, char *msg, int error)
+{
+    char v3; // [esp+23h] [ebp-25h]
+    char *v4; // [esp+28h] [ebp-20h]
+    char *v5; // [esp+2Ch] [ebp-1Ch]
+    bool v6; // [esp+40h] [ebp-8h]
+
+    v6 = channel >= 31 && !Con_IsChannelVisible(CON_DEST_CONSOLE, channel, 0);
+    if ( !v6 || error == 2 || error == 3 )
+    {
+        //PbCaptureConsoleOutput(msg, 4096);
+        Sys_EnterCriticalSection(CRITSECT_CONSOLE);
+        if ( (int)(strlen(msg) + 1) <= 256 )
+        {
+            v5 = msg;
+            v4 = com_consoleBuffer[com_consoleBufferCurLine];
+            do
+            {
+                v3 = *v5;
+                *v4++ = *v5++;
+            }
+            while ( v3 );
+        }
+        else
+        {
+            strncpy(com_consoleBuffer[com_consoleBufferCurLine], msg, 0xFFu);
+            com_consoleBuffer[com_consoleBufferCurLine][255] = 0;
+        }
+        if ( ++com_consoleBufferCurLine >= 100 )
+            com_consoleBufferCurLine = 0;
+        Sys_LeaveCriticalSection(CRITSECT_CONSOLE);
+        if ( rd_buffer )
+        {
+            if ( channel != 6 )
+            {
+                Sys_EnterCriticalSection(CRITSECT_RD_BUFFER);
+                if ( strlen(rd_buffer) + strlen(msg) > rd_buffersize - 1 )
+                {
+                    rd_flush(rd_buffer);
+                    *rd_buffer = 0;
+                }
+                I_strncat(rd_buffer, rd_buffersize, msg);
+                Sys_LeaveCriticalSection(CRITSECT_RD_BUFFER);
+            }
+        }
+        else
+        {
+            if ( channel != 6  )
+            {
+                if (Sys_IsRemoteDebugServer() && Sys_DebugSocketReady(0))
+                {
+                    Sys_WriteDebugSocketMessageType(0x2Au);
+                    Sys_WriteDebugSocketString(msg);
+                    Sys_EndWriteDebugSocket();
+                }
+
+                if (!IsDedicatedServer())
+                {
+                    CL_ConsolePrint(0, channel, msg, 0, 0, 32 * error);
+                }
+            }
+
+            if ( *msg == 94 && msg[1] )
+                msg += 2;
+            if ( channel != 6
+                && (!com_filter_output
+                 || !com_filter_output->current.enabled
+                 || Con_IsChannelVisible(CON_DEST_CONSOLE, channel, 3)) )
+            {
+                Platform_Print(msg);
+            }
+            if ( Monkey_IsRunning() )
+            {
+                Sys_EnterCriticalSection(CRITSECT_CONSOLE);
+                Monkey_ComPrintHook(msg);
+                Sys_LeaveCriticalSection(CRITSECT_CONSOLE);
+            }
+            if ( channel != 7 && com_logfile && com_logfile->current.integer )
+                Com_LogPrintMessage(channel, msg);
+        }
+    }
+}
+
+void Com_Printf(int channel, const char *fmt, ...)
+{
+    char string[4100]; // [esp+8h] [ebp-1008h] BYREF
+    va_list va; // [esp+1020h] [ebp+10h] BYREF
+
+    va_start(va, fmt);
+    if ( channel < 31 || Con_IsChannelVisible(CON_DEST_CONSOLE, channel, 0) )
+    {
+        _vsnprintf(string, 0x1000u, fmt, va);
+        string[4095] = 0;
+        #if defined(__ANDROID__)
+        va_end(va);
+#endif
+        Com_PrintMessage(channel, string, 0);
+    }
+#if defined(__ANDROID__)
+    else
+        va_end(va);
+#endif
+}
+
+void Com_DPrintf(int channel, const char *fmt, ...)
+{
+    char string[4100]; // [esp+8h] [ebp-1008h] BYREF
+    va_list va; // [esp+1020h] [ebp+10h] BYREF
+
+    va_start(va, fmt);
+    if ( com_developer
+        && com_developer->current.integer
+        && (channel < 31 || Con_IsChannelVisible(CON_DEST_CONSOLE, channel, 0)) )
+    {
+        _vsnprintf(string, 0x1000u, fmt, va);
+        string[4095] = 0;
+        #if defined(__ANDROID__)
+        va_end(va);
+#endif
+        Com_Printf(channel, "%s", string);
+    }
+#if defined(__ANDROID__)
+    else
+        va_end(va);
+#endif
+}
+
+void Com_PrintError(int channel, const char *fmt, ...)
+{
+    char dest[4096]; // [esp+14h] [ebp-1008h] BYREF
+    int v3; // [esp+1018h] [ebp-4h]
+    va_list va; // [esp+102Ch] [ebp+10h] BYREF
+
+    va_start(va, fmt);
+    if (I_stristr(fmt, "error"))
+        I_strncpyz(dest, "^1", 4096);
+    else
+        I_strncpyz(dest, "^1Error: ", 4096);
+    v3 = &dest[strlen(dest) + 1] - &dest[1];
+    _vsnprintf(&dest[v3], 4096 - v3, fmt, va);
+    dest[4095] = 0;
+    ++com_errorPrintsCount;
+    #if defined(__ANDROID__)
+        va_end(va);
+#endif
+    Com_PrintMessage(channel, dest, 3);
+}
+
+void Com_PrintWarning(int channel, const char *fmt, ...)
+{
+    char dest[4096]; // [esp+14h] [ebp-1008h] BYREF
+    int v3; // [esp+1018h] [ebp-4h]
+    va_list va; // [esp+102Ch] [ebp+10h] BYREF
+
+    va_start(va, fmt);
+    I_strncpyz(dest, "^3", 4096);
+    v3 = &dest[strlen(dest) + 1] - &dest[1];
+    _vsnprintf(&dest[v3], 4096 - v3, fmt, va);
+    dest[4095] = 0;
+    #if defined(__ANDROID__)
+        va_end(va);
+#endif
+    Com_PrintMessage(channel, dest, 2);
+}
+
+void __cdecl Com_LogPrintMessage(int channel, char *msg)
+{
+    Sys_EnterCriticalSection(CRITSECT_CONSOLE);
+    if ( FS_Initialized() )
+    {
+        if ( !logfile )
+            Com_OpenLogFile();
+        if ( logfile )
+        {
+            FS_WriteToDemo(msg, strlen(msg), logfile);
+            if ( com_logfile->current.integer > 1 )
+                FS_Flush(logfile);
+        }
+    }
+    Sys_LeaveCriticalSection(CRITSECT_CONSOLE);
+}
+
+void Com_AddStartupCommands()
+{
+    int ControllerIndex; // eax
+    int i; // [esp+0h] [ebp-414h]
+    char localBuffer[1036]; // [esp+4h] [ebp-410h] BYREF
+
+    for ( i = 0; i < com_numConsoleLines; ++i )
+    {
+        if ( *com_consoleLines[i] )
+        {
+            if ( !Com_StartupProcessSetCommand(i, 0) )
+            {
+                Com_sprintf(localBuffer, 0x401u, "%s\n", com_consoleLines[i]);
+                ControllerIndex = Com_LocalClient_GetControllerIndex(0);
+                Cbuf_ExecuteBuffer(0, ControllerIndex, localBuffer);
+            }
+        }
+    }
+}
+
+const char *__cdecl Com_PlayerConfigName()
+{
+    return bo1_zombies && bo1_zombies->current.enabled ? "config.cfg" : "config_mp.cfg";
+}
+
+void __cdecl Com_PlayerConfigPath(char *path, int size)
+{
+    const char *fsGame = Dvar_GetString("fs_game");
+
+    // mod: bo1_mod_sharedconfig 1 (the launcher sets it; +set on the command line, read before the startup exec):
+    // one player config for every mod - players\config.cfg - so binds / sensitivity follow the player into horde,
+    // zinfo, mapkit... (User: a mapkit map came up with default controls). 0 / unset = retail per-fs_game config.
+    if ( Dvar_GetBool("bo1_mod_sharedconfig") )
+        fsGame = 0;
+    if ( bo1_zombies && bo1_zombies->current.enabled && fsGame && *fsGame )
+        Com_sprintf(path, size, "%s/%s", fsGame, "config.cfg");
+    else
+        I_strncpyz(path, Com_PlayerConfigName(), size);
+}
+
+void COM_PlayIntroMovies()
+{
+    if (!IsDedicatedServer())
+    {
+        // BO1TODO: intro movies
+    }
+}
+
+void __cdecl Com_SetScriptSettings()
+{
+    bool v0; // [esp+0h] [ebp-Ch]
+    int abort_on_error; // [esp+4h] [ebp-8h]
+
+    v0 = com_developer->current.integer || com_logfile->current.integer;
+    abort_on_error = com_developer->current.integer;
+    Scr_Settings(v0, com_developer_script->current.color[0], abort_on_error, SCRIPTINSTANCE_SERVER);
+    Scr_Settings(v0, com_developer_script->current.color[0], abort_on_error, SCRIPTINSTANCE_CLIENT);
+}
+
+void __cdecl Com_Error_f()
+{
+    if ( Cmd_Argc() <= 1 )
+        Com_Error(ERR_FATAL, "Testing fatal error");
+    else
+        Com_Error(ERR_DROP, "Testing drop error");
+}
+
+void __cdecl Com_Freeze_f()
+{
+    const char *v0; // eax
+    unsigned int start; // [esp+10h] [ebp-Ch]
+    float s; // [esp+18h] [ebp-4h]
+
+    if ( Cmd_Argc() == 2 )
+    {
+        v0 = Cmd_Argv(1);
+        s = atof(v0);
+        start = Sys_Milliseconds();
+        while ( (double)(int)(Sys_Milliseconds() - start) * 0.001 <= s )
+            ;
+    }
+    else
+    {
+        Com_Printf(0, "freeze <seconds>\n");
+    }
+}
+
+void __cdecl Com_Crash_f()
+{
+    //MEMORY[0] = 305419896;
+    int *ptr = NULL;
+    *ptr = 0x12345678;
+}
+
+void __cdecl Com_Assert_f()
+{
+    ;
+}
+
+static void Com_InitContentPacks_SP()
+{
+    static const struct { int pack; const char *zone; } packs[] = {
+        { 8, "zombie_cosmodrome" }, { 16, "zombie_coast" }, { 32, "zombie_temple" }, { 4, "zombie_cod5_prototype" },
+        { 64, "zombie_moon" },
+    };
+
+    if ( !bo1_zombies || !bo1_zombies->current.enabled )
+        return;
+    for ( int i = 0; i < ARRAY_COUNT(packs); ++i )
+    {
+        if ( !DB_FileExists(packs[i].zone, FFD_DEFAULT) )
+        {
+            Com_Printf(16, "content pack %d not installed (%s.ff missing)\n", packs[i].pack, packs[i].zone);
+            continue;
+        }
+        switch ( packs[i].pack )
+        {
+        case 4:
+            _Dvar_RegisterBool("dlc1", 1, 0, "");
+            break;
+        case 8:
+            _Dvar_RegisterBool("dlc2", 1, 0, "");
+            break;
+        case 16:
+            _Dvar_RegisterBool("dlc3", 1, 0, "");
+            break;
+        case 32:
+            _Dvar_RegisterBool("dlc4", 1, 0, "");
+            break;
+        case 64:
+            _Dvar_RegisterBool("dlc1", 1, 0, "");
+            _Dvar_RegisterBool("dlc5", 1, 0, "");
+            break;
+        }
+    }
+}
+#endif // genuine common startup bodies
+
+int g_loadedPreXAssets = 0;
+void __cdecl Com_InitCodeXAssets()
+{
+    XZoneInfo zoneInfo[4]; // [esp+0h] [ebp-34h] BYREF
+    unsigned int zoneCount; // [esp+30h] [ebp-4h]
+
+    DB_InitThread();
+    if ( !g_loadedPreXAssets )
+    {
+        g_loadedPreXAssets = 1;
+        // zombies: code_pre_gfx_mp in both modes. SP's Com_InitCodeXAssets (0x00457300) loads code_pre_gfx, but that
+        // holds SP configs only; this exe's init needs its own (default_mp.cfg, init_dvars_pc_dedicated_mp.cfg and the
+        // mp/devconsole_restrict_access_*.csv tables, which are requested before code_post_gfx brings the default
+        // stringtable). It adds 68 localize entries and no snddriverglobals, so the SP post-gfx set still fits.
+        zoneInfo[0].name = "code_pre_gfx_mp";
+        zoneInfo[0].allocFlags = 1;
+        zoneInfo[0].freeFlags = 0;
+        zoneCount = 1;
+        DB_LoadXAssets(zoneInfo, 1u, 0);
+        DB_SyncXAssets();
+    }
 }

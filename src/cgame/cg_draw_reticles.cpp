@@ -1038,9 +1038,16 @@ double __cdecl CG_GetVehicleCrossHairAlpha(int localClientNum)
             angleDiff_4 = (float)vehicle->currentState.u.vehicle.gunYaw * 0.0054931641;
             angleDiff = (float)vehicle->currentState.u.vehicle.gunPitch * 0.0054931641;
         }
+#if defined(__ANDROID__)
+        // Preserve the validated reference expression's actual evaluation.
+        // Its chained comparison needs a separate retail-behavior audit.
+        if ( ((float)(angleDiff_4 + s_arcEpsilon) < (weapDef->leftArc - weapDef->rightArc))
+            < (float)(angleDiff_4 - s_arcEpsilon) )
+#else
         if ( (float)(angleDiff_4 + s_arcEpsilon) < weapDef->leftArc
             //&& COERCE_FLOAT(LODWORD(weapDef->rightArc) ^ _mask__NegFloat_) < (float)(angleDiff_4 - s_arcEpsilon) )
             -(weapDef->rightArc) < (float)(angleDiff_4 - s_arcEpsilon) )
+#endif
         {
             if ( (float)(angleDiff + s_arcEpsilon) < weapDef->bottomArc
                 //&& COERCE_FLOAT(LODWORD(weapDef->topArc) ^ _mask__NegFloat_) < (float)(angleDiff - s_arcEpsilon) )

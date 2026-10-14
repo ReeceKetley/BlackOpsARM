@@ -10,7 +10,13 @@ FxEffectContainer *__cdecl FX_EffectFromHandle(FxSystem *system, unsigned __int1
     {
         __debugbreak();
     }
+#if defined(__ANDROID__)
+    static_assert(sizeof(FxEffectContainer) % 4 == 0);
+    static_assert(1024 * sizeof(FxEffectContainer) / 4 <= 0xFFFF);
+    if ( handle >= 1024 * sizeof(FxEffectContainer) / 4 || handle % (sizeof(FxEffectContainer) / 4) )
+#else
     if ( handle >= 0xD000u || handle % 0x34u )
+#endif
     {
         v2 = va("%p %i", system->effects, handle);
         if ( !Assert_MyHandler(

@@ -272,8 +272,8 @@ int __cdecl R_ShaderConstantSet_CopyToFrontEndDataOut(const ShaderConstantSet *s
 // mod (L43): r_mod_scsShare 1. The frame's set index is 7 bits of the 64-bit draw-surf sort key (XModelDrawSurf_EncodeIndex:
 // bits 16-19 and 22-24; XModelDrawSurf_DecodeIndex), so the 128 slots can't grow without re-packing the key. Instead a
 // set byte-identical to one already copied this frame reuses that slot: same constants, same draw. Off = retail.
-volatile long g_scsFrameStamp = 1; // bumped where shaderConstantSetCount is reset (R_ToggleSmpFrame, r_rendercmds.cpp)
-static volatile long s_scsReadyStamp[128]; // g_scsFrameStamp once slot i is fully copied
+Bo1ShaderFrameStamp g_scsFrameStamp{1}; // bumped where shaderConstantSetCount is reset (R_ToggleSmpFrame, r_rendercmds.cpp)
+static Bo1ShaderFrameStamp s_scsReadyStamp[128]{}; // g_scsFrameStamp once slot i is fully copied
 
 int __cdecl CopyShaderConstantSetToBackendData(const ShaderConstantSet *scs)
 {
@@ -307,7 +307,11 @@ int __cdecl CopyShaderConstantSetToBackendData(const ShaderConstantSet *scs)
     else
     {
         memcpy(&frontEndDataOut->shaderConstantSets[scsIndex], scs, sizeof(frontEndDataOut->shaderConstantSets[scsIndex]));
+#if defined(__ANDROID__)
+        s_scsReadyStamp[scsIndex].store(g_scsFrameStamp.load(), std::memory_order_seq_cst);
+#else
         _InterlockedExchange(&s_scsReadyStamp[scsIndex], g_scsFrameStamp); // mod (L43): r_mod_scsShare (full barrier after the copy)
+#endif
     }
     return scsIndex;
 }
@@ -431,7 +435,11 @@ void __cdecl R_ShaderConstantShowDebug(
                         constName = R_FindScriptableConstantName_BySource(scs->constantSource[i]);
                         if ( constName )
                         {
+#if defined(__ANDROID__)
+                            snprintf(
+#else
                             _snprintf(
+#endif
                                 text,
                                 0x200u,
                                 "%d:%s %.2f %.2f %.2f %.2f",

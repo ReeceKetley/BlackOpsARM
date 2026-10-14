@@ -6,6 +6,10 @@
 #include <qcommon/threads.h>
 #include <qcommon/sv_msg_write.h>
 
+#if defined(__ANDROID__)
+// The original byte-221 visibility test is the link flag, not bmodel.
+static_assert(offsetof(entityState_s, clientLinkInfo) + offsetof(clientLinkInfo_t, flags) == 221);
+#endif
 void __cdecl SV_ArchiveSnapshot(msg_t *msg)
 {
     MatchState *MatchStateLocal; // eax
@@ -37,7 +41,11 @@ void __cdecl SV_ArchiveSnapshot(msg_t *msg)
     int num_clients; // [esp+ACh] [ebp-27E4h]
     gentity_s *v28; // [esp+B0h] [ebp-27E0h]
     int v29; // [esp+B4h] [ebp-27DCh]
+#if defined(__ANDROID__)
+    int lastEntityNum;
+#else
     float v30; // [esp+B8h] [ebp-27D8h]
+#endif
     float *p_number; // [esp+BCh] [ebp-27D4h]
     archivedEntity_s to; // [esp+C0h] [ebp-27D0h] BYREF
     int i; // [esp+1C8h] [ebp-26C8h]
@@ -51,10 +59,15 @@ void __cdecl SV_ArchiveSnapshot(msg_t *msg)
     int savedregs; // [esp+2890h] [ebp+0h] BYREF
 
     v37 = 0;
+#if defined(__ANDROID__)
+    snapInfo = {};
+    snapInfo.archived = true;
+#else
     *(unsigned int *)&snapInfo.fromBaseline = 256;
     snapInfo.packetEntityType = ANALYZE_DATATYPE_ENTITYTYPE_GENERALENTITY;
     *(unsigned int *)&snapInfo.packetEntityTypeArchived = 0;
     memset(&snapInfo, 0, 12);
+#endif
     if ( !svsHeaderValid
         && !Assert_MyHandler(
                     "C:\\projects_pc\\cod\\codsrc\\src\\server_mp\\sv_archive_mp.cpp",
@@ -220,7 +233,11 @@ void __cdecl SV_ArchiveSnapshot(msg_t *msg)
         }
         MSG_WriteBit0(msg);
         MSG_ClearLastReferencedEntity(msg);
+#if defined(__ANDROID__)
+        lastEntityNum = -1;
+#else
         v30 = NAN;
+#endif
 
         for ( num = 0; num < svsHeader.num_entities; ++num )
         {
@@ -233,12 +250,17 @@ void __cdecl SV_ArchiveSnapshot(msg_t *msg)
                 {
                     v4 = va(
                                  "entnum: %d vs %d, eType: %d, origin: %f %f %f",
+#if defined(__ANDROID__)
+                                 v28->s.number, num, static_cast<int>(v28->s.eType),
+                                 v28->r.currentOrigin[0], v28->r.currentOrigin[1], v28->r.currentOrigin[2]);
+#else
                                  *(unsigned int *)p_number,
                                  num,
                                  *((__int16 *)p_number + 95),
                                  p_number[73],
                                  p_number[74],
                                  p_number[75]);
+#endif
                     if ( !Assert_MyHandler(
                                     "C:\\projects_pc\\cod\\codsrc\\src\\server_mp\\sv_archive_mp.cpp",
                                     301,
@@ -248,15 +270,28 @@ void __cdecl SV_ArchiveSnapshot(msg_t *msg)
                                     v4) )
                         __debugbreak();
                 }
+#if defined(__ANDROID__)
+                iassert(svsHeader.svEntities && v28->s.number >= 0 && v28->s.number < svsHeader.num_entities);
+                if (v28->r.broadcastTime || (v28->s.clientLinkInfo.flags & 1) != 0
+                    || (v28->r.svFlags & 1) == 0
+                    && ((v28->r.svFlags & 0x18) != 0 || svsHeader.svEntities[v28->s.number].numClusters)
+                    && (v28->r.svFlags & 0x80) == 0)
+#else
                 if ( *((unsigned int *)p_number + 59)
                     || (*((_BYTE *)p_number + 221) & 1) != 0
                     || (*((_BYTE *)p_number + 226) & 1) == 0
                     && ((*((_BYTE *)p_number + 226) & 0x18) != 0 || svsHeader.svEntities[*(unsigned int *)p_number].numClusters)
                     && (*((_BYTE *)p_number + 226) & 0x80) == 0 )
+#endif
                 {
+#if defined(__ANDROID__)
+                    v38 = &svsHeader.svEntities[v28->s.number].baseline;
+                    if (!v38
+#else
                     LODWORD(v5) = 360 * *(unsigned int *)p_number;
                     v38 = (archivedEntity_s *)((char *)&svsHeader.svEntities->baseline + LODWORD(v5));
                     if ( (svEntity_s *)((char *)svsHeader.svEntities + LODWORD(v5)) == (svEntity_s *)-4
+#endif
                         && !Assert_MyHandler(
                                     "C:\\projects_pc\\cod\\codsrc\\src\\server_mp\\sv_archive_mp.cpp",
                                     319,
@@ -266,6 +301,14 @@ void __cdecl SV_ArchiveSnapshot(msg_t *msg)
                     {
                         __debugbreak();
                     }
+#if defined(__ANDROID__)
+                    to.s = v28->s;
+                    to.r.svFlags = v28->r.svFlags;
+                    if (v28->r.broadcastTime) to.r.svFlags |= 8u;
+                    to.r.clientMask[0] = v28->r.clientMask[0];
+                    memcpy(to.r.absmin, v28->r.absmin, sizeof(to.r.absmin));
+                    memcpy(to.r.absmax, v28->r.absmax, sizeof(to.r.absmax));
+#else
                     memcpy(&to, p_number, 0xE0u);
                     to.r.svFlags = *((unsigned __int8 *)p_number + 226);
                     if ( *((unsigned int *)p_number + 59) )
@@ -277,9 +320,18 @@ void __cdecl SV_ArchiveSnapshot(msg_t *msg)
                     to.r.absmax[0] = p_number[70];
                     to.r.absmax[1] = p_number[71];
                     to.r.absmax[2] = p_number[72];
+#endif
+#if defined(__ANDROID__)
+                    if (lastEntityNum == v28->s.number)
+#else
                     if ( LODWORD(v30) == *(unsigned int *)p_number )
+#endif
                     {
+#if defined(__ANDROID__)
+                        v6 = va("lastEntityNum is %i, cur entnum is %i", lastEntityNum, v28->s.number);
+#else
                         v6 = va("lastEntityNum is %i, cur entnum is %i", v30, *(unsigned int *)p_number);
+#endif
                         if ( !Assert_MyHandler(
                                         "C:\\projects_pc\\cod\\codsrc\\src\\server_mp\\sv_archive_mp.cpp",
                                         332,
@@ -293,7 +345,11 @@ void __cdecl SV_ArchiveSnapshot(msg_t *msg)
                     if ( MSG_WriteDeltaArchivedEntity(&snapInfo, msg, svsHeader.time, v38, &to, DELTA_FLAGS_FORCE) )
                         ++svsHeader.archivedEntityCount;
                     snapInfo.fromBaseline = 0;
+#if defined(__ANDROID__)
+                    lastEntityNum = v28->s.number;
+#else
                     v30 = *p_number;
+#endif
                 }
             }
         }
@@ -364,12 +420,17 @@ LABEL_84:
             {
                 v9 = va(
                              "entnum: %d vs %d, eType: %d, origin: %f %f %f",
+#if defined(__ANDROID__)
+                             v28->s.number, numa, static_cast<int>(v28->s.eType),
+                             v28->r.currentOrigin[0], v28->r.currentOrigin[1], v28->r.currentOrigin[2]);
+#else
                              *(unsigned int *)p_number,
                              numa,
                              *((__int16 *)p_number + 95),
                              p_number[73],
                              p_number[74],
                              p_number[75]);
+#endif
                 if ( !Assert_MyHandler(
                                 "C:\\projects_pc\\cod\\codsrc\\src\\server_mp\\sv_archive_mp.cpp",
                                 440,
@@ -379,15 +440,28 @@ LABEL_84:
                                 v9) )
                     __debugbreak();
             }
+#if defined(__ANDROID__)
+            iassert(svsHeader.svEntities && v28->s.number >= 0 && v28->s.number < svsHeader.num_entities);
+            if (v28->r.broadcastTime || (v28->s.clientLinkInfo.flags & 1) != 0
+                || (v28->r.svFlags & 1) == 0
+                && ((v28->r.svFlags & 0x18) != 0 || svsHeader.svEntities[v28->s.number].numClusters)
+                && (v28->r.svFlags & 0x80) == 0)
+#else
             if ( *((unsigned int *)p_number + 59)
                 || (*((_BYTE *)p_number + 221) & 1) != 0
                 || (*((_BYTE *)p_number + 226) & 1) == 0
                 && ((*((_BYTE *)p_number + 226) & 0x18) != 0 || svsHeader.svEntities[*(unsigned int *)p_number].numClusters)
                 && (*((_BYTE *)p_number + 226) & 0x80) == 0 )
+#endif
             {
+#if defined(__ANDROID__)
+                v38 = &svsHeader.svEntities[v28->s.number].baseline;
+                if (!v38
+#else
                 LODWORD(v10) = 360 * *(unsigned int *)p_number;
                 v38 = (archivedEntity_s *)((char *)&svsHeader.svEntities->baseline + LODWORD(v10));
                 if ( (svEntity_s *)((char *)svsHeader.svEntities + LODWORD(v10)) == (svEntity_s *)-4
+#endif
                     && !Assert_MyHandler(
                                 "C:\\projects_pc\\cod\\codsrc\\src\\server_mp\\sv_archive_mp.cpp",
                                 458,
@@ -399,6 +473,14 @@ LABEL_84:
                 }
                 v21 = &svsHeader.cachedSnapshotEntities[svsHeader.nextCachedSnapshotEntities
                                                                                             % svsHeader.numCachedSnapshotEntities];
+#if defined(__ANDROID__)
+                v21->s = v28->s;
+                v21->r.svFlags = v28->r.svFlags;
+                if (v28->r.broadcastTime) v21->r.svFlags |= 8u;
+                v21->r.clientMask[0] = v28->r.clientMask[0];
+                memcpy(v21->r.absmin, v28->r.absmin, sizeof(v21->r.absmin));
+                memcpy(v21->r.absmax, v28->r.absmax, sizeof(v21->r.absmax));
+#else
                 memcpy(v21, p_number, 0xE0u);
                 v21->r.svFlags = *((unsigned __int8 *)p_number + 226);
                 if ( *((unsigned int *)p_number + 59) )
@@ -414,6 +496,7 @@ LABEL_84:
                 v21->r.absmax[0] = p_number[70];
                 absmax[1] = v12[1];
                 absmax[2] = v12[2];
+#endif
                 snapInfo.fromBaseline = 1;
                 MSG_WriteDeltaArchivedEntity(&snapInfo, msg, svsHeader.time, v38, v21, DELTA_FLAGS_FORCE);
                 ++svsHeader.archivedEntityCount;

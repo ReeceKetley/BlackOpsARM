@@ -1,4 +1,7 @@
 #include "rb_sky.h"
+#if defined(__ANDROID__)
+#include <platform/win32_compat/win32_time.h>
+#endif
 #include "rb_shade.h"
 #include "r_dvars.h"
 #include "rb_logfile.h"
@@ -135,7 +138,11 @@ unsigned int __cdecl RB_CalcSunSpriteSamples()
       hr = occlusionQuery->GetData(&sampleCount, 4, 1);
     if ( hr != 1 )
       break;
+#if defined(__ANDROID__)
+    bo1::win32::Sleep(0);
+#else
     Sleep(0);
+#endif
   }
   if ( hr )
     return 256;

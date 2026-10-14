@@ -1,5 +1,8 @@
 #pragma once
 
+#if defined(__ANDROID__)
+#include <platform/win32_compat/windows_declarations.h>
+#else
 #include <ddraw.h>
 
 // genius in training
@@ -18,6 +21,7 @@ struct __declspec(align(4)) DDraw // sizeof=0x14
     //~DDraw();
     static DDraw *Instance();
 };
+#endif
 
 unsigned int __cdecl R_AvailableTextureMemory();
 unsigned int __cdecl R_VideoMemory();

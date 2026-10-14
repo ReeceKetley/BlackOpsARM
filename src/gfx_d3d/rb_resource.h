@@ -22,12 +22,18 @@ enum Action_t : __int32 // not a real enum
 struct r_resource_action // sizeof=0x18
 {                                       // XREF: .data:r_resource_action * resourceActions/r
     Action_t action;
-    void *resource;
+    union {
+        void *resource;
+        void (__cdecl *callback)();
+        void (__cdecl *callbackParam)(void *);
+    };
     void *data;
     int p1;
     int p2;
     int p3;
 };
+static_assert(sizeof(r_resource_action) == (sizeof(void *) == 8 ? 40 : 24));
+static_assert(sizeof(void *) == sizeof(void (__cdecl *)()));
 
 void __cdecl RB_Resource_Lock();
 void __cdecl RB_Resource_Unlock();
