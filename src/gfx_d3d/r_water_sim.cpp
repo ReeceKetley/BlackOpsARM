@@ -1,4 +1,7 @@
 #include "r_water_sim.h"
+#if defined(__ANDROID__)
+#include <platform/android/water_mutex.h>
+#endif
 #include "r_init.h"
 #include <qcommon/com_bsp.h>
 #include "r_foliage.h"
@@ -385,7 +388,11 @@ void __cdecl R_InitWaterSimulation()
         numFreeVertBlocks = 0;
         for ( n = 0; n < 0x320; ++n )
             freeVertBlocks[numFreeVertBlocks++] = 289 * n;
+#if defined(__ANDROID__)
+        waterUpdateMutex = bo1::android::InitializeWaterUpdateMutex();
+#else
         waterUpdateMutex = CreateMutexA(0, 0, 0);
+#endif
         data.sprayMaterial = Material_RegisterHandle((char*)"water_dynamic_spray", 6);
         R_WaterSimulationRestart();
     }
@@ -2493,12 +2500,20 @@ void __cdecl R_WaterSimulationCmd(const WaterSimulationCmd *rawdata)
 
 unsigned int LockUpdateMutex()
 {
+#if defined(__ANDROID__)
+    return bo1::android::LockWaterUpdateMutex(waterUpdateMutex);
+#else
     return WaitForSingleObject(waterUpdateMutex, 0xFFFFFFFF);
+#endif
 }
 
 bool UnlockUpdateMutex()
 {
+#if defined(__ANDROID__)
+    return bo1::android::UnlockWaterUpdateMutex(waterUpdateMutex);
+#else
     return ReleaseMutex(waterUpdateMutex);
+#endif
 }
 
 // Pack the shader's byte format after rounding, with saturation at each end.

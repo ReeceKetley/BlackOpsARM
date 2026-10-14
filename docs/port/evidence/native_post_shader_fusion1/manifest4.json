@@ -1,0 +1,12 @@
+{
+  "bloomApplyLDR-pass0.vs.bin": {
+    "bytes": 336,
+    "sha256": "bb7360f2413c64e5c03907a45ed422be1dfdeddb2ea5910732470d22386a19cd",
+    "disassemble_hresult": 0
+  },
+  "postFxColorMaterial-pass0.vs.bin": {
+    "bytes": 336,
+    "sha256": "bb7360f2413c64e5c03907a45ed422be1dfdeddb2ea5910732470d22386a19cd",
+    "disassemble_hresult": 0
+  }
+}

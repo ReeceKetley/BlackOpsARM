@@ -1207,7 +1207,7 @@ void __cdecl SL_FreeString(scriptInstance_t inst, unsigned int stringValue, RefS
     }
 }
 
-#if !defined(BO1_STRING_POOL_GATE)
+#if !defined(BO1_STRING_POOL_GATE) || defined(BO1_NATIVE_STRING_UTILS)
 void __cdecl Scr_SetStringLiveUpdateSafe(unsigned __int16 *to, char *value, scriptInstance_t inst)
 {
     int substrLen; // [esp+0h] [ebp-94h]
@@ -1287,7 +1287,7 @@ unsigned int __cdecl SL_GetStringForFloat(float f, scriptInstance_t inst)
     return SL_GetString_(inst, tempString, 0, 15);
 }
 
-#if !defined(BO1_STRING_POOL_GATE)
+#if !defined(BO1_STRING_POOL_GATE) || defined(BO1_NATIVE_STRING_UTILS)
 unsigned int __cdecl SL_GetStringForInt(scriptInstance_t inst, int i)
 {
     char tempString[132]; // [esp+0h] [ebp-88h] BYREF

@@ -1,4 +1,10 @@
 #include "g_sp_client.h"
+#if defined(__ANDROID__)
+#include <shared_mutex>
+#include <cstdio>
+// These two uses scan only numeric fields; no secure-CRT string capacities.
+#define sscanf_s std::sscanf
+#endif
 #include <Windows.h>
 #include "g_sp_levelstart.h"
 #include "g_sp_ext.h"
@@ -95,7 +101,15 @@ static int g_testClientActiveFrames;
 static bool g_addingHeadlessTestClient;
 // x6: headless -Client harness - the fight command computed on the server thread for the LOCAL client, applied by the
 // client's own CL_CreateCmd (G_SP_HeadlessLocalClientCommand), so the rendered view is the harness player's.
+#if defined(__ANDROID__)
+static std::shared_mutex g_localFightLock;
+static void AcquireSRWLockExclusive(std::shared_mutex *lock) { lock->lock(); }
+static void ReleaseSRWLockExclusive(std::shared_mutex *lock) { lock->unlock(); }
+static void AcquireSRWLockShared(std::shared_mutex *lock) { lock->lock_shared(); }
+static void ReleaseSRWLockShared(std::shared_mutex *lock) { lock->unlock_shared(); }
+#else
 static SRWLOCK g_localFightLock = SRWLOCK_INIT;
+#endif
 static usercmd_s g_localFightCmd;
 static bool g_localFightValid;
 static bool g_localFightWeaponOverride;

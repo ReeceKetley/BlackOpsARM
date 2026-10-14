@@ -1,4 +1,13 @@
 #include "rb_shade.h"
+#if defined(__ANDROID__) && defined(BO1_NATIVE_FULLSCREEN_TRIANGLE) && BO1_NATIVE_FULLSCREEN_TRIANGLE
+#include "platform/android/fullscreen_triangle.h"
+#endif
+#if defined(__ANDROID__) && defined(BO1_NATIVE_POST_FUSION_TRIAL) && BO1_NATIVE_POST_FUSION_TRIAL
+#include "platform/android/post_fusion_trial.h"
+#endif
+#if defined(__ANDROID__) && defined(BO1_NATIVE_FILTER_DEPTH_UNBIND) && BO1_NATIVE_FILTER_DEPTH_UNBIND
+#include "platform/android/post_filter_depth.h"
+#endif
 #include "r_dvars.h"
 #include "rb_logfile.h"
 #include "rb_pixelcost.h"
@@ -512,7 +521,20 @@ void __cdecl R_DrawTessTechnique(GfxCmdBufContext context, const GfxDrawPrimArgs
         R_SetStreamSource(&context.state->prim, vb, vertexOffset, 0x20u);
         R_SetupPassPerObjectArgs(context);
         R_SetupPassPerPrimArgs(context);
-        R_DrawIndexedPrimitive(&context.state->prim, args);
+#if defined(__ANDROID__) && defined(BO1_NATIVE_FILTER_DEPTH_UNBIND) && BO1_NATIVE_FILTER_DEPTH_UNBIND
+        bo1::android::post_filter_depth::DrawScope filterDepthDraw(isPixelCostEnabled ? nullptr : context.state->prim.device);
+#endif
+#if defined(__ANDROID__) && defined(BO1_NATIVE_POST_FUSION_TRIAL) && BO1_NATIVE_POST_FUSION_TRIAL
+        if (bo1::android::post_fusion_trial::ObservePass(context.state->prim.device, context.state->material, passIndex))
+#endif
+        {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_FULLSCREEN_TRIANGLE) && BO1_NATIVE_FULLSCREEN_TRIANGLE
+            if (!isPixelCostEnabled && bo1::android::fullscreen_triangle::TryDraw(context.state->prim.device, context.state->material, passIndex)) {
+                // Native helper owns this draw and restores the actual stream state.
+            } else
+#endif
+                R_DrawIndexedPrimitive(&context.state->prim, args);
+        }
     }
     if ( isPixelCostEnabled )
         R_PixelCost_EndSurface(context);

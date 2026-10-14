@@ -578,7 +578,11 @@ void __cdecl DebugThreatStringAll(const actor_s *self, sentient_s *enemy, int th
 
         displayPos[2] = displayPos[2] + 32.0;
 
+#if defined(__ANDROID__)
+        for ( i = 0; i < ARRAY_COUNT(g_threatDebugStrings); ++i )
+#else
         for ( i = 0; i < ARRAYSIZE(g_threatDebugStrings); ++i )
+#endif
         {
             char *str = g_threatDebugStrings[i];
 

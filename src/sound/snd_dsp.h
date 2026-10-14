@@ -1,5 +1,5 @@
 #pragma once
-#include "snd_driver_xaudio2_dsp.h"
+#include "snd_dsp_types.h"
 
 struct snd_dsp_meters // sizeof=0x18
 {                                                                             // XREF: snd_local_t/r
@@ -63,7 +63,11 @@ void __cdecl SND_DspDynamo(
                 float *input,
                 float *gain);
 void __cdecl SND_DspFxSourceMono(
+#if defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST)
+                const snd_dsp_source_params *sourceParams,
+#else
                 const snd_dsp_futz_param *params,
+#endif
                 snd_dsp_source_state *state,
                 unsigned int frameCount,
                 float *frames,

@@ -94,6 +94,40 @@ void __cdecl R_SkinSceneDObj(
     }
 }
 
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+unsigned int R_AllocModelSurfaces(unsigned int size)
+{
+    const unsigned int alignment = alignof(GfxModelRigidSurface);
+    const unsigned int capacity = sizeof(frontEndDataOut->surfsBuffer);
+    static_assert(alignof(GfxModelRigidSurface) == alignof(GfxModelSkinnedSurface));
+    static_assert((sizeof(GfxModelRigidSurface) % alignment) == 0);
+    static_assert((sizeof(GfxModelSkinnedSurface) % alignment) == 0);
+    static_assert((alignment & (alignment - 1)) == 0);
+    static_assert((__builtin_offsetof(GfxBackEndData, surfsBuffer) % alignment) == 0);
+    static_assert(alignof(GfxBackEndData) >= alignment);
+    iassert(size);
+    iassert(!(size % alignment));
+
+    // Brush/water producers share this arena: atomically reserve padding and payload.
+    unsigned int previous = __atomic_load_n(&frontEndDataOut->surfPos, __ATOMIC_SEQ_CST);
+    for (;;)
+    {
+        if (previous > capacity || size > capacity)
+            break;
+        const unsigned int start = (previous + alignment - 1) & ~(alignment - 1);
+        if (start > capacity || size > capacity - start)
+            break;
+        const unsigned int observed = _InterlockedCompareExchange(
+            &frontEndDataOut->surfPos, start + size, previous);
+        if (observed == previous)
+            return start;
+        previous = observed;
+    }
+    // Existing callers retain their model-specific warning and return-zero path.
+    return capacity;
+}
+#endif
+
 unsigned int    R_SkinSceneDObjModels(
     GfxSceneEntity *sceneEnt,
     const DObj *obj,
@@ -145,6 +179,9 @@ unsigned int    R_SkinSceneDObjModels(
     unsigned int boneIndex; // [esp-1C14h] [ebp-1C20h]
     unsigned int numSkinnedVerts; // [esp-1C10h] [ebp-1C1Ch] BYREF
     GfxModelSkinnedSurface *surfPos; // [esp-1C0Ch] [ebp-1C18h]
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+    alignas(GfxModelRigidSurface)
+#endif
     unsigned __int8 surfsBuffer[312 * sizeof(GfxModelSkinnedSurface)]; // Win32: 7488 = 312 * 24 // [esp-1C08h] [ebp-1C14h] BYREF
     //int v51; // [esp+8h] [ebp-4h]
     //int retaddr; // [esp+Ch] [ebp+0h]
@@ -234,7 +271,7 @@ unsigned int    R_SkinSceneDObjModels(
                 if (partsBitsVisCheck)
                 {
                     surfPos->skinnedCachedOffset = -3;
-                    surfPos = (GfxModelSkinnedSurface *)((char *)surfPos + 4);
+                    surfPos = (GfxModelSkinnedSurface *)((char *)surfPos + GFX_MODEL_HIDDEN_SURFACE_SIZE);
                 }
                 else
                 {
@@ -326,7 +363,7 @@ unsigned int    R_SkinSceneDObjModels(
                 }
                 else if (surfPos2_->skinnedCachedOffset == -3)
                 {
-                    surfPos2_ = (GfxModelSkinnedSurface *)((char *)surfPos2_ + 4);
+                    surfPos2_ = (GfxModelSkinnedSurface *)((char *)surfPos2_ + GFX_MODEL_HIDDEN_SURFACE_SIZE);
                 }
                 else
                 {
@@ -377,7 +414,7 @@ unsigned int    R_SkinSceneDObjModels(
                 }
                 else if (surfPos2->skinnedCachedOffset == -3)
                 {
-                    surfPos2 = (GfxModelSkinnedSurface *)((char *)surfPos2 + 4);
+                    surfPos2 = (GfxModelSkinnedSurface *)((char *)surfPos2 + GFX_MODEL_HIDDEN_SURFACE_SIZE);
                 }
                 else
                 {
@@ -400,7 +437,11 @@ unsigned int    R_SkinSceneDObjModels(
         }
     }
     totalSurfSize = (char *)surfPos - (char *)surfsBuffer;
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+    startSurfPos = R_AllocModelSurfaces(totalSurfSize);
+#else
     startSurfPos = _InterlockedExchangeAdd(&frontEndDataOut->surfPos, (char *)surfPos - (char *)surfsBuffer);
+#endif
     if (totalSurfSize + startSurfPos <= 0x40000)
     {
         if ((startSurfPos & 3) != 0

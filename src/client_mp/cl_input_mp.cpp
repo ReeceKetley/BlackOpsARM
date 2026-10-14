@@ -18,7 +18,11 @@
 #include <win32/win_net.h>
 #include <client/cl_keys.h>
 #include <qcommon/com_clients.h>
+#if defined(__ANDROID__)
+#include <client/cl_gamepad.h>
+#else
 #include <win32/win_gamepad.h>
+#endif
 #include "cl_cgame_mp.h"
 #include <aim_assist/aim_assist.h>
 #include <cgame/cg_gamepad.h>

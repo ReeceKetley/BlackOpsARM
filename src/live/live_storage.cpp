@@ -1,4 +1,7 @@
 #include "live_storage.h"
+#if defined(__ANDROID__)
+#include <platform/android/calendar_time.h>
+#endif
 #include <qcommon/com_gamemodes.h>
 #include "live_stats.h"
 #include "live_storage_pub.h"
@@ -1342,7 +1345,11 @@ void __cdecl LiveStorage_GetServerTimeComplete(TaskRecord *rec)
 {
 #ifdef BO1_LIVE_STUBS
     SV_SetTime(bdServerTime.m_timeStamp);
+#if defined(__ANDROID__)
+    s_UTCOffset = bdServerTime.m_timeStamp - bo1::android::WallTime64();
+#else
     s_UTCOffset = bdServerTime.m_timeStamp - _time64(0);
+#endif
     s_UTCSynced = 1;
 #endif
 }
@@ -1354,7 +1361,11 @@ void __cdecl LiveStorage_GetServerTimeFailed(TaskRecord *rec)
 
 __int64 __cdecl LiveStorage_GetUTC()
 {
+#if defined(__ANDROID__)
+    return bo1::android::WallTime64() + s_UTCOffset;
+#else
     return _time64(0) + s_UTCOffset;
+#endif
 }
 
 int __cdecl LiveStorage_GetUTCOffset()

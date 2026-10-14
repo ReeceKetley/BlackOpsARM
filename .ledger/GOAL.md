@@ -1,266 +1,50 @@
-## Current Milestone
-
-TASK45 originalFastCriticalSection nativefixed32 protocol verifiedWindows/HONOR
-O0/O3 andpreservednormalWindows; sameprocessTLS+MP71 stillpasses. TSanruntime
-failure independentlyreproducedwithoutenginecode, retainedasnonpassingcoverage.
-NextactualDvar/Cmd/Cbuf registration/SLownership, realDBorchestration, genuine
-headlessCom_Init/Frames/Zombiessimulation. No fullstartup/gameplayclaim.
-
-## Current integration target - actual Com_Init
-
-TASK46 complete FACT141, read STATE and arm64_native_startup_services.md.
-DEC64: build the smallest honest native executable calling the full real
-Com_Init, preserving required entry order and runtime dedicated/headless behavior.
-Trace actual progress; first unsupported dependency -> production behavior ->
-rerun. Resolve real DBworker/events/files/allocator ownership as reached, without
-fake readiness/assertion bypass. Actual bounded Com_Frame and clean shutdown
-follow successful Com_Init return, then headless Zombies simulation. Focus
-tests on new ABI/sync/ownership/recovery risks; don't repeatedly broaden checks.
-Protected Windows/retail, accepted stubs/DOA exclusion, localcommits/nopush stay.
-
-## Historical active TASK46
-
-Continue genuine startup services from verified8f81f9c. Initial integrated HONOR
-smoke passes real mainTLS/parse/Dvar/SL/CbufInit/CmdInit/3commandoperations/cleanup,
-but extended Windows/ARM acceptance and MP71 integration remain unfinished.
-Root and implementation agent have separate source ownership. Next real database
-events/one-shot role13 worker, explicit allocator ownership, actual Com_Init and
-bounded Frames/headless simulation. Preserve original Windows/retail/DXVK and
-all evidence; verified local commits authorized, no push. Read STATE/FACT139.
-
-## Historical Milestone
-
-TASK44 genuine native main/backend/database thread data and originalCmdReset
-verified3ABIs/O0/O3, actualmainTLS+allMP71 in sameprocess passes. TASK42PMem and
-TASK43all75locks committed; latestSTATE/Git give checkpoint. No actualDvar/DBworker/
-Com_Init/Frame/gameplay claim. Next fixed32actualFastCriticalSection protocol,
-genuineDvar/Cmd/Cbuf closure, realDB orchestration andheadlessboot/simulation.
-Standing DEC47/56/59/localverifiedcommits/nopush active; protectWindows/assets.
-
-## Historical Milestone
-
-TASK40 corrected actualdefault/SLownership verified3ABIs/O0/O3. Next complete
-production first71assetMPstartupzone, nativeDB/core startup, genuineheadless
-Zombiessimulation beforegraphics. DEC47/56/59 active; nofullenginebootclaim.
-
-## Current Milestone
-
-TASK39 complete genuine default CPUgraph registered on3ABIs/O0/O3; next actual
-bootstrap default services/liveSL ownership, true MP-first initialization and
-mapmodel/script prerequisites. Read STATE/arm64_bootstrap_default.md; standing
-DEC47 and verified-x64-stub policyDEC56 active. Noengineboot/playableclaim.
-
-## Current Milestone
-
-TASK38 genuine TechniqueSet deserialization/default-dependency diagnostic verified
-on x86/x64/HONOR O0/O3; successful type7 registration remains blocked by real
-bootstrap dependencies. TASK37 all37 assets still passes. Read latest STATE and
-arm64_techset.md; DEC54/55/FACT115/116/WARN39/FAIL36. Next genuine bootstrap default
-graph, SL/MT default naming, then actual startup sequence/Pentagon XModel. Dead
-Ops Arcade excluded. Standing autonomous DEC47 active; local commits authorized.
-
-# Historical checkpoint (preserved)
-
-TASK37 complete codezone37assets verified3ABIs/O0/O3; next genuine firstTechniqueSet all130null through66226/type7registration, then XModel5 and wider coreinit. DEC53/FACT109/110/WARN38/FAIL35; standingDEC47active.
-
-TASK36 actual Add/completeLink new-name returnedheader registration verified3ABIs/O0/O3; next genuine asset deserialization then wider zone integration/core initialization. DEC52/FACT107/108/WARN37/FAIL34; standing DEC47 active.
-
-TASK35 production insertion/lookup passes3ABIs/O0/O3. FullAdd/Link unverified; next actual returned-header registration on liveTEMP before normalization/Pop then next genuine asset. DEC51/FACT105/106/WARN36; standing DEC47 active.
-
-TASK34 lookup verified; continue actual production insertion/registration and returned-header integration, then next genuine asset. Read arm64_registry_lookup.md and DEC50/FACT103/104/WARN35/FAIL33. Fixture membership is not publication; standing autonomous DEC47 remains active.
-
-## Current autonomous progress — TASK33 complete
-
-Genuine loaded headers now use real entry-owned pools/clone/free on3ABIs/O0/O3.
-Next actual name/hash lookup, smallest real publication, next genuine asset type.
-Continue standing_development_goal.md/DEC47; local verified checkpoints/no push.
-No fullengine startup/render yet.
-
-## Standing autonomous goal — TASK32 complete
-
-Continue successive verified native engine milestones without waiting after each.
-Read docs/port/standing_development_goal.md (DEC47). Actual entry allocation/free
-verified; next genuine entry-owned headers, lookup, minimal publication. Local
-verified commits allowed/no push. No fullengine startup/render yet.
-
-## Current milestone — TASK31 complete, 12 October 2026
-
-Actual entry-list init and native recursive DBHASH verified on3ABIs/O0/O3.
-Next actual header/entry allocation/free, hash lookup, smallest real registration.
-See STATE/arm64_asset_entry_init.md; local verified commits authorized/no push.
-No full DB_Init/registry publication/engine startup/rendering yet.
-
-## Current milestone — TASK30 complete, 12 October 2026
-
-Actual persistent RawFile pool header/children lifetime verified on HONOR and
-Windows x86/x64/O3. Next actual asset-entry/DBHASH initialization services, then
-real registration/lookup. User resumed and authorizes local verified ARM64
-checkpoint commits (DEC45); no push. See STATE and arm64_rawfile_owner.md.
-No genuine engine startup/rendering yet. Historical goals remain below.
-
-## Current Milestone
-
-TASK29 genuine RawFile name/buffer and first StringTable queries verified.
-TASK30 actual RawFile persistent pool ownership before TEMP reuse is next, then
-registry-entry/DBHASH init services and real registration. Full native engine
-objective remains active; local verified checkpoints authorized/no push.
-Read STATE and arm64_rawfile_payload.md. No engine-owned graphics yet.
-
-## Historical milestone
-
-TASK28 TEMP write/value maps and genuine next codeRawFileheader verified.
-TASK29 actual RawFile name/presentbuffer bytes beforeDBAdd next. Core front end,
-interning and firsttablequeries/poolownership verified; actualgameboot/graphics
-remainfuture. Continuefullnativeengine/assets/startup goalDEC29, localverified
-commitsDEC26 authorized; no push. Read STATE/arm64_temp_write.md.
-
-## Historical milestone
-
-Cursor/alias prerequisite verified; TEMP successful-write mapping is next TASK28,
-before genuine codeRawFile numericheader atTEMP0. No asset skipping or fullregistry
-claim. Corefront end and interning already complete. Continue DEC29; localverified
-commitsDEC26, no push. Read STATE/arm64_temp_cursor.md; no engine-owned graphics.
-
-# Current milestone,12 October2026
-
-TASK26 actualpoolheader/cloneownership complete: genuine1994queries surviveTEMP
-overwrite onHONOR/Windows/optimized, real576/768 policy andcleanup preserved.
-TASK27 original-evidence TEMPshadow/maps reuse beforeasset2 next; then realregistry
-services andboundary. Read STATE/arm64_stringtable_owner.md. Corefrontend/interning/
-queries complete; autonomousDEC29/localcommitsDEC26/no push. Noenginegraphics yet.
-
-# Current milestone,12 October2026
-
-TASK25 actual normalization/query parity complete: exact original400/1594 arrays
-and all1994 queries onHONOR/Windows/optimizedARM. Persistent pool-header ownership
-beforeTEMP overwrite is next, then TEMPshadow/map reuse and realregistry boundary.
-Read STATE/arm64_stringtable_normalization.md. Corefront end/interning complete;
-autonomousDEC29/localcommitsDEC26/no push. No game-owned graphics yet.
-
-# Current milestone,12 October2026
-
-TASK24 original audit complete: missing signed normalization after returned
-asset registration; Windows CRT exact, Android equal-key order differs6/14.
-TASK25 bounded original-policy normalizer/actual query parity next, then persistent
-registry/TEMP ownership and next asset. Read STATE/arm64_original_query.md. Core
-front end plus actual interning complete. AutonomousDEC29/localcommitsDEC26,
-no push; no game-owned graphics yet. Historical goal retained below.
-
 # Project Goal
 
-## Historical milestone
+## Current user objective
 
-TASK-0023 actual query parity audit complete, but shared genuine row misses
-24/400 and796/1594 remain open (FAIL20). Original-instruction/loading-path audit
-next before any correction or registration. Read STATE/arm64_stringtable_lookup.md
-and FACT70/71/WARN23. AutonomousDEC29 continues, verified local commitsDEC26,
-no push. No engine-owned graphics yet.
+Render the genuine Black Ops Zombies engine and achieve playable gameplay in
+the Android APK on the authorized HONOR tablet. BlackOps64 is the validated
+Windows reference; original retail assets remain unchanged.
 
-## Historical milestone
+Once rendering works, overlay performance metrics on screen for benchmarking
+and tuning: actual FPS/frame time, CPU utilization/time, RAM use and GPU timing
+where supported, plus other useful measured engine statistics. Keep measurement
+sources/units clear and label unavailable data. Do not fabricate performance or
+readiness. Improve demonstrated bottlenecks toward the user's30fps-or-higher
+ambition; canonical20Hz server simulation is distinct from rendered FPS.
+Preserve the game's appearance while optimizing. User welcomes selected native
+Vulkan passes when profiling justifies them and asks to audit DXVK-native too;
+prefer measured work reduction over crude visual degradation.
 
-TASK-0022 real modulo32 hash complete. Genuine first payloads/index arrays and
-all1994 stored hashes match originalWindows/HONOR. Actual lookup/reference
-investigation next before assetregistration; FACT67/68/WARN22/DEC37. Autonomous
-objectiveDEC29 continues, local verified checkpointsDEC26/no push. Read STATE
-and arm64_stringtable_hash.md; no engine-owned graphics yet.
+User explicitly changed the active goal on2026-10-14 from headless reliability,
+app integration and timing investigation to rendering/gameplay/visible metrics.
+Preserve completed headless/asset/import/timing evidence; do not repeat broad
+tests or transfer equivalent assets. Prior objectives/handoffs remain archived.
 
-## Historical milestone
+## Current milestone
 
-TASK-0021 original StringTable indices complete. Actual payload leaves through
-index arrays pass HONOR/Windows; real hash/lookup next before registry. Read
-STATE, arm64_stringtable_indices.md and FACT-0064/0065/WARN-0021. Autonomous
-objective DEC-0029 continues; local verified checkpoints DEC-0026, no push.
+Actual headless initialization, Kino frames, same-process map_restart and mapped
+shutdown pass. Same430 comparison reduces mean server work78.365→35.619ms at
+matched15000ms simulation age and restores sustained20Hz before/after restart.
+All266assets are genuinely imported through Android SAF, with a committed
+receipt and app-accessible roots. Actual APK creates the SDL Vulkan window and
+real Adreno610/Vulkan1.1.128 device/resources. Loading Present API returns pass;
+rendered canonical Com_Init returns and enters the real input/frame loop.
+Visible engine loading UI, title and genuine interrogation-room 3D are proved;
+the real frontend client reaches CA_ACTIVE. SDK469 sustains room rendering through
+4601 main frames before a separate console callback failure. Render submission
+FPS, main/render/process CPU, RSS and genuine GPU span overlay values/toggle are
+verified in the actual APK. Complete playable Zombies and stable gameplay
+measurements; current owners and actual blocker are in STATE.
 
-## Historical milestone
+## Working rules and references
 
-TASK-0020 actual initialized StringTable strings/offset conversion complete
-(FACT-0060/0061). Approved core front end and actual interning are complete;
-DEC-0029 continues bounded native engine/assets progress. Next: original index
-bytes, Windows-equivalent hash arithmetic, actual lookup/reference investigation.
-Retail indices are not ordinarily hash-sorted; preserve them (FACT-0062).
-No game-owned graphics yet. Local verified checkpoints DEC-0026; no push.
-Read STATE/current Git and arm64_stringtable_strings.md.
-
-## Historical milestone
-
-TASK-0019 genuine StringTable names/cell descriptors complete (FACT-0057/0058).
-Core front end and actual interning stretch remain complete. DEC-0029 continues
-bounded native engine/assets progress. Next: initialized cell strings/real offset
-conversion, signed16 indices, actual hash/lookup before asset registration.
-No game-owned graphics yet. Local verified commits DEC-0026; no push.
-Read STATE, current Git and arm64_stringtable_cells.md.
-
-## Historical milestone
-
-TASK-0018 genuine StringTable numeric headers complete (FACT-0054/0055).
-Approved structural front end and actual interning stretch are complete;
-DEC-0029 continues bounded work toward native engine/assets/game-owned graphics.
-Next: actual StringTable name/cell arrays, initialized cell-string offsets, then
-signed16 index data/actual lookup before asset registration. No graphics yet.
-Local verified commits authorized DEC-0026; no push. Read STATE/current Git.
-
-## Primary Objective
-
-Native Android ARM64 port of the original T5 Zombies engine. Windows x64 is the
-functional reference implementation; the original Win32 path remains a behavior
-and serialization oracle. This Git worktree shares BlackOps64 history and sources.
-
-## Success Criteria
-
-Eventually load original game assets and FastFiles, render and play an offline
-T5 Zombies round with sound and an Xbox controller on HONOR Pad X8a and Samsung
-Galaxy S25. Initial renderer: DXVK Native 1.9.2 with tested SDL2/Vulkan integration.
-Device validation must be recorded separately from Windows validation.
-
-## Approved overnight milestone
-
-Native FastFile structural front end: both genuine files/3 ABIs through pointer
-tables, bounded raw strings and typed asset directory, before dispatch. Real
-production interning is conditional stretch. DEC-0026 authorizes local verified
-checkpoint commits, never push. See docs/port/overnight_frontend.md.
-
-## Latest completed gate
-
-TASK-0014 actual genuine script-string pointer table,26 fixtures/12cycles perABI.
-Next: bounded raw strings -> asset directory -> real SL/MT pool, before dispatch.
-See arm64_string_table.md/WARN-0014. Autonomous updated objective continues toward
-actual game-owned execution/assets/graphics; no simulated progress or deadline.
-
-## Historical completed gate
-
-TASK-0013 genuine16-byte XAssetList envelope read/expansion is complete on HONOR
-ARM64 and Windows x86/x64,72 fixtures/12 cycles each. Counts/tags, persistent
-aliases, unchanged cursors and reset/release pass with independent full-decode
-provenance. Actual body bytes unchanged; finite reader is fixture-only.
-See docs/port/arm64_assetlist.md, FACT-0037/0038, WARN-0013. Next recommended
-TASK-0014 is the block4 script-string pointer table, before strings/assets/fixups.
-Not started. TASK-0011 timing/RSS and all older evidence remain frozen.
-
-## Constraints
-
-- Retain original game assets and 32-bit serialization/FastFile layouts.
-- Keep runtime pointers native-width and use correct ARM64 memory ordering.
-- Prefer small Win32 compatibility shims for OS services; use native Android
-  graphics, audio, application lifecycle and controller-first Xbox input.
-- Shared engine changes must remain compatible with Windows.
-- DXVK-Native is maintained in `../DXVK-Native`, a separate repository.
-- `../.ledger` owns shared project goals/history and Windows evidence; this
-  Ledger owns Android setup, decisions, blockers and progress. User steering
-  overrides older root planning without rewriting historical evidence.
-- Keep original game assets out of source control and APK scaffold.
-
-## Non-Goals
-
-- Full engine conversion, gameplay changes or broad decompiled-code cleanup
-  during the bounded compilation audit.
-- Independent engine fork/source duplication or changes to the Windows branch.
-- Changes to DXVK-Native, commits or pushes without explicit authorization.
-- T6 compatibility work before native T5 bring-up.
-
-
-## Historical milestone
-
-TASK-0017 is complete: real pool lifecycle and859 genuine IDs match Windows and
-HONOR, including optimized ARM validation. TASK-0018 is the next bounded first
-StringTable header, before name/cells/fixups/registration. The broader autonomous
-objective continues; no game-owned graphics yet. See current STATE/report.
+See STATE.md for current owners/artifacts and ../AGENTS.md for source/ABI rules.
+Implement actual providers/canonical engine behavior; no dummy success, fake
+readiness, assertion bypass, asset-format alteration or unmeasured FPS claim.
+Preserve accepted intentional Windows reference stubs. Dead Ops Arcade excluded.
+BlackOps64, DXVK-Native1.9.2/SDL2.30.11 and user's working dxvk spike are read-only.
+No Vulkan upgrade, global BO1_PORT_X64, commit/push/reset/clean authorization.
+User permits distinct parallel agents; root coordinates source/config/device.
+User-accessible source /sdcard/boARM and the already imported app copy must remain
+preserved. No recurring full-file hash sweeps or unnecessary asset copies.

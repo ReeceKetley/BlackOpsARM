@@ -9,6 +9,8 @@
 #include <platform/android/hunk_services.h>
 #include <cstring>
 #include <cstddef>
+#include <cstdlib>
+#include <limits>
 // Debug/telemetry services remain external; the default allocator does not call them.
 void __cdecl Com_Error(errorParm_t code, const char *format, ...);
 void Bo1_Diag(const char *format, ...);
@@ -35,6 +37,60 @@ static bool Hunk_IsMainThread()
     return Sys_IsMainThread();
 #endif
 }
+
+#if defined(__ANDROID__)
+[[noreturn]] static void Hunk_NativeFail(const char *reason)
+{
+    Com_Error(ERR_FATAL,"Android HunkUser: %s",reason);
+    std::abort();
+}
+static bool Hunk_ContainsNativeTrackedAllocation(HunkUser *user, void *ptr)
+{
+    NativeUserHunkRecord record{};
+    if (!track_userhunk_find(ptr, &record)) return false;
+    const auto position = reinterpret_cast<std::uintptr_t>(ptr);
+    const auto fits = [&](std::uintptr_t begin, std::uintptr_t end) {
+        return position >= begin && position <= end && record.size <= end - position;
+    };
+    if (user->scheme == HU_SCHEME_DEFAULT)
+    {
+        for (auto *block = reinterpret_cast<HunkUserDefault *>(user); block; block = block->next)
+            if (fits(reinterpret_cast<std::uintptr_t>(block->buf), static_cast<std::uintptr_t>(block->end))) return true;
+        return false;
+    }
+    auto *heap = user->scheme == HU_SCHEME_DEBUG
+        ? reinterpret_cast<FirstFitHunkUser *>(reinterpret_cast<HunkUserDebug *>(user)->firstFit)
+        : reinterpret_cast<FirstFitHunkUser *>(user);
+    const auto base = reinterpret_cast<std::uintptr_t>(heap);
+    return heap->size <= std::numeric_limits<std::uintptr_t>::max() - base
+        && fits(base + sizeof(*heap), base + heap->size);
+}
+static void Hunk_RetireNativeTracking(HunkUser *user)
+{
+    if(!(user->flags & 8))return;
+    if(user->scheme==HU_SCHEME_DEFAULT)
+    {
+        for(auto *block=reinterpret_cast<HunkUserDefault *>(user);block;block=block->next)
+        {
+            const auto begin=reinterpret_cast<std::uintptr_t>(block->buf);
+            const auto end=static_cast<std::uintptr_t>(block->end);
+            if(end<begin || end-begin>std::numeric_limits<unsigned int>::max())Hunk_NativeFail("invalid tracked arena range");
+            track_userhunk_freerange(block->buf,static_cast<unsigned int>(end-begin));
+        }
+    }
+    else if(user->scheme==HU_SCHEME_FIRSTFIT)
+    {
+        auto *heap=reinterpret_cast<FirstFitHunkUser *>(user);
+        track_userhunk_freerange(heap,heap->size);
+    }
+    else if(user->scheme==HU_SCHEME_DEBUG)
+    {
+        auto *heap=reinterpret_cast<FirstFitHunkUser *>(reinterpret_cast<HunkUserDebug *>(user)->firstFit);
+        track_userhunk_freerange(heap,heap->size);
+    }
+    else Hunk_NativeFail("unsupported tracked allocator scheme");
+}
+#endif
 
 HunkUser *g_DebugHunkUser;
 
@@ -216,6 +272,9 @@ void *__cdecl Hunk_UserDebugAlloc(HunkUser *_user, int size, int alignment)
         const FirstFitHunkUser *heap = reinterpret_cast<const FirstFitHunkUser *>(firstFit);
         Com_Error(ERR_FATAL, "Hunk_UserDebugAlloc: out of memory (%d requested, %d used, %u capacity)",
             size, heap->used, heap->size);
+#if defined(__ANDROID__)
+        std::abort();
+#endif
     }
     return result;
 }
@@ -282,7 +341,11 @@ HunkUser *__cdecl Hunk_UserDefaultInit(
         __debugbreak();
     }
     if ( (flags & 2) != 0 )
+#if defined(__ANDROID__)
+        user->locked = user->end;
+#else
         user->locked = user->pos + (psize_int)size;
+#endif
     else
         user->locked = (user->pos + Hunk_PageSize() - 1) & ~(Hunk_PageSize() - 1);
     user->maxSize = size;
@@ -325,7 +388,11 @@ void __cdecl Hunk_UserDefaultReset(HunkUserDefault *_user)
     if ((_user->hunkUser.flags & 2) != 0)
     {
         _user->pos = (psize_int)_user->buf;
+#if defined(__ANDROID__)
+        _user->locked = _user->end;
+#else
         _user->locked = (psize_int)_user->maxSize + _user->pos;
+#endif
     }
     else
     {
@@ -371,8 +438,12 @@ void __cdecl Hunk_UserDefaultDestroy(HunkUserDefault *_user)
     {
         __debugbreak();
     }
+#if defined(__ANDROID__)
+    Hunk_RetireNativeTracking(&_user->hunkUser);
+#else
     if ((_user->hunkUser.flags & 8) != 0)
         track_userhunk_freerange(_user->buf, _user->maxSize);
+#endif
     if ((_user->hunkUser.flags & 2) == 0)
     {
         for (current = _user->next; current; current = newCurrent)
@@ -456,6 +527,9 @@ void *__cdecl Hunk_UserDefaultAlloc(HunkUserDefault *user, unsigned int size, in
                      user->maxSize, (unsigned long long)current->pos, (unsigned long long)current->end);
             Bo1_DiagStack("HunkOOM");
             Com_Error(ERR_FATAL, "Hunk_UserAlloc: out of memory");
+#if defined(__ANDROID__)
+            std::abort();
+#endif
         }
         newCurrent = (HunkUserDefault *)Hunk_UserCreate(
             user->maxSize,
@@ -493,6 +567,7 @@ void *__cdecl Hunk_UserDefaultAlloc(HunkUserDefault *user, unsigned int size, in
         Z_VirtualCommit((char *)current->locked, (int)range, user->hunkUser.type);
         current->locked += range;
     }
+#if !defined(__ANDROID__)
     if ((user->hunkUser.flags & 8) != 0)
     {
         if (name)
@@ -500,6 +575,7 @@ void *__cdecl Hunk_UserDefaultAlloc(HunkUserDefault *user, unsigned int size, in
         else
             track_userhunk_alloc(size, (int)v8, user->hunkUser.name, user->hunkUser.type);
     }
+#endif
     return (void *)v8;
 }
 
@@ -515,8 +591,10 @@ void __cdecl Hunk_UserDefaultFree(HunkUser *user, void *ptr)
     {
         __debugbreak();
     }
+#if !defined(__ANDROID__)
     if ( (user->flags & 8) != 0 )
         track_userhunk_free(ptr);
+#endif
 }
 
 void __cdecl Hunk_UserStartup()
@@ -553,7 +631,8 @@ HunkUser *__cdecl Hunk_UserCreateFromBuffer(
                 int type)
 {
 #if defined(__ANDROID__)
-    if (!(buffer && size > static_cast<int>(offsetof(HunkUserDefault, buf) + 31) && !(flags & 8) && (scheme == HU_SCHEME_DEFAULT || scheme == HU_SCHEME_FIRSTFIT) && (reinterpret_cast<uintptr_t>(buffer) % alignof(HunkUserDefault)) == 0)) Com_Error(ERR_FATAL, "Android HunkUser: invalid or unsupported configuration");
+    if (!(buffer && size > static_cast<int>(offsetof(HunkUserDefault, buf) + 31) && (scheme == HU_SCHEME_DEFAULT || scheme == HU_SCHEME_FIRSTFIT) && (reinterpret_cast<uintptr_t>(buffer) % alignof(HunkUserDefault)) == 0)) Hunk_NativeFail("invalid or unsupported configuration");
+    if ((flags & 8) && (!name || !*name || type < 0 || type >= 54)) Hunk_NativeFail("invalid tracking metadata");
 #endif
     if ( scheme == HU_SCHEME_DEBUG
         && !Assert_MyHandler(
@@ -579,7 +658,8 @@ HunkUser *__cdecl Hunk_UserCreate(
     char *buffer; // [esp+0h] [ebp-4h]
 
 #if defined(__ANDROID__)
-    if (!(size > static_cast<int>(offsetof(HunkUserDefault, buf) + 31) && !(flags & 8) && (scheme == HU_SCHEME_DEFAULT || scheme == HU_SCHEME_DEBUG))) Com_Error(ERR_FATAL, "Android HunkUser: invalid or unsupported configuration");
+    if (!(size > static_cast<int>(offsetof(HunkUserDefault, buf) + 31) && !(flags & 2) && (scheme == HU_SCHEME_DEFAULT || scheme == HU_SCHEME_DEBUG))) Hunk_NativeFail("invalid or unsupported configuration");
+    if ((flags & 8) && (!name || !*name || type < 0 || type >= 54)) Hunk_NativeFail("invalid tracking metadata");
 #endif
     if ((flags & 2) != 0
         && !Assert_MyHandler(
@@ -630,23 +710,46 @@ void *__cdecl Hunk_UserAlloc(HunkUser *user, int size, int alignment, const char
 {
 #if defined(__ANDROID__)
     if (!user || (user->scheme != HU_SCHEME_DEFAULT && user->scheme != HU_SCHEME_DEBUG && user->scheme != HU_SCHEME_FIRSTFIT) || size < 0 || alignment <= 0 || alignment > 4096 || (alignment & (alignment - 1)))
-        Com_Error(ERR_FATAL, "Android HunkUser: invalid allocation");
+        Hunk_NativeFail("invalid allocation");
 #endif
+#if defined(__ANDROID__)
+    void *result = g_HunkUserAllocationSchemeMap[user->scheme].Alloc(user, size, alignment, name);
+    if (result && (user->flags & 8))
+        track_userhunk_alloc(size, result, name ? name : user->name, user->type);
+    return result;
+#else
     return g_HunkUserAllocationSchemeMap[user->scheme].Alloc(user, size, alignment, name);
+#endif
 }
 
 void __cdecl Hunk_UserFree(HunkUser *user, void *ptr)
 {
+#if defined(__ANDROID__)
+    if (!user || user->scheme < HU_SCHEME_DEFAULT || user->scheme > HU_SCHEME_FIRSTFIT) Hunk_NativeFail("invalid free owner");
+    if ((user->flags & 8) && ptr)
+    {
+        if (!Hunk_ContainsNativeTrackedAllocation(user, ptr)) Hunk_NativeFail("tracked free does not belong to this arena");
+        track_userhunk_free(ptr);
+    }
+#endif
     g_HunkUserAllocationSchemeMap[user->scheme].Free(user, ptr);
 }
 
 void __cdecl Hunk_UserReset(HunkUser *user)
 {
+#if defined(__ANDROID__)
+    if (!user || user->scheme < HU_SCHEME_DEFAULT || user->scheme > HU_SCHEME_FIRSTFIT) Hunk_NativeFail("invalid reset owner");
+    Hunk_RetireNativeTracking(user);
+#endif
     g_HunkUserAllocationSchemeMap[user->scheme].Reset(user);
 }
 
 void __cdecl Hunk_UserDestroy(HunkUser *user)
 {
+#if defined(__ANDROID__)
+    if (!user || user->scheme < HU_SCHEME_DEFAULT || user->scheme > HU_SCHEME_FIRSTFIT) Hunk_NativeFail("invalid destroy owner");
+    if (user->scheme != HU_SCHEME_DEFAULT) Hunk_RetireNativeTracking(user);
+#endif
     g_HunkUserAllocationSchemeMap[user->scheme].Destroy(user);
 }
 
@@ -659,6 +762,10 @@ void __cdecl Hunk_UserSetPos(HunkUser *_user, unsigned char *pos)
     iassert(pos >= user->buf);
     iassert((psize_int)pos <= user->pos);
 
+#if defined(__ANDROID__)
+    if ((user->hunkUser.flags & 8) && static_cast<psize_int>(reinterpret_cast<std::uintptr_t>(pos)) < user->pos)
+        track_userhunk_freerange(pos, static_cast<unsigned int>(user->pos - reinterpret_cast<psize_int>(pos)));
+#endif
     user->pos = (psize_int)pos;
 }
 

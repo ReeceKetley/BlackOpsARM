@@ -6,6 +6,10 @@
 #include "r_image.h"
 #include "rb_draw3d.h"
 #include "r_state_utils.h"
+#if defined(__ANDROID__)
+#include <cstdlib>
+#include <cstdint>
+#endif
 
 void __cdecl RB_TouchAllImages()
 {
@@ -14,7 +18,11 @@ void __cdecl RB_TouchAllImages()
   int v3; // [esp+4h] [ebp-4224h]
   int hr; // [esp+Ch] [ebp-421Ch]
   unsigned int i; // [esp+14h] [ebp-4214h]
+#if defined(__ANDROID__)
+  uint64_t v9;
+#else
   int v9; // [esp+1Ch] [ebp-420Ch]
+#endif
   ImageList imageList; // [esp+20h] [ebp-4208h] BYREF
 
   if ( !dx.inScene )
@@ -31,12 +39,23 @@ void __cdecl RB_TouchAllImages()
         "C:\\projects_pc\\cod\\codsrc\\src\\gfx_d3d\\rb_imagetouch.cpp (%i) dx.device->BeginScene() failed: %s\n",
         62,
         v0);
+#if defined(__ANDROID__)
+      std::abort();
+#endif
     }
   }
   if ( tess.indexCount )
     RB_EndTessSurface();
   R_GetImageList(&imageList);
+#if defined(__ANDROID__)
+  if (imageList.count > ARRAY_COUNT(imageList.image)) { Com_Error(ERR_FATAL,"Image touch list exceeds actual capacity"); std::abort(); }
+  for(unsigned index=0;index<imageList.count;++index) if(!imageList.image[index]) { Com_Error(ERR_FATAL,"Image touch list contains null image"); std::abort(); }
+  qsort(imageList.image,imageList.count,sizeof(imageList.image[0]),[](const void *a,const void *b) {
+      return RB_CompareTouchImages(static_cast<GfxImage *const *>(a),static_cast<GfxImage *const *>(b));
+  });
+#else
   qsort(imageList.image, imageList.count, sizeof(*(imageList.image)), (_CoreCrtNonSecureSearchSortCompareFunction)RB_CompareTouchImages);
+#endif
   v9 = 0;
   for ( i = 0; i < imageList.count && imageList.image[i]->semantic; ++i )
   {
@@ -59,6 +78,9 @@ void __cdecl RB_TouchAllImages()
         "C:\\projects_pc\\cod\\codsrc\\src\\gfx_d3d\\rb_imagetouch.cpp (%i) dx.device->EndScene() failed: %s\n",
         79,
         v1);
+#if defined(__ANDROID__)
+      std::abort();
+#endif
     }
   }
 }
@@ -89,6 +111,9 @@ int __cdecl RB_CompareTouchImages(GfxImage *const *e0, GfxImage *const *e1)
 {
     const GfxImage *image = *e0;
     const GfxImage *other = *e1;
+#if defined(__ANDROID__)
+    if (!other->semantic && !image->semantic) return 0;
+#endif
     if (!other->semantic) return -1;
     if (!image->semantic) return 1;
     if (other->cardMemory.platform[0] != image->cardMemory.platform[0])

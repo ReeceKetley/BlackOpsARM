@@ -17,7 +17,11 @@ void __cdecl RB_DrawComposites()
     R_SetRenderTarget(gfxCmdBufContext, R_RENDERTARGET_COMPOSITE);
     R_Set2D(&gfxCmdBufSourceState);
     RB_ExecuteRenderCommandsLoop(cmds, 0);
+#if !defined(__ANDROID__)
     memcpy(gfxCmdBufState.refSamplerState, gfxCmdBufState.refSamplerState, sizeof(gfxCmdBufState));
+#endif
+    // Native: commands already update gfxCmdBufState itself. The identical
+    // source/destination copy has no state effect and violates memcpy overlap.
   }
 }
 

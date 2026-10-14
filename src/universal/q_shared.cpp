@@ -1,4 +1,7 @@
 #if !defined(BO1_NATIVE_THREAD_DATA)
+#if defined(__ANDROID__)
+#include <platform/android/legacy_crt.h>
+#endif
 #if defined(BO1_STARTUP_SERVICES)
 #include <platform/startup_services_api.h>
 #include "thread_data.h"
@@ -200,7 +203,7 @@ FloatWriteSwap_union __cdecl FloatWriteSwap(float f)
 }
 #endif
 
-#if !defined(BO1_STARTUP_SERVICES)
+#if !defined(BO1_STARTUP_SERVICES) || defined(BO1_NATIVE_COM_BOOT)
 void __cdecl Swap_InitLittleEndian()
 {
     //BigShort = (__int16 (__cdecl *)(__int16))ShortSwap;
@@ -226,7 +229,7 @@ void __cdecl Swap_InitBigEndian()
 }
 #endif
 
-#if !defined(BO1_STARTUP_SERVICES)
+#if !defined(BO1_STARTUP_SERVICES) || defined(BO1_NATIVE_COM_BOOT)
 void __cdecl Swap_Init()
 {
     Swap_InitLittleEndian();
@@ -240,12 +243,10 @@ __int64 __cdecl I_atoi64(const char *str)
 }
 #endif
 
-#if !defined(BO1_STARTUP_SERVICES)
 bool __cdecl I_islower(int c)
 {
     return c >= 97 && c <= 122;
 }
-#endif
 
 #endif
 bool __cdecl I_isupper(int c)
@@ -439,7 +440,6 @@ int __cdecl I_strcmp(const char *s0, const char *s1)
     return I_strncmp(s0, s1, 0x7FFFFFFF);
 }
 
-#if !defined(BO1_STARTUP_SERVICES)
 int __cdecl I_stricmpwild(const char *wild, const char *s)
 {
     int v3; // esi
@@ -476,9 +476,7 @@ int __cdecl I_stricmpwild(const char *wild, const char *s)
     while ( charWild );
     return 0;
 }
-#endif
 
-#if !defined(BO1_STARTUP_SERVICES)
 char *__cdecl I_strlwr(char *s)
 {
     char *iter; // [esp+0h] [ebp-4h]
@@ -490,9 +488,7 @@ char *__cdecl I_strlwr(char *s)
     }
     return s;
 }
-#endif
 
-#if !defined(BO1_STARTUP_SERVICES)
 char *__cdecl I_strupr(char *s)
 {
     char *iter; // [esp+0h] [ebp-4h]
@@ -504,7 +500,6 @@ char *__cdecl I_strupr(char *s)
     }
     return s;
 }
-#endif
 
 #if !defined(BO1_STARTUP_SERVICES)
 bool __cdecl I_iscsym(int c)

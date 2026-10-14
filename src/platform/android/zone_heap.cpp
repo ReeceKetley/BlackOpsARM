@@ -5,6 +5,7 @@
 #include <map>
 #include <mutex>
 #include <string>
+#include <new>
 #if !defined(__ANDROID__) && !defined(BO1_ZONE_HEAP_HOST_TEST)
 #error Native Android heap or explicit standalone host oracle only
 #endif
@@ -19,16 +20,39 @@ std::size_t allocatedBytes;
     std::abort();
 }
 }
-unsigned int *Z_Malloc(int size, const char *name, int type)
+static void *tryAllocate(int size, const char *name, int type, bool clear)
 {
     if (size < 0 || type < 0) fail("invalid allocation");
-    void *p = std::calloc(size ? static_cast<std::size_t>(size) : 1, 1);
-    if (!p) fail("out of memory");
+    const auto bytes = size ? static_cast<std::size_t>(size) : 1;
+    void *p = clear ? std::calloc(bytes, 1) : std::malloc(bytes);
+    if (!p) return nullptr;
     std::lock_guard<std::mutex> lock(heapMutex);
-    if (!allocations.emplace(p, Allocation{static_cast<std::size_t>(size), type, name ? name : ""}).second)
-        fail("duplicate allocation");
+    try {
+        if (!allocations.emplace(p, Allocation{static_cast<std::size_t>(size), type, name ? name : ""}).second)
+            fail("duplicate allocation");
+    } catch (const std::bad_alloc &) { std::free(p); return nullptr; }
     allocatedBytes += static_cast<std::size_t>(size);
+    return p;
+}
+unsigned int *Z_TryMalloc(int size, const char *name, int type)
+{
+    return static_cast<unsigned int *>(tryAllocate(size, name, type, true));
+}
+char *Z_TryMallocGarbage(int size, const char *name, int type)
+{
+    return static_cast<char *>(tryAllocate(size, name, type, false));
+}
+unsigned int *Z_Malloc(int size, const char *name, int type)
+{
+    auto *p = Z_TryMalloc(size, name, type);
+    if (!p) fail("out of memory");
     return static_cast<unsigned int *>(p);
+}
+char *Z_MallocGarbage(int size, const char *name, int type)
+{
+    auto *p = Z_TryMallocGarbage(size, name, type);
+    if (!p) fail("out of memory");
+    return p;
 }
 void Z_Free(char *ptr, int type)
 {

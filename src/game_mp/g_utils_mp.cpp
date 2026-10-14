@@ -33,6 +33,9 @@
 #include <bgame/bg_misc.h>
 #include <sound/snd_utils.h>
 #include <stringed/stringed_hooks.h>
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+#include <cstring>
+#endif
 
 const char *origErrorMsg = "localized string";
 
@@ -1109,15 +1112,25 @@ void __cdecl G_CalcTagParentAxis(gentity_s *ent, float (*parentAxis)[3])
         mat = &SV_DObjGetMatrixArray(parent)[tagInfo->index];
         ConvertQuatToMat(mat, axis);
         MatrixMultiply(axis, tempAxis, parentAxis);
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+        MatrixTransformVector43(mat->trans, tempAxis, parentAxis[3]);
+#else
         MatrixTransformVector43(mat->trans, tempAxis, &(*parentAxis)[9]);
+#endif
     }
     else
     {
         AnglesToAxis(parent->r.currentAngles, parentAxis);
         currentOrigin = parent->r.currentOrigin;
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+        parentAxis[3][0] = parent->r.currentOrigin[0];
+        parentAxis[3][1] = currentOrigin[1];
+        parentAxis[3][2] = currentOrigin[2];
+#else
         (*parentAxis)[9] = parent->r.currentOrigin[0];
         (*parentAxis)[10] = currentOrigin[1];
         (*parentAxis)[11] = currentOrigin[2];
+#endif
     }
 }
 
@@ -1480,7 +1493,11 @@ int __cdecl G_DObjGetWorldTagMatrix(const gentity_s *ent, unsigned int tagName, 
     ent_axis[3][2] = ent->r.currentOrigin[2];
     ConvertQuatToMat(mat, axis);
     MatrixMultiply(axis, ent_axis, tagMat);
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+    MatrixTransformVector43(mat->trans, ent_axis, tagMat[3]);
+#else
     MatrixTransformVector43(mat->trans, ent_axis, &(*tagMat)[9]);
+#endif
     return 1;
 }
 
@@ -1530,8 +1547,13 @@ void __cdecl G_TraceBulletPathForVehTurret(gentity_s *ent, DObjTrace_s *trace, i
     else
         flash = veh->boneIndex.gunnerTags[gunnerIndex].flash;
     G_DObjGetWorldBoneIndexMatrix(ent, flash, flashMtx);
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+    // The muzzle origin and trace start each contain three float components.
+    std::memcpy(start, flashMtx[3], sizeof(start));
+#else
     *(_QWORD *)start = *(_QWORD *)&flashMtx[3][0];
     start[2] = flashMtx[3][2];
+#endif
     end[0] = (float)(500.0 * flashMtx[0][0]) + flashMtx[3][0];
     end[1] = (float)(500.0 * flashMtx[0][1]) + flashMtx[3][1];
     end[2] = (float)(500.0 * flashMtx[0][2]) + flashMtx[3][2];
@@ -1581,7 +1603,11 @@ void __cdecl G_DObjGetWorldBoneIndexMatrix(const gentity_s *ent, int boneIndex, 
     ent_axis[3][2] = ent->r.currentOrigin[2];
     ConvertQuatToMat(mat, axis);
     MatrixMultiply(axis, ent_axis, tagMat);
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+    MatrixTransformVector43(mat->trans, ent_axis, tagMat[3]);
+#else
     MatrixTransformVector43(mat->trans, ent_axis, &(*tagMat)[9]);
+#endif
 }
 
 gentity_s *__cdecl G_Find(gentity_s *from, int fieldofs, unsigned __int16 match)

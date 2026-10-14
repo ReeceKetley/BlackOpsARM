@@ -7,7 +7,14 @@
 #include "r_dvars.h"
 #include "rb_logfile.h"
 #include "r_utils.h"
+#if defined(__ANDROID__)
+#include <platform/win32_compat/native_d3dx9_api.h>
+#include <platform/win32_compat/win32_time.h>
+#include <platform/android/back_buffer_capture.h>
+using bo1::win32::Sleep;
+#else
 #include <d3dx9.h>
+#endif
 #include <universal/com_files.h>
 #include <qcommon/cmd.h>
 #include "rb_resource.h"
@@ -241,6 +248,15 @@ void __cdecl R_UpsamplePixelData(
 
 char __cdecl R_GetFrontBufferData(int x, int y, int width, int height, int bytesPerPixel, unsigned __int8 *buffer)
 {
+#if defined(__ANDROID__)
+    if (Sys_IsHeadlessClient())
+    {
+        Com_PrintError(8, "ERROR: bo1_headless_client: no front buffer reads (use screenshot / screenshotJpeg)\n");
+        return 0;
+    }
+    return bo1::android::CaptureBackBuffer(dx.device, dx.windows[0].swapChain,
+        x, y, width, height, bytesPerPixel, buffer);
+#else
     const char *v7; // eax
     const char *v8; // eax
     HRESULT v9; // [esp-4h] [ebp-7Ch]
@@ -409,6 +425,7 @@ LABEL_12:
         Com_PrintError(8, "ERROR: cannot take screenshot: LockRect failed: %s (0x%08x)\n", v8, v10);
         return 0;
     }
+#endif
 }
 
 void __cdecl R_TakeScreenshotJpgCallback(char *param)
@@ -470,6 +487,10 @@ static char R_TakeHeadlessClientScreenshot(char *filename, int format)
 
 char __cdecl R_TakeScreenshot(char *filename, int format)
 {
+#if defined(__ANDROID__)
+    // The original game back-buffer capture uses actual D3D readback and image save.
+    return R_TakeHeadlessClientScreenshot(filename, format);
+#else
     const char *v3; // eax
     HRESULT v4; // [esp-4h] [ebp-170h]
     IDirect3DSurface9 *var; // [esp+0h] [ebp-16Ch]
@@ -579,12 +600,29 @@ LABEL_12:
     }
     while ( alwaysfails );
     return 1;
+#endif
 }
 
 void __cdecl R_TakeScreenshotTgaCallback(char *param)
 {
     R_TakeScreenshot(param, D3DXIFF_TGA);
 }
+
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+// Resource actions invoke void(void *); preserve the canonical typed payload.
+static void __cdecl R_TakeScreenshotTgaCallbackResource(void *data)
+{
+    R_TakeScreenshotTgaCallback(static_cast<char *>(data));
+}
+#endif
+
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+// Resource actions invoke void(void *); preserve the canonical typed payload.
+static void __cdecl R_TakeScreenshotJpgCallbackResource(void *data)
+{
+    R_TakeScreenshotJpgCallback(static_cast<char *>(data));
+}
+#endif
 
 static char filename[256];
 static int lastNumber = 0;
@@ -643,9 +681,17 @@ void __cdecl R_ScreenshotCommand(GfxScreenshotType type)
         ++lastNumber;
     }
     if ( type )
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+        RB_Resource_CallbackParam(R_TakeScreenshotTgaCallbackResource, filename);
+#else
         RB_Resource_CallbackParam((void (__cdecl *)(void *))R_TakeScreenshotTgaCallback, filename);
+#endif
     else
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+        RB_Resource_CallbackParam(R_TakeScreenshotJpgCallbackResource, filename);
+#else
         RB_Resource_CallbackParam((void (__cdecl *)(void *))R_TakeScreenshotJpgCallback, filename);
+#endif
     if ( v4 )
         Com_Printf(8, "Wrote %s\n", filename);
 }

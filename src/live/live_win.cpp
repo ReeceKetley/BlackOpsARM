@@ -1,4 +1,7 @@
 #include "live_win.h"
+#if defined(__ANDROID__)
+#include <cstring>
+#endif
 #include <win32/win_tasks.h>
 #include "live_steam.h"
 #include <DW/dwLogOn_pc.h>
@@ -1835,6 +1838,16 @@ char __cdecl Live_AddFavourite_Ingame(unsigned __int64 serverid, unsigned __int6
 
 void __cdecl Live_AddFavourite(unsigned __int64 serverid, unsigned __int64 serveruid)
 {
+#if defined(__ANDROID__)
+    unsigned int i = 0;
+    for (; i < 42 && s_favourites[i].uid; ++i) {}
+    if (i < 42)
+    {
+        std::memcpy(s_favourites[i].addressblob, &serverid, sizeof(s_favourites[i].addressblob));
+        s_favourites[i].uid = serveruid;
+    }
+    CL_SetFavourites_f();
+#else
     favourite_t *v2; // ecx
     unsigned int v3; // ecx
     unsigned int i; // [esp+4h] [ebp-4h]
@@ -1851,10 +1864,22 @@ void __cdecl Live_AddFavourite(unsigned __int64 serverid, unsigned __int64 serve
         *(unsigned int *)(v3 * 16 + 174313908) = HIDWORD(serveruid);
     }
     CL_SetFavourites_f();
+#endif
 }
 
 void __cdecl Live_DeleteFavourite(unsigned __int64 serverid)
 {
+#if defined(__ANDROID__)
+    for (unsigned int i = 0; i < 42; ++i)
+    {
+        if (s_favourites[i].uid == serverid)
+        {
+            s_favourites[i].uid = 0;
+            CL_SetFavourites_f();
+            break;
+        }
+    }
+#else
     unsigned int v1; // eax
     unsigned int i; // [esp+4h] [ebp-4h]
 
@@ -1867,10 +1892,23 @@ void __cdecl Live_DeleteFavourite(unsigned __int64 serverid)
         *(unsigned int *)(v1 * 16 + 174313908) = 0;
         CL_SetFavourites_f();
     }
+#endif
 }
 
 void __cdecl Live_ParseFavsBlobs(unsigned __int8 *addrblob, unsigned __int8 *uidblob)
 {
+#if defined(__ANDROID__)
+    for (unsigned int i = 0; i < 42; ++i)
+    {
+        unsigned __int64 uid;
+        std::memcpy(&uid, uidblob, sizeof(uid));
+        if (!uid) break;
+        std::memcpy(s_favourites[i].addressblob, addrblob, sizeof(s_favourites[i].addressblob));
+        s_favourites[i].uid = uid;
+        addrblob += 6;
+        uidblob += 8;
+    }
+#else
     favourite_t *v2; // eax
     unsigned int v3; // edx
     unsigned int i; // [esp+0h] [ebp-4h]
@@ -1886,10 +1924,25 @@ void __cdecl Live_ParseFavsBlobs(unsigned __int8 *addrblob, unsigned __int8 *uid
         addrblob += 6;
         uidblob += 8;
     }
+#endif
 }
 
 void __cdecl Live_SetFavsBlobs(unsigned __int8 *addrblob, unsigned __int8 *uidblob)
 {
+#if defined(__ANDROID__)
+    std::memset(addrblob, 0, 253);
+    std::memset(uidblob, 0, 337);
+    for (const auto &favourite : s_favourites)
+    {
+        if (favourite.uid)
+        {
+            std::memcpy(addrblob, favourite.addressblob, sizeof(favourite.addressblob));
+            std::memcpy(uidblob, &favourite.uid, sizeof(favourite.uid));
+            addrblob += 6;
+            uidblob += 8;
+        }
+    }
+#else
     favourite_t *v2; // eax
     unsigned int i; // [esp+4h] [ebp-4h]
 
@@ -1908,6 +1961,7 @@ void __cdecl Live_SetFavsBlobs(unsigned __int8 *addrblob, unsigned __int8 *uidbl
             uidblob += 8;
         }
     }
+#endif
 }
 
 void __cdecl Live_GetPrivateProfileComplete()

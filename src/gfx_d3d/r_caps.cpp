@@ -1,5 +1,21 @@
 #include "r_caps.h"
 #include <qcommon/common.h>
+#if defined(__ANDROID__)
+#include <cstring>
+#include <cstdlib>
+#include <cstdint>
+namespace {
+unsigned int R_ReadCapsWord(const _D3DCAPS9 *caps, int offset) {
+    static_assert(sizeof(unsigned int)==4);
+    static_assert(sizeof(_D3DCAPS9)==304);
+    static_assert(offsetof(_D3DCAPS9,DeviceType)==0);
+    if (!caps || offset < 0 || static_cast<size_t>(offset) > sizeof(*caps)-sizeof(unsigned int)) {
+        Com_Error(ERR_FATAL, "Invalid D3D capability structure/field bounds"); std::abort();
+    }
+    unsigned int value; std::memcpy(&value, reinterpret_cast<const unsigned char *>(caps)+offset, sizeof(value)); return value;
+}
+}
+#endif
 
 const DxCapsCheckBits s_capsCheckBits[33] =
 {
@@ -243,7 +259,11 @@ void __cdecl R_CheckDxCaps(const _D3DCAPS9 *caps)
 
     for ( checkIndex = 0; checkIndex < 0x21; ++checkIndex )
     {
+#if defined(__ANDROID__)
+        bits = R_ReadCapsWord(caps,s_capsCheckBits[checkIndex].offset);
+#else
         bits = *(_D3DDEVTYPE *)((char *)&caps->DeviceType + s_capsCheckBits[checkIndex].offset);
+#endif
         if ( (!s_capsCheckBits[checkIndex].clearBits || (s_capsCheckBits[checkIndex].clearBits & ~bits) != 0)
             && (!s_capsCheckBits[checkIndex].setBits || (s_capsCheckBits[checkIndex].setBits & bits) != 0) )
         {
@@ -252,7 +272,11 @@ void __cdecl R_CheckDxCaps(const _D3DCAPS9 *caps)
     }
     for ( checkIndexa = 0; checkIndexa < 0xA; ++checkIndexa )
     {
+#if defined(__ANDROID__)
+        integer = R_ReadCapsWord(caps,s_capsCheckInt[checkIndexa].offset);
+#else
         integer = *(_D3DDEVTYPE *)((char *)&caps->DeviceType + s_capsCheckInt[checkIndexa].offset);
+#endif
         if ( integer < s_capsCheckInt[checkIndexa].min || integer > s_capsCheckInt[checkIndexa].max )
             R_RespondToMissingCaps(s_capsCheckInt[checkIndexa].response, s_capsCheckInt[checkIndexa].msg);
     }
@@ -270,12 +294,18 @@ void __cdecl R_RespondToMissingCaps(DxCapsResponse response, const char *msg)
     {
         case DX_CAPS_RESPONSE_QUIT:
             Com_Error(ERR_FATAL, "Video card or driver %s.\n", msg);
+#if defined(__ANDROID__)
+            std::abort();
+#endif
             break;
         case DX_CAPS_RESPONSE_WARN:
         case DX_CAPS_RESPONSE_INFO:
             return;
         case DX_CAPS_RESPONSE_FORBID_SM3:
             Com_Error(ERR_FATAL, "Shader model 3.0 not available.\n");
+#if defined(__ANDROID__)
+            std::abort();
+#endif
             break;
         default:
             v2 = va("unhandled response %i", response);

@@ -1,4 +1,7 @@
 #if !defined(BO1_FAST_CRIT_SECT_GATE)
+#if defined(__ANDROID__)
+#include <platform/android/legacy_crt.h>
+#endif
 #if defined(BO1_STARTUP_SERVICES)
 #include <platform/startup_services_api.h>
 #include <algorithm>
@@ -2509,10 +2512,17 @@ const dvar_s *__cdecl _Dvar_RegisterColor(
     DvarValue dvarValue;
 
     // Clamp rgba values to [0.0, 1.0]
+#if defined(__ANDROID__)
+    r = (std::min)((std::max)(r, 0.0f), 1.0f);
+    g = (std::min)((std::max)(g, 0.0f), 1.0f);
+    b = (std::min)((std::max)(b, 0.0f), 1.0f);
+    a = (std::min)((std::max)(a, 0.0f), 1.0f);
+#else
     r = min(1.0f, max(0.0f, r));
     g = min(1.0f, max(0.0f, g));
     b = min(1.0f, max(0.0f, b));
     a = min(1.0f, max(0.0f, a));
+#endif
 
     // Convert to 0-255 range, +.5 for rounding
     dvarValue.color[0] = (int)(r * 255.0f + 0.5f);

@@ -1,4 +1,20 @@
 #include "cg_ents_mp.h"
+#if defined(__ANDROID__)
+#include <platform/android/engine_paths.h>
+#include <platform/android/stdio_services.h>
+#include <string>
+#else
+#include <xmmintrin.h>
+#endif
+
+static inline void Bo1EntityPrefetch(const char *address)
+{
+#if defined(__ANDROID__)
+    __builtin_prefetch(address, 0, 1);
+#else
+    _mm_prefetch(address, 1);
+#endif
+}
 #include <game_sp/g_sp_levelstart.h>
 #include <qcommon/cm_mapkit.h>
 #include "cg_main_mp.h"
@@ -1607,7 +1623,7 @@ int __cdecl CG_AddPacketEntities(int localClientNum)
     numEntities = cgameGlob->nextSnap->numEntities;
     numEntities = cgameGlob->nextSnap->numEntities;
     if (numEntities)
-        _mm_prefetch((const char *)&CG_GetEntity(localClientNum, cgameGlob->nextSnap->entities[0].number)->nextState, 1);
+        Bo1EntityPrefetch((const char *)&CG_GetEntity(localClientNum, cgameGlob->nextSnap->entities[0].number)->nextState);
     postPSEntNum = 1023;
 
     {
@@ -1618,9 +1634,8 @@ int __cdecl CG_AddPacketEntities(int localClientNum)
         {
             entnum = cgameGlob->nextSnap->entities[num].number;
             if (num + 1 < numEntities)
-                _mm_prefetch(
-                    (const char *)&CG_GetEntity(localClientNum, cgameGlob->nextSnap->entities[num + 1].number)->nextState,
-                    1);
+                Bo1EntityPrefetch(
+                    (const char *)&CG_GetEntity(localClientNum, cgameGlob->nextSnap->entities[num + 1].number)->nextState);
             cent = CG_GetEntity(localClientNum, entnum);
             if (EntPacketUpdateNeedsDelayed(localClientNum, cent, contextKey))
                 DelayListAdd(&delayList, cent);
@@ -3486,7 +3501,11 @@ DObj *__cdecl CG_PreProcess_GetDObj(int localClientNum, int entIndex, int entTyp
             if ( !cent->tree )
             {
                 anims = CG_GetAnimations(localClientNum, entIndex, entType);
+#if defined(__ANDROID__)
+                cent->tree = anims ? XAnimCreateTree(anims, CG_AllocAnimTree) : 0;
+#else
                 cent->tree = anims ? XAnimCreateTree(anims, (void *(__cdecl *)(unsigned int))CG_AllocAnimTree) : 0;
+#endif
                 newTree = cent->tree != 0;
             }
             animTree = cent->tree;
@@ -3506,7 +3525,11 @@ DObj *__cdecl CG_PreProcess_GetDObj(int localClientNum, int entIndex, int entTyp
         {
             anims = CG_GetAnimations(localClientNum, entIndex, entType);
             if ( anims )
+#if defined(__ANDROID__)
+                Tree = XAnimCreateTree(anims, CG_AllocAnimTree);
+#else
                 Tree = XAnimCreateTree(anims, (void *(__cdecl *)(unsigned int))CG_AllocAnimTree);
+#endif
             else
                 Tree = 0;
             animTree = Tree;
@@ -3922,7 +3945,12 @@ static void CG_SP_MeasureBrushMover(int localClientNum, const centity_s *cent)
     // Own file, not Com_Printf: the client thread printing every frame beside the server's measurement
     // lines hung a -Client run. Relative to the game's working directory (build\Release).
     static FILE *file;
+#if defined(__ANDROID__)
+    if (!file) file=bo1::android::OpenStdio((std::string(Sys_EngineUserRoot())+"/bo1_cgmover.txt").c_str(),"w");
+    if (!file)
+#else
     if (!file && fopen_s(&file, "bo1_cgmover.txt", "w"))
+#endif
         return;
     const cg_s *cgameGlob = CG_GetLocalClientGlobals(localClientNum);
     fprintf(file, "cgtime %d snap %d ent %d origin %.1f %.1f %.1f angles %.0f %.0f %.0f hidden %d tr %d\n",

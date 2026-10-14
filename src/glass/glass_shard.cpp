@@ -1800,7 +1800,7 @@ char __thiscall GlassShard::Triangles::Triangulate()
     int k; // [esp+98h] [ebp-124h]
     int numBefore; // [esp+9Ch] [ebp-120h]
     int i; // [esp+A0h] [ebp-11Ch]
-    _LARGE_INTEGER timer; // [esp+A4h] [ebp-118h]
+    BO1_TL_COUNTER timer; // [esp+A4h] [ebp-118h]
     unsigned __int64 *timer_8; // [esp+ACh] [ebp-110h]
     int num; // [esp+B8h] [ebp-104h]
     int hullVtxIndex[64]; // [esp+BCh] [ebp-100h]
@@ -2036,7 +2036,7 @@ int __thiscall GlassShard::Shatter(const GlassShard **newShards, int maxNewShard
     int numTries; // [esp+A0h] [ebp-2Ch]
     int maxSplits; // [esp+A4h] [ebp-28h]
     signed int numNewShards; // [esp+ACh] [ebp-20h]
-    _LARGE_INTEGER timer; // [esp+B4h] [ebp-18h]
+    BO1_TL_COUNTER timer; // [esp+B4h] [ebp-18h]
     unsigned __int64 *timer_8; // [esp+BCh] [ebp-10h]
     int maxSplitTries; // [esp+C8h] [ebp-4h]
 

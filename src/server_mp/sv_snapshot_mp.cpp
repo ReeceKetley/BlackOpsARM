@@ -1,6 +1,11 @@
 #include <qcommon/cm_mapkit.h>
 #include <qcommon/actor_model_state.h>
 #include "sv_snapshot_mp.h"
+#if defined(__ANDROID__)
+#include <platform/android/legacy_crt.h>
+#include <platform/android/engine_frame_timing.h>
+namespace nft = bo1::android::frame_timing;
+#endif
 #include <cgame/cg_sp_nettrace.h>
 #include <game_sp/g_anim_commands_sp.h>
 #include <demo/demo_common.h>
@@ -63,6 +68,9 @@ msg_t g_archiveMsg;
 
 void __cdecl SV_WriteSnapshotToClient(client_t *client, msg_t *msg)
 {
+#if defined(__ANDROID__)
+    nft::Scope timing(nft::SnapshotWrite);
+#endif
     int v2; // edx
     clientSnapshot_t *frame; // [esp+8h] [ebp-60h]
     int lastframe; // [esp+10h] [ebp-58h]
@@ -2123,6 +2131,9 @@ void __cdecl SV_AddModifiedStats(unsigned int clientNum)
 
 void __cdecl SV_BuildClientSnapshot(client_t *client)
 {
+#if defined(__ANDROID__)
+    nft::Scope timing(nft::SnapshotBuild);
+#endif
     unsigned __int8 *v1; // eax
     clientState_s *ClientState; // eax
     ArchivedMatchState *p_archivedState; // ecx
@@ -2183,6 +2194,16 @@ void __cdecl SV_BuildClientSnapshot(client_t *client)
                     v5 = 0;
                 v23 = v5;
                 dst = (unsigned __int8 *)v7;
+#if defined(__ANDROID__)
+                // Native HUD members enlarge playerState_s; copy the runtime
+                // object and address its fields rather than original offsets.
+                v7->ps = *SV_GameClientNum(clientNum);
+                clientNum = v7->ps.clientNum;
+                position[0] = v7->ps.origin[0];
+                position[1] = v7->ps.origin[1];
+                position[2] = v7->ps.origin[2] + v7->ps.viewHeightCurrent;
+                AddLeanToPosition(position, v7->ps.viewangles[0], v7->ps.leanf, 16.0, 20.0);
+#else
                 v1 = (unsigned __int8 *)SV_GameClientNum(clientNum);
                 memcpy(dst, v1, 0x26A4u);
                 clientNum = dst[304];
@@ -2191,6 +2212,7 @@ void __cdecl SV_BuildClientSnapshot(client_t *client)
                 position[2] = *((float *)dst + 11);
                 position[2] = position[2] + *((float *)dst + 100);
                 AddLeanToPosition(position, *((float *)dst + 97), *((float *)dst + 31), 16.0, 20.0);
+#endif
                 memset((unsigned __int8 *)v15, 0, sizeof(v15));
                 if ( CachedSnapshot )
                 {
@@ -2684,6 +2706,9 @@ unsigned __int8 svCompressedBuf[131072];
 //unsigned __int8 to[65536];
 void __cdecl SV_SendMessageToClient(msg_t *msg, client_t *client, bool reliable)
 {
+#if defined(__ANDROID__)
+    nft::Scope timing(nft::SnapshotTransmit);
+#endif
     int lowest_send_count; // [esp+10h] [ebp-Ch]
     int compressedSize; // [esp+14h] [ebp-8h]
     int rateMsec; // [esp+18h] [ebp-4h]
@@ -3401,6 +3426,9 @@ static void SV_BO1CheckFarEntities()
 
 void __cdecl SV_SendClientMessages()
 {
+#if defined(__ANDROID__)
+    nft::Scope sendTiming(nft::SnapshotSend);
+#endif
     char *v1; // eax
     int v2; // eax
     float comp_ratio; // [esp+74h] [ebp-98h]
@@ -3429,10 +3457,19 @@ void __cdecl SV_SendClientMessages()
 
     PROF_SCOPED("SV_SendClientMessages");
 
+#if defined(__ANDROID__)
+    { nft::Scope timing(nft::SnapshotFarCheck);
+#endif
     if (sv.state == SS_GAME)
         SV_BO1CheckFarEntities(); // mod (L51): name far entities before a snapshot / archive write can Com_Error on them
-
+#if defined(__ANDROID__)
+    }
+    { nft::Scope timing(nft::SnapshotAnimCollect);
+#endif
     SV_SP_CollectAnimCommands();
+#if defined(__ANDROID__)
+    }
+#endif
 
     sv.bpsTotalBytes = 0;
     sv.ubpsTotalBytes = 0;
@@ -3454,6 +3491,9 @@ void __cdecl SV_SendClientMessages()
 
     {
         PROF_SCOPED("extra messages");
+#if defined(__ANDROID__)
+        nft::Scope timing(nft::SnapshotBuildClients);
+#endif
 
         for (clientCounter = 0; clientCounter < maxclients; ++clientCounter)
         {
@@ -3494,6 +3534,9 @@ void __cdecl SV_SendClientMessages()
 
     {
         PROF_SCOPED("SV_SendClientSnapshot");
+#if defined(__ANDROID__)
+        nft::Scope timing(nft::SnapshotTransmitClients);
+#endif
         for (clientCounter = 0; clientCounter < maxclients; ++clientCounter)
         {
             clientNum = (clientCounter + startClient) % maxclients;
@@ -3585,9 +3628,15 @@ void __cdecl SV_SendClientMessages()
     if (sv.state == SS_GAME)
     {
         PROF_SCOPED("SV_ArchiveSnapshot");
+#if defined(__ANDROID__)
+        nft::Scope timing(nft::ArchiveSerialize);
+#endif
         MSG_Init(&g_archiveMsg, tempServerMsgBuf, 0x10000);
         SV_ArchiveSnapshot(&g_archiveMsg);
     }
+#if defined(__ANDROID__)
+    { nft::Scope timing(nft::ArchiveCommit);
+#endif
     SV_GetServerStaticHeader();
     if (sv.state == SS_GAME)
     {
@@ -3628,6 +3677,9 @@ void __cdecl SV_SendClientMessages()
         }
     }
     g_archivingSnapshot = 0;
+#if defined(__ANDROID__)
+    }
+#endif
     //if (GetCurrentThreadId() == g_DXDeviceThread)
     //    D3DPERF_EndEvent();
 }

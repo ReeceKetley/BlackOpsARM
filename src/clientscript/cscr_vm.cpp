@@ -12,9 +12,39 @@
 #include "cscr_memorytree.h"
 
 #include <cstring>
+#if defined(__ANDROID__)
+#include <platform/bo1_bytecode_io.h>
+#endif
+// Only packed instruction/archive bytes use these helpers; aligned VM structs
+// retain their actual native members and pointer ownership.
+template <typename T> static inline T Bo1_VMLoad(const void *bytes)
+{
+#if defined(__ANDROID__)
+    return bo1::bytecode::Load<T>(bytes);
+#else
+    return *static_cast<const T *>(bytes);
+#endif
+}
+template <typename T> static inline void Bo1_VMStore(void *bytes, T value)
+{
+#if defined(__ANDROID__)
+    bo1::bytecode::Store<T>(bytes, value);
+#else
+    *static_cast<T *>(bytes) = value;
+#endif
+}
+#if defined(__ANDROID__)
+static inline void Bo1_VMPrefetch(const char *address) { __builtin_prefetch(address, 0, 1); }
+#else
 #include <xmmintrin.h>
+static inline void Bo1_VMPrefetch(const char *address) { _mm_prefetch(address, 1); }
+#endif
 #include <qcommon/common.h>
+#if defined(__ANDROID__)
+#include <windows.h>
+#else
 #include <minwindef.h>
+#endif
 #include "cscr_evaluate.h"
 #include <win32/win_main.h>
 #include <csetjmp>
@@ -37,6 +67,13 @@ int gCaseCount[2];
 
 int gScrExecuteTime[2];
 
+#if defined(__ANDROID__)
+static inline unsigned int *Bo1_VMLocalVarsBase(scriptInstance_t inst)
+{
+    return &gScrVmGlob[inst].localVarsStack_storage[0];
+}
+#endif
+
 const dvar_t *logScriptTimes;
 const dvar_t *scrVmEnableScripts;
 const dvar_t *scrShowVarUseage;
@@ -50,7 +87,14 @@ unsigned int __cdecl VM_Execute_0(scriptInstance_t inst);
 // slot holds a narrow handle (BO1_NARROW_ENCODE / BO1_NARROW_DECODE).
 static inline char *Bo1_LoadCodePos(const void *p)
 {
+#if defined(__ANDROID__)
+    unsigned int bits;
+    static_assert(sizeof(bits) == 4);
+    std::memcpy(&bits, p, sizeof(bits));
+    return BO1_NARROW_DECODE(char, bits);
+#else
     return BO1_NARROW_DECODE(char, *(const unsigned int *)p);
+#endif
 }
 // The bits of a VariableUnion that holds a VariableStackBuffer * (u.intValue / u.stackValue) -> the buffer address.
 static inline unsigned char *Bo1_StackBuf(int bits)
@@ -103,7 +147,11 @@ void __cdecl Scr_VM_Init(scriptInstance_t inst)
     gScrVmPub[inst].top = gScrVmPub[inst].stack;
     gScrVmPub[inst].function_count = 0;
     gScrVmPub[inst].function_frame = gScrVmPub[inst].function_frame_start;
+#if defined(__ANDROID__)
+    gScrVmPub[inst].localVars = Bo1_VMLocalVarsBase(inst);
+#else
     gScrVmPub[inst].localVars = (unsigned int *)&gScrVmGlob[inst].starttime;
+#endif
     gScrVarPub[inst].evaluate = 0;
     gScrVmPub[inst].debugCode = 0;
     Scr_ClearErrorMessage(inst);
@@ -465,7 +513,7 @@ char *__cdecl Scr_GetNextCodepos(
                 value.type = type;
                 AddRefToValue(inst, type, value.u);
                 Scr_CastBool(inst, &value);
-                v15 = *(_WORD *)pos;
+                v15 = Bo1_VMLoad<unsigned short>(pos);
                 pos += 2;
                 if (gScrVarPub[inst].error_message)
                     goto LABEL_76;
@@ -490,7 +538,7 @@ char *__cdecl Scr_GetNextCodepos(
                 value.type = v8;
                 AddRefToValue(inst, v8, value.u);
                 Scr_CastBool(inst, &value);
-                v14 = *(_WORD *)pos;
+                v14 = Bo1_VMLoad<unsigned short>(pos);
                 pos += 2;
                 if (gScrVarPub[inst].error_message)
                     goto LABEL_76;
@@ -509,12 +557,12 @@ char *__cdecl Scr_GetNextCodepos(
                 else
                     return (char *)pos;
             case 98:
-                return (char *)&pos[*(_DWORD *)pos + 4];
+                return (char *)&pos[Bo1_VMLoad<unsigned int>(pos) + 4];
             case 99:
-                return (char *)&pos[-*(unsigned __int16 *)pos + 2];
+                return (char *)&pos[-Bo1_VMLoad<unsigned short>(pos) + 2];
             case 124:
-                posb = &pos[*(_DWORD *)pos + 4];
-                v13 = *(_WORD *)posb;
+                posb = &pos[Bo1_VMLoad<unsigned int>(pos) + 4];
+                v13 = Bo1_VMLoad<unsigned short>(posb);
                 posa = posb + 2;
                 caseCount = v13;
                 v10 = top->type;
@@ -544,7 +592,7 @@ char *__cdecl Scr_GetNextCodepos(
                 }
                 break;
             case 125:
-                return (char *)&pos[8 * *(unsigned __int16 *)pos + 2];
+                return (char *)&pos[8 * Bo1_VMLoad<unsigned short>(pos) + 2];
             default:
                 v9 = va("unknown opcode %d", opcode);
                 if (!Assert_MyHandler("C:\\projects_pc\\cod\\codsrc\\src\\clientscript\\cscr_vm.cpp", 3269, 0, v9))
@@ -558,7 +606,7 @@ char *__cdecl Scr_GetNextCodepos(
             }
             do
             {
-                v12 = *(_DWORD *)posa;
+                v12 = Bo1_VMLoad<unsigned int>(posa);
                 posc = posa + 4;
                 v11 = Bo1_LoadCodePos(posc);
                 posa = posc + 4;
@@ -843,7 +891,7 @@ const char *__cdecl Scr_GetStackThreadPos(
     while (size)
     {
         bufa = buf - 4;
-        u.intValue = *(int *)bufa;
+        u.intValue = Bo1_VMLoad<int>(bufa);
         buf = bufa - 1;
         --size;
         if (*buf == 7)
@@ -1159,18 +1207,18 @@ void __cdecl VM_Notify(
                         {
                             __debugbreak();
                         }
-                        if (size > *(unsigned __int16 *)(Bo1_StackBuf(stackValue.intValue) + 4)
+                        if (size > Bo1_VMLoad<unsigned short>(Bo1_StackBuf(stackValue.intValue) + 4)
                             && !Assert_MyHandler(
                                 "C:\\projects_pc\\cod\\codsrc\\src\\clientscript\\cscr_vm.cpp",
                                 4084,
                                 0,
                                 "size <= stackValue->size\n\t%i, %i",
                                 size,
-                                *(unsigned __int16 *)(Bo1_StackBuf(stackValue.intValue) + 4)))
+                                Bo1_VMLoad<unsigned short>(Bo1_StackBuf(stackValue.intValue) + 4)))
                         {
                             __debugbreak();
                         }
-                        buf = (char *)(Bo1_StackBuf(stackValue.intValue) + 5 * (*(unsigned __int16 *)(Bo1_StackBuf(stackValue.intValue) + 4) - size) + 13);
+                        buf = (char *)(Bo1_StackBuf(stackValue.intValue) + 5 * (Bo1_VMLoad<unsigned short>(Bo1_StackBuf(stackValue.intValue) + 4) - size) + 13);
                         for (currentValue = top; size; --currentValue)
                         {
                             if (currentValue->type == 7
@@ -1202,7 +1250,7 @@ void __cdecl VM_Notify(
                             }
                             if (tempValue3.type == 8)
                                 break;
-                            tempValue3.u.intValue = *(_DWORD *)++buf;
+                            tempValue3.u.intValue = Bo1_VMLoad<unsigned int>(++buf);
                             buf += 4;
                             AddRefToValue(inst, tempValue3.type, tempValue3.u);
                             type = currentValue->type;
@@ -1297,7 +1345,7 @@ void __cdecl VM_Notify(
                         {
                             __debugbreak();
                         }
-                        size = *(unsigned __int16 *)(Bo1_StackBuf(stackValue.intValue) + 4);
+                        size = Bo1_VMLoad<unsigned short>(Bo1_StackBuf(stackValue.intValue) + 4);
                         newSize = size;
                         currentValue = top;
                         do
@@ -1328,18 +1376,18 @@ void __cdecl VM_Notify(
                         }
                         len = 5 * size;
                         bufLen = 5 * newSize + 13;
-                        if (!MT_Realloc(inst, *(unsigned __int16 *)(Bo1_StackBuf(stackValue.intValue) + 6), bufLen))
+                        if (!MT_Realloc(inst, Bo1_VMLoad<unsigned short>(Bo1_StackBuf(stackValue.intValue) + 6), bufLen))
                         {
                             newStackValue = (VariableStackBuffer *)MT_Alloc(bufLen, 1, inst);
                             newStackValue->bufLen = bufLen;
                             newStackValue->pos = Bo1_LoadCodePos(Bo1_Addr32(stackValue.intValue));
-                            newStackValue->localId = *(_DWORD *)(Bo1_StackBuf(stackValue.intValue) + 8);
+                            newStackValue->localId = Bo1_VMLoad<unsigned int>(Bo1_StackBuf(stackValue.intValue) + 8);
                             memcpy((unsigned __int8 *)newStackValue->buf, (unsigned __int8 *)(Bo1_StackBuf(stackValue.intValue) + 13), len);
-                            MT_Free(Bo1_StackBuf(stackValue.intValue), *(unsigned __int16 *)(Bo1_StackBuf(stackValue.intValue) + 6), inst);
+                            MT_Free(Bo1_StackBuf(stackValue.intValue), Bo1_VMLoad<unsigned short>(Bo1_StackBuf(stackValue.intValue) + 6), inst);
                             stackValue.intValue = (int)BO1_NARROW_ENCODE(newStackValue);
                             tempValue->intValue = (int)BO1_NARROW_ENCODE(newStackValue);
                         }
-                        *(_WORD *)(Bo1_StackBuf(stackValue.intValue) + 4) = newSize;
+                        Bo1_VMStore<unsigned short>(Bo1_StackBuf(stackValue.intValue) + 4, newSize);
                         buf = (char *)(Bo1_StackBuf(stackValue.intValue) + len + 13);
                         newSize -= size;
                         if (!newSize
@@ -1367,7 +1415,7 @@ void __cdecl VM_Notify(
                                 __debugbreak();
                             }
                             *buf++ = currentValue->type;
-                            *(_DWORD *)buf = currentValue->u.intValue;
+                            Bo1_VMStore<unsigned int>(buf, currentValue->u.intValue);
                             buf += 4;
                             --newSize;
                         } while (newSize);
@@ -1540,7 +1588,7 @@ void __cdecl VM_TerminateStack(
         buf -= sizeof(unsigned int);
         // Archived values are raw union bits: strings/numbers are not narrow pointers.
         // Pointer members decode the same bits when the value's type requires it.
-        u.intValue = *(const int *)buf;
+        u.intValue = Bo1_VMLoad<int>(buf);
         buf -= sizeof(unsigned char);
         unsigned char type = buf[0];
         size--;
@@ -1788,7 +1836,7 @@ void __cdecl Scr_CancelNotifyList(scriptInstance_t inst, unsigned int notifyList
                 }
                 VariableValueAddress = GetVariableValueAddress(inst, stackIda);
                 stackValue = BO1_NARROW_DECODE(VariableStackBuffer, VariableValueAddress->next);
-                if ( *(unsigned int *)stackValue )
+                if ( Bo1_VMLoad<unsigned int>(stackValue) )
                 {
                     if ( !Assert_MyHandler(
                                     "C:\\projects_pc\\cod\\codsrc\\src\\clientscript\\cscr_vm.cpp",
@@ -1832,7 +1880,7 @@ void __cdecl VM_TrimStack(
     while (size)
     {
         bufa = buf - 4;
-        u.intValue = *(int *)bufa;
+        u.intValue = Bo1_VMLoad<int>(bufa);
         buf = bufa - 1;
         --size;
         if (*buf == 7)
@@ -1918,10 +1966,15 @@ unsigned int __cdecl Scr_ExecThread(scriptInstance_t inst, int handle, unsigned 
     unsigned int id; // [esp+1Ch] [ebp-4h]
 
     pos = (char *)&gScrVarPub[inst].programBuffer[handle];
-    _mm_prefetch(pos, 1);
+    Bo1_VMPrefetch(pos);
     if (!gScrVmPub[inst].function_count)
     {
-        if ((int *)gScrVmPub[inst].localVars != &gScrVmGlob[inst].starttime
+        if (
+#if defined(__ANDROID__)
+            gScrVmPub[inst].localVars != Bo1_VMLocalVarsBase(inst)
+#else
+            (int *)gScrVmPub[inst].localVars != &gScrVmGlob[inst].starttime
+#endif
             && !Assert_MyHandler(
                 "C:\\projects_pc\\cod\\codsrc\\src\\clientscript\\cscr_vm.cpp",
                 4583,
@@ -1963,7 +2016,12 @@ unsigned int __cdecl Scr_ExecThread(scriptInstance_t inst, int handle, unsigned 
     --gScrVmPub[inst].top;
     --gScrVmPub[inst].inparamcount;
     if (!gScrVmPub[inst].function_count
-        && (int *)gScrVmPub[inst].localVars != &gScrVmGlob[inst].starttime
+        &&
+#if defined(__ANDROID__)
+        gScrVmPub[inst].localVars != Bo1_VMLocalVarsBase(inst)
+#else
+        (int *)gScrVmPub[inst].localVars != &gScrVmGlob[inst].starttime
+#endif
         && !Assert_MyHandler(
             "C:\\projects_pc\\cod\\codsrc\\src\\clientscript\\cscr_vm.cpp",
             4624,
@@ -2047,6 +2105,9 @@ unsigned int __cdecl VM_Execute(scriptInstance_t inst, unsigned int localId, cha
             gScrVmPub[inst].function_frame->fs.localId = 0;
         }
         gScrVmPub[inst].function_frame->fs.pos = pos;
+#if defined(__ANDROID__)
+        bo1::android::PublishServerScriptPosition(static_cast<int>(inst), gScrVmPub[inst].function_frame->fs.pos);
+#endif
         ++gScrVmPub[inst].function_count;
         ++gScrVmPub[inst].function_frame;
         gScrVmPub[inst].function_frame->fs.localId = localId;
@@ -2098,15 +2159,20 @@ unsigned __int16 __cdecl Scr_ReadUnsignedShort(const char **pos)
 {
     __int16 v2; // [esp+0h] [ebp-4h]
 
-    v2 = *(_WORD *)*pos;
+    v2 = Bo1_VMLoad<unsigned short>(*pos);
     *pos += sizeof(short);
     return v2;
 }
 
 uintptr_t Scr_ReadUnsigned(const char **pos)
 {
+#if defined(__ANDROID__)
+    uintptr_t value = bo1::bytecode::Load<unsigned int>(*pos);
+    *pos += 4;
+#else
     uintptr_t value = *(reinterpret_cast<const uintptr_t *>(*pos));
     *pos += sizeof(uintptr_t);
+#endif
     return value;
 }
 
@@ -2119,14 +2185,14 @@ const float *Scr_ReadVector(const char **pos)
 
 float Scr_ReadFloat(const char **pos)
 {
-    float value = *(reinterpret_cast<const float *>(*pos));
+    float value = Bo1_VMLoad<float>(*pos);
     *pos += sizeof(float);
     return value;
 }
 
 int Scr_ReadInt(const char **pos)
 {
-    int value = *(int *)*pos;
+    int value = Bo1_VMLoad<int>(*pos);
     *pos += sizeof(int);
     return value ;
 }
@@ -2144,7 +2210,7 @@ const char *__cdecl Scr_ReadCodePos(scriptInstance_t inst, const char **pos)
 {
     int v3; // [esp+0h] [ebp-8h]
 
-    v3 = *(unsigned int *)*pos;
+    v3 = Bo1_VMLoad<unsigned int>(*pos);
     *pos += 4;
     return BO1_NARROW_DECODE(const char, (unsigned int)v3);
 }
@@ -2217,10 +2283,10 @@ VariableStackBuffer *__cdecl VM_ArchiveStack(scriptInstance_t inst, function_sta
     stackValue = MT_Alloc(bufLen, 1, inst);
     ++gScrVarPub[inst].numScriptThreads;
     localId = stack->localId;
-    *((_DWORD *)stackValue + 2) = localId;
-    *((_WORD *)stackValue + 2) = size;
-    *((_WORD *)stackValue + 3) = bufLen;
-    *(unsigned int *)stackValue = BO1_NARROW_ENCODE(stack->pos);
+    Bo1_VMStore<unsigned int>(stackValue + 8, localId);
+    Bo1_VMStore<unsigned short>(stackValue + 4, size);
+    Bo1_VMStore<unsigned short>(stackValue + 6, bufLen);
+    Bo1_VMStore<unsigned int>(stackValue, BO1_NARROW_ENCODE(stack->pos));
     stackValue[12] = gScrVarPub[inst].time;
     gScrVmPub[inst].localVars -= stack->localVarCount;
     buf = &stackValue[5 * size + 13];
@@ -2231,13 +2297,13 @@ VariableStackBuffer *__cdecl VM_ArchiveStack(scriptInstance_t inst, function_sta
         {
             --gScrVmPub[inst].function_count;
             --gScrVmPub[inst].function_frame;
-            *(unsigned int *)bufa = BO1_NARROW_ENCODE(gScrVmPub[inst].function_frame->fs.pos);
+            Bo1_VMStore<unsigned int>(bufa, BO1_NARROW_ENCODE(gScrVmPub[inst].function_frame->fs.pos));
             gScrVmPub[inst].localVars -= gScrVmPub[inst].function_frame->fs.localVarCount;
             localId = GetParentLocalId(inst, localId);
         }
         else
         {
-            *(_DWORD *)bufa = top->u.intValue;
+            Bo1_VMStore<unsigned int>(bufa, top->u.intValue);
         }
         buf = bufa - 1;
         if (top->type >= 0x100u
@@ -2276,10 +2342,15 @@ unsigned int __cdecl Scr_ExecEntThreadNum(
     unsigned int id; // [esp+20h] [ebp-4h]
 
     pos = (char *)&gScrVarPub[inst].programBuffer[handle];
-    _mm_prefetch(pos, 1);
+    Bo1_VMPrefetch(pos);
     if (!gScrVmPub[inst].function_count)
     {
-        if ((int *)gScrVmPub[inst].localVars != &gScrVmGlob[inst].starttime
+        if (
+#if defined(__ANDROID__)
+            gScrVmPub[inst].localVars != Bo1_VMLocalVarsBase(inst)
+#else
+            (int *)gScrVmPub[inst].localVars != &gScrVmGlob[inst].starttime
+#endif
             && !Assert_MyHandler(
                 "C:\\projects_pc\\cod\\codsrc\\src\\clientscript\\cscr_vm.cpp",
                 4646,
@@ -2331,7 +2402,12 @@ unsigned int __cdecl Scr_ExecEntThreadNum(
     --gScrVmPub[inst].top;
     --gScrVmPub[inst].inparamcount;
     if (!gScrVmPub[inst].function_count
-        && (int *)gScrVmPub[inst].localVars != &gScrVmGlob[inst].starttime
+        &&
+#if defined(__ANDROID__)
+        gScrVmPub[inst].localVars != Bo1_VMLocalVarsBase(inst)
+#else
+        (int *)gScrVmPub[inst].localVars != &gScrVmGlob[inst].starttime
+#endif
         && !Assert_MyHandler(
             "C:\\projects_pc\\cod\\codsrc\\src\\clientscript\\cscr_vm.cpp",
             4688,
@@ -2352,10 +2428,15 @@ void __cdecl Scr_AddExecThread(scriptInstance_t inst, int handle, unsigned int p
     const char *varUsagePos; // [esp+Ch] [ebp-4h]
 
     pos = (char *)&gScrVarPub[inst].programBuffer[handle];
-    _mm_prefetch(pos, 1);
+    Bo1_VMPrefetch(pos);
     if (!gScrVmPub[inst].function_count)
     {
-        if ((int *)gScrVmPub[inst].localVars != &gScrVmGlob[inst].starttime
+        if (
+#if defined(__ANDROID__)
+            gScrVmPub[inst].localVars != Bo1_VMLocalVarsBase(inst)
+#else
+            (int *)gScrVmPub[inst].localVars != &gScrVmGlob[inst].starttime
+#endif
             && !Assert_MyHandler(
                 "C:\\projects_pc\\cod\\codsrc\\src\\clientscript\\cscr_vm.cpp",
                 4708,
@@ -2402,7 +2483,12 @@ void __cdecl Scr_AddExecThread(scriptInstance_t inst, int handle, unsigned int p
     ++gScrVmPub[inst].outparamcount;
     --gScrVmPub[inst].inparamcount;
     if (!gScrVmPub[inst].function_count
-        && (int *)gScrVmPub[inst].localVars != &gScrVmGlob[inst].starttime
+        &&
+#if defined(__ANDROID__)
+        gScrVmPub[inst].localVars != Bo1_VMLocalVarsBase(inst)
+#else
+        (int *)gScrVmPub[inst].localVars != &gScrVmGlob[inst].starttime
+#endif
         && !Assert_MyHandler(
             "C:\\projects_pc\\cod\\codsrc\\src\\clientscript\\cscr_vm.cpp",
             4738,
@@ -3302,9 +3388,27 @@ void __cdecl Scr_AddBool(unsigned int value, scriptInstance_t inst)
     gScrVmPub[inst].top->u.intValue = value;
 }
 
+#if defined(__ANDROID__)
+static inline VariableValue *Bo1_VMEvalStack(scriptInstance_t inst)
+{
+    return &gScrVmGlob[inst].eval_stack_storage[1];
+}
+static inline bool Bo1_VMTopInRange(const VariableValue *top, const VariableValue *first, const VariableValue *last)
+{
+    // Either owned stack may be inactive; compare their numeric address bounds
+    // without ordering pointers into unrelated arrays.
+    const uintptr_t address = reinterpret_cast<uintptr_t>(top);
+    return address >= reinterpret_cast<uintptr_t>(first) && address <= reinterpret_cast<uintptr_t>(last);
+}
+#endif
+
 void __cdecl IncInParam(scriptInstance_t inst)
 {
+#if defined(__ANDROID__)
+    iassert(Bo1_VMTopInRange(gScrVmPub[inst].top, Bo1_VMEvalStack(inst) - 1, Bo1_VMEvalStack(inst)) || Bo1_VMTopInRange(gScrVmPub[inst].top, gScrVmPub[inst].stack, gScrVmPub[inst].maxstack));
+#else
     iassert(((gScrVmPub[inst].top >= gScrVmGlob[inst].eval_stack - 1) && (gScrVmPub[inst].top <= gScrVmGlob[inst].eval_stack)) || ((gScrVmPub[inst].top >= gScrVmPub[inst].stack) && (gScrVmPub[inst].top <= gScrVmPub[inst].maxstack)));
+#endif
 
     Scr_ClearOutParams(inst);
     if (gScrVmPub[inst].top == gScrVmPub[inst].maxstack)
@@ -3312,7 +3416,11 @@ void __cdecl IncInParam(scriptInstance_t inst)
     ++gScrVmPub[inst].top;
     ++gScrVmPub[inst].inparamcount;
 
+#if defined(__ANDROID__)
+    iassert(Bo1_VMTopInRange(gScrVmPub[inst].top, Bo1_VMEvalStack(inst), Bo1_VMEvalStack(inst) + 1) || Bo1_VMTopInRange(gScrVmPub[inst].top, gScrVmPub[inst].stack, gScrVmPub[inst].maxstack));
+#else
     iassert(((gScrVmPub[inst].top >= gScrVmGlob[inst].eval_stack) && (gScrVmPub[inst].top <= gScrVmGlob[inst].eval_stack + 1)) || ((gScrVmPub[inst].top >= gScrVmPub[inst].stack) && (gScrVmPub[inst].top <= gScrVmPub[inst].maxstack)));
+#endif
 }
 
 void __cdecl Scr_AddInt(int value, scriptInstance_t inst)
@@ -3732,8 +3840,14 @@ VariableValue __cdecl GetEntityFieldValue(
     iassert(!gScrVmPub[inst].outparamcount);
 
 
+#if defined(__ANDROID__)
+    VariableValue *evalStack = Bo1_VMEvalStack(inst);
+    gScrVmPub[inst].top = evalStack - 1;
+    evalStack[0].type = 0;
+#else
     gScrVmPub[inst].top = gScrVmGlob[inst].eval_stack - 1;
     gScrVmGlob[inst].eval_stack[0].type = 0;
+#endif
     if (inst == SCRIPTINSTANCE_CLIENT)
         CScr_GetObjectField(classnum, entnum, clientNum, offset);
     else
@@ -3741,11 +3855,20 @@ VariableValue __cdecl GetEntityFieldValue(
 
     iassert(!gScrVmPub[inst].inparamcount || gScrVmPub[inst].inparamcount == 1);
     iassert(!gScrVmPub[inst].outparamcount);
+#if defined(__ANDROID__)
+    iassert(gScrVmPub[inst].top - gScrVmPub[inst].inparamcount == evalStack - 1);
+#else
     iassert(gScrVmPub[inst].top - gScrVmPub[inst].inparamcount == gScrVmGlob[inst].eval_stack - 1);
+#endif
 
     gScrVmPub[inst].inparamcount = 0;
+#if defined(__ANDROID__)
+    result.u.intValue = evalStack[0].u.intValue;
+    result.type = evalStack[0].type;
+#else
     result.u.intValue = gScrVmGlob[inst].eval_stack[0].u.intValue;
     result.type = gScrVmGlob[inst].eval_stack[0].type;
+#endif
     return result;
 }
 
@@ -4069,7 +4192,12 @@ void __cdecl VM_Resume(scriptInstance_t inst, unsigned int timeId)
         {
             __debugbreak();
         }
-        if ((int *)gScrVmPub[inst].localVars != &gScrVmGlob[inst].starttime
+        if (
+#if defined(__ANDROID__)
+            gScrVmPub[inst].localVars != Bo1_VMLocalVarsBase(inst)
+#else
+            (int *)gScrVmPub[inst].localVars != &gScrVmGlob[inst].starttime
+#endif
             && !Assert_MyHandler(
                 "C:\\projects_pc\\cod\\codsrc\\src\\clientscript\\cscr_vm.cpp",
                 4443,
@@ -4139,7 +4267,11 @@ void __cdecl VM_UnarchiveStack(scriptInstance_t inst, unsigned int startLocalId,
 {
     VariableValue *top; // [esp+8h] [ebp-14h]
     char *buf; // [esp+Ch] [ebp-10h]
-    const unsigned int *bufa; // [esp+Ch] [ebp-10h]
+#if defined(__ANDROID__)
+    const char *bufa;
+#else
+    const unsigned int *bufa;
+#endif // [esp+Ch] [ebp-10h]
     unsigned int localId; // [esp+10h] [ebp-Ch]
     int function_count; // [esp+14h] [ebp-8h]
     int size; // [esp+18h] [ebp-4h]
@@ -4174,8 +4306,11 @@ void __cdecl VM_UnarchiveStack(scriptInstance_t inst, unsigned int startLocalId,
     {
         __debugbreak();
     }
-    _mm_prefetch(stackValue->pos, 1);
+    Bo1_VMPrefetch(stackValue->pos);
     gScrVmPub[inst].function_frame->fs.pos = stackValue->pos;
+#if defined(__ANDROID__)
+    bo1::android::PublishServerScriptPosition(static_cast<int>(inst), gScrVmPub[inst].function_frame->fs.pos);
+#endif
     ++gScrVmPub[inst].function_count;
     ++gScrVmPub[inst].function_frame;
     size = stackValue->size;
@@ -4186,7 +4321,11 @@ void __cdecl VM_UnarchiveStack(scriptInstance_t inst, unsigned int startLocalId,
         --size;
         top[1].type = (unsigned __int8)*buf;
         ++top;
+#if defined(__ANDROID__)
+        bufa = buf + 1;
+#else
         bufa = (const unsigned int *)(buf + 1);
+#endif
         if (top->type == 7)
         {
             if (gScrVmPub[inst].function_count >= 32
@@ -4200,14 +4339,21 @@ void __cdecl VM_UnarchiveStack(scriptInstance_t inst, unsigned int startLocalId,
                 __debugbreak();
             }
             gScrVmPub[inst].function_frame->fs.pos = Bo1_LoadCodePos(bufa);
+#if defined(__ANDROID__)
+            bo1::android::PublishServerScriptPosition(static_cast<int>(inst), gScrVmPub[inst].function_frame->fs.pos);
+#endif
             ++gScrVmPub[inst].function_count;
             ++gScrVmPub[inst].function_frame;
         }
         else
         {
-            top->u.intValue = (int)*bufa;
+            top->u.intValue = static_cast<int>(Bo1_VMLoad<unsigned int>(bufa));
         }
+#if defined(__ANDROID__)
+        buf = const_cast<char *>(bufa + 4);
+#else
         buf = (char *)(bufa + 1);
+#endif
     }
     gFs[inst].pos = stackValue->pos;
     gFs[inst].top = top;
@@ -4904,7 +5050,17 @@ thread_return:
             iassert(localFs.top + 1 <= gScrVmPub[inst].maxstack);
 
             localFs.top[1].type = VAR_VECTOR;
+#if defined(__ANDROID__)
+            {
+                float *vector = Scr_AllocVector(inst);
+                for (unsigned component = 0; component < 3; ++component)
+                    bo1::bytecode::Store<float>(&vector[component], bo1::bytecode::Load<float>(localFs.pos + 4 * component));
+                localFs.pos += 12;
+                localFs.top[1].u.vectorValue = vector;
+            }
+#else
             localFs.top[1].u.vectorValue = Scr_ReadVector(&localFs.pos);
+#endif
             ++localFs.top;
             continue;
 
@@ -5168,7 +5324,7 @@ thread_return:
             {
                 __debugbreak();
             }
-            v78 = *(_WORD *)localFs.pos;
+            v78 = Bo1_VMLoad<unsigned short>(localFs.pos);
             localFs.pos += 2;
             Variable = FindVariable(inst, objectId, v78);
             v95 = Scr_EvalVariable(inst, Variable);
@@ -5226,7 +5382,7 @@ thread_return:
             {
                 __debugbreak();
             }
-            v77 = *(_WORD *)localFs.pos;
+            v77 = Bo1_VMLoad<unsigned short>(localFs.pos);
             localFs.pos += 2;
             VariableField = Scr_FindVariableField(inst, objectId, v77);
             v94 = VariableField;
@@ -5245,20 +5401,20 @@ thread_return:
             goto EvalFieldVariableRef;
         case OP_EvalFieldVariableRef:
         EvalFieldVariableRef:
-            v76 = *(_WORD *)localFs.pos;
+            v76 = Bo1_VMLoad<unsigned short>(localFs.pos);
             localFs.pos += 2;
             fieldValueIndex = Scr_GetVariableFieldIndex(inst, objectId, v76);
             fieldValueId = gScrVarGlob[inst].variableList[fieldValueIndex + VARIABLELIST_CHILD_BEGIN(inst)].hash.id;
             continue;
         case OP_ClearFieldVariable:
-            v75 = *(_WORD *)localFs.pos;
+            v75 = Bo1_VMLoad<unsigned short>(localFs.pos);
             localFs.pos += 2;
             ClearVariableField(inst, objectId, v75, localFs.top);
             continue;
         case OP_SafeCreateVariableFieldCached:
             ++gScrVmPub[inst].localVars;
             ++localFs.localVarCount;
-            v74 = *(_WORD *)localFs.pos;
+            v74 = Bo1_VMLoad<unsigned short>(localFs.pos);
             localFs.pos += 2;
             *gScrVmPub[inst].localVars = GetNewVariable(inst, localFs.localId, v74);
             goto $LN261_1;
@@ -5382,7 +5538,7 @@ thread_return:
             fieldValueId = gScrVmPub[inst].localVars[-(unsigned __int8)*localFs.pos++];
             continue;
         case OP_SetLevelFieldVariableField:
-            v73 = *(_WORD *)localFs.pos;
+            v73 = Bo1_VMLoad<unsigned short>(localFs.pos);
             localFs.pos += 2;
             top = localFs.top;
             v9 = GetVariable(inst, gScrVarPub[inst].levelId, v73);
@@ -5391,14 +5547,14 @@ thread_return:
         case OP_SetVariableField:
             goto $LN1040;
         case OP_SetAnimFieldVariableField:
-            v71 = *(_WORD *)localFs.pos;
+            v71 = Bo1_VMLoad<unsigned short>(localFs.pos);
             localFs.pos += 2;
             v62 = localFs.top;
             v10 = GetVariable(inst, gScrVarPub[inst].animId, v71);
             SetVariableValue(inst, v10, v62);
             goto loop_dec_top;
         case OP_SetSelfFieldVariableField:
-            v72 = *(_WORD *)localFs.pos;
+            v72 = Bo1_VMLoad<unsigned short>(localFs.pos);
             localFs.pos += 2;
             fieldName = v72;
             objectId = Scr_GetSelf(inst, localFs.localId);
@@ -5450,10 +5606,13 @@ thread_return:
 CallBuiltin:
             iassert(!gScrVmPub[inst].inparamcount);
             debugpos = localFs.pos;
-            v70 = *(_WORD *)localFs.pos;
+            v70 = Bo1_VMLoad<unsigned short>(localFs.pos);
             localFs.pos += 2;
             builtinIndex = v70;
             gScrVmPub[inst].function_frame->fs.pos = localFs.pos;
+#if defined(__ANDROID__)
+            bo1::android::PublishServerScriptPosition(static_cast<int>(inst), gScrVmPub[inst].function_frame->fs.pos);
+#endif
             if (gScrVmDebugPub[inst].func_table[builtinIndex].breakpointCount)
             {
                 outparamcount = gScrVmPub[inst].outparamcount;
@@ -5489,7 +5648,7 @@ CallBuiltin:
             iassert(!gScrVmPub[inst].inparamcount);
             debugpos = localFs.pos;
             gScrVmPub[inst].top = localFs.top - 1;
-            v69 = *(_WORD *)localFs.pos;
+            v69 = Bo1_VMLoad<unsigned short>(localFs.pos);
             localFs.pos += 2;
             builtinIndex = v69;
             if (localFs.top->type != VAR_POINTER)
@@ -5589,6 +5748,9 @@ negWait:
             entref = Scr_GetEntityIdRef(inst, objectId);
             RemoveRefToObject(inst, objectId);
             gScrVmPub[inst].function_frame->fs.pos = localFs.pos;
+#if defined(__ANDROID__)
+            bo1::android::PublishServerScriptPosition(static_cast<int>(inst), gScrVmPub[inst].function_frame->fs.pos);
+#endif
             if (gScrVmGlob[inst].recordPlace)
                 Scr_GetFileAndLine(inst, localFs.pos, (char **)&gScrVmGlob[inst].lastFileName, &gScrVmGlob[inst].lastLine);
             if (gScrVmDebugPub[inst].func_table[builtinIndex].breakpointCount)
@@ -5662,6 +5824,9 @@ $LN205_0:
                 AddRefToObject(inst, selfId);
                 localFs.localId = AllocChildThread(inst, selfId, localFs.localId);
                 gScrVmPub[inst].function_frame->fs.pos = localFs.pos;
+#if defined(__ANDROID__)
+                bo1::android::PublishServerScriptPosition(static_cast<int>(inst), gScrVmPub[inst].function_frame->fs.pos);
+#endif
                 function_frame = gScrVmPub[inst].function_frame;
                 v68 = Bo1_LoadCodePos(function_frame->fs.pos);
                 function_frame->fs.pos += 4;
@@ -5679,6 +5844,9 @@ $LN202_0:
                 AddRefToObject(inst, selfId);
                 localFs.localId = AllocChildThread(inst, selfId, localFs.localId);
                 gScrVmPub[inst].function_frame->fs.pos = localFs.pos;
+#if defined(__ANDROID__)
+                bo1::android::PublishServerScriptPosition(static_cast<int>(inst), gScrVmPub[inst].function_frame->fs.pos);
+#endif
                 localFs.pos = localFs.top->u.codePosValue;
                 --localFs.top;
                 goto function_call;
@@ -5697,6 +5865,9 @@ $LN202_0:
                 localFs.localId = AllocChildThread(inst, localFs.top->u.stringValue, localFs.localId);
                 --localFs.top;
                 gScrVmPub[inst].function_frame->fs.pos = localFs.pos;
+#if defined(__ANDROID__)
+                bo1::android::PublishServerScriptPosition(static_cast<int>(inst), gScrVmPub[inst].function_frame->fs.pos);
+#endif
                 localFs.pos = Scr_ReadCodePos(inst, &gScrVmPub[inst].function_frame->fs.pos);
                 goto function_call;
             }
@@ -5721,6 +5892,9 @@ $LN202_0:
                     localFs.localId = AllocChildThread(inst, localFs.top->u.stringValue, localFs.localId);
                     --localFs.top;
                     gScrVmPub[inst].function_frame->fs.pos = localFs.pos;
+#if defined(__ANDROID__)
+                    bo1::android::PublishServerScriptPosition(static_cast<int>(inst), gScrVmPub[inst].function_frame->fs.pos);
+#endif
                     localFs.pos = tempCodePos;
                     goto function_call;
                 }
@@ -5740,6 +5914,9 @@ $LN202_0:
                     AddRefToObject(inst, selfId);
                     localFs.localId = AllocThread(inst, selfId);
                     gScrVmPub[inst].function_frame->fs.pos = localFs.pos;
+#if defined(__ANDROID__)
+                    bo1::android::PublishServerScriptPosition(static_cast<int>(inst), gScrVmPub[inst].function_frame->fs.pos);
+#endif
                     gScrVmPub[inst].function_frame->fs.startTop = localFs.startTop;
                     localFs.pos = Scr_ReadCodePos(inst, &gScrVmPub[inst].function_frame->fs.pos);
                     localFs.startTop = &localFs.top[-(int)Scr_ReadInt(&gScrVmPub[inst].function_frame->fs.pos)];
@@ -5759,6 +5936,9 @@ $LN202_0:
                         AddRefToObject(inst, selfId);
                         localFs.localId = AllocThread(inst, selfId);
                         gScrVmPub[inst].function_frame->fs.pos = localFs.pos;
+#if defined(__ANDROID__)
+                        bo1::android::PublishServerScriptPosition(static_cast<int>(inst), gScrVmPub[inst].function_frame->fs.pos);
+#endif
                         gScrVmPub[inst].function_frame->fs.startTop = localFs.startTop;
                         localFs.pos = tempCodePos;
                         localFs.startTop = &localFs.top[-(int)Scr_ReadInt(&gScrVmPub[inst].function_frame->fs.pos)];
@@ -5778,6 +5958,9 @@ $LN202_0:
                         localFs.localId = AllocThread(inst, localFs.top->u.stringValue);
                         --localFs.top;
                         gScrVmPub[inst].function_frame->fs.pos = localFs.pos;
+#if defined(__ANDROID__)
+                        bo1::android::PublishServerScriptPosition(static_cast<int>(inst), gScrVmPub[inst].function_frame->fs.pos);
+#endif
                         gScrVmPub[inst].function_frame->fs.startTop = localFs.startTop;
                         localFs.pos = Scr_ReadCodePos(inst, &gScrVmPub[inst].function_frame->fs.pos);
                         localFs.startTop = &localFs.top[-(int)Scr_ReadInt(&gScrVmPub[inst].function_frame->fs.pos)];
@@ -5821,6 +6004,9 @@ $LN202_0:
             localFs.localId = AllocThread(inst, localFs.top->u.stringValue);
             --localFs.top;
             gScrVmPub[inst].function_frame->fs.pos = localFs.pos;
+#if defined(__ANDROID__)
+            bo1::android::PublishServerScriptPosition(static_cast<int>(inst), gScrVmPub[inst].function_frame->fs.pos);
+#endif
             gScrVmPub[inst].function_frame->fs.startTop = localFs.startTop;
             localFs.pos = tempCodePos;
             localFs.startTop = &localFs.top[-(int)Scr_ReadInt(&gScrVmPub[inst].function_frame->fs.pos)];
@@ -6155,6 +6341,9 @@ function_call:
             if (gScrVmDebugPub[inst].checkBreakon)
                 Scr_CheckBreakonNotify(inst, id, stringValue, localFs.top, localFs.pos, localFs.localId);
             gScrVmPub[inst].function_frame->fs.pos = localFs.pos;
+#if defined(__ANDROID__)
+            bo1::android::PublishServerScriptPosition(static_cast<int>(inst), gScrVmPub[inst].function_frame->fs.pos);
+#endif
             VM_Notify(inst, id, stringValue, localFs.top);
             localFs.pos = gScrVmPub[inst].function_frame->fs.pos;
             RemoveRefToObject(inst, id);

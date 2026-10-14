@@ -1,4 +1,8 @@
 #include "live_storage_pub.h"
+#if defined(__ANDROID__)
+#include <ctime>
+#include <cstdlib>
+#endif
 #include <DW/dwLogOn_pc.h>
 #include <stringed/stringed_hooks.h>
 #include <cgame_mp/cg_main_mp.h>
@@ -201,7 +205,18 @@ void LiveStorage_ProcessOnlineWAD()
             tlEndianSwapMemory32((int *)s_onlineWADBuffer, 0x10u);
         }
         genTime = *(unsigned int *)&s_onlineWADBuffer[4];
+#if defined(__ANDROID__)
+        const std::time_t generated = static_cast<std::time_t>(genTime);
+        char generatedText[26];
+        v3 = ::ctime_r(&generated, generatedText);
+        if (!v3)
+        {
+            Com_Error(ERR_DROP, "Invalid online WAD generation timestamp" );
+            std::abort();
+        }
+#else
         v3 = _ctime64(&genTime);
+#endif
         Com_Printf(23, "Got Online WAD. %d entries, generated: %s", *(unsigned int *)&s_onlineWADBuffer[8], v3);
         for ( idx = 0; idx < *(unsigned int *)&s_onlineWADBuffer[8]; ++idx )
         {
@@ -292,12 +307,22 @@ bool __cdecl LiveStorage_DecompressBuffer(
                 unsigned int uncompressedSize)
 {
     int err; // [esp+0h] [ebp-38h]
+#if defined(__ANDROID__)
+    z_stream_s stream{};
+#else
     z_stream_s stream; // [esp+4h] [ebp-34h] BYREF
+#endif
 
+#if !defined(__ANDROID__)
     memset(&stream.zalloc, 0, 12);
+#endif
     stream.avail_in = compressedSize;
     stream.next_in = compressedBuffer;
+#if defined(__ANDROID__)
+    if (inflateInit2_(&stream, 15, "1.2.3", sizeof(stream)) != Z_OK) return false;
+#else
     inflateInit2_(&stream, 15, "1.2.3", 52);
+#endif
     stream.avail_out = uncompressedSize;
     stream.next_out = uncompressedBuffer;
     err = inflate(&stream, 0);

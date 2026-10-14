@@ -241,6 +241,17 @@ struct StreamSeg
     unsigned int nElem;  // native element stride
 };
 std::vector<StreamSeg> g_streamSegs[7];
+#if defined(__ANDROID__)
+struct NativePointerArray
+{
+    unsigned block;
+    unsigned within;
+    unsigned count;
+    unsigned __int8 *native;
+};
+// Metadata is per loading zone; array storage belongs to that zone's XBlock.
+std::vector<NativePointerArray> g_nativePointerArrays;
+#endif
 static void DB_StreamCommitTempSegment(const StreamSeg &write);
 int g_segFallbackLogged;
 
@@ -614,6 +625,72 @@ const char *DB_StreamDescribe(unsigned int blockIndex, unsigned int win32Within)
     return buf;
 }
 
+#if defined(__ANDROID__)
+unsigned __int8 *DB_StreamMapPointerArray(unsigned block, unsigned within, unsigned count)
+{
+    if (block == 0 || block >= 7 || !count || count > (1u << 20) ||
+        !g_streamBlocks || !g_streamBlocks[block].data)
+        return nullptr;
+    for (const auto &array : g_nativePointerArrays)
+        if (array.block == block && array.within == within && array.count == count)
+            return array.native;
+
+    const auto &segments = g_streamSegs[block];
+    auto after = std::upper_bound(segments.begin(), segments.end(), within,
+                                 [](unsigned value, const StreamSeg &seg) { return value < seg.w; });
+    if (after == segments.begin()) return nullptr;
+    const StreamSeg segment = *--after;
+    if (within < segment.w) return nullptr;
+    const unsigned delta = within - segment.w;
+    const size_t diskBytes = static_cast<size_t>(count) * sizeof(uint32_t);
+    const size_t nativeBytes = static_cast<size_t>(count) * sizeof(uintptr_t);
+    if (delta > segment.wSize || diskBytes > segment.wSize - delta)
+        return nullptr;
+    if (segment.wElem == sizeof(uint32_t) && segment.nElem == sizeof(uintptr_t) &&
+        delta % sizeof(uint32_t) == 0)
+    {
+        const size_t nativeDelta = (delta / sizeof(uint32_t)) * sizeof(uintptr_t);
+        if (nativeDelta > segment.nSize || nativeBytes > segment.nSize - nativeDelta)
+            return nullptr;
+        return g_streamBlocks[block].data + segment.n + nativeDelta;
+    }
+    if (segment.wSize != segment.nSize || segment.n > g_streamBlocks[block].size ||
+        delta > g_streamBlocks[block].size - segment.n ||
+        diskBytes > g_streamBlocks[block].size - segment.n - delta)
+        return nullptr;
+    const unsigned __int8 *raw = g_streamBlocks[block].data + segment.n + delta;
+    for (size_t i = 0; i < diskBytes; ++i)
+        if (raw[i] != 0) return nullptr; // A nonzero raw span is not a resolved pointer array.
+
+    // Materialize the proven disk null slots in this zone's existing native
+    // block. No disk bytes are consumed; scalar aliases keep their old mapping.
+    // Reserve metadata before changing native cursor or owned bytes.
+    if (g_streamPosIndex != block || g_expandWin32Size != -1 || g_expandElemW || g_expandElemN)
+        return nullptr;
+    const uintptr_t cursor = reinterpret_cast<uintptr_t>(g_streamPos);
+    const uintptr_t aligned = (cursor + sizeof(uintptr_t) - 1) & ~(sizeof(uintptr_t) - 1);
+    const uintptr_t base = reinterpret_cast<uintptr_t>(g_streamBlocks[block].data);
+    if (aligned < cursor || aligned < base || aligned - base > g_streamBlocks[block].size ||
+        nativeBytes > g_streamBlocks[block].size - (aligned - base))
+        return nullptr;
+    g_nativePointerArrays.reserve(g_nativePointerArrays.size() + 1);
+    g_streamSegs[block].reserve(g_streamSegs[block].size() + 1);
+    g_driftMarks[block].reserve(g_driftMarks[block].size() + 2);
+    g_aliasSlots[block].reserve(g_aliasSlots[block].size() + count);
+    unsigned __int8 *native = DB_AllocStreamPos(0); // Native alignment, unchanged Win32 cursor.
+    memset(native, 0, nativeBytes);
+    DB_SetExpandWin32Size(0);
+    DB_IncStreamPos(static_cast<int>(nativeBytes));
+    for (unsigned i = 0; i < count; ++i)
+        DB_StreamRegisterAliasSlot(block, within + i * sizeof(uint32_t),
+                                   reinterpret_cast<uintptr_t *>(native) + i);
+    g_nativePointerArrays.push_back(NativePointerArray{block, within, count, native});
+    Bo1_Diag("NATIVE_POINTER_ZERO_ALIAS block=%u disk=%08X count=%u native=%p disk_bytes=%zu native_bytes=%zu",
+             block, within, count, static_cast<void *>(native), diskBytes, nativeBytes);
+    return native;
+}
+#endif
+
 unsigned __int8 *DB_StreamMapLookup(unsigned int blockIndex, unsigned int win32Within)
 {
     if (blockIndex >= 7 || !g_streamBlocks || !g_streamBlocks[blockIndex].data)
@@ -680,6 +757,9 @@ void __cdecl DB_InitStreams(XBlock *blocks)
     g_tempWrite.segments.clear();
     g_tempWrite.aliases.clear();
     g_aliasSequence = 0;
+#if defined(__ANDROID__)
+    g_nativePointerArrays.clear();
+#endif
     g_expandWin32Size = -1;
     g_expandElemW = g_expandElemN = 0; // No pending stride may cross a zone lifetime.
     for (int bi = 0; bi < 7; ++bi)

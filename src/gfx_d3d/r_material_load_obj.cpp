@@ -19,7 +19,15 @@
 #include "r_state.h"
 #include "r_image.h"
 
+#if defined(__ANDROID__)
+#include <platform/win32_compat/native_d3dx9_api.h>
+#include <platform/android/shader_cache.h>
+#include <mutex>
+#include <cstdio>
+using _iobuf = FILE;
+#else
 #include <d3dx9.h>
+#endif
 
 MaterialTypeInfo g_materialTypeInfo[5] =
 {
@@ -2974,7 +2982,11 @@ bool __cdecl Material_IncludeShader(GfxAssembledShaderText *prog, char *includeN
     bool hasLibPrefix; // [esp+4Fh] [ebp-1h]
 
     //hasLibPrefix = strnicmp(includeName, "lib/", 4u) == 0;
+#if defined(__ANDROID__)
+    hasLibPrefix = I_strnicmp(includeName, "lib/", 4) == 0;
+#else
     hasLibPrefix = _strnicmp(includeName, "lib/", 4u) == 0;
+#endif
     if ( isInLibDir && !hasLibPrefix )
     {
         Com_sprintf(extendedName, 0x40u, "lib/%s", includeName);
@@ -3134,7 +3146,11 @@ char __cdecl Material_FindCachedShader(
     Material_DeleteOldCachedShaders();
     *cachedShader = 0;
     *shaderLen = 0;
+#if defined(__ANDROID__)
+    cacheFile = bo1::android::OpenShaderCacheFile(filename, "rb");
+#else
     cacheFile = fopen(filename, "rb");
+#endif
     if ( !cacheFile )
         return 0;
     if ( fread(&cachedShaderTextLen, 4u, 1u, cacheFile) == 1 && cachedShaderTextLen == shaderTextLen )
@@ -3145,6 +3161,11 @@ char __cdecl Material_FindCachedShader(
             && !memcmp(cachedShaderText, shaderText, cachedShaderTextLen)
             && fread(shaderLen, 4u, 1u, cacheFile) == 1 )
         {
+#if defined(__ANDROID__)
+            if (!bo1::android::ShaderCacheHasBytes(cacheFile, *shaderLen)) {
+                *shaderLen=0; Z_Free(cachedShaderText,32); fclose(cacheFile); return 0;
+            }
+#endif
             *cachedShader = Z_Malloc(*shaderLen, "Material_FindCachedShader", 32);
             if ( !*cachedShader
                 && !Assert_MyHandler(
@@ -3156,7 +3177,14 @@ char __cdecl Material_FindCachedShader(
             {
                 __debugbreak();
             }
+#if defined(__ANDROID__)
+            if (fread(*cachedShader, 1u, *shaderLen, cacheFile)!=*shaderLen) {
+                Z_Free(static_cast<char *>(*cachedShader),32); *cachedShader=nullptr; *shaderLen=0;
+                Z_Free(cachedShaderText,32); fclose(cacheFile); return 0;
+            }
+#else
             fread(*cachedShader, 1u, *shaderLen, cacheFile);
+#endif
             Z_Free(cachedShaderText, 32);
             fclose(cacheFile);
             return 1;
@@ -3180,10 +3208,15 @@ void Material_DeleteOldCachedShaders()
     char dirname[264]; // [esp+8h] [ebp-110h] BYREF
     unsigned int oldShaderCacheVersion; // [esp+114h] [ebp-4h]
 
+#if defined(__ANDROID__)
+    static std::once_flag once;
+    std::call_once(once, [&] {
+#else
     static bool once = false;
     if ( !once )
     {
         once = 1;
+#endif
         for ( oldShaderCacheVersion = 1; oldShaderCacheVersion < 2; ++oldShaderCacheVersion )
         {
             if ( IW_PROJECT_GAMEDIR )
@@ -3197,11 +3230,19 @@ void Material_DeleteOldCachedShaders()
         else
             Com_sprintf(dirname, 0x104u, "%s/%s/shadercache%d", "..", "pc", 2);
         Material_DeleteOldFilesInDirectory(dirname, 0xAu);
+#if defined(__ANDROID__)
+    });
+#else
     }
+#endif
 }
 
 void __cdecl Material_DeleteOldFilesInDirectory(const char *dirname, unsigned __int16 daysOld)
 {
+#if defined(__ANDROID__)
+    bo1::android::CleanShaderCacheDirectory(dirname, daysOld, false);
+#else
+
     unsigned int errorCode; // [esp+0h] [ebp-378h]
     HANDLE handle; // [esp+4h] [ebp-374h]
     _WIN32_FIND_DATAA findData; // [esp+8h] [ebp-370h] BYREF
@@ -3232,8 +3273,11 @@ void __cdecl Material_DeleteOldFilesInDirectory(const char *dirname, unsigned __
         while ( FindNextFileA(handle, &findData) );
         FindClose(handle);
     }
+
+#endif
 }
 
+#if !defined(__ANDROID__)
 void __cdecl Material_SubtractDays(_SYSTEMTIME *sysTime, unsigned __int16 daysOld)
 {
     if ( daysOld > 0x14u
@@ -3264,9 +3308,14 @@ void __cdecl Material_SubtractDays(_SYSTEMTIME *sysTime, unsigned __int16 daysOl
         sysTime->wDay -= daysOld;
     }
 }
+#endif
 
 void __cdecl Material_DeleteDirectory(const char *dirname)
 {
+#if defined(__ANDROID__)
+    bo1::android::CleanShaderCacheDirectory(dirname, 0, true);
+#else
+
     unsigned int errorCode; // [esp+0h] [ebp-360h]
     HANDLE handle; // [esp+4h] [ebp-35Ch]
     _WIN32_FIND_DATAA findData; // [esp+8h] [ebp-358h] BYREF
@@ -3293,6 +3342,8 @@ void __cdecl Material_DeleteDirectory(const char *dirname)
         FindClose(handle);
     }
     RemoveDirectoryA(dirname);
+
+#endif
 }
 
 char __cdecl Material_CopyTextToDXBuffer(unsigned __int8 *cachedShader, unsigned int shaderLen, ID3DXBuffer **shader)
@@ -3347,7 +3398,13 @@ void __cdecl Material_CacheShaderDX(
         v7 = "..";
         Com_sprintf(dirname, 0x104u, "%s/%s/shadercache%d", "..", "pc", 2);
     }
+#if defined(__ANDROID__)
+    if (!bo1::android::EnsureShaderCacheDirectory(dirname)) {
+        Com_PrintWarning(10,"Failed to create shader cache directory '%s'\n",dirname); return;
+    }
+#else
     Sys_Mkdir(dirname);
+#endif
     Com_sprintf(
         filename,
         0x104u,
@@ -3376,7 +3433,11 @@ void __cdecl Material_CacheShader(
     char fileFullPath[1024]; // [esp+0h] [ebp-408h] BYREF
     _iobuf *cacheFile; // [esp+404h] [ebp-4h]
 
+#if defined(__ANDROID__)
+    cacheFile = bo1::android::OpenShaderCacheFile(filename, "wb");
+#else
     cacheFile = fopen(filename, "wb");
+#endif
     if ( cacheFile )
     {
         fwrite(&shaderTextLen, 4u, 1u, cacheFile);
@@ -3388,10 +3449,14 @@ void __cdecl Material_CacheShader(
     else
     {
         memset(fileFullPath, 0, sizeof(fileFullPath));
+#if defined(__ANDROID__)
+        Com_PrintWarning(10, "Material_CacheShader: Failed to open user cache for '%s'\n", filename);
+#else
         if ( GetFullPathNameA(filename, 0x400u, fileFullPath, 0) )
             Com_PrintWarning(10, "Material_CacheShader: Failed to open for writing '%s'\n", fileFullPath);
         else
             Com_PrintWarning(10, "Material_CacheShader: Failed to open for writing '%s'\n", filename);
+#endif
     }
 }
 
@@ -3490,13 +3555,32 @@ char __cdecl Material_SetPassShaderArguments_DX(
         {
             UINT count;
             hr = D3DXGetShaderInputSemantics(program, semantic, &count);
+#if defined(__ANDROID__)
+            if (hr < 0) {
+                Com_PrintError(8, "Input semantics unavailable for shader '%s' (0x%08x)\n", shaderName, static_cast<unsigned>(hr));
+                return 0;
+            }
+#endif
             paramSet->varyingInputCount = 0;
             for ( i = 0; i < count; ++i )
             {
                 Material_SetVaryingParameterDef(&semantic[i], &paramSet->varyingInputs[paramSet->varyingInputCount]);
                 ++paramSet->varyingInputCount;
             }
+#if defined(__ANDROID__)
+            hr = D3DXGetShaderOutputSemantics(program, nullptr, &v17);
+            if (hr < 0 || v17 > sizeof(v19) / sizeof(v19[0])) {
+                Com_PrintError(8, "Invalid output semantics for shader '%s' (0x%08x)\n", shaderName, static_cast<unsigned>(hr));
+                return 0;
+            }
+#endif
             hr = D3DXGetShaderOutputSemantics(program, v19, &v17);
+#if defined(__ANDROID__)
+            if (hr < 0) {
+                Com_PrintError(8, "Output semantics unavailable for shader '%s' (0x%08x)\n", shaderName, static_cast<unsigned>(hr));
+                return 0;
+            }
+#endif
             paramSet->outputCount = 0;
             for ( i = 0; i < v17; ++i )
             {

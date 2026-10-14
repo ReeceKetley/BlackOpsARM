@@ -1,6 +1,9 @@
 #include "md4.h"
 
 #include <cstring>
+#if defined(__ANDROID__)
+#include <mutex>
+#endif
 #include <universal/q_shared.h>
 
 unsigned __int8 PADDING[64] =
@@ -390,6 +393,10 @@ void __cdecl Com_BlockChecksum128(unsigned __int8 *buffer, unsigned int length, 
 
 void __cdecl Com_CreateChecksumTable32()
 {
+#if defined(__ANDROID__)
+    static std::once_flag tableOnce;
+    std::call_once(tableOnce, [] {
+#endif
     int i; // ecx
     unsigned int v1; // eax
     unsigned int v2; // eax
@@ -436,6 +443,9 @@ void __cdecl Com_CreateChecksumTable32()
         s_crcTable[i] = v8;
     }
     s_crcTableCreated = 1;
+#if defined(__ANDROID__)
+    });
+#endif
 }
 
 int __cdecl Com_BlockChecksumKey32(const unsigned __int8 *data, unsigned int length, unsigned int initialCrc)
@@ -444,7 +454,9 @@ int __cdecl Com_BlockChecksumKey32(const unsigned __int8 *data, unsigned int len
     unsigned int crc; // [esp+8h] [ebp-4h]
 
     crc = ~initialCrc;
+#if !defined(__ANDROID__)
     if (!s_crcTableCreated)
+#endif
         Com_CreateChecksumTable32();
     for (dataIter = data; dataIter != &data[length]; ++dataIter)
         crc = s_crcTable[(unsigned __int8)(crc ^ *dataIter)] ^ (crc >> 8);

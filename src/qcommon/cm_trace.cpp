@@ -1,5 +1,20 @@
+#include <platform/bo1_native_width.h>
+#if defined(BO1_NATIVE_CLIPMAP_STATE)
+#include <qcommon/clipmap_state.h>
+#else
 #include <universal/profile.h>
 #include "cm_trace.h"
+#if !defined(__ANDROID__)
+#include <xmmintrin.h>
+#endif
+static inline void Bo1TracePrefetch(const char *address)
+{
+#if defined(__ANDROID__)
+    __builtin_prefetch(address, 0, 1);
+#else
+    _mm_prefetch(address, 1);
+#endif
+}
 #include "cm_mapkit.h"
 #include "cm_load.h"
 #include "threads.h"
@@ -162,10 +177,7 @@ void __cdecl CM_GetTraceThreadInfo(TraceThreadInfo *threadInfo)
     }
 }
 
-clipMap_t *__cdecl CM_GetClipMap()
-{
-    return &cm;
-}
+
 
 unsigned int __cdecl CM_TempBoxModel(const float *mins, const float *maxs, int contents)
 {
@@ -890,7 +902,7 @@ void __cdecl CM_TraceThroughLeaf(const traceWork_t *tw, cLeaf_s *leaf, trace_t *
         for ( k = 0; k < leaf->collAabbCount; ++k )
         {
             aabbTree = &cm.aabbTrees[k + leaf->firstCollAabbIndex];
-            _mm_prefetch((const char *)aabbTree, 1);
+            Bo1TracePrefetch((const char *)aabbTree);
             if ( trace->fraction == 0.0 )
                 break;
             CM_TraceThroughAabbTree(tw, aabbTree, trace);
@@ -2197,7 +2209,11 @@ void __cdecl TransposeMatrix(const float (*matrix)[3], float (*transpose)[3])
     for ( i = 0; i < 3; ++i )
     {
         for ( j = 0; j < 3; ++j )
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+            transpose[i][j] = matrix[j][i];
+#else
             (*transpose)[3 * i + j] = (*matrix)[3 * j + i];
+#endif
     }
 }
 
@@ -2892,7 +2908,7 @@ int __cdecl CM_SightTraceThroughLeaf(const traceWork_t *tw, const cLeaf_s *leaf,
         for ( k = 0; k < leaf->collAabbCount; ++k )
         {
             v4 = (const char *)&cm.aabbTrees[k + leaf->firstCollAabbIndex];
-            _mm_prefetch(v4, 1);
+            Bo1TracePrefetch(v4);
             CM_SightTraceThroughAabbTree(tw, (const CollisionAabbTree *)v4, trace);
             if ( trace->fraction != 1.0 )
                 return leaf->firstCollAabbIndex + k + cm.numBrushes + 1;
@@ -3551,11 +3567,11 @@ int __cdecl CM_SightTracePoint(int oldHitNum, const float *start, const float *e
         return hitNum;
     }
     prim = context->prims;
-    _mm_prefetch((const char *)prim, 1);
-    _mm_prefetch((const char *)prim->tree, 1);
+    Bo1TracePrefetch((const char *)prim);
+    Bo1TracePrefetch((const char *)prim->tree);
     for ( j = 0; j < context->nprims; ++j )
     {
-        _mm_prefetch((const char *)context->prims[j + 1].tree, 1);
+        Bo1TracePrefetch((const char *)context->prims[j + 1].tree);
         if ( prim->type )
         {
             if ( (brushmask & *(unsigned int *)&prim->tree->materialIndex) != 0 )
@@ -5570,4 +5586,10 @@ char __cdecl CM_GetHeliHeight(const float *pt, float checkdist, float *result)
         }
     }
     return 0;
+}
+
+#endif
+clipMap_t *__cdecl CM_GetClipMap()
+{
+    return &cm;
 }

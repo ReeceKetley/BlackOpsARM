@@ -1,7 +1,11 @@
 #pragma once
 #include <d3d9.h>
 #include "r_material.h"
+#if defined(__ANDROID__)
+#include <platform/android/bink_service.h>
+#else
 #include <binklib/binktextures.h>
+#endif
 
 #define CINEMATIC_INVALID_IMAGE_FRAME -1
 #define BINK_MISC_BUFFER_SIZE 1572864
@@ -79,7 +83,11 @@ void __cdecl R_Cinematic_Init();
 unsigned int *R_Cinematic_ReserveMemory();
 void __cdecl R_Cinematic_Shutdown();
 void __cdecl R_Cinematic_ReleaseImages(CinematicTextureSet *textureSet);
+#if defined(__ANDROID__)
+void __cdecl R_Cinematic_StartPlayback_Internal(const char *name, unsigned int playbackFlags, float volume);
+#else
 void __cdecl R_Cinematic_StartPlayback_Internal(const char *name, unsigned int playbackFlags, int volume);
+#endif
 void __cdecl R_Cinematic_StartNextPlayback();
 bool __cdecl R_Cinematic_IsNextReady_Internal();
 void __cdecl R_Cinematic_StopPlayback();
@@ -125,3 +133,7 @@ bool __cdecl R_Cinematic_IsStarted();
 bool __cdecl R_Cinematic_IsNextReady();
 char __cdecl R_Cinematic_IsUnderrun();
 void __cdecl R_Cinematic_ForceRelinquishIO();
+
+#if defined(__ANDROID__)
+bool R_Cinematic_IsInitialized(); // Read-only actual canonical owner state.
+#endif

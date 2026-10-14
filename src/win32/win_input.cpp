@@ -1,7 +1,9 @@
 #include "win_input.h"
 #include "win_gamepad.h"
 
+#if !defined(__ANDROID__)
 #include "win_wndproc.h"
+#endif
 #include <universal/assertive.h>
 #include <gfx_d3d/r_dvars.h>
 #include <qcommon/common.h>
@@ -48,6 +50,7 @@ GamePadButton buttonList[32] =
 
 
 
+#if !defined(__ANDROID__)
 int window_center_x;
 int window_center_y;
 
@@ -231,6 +234,8 @@ void __cdecl IN_Frame()
     IN_Frame_Win32();
 }
 
+#endif // Windows mouse and lifecycle owners
+
 void IN_GamepadsMove()
 {
     int ry; // [esp+0h] [ebp-2Ch]
@@ -285,6 +290,7 @@ void IN_GamepadsMove()
         Dvar_SetBool((dvar_s*)gpad_present, gpadPresent);
 }
 
+#if !defined(__ANDROID__)
 void IN_MouseMove()
 {
     int v0; // [esp+0h] [ebp-10h]
@@ -366,3 +372,5 @@ void __cdecl IN_ClampMouseMove(tagPOINT *curPos)
         SetCursorPos(curPos->x, curPos->y);
 }
 
+
+#endif // Windows cursor implementation

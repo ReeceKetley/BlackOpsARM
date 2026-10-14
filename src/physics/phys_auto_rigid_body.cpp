@@ -65,7 +65,11 @@ void __cdecl auto_rigid_body::add(const centity_s *cent, gjk_physics_collision_v
             }
             arb = m_tree_root;
             p_ReadLockCount = &g_auto_rigid_body_map_mutex.ThisPtr->ReadLockCount;
+#if defined(__ANDROID__)
+            g_auto_rigid_body_map_mutex.ReadUnlock();
+#else
             _InterlockedExchangeAdd(&g_auto_rigid_body_map_mutex.ThisPtr->ReadLockCount, 0xFFFFFFFF);
+#endif
             if ( !m_tree_root )
             {
                 //tlAtomicReadWriteMutex::WriteLock(&g_auto_rigid_body_map_mutex);

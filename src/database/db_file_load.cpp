@@ -18,15 +18,33 @@
 #include "db_load.h"
 #include "db_expand.hpp"
 #include <tl/tl_system.h>
+#if defined(__ANDROID__)
+#include <platform/android/file_services.h>
+#include <platform/atomic32.h>
+#endif
 
+#if defined(__ANDROID__)
+std::atomic<int> g_totalSize;
+std::atomic<unsigned int> g_loadedSize;
+std::atomic<unsigned int> g_loadingAssets;
+std::atomic<int> g_totalExternalBytes;
+std::atomic<unsigned int> g_loadedExternalBytes;
+std::atomic<int> g_totalStreamBytes;
+static_assert(sizeof(std::atomic<int>) == 4 && std::atomic<int>::is_always_lock_free);
+#else
 volatile int g_totalSize;
 volatile unsigned int g_loadedSize;
 volatile unsigned int g_loadingAssets;
 volatile int g_totalExternalBytes;
 volatile unsigned int g_loadedExternalBytes;
 volatile int g_totalStreamBytes;
+#endif
 int g_trackLoadProgress;
+#if defined(__ANDROID__)
+std::atomic<bool> g_minimumFastFileLoaded;
+#else
 bool g_minimumFastFileLoaded;
+#endif
 int g_totalWait;
 
 XAssetList *varXAssetList;
@@ -135,14 +153,22 @@ signed __int32 DB_WaitXFileStage()
     waitStart = Sys_Milliseconds();
     SleepEx(0xFFFFFFFF, 1);
     g_totalWait += Sys_Milliseconds() - waitStart;
+#if defined(__ANDROID__)
+    result = g_loadedSize.fetch_add(1u);
+#else
     result = _InterlockedExchangeAdd(&g_loadedSize, 1u);
+#endif
     g_load.stream.avail_in += 0x40000;
     return result;
 }
 
 void __cdecl DB_LoadedExternalData(unsigned int size)
 {
+#if defined(__ANDROID__)
+    g_loadedExternalBytes.fetch_add(size);
+#else
     _InterlockedExchangeAdd(&g_loadedExternalBytes, size);
+#endif
 }
 
 #endif
@@ -282,7 +308,11 @@ RESTART:
                             g_load.stream.next_in = g_load.compressBufferStart;
                     }
 
+#if defined(__ANDROID__)
+                    __builtin_prefetch((const char *)g_load.stream.next_in + 512, 0, 1);
+#else
                     _mm_prefetch((const char *)g_load.stream.next_in + 512, 1);
+#endif
 
                     if ( !g_load.stream.avail_out )
                     {

@@ -2,6 +2,7 @@
 #include <database/db_stream.h>
 #endif
 #include "r_material.h"
+#include "r_material_globals.h"
 #include <universal/com_memory.h>
 #include "r_dvars.h"
 #include <qcommon/com_profilemapload.h>
@@ -425,11 +426,6 @@ const BuiltInMaterialTable s_builtInMaterials[122] =
 };
 
 
-struct $5803DA4EE1143C7EE9D14DA3FE11ED2E // sizeof=0x2004
-{                                       // XREF: .data:materialGlobals/r
-    int techniqueSetCount;
-    MaterialTechniqueSet *techniqueSetHashTable[2048];
-};
 $5803DA4EE1143C7EE9D14DA3FE11ED2E materialGlobals;
 
 bool g_alwaysUseDefaultMaterial;
@@ -832,9 +828,25 @@ void __cdecl Material_ReleasePassResources(MaterialPass *pass)
     }
 }
 
+#if defined(__ANDROID__)
+// DB enumeration invokes (header, context); the canonical owners take header only.
+static void __cdecl Material_FreeTechniqueSetEnumerated(XAssetHeader header, void *)
+{
+    Material_FreeTechniqueSet(header);
+}
+static void __cdecl Material_UpdatePicmipSingleEnumerated(XAssetHeader header, void *)
+{
+    Material_UpdatePicmipSingle(header);
+}
+#endif
+
 void __cdecl Material_FreeAllTechniqueSets()
 {
+    #if defined(__ANDROID__)
+    DB_EnumXAssets(ASSET_TYPE_TECHNIQUE_SET, Material_FreeTechniqueSetEnumerated, 0, 1);
+#else
     DB_EnumXAssets(ASSET_TYPE_TECHNIQUE_SET, (void (__cdecl *)(XAssetHeader, void *))Material_FreeTechniqueSet, 0, 1);
+#endif
     if ( !useFastFile->current.enabled )
         memset((unsigned __int8 *)materialGlobals.techniqueSetHashTable, 0, sizeof(materialGlobals.techniqueSetHashTable));
 }
@@ -1631,7 +1643,11 @@ void __cdecl Material_UpdatePicmipAll()
 {
     R_SyncRenderThread();
     R_SetPicmip();
+    #if defined(__ANDROID__)
+    DB_EnumXAssets(ASSET_TYPE_MATERIAL, Material_UpdatePicmipSingleEnumerated, 0, 1);
+#else
     DB_EnumXAssets(ASSET_TYPE_MATERIAL, (void (__cdecl *)(XAssetHeader, void *))Material_UpdatePicmipSingle, 0, 1);
+#endif
 }
 
 void __cdecl Material_UpdatePicmipSingle(XAssetHeader header)
@@ -1816,4 +1832,3 @@ GfxImage *__cdecl Material_GetTexture(Material *handle, int index)
     }
     return handle->textureTable[index].u.image;
 }
-

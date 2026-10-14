@@ -1,8 +1,9 @@
 #pragma once
+#include "snd_stream_files.h"
 #include "snd.h"
 #include <database/db_load.h>
 #include <tl/jobqueue/jobqueue_all.h>
-#include "snd_driver_xaudio2.h"
+#include "snd_driver_api.h"
 
 
 struct snd_buffer // sizeof=0x118
@@ -111,7 +112,6 @@ void __cdecl Snd_StreamBufferInit(snd_buffer *buffer, char *data);
 void __cdecl Snd_StreamReset(snd_stream *stream);
 void __cdecl Snd_StreamInit();
 void __cdecl Snd_StreamFini();
-void __cdecl SND_StreamCloseFiles();
 void __cdecl Snd_StreamOpen(
                 unsigned int index,
                 char *filename,

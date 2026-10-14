@@ -1,4 +1,8 @@
 #include "pathnode.h"
+#if defined(__ANDROID__)
+#include <cstdio>
+#include <cstdlib>
+#endif
 #include <clientscript/cscr_vm.h>
 #include <game_mp/g_spawn_mp.h>
 #include <bgame/bg_slidemove.h>
@@ -1171,7 +1175,11 @@ LABEL_6:
     leafNodes = tree->u.s.nodes;
     for ( i = 0; i < tree->u.s.nodeCount && g_path.circle.nodeCount < g_path.circle.maxNodes; ++i )
     {
+#if defined(__ANDROID__)
+        __builtin_prefetch(&gameWorldCurrent->path.nodes[leafNodes[i]], 0, 1);
+#else
         _mm_prefetch((const char *)&gameWorldCurrent->path.nodes[leafNodes[i]], 1);
+#endif
         pnode = &gameWorldCurrent->path.nodes[leafNodes[i]];
         if ( get_pathnode_parent(pnode)->entnum == 1022 )
             Path_NodesInCylinder_process(pnode);
@@ -1323,7 +1331,11 @@ void __cdecl Path_InitNodeDynamic(pathnode_t *loadNode)
 
 void __cdecl Path_InitPaths()
 {
+#if defined(__ANDROID__)
+    FILE *v0;
+#else
     _iobuf *v0; // eax
+#endif
 
     if ( !useFastFile->current.enabled )
     {
@@ -1351,7 +1363,11 @@ void __cdecl Path_InitPaths()
             //v0 = __iob_func();
             //fflush(v0 + 1);
             fflush(stdout);
+#if defined(__ANDROID__)
+            std::_Exit(0);
+#else
             ExitProcess(0);
+#endif
         }
         Dvar_SetInt((dvar_s *)g_connectpaths, 0);
     }

@@ -1,5 +1,6 @@
 #include <platform/bo1_native_width.h>
 #pragma once
+#include <cstring>
 #include <universal/q_shared.h>
 #include <game/teams.h>
 #include "snd_dsp.h"

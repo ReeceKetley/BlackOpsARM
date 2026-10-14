@@ -739,8 +739,10 @@ struct playerState_s // sizeof=0x26A4
                 hudelem_s archival[31];
         } hud;
 };
-#if !defined(BO1_PORT_X64)
+#if !BO1_NATIVE_64BIT
 static_assert(sizeof(playerState_s) == 9892);
+#else
+static_assert(sizeof(playerState_s) == 10152);
 #endif
 
 struct lerpFrame_t // sizeof=0x34

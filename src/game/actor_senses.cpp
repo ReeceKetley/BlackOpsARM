@@ -7,6 +7,9 @@
 #include <game_mp/g_utils_mp.h>
 #include "bullet.h"
 #include <qcommon/dobj_management.h>
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+#include <cstring>
+#endif
 
 colgeom_visitor_inlined_t<200> *g_visitor;
 float g_viewPos[3];
@@ -574,7 +577,11 @@ void __fastcall Actor_UpdateEyeInformation(actor_s *self)
             self->eyeInfo.pos[0] = tagMat[3][0];
             self->eyeInfo.pos[1] = tagMat[3][1];
             self->eyeInfo.pos[2] = tagMat[3][2];
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+            std::memcpy(self->eyeInfo.dir, tagMat[0], 2 * sizeof(float));
+#else
             *(_QWORD *)self->eyeInfo.dir = *(_QWORD *)&tagMat[0][0];
+#endif
             Vec2Normalize(self->eyeInfo.dir);
             self->eyeInfo.dir[2] = 0.0f;
         }
@@ -671,8 +678,12 @@ int __fastcall Actor_GetMuzzleInfo(actor_s *self, float *vOrigin, float *vForwar
         self->muzzleInfo.pos[0] = tagMat[3][0];
         self->muzzleInfo.pos[1] = tagMat[3][1];
         self->muzzleInfo.pos[2] = tagMat[3][2];
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+        std::memcpy(self->muzzleInfo.dir, tagMat[0], sizeof(self->muzzleInfo.dir));
+#else
         *(_QWORD *)self->muzzleInfo.dir = *(_QWORD *)&tagMat[0][0];
         self->muzzleInfo.dir[2] = tagMat[0][2];
+#endif
     }
     if ( !vOrigin
         && !Assert_MyHandler("C:\\projects_pc\\cod\\codsrc\\src\\game\\actor_senses.cpp", 976, 0, "%s", "vOrigin") )

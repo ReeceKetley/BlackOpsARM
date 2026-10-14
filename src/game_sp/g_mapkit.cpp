@@ -15,6 +15,22 @@
 #include <stdio.h>
 #include <string.h>
 #include <string>
+#if defined(__ANDROID__)
+#include <cstdio>
+#include <cstdlib>
+#include <platform/android/stdio_services.h>
+template<std::size_t N, class... Args>
+static int sprintf_s(char (&output)[N], const char *format, Args... arguments)
+{
+    const int written = std::snprintf(output, N, format, arguments...);
+    if (written < 0 || static_cast<std::size_t>(written) >= N)
+    {
+        Com_Error(ERR_DROP, "Mapkit output exceeds buffer");
+        std::abort();
+    }
+    return written;
+}
+#endif
 
 static int s_checkPass, s_checkFail;
 
@@ -377,7 +393,12 @@ void G_Mapkit_f_dump()
     sprintf_s(osPath, "%s/%s/%s", home && home->current.string ? home->current.string : ".",
         game && game->current.string && *game->current.string ? game->current.string : "main", file);
     FILE *f = 0;
+#if defined(__ANDROID__)
+    f = bo1::android::OpenStdio(osPath, "wb");
+    if (!f)
+#else
     if (fopen_s(&f, osPath, "wb") || !f)
+#endif
     {
         Com_PrintWarning(24, "mapkit: cannot write %s\n", osPath);
         return;

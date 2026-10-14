@@ -11,6 +11,25 @@
  */
 
 
+#if defined(__ANDROID__)
+#include <stdint.h>
+#include <string.h>
+#include <stdlib.h>
+/* Preserve the original Windows 32-bit shift bit patterns without signed UB. */
+static inline INT32 jpeg_shift32(INT32 value, unsigned int amount)
+{
+  uint32_t bits;
+  INT32 result;
+  if (amount >= 32) abort();
+  memcpy(&bits, &value, sizeof(bits));
+  bits <<= amount;
+  memcpy(&result, &bits, sizeof(result));
+  return result;
+}
+#define JPEG_SHIFT32(value, amount) jpeg_shift32((INT32)(value), (unsigned int)(amount))
+#else
+#define JPEG_SHIFT32(value, amount) ((value) << (amount))
+#endif
 /* Declarations for both compression & decompression */
 
 typedef enum {			/* Operating modes for buffer controllers */

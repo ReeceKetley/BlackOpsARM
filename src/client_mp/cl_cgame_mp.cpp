@@ -2,6 +2,9 @@
 #include <qcommon/actor_model_state.h>
 #include <cgame_mp/cg_anim_commands.h>
 #include "cl_cgame_mp.h"
+#if defined(__ANDROID__)
+#define _stricmp I_stricmp
+#endif
 #include <universal/assertive.h>
 #include "cl_main_mp.h"
 #include <qcommon/common.h>

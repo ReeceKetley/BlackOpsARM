@@ -5,6 +5,9 @@
 #include <qcommon/cm_load.h>
 
 #include <algorithm>
+#if defined(__ANDROID__)
+#include <cstring>
+#endif
 #include <ragdoll/ragdoll_update.h>
 
 const dvar_t *dynEnt_damageRadiusScale;
@@ -82,10 +85,15 @@ void __cdecl DynEntSv_LinkModel(unsigned __int16 dynEntId)
     }
     radius = XModelGetRadius(model);
     XModelGetBounds(model, modelBoundsVec3[0], modelBoundsVec3[1]);
+#if defined(__ANDROID__)
+    std::memcpy(modelBoundsFloat4[0].v, modelBoundsVec3[0], sizeof(modelBoundsVec3[0]));
+    modelBoundsFloat4[0].u[3] = 0;
+#else
     *(_QWORD *)modelBoundsFloat4[0].v = *(_QWORD *)&modelBoundsVec3[0][0];
     *(_QWORD *)&modelBoundsFloat4[0].unitVec[2].packed = __PAIR64__(
                                                                                                                  0,
                                                                                                                  LODWORD(modelBoundsVec3[0][2]));
+#endif
     modelBoundsFloat4[1].v[0] = modelBoundsVec3[1][0];
     modelBoundsFloat4[1].v[1] = modelBoundsVec3[1][1];
     modelBoundsFloat4[1].v[2] = modelBoundsVec3[1][2];
@@ -190,8 +198,12 @@ void __cdecl DynEntSv_LinkModel(unsigned __int16 dynEntId)
                                                                         * modelAxis[2][2])
                                                         + worldBoundsFloat4[1].v[2];
     worldBoundsFloat4[1].v[3] = (float)(modelBoundsFloat4[1].v[2] * 0.0) + worldBoundsFloat4[1].v[3];
+#if defined(__ANDROID__)
+    std::memcpy(worldBoundsVec3[0], worldBoundsFloat4[0].v, sizeof(worldBoundsVec3[0]));
+#else
     *(_QWORD *)&worldBoundsVec3[0][0] = *(_QWORD *)worldBoundsFloat4[0].v;
     LODWORD(worldBoundsVec3[0][2]) = worldBoundsFloat4[0].u[2];
+#endif
     worldBoundsVec3[1][0] = worldBoundsFloat4[1].v[0];
     worldBoundsVec3[1][1] = worldBoundsFloat4[1].v[1];
     worldBoundsVec3[1][2] = worldBoundsFloat4[1].v[2];
@@ -312,11 +324,19 @@ void __cdecl DynEntSv_LinkBrush(unsigned __int16 dynEntId)
                                                                                         + (float)((float)(COERCE_FLOAT(bounds[0].u[0] & v8 | bounds[1].u[0] & ~v8)
                                                                                                                         * axis[0][1])
                                                                                                         + v11));
+#if defined(__ANDROID__)
+    std::memcpy(absMins, &rotatedBounds, sizeof(rotatedBounds));
+#else
     *(_QWORD *)absMins = rotatedBounds;
+#endif
     absMins[2] = (float)(COERCE_FLOAT(bounds[1].u[2] & v1 | bounds[0].u[2] & ~v1) * axis[2][2])
                          + (float)((float)(COERCE_FLOAT(bounds[1].u[1] & v4 | bounds[0].u[1] & ~v4) * axis[1][2])
                                          + (float)((float)(COERCE_FLOAT(bounds[1].u[0] & v7 | bounds[0].u[0] & ~v7) * axis[0][2]) + v12));
+#if defined(__ANDROID__)
+    std::memcpy(absMaxs, &rotatedBounds_16, sizeof(rotatedBounds_16));
+#else
     *(_QWORD *)absMaxs = rotatedBounds_16;
+#endif
     absMaxs[2] = (float)(COERCE_FLOAT(bounds[0].u[2] & v1 | bounds[1].u[2] & ~v1) * axis[2][2])
                          + (float)((float)(COERCE_FLOAT(bounds[0].u[1] & v4 | bounds[1].u[1] & ~v4) * axis[1][2])
                                          + (float)((float)(COERCE_FLOAT(bounds[0].u[0] & v7 | bounds[1].u[0] & ~v7) * axis[0][2]) + v12));

@@ -1,5 +1,6 @@
 #pragma once
 #include "cmd.h"
+struct rectDef_s;
 
 enum MapProfileTrackedValue : __int32
 {                                       // XREF: ?ProfLoad_BeginTrackedValue@@YAXW4MapProfileTrackedValue@@@Z/r

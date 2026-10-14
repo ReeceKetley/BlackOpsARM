@@ -1,4 +1,11 @@
 #include "bg_weapons_view.h"
+#if defined(__ANDROID__)
+namespace {
+// Match the original Windows macro comparisons, including unordered values.
+float min(float first,float second){return first<second?first:second;}
+float max(float first,float second){return first>second?first:second;}
+}
+#endif
 #include <qcommon/common.h>
 #include "bg_local.h"
 #include "bg_public.h"

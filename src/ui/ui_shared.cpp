@@ -1,4 +1,8 @@
 #include "ui_shared.h"
+#if defined(__ANDROID__)
+#include <platform/android/legacy_crt.h>
+#include <cstdlib>
+#endif
 #include "ui_shared_obj.h"
 #include "ui_localvars.h"
 #include "ui_utils.h"
@@ -23,7 +27,10 @@
 #include <client/cl_keys.h>
 #include <ui_mp/ui_feeders_mp.h>
 #include <win32/win_gamerprofile.h>
+#include <client/cl_gamepad.h>
+#if !defined(__ANDROID__)
 #include <win32/win_gamepad.h>
+#endif
 #include <cgame_mp/cg_consolecmds_mp.h>
 #include <cgame_mp/cg_newDraw_mp.h>
 #include <cgame/cg_hudelem.h>
@@ -1426,14 +1433,29 @@ void __cdecl Menus_RemoveMenu(XAssetHeader header)
     for ( localClientNum = 0; localClientNum < 1; ++localClientNum )
     {
         uiInfo = UI_GetInfo(localClientNum);
+#if defined(__ANDROID__)
+        if(!uiInfo || uiInfo->uiDC.menuCount<0 ||
+            static_cast<unsigned>(uiInfo->uiDC.menuCount)>sizeof(uiInfo->uiDC.Menus)/sizeof(uiInfo->uiDC.Menus[0]))
+        {
+            Com_Error(ERR_FATAL,"Native menu removal requires an actual UI roster within its pointer-array capacity");
+            std::abort();
+        }
+#endif
         for ( i = 0; i < uiInfo->uiDC.menuCount; ++i )
         {
             if ( header.menu == uiInfo->uiDC.Menus[i] )
             {
+#if defined(__ANDROID__)
+                const auto remaining=uiInfo->uiDC.menuCount-i-1;
+                if(remaining)
+                    memmove(&uiInfo->uiDC.Menus[i],&uiInfo->uiDC.Menus[i+1],
+                        sizeof(uiInfo->uiDC.Menus[0])*static_cast<size_t>(remaining));
+#else
                 memmove(
                     (unsigned __int8 *)&uiInfo->uiDC.Menus[i],
                     (unsigned __int8 *)&uiInfo->uiDC.Menus[i + 1],
                     4 * (uiInfo->uiDC.menuCount - i) - 4);
+#endif
                 --uiInfo->uiDC.menuCount;
                 --i;
             }
@@ -2354,6 +2376,16 @@ void __cdecl Script_AddTextWrapper(int localClientNum, int controllerIndex, item
     Cbuf_AddText(localClientNum, text);
 }
 
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+static void __cdecl Script_ExecuteBufferUIWrapper(
+    int localClientNum, int controllerIndex, itemDef_s *item, const char *text)
+{
+    // Both script handlers supply their owned mutable stack command buffer.
+    // Keep the callback's const signature and call the canonical executor directly.
+    Cbuf_ExecuteBufferUI(localClientNum, controllerIndex, item, const_cast<char *>(text));
+}
+#endif
+
 void __cdecl Script_ExecNow(int localClientNum, UiContext *dc, itemDef_s *item, const char **args)
 {
     int controllerIndex; // [esp+0h] [ebp-4h]
@@ -2374,7 +2406,11 @@ void __cdecl Script_ExecNow(int localClientNum, UiContext *dc, itemDef_s *item, 
         controllerIndex,
         item,
         (char**)args,
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+        Script_ExecuteBufferUIWrapper);
+#else
         (void (__cdecl *)(int, int, itemDef_s *, const char *))Cbuf_ExecuteBufferUI);
+#endif
 }
 
 void __cdecl Script_ExecDvar(int localClientNum, UiContext *dc, itemDef_s *item, const char **args)
@@ -2493,7 +2529,11 @@ void __cdecl Script_ExecNowOnDvarStringValue(int localClientNum, UiContext *dc, 
         item,
         args,
         Script_ExecIfStringsEqual,
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+        Script_ExecuteBufferUIWrapper);
+#else
         (void (__cdecl *)(int, int, itemDef_s *, const char *))Cbuf_ExecuteBufferUI);
+#endif
 }
 
 void __cdecl Script_ExecNowOnDvarIntValue(int localClientNum, UiContext *dc, itemDef_s *item, const char **args)
@@ -2504,7 +2544,11 @@ void __cdecl Script_ExecNowOnDvarIntValue(int localClientNum, UiContext *dc, ite
         item,
         args,
         Script_ExecIfIntsEqual,
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+        Script_ExecuteBufferUIWrapper);
+#else
         (void (__cdecl *)(int, int, itemDef_s *, const char *))Cbuf_ExecuteBufferUI);
+#endif
 }
 
 void __cdecl Script_ExecNowOnDvarFloatValue(int localClientNum, UiContext *dc, itemDef_s *item, const char **args)
@@ -2515,7 +2559,11 @@ void __cdecl Script_ExecNowOnDvarFloatValue(int localClientNum, UiContext *dc, i
         item,
         args,
         Script_ExecIfFloatsEqual,
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+        Script_ExecuteBufferUIWrapper);
+#else
         (void (__cdecl *)(int, int, itemDef_s *, const char *))Cbuf_ExecuteBufferUI);
+#endif
 }
 
 void __cdecl Script_RespondOnDvarStringValue(int localClientNum, UiContext *dc, itemDef_s *item, const char **args)
@@ -4354,10 +4402,21 @@ void __cdecl Menus_Open(int localClientNum, UiContext *dc, menuDef_t *menu)
         }
     }
     Menus_SetupOpenMenu(localClientNum, dc, menu);
+    // The decompiled Menus arithmetic addresses the final 32-bit menuStack entry.
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+    if ( dc->openMenuCount > 0 && dc->menuStack[dc->openMenuCount - 1].menu != menu )
+#else
     if ( dc->openMenuCount > 0 && dc->Menus[2 * dc->openMenuCount + 599] != menu )
+#endif
     {
         Menu_LoseFocusDueToOpen(localClientNum, dc, menu);
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+        // Leave-focus scripts can close the stack before this second lookup.
+        if (dc->openMenuCount > 0)
+            Menus_SetupOpenMenu(localClientNum, dc, dc->menuStack[dc->openMenuCount - 1].menu);
+#else
         Menus_SetupOpenMenu(localClientNum, dc, dc->Menus[2 * dc->openMenuCount + 599]);
+#endif
     }
 }
 
@@ -8027,7 +8086,11 @@ void __cdecl Menu_PerformTransitionEffects(int localClientNum, UiContext *dc, me
             if (direction[3])
             {
                 Window_RemoveDynamicFlags(dc->contextIndex, &menu->window, 0x20000);
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+                if (dc->openMenuCount > 0 && dc->menuStack[dc->openMenuCount - 1].menu == menu)
+#else
                 if (dc->Menus[2 * dc->openMenuCount + 599] == menu)
+#endif
                     Menu_CallOnFocusDueToOpen(localClientNum, dc, menu);
                 menu->slideTimeCounter = -1;
             }
@@ -8064,7 +8127,11 @@ void __cdecl Menu_PerformTransitionEffects(int localClientNum, UiContext *dc, me
             if (direction[1])
             {
                 Window_RemoveDynamicFlags(dc->contextIndex, &menu->window, 0x80000);
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+                if (dc->openMenuCount > 0 && dc->menuStack[dc->openMenuCount - 1].menu == menu)
+#else
                 if (dc->Menus[2 * dc->openMenuCount + 599] == menu)
+#endif
                     Menu_CallOnFocusDueToOpen(localClientNum, dc, menu);
                 menu->fadeTimeCounter = -1;
             }
@@ -8311,7 +8378,13 @@ void __cdecl Window_Paint(
     borderRect.y = fillRect.y;
     borderRect.w = fillRect.w;
     borderRect.h = fillRect.h;
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+    // rectDef_s contains four-byte int fields; no wider alignment is required.
+    borderRect.horzAlign = fillRect.horzAlign;
+    borderRect.vertAlign = fillRect.vertAlign;
+#else
     *(_QWORD *)&borderRect.horzAlign = *(_QWORD *)&fillRect.horzAlign;
+#endif
     scrPlace = &scrPlaceView[dc->contextIndex];
     if (itemType == 4)
     {
@@ -10089,7 +10162,12 @@ void __cdecl Item_ListBox_PaintTextElem(
     }
     else if ( optionalOwnerDraw )
     {
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+        // foreColor is float[4], not an eight-byte-aligned DvarValue object.
+        memcpy(color.vector, item->window.foreColor, sizeof(color.vector));
+#else
         color = *(DvarValue *)item->window.foreColor;
+#endif
         ownerDrawRect.x = x;
         ownerDrawRect.y = y;
         ownerDrawRect.w = w;

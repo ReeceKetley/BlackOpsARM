@@ -1,0 +1,8 @@
+{
+  "initial_compile": 0,
+  "initial_pass": 0,
+  "initial_restore_failure": 4294967295,
+  "completion": "Agent stopped only its verified fixture child PID5744 after the Windows CRT fault reporter held the injected abort open.",
+  "repair": "Fixture-only _set_abort_behavior disables the CRT fault-report dialog; unchanged production restore failure then aborts with exit3.",
+  "production_source_changed_for_host_dialog": false
+}

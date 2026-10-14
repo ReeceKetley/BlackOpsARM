@@ -1,26 +1,19 @@
 #pragma once
+#include "snd_driver_api.h"
 
+#if defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST)
+#include <platform/android/faudio_bridge.h>
+#else
 #include <XAPOBase.h>
 #include <XAudio2.h>
+#endif
 #include <gfx_d3d/r_font.h>
 #include "snd.h"
 #include "snd_driver_xaudio2_dsp.h"
 
-#define SND_MAX_STREAM_VOICES 10
-#define SND_MAX_VOICES 74
-#define SND_PLAYBACKID_NOTPLAYED -1
 
 
-enum snd_stream_status : __int32
-{                                       // XREF: ?Snd_StreamStatus@@YA?AW4snd_stream_status@@I@Z/r
-                                        // ?Snd_StreamAcquireWindow@@YA?AW4snd_stream_status@@IPAI0PAPAD@Z/r ...
-    SND_STREAM_UNUSED   = 0x0,
-    SND_STREAM_LOADING  = 0x1,
-    SND_STREAM_OK       = 0x2,
-    SND_STREAM_STARVING = 0x3,
-    SND_STREAM_EOF      = 0x4,
-    SND_STREAM_ERROR    = 0x5,
-};
+
 
 //typedef struct ADPCMWAVEFORMAT {
 //    WAVEFORMATEX wfx;
@@ -95,7 +88,11 @@ struct StreamVoice : IXAudio2VoiceCallback // sizeof=0x50
     // processed when the error occurred, and its HRESULT code.
     STDMETHOD_(void, OnVoiceError) (THIS_ void *pBufferContext, HRESULT Error)
     {
+#if defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST)
+        std::fprintf(stderr, "Native stream voice error: 0x%08x\n", static_cast<unsigned>(Error));
+#else
         OutputDebugStringA("StreamVoiceError\n");
+#endif
     }
 };
 
@@ -133,9 +130,7 @@ struct __declspec(align(128)) SoundState // sizeof=0x3EF600
     ~SoundState() = default;
 };
 
-bool __cdecl SD_Xaudio2CanInit();
 SDXA2SourceEffect *__cdecl SDXA2_VoiceDspAllocate();
-void __cdecl SD_TruncateAudioDeviceNames(Font_s *font, float scale, int size);
 void __cdecl SD_XAudio2Done();
 unsigned int __cdecl SDXA2_ChannelFixup(unsigned int outputChannels, unsigned int channel);
 IXAudio2SubmixVoice *__cdecl SD_CreateBus(
@@ -145,14 +140,14 @@ IXAudio2SubmixVoice *__cdecl SD_CreateBus(
                 unsigned int stage,
                 SDXA2Effect *dsp,
                 IXAudio2Voice *outputVoice);
-void __cdecl SD_StopVoice(int voiceIndex);
+
 unsigned int __cdecl iSND_GetStreamChannel(unsigned int index);
 void __cdecl iSND_ReleaseStreamBuffer(unsigned int streamVoice, unsigned int bufferIndex);
 int __cdecl SND_StartAliasStream(SndStartAliasInfo *startAliasInfo, unsigned int voiceIndex);
 void __cdecl SD_UpdateStreamVoice(int voiceIndex);
 int __cdecl iSND_CreateVoice(int voiceIndex, const snd_asset *snd, int isLooping, int bus);
 void __cdecl iSND_ChannelError(int voiceIndex);
-char __cdecl SD_Init();
+
 void SDXA2_VoiceDspAssertUnused();
 bool __cdecl SD_XAudio2Init();
 HRESULT __cdecl XAudio2Create(
@@ -167,16 +162,16 @@ char __cdecl SD_XAudio2CheckDevice(
                 unsigned int deviceIndex);
 void SD_SwitchDevice();
 void SND_InitMasterVoice();
-void SD_Shutdown();
+
 void SND_ShutdownMasterVoice();
-void __cdecl SD_PreUpdate();
-void __cdecl SD_PauseVoice(int voiceIndex);
-void __cdecl SD_UnpauseVoice(int voiceIndex);
+
+
+
 // zombies (L4): bo1_audio pause trace only - the source voice's SamplesPlayed, or -1 while its file is loading.
-__int64 SD_BO1SamplesPlayed(int voiceIndex);
-void __cdecl SD_UpdateVoice(unsigned int voiceIndex);
+
+
 void __cdecl SDXA2_UpdateVoiceSends(int voiceIndex);
 
 
-int __cdecl SD_StartAlias(SndStartAliasInfo *startAliasInfo, unsigned int voice);
+
 int __cdecl SND_StartAliasRam(SndStartAliasInfo *startAliasInfo, int voiceIndex);

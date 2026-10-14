@@ -203,6 +203,25 @@ void __cdecl DB_ConvertOffsetToPointer(void *field)
 #endif
 }
 
+#if defined(__ANDROID__)
+void DB_ConvertOffsetToPointerArray(void *field, unsigned count)
+{
+#if defined(BO1_NATIVE_ZONE_LOAD)
+    bo1::fastfile::NativeZoneValidatePointerOffset(field);
+#endif
+    auto *data = reinterpret_cast<uintptr_t *>(field);
+    const unsigned offset = static_cast<unsigned>(*data);
+    unsigned __int8 *mapped = offset ? DB_StreamMapPointerArray((offset - 1) >> 29,
+                                                               (offset - 1) & 0x1fffffffu, count) : nullptr;
+    if (!mapped)
+    {
+        Com_Error(ERR_DROP, "Unsupported native pointer-array offset=%08X count=%u", offset, count);
+        return;
+    }
+    *data = reinterpret_cast<uintptr_t>(mapped);
+}
+#endif
+
 void __cdecl Load_XStringCustom(const char **str)
 {
     int numBytesLoaded; // [esp+4h] [ebp-8h]

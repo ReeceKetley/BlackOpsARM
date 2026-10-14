@@ -11,6 +11,22 @@
 #include <common/brush_edges.h>
 #include <universal/com_math_anglevectors.h>
 
+#if defined(__ANDROID__)
+#include <climits>
+#include <cstdlib>
+
+// Alloc takes a signed byte count; these are runtime objects, not disk records.
+static int XModel_RuntimeAllocationSize(size_t elementSize, unsigned int count)
+{
+    if (count > static_cast<size_t>(INT_MAX) / elementSize)
+    {
+        Com_Error(ERR_DROP, "Collision-map runtime allocation exceeds INT_MAX");
+        std::abort();
+    }
+    return static_cast<int>(elementSize * count);
+}
+#endif
+
 collision_material_t g_collision_materials[512];
 int g_collision_materials_count;
 
@@ -271,8 +287,14 @@ void __cdecl XModel_LoadCollMap(const char *name, void *(__cdecl *Alloc)(int), X
                     __debugbreak();
                 }
                 model->numCollmaps = collmapCount;
+#if defined(__ANDROID__)
+                const int collmapBytes = XModel_RuntimeAllocationSize(sizeof(Collmap), collmapCount);
+                model->collmaps = (Collmap *)Alloc(collmapBytes);
+                memset(model->collmaps, 0, collmapBytes);
+#else
                 model->collmaps = (Collmap *)Alloc(4 * collmapCount);
                 memset((unsigned __int8 *)model->collmaps, 0, 4 * collmapCount);
+#endif
                 for ( boneIndex = 0; boneIndex < model->numBones; ++boneIndex )
                     model->localBoneInfo[boneIndex].collmap = -1;
                 for ( collIndex = 0; collIndex < collmapCount; ++collIndex )
@@ -619,14 +641,24 @@ PhysGeomList *__cdecl Xmodel_ParsePhysicsCollMap(
             }
             if ( !strcmp(token, "{") )
             {
+#if defined(__ANDROID__)
+                v8 = (PhysGeomList *)Alloc(sizeof(PhysGeomList));
+#else
                 v8 = (PhysGeomList *)Alloc(12);
+#endif
                 geomList = v8;
                 v8->count = 0;
                 v8->geoms = 0;
                 v8->contents = 0;
                 geomList->count = geomCount;
+#if defined(__ANDROID__)
+                const int geomBytes = XModel_RuntimeAllocationSize(sizeof(PhysGeomInfo), geomCount);
+                geomList->geoms = (PhysGeomInfo *)Alloc(geomBytes);
+                memset(geomList->geoms, 0, geomBytes);
+#else
                 geomList->geoms = (PhysGeomInfo *)Alloc(68 * geomCount);
                 memset((unsigned __int8 *)geomList->geoms, 0, 68 * geomCount);
+#endif
                 geomIndex = 0;
                 while ( geomIndex < geomCount )
                 {
@@ -1021,7 +1053,11 @@ char __cdecl Xmodel_ParsePhysicsBrush(
     }
     if (v44)
     {
+#if defined(__ANDROID__)
+        geom->brush = (BrushWrapper *)Alloc(sizeof(BrushWrapper));
+#else
         geom->brush = (BrushWrapper *)Alloc(96);
+#endif
         memset((unsigned __int8 *)geom->brush, 0, sizeof(BrushWrapper));
         geom->type = 2;
         brush = geom->brush;
@@ -1046,7 +1082,12 @@ char __cdecl Xmodel_ParsePhysicsBrush(
         }
         if (geom->brush->numsides)
         {
+#if defined(__ANDROID__)
+            geom->brush->sides = (cbrushside_t *)Alloc(
+                XModel_RuntimeAllocationSize(sizeof(cbrushside_t), geom->brush->numsides));
+#else
             geom->brush->sides = (cbrushside_t *)Alloc(12 * geom->brush->numsides);
+#endif
             geom->brush->planes = (cplane_s *)Alloc(20 * geom->brush->numsides);
             v15 = 0;
             for (basePlaneIndex = 0; basePlaneIndex < sideCount; ++basePlaneIndex)

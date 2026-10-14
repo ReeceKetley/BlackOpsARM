@@ -1,6 +1,11 @@
 #include "live_storage_win.h"
 
+#if defined(__ANDROID__)
+#include <platform/android/calendar_time.h>
+#include <cstdlib>
+#else
 #include <Windows.h>
+#endif
 #include <universal/assertive.h>
 #include <qcommon/common.h>
 #include <ddl/ddl_api.h>
@@ -219,10 +224,21 @@ char g_statsDir[256];
 
 int __cdecl SystemTimeToInt()
 {
+#if defined(__ANDROID__)
+    const std::time_t now = std::time(nullptr);
+    std::tm utc{};
+    if (now == static_cast<std::time_t>(-1) || !::gmtime_r(&now, &utc))
+    {
+        Com_Error(ERR_FATAL, "SystemTimeToInt: UTC clock conversion failed" );
+        std::abort();
+    }
+    return ((utc.tm_year + 1900) << 16) | ((utc.tm_mon + 1) << 8) | utc.tm_mday;
+#else
     _SYSTEMTIME systemTime; // [esp+0h] [ebp-14h] BYREF
 
     GetSystemTime(&systemTime);
     return (systemTime.wYear << 16) | (systemTime.wMonth << 8) | systemTime.wDay;
+#endif
 }
 
 void __cdecl LiveStorage_ResetStats(unsigned __int8 *buffer)
@@ -724,6 +740,9 @@ void __cdecl SV_DoTimedStatsForClient(
     int lastweekly; // [esp+7Ch] [ebp-Ch] BYREF
     tm *tm_lastmonthlyWrite; // [esp+80h] [ebp-8h]
     int lastmonthly; // [esp+84h] [ebp-4h] BYREF
+#if defined(__ANDROID__)
+    std::tm currentUtc{}, weeklyUtc{}, monthlyUtc{};
+#endif
 
     client = &svs.clients[clientnum];
     if ( (!client || !gameModePrefix)
@@ -751,9 +770,27 @@ void __cdecl SV_DoTimedStatsForClient(
                     serverUTC = SV_GetTime();
                     resetweekly = 0;
                     resetmonthly = 0;
+#if defined(__ANDROID__)
+                    // Validate before signed32 subtraction as well as conversion.
+                    if (serverUTC < 0 || lastweekly < 0 || lastmonthly < 0)
+                    {
+                        Com_Error(ERR_DROP, "Invalid player-statistics UTC timestamp");
+                        std::abort();
+                    }
+#endif
                     elapsedseconds = serverUTC - lastweekly;
                     currentTime = serverUTC;
+                    
+#if defined(__ANDROID__)
+                    tm_currentTime = bo1::android::BreakDownTime32(serverUTC, false, currentUtc);
+                    if (!tm_currentTime)
+                    {
+                        Com_Error(ERR_DROP, "Invalid player-statistics UTC timestamp" );
+                        std::abort();
+                    }
+#else
                     tm_currentTime = _gmtime64(&currentTime);
+#endif
                     if ( elapsedseconds >= 604800 )
                     {
                         resetweekly = 1;
@@ -761,7 +798,17 @@ void __cdecl SV_DoTimedStatsForClient(
                     else
                     {
                         lastwriteTime = lastweekly;
-                        tm_lastweeklyWrite = _gmtime64(&lastwriteTime);
+                        
+#if defined(__ANDROID__)
+                    tm_lastweeklyWrite = bo1::android::BreakDownTime32(lastweekly, false, weeklyUtc);
+                    if (!tm_lastweeklyWrite)
+                    {
+                        Com_Error(ERR_DROP, "Invalid player-statistics UTC timestamp" );
+                        std::abort();
+                    }
+#else
+                    tm_lastweeklyWrite = _gmtime64(&lastwriteTime);
+#endif
                         numDays = tm_currentTime->tm_wday - tm_lastweeklyWrite->tm_wday;
                         Com_DPrintf(15, "%i days since last weekly write\n", numDays);
                         currentday = (day_t)tm_currentTime->tm_wday;
@@ -784,7 +831,17 @@ void __cdecl SV_DoTimedStatsForClient(
                         }
                     }
                     lastwriteTime = lastmonthly;
+                    
+#if defined(__ANDROID__)
+                    tm_lastmonthlyWrite = bo1::android::BreakDownTime32(lastmonthly, false, monthlyUtc);
+                    if (!tm_lastmonthlyWrite)
+                    {
+                        Com_Error(ERR_DROP, "Invalid player-statistics UTC timestamp" );
+                        std::abort();
+                    }
+#else
                     tm_lastmonthlyWrite = _gmtime64(&lastwriteTime);
+#endif
                     if ( tm_lastmonthlyWrite->tm_mon != tm_currentTime->tm_mon )
                         resetmonthly = 1;
                     if ( resetweekly )

@@ -630,7 +630,14 @@ void __cdecl CG_FreeWeapons(int localClientNum)
 static void *__cdecl CG_AllocViewModelTree(unsigned int size)
 {
     if ( zombiemode && zombiemode->current.enabled )
+    {
+#if defined(__ANDROID__)
+        constexpr unsigned int alignment = alignof(XAnimTree_s) > 4 ? alignof(XAnimTree_s) : 4;
+        return Hunk_AllocLowAlign(size, alignment, "Hunk_AllocXAnimClient", 13);
+#else
         return Hunk_AllocLowAlign(size, 4, "Hunk_AllocXAnimClient", 13);
+#endif
+    }
     return Hunk_AllocXAnimClient(size);
 }
 

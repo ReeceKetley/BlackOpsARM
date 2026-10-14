@@ -1,5 +1,6 @@
 #include <qcommon/cm_mapkit.h>
 #include "r_model_lighting.h"
+#include <algorithm>
 #include "r_rendercmds.h"
 #include "r_dvars.h"
 #include "r_staticmodelcache.h"
@@ -942,7 +943,7 @@ void __cdecl R_InitModelLightingGlobals()
         "mod: requested dynamic model lighting entries at startup (0 = retail; atlas rounds up)");
     if (modEntries->current.integer > (int)modelLightGlob.xmodelEntryLimit)
     {
-        const unsigned int requested = min((unsigned int)modEntries->current.integer, 8192u - smodelLightGlob.local.entryLimit);
+        const unsigned int requested = (std::min)((unsigned int)modEntries->current.integer, 8192u - smodelLightGlob.local.entryLimit);
         while ((1u << totalBitsNeeded) < smodelLightGlob.local.entryLimit + requested)
             ++totalBitsNeeded;
         modelLightGlob.totalEntryLimit = 1u << totalBitsNeeded;

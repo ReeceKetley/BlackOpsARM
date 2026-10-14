@@ -1,4 +1,14 @@
+#if defined(BO1_NATIVE_CLIENT_STATE)
+#include <client_mp/client_static.h>
+#include <client/client.h>
+#else
 #include <platform/engine_random.h>
+#if defined(__ANDROID__)
+#include <platform/android/legacy_crt.h>
+#include <universal/mem_userhunk.h>
+#include <limits>
+#include <cstdlib>
+#endif
 #include <platform/bo1_native_width.h>
 #include <qcommon/actor_model_state.h>
 #include <cgame_mp/cg_anim_commands.h>
@@ -68,6 +78,9 @@
 #include <server_mp/sv_main_pc_mp.h>
 #include <ui_mp/ui_main_mp.h>
 #include <gfx_d3d/r_cinematic.h>
+#if defined(__ANDROID__)
+#include <platform/android/shutdown_services.h>
+#endif
 #include <client/cl_console.h>
 #include <EffectsCore/fx_system.h>
 #include <universal/physicalmemory.h>
@@ -100,7 +113,6 @@
 #include <universal/base64.h>
 #include <game_sp/g_sp_playtrace.h>
 
-const dvar_t *cl_noprint;
 const dvar_t *playlist;
 const dvar_t *category;
 const dvar_t *categoryPlaylist;
@@ -187,7 +199,12 @@ const dvar_t *motd;
 clientActive_t *clients;
 UiContext cgDC[1];
 
+#endif // BO1_NATIVE_CLIENT_STATE
+
 clientStatic_t cls;
+
+#if !defined(BO1_NATIVE_CLIENT_STATE)
+
 int cl_pausedRealtime; // zombies: ms spent paused (SP keeps an always-running clock at 0x02B10CA8)
 clientConnection_t *clientConnections;
 
@@ -1655,10 +1672,17 @@ void __cdecl CL_Snd_Restart_f()
     {
         n = Dvar_GetInt("sd_xa2_device_name");
         Dvar_SetIntByName("sd_xa2_device_guid", n);
+#if defined(__ANDROID__)
+        const bool cinematicWasInitialized=R_Cinematic_IsInitialized();
+        if(cinematicWasInitialized)R_Cinematic_Shutdown();
+#endif
         Voice_Shutdown();
         SND_Shutdown();
         Com_SyncThreads();
         SND_Init();
+#if defined(__ANDROID__)
+        if(cinematicWasInitialized)R_Cinematic_Init();
+#endif
         Voice_Init();
         CG_SndGameReset();
     }
@@ -2701,7 +2725,39 @@ void __cdecl AllocatePerLocalClientMemory(int maxLocalClients, int maxClients, u
     int mem_neededa; // [esp+0h] [ebp-4h]
     int mem_neededb; // [esp+0h] [ebp-4h]
 
+#if defined(__ANDROID__)
+    if(maxLocalClients<1 || maxLocalClients>MAX_LOCAL_CLIENTS || maxClients<1 || maxClients>32)
+    {
+        Com_Error(ERR_FATAL,"Native per-client memory counts exceed actual local/server capacities");
+        std::abort();
+    }
+#endif
     CL_FreePerLocalClientMemory();
+#if defined(__ANDROID__)
+    // Native sizeof includes the expanded parse-entity ring already.
+    const int clientActiveBytes=sizeof(clientActive_t);
+    const int clientConnBytes=sizeof(clientConnection_t);
+    static_assert(sizeof(clientActive_t)<=std::numeric_limits<int>::max());
+    static_assert(sizeof(clientConnection_t)<=std::numeric_limits<int>::max());
+    std::size_t required=offsetof(HunkUserDefault,buf)+31;
+    required+=static_cast<std::size_t>(clientActiveBytes)*maxLocalClients+alignof(clientActive_t)-1;
+    required+=static_cast<std::size_t>(clientConnBytes)*maxLocalClients+alignof(clientConnection_t)-1;
+    if((flags&1)==0) required+=SV_AllocateClientMemory_SizeRequired(maxLocalClients,maxClients);
+    const int cgRequired=CG_AllocateClientMemory_SizeRequired(maxLocalClients);
+    const int fxRequired=FX_AllocateClientMemory_SizeRequired(maxLocalClients);
+    if(cgRequired<0 || fxRequired<0)
+    {
+        Com_Error(ERR_FATAL,"Native per-client companion memory budget is invalid");
+        std::abort();
+    }
+    required+=static_cast<std::size_t>(cgRequired)+static_cast<std::size_t>(fxRequired);
+    if(required>static_cast<std::size_t>(std::numeric_limits<int>::max()))
+    {
+        Com_Error(ERR_FATAL,"Native per-client memory exceeds the actual hunk API capacity");
+        std::abort();
+    }
+    mem_neededb=static_cast<int>(required);
+#else
     // clientActive_t / clientConnection_t: Win32 sizeof 1728768 / 720712 (larger on x64)
     const int clientActiveBytes = (int)Bo1_MaxSize(sizeof(clientActive_t), 1728768);
     const int clientConnBytes = (int)Bo1_MaxSize(sizeof(clientConnection_t), 720712);
@@ -2710,6 +2766,7 @@ void __cdecl AllocatePerLocalClientMemory(int maxLocalClients, int maxClients, u
         mem_needed += SV_AllocateClientMemory_SizeRequired(maxLocalClients, maxClients);
     mem_neededa = mem_needed + CG_AllocateClientMemory_SizeRequired(maxLocalClients);
     mem_neededb = mem_neededa + FX_AllocateClientMemory_SizeRequired(maxLocalClients);
+#endif
     PMem_BeginAlloc(PerLocalClientMemoryName, 1u, TRACK_CLIENT);
     perLocalClientMemBuffer = _PMem_AllocNamed(mem_neededb, 0x80u, 4, 1u, PerLocalClientMemoryName, TRACK_CLIENT);
     memset(perLocalClientMemBuffer, 0, mem_neededb);
@@ -2722,12 +2779,17 @@ void __cdecl AllocatePerLocalClientMemory(int maxLocalClients, int maxClients, u
                                                         0,
                                                         "PerLocalClient Memory",
                                                         42);
+#if defined(__ANDROID__)
+    clients=static_cast<clientActive_t *>(Hunk_UserAlloc(perLocalClientMemHunk,clientActiveBytes*maxLocalClients,alignof(clientActive_t),"clients"));
+    clientConnections=static_cast<clientConnection_t *>(Hunk_UserAlloc(perLocalClientMemHunk,clientConnBytes*maxLocalClients,alignof(clientConnection_t),"clientConnections"));
+#else
     clients = (clientActive_t *)Hunk_UserAlloc(perLocalClientMemHunk, (clientActiveBytes + CL_PARSE_ENTITIES_EXTRA_BYTES) * maxLocalClients, 4, "clients");
     clientConnections = (clientConnection_t *)Hunk_UserAlloc(
                                                                                             perLocalClientMemHunk,
                                                                                             clientConnBytes * maxLocalClients,
                                                                                             4,
                                                                                             "clientConnections");
+#endif
     memset((unsigned __int8 *)clients, 0, clientActiveBytes * maxLocalClients);
     memset((unsigned __int8 *)clientConnections, 0, clientConnBytes * maxLocalClients);
     memset((unsigned __int8 *)&cls.gameState, 0, sizeof(cls.gameState));
@@ -2759,6 +2821,14 @@ void __cdecl CL_FreePerLocalClientMemory()
         Hunk_UserFree(perLocalClientMemHunk, clients);
         Hunk_UserFree(perLocalClientMemHunk, clientConnections);
     }
+#if defined(__ANDROID__)
+    // Every consumer and the borrowed hunk tracker still read the owned buffer.
+    // Retire them before releasing the underlying PMem allocation.
+    FX_FreeClientMemory(perLocalClientMemHunk);
+    CG_FreeClientMemory(perLocalClientMemHunk,cl_maxLocalClients);
+    SV_FreeClientMemory(perLocalClientMemHunk);
+    if(perLocalClientMemHunk) Hunk_UserDestroy(perLocalClientMemHunk);
+#endif
     if ( cl_maxLocalClients > 0 )
     {
         PMem_Free(PerLocalClientMemoryName);
@@ -2766,9 +2836,11 @@ void __cdecl CL_FreePerLocalClientMemory()
         clientConnections = 0;
         perLocalClientMemBuffer = 0;
     }
+#if !defined(__ANDROID__)
     FX_FreeClientMemory(perLocalClientMemHunk);
     CG_FreeClientMemory(perLocalClientMemHunk, cl_maxLocalClients);
     SV_FreeClientMemory(perLocalClientMemHunk);
+#endif
     perLocalClientMemHunk = 0;
     cl_maxLocalClients = 0;
     Dvar_SetIntIfChanged((dvar_s *)com_maxclients, 32);
@@ -3661,7 +3733,11 @@ void __cdecl CL_InitDedicated()
     R_MakeDedicated(&config);
     Sys_HideSplashWindow();
     Sys_ShowConsole();
+#if defined(__ANDROID__)
+    bo1::android::DedicatedInitializationCheckpoint();
+#else
     Sys_NormalExit();
+#endif
 }
 
 void __cdecl CL_startSingleplayer_f()
@@ -4674,18 +4750,6 @@ void __cdecl CL_Init(int localClientNum)
     Com_Printf(14, "----- Client Initialization Complete -----\n");
 }
 
-int __cdecl CountBitsEnabled(unsigned int num)
-{
-    unsigned int numa; // [esp+1Ch] [ebp+8h]
-    unsigned int numb; // [esp+1Ch] [ebp+8h]
-
-    numa = (((((num >> 1) & 0x55555555) + (num & 0x55555555)) >> 2) & 0x33333333)
-        + ((((num >> 1) & 0x55555555) + (num & 0x55555555)) & 0x33333333);
-    numb = (((((numa >> 4) & 0xF0F0F0F) + (numa & 0xF0F0F0F)) >> 8) & 0xFF00FF)
-        + ((((numa >> 4) & 0xF0F0F0F) + (numa & 0xF0F0F0F)) & 0xFF00FF);
-    return HIWORD(numb) + (unsigned __int16)numb;
-}
-
 int recursive;
 void __cdecl CL_Shutdown(int localClientNum)
 {
@@ -4713,6 +4777,9 @@ void __cdecl CL_Shutdown(int localClientNum)
         {
             CL_ShutdownDebugData();
             CL_ShutdownHunkUsers();
+#if defined(__ANDROID__)
+            if(R_Cinematic_IsInitialized())R_Cinematic_Shutdown();
+#endif
             Voice_Shutdown();
             SND_Shutdown();
             CL_ShutdownInput();
@@ -5522,8 +5589,30 @@ int __cdecl CL_FilterChar(unsigned __int8 input)
 //    //return this;
 //}
 
+
+
+
+#endif // BO1_NATIVE_CLIENT_STATE
+const dvar_t *cl_noprint;
+
+int __cdecl CountBitsEnabled(unsigned int num)
+{
+    unsigned int numa; // [esp+1Ch] [ebp+8h]
+    unsigned int numb; // [esp+1Ch] [ebp+8h]
+
+    numa = (((((num >> 1) & 0x55555555) + (num & 0x55555555)) >> 2) & 0x33333333)
+        + ((((num >> 1) & 0x55555555) + (num & 0x55555555)) & 0x33333333);
+    numb = (((((numa >> 4) & 0xF0F0F0F) + (numa & 0xF0F0F0F)) >> 8) & 0xFF00FF)
+        + ((((numa >> 4) & 0xF0F0F0F) + (numa & 0xF0F0F0F)) & 0xFF00FF);
+#if defined(BO1_NATIVE_CLIENT_STATE)
+    return (numb >> 16) + (unsigned __int16)numb;
+#else
+    return HIWORD(numb) + (unsigned __int16)numb;
+#endif
+}
+
+
 bool __cdecl CL_IsLocalClientInGame(int localClientNum)
 {
     return CL_GetLocalClientConnectionState(localClientNum) == 10;
 }
-

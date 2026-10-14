@@ -5,6 +5,9 @@
 #include <cstring>
 #include <universal/q_shared.h>
 
+#if defined(__ANDROID__)
+#include "vpx_native.inl"
+#else
 struct //$0A669EED672D0614AB086EF67B48703D // sizeof=0x12C
 {                                       // XREF: .data:_unnamed_type_vpx_globals_ vpx_globals/r
     bool init;                          // XREF: vpx_init(char const *,int,int)+4/r
@@ -207,3 +210,5 @@ void __cdecl vpx_shutdown()
     }
 }
 
+
+#endif

@@ -13,7 +13,9 @@
 //#include "LocalDXUT\\dxstdafx.h"
 #include <windows.h>
 #include <stdio.h>
+#if !defined(__ANDROID__)
 #include <wtypes.h>
+#endif
 #include <stdarg.h>
 
 //do not allow "dxstdafx.h" to depricate any core string functions

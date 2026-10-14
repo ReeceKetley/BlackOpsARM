@@ -88,7 +88,28 @@ void __cdecl track_temp_high_alloc(int size, int hunkSize, int permanent, const 
 void __cdecl track_temp_high_clear(int permanent);
 void __cdecl track_userhunk_freerange(void *low, unsigned int size);
 void __cdecl track_userhunk_free(void *ptr);
+#if defined(__ANDROID__)
+#include <cstddef>
+#include <cstdint>
+struct NativeUserHunkRecord
+{
+    void *position;
+    std::uint32_t size;
+    int type;
+    char name[128];
+};
+struct NativeUserHunkSnapshot
+{
+    std::size_t count;
+    std::uint64_t bytes;
+    std::uint64_t typeBytes[54];
+};
+void __cdecl track_userhunk_alloc(int size, void *pos, const char *name, int type);
+NativeUserHunkSnapshot track_userhunk_snapshot();
+bool track_userhunk_find(void *position, NativeUserHunkRecord *record);
+#else
 void __cdecl track_userhunk_alloc(int size, int pos, const char *name, int type);
+#endif
 void __cdecl track_hunk_alloc(int size, int pos, const char *name, int type);
 void __cdecl track_hunk_allocLow(int size, int pos, const char *name, int type);
 void __cdecl track_set_hunk_size(int size);

@@ -10,6 +10,10 @@
 #include "win_shared.h"
 #include <live/live_sessions_win.h>
 #include "win_main.h"
+#if defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST)
+#include <groupvoice/record_dsound.h>
+#include <SDL.h>
+#endif
 
 const dvar_t *winvoice_mic_mute;
 const dvar_t *winvoice_mic_reclevel;
@@ -25,6 +29,9 @@ int g_voice_initialized;
 float levelSamples[6];
 int sampleCount;
 bool recording;
+#if defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST)
+extern dsound_sample_t *currentRecordingSample;
+#endif
 float voice_current_scaler = 1.0f;
 
 
@@ -51,6 +58,28 @@ bool __cdecl Voice_Init()
         Com_Printf(16, "bo1_headless: voice disabled\n");
         return 0;
     }
+#if defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST)
+    if(g_voice_initialized) {Com_PrintError(9,"Voice already owns initialized native resources\n");return false;}
+    g_current_bandwidth_setting=0;
+    if(!Decode_Init(0) || !Encode_Init(0) || !Record_Init() || !Sound_Init(nullptr)) {
+        Record_Shutdown();Encode_Shutdown();Decode_Shutdown();Sound_Shutdown();
+        Com_PrintError(9,"Actual native voice initialization failed: %s\n",SDL_GetError());return false;
+    }
+    mic_current_reclevel=static_cast<unsigned short>(static_cast<int>(winvoice_mic_reclevel->current.value));
+    if(!BO1_VoiceCaptureControls(mic_current_reclevel,winvoice_mic_mute->current.enabled)) {
+        Record_Shutdown();Encode_Shutdown();Decode_Shutdown();Sound_Shutdown();return false;
+    }
+    memset(s_clientTalkTime,0,sizeof(s_clientTalkTime));
+    for(client=0;client<32;++client) {
+        s_clientSamples[client]=Sound_NewSample();
+        if(!s_clientSamples[client]) {
+            for(int prior=0;prior<client;++prior) {Sound_DestroySample(s_clientSamples[prior]);s_clientSamples[prior]=nullptr;}
+            Record_Shutdown();Encode_Shutdown();Decode_Shutdown();Sound_Shutdown();return false;
+        }
+    }
+    Com_Printf(16,"Native voice uses application microphone gain/mute and read-only SDL capture routing\n");
+    g_voice_initialized=1;return true;
+#else
     if ( !mixerGetRecordSource(old_rec_source) )
         strcpy(old_rec_source, "microphone-not-present");
     mixerSetRecordSource(old_rec_source);
@@ -68,6 +97,7 @@ bool __cdecl Voice_Init()
     memset((unsigned __int8 *)s_clientTalkTime, 0, sizeof(s_clientTalkTime));
     for ( client = 0; client < 32; ++client )
         s_clientSamples[client] = Sound_NewSample();
+#endif
     return 0;
 }
 
@@ -75,15 +105,26 @@ void __cdecl Voice_StopClientSamples()
 {
     int client; // [esp+0h] [ebp-4h]
 
+#if defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST)
+    if(!g_voice_initialized)return;
+#endif
     for ( client = 0; client < 32; ++client )
         Sound_StopSample(s_clientSamples[client]);
 }
 
+#if defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST)
+extern void *g_encoder, *g_decoder;
+bool Voice_HasOwnedResources(){return g_encoder || g_decoder || BO1_VoiceHasOwnedResources();}
+#endif
 void __cdecl Voice_Shutdown()
 {
     int client; // [esp+0h] [ebp-4h]
 
+#if defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST)
+    if ( g_voice_initialized || Voice_HasOwnedResources() )
+#else
     if ( g_voice_initialized )
+#endif
     {
         for ( client = 0; client < 32; ++client )
             Sound_DestroySample(s_clientSamples[client]);
@@ -92,9 +133,14 @@ void __cdecl Voice_Shutdown()
         Encode_Shutdown();
         Decode_Shutdown();
         Sound_Shutdown();
+#if !(defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST))
         mixerSetMicrophoneMute(1u);
         mixerSetRecordLevel(old_rec_source, mic_old_reclevel);
         mixerSetRecordSource(old_rec_source);
+#endif
+#if defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST)
+        memset(s_clientSamples,0,sizeof(s_clientSamples));currentRecordingSample=nullptr;recording=false;
+#endif
         g_voice_initialized = 0;
     }
 }
@@ -150,6 +196,9 @@ int __cdecl Voice_GetLocalVoiceData()
             voice_current_scaler = 0.5f;
         }
     }
+#if defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST)
+    BO1_VoiceCaptureControls(static_cast<unsigned short>(static_cast<int>(winvoice_mic_reclevel->current.value)),winvoice_mic_mute->current.enabled);
+#endif
     Record_Frame();
     return 0;
 }
@@ -158,13 +207,17 @@ bool playing;
 void __cdecl Voice_IncomingVoiceData(unsigned __int8 talker, unsigned __int8 *data, int packetDataSize)
 {
     int v3; // [esp+0h] [ebp-201Ch]
-    _iobuf *stream; // [esp+8h] [ebp-2014h]
+    FILE *stream; // [esp+8h] [ebp-2014h]
     int v5; // [esp+10h] [ebp-200Ch]
     __int16 out[4096]; // [esp+14h] [ebp-2008h] BYREF
     unsigned int data_len; // [esp+2018h] [ebp-4h]
 
     if ( g_voice_initialized )
     {
+#if defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST)
+        iassert(talker < 32);
+        if(talker>=32 || !data || packetDataSize<=0 || packetDataSize>4096)return;
+#endif
         if ( !playing )
             playing = 1;
         data_len = 0;
@@ -217,6 +270,9 @@ bool __cdecl Voice_IsClientTalking(unsigned int clientNum)
     {
         __debugbreak();
     }
+#if defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST)
+    if(!g_voice_initialized || clientNum>=32)return false;
+#endif
     return (int)(Sys_Milliseconds() - s_clientTalkTime[clientNum]) < 300;
 }
 
@@ -224,10 +280,18 @@ dsound_sample_t *currentRecordingSample;
 int count_0;
 char __cdecl Voice_StartRecording()
 {
+#if defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST)
+    if(!g_voice_initialized)return 0;
+#endif
     if ( !recording )
     {
         currentRecordingSample = Record_NewSample();
+#if defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST)
+        if(!currentRecordingSample)return 0;
+        if(Record_Start(currentRecordingSample)<0){Record_DestroySample(currentRecordingSample);currentRecordingSample=nullptr;return 0;}
+#else
         Record_Start(currentRecordingSample);
+#endif
         recording = 1;
         ++count_0;
     }
@@ -244,6 +308,13 @@ char __cdecl Voice_StopRecording()
     return 1;
 }
 
+#if defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST)
+unsigned int mixerGetRecordLevel(char *source) {char actual[256];if(!source || !BO1_VoiceCaptureRoute(actual,sizeof(actual)) || strcmp(source,actual))return static_cast<unsigned>(-1);return mic_current_reclevel;}
+int mixerSetRecordLevel(char *,unsigned short level) {if(!BO1_VoiceCaptureControls(level,winvoice_mic_mute->current.enabled))return 0;mic_current_reclevel=level;return 1;}
+int mixerGetRecordSource(char *output) {return BO1_VoiceCaptureRoute(output,256);}
+int mixerSetRecordSource(char *) {SDL_SetError("Native SDL voice capture routing is read-only; no Windows global mixer source");return 0;}
+int mixerSetMicrophoneMute(unsigned char mute) {return BO1_VoiceCaptureControls(mic_current_reclevel,mute!=0);}
+#else
 unsigned int __cdecl mixerGetRecordLevel(char *SrcName)
 {
     tagMIXERCONTROLA mxc; // [esp+0h] [ebp-188h] BYREF
@@ -635,6 +706,8 @@ int __cdecl mixerSetMicrophoneMute(unsigned __int8 bMute)
     mixerClose(phmx);
     return 0;
 }
+
+#endif
 
 int __cdecl Live_GetClientNumForXuid(const SessionData_s *session, unsigned __int64 xuid)
 {

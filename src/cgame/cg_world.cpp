@@ -16,7 +16,12 @@
 #include <physics/rope.h>
 #include <xanim/xmodel.h>
 #include <xanim/dobj_utils.h>
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
 #include <clientscript/cscr_stringlist.h>
+#include <cstring>
+#else
+#include <clientscript/cscr_stringlist.h>
+#endif
 
 float actorLocationalMinsBig[3] = { -54.0, -54.0, -32.0 };
 float actorLocationalMaxsBig[3] = { 54.0, 54.0, 72.0 };
@@ -558,10 +563,15 @@ void __cdecl CG_PointTraceToEntity(const pointtrace_t *clip, unsigned int entInd
             return;
         }
         cgameGlob = CG_GetLocalClientGlobals(localClientNum);
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+        std::memcpy(localStart, clip->extents.start.vec.v, 3 * sizeof(float));
+        std::memcpy(localEnd, clip->extents.end.vec.v, 3 * sizeof(float));
+#else
         *(_QWORD *)localStart = *(_QWORD *)clip->extents.start.vec.v;
         localStart[2] = clip->extents.start.vec.v[2];
         *(_QWORD *)localEnd = *(_QWORD *)clip->extents.end.vec.v;
         localEnd[2] = clip->extents.end.vec.v[2];
+#endif
         objTrace.fraction = results->fraction;
         if ( character )
         {
@@ -596,8 +606,12 @@ void __cdecl CG_PointTraceToEntity(const pointtrace_t *clip, unsigned int entInd
         results->partName = objTrace.partName;
         results->partGroup = objTrace.partGroup;
         results->boneIndex = objTrace.localBoneIndex;
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+        std::memcpy(results->normal.vec.v, objTrace.normal, 3 * sizeof(float));
+#else
         *(_QWORD*)results->normal.vec.v = *(_QWORD*)objTrace.normal;
         results->normal.vec.u[2] = LODWORD(objTrace.normal[2]);
+#endif
         results->walkable = results->normal.vec.v[2] >= 0.69999999;
         results->hitType = TRACE_HITTYPE_ENTITY;
         results->hitId = p_nextState->number;
@@ -607,8 +621,13 @@ void __cdecl CG_PointTraceToEntity(const pointtrace_t *clip, unsigned int entInd
 
 void __cdecl CG_PointTraceToEntities(const pointtrace_t *clip, trace_t *results)
 {
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+    float start[4];
+    float end[4];
+#else
     _QWORD start[2]; // [esp+18h] [ebp-20h] BYREF
     _QWORD end[2]; // [esp+28h] [ebp-10h] BYREF
+#endif
 
     PROF_SCOPED("cg_pointtracetoentities");
 
@@ -638,13 +657,25 @@ void __cdecl CG_PointTraceToEntities(const pointtrace_t *clip, trace_t *results)
     {
         __debugbreak();
     }
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+    // Keep three coordinates and the separate traversal fraction lane.
+    std::memcpy(start, clip->extents.start.vec.v, 3 * sizeof(float));
+    std::memcpy(end, clip->extents.end.vec.v, 3 * sizeof(float));
+    start[3] = 0.0f;
+    std::memcpy(&end[3], &results->fraction, sizeof(float));
+#else
     start[0] = *(_QWORD *)clip->extents.start.vec.v;
     LODWORD(start[1]) = clip->extents.start.vec.u[2];
     end[0] = *(_QWORD *)clip->extents.end.vec.v;
     LODWORD(end[1]) = clip->extents.end.vec.u[2];
     HIDWORD(start[1]) = 0;
     HIDWORD(end[1]) = LODWORD(results->fraction);
+#endif
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+    CG_PointTraceToEntities_r(clip, 1u, start, end, results);
+#else
     CG_PointTraceToEntities_r(clip, 1u, (const float *)start, (const float *)end, results);
+#endif
 }
 
 void __cdecl CG_PointTraceToEntities_r(
@@ -911,8 +942,13 @@ void __cdecl CG_TraceCapsule(
 
 void __cdecl CG_ClipMoveToEntities(const moveclip_t *clip, trace_t *results)
 {
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+    float start[4];
+    float end[4];
+#else
     _QWORD start[2]; // [esp+1Ch] [ebp-20h] BYREF
     _QWORD end[2]; // [esp+2Ch] [ebp-10h] BYREF
+#endif
 
     PROF_SCOPED("cg_clipmovetoentities");
 
@@ -942,13 +978,25 @@ void __cdecl CG_ClipMoveToEntities(const moveclip_t *clip, trace_t *results)
     {
         __debugbreak();
     }
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+    // Keep three coordinates and the separate traversal fraction lane.
+    std::memcpy(start, clip->extents.start.vec.v, 3 * sizeof(float));
+    std::memcpy(end, clip->extents.end.vec.v, 3 * sizeof(float));
+    start[3] = 0.0f;
+    std::memcpy(&end[3], &results->fraction, sizeof(float));
+#else
     start[0] = *(_QWORD *)clip->extents.start.vec.v;
     LODWORD(start[1]) = clip->extents.start.vec.u[2];
     end[0] = *(_QWORD *)clip->extents.end.vec.v;
     LODWORD(end[1]) = clip->extents.end.vec.u[2];
     HIDWORD(start[1]) = 0;
     HIDWORD(end[1]) = LODWORD(results->fraction);
+#endif
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+    CG_ClipMoveToEntities_r(clip, 1u, start, end, results);
+#else
     CG_ClipMoveToEntities_r(clip, 1u, (const float *)start, (const float *)end, results);
+#endif
 }
 
 void __cdecl CG_ClipMoveToEntities_r(
@@ -1443,10 +1491,16 @@ LABEL_34:
             ignoreEntParams.ignoreParent = 0;
             ignoreEntParams.ignoreChildren = 0;
             ignoreEntParams.ignoreSiblings = 0;
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+            // Caller coordinates only require float alignment; leave lane3 intact.
+            std::memcpy(clip.extents.start.vec.v, start, 3 * sizeof(float));
+            std::memcpy(clip.extents.end.vec.v, end, 3 * sizeof(float));
+#else
             *(_QWORD *)clip.extents.start.vec.v = *(_QWORD *)start;
             clip.extents.start.vec.v[2] = start[2];
             *(_QWORD *)clip.extents.end.vec.v = *(_QWORD *)end;
             clip.extents.end.vec.v[2] = end[2];
+#endif
             CM_CalcTraceExtents(&clip.extents);
             if ( context->ignoreEntParams )
                 p_ignoreEntParams = context->ignoreEntParams;
@@ -1686,10 +1740,16 @@ bool __cdecl CG_SightTracePointInternal(int *hitNum, const float *start, const f
     trace->allsolid = 0;
     tw.contents = mask;
     memset(&tw.size, 0, 12);
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+    // Caller coordinates only require float alignment; leave lane3 intact.
+    std::memcpy(tw.extents.start.vec.v, start, 3 * sizeof(float));
+    std::memcpy(tw.extents.end.vec.v, end, 3 * sizeof(float));
+#else
     *(_QWORD *)tw.extents.start.vec.v = *(_QWORD *)start;
     tw.extents.start.vec.v[2] = start[2];
     *(_QWORD *)tw.extents.end.vec.v = *(_QWORD *)end;
     tw.extents.end.vec.v[2] = end[2];
+#endif
     tw.midpoint.vec.v[0] = (float)(0.5 * tw.extents.start.vec.v[0]) + (float)(0.5 * tw.extents.end.vec.v[0]);
     tw.midpoint.vec.v[1] = (float)(0.5 * tw.extents.start.vec.v[1]) + (float)(0.5 * tw.extents.end.vec.v[1]);
     tw.midpoint.vec.v[2] = (float)(0.5 * tw.extents.start.vec.v[2]) + (float)(0.5 * tw.extents.end.vec.v[2]);
@@ -1711,6 +1771,10 @@ bool __cdecl CG_SightTracePointInternal(int *hitNum, const float *start, const f
     Vec3Max(tw.extents.start.vec.v, tw.extents.end.vec.v, tw.bounds[1].vec.v);
     tw.axialCullOnly = 0;
     tw.isPoint = 1;
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+    // Ordinary sight traces use one-sided triangle tests, as in CM_SightTracePoint.
+    tw.doublesided = false;
+#endif
     memset(&tw.radius, 0, 12);
     CM_GetTraceThreadInfo(&tw.threadInfo);
     if ( !*hitNum )
@@ -1743,10 +1807,16 @@ bool __cdecl CG_SightTracePoint(int *hitNum, const float *start, const float *en
     int oldHitNum; // [esp+1A0h] [ebp-4h]
 
     ////TraceExtents::TraceExtents(&extents);
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+    // Caller coordinates only require float alignment; leave lane3 intact.
+    std::memcpy(extents.start.vec.v, start, 3 * sizeof(float));
+    std::memcpy(extents.end.vec.v, end, 3 * sizeof(float));
+#else
     *(_QWORD *)extents.start.vec.v = *(_QWORD *)start;
     extents.start.vec.v[2] = start[2];
     *(_QWORD *)extents.end.vec.v = *(_QWORD *)end;
     extents.end.vec.v[2] = end[2];
+#endif
     CM_CalcTraceExtents(&extents);
     oldHitNum = *hitNum;
     *hitNum = 0;
@@ -1764,8 +1834,12 @@ bool __cdecl CG_SightTracePoint(int *hitNum, const float *start, const float *en
             mn[0] = occlusion_overrides[i][0][0];
             mn[1] = occlusion_overrides[i][0][1];
             mn[2] = occlusion_overrides[i][0][2];
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+            std::memcpy(mx, occlusion_overrides[i][1], 3 * sizeof(float));
+#else
             *(_QWORD *)mx = *(_QWORD *)&occlusion_overrides[i][1][0];
             mx[2] = occlusion_overrides[i][1][2];
+#endif
             t0 = 0.0f;
             t1 = 1.0f;
             if ( intersect_extents_aabb(&extents, mn, mx, &t0, &t1) )

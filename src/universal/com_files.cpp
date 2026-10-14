@@ -3,7 +3,14 @@
 #include "assertive.h"
 #include "q_shared.h"
 
+#if defined(__ANDROID__)
+#include <platform/android/engine_paths.h>
+#include <platform/android/legacy_crt.h>
+#include <platform/android/file_services.h>
+#include <platform/atomic32.h>
+#else
 #include <ShlObj.h>
+#endif
 #include <qcommon/threads.h>
 #include <qcommon/common.h>
 
@@ -11,6 +18,12 @@
 #include "com_fileaccess.h"
 
 #include <cstring>
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+#include <cstddef>
+#endif
+#if defined(__ANDROID__)
+#include <limits>
+#endif
 #include <ctype.h>
 #include "com_memory.h"
 #include <stringed/stringed_hooks.h>
@@ -24,7 +37,11 @@
 #include <database/db_registry.h>
 #include <sound/snd_public_async.h>
 #include <win32/win_net.h>
+#if defined(__ANDROID__)
+#include <sound/snd_stream_files.h>
+#else
 #include <sound/snd_stream.h>
+#endif
 
 const char TEN_SPACE[] = "          ";
 
@@ -88,10 +105,17 @@ char *__cdecl FS_GetOsFolderPath(int folder, char *ospath)
     {
         __debugbreak();
     }
+#if defined(__ANDROID__)
+    if (strlen(Sys_EngineUserRoot()) + sizeof("/Activision/CoD") > 256)
+        Com_Error(ERR_FATAL, "Android user path exceeds filesystem path capacity");
+    Com_sprintf(ospath,256,"%s/Activision/CoD",Sys_EngineUserRoot());
+    return ospath;
+#else
     SHGetFolderPathA(0, folder | 0x8000, 0, 0, buffer);
     I_strncpyz(ospath, buffer, 256);
     I_strncat(ospath, 256, "\\Activision\\CoD");
     return ospath;
+#endif
 }
 
 bool __cdecl FS_Initialized()
@@ -469,7 +493,7 @@ int __cdecl FS_CreatePath(char *OSPath)
 
 int __cdecl FS_FileExists(char *file)
 {
-    _iobuf *f; // [esp+4h] [ebp-10Ch]
+    FILE *f; // [esp+4h] [ebp-10Ch]
     char testpath[260]; // [esp+8h] [ebp-108h] BYREF
 
     FS_BuildOSPath((char *)fs_homepath->current.string, fs_gamedir, file, testpath);
@@ -482,7 +506,7 @@ int __cdecl FS_FileExists(char *file)
 
 int __cdecl FS_OSFPathExists(const char *file)
 {
-    _iobuf *f; // [esp+0h] [ebp-4h]
+    FILE *f; // [esp+0h] [ebp-4h]
 
     f = FS_FileOpenReadBinary(file);
     if ( !f )
@@ -495,8 +519,8 @@ void __cdecl FS_CopyFile(char *fromOSPath, char *toOSPath)
 {
     unsigned __int8 *buf; // [esp+0h] [ebp-Ch]
     int len; // [esp+4h] [ebp-8h]
-    _iobuf *f; // [esp+8h] [ebp-4h]
-    _iobuf *fa; // [esp+8h] [ebp-4h]
+    FILE *f; // [esp+8h] [ebp-4h]
+    FILE *fa; // [esp+8h] [ebp-4h]
 
     f = FS_FileOpenReadBinary(fromOSPath);
     if ( f )
@@ -528,7 +552,7 @@ void __cdecl FS_Remove(const char *osPath)
 void __cdecl FS_FCloseFile(int h)
 {
     const char *CurrentThreadName; // eax
-    _iobuf *f; // [esp+0h] [ebp-4h]
+    FILE *f; // [esp+0h] [ebp-4h]
 
     FS_CheckFileSystemStarted();
     if (fsh[h].streamed
@@ -605,7 +629,7 @@ int __cdecl FS_FOpenFileWriteToDirForThread(char *filename, char *dir, const cha
 int __cdecl FS_GetHandleAndOpenFile(const char *filename, const char *ospath, FsThread thread)
 {
     int f; // [esp+0h] [ebp-8h]
-    _iobuf *fp; // [esp+4h] [ebp-4h]
+    FILE *fp; // [esp+4h] [ebp-4h]
 
     fp = FS_FileOpenWriteBinary(ospath);
     if (!fp)
@@ -638,7 +662,7 @@ int __cdecl FS_FOpenTextFileWrite(char *filename)
 {
     char ospath[256]; // [esp+0h] [ebp-110h] BYREF
     const char *basepath; // [esp+104h] [ebp-Ch]
-    _iobuf *f; // [esp+108h] [ebp-8h]
+    FILE *f; // [esp+108h] [ebp-8h]
     int h; // [esp+10Ch] [ebp-4h]
 
     h = 0;
@@ -669,7 +693,7 @@ int __cdecl FS_FOpenFileAppend(char *filename)
 {
     char ospath[256]; // [esp+0h] [ebp-110h] BYREF
     const char *basepath; // [esp+104h] [ebp-Ch]
-    _iobuf *f; // [esp+108h] [ebp-8h]
+    FILE *f; // [esp+108h] [ebp-8h]
     int h; // [esp+10Ch] [ebp-4h]
 
     h = 0;
@@ -775,7 +799,7 @@ unsigned int __cdecl FS_FOpenFileReadForThread(const char *filename, int *file, 
     char netpath[256]; // [esp+228h] [ebp-110h] BYREF
     bool wasSkipped; // [esp+32Fh] [ebp-9h]
     searchpath_s *search; // [esp+330h] [ebp-8h]
-    _iobuf *filetemp; // [esp+334h] [ebp-4h]
+    FILE *filetemp; // [esp+334h] [ebp-4h]
 
     impureIwd = 0;
     wasSkipped = 0;
@@ -824,10 +848,14 @@ unsigned int __cdecl FS_FOpenFileReadForThread(const char *filename, int *file, 
                                         v14->referenced = 1;
                                         FS_AddIwdPureCheckReference(search);
                                     }
+#if defined(__ANDROID__)
+                                    if ( bo1::atomic32::CmpExchange32(&v14->hasOpenFile, 1, 0) == 1 )
+#else
                                     if ( _InterlockedCompareExchange(&v14->hasOpenFile, 1, 0) == 1 )
+#endif
                                     {
                                         fsh[*file].handleFiles.iwdIsClone = 1;
-                                        fsh[*file].handleFiles.file.o = (_iobuf *)unzReOpen(v14->iwdFilename, v14->handle);
+                                        fsh[*file].handleFiles.file.o = (FILE *)unzReOpen(v14->iwdFilename, v14->handle);
                                         if (!fsh[*file].handleFiles.file.o)
                                         {
                                             if (thread)
@@ -842,7 +870,7 @@ unsigned int __cdecl FS_FOpenFileReadForThread(const char *filename, int *file, 
                                     else
                                     {
                                         fsh[*file].handleFiles.iwdIsClone = 0;
-                                        fsh[*file].handleFiles.file.o = (_iobuf *)v14->handle;
+                                        fsh[*file].handleFiles.file.o = (FILE *)v14->handle;
                                     }
                                     I_strncpyz(fsh[*file].name, sanitizedName, 256);
                                     fsh[*file].zipFile = v14;
@@ -850,7 +878,12 @@ unsigned int __cdecl FS_FOpenFileReadForThread(const char *filename, int *file, 
                                     filetemp = zfi->file;
                                     ziptemp = zfi->pfile_in_zip_read;
                                     unzSetCurrentFileInfoPosition(v14->handle, i->pos);
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+                                    // Copy all native archive metadata; the following read state remains owned by this handle.
+                                    Com_Memcpy(zfi, v14->handle, offsetof(unz_s, pfile_in_zip_read));
+#else
                                     Com_Memcpy(zfi, v14->handle, 128);
+#endif
                                     zfi->file = filetemp;
                                     zfi->pfile_in_zip_read = ziptemp;
                                     unzOpenCurrentFile(fsh[*file].handleFiles.file.z);
@@ -1160,7 +1193,7 @@ unsigned int __cdecl FS_Read(unsigned __int8 *buffer, unsigned int len, int h)
     int tries; // [esp+4h] [ebp-14h]
     unsigned int remaining; // [esp+8h] [ebp-10h]
     unsigned __int8 *buf; // [esp+Ch] [ebp-Ch]
-    _iobuf *f; // [esp+10h] [ebp-8h]
+    FILE *f; // [esp+10h] [ebp-8h]
     int read; // [esp+14h] [ebp-4h]
 
     FS_CheckFileSystemStarted();
@@ -1198,7 +1231,7 @@ unsigned int __cdecl FS_Write(char *buffer, unsigned int len, int h)
     int tries; // [esp+4h] [ebp-14h]
     unsigned int remaining; // [esp+8h] [ebp-10h]
     int written; // [esp+10h] [ebp-8h]
-    _iobuf *f; // [esp+14h] [ebp-4h]
+    FILE *f; // [esp+14h] [ebp-4h]
 
     FS_CheckFileSystemStarted();
     if (!h)
@@ -1244,7 +1277,7 @@ int __cdecl FS_Seek(int f, int offset, int origin)
 {
     unsigned int CurrentFile; // eax
     const char *v5; // eax
-    _iobuf *v6; // eax
+    FILE *v6; // eax
     signed int iZipPos; // [esp+8h] [ebp-8h]
     unsigned int iZipOffset; // [esp+Ch] [ebp-4h]
 
@@ -1433,7 +1466,7 @@ int __cdecl FS_GetFileOsPath(const char *filename, char *ospath)
     char sanitizedName[256]; // [esp+0h] [ebp-110h] BYREF
     directory_t *dir; // [esp+104h] [ebp-Ch]
     searchpath_s *search; // [esp+108h] [ebp-8h]
-    _iobuf *fp; // [esp+10Ch] [ebp-4h]
+    FILE *fp; // [esp+10Ch] [ebp-4h]
 
     if ( !filename
         && !Assert_MyHandler("C:\\projects_pc\\cod\\codsrc\\src\\universal\\com_files.cpp", 3681, 0, "%s", "filename") )
@@ -1551,8 +1584,21 @@ const char **__cdecl FS_ListFilteredFiles(
     FS_ReturnPath(sanitizedPath, zpath, &pathDepth);
     if ( sanitizedPath[0] )
         ++pathDepth;
+#if defined(__ANDROID__)
+    // Original capacity: owner prefix + 16383 names + null terminator.
+    // Keep the original string/growth headroom after widening native slots.
+    constexpr int nativeListBytes = static_cast<int>(0x4001u * sizeof(const char *));
+    // Hunk_UserCreate requires a 4096-byte multiple; preserve that contract.
+    constexpr int nativeUserBytes = (0x20000 + nativeListBytes - 65540 + 4095) & ~4095;
+    static_assert(nativeUserBytes % 4096 == 0, "FS list hunk must satisfy the page-size contract");
+    static_assert(nativeUserBytes >= nativeListBytes + sizeof(HunkUserDefault) + 31,
+                  "FS list hunk must contain the native table and aligned header");
+    user = Hunk_UserCreate(nativeUserBytes, HU_SCHEME_DEFAULT, 0, 0, "FS_ListFilteredFiles", 3);
+    list = (const char **)Hunk_UserAlloc(user, nativeListBytes, alignof(const char *), 0);
+#else
     user = Hunk_UserCreate(0x20000, HU_SCHEME_DEFAULT, 0, 0, "FS_ListFilteredFiles", 3);
     list = (const char **)Hunk_UserAlloc(user, 65540, 4, 0);
+#endif
     *list++ = (const char *)user;
     for ( search = searchPath; search; search = search->next )
     {
@@ -1769,12 +1815,20 @@ const char **__cdecl FS_ListFilteredFilesInLocation(
         {
             if ( locationSearchPath )
             {
+#if defined(__ANDROID__)
+                locationSearch->next = (searchpath_s *)Hunk_UserAlloc(user, sizeof(searchpath_s), alignof(searchpath_s), 0);
+#else
                 locationSearch->next = (searchpath_s *)Hunk_UserAlloc(user, 28, 4, 0);
+#endif
                 locationSearch = locationSearch->next;
             }
             else
             {
+#if defined(__ANDROID__)
+                locationSearchPath = (searchpath_s *)Hunk_UserAlloc(user, sizeof(searchpath_s), alignof(searchpath_s), 0);
+#else
                 locationSearchPath = (searchpath_s *)Hunk_UserAlloc(user, 28, 4, 0);
+#endif
                 locationSearch = locationSearchPath;
             }
             locationSearch->next = 0;
@@ -2190,7 +2244,27 @@ iwd_t *__cdecl FS_LoadZipFile(char *zipfile, const char *basename)
         }
         while ( v3 );
         namePtr += strlen(filename_inzip) + 1;
+#if defined(__ANDROID__)
+        // The actual archive API writes native unsigned long; the index slot
+        // intentionally retains its fixed 32-bit position contract.
+        unsigned long archivePosition = 0;
+        const int positionStatus = unzGetCurrentFileInfoPosition(uf, &archivePosition);
+        if (positionStatus != UNZ_OK
+            || archivePosition > std::numeric_limits<decltype(buildBuffer[i].pos)>::max())
+        {
+            // The index is still private: retire all owners before fatal exit.
+            unzClose(uf);
+            Z_Free((char *)fs_headerLongs, 3);
+            Z_Free((char *)buildBuffer, 3);
+            Z_Free((char *)iwd, 3);
+            Com_Error(ERR_FATAL, "Invalid or unrepresentable IWD index position in %s (status %d, position %lu)",
+                zipfile, positionStatus, archivePosition);
+            std::abort();
+        }
+        buildBuffer[i].pos = static_cast<decltype(buildBuffer[i].pos)>(archivePosition);
+#else
         unzGetCurrentFileInfoPosition(uf, (unsigned long*)&buildBuffer[i].pos);
+#endif
         buildBuffer[i].next = iwd->hashTable[hash];
         iwd->hashTable[hash] = &buildBuffer[i];
         unzGoToNextFile(uf);
@@ -2212,7 +2286,7 @@ iwd_t *__cdecl FS_LoadFakeIwdFile(char *fakeiwdfile, const char *basename)
     int *fs_headerLongs;
     unsigned int *buf;
     iwd_t *iwd;
-    _iobuf *f;
+    FILE *f;
 
     buf = 0;
     f = FS_FileOpenReadBinary(fakeiwdfile);
@@ -2665,7 +2739,11 @@ void FS_RegisterDvars()
         "mod: mods stacked on the search path, e.g. \"mapkit horde zinfo\" = mods/mapkit, mods/horde, mods/zinfo (later wins)");
     fs_usermapDir = _Dvar_RegisterString("fs_usermapdir", (char *)"", 0x144u, "Usermap data directory.");
     fs_ignoreLocalized = _Dvar_RegisterBool("fs_ignoreLocalized", 0, 0xA0u, "Ignore localized files");
+#if defined(__ANDROID__)
+    homePath = Sys_EngineUserRoot();
+#else
     homePath = nullptr;
+#endif
     if ( !homePath || !*homePath )
         homePath = (char *)fs_basepath->reset.string; // Win32 overlaid string onto .integer
     fs_homepath = _Dvar_RegisterString("fs_h", homePath, 0x210u, "Game home path");
@@ -2932,7 +3010,7 @@ unsigned int __cdecl FS_FTell(int f)
 
 void __cdecl FS_Flush(int f)
 {
-    _iobuf *v1; // eax
+    FILE *v1; // eax
 
     v1 = FS_FileForHandle(f);
     fflush(v1);

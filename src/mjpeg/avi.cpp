@@ -4,7 +4,9 @@
 #include <Windows.h>
 #include "yuv.h"
 #include <gfx_d3d/r_dvars.h>
+#if !defined(__ANDROID__)
 #include <vpx/vpx.h>
+#endif
 #include "mjpeg.h"
 #include <qcommon/threads.h>
 #include <universal/q_shared.h>
@@ -82,7 +84,11 @@ avi::RIFF_s::LIST_hdrl_s::LIST_vid_strl_s::strh_s::strh_s()
     this->header[1] = 't';
     this->header[2] = 'r';
     this->header[3] = 'h';
+#if defined(__ANDROID__)
+    memcpy(this->type,"vids",4);memcpy(this->format,"mjpg",4);
+#else
     strcpy(this->type, "vidsmjpg");
+#endif
     //BYTE1(this->Flags) = 0;
     //HIWORD(this->Flags) = 0;
     this->Flags = 0;
@@ -143,7 +149,11 @@ avi::RIFF_s::LIST_hdrl_s::LIST_aud_strl_s::strh_s::strh_s()
     this->header[1] = 't';
     this->header[2] = 'r';
     this->header[3] = 'h';
+#if defined(__ANDROID__)
+    memcpy(this->type,"auds",4);this->format[0]=0;
+#else
     strcpy(this->type, "auds");
+#endif
     this->format[1] = 0;
     this->format[2] = 0;
     this->format[3] = 0;
@@ -178,13 +188,16 @@ avi::RIFF_s::LIST_hdrl_s::LIST_aud_strl_s::strf_s::strf_s()
     this->bits_per_sample = 16;
 }
 
+#if !defined(__ANDROID__)
 unsigned int __stdcall mjpeg_write_thread(void *__formal)
 {
     //avi_s::write_thread(AVI);
     AVI->write_thread();
     return 0;
 }
+#endif
 
+#if !defined(__ANDROID__)
 void avi_s::write_thread()
 {
     HANDLE CurrentThread; // eax
@@ -211,7 +224,9 @@ void avi_s::write_thread()
         }
     }
 }
+#endif
 
+#if !defined(__ANDROID__)
 void __cdecl mjpeg_create(const char *szFile, int width, int height, unsigned int fps)
 {
     avi_s *v4; // [esp+0h] [ebp-28h]
@@ -239,7 +254,9 @@ void __cdecl mjpeg_create(const char *szFile, int width, int height, unsigned in
         AVI->create(szFile, width, height, fps);
     mjpeg_run_encoder = 1;
 }
+#endif
 
+#if !defined(__ANDROID__)
 void avi_s::create(
                 const char *szFile,
                 unsigned int width,
@@ -271,6 +288,7 @@ void avi_s::create(
         SetThreadName(threadId, "MJPEG Write Thread");
     }
 }
+#endif
 
 void avi::RIFF_s::Out(unsigned __int8 **out)
 {
@@ -294,7 +312,11 @@ unsigned int __cdecl avi::Out32(unsigned __int8 **out, unsigned int d)
     *(*out)++ = d;
     *(*out)++ = BYTE1(d);
     *(*out)++ = BYTE2(d);
+#if defined(__ANDROID__)
+    *(*out)++ = d >> 24;
+#else
     *(*out)++ = HIBYTE(d);
+#endif
     return 4;
 }
 
@@ -515,6 +537,7 @@ void avi::RIFF_s::Setup(unsigned int width, unsigned int height, unsigned int fp
     this->idx1.count = 0;
 }
 
+#if !defined(__ANDROID__)
 void __cdecl mjpeg_add_frame(unsigned __int8 *y, unsigned __int8 *u, unsigned __int8 *v)
 {
     if ( r_clipCodec->current.integer == 1 )
@@ -522,7 +545,9 @@ void __cdecl mjpeg_add_frame(unsigned __int8 *y, unsigned __int8 *u, unsigned __
     else
         AVI->add_frame(y, u, v);
 }
+#endif
 
+#if !defined(__ANDROID__)
 void avi_s::add_frame(unsigned __int8 *y, unsigned __int8 *u, unsigned __int8 *v)
 {
 #if 0 // BO1TODO: jpeg bits
@@ -567,6 +592,7 @@ void avi_s::add_frame(unsigned __int8 *y, unsigned __int8 *u, unsigned __int8 *v
     }
 #endif
 }
+#endif
 
 void avi::RIFF_s::AddFrame(unsigned int offset, unsigned int size)
 {
@@ -578,6 +604,7 @@ void avi::RIFF_s::AddFrame(unsigned int offset, unsigned int size)
     this->idx1.sizes[this->idx1.count++] = size | 0x80000000;
 }
 
+#if !defined(__ANDROID__)
 unsigned int avi_s::output_data(unsigned __int8 *data, unsigned int size)
 {
     int bufferLeft; // [esp+4h] [ebp-8h]
@@ -623,7 +650,9 @@ unsigned int avi_s::output_data(unsigned __int8 *data, unsigned int size)
     ReleaseMutex(this->hOutputAddLock);
     return ret;
 }
+#endif
 
+#if !defined(__ANDROID__)
 void __cdecl mjpeg_close_int()
 {
     if ( r_clipCodec->current.integer == 1 )
@@ -634,7 +663,9 @@ void __cdecl mjpeg_close_int()
     operator delete(AVI);
     AVI = 0;
 }
+#endif
 
+#if !defined(__ANDROID__)
 void avi_s::close()
 {
     DWORD bytes; // [esp+2Ch] [ebp-18h] BYREF
@@ -671,6 +702,7 @@ void avi_s::close()
     WriteFile(this->hFile, this->encodeBuff, 0xCu, &bytes, 0);
     CloseHandle(this->hFile);
 }
+#endif
 
 void avi::idx1_s::Out(unsigned __int8 **out)
 {
@@ -708,6 +740,7 @@ void avi::idx1_s::Out(unsigned __int8 **out)
     avi::Out32(&sizePtr, *out - sizePtr - 4);
 }
 
+#if !defined(__ANDROID__)
 void avi_s::flush_samples()
 {
     int v2; // [esp+4h] [ebp-18h]
@@ -726,13 +759,17 @@ void avi_s::flush_samples()
     this->riff.idx1.sizes[this->riff.idx1.count++] = v2;
     this->audioBufferCount = 0;
 }
+#endif
 
+#if !defined(__ANDROID__)
 void __cdecl mjpeg_add_samples(__int16 *in, int count)
 {
     if ( mjpeg_run_encoder )
         AVI->add_samples(in, count);
 }
+#endif
 
+#if !defined(__ANDROID__)
 void avi_s::add_samples(__int16 *in, int count)
 {
     __int16 v3; // [esp+1Eh] [ebp-Ah]
@@ -762,6 +799,7 @@ void avi_s::add_samples(__int16 *in, int count)
         Com_PrintWarning(16, "WARNING: Movie encoding. Sound out of sync with video, droping samples\n");
     }
 }
+#endif
 
 void avi::RIFF_s::LIST_hdrl_s::LIST_aud_strl_s::strh_s::Out(unsigned __int8 **out)
 {
@@ -825,3 +863,6 @@ void avi::RIFF_s::LIST_hdrl_s::LIST_aud_strl_s::strh_s::Out(unsigned __int8 **ou
 
     avi::Out32(&sizePtr, *out - sizePtr - 4);
 }
+#if defined(__ANDROID__)
+#include "avi_native.inl"
+#endif

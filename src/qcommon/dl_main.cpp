@@ -4,6 +4,19 @@
 
 // Downloader func's stubbed again
 
+#if defined(__ANDROID__)
+#include <cstdarg>
+#include <cstdio>
+int __cdecl DL_VPrintf(const char *fmt, va_list arguments)
+{
+    if (!fmt) return -1;
+    char message[1024]{};
+    const int result = std::vsnprintf(message, sizeof(message), fmt, arguments);
+    if (result < 0) return result;
+    Com_Printf(0, "%s", message);
+    return static_cast<int>(std::strlen(message));
+}
+#else
 int __cdecl DL_VPrintf(const char *fmt, char *argptr)
 {
     char msg[1028]; // [esp+10h] [ebp-408h] BYREF
@@ -12,6 +25,8 @@ int __cdecl DL_VPrintf(const char *fmt, char *argptr)
     Com_Printf(0, "%s", msg);
     return &msg[strlen(msg) + 1] - &msg[1];
 }
+
+#endif
 
 int __cdecl terminate_handler_WINDOWSNAMINGCLASH(_HTRequest *request, struct _HTResponse *response, void *param, int status)
 {

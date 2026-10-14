@@ -370,7 +370,15 @@ void __cdecl SpectatorThink(gentity_s *ent, usercmd_s *ucmd)
             client->ps.speed = 400;
         else
             client->ps.speed = 0;
+        
+#if defined(__ANDROID__)
+        // Preserve the constructed collision visitor and its cached proximity query.
+        memset((unsigned __int8 *)pm, 0,
+            (unsigned __int8 *)&pm->proximity_data - (unsigned __int8 *)pm);
+        pm->spDisabledStances = 0;
+#else
         memset((unsigned __int8 *)pm, 0, 0x258u);
+#endif
         pm->localClientNum = -1;
         pm->ps = &client->ps;
         memcpy(&pm->cmd, ucmd, sizeof(pm->cmd));
@@ -1397,7 +1405,15 @@ LABEL_53:
                 // zombies: SP ClientThink_real sets ps.gravity before Pmove (SP 0x0069d5a3, setplayergravity).
                 if (zombiemode && zombiemode->current.enabled)
                     client->ps.gravity = G_SP_PlayerGravity(client, true);
-                memset((unsigned __int8 *)pm, 0, 0x258u);
+                
+#if defined(__ANDROID__)
+        // Preserve the constructed collision visitor and its cached proximity query.
+        memset((unsigned __int8 *)pm, 0,
+            (unsigned __int8 *)&pm->proximity_data - (unsigned __int8 *)pm);
+        pm->spDisabledStances = 0;
+#else
+        memset((unsigned __int8 *)pm, 0, 0x258u);
+#endif
                 pm->localClientNum = -1;
                 pm->ps = &client->ps;
                 memcpy(&pm->cmd, ucmd, sizeof(pm->cmd));

@@ -1,5 +1,10 @@
+#if defined(BO1_NATIVE_COM_BOOT)
+#include "stringed_hooks.h"
+#include <universal/q_shared.h>
+#else
 #include "stringed_hooks.h"
 #include <universal/dvar.h>
+extern languageInfo_t g_languages[13];
 #include <universal/com_files.h>
 #include <qcommon/common.h>
 #include "stringed_ingame.h"
@@ -8,38 +13,14 @@
 #include <ui/ui_main.h>
 #include <database/db_registry.h>
 
-const dvar_t *loc_language;
-const dvar_t *loc_forceEnglish;
-const dvar_t *loc_translate;
-const dvar_t *loc_warnings;
-const dvar_t *loc_warningsAsErrors;
-
 int g_currentAsian;
 
 char szStrings[10][1024];
 int iCurrString;
 
-languageInfo_t g_languages[13] =
-{
-  { "english", "en_", 0 },
-  { "french", "fr_", 0 },
-  { "frenchcan", "fc_", 0 },
-  { "german", "ge_", 0 },
-  { "austrian", "ge_", 0 },
-  { "italian", "it_", 0 },
-  { "spanish", "sp_", 0 },
-  { "british", "br_", 0 },
-  { "russian", "ru_", 0 },
-  { "polish", "po_", 0 },
-  { "korean", "ko_", 0 },
-  { "japanese", "ja_", 0 },
-  { "czech", "cz_", 0 }
-};
 
-int __cdecl SEH_GetCurrentLanguage()
-{
-    return loc_language->current.integer;
-}
+
+
 
 void __cdecl SEH_InitLanguage()
 {
@@ -736,21 +717,29 @@ int __cdecl SEH_PrintStrlen(const char *string)
     return len;
 }
 
-const char *__cdecl SEH_GetLanguageName(unsigned int iLanguage)
-{
-    if ( iLanguage <= 0xC )
-        return g_languages[iLanguage].pszName;
-    else
-        return g_languages[0].pszName;
-}
 
-const char *__cdecl SEH_GetLanguageNameAbbr(unsigned int iLanguage)
+
+
+
+
+#endif
+
+languageInfo_t g_languages[13] =
 {
-    if ( iLanguage <= 0xC )
-        return g_languages[iLanguage].pszNameAbbr;
-    else
-        return g_languages[0].pszNameAbbr;
-}
+  { "english", "en_", 0 },
+  { "french", "fr_", 0 },
+  { "frenchcan", "fc_", 0 },
+  { "german", "ge_", 0 },
+  { "austrian", "ge_", 0 },
+  { "italian", "it_", 0 },
+  { "spanish", "sp_", 0 },
+  { "british", "br_", 0 },
+  { "russian", "ru_", 0 },
+  { "polish", "po_", 0 },
+  { "korean", "ko_", 0 },
+  { "japanese", "ja_", 0 },
+  { "czech", "cz_", 0 }
+};
 
 int __cdecl SEH_GetLanguageIndexForName(const char *pszLanguageName, int *piLanguageIndex)
 {
@@ -766,4 +755,32 @@ int __cdecl SEH_GetLanguageIndexForName(const char *pszLanguageName, int *piLang
     }
     *piLanguageIndex = 0;
     return 0;
+}
+
+const dvar_t *loc_language;
+const dvar_t *loc_forceEnglish;
+const dvar_t *loc_translate;
+const dvar_t *loc_warnings;
+const dvar_t *loc_warningsAsErrors;
+
+
+int __cdecl SEH_GetCurrentLanguage()
+{
+    return loc_language->current.integer;
+}
+
+const char *__cdecl SEH_GetLanguageName(unsigned int iLanguage)
+{
+    if ( iLanguage <= 0xC )
+        return g_languages[iLanguage].pszName;
+    else
+        return g_languages[0].pszName;
+}
+
+const char *__cdecl SEH_GetLanguageNameAbbr(unsigned int iLanguage)
+{
+    if ( iLanguage <= 0xC )
+        return g_languages[iLanguage].pszNameAbbr;
+    else
+        return g_languages[0].pszNameAbbr;
 }

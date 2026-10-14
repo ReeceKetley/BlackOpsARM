@@ -1,4 +1,7 @@
 #include "cg_animtree_mp.h"
+#if defined(__ANDROID__)
+#include <cstdlib>
+#endif
 #include <clientscript/cscr_main.h>
 #include <clientscript/cscr_memorytree.h>
 #include <client_mp/cl_cgame_mp.h>
@@ -7,6 +10,23 @@
 #include <qcommon/common.h>
 #include "cg_local_mp.h"
 #include <qcommon/dobj_management.h>
+
+#if defined(__ANDROID__)
+static void *__cdecl CGScr_AllocateAnimTreeNative(int size)
+{
+    if(size<0)
+    {
+        Com_Error(ERR_FATAL,"Native CGame anim-tree allocation requires a nonnegative byte count");
+        std::abort();
+    }
+    return Hunk_AllocXAnimCreate(static_cast<unsigned int>(size));
+}
+static void __cdecl CGScr_FreeAnimTreeNative(void *memory,int size,scriptInstance_t inst)
+{
+    MT_Free(static_cast<_BYTE *>(memory),size,inst);
+}
+
+#endif
 
 void __cdecl CGScr_LoadAnimTrees()
 {
@@ -22,7 +42,11 @@ void __cdecl CGScr_LoadAnimTrees()
             if ( strcmp("multiplayer", string) )
             {
                 Scr_ClientUsingTree(SCRIPTINSTANCE_SERVER, string);
+#if defined(__ANDROID__)
+                Scr_PrecacheAnimTrees(SCRIPTINSTANCE_SERVER, CGScr_AllocateAnimTreeNative, 0, 1);
+#else
                 Scr_PrecacheAnimTrees(SCRIPTINSTANCE_SERVER, (void *(__cdecl *)(int))Hunk_AllocXAnimCreate, 0, 1);
+#endif
             }
         }
     }
@@ -80,7 +104,11 @@ void __cdecl CG_SafeDObjFree(int localClientNum, int entIndex)
     {
         if ( entIndex >= 32 )
         {
+#if defined(__ANDROID__)
+            XAnimFreeTree(cent->tree, CGScr_FreeAnimTreeNative, SCRIPTINSTANCE_SERVER);
+#else
             XAnimFreeTree(cent->tree, (void (__cdecl *)(void *, int, scriptInstance_t))MT_Free, SCRIPTINSTANCE_SERVER);
+#endif
             cent->tree = 0;
         }
     }

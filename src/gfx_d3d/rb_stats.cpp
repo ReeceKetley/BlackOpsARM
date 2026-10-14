@@ -1,4 +1,7 @@
 #include "rb_stats.h"
+#if defined(__ANDROID__)
+#include <platform/android/legacy_crt.h>
+#endif
 
 const int drawPrimHistogramLimit[15] =
 { 10, 25, 50, 100, 200, 300, 400, 600, 800, 1000, 1200, 1400, 1600, 1800, 2000 };

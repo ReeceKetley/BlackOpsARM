@@ -1815,7 +1815,11 @@ void __cdecl UI_Gametype_Custom_UploadToFileShareSuccess(int controllerIndex, un
                 && (LODWORD(v6) = Live_GetXuid(controllerIndex), DDL_SetInt64(&state, v6, metaData)) )
             {
                 if ( DDL_MoveToName(&g_fileShareRootState, &state, "createTime")
+#if defined(__ANDROID__)
+                    && (value = std::time(nullptr), DDL_SetInt(&state, value, metaData)) )
+#else
                     && (value = _time64(0), DDL_SetInt(&state, value, metaData)) )
+#endif
                 {
                     if ( DDL_MoveToName(&g_fileShareRootState, &state, "name")
                         && (v7 = Dvar_GetString("fsSelectedFileName"), DDL_SetString(&state, v7, metaData)) )

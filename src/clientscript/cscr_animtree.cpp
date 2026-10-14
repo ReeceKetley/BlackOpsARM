@@ -1,4 +1,10 @@
 #include "cscr_animtree.h"
+#if defined(__ANDROID__)
+#include <cctype>
+#include <cstdint>
+#include <platform/bo1_bytecode_io.h>
+#include <platform/android/legacy_crt.h>
+#endif
 #include <universal/q_shared.h>
 #include <universal/q_parse.h>
 #include "cscr_parser.h"
@@ -295,13 +301,21 @@ void __cdecl Scr_EmitAnimationInternal(scriptInstance_t inst, char *pos, unsigne
     if ( animId )
     {
         VariableValueAddress = GetVariableValueAddress(inst, animId);
+#if defined(__ANDROID__)
+        bo1::bytecode::Store<std::uint32_t>(pos,VariableValueAddress->next);
+#else
         *(unsigned int *)pos = VariableValueAddress->next;
+#endif
         VariableValueAddress->next = BO1_NARROW_ENCODE(pos);
     }
     else
     {
         NewVariable = GetNewVariable(inst, names, animName);
+#if defined(__ANDROID__)
+        bo1::bytecode::Store<std::uint32_t>(pos,0);
+#else
         *(unsigned int *)pos = 0;
+#endif
         tempValue.type = 7;
         tempValue.u.intValue = (int)BO1_NARROW_ENCODE(pos);
         SetVariableValue(inst, NewVariable, &tempValue);
@@ -885,12 +899,22 @@ void __cdecl Scr_ClientUsingTree(scriptInstance_t inst, const char *filename)
         gScrAnimPub[inst].animTreeNames = Scr_UsingTreeInternal(inst, filename, &gScrAnimPub[inst].animTreeIndex, 0);
 }
 
+#if defined(__ANDROID__)
+// Preserve the allocator function type through the canonical synchronous body.
+template <typename Allocator> static void Scr_LoadAnimTreeAtIndexInternal(
+    scriptInstance_t inst,
+    unsigned int index,
+    Allocator Alloc,
+    int user,
+    bool modCheckSum)
+#else
 void __cdecl Scr_LoadAnimTreeAtIndex(
     scriptInstance_t inst,
     unsigned int index,
     void *(__cdecl *Alloc)(int),
     int user,
     bool modCheckSum)
+#endif
 {
     ClientTreeStorage *v6; // edx
     char *v7; // eax
@@ -1026,6 +1050,26 @@ void __cdecl Scr_LoadAnimTreeAtIndex(
         }
     }
 }
+#if defined(__ANDROID__)
+void __cdecl Scr_LoadAnimTreeAtIndex(
+    scriptInstance_t inst,
+    unsigned int index,
+    void *(__cdecl *Alloc)(int),
+    int user,
+    bool modCheckSum)
+{
+    Scr_LoadAnimTreeAtIndexInternal(inst, index, Alloc, user, modCheckSum);
+}
+void __cdecl Scr_LoadAnimTreeAtIndex(
+    scriptInstance_t inst,
+    unsigned int index,
+    void *(__cdecl *Alloc)(unsigned int),
+    int user,
+    bool modCheckSum)
+{
+    Scr_LoadAnimTreeAtIndexInternal(inst, index, Alloc, user, modCheckSum);
+}
+#endif
 
 unsigned int __cdecl GetVariableName(scriptInstance_t inst, unsigned int id)
 {
@@ -1246,8 +1290,16 @@ void __cdecl ConnectScriptToAnim(
         anim.tree = treeIndex;
         for ( codePos = BO1_NARROW_DECODE(char, value->next); codePos; codePos = (char *)nextCodePos )
         {
+#if defined(__ANDROID__)
+            nextCodePos=BO1_NARROW_DECODE(const char,bo1::bytecode::Load<std::uint32_t>(codePos));
+            static_assert(sizeof(scr_anim_s)==sizeof(std::uint32_t),"Animation bytecode remains four bytes");
+            std::uint32_t animationBits;
+            std::memcpy(&animationBits,&anim,sizeof(animationBits));
+            bo1::bytecode::Store<std::uint32_t>(codePos,animationBits);
+#else
             nextCodePos = BO1_NARROW_DECODE(const char, *(unsigned int *)codePos); // 4-byte link stored in the code stream (Scr_EmitAnimationInternal)
             *(scr_anim_s *)codePos = anim;
+#endif
         }
         value->next = 0;
     }
@@ -1321,7 +1373,11 @@ void __cdecl Scr_PrecacheAnimationTree(scriptInstance_t inst, unsigned int paren
             else
             {
                 v4 = SL_ConvertToString(name, inst);
+                #if defined(__ANDROID__)
+                XAnimPrecache(v4, Hunk_AllocXAnimPrecacheSigned);
+#else
                 XAnimPrecache(v4, (void *(__cdecl *)(int))Hunk_AllocXAnimPrecache);
+#endif
             }
         }
     }
@@ -2409,6 +2465,17 @@ void __cdecl ParseParameterDef(ScriptTokenizer *tokenizer, scriptInstance_t inst
     SetIntVariable(inst, paramData, iExprIndex, (char *)PARAM_EXPR_INDEX);
 }
 
+#if defined(__ANDROID__)
+// Preserve the allocator function type through the canonical synchronous body.
+template <typename Allocator> static int Scr_CreateAllAnimTreeDataInternal(
+                scriptInstance_t inst,
+                unsigned int rootData,
+                unsigned int names,
+                scr_animtree_t *animtree,
+                unsigned int filenameId,
+                unsigned int index,
+                Allocator Alloc)
+#else
 int __cdecl Scr_CreateAllAnimTreeData(
                 scriptInstance_t inst,
                 unsigned int rootData,
@@ -2417,6 +2484,7 @@ int __cdecl Scr_CreateAllAnimTreeData(
                 unsigned int filenameId,
                 unsigned int index,
                 void *(__cdecl *Alloc)(int))
+#endif
 {
     unsigned int NamedArrayVarArray; // eax
     unsigned int v8; // eax
@@ -2428,7 +2496,48 @@ int __cdecl Scr_CreateAllAnimTreeData(
     v8 = GetNamedArrayVarArray(inst, rootData, (char *)NODE_ROOT_NAME);
     return Scr_CreateAnimationTree(inst, v8, rootData, names, anims, 1u, "root", 0, filenameId, index, 0, Alloc, 0);
 }
+#if defined(__ANDROID__)
+int __cdecl Scr_CreateAllAnimTreeData(
+                scriptInstance_t inst,
+                unsigned int rootData,
+                unsigned int names,
+                scr_animtree_t *animtree,
+                unsigned int filenameId,
+                unsigned int index,
+                void *(__cdecl *Alloc)(int))
+{
+    return Scr_CreateAllAnimTreeDataInternal(inst, rootData, names, animtree, filenameId, index, Alloc);
+}
+int __cdecl Scr_CreateAllAnimTreeData(
+                scriptInstance_t inst,
+                unsigned int rootData,
+                unsigned int names,
+                scr_animtree_t *animtree,
+                unsigned int filenameId,
+                unsigned int index,
+                void *(__cdecl *Alloc)(unsigned int))
+{
+    return Scr_CreateAllAnimTreeDataInternal(inst, rootData, names, animtree, filenameId, index, Alloc);
+}
+#endif
 
+#if defined(__ANDROID__)
+// Preserve the allocator function type through the canonical synchronous body.
+template <typename Allocator> static int Scr_CreateAnimationTreeInternal(
+    scriptInstance_t inst,
+    unsigned int parentNode,
+    unsigned int rootData,
+    unsigned int names,
+    XAnim_s *anims,
+    unsigned int childIndex,
+    const char *parentName,
+    unsigned int parentIndex,
+    unsigned int filename,
+    int treeIndex,
+    unsigned __int16 flags,
+    Allocator Alloc,
+    unsigned int paramMap)
+#else
 int __cdecl Scr_CreateAnimationTree(
     scriptInstance_t inst,
     unsigned int parentNode,
@@ -2443,6 +2552,7 @@ int __cdecl Scr_CreateAnimationTree(
     unsigned __int16 flags,
     void *(__cdecl *Alloc)(int),
     unsigned int paramMap)
+#endif
 {
     unsigned int ValueType; // eax
     char *v14; // eax
@@ -2602,6 +2712,42 @@ LABEL_18:
     }
     return childIndexa;
 }
+#if defined(__ANDROID__)
+int __cdecl Scr_CreateAnimationTree(
+    scriptInstance_t inst,
+    unsigned int parentNode,
+    unsigned int rootData,
+    unsigned int names,
+    XAnim_s *anims,
+    unsigned int childIndex,
+    const char *parentName,
+    unsigned int parentIndex,
+    unsigned int filename,
+    int treeIndex,
+    unsigned __int16 flags,
+    void *(__cdecl *Alloc)(int),
+    unsigned int paramMap)
+{
+    return Scr_CreateAnimationTreeInternal(inst, parentNode, rootData, names, anims, childIndex, parentName, parentIndex, filename, treeIndex, flags, Alloc, paramMap);
+}
+int __cdecl Scr_CreateAnimationTree(
+    scriptInstance_t inst,
+    unsigned int parentNode,
+    unsigned int rootData,
+    unsigned int names,
+    XAnim_s *anims,
+    unsigned int childIndex,
+    const char *parentName,
+    unsigned int parentIndex,
+    unsigned int filename,
+    int treeIndex,
+    unsigned __int16 flags,
+    void *(__cdecl *Alloc)(unsigned int),
+    unsigned int paramMap)
+{
+    return Scr_CreateAnimationTreeInternal(inst, parentNode, rootData, names, anims, childIndex, parentName, parentIndex, filename, treeIndex, flags, Alloc, paramMap);
+}
+#endif
 
 void __cdecl Scr_ProcessNodeValues(
                 scriptInstance_t inst,

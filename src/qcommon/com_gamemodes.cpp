@@ -1,9 +1,17 @@
+#if defined(BO1_NATIVE_GAMEMODE_GLOBAL_ONLY)
+#include <universal/dvar.h>
+#else
 #include "com_gamemodes.h"
 #include <universal/dvar.h>
 #include <game_mp/g_main_mp.h>
 #include <universal/assertive.h>
 
+#endif // BO1_NATIVE_GAMEMODE_GLOBAL_ONLY
+
 const dvar_s *onlinegame;
+
+#if !defined(BO1_NATIVE_GAMEMODE_GLOBAL_ONLY)
+
 //const dvar_s *xblive_privatematch;
 //const dvar_s *xblive_basictraining;
 //const dvar_s *xblive_theater;
@@ -185,3 +193,5 @@ void __cdecl Com_GameMode_ResetGameModes()
     Dvar_SetBool((dvar_s *)xblive_theater, 0);
 }
 
+
+#endif // BO1_NATIVE_GAMEMODE_GLOBAL_ONLY

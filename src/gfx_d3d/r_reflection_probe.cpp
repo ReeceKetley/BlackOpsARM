@@ -1,3 +1,8 @@
+#if defined(BO1_NATIVE_COM_BOOT)
+#include <platform/common_boot_api.h>
+extern const dvar_t *r_reflectionProbeGenerate;
+void Material_PreventOverrideTechniqueGeneration();
+#else
 #include "r_reflection_probe.h"
 #include "r_bsp.h"
 #include "r_dvars.h"
@@ -14,8 +19,8 @@
 
 const char *fields_5[6] = { "name", "black_level", "white_level", "gamma", "saturation", NULL };
 
-const dvar_t *r_reflectionProbeRegenerateAll;
-const dvar_t *r_reflectionProbeGenerateExit;
+extern const dvar_t *r_reflectionProbeRegenerateAll;
+extern const dvar_t *r_reflectionProbeGenerateExit;
 
 int s_numColorCorrectionDataEntries;
 
@@ -41,26 +46,7 @@ void __cdecl R_GetReflectionProbePosition(unsigned int index, float *pos)
     pos[2] = v2->origin[2];
 }
 
-void __cdecl R_ReflectionProbeRegisterDvars()
-{
-    r_reflectionProbeGenerate = _Dvar_RegisterBool(
-                                                                "r_reflectionProbeGenerate",
-                                                                0,
-                                                                0,
-                                                                "Generate cube maps for reflection probes.");
-    r_reflectionProbeRegenerateAll = _Dvar_RegisterBool(
-                                                                         "r_reflectionProbeRegenerateAll",
-                                                                         0,
-                                                                         0,
-                                                                         "Regenerate cube maps for all reflection probes.");
-    r_reflectionProbeGenerateExit = _Dvar_RegisterBool(
-                                                                        "r_reflectionProbeGenerateExit",
-                                                                        0,
-                                                                        0,
-                                                                        "Exit when done generating reflection cubes.");
-    if ( r_reflectionProbeGenerate->current.enabled )
-        Material_PreventOverrideTechniqueGeneration();
-}
+
 
 void __cdecl R_CalcCubeMapViewValues(refdef_s *refdef, CubemapShot cubemapShot, int cubemapSize)
 {
@@ -330,13 +316,7 @@ char __cdecl R_CopyReflectionsFromLumpData(
     return 0;
 }
 
-bool __cdecl R_ReflectionProbeGenerateExitWhenDone()
-{
-    return r_reflectionProbeGenerate
-            && r_reflectionProbeGenerate->current.enabled
-            && r_reflectionProbeGenerateExit
-            && r_reflectionProbeGenerateExit->current.enabled;
-}
+
 
 void __cdecl R_SetBlackProbe(unsigned __int8 *target, unsigned int bytestozero)
 {
@@ -621,3 +601,35 @@ void __cdecl R_GenerateReflectionImages(
     Hunk_FreeTempMemory((char *)pixels);
 }
 
+
+#endif
+const dvar_t *r_reflectionProbeRegenerateAll;
+const dvar_t *r_reflectionProbeGenerateExit;
+void __cdecl R_ReflectionProbeRegisterDvars()
+{
+    r_reflectionProbeGenerate = _Dvar_RegisterBool(
+                                                                "r_reflectionProbeGenerate",
+                                                                0,
+                                                                0,
+                                                                "Generate cube maps for reflection probes.");
+    r_reflectionProbeRegenerateAll = _Dvar_RegisterBool(
+                                                                         "r_reflectionProbeRegenerateAll",
+                                                                         0,
+                                                                         0,
+                                                                         "Regenerate cube maps for all reflection probes.");
+    r_reflectionProbeGenerateExit = _Dvar_RegisterBool(
+                                                                        "r_reflectionProbeGenerateExit",
+                                                                        0,
+                                                                        0,
+                                                                        "Exit when done generating reflection cubes.");
+    if ( r_reflectionProbeGenerate->current.enabled )
+        Material_PreventOverrideTechniqueGeneration();
+}
+
+bool __cdecl R_ReflectionProbeGenerateExitWhenDone()
+{
+    return r_reflectionProbeGenerate
+            && r_reflectionProbeGenerate->current.enabled
+            && r_reflectionProbeGenerateExit
+            && r_reflectionProbeGenerateExit->current.enabled;
+}

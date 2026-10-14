@@ -7,6 +7,9 @@
 #include "cscr_parser.h"
 #include "cscr_evaluate.h"
 #include "cscr_vm.h"
+#if defined(__ANDROID__)
+#include <platform/bo1_bytecode_io.h>
+#endif
 
 #undef GetObject // what a shit horrible macro that ruins every project
 
@@ -67,11 +70,26 @@ unsigned int __cdecl Scr_GetBuiltin(scriptInstance_t inst, sval_u func_name)
 
 int __cdecl CompareCaseInfo(unsigned int *elem1, unsigned int *elem2)
 {
+#if defined(__ANDROID__)
+    const uint32_t key1 = bo1::bytecode::Load<uint32_t>(elem1);
+    const uint32_t key2 = bo1::bytecode::Load<uint32_t>(elem2);
+    return key1 <= key2 ? key1 < key2 : -1;
+#else
     if ( *elem1 <= *elem2 )
         return *elem1 < *elem2;
     else
         return -1;
+#endif
 }
+
+#if defined(__ANDROID__)
+static int __cdecl ComparePackedCaseInfo(const void *elem1, const void *elem2)
+{
+    const uint32_t key1 = bo1::bytecode::Load<uint32_t>(elem1);
+    const uint32_t key2 = bo1::bytecode::Load<uint32_t>(elem2);
+    return key1 <= key2 ? key1 < key2 : -1;
+}
+#endif
 
 void __cdecl ScriptCompile(
                 scriptInstance_t inst,
@@ -199,6 +217,19 @@ void __cdecl ScriptCompile(
     SetVariableValue(inst, scriptId, &value);
 }
 
+#if defined(__ANDROID__)
+// A variable stores a Narrow32 address of a packed four-byte call operand.
+static uint32_t Scr_ReadLinkedCodeOperand(uint32_t operandHandle)
+{
+    return bo1::bytecode::Load<uint32_t>(BO1_NARROW_DECODE(const unsigned char, operandHandle));
+}
+
+static void Scr_WriteLinkedCodeOperand(uint32_t operandHandle, uint32_t codeHandle)
+{
+    bo1::bytecode::Store<uint32_t>(BO1_NARROW_DECODE(unsigned char, operandHandle), codeHandle);
+}
+#endif
+
 void __cdecl LinkThread(scriptInstance_t inst, unsigned int threadCountId, VariableValue *pos, bool allowFarCall)
 {
     VariableValue count; // [esp+18h] [ebp-24h]
@@ -266,12 +297,20 @@ void __cdecl LinkThread(scriptInstance_t inst, unsigned int threadCountId, Varia
                     return;
                 }
             }
+#if defined(__ANDROID__)
+            if (!pos->type || !allowFarCall && Scr_ReadLinkedCodeOperand(value->next) == 1)
+#else
             if (!pos->type || !allowFarCall && *BO1_NARROW_DECODE(unsigned int, value->next) == 1)
+#endif
             {
                 CompileError2(inst, BO1_NARROW_DECODE(char, value->next), "unknown function");
                 return;
             }
+#if defined(__ANDROID__)
+            Scr_WriteLinkedCodeOperand(value->next, static_cast<uint32_t>(pos->u.intValue));
+#else
             *BO1_NARROW_DECODE(unsigned int, value->next) = pos->u.intValue;
+#endif
             RemoveVariable(inst, threadCountId, i + 1);
         }
         RemoveVariable(inst, threadCountId, 0);
@@ -758,9 +797,15 @@ void __cdecl Scr_MergeChildBlocks(ScrBlockPtr *childBlocks, int childCount, scr_
                 }
                 while ( j > i )
                 {
-                    v3 = *(unsigned int *)&childBlock->localVarsInitBits[8 * j + 4];
+                    #if defined(__ANDROID__)
+// Shift the previous real row, rather than indexing beyond the init mask.
+                    childBlock->localVars[j] = childBlock->localVars[j - 1];
+                    --j;
+#else
+v3 = *(unsigned int *)&childBlock->localVarsInitBits[8 * j + 4];
                     childBlock->localVars[j].name = *(unsigned int *)&childBlock->localVarsInitBits[8 * j];
                     childBlock->localVars[j--].sourcePos = v3;
+#endif
                 }
                 childBlock->localVars[i].name = localVar;
                 childBlock->localVars[i].sourcePos = localVar_4;
@@ -1782,7 +1827,11 @@ void __cdecl EmitGetInteger(scriptInstance_t inst, int value, sval_u sourcePos)
 void __cdecl EmitUInt32(scriptInstance_t inst, unsigned int value)
 {
     gScrCompileGlob[inst].codePos = (unsigned __int8 *)TempMallocAlignStrict(4);
+#if defined(__ANDROID__)
+    bo1::bytecode::Store<uint32_t>(gScrCompileGlob[inst].codePos, static_cast<uint32_t>(value));
+#else
     *(unsigned int *)gScrCompileGlob[inst].codePos = value;
+#endif
 }
 
 void __cdecl EmitCodepos(scriptInstance_t inst, const char *pos)
@@ -1800,7 +1849,11 @@ void __cdecl EmitGetFloat(scriptInstance_t inst, float value, sval_u sourcePos)
 void __cdecl EmitFloat(scriptInstance_t inst, float value)
 {
     gScrCompileGlob[inst].codePos = (unsigned __int8 *)TempMallocAlignStrict(4);
+#if defined(__ANDROID__)
+    bo1::bytecode::Store<float>(gScrCompileGlob[inst].codePos, static_cast<float>(value));
+#else
     *(float *)gScrCompileGlob[inst].codePos = value;
+#endif
 }
 
 void __cdecl EmitGetString(scriptInstance_t inst, unsigned int value, sval_u sourcePos)
@@ -1814,7 +1867,11 @@ void __cdecl EmitGetString(scriptInstance_t inst, unsigned int value, sval_u sou
 void __cdecl EmitShort(scriptInstance_t inst, __int16 value)
 {
     gScrCompileGlob[inst].codePos = (unsigned __int8 *)TempMallocAlignStrict(2);
+#if defined(__ANDROID__)
+    bo1::bytecode::Store<uint16_t>(gScrCompileGlob[inst].codePos, static_cast<uint16_t>(value));
+#else
     *(_WORD *)gScrCompileGlob[inst].codePos = value;
+#endif
 }
 
 void __cdecl EmitGetIString(scriptInstance_t inst, unsigned int value, sval_u sourcePos)
@@ -2233,15 +2290,27 @@ void __cdecl EmitCanonicalString(scriptInstance_t inst, unsigned int stringValue
     }
     else if (gScrCompilePub[inst].developer_statement == 3)
     {
+#if defined(__ANDROID__)
+        bo1::bytecode::Store<uint16_t>(gScrCompileGlob[inst].codePos, static_cast<uint16_t>(Scr_CompileCanonicalString(inst, stringValue)));
+#else
         *(_WORD *)gScrCompileGlob[inst].codePos = Scr_CompileCanonicalString(inst, stringValue);
-        if (!*(_WORD *)gScrCompileGlob[inst].codePos)
+#endif
+        #if defined(__ANDROID__)
+if (!bo1::bytecode::Load<uint16_t>(gScrCompileGlob[inst].codePos))
+#else
+if (!*(_WORD *)gScrCompileGlob[inst].codePos)
+#endif
             CompileError(inst, 0, "unknown field");
     }
     else
     {
         if (gScrCompileGlob[inst].bConstRefCount)
             SL_AddRefToString(stringValue, inst);
+#if defined(__ANDROID__)
+        bo1::bytecode::Store<uint16_t>(gScrCompileGlob[inst].codePos, static_cast<uint16_t>(SL_TransferToCanonicalString(inst, stringValue)));
+#else
         *(_WORD *)gScrCompileGlob[inst].codePos = SL_TransferToCanonicalString(inst, stringValue);
+#endif
     }
 }
 
@@ -3553,7 +3622,11 @@ void __cdecl EmitBoolOrExpression(
     {
         __debugbreak();
     }
+#if defined(__ANDROID__)
+    bo1::bytecode::Store<uint16_t>(pos, static_cast<uint16_t>((_WORD)offset));
+#else
     *(_WORD *)pos = (_WORD)offset;
+#endif
 }
 
 void __cdecl EmitCastBool(scriptInstance_t inst, sval_u sourcePos)
@@ -3593,7 +3666,11 @@ void __cdecl EmitBoolAndExpression(
     {
         __debugbreak();
     }
+#if defined(__ANDROID__)
+    bo1::bytecode::Store<uint16_t>(pos, static_cast<uint16_t>((_WORD)offset));
+#else
     *(_WORD *)pos = (_WORD)offset;
+#endif
 }
 
 char __cdecl EmitOrEvalBinaryOperatorExpression(
@@ -4109,7 +4186,11 @@ void __cdecl EmitIfStatement(
     {
         __debugbreak();
     }
+#if defined(__ANDROID__)
+    bo1::bytecode::Store<uint16_t>(pos, static_cast<uint16_t>((_WORD)offset));
+#else
     *(_WORD *)pos = (_WORD)offset;
+#endif
 }
 
 void __cdecl EmitNOP2(scriptInstance_t inst, bool lastStatement, unsigned int endSourcePos, scr_block_s *block)
@@ -4217,9 +4298,15 @@ void __cdecl Scr_TransferBlock(scr_block_s *from, scr_block_s *to)
         }
         while ( j > i )
         {
-            v2 = *(unsigned int *)&to->localVarsInitBits[8 * j + 4];
+            #if defined(__ANDROID__)
+// Shift the previous real row, rather than indexing beyond the init mask.
+            to->localVars[j] = to->localVars[j - 1];
+            --j;
+#else
+v2 = *(unsigned int *)&to->localVarsInitBits[8 * j + 4];
             to->localVars[j].name = *(unsigned int *)&to->localVarsInitBits[8 * j];
             to->localVars[j--].sourcePos = v2;
+#endif
         }
         to->localVars[i].name = localVar;
         to->localVars[i].sourcePos = localVar_4;
@@ -4303,14 +4390,22 @@ void __cdecl EmitIfElseStatement(
     {
         __debugbreak();
     }
+#if defined(__ANDROID__)
+    bo1::bytecode::Store<uint16_t>(pos1, static_cast<uint16_t>((_WORD)offset));
+#else
     *(_WORD *)pos1 = (_WORD)offset;
+#endif
     Scr_TransferBlock(block, elseStatBlock->block);
     EmitStatement(inst, stmt2, lastStatement, endSourcePos, elseStatBlock->block);
     EmitNOP2(inst, lastStatement, endSourcePos, elseStatBlock->block);
     if (!elseStatBlock->node[0].stringValue)
         childBlocks[childCount++] = elseStatBlock->block;
     if (!lastStatement)
+#if defined(__ANDROID__)
+        bo1::bytecode::Store<uint32_t>(const_cast<void *>(static_cast<const void *>(pos2)), static_cast<uint32_t>(TempMallocAlignStrict(0) - nextPos2));
+#else
         *(_DWORD *)pos2 = TempMallocAlignStrict(0) - nextPos2;
+#endif
     Scr_InitFromChildBlocks(childBlocks, childCount, block);
 }
 
@@ -4526,7 +4621,11 @@ void __cdecl EmitWhileStatement(
     {
         __debugbreak();
     }
+#if defined(__ANDROID__)
+    bo1::bytecode::Store<uint16_t>(gScrCompileGlob[inst].codePos, static_cast<uint16_t>(offset));
+#else
     *(_WORD *)gScrCompileGlob[inst].codePos = offset;
+#endif
     if (pos2)
     {
         offset = TempMallocAlignStrict(0) - nextPos2;
@@ -4540,7 +4639,11 @@ void __cdecl EmitWhileStatement(
         {
             __debugbreak();
         }
+#if defined(__ANDROID__)
+        bo1::bytecode::Store<uint16_t>(const_cast<void *>(static_cast<const void *>(pos2)), static_cast<uint16_t>(offset));
+#else
         *(_WORD *)pos2 = offset;
+#endif
     }
     ConnectBreakStatements(inst);
     gScrCompileGlob[inst].bCanBreak = bOldCanBreak;
@@ -4599,7 +4702,11 @@ void __cdecl ConnectBreakStatements(scriptInstance_t inst)
     }
     codePos = TempMallocAlignStrict(0);
     for (breakStatement = gScrCompileGlob[inst].currentBreakStatement; breakStatement; breakStatement = breakStatement->next)
+#if defined(__ANDROID__)
+        bo1::bytecode::Store<uint32_t>(const_cast<void *>(static_cast<const void *>(breakStatement->codePos)), static_cast<uint32_t>(codePos - breakStatement->nextCodePos));
+#else
         *(_DWORD *)breakStatement->codePos = codePos - breakStatement->nextCodePos;
+#endif
 }
 
 void __cdecl ConnectContinueStatements(scriptInstance_t inst)
@@ -4612,7 +4719,11 @@ void __cdecl ConnectContinueStatements(scriptInstance_t inst)
         continueStatement;
         continueStatement = continueStatement->next)
     {
+#if defined(__ANDROID__)
+        bo1::bytecode::Store<uint32_t>(const_cast<void *>(static_cast<const void *>(continueStatement->codePos)), static_cast<uint32_t>(codePos - continueStatement->nextCodePos));
+#else
         *(_DWORD *)continueStatement->codePos = codePos - continueStatement->nextCodePos;
+#endif
     }
 }
 
@@ -4747,7 +4858,11 @@ void __cdecl EmitForStatement(
     {
         __debugbreak();
     }
+#if defined(__ANDROID__)
+    bo1::bytecode::Store<uint16_t>(gScrCompileGlob[inst].codePos, static_cast<uint16_t>(offset));
+#else
     *(_WORD *)gScrCompileGlob[inst].codePos = offset;
+#endif
     if (pos2)
     {
         offset = TempMallocAlignStrict(0) - nextPos2;
@@ -4761,7 +4876,11 @@ void __cdecl EmitForStatement(
         {
             __debugbreak();
         }
+#if defined(__ANDROID__)
+        bo1::bytecode::Store<uint16_t>(const_cast<void *>(static_cast<const void *>(pos2)), static_cast<uint16_t>(offset));
+#else
         *(_WORD *)pos2 = offset;
+#endif
     }
     ConnectBreakStatements(inst);
     gScrCompileGlob[inst].bCanBreak = bOldCanBreak;
@@ -5036,7 +5155,11 @@ void __cdecl EmitSwitchStatement(
     AddOpcodePos(inst, sourcePos.stringValue, 0);
     EmitShort(inst, 0);
     pos2 = gScrCompileGlob[inst].codePos;
+#if defined(__ANDROID__)
+    bo1::bytecode::Store<uint32_t>(pos1, static_cast<uint32_t>(pos2 - (unsigned __int8 *)nextPos1));
+#else
     *(_DWORD *)pos1 = pos2 - (unsigned __int8 *)nextPos1;
+#endif
     pos3 = TempMallocAlignStrict(0);
     num = 0;
     caseStatement = gScrCompileGlob[inst].currentCaseStatement;
@@ -5047,17 +5170,33 @@ void __cdecl EmitSwitchStatement(
         caseStatement = caseStatement->next;
         ++num;
     }
+#if defined(__ANDROID__)
+    bo1::bytecode::Store<uint16_t>(const_cast<void *>(static_cast<const void *>(pos2)), static_cast<uint16_t>(num));
+#else
     *(_WORD *)pos2 = num;
+#endif
+#if defined(__ANDROID__)
+    qsort(pos3, num, 8, ComparePackedCaseInfo); // Two packed four-byte slots, without padding.
+#else
     qsort(pos3, num, 2 * sizeof(unsigned int), (int(__cdecl *)(const void *, const void *))CompareCaseInfo); // {name, codepos}: two 4-byte slots in the code stream
+#endif
     while (num > 1)
     {
-        if (*(_DWORD *)pos3 == *((_DWORD *)pos3 + 2))
+        #if defined(__ANDROID__)
+if (bo1::bytecode::Load<uint32_t>(pos3) == bo1::bytecode::Load<uint32_t>(pos3 + 8))
+#else
+if (*(_DWORD *)pos3 == *((_DWORD *)pos3 + 2))
+#endif
         {
             for (caseStatementa = gScrCompileGlob[inst].currentCaseStatement;
                 caseStatementa;
                 caseStatementa = caseStatementa->next)
             {
-                if (caseStatementa->name == *(_DWORD *)pos3)
+                #if defined(__ANDROID__)
+if (caseStatementa->name == bo1::bytecode::Load<uint32_t>(pos3))
+#else
+if (caseStatementa->name == *(_DWORD *)pos3)
+#endif
                 {
                     CompileError(inst, caseStatementa->sourcePos, "duplicate case expression");
                     return;

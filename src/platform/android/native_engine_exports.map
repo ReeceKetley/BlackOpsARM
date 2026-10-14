@@ -1,0 +1,13 @@
+{
+    global:
+        SDL_main;
+        Java_com_blackopsarm_dev_EngineActivity_nativeAdoptSDLActivity;
+        Java_com_blackopsarm_dev_EngineActivity_nativeSetPerformanceOverlayEnabled;
+        Java_com_blackopsarm_dev_EngineActivity_nativeReadPerformanceOverlay;
+        Java_com_blackopsarm_dev_EngineActivity_nativeSetTouchControlsEnabled;
+        Java_com_blackopsarm_dev_EngineActivity_nativeReadTouchState;
+        Java_com_blackopsarm_dev_EngineActivity_nativeTouchButton;
+        Java_com_blackopsarm_dev_EngineActivity_nativeTouchMotion;
+    local:
+        *;
+};

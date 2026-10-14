@@ -10,7 +10,9 @@
 #include "cl_keys.h"
 #include <cgame_mp/cg_main_mp.h>
 #include <server_mp/sv_init_mp.h>
+#if !defined(__ANDROID__)
 #include <win32/win_gamepad.h>
+#endif
 #include <devgui/devgui.h>
 #include <cgame_mp/cg_newDraw_mp.h>
 #include <ui/keycodes.h>
@@ -248,6 +250,26 @@ void __cdecl Gamepad_BindAxis(
                 GamepadVirtualAxis axisIndex,
                 GamepadMapping mapType)
 {
+#if defined(__ANDROID__)
+    iassert(gaGlob != nullptr);
+    iassert(realIndex == GPAD_PHYSAXIS_NONE ||
+            (realIndex >= 0 && realIndex < GPAD_PHYSAXIS_COUNT));
+    iassert(axisIndex == GPAD_VIRTAXIS_NONE ||
+            (axisIndex >= 0 && axisIndex < GPAD_VIRTAXIS_COUNT));
+    iassert(mapType >= 0 && mapType < GPAD_MAP_COUNT);
+    // bindaxis <physical> removes that physical axis's virtual bindings.
+    // The decompiled fallthrough indexed virtualAxes[-1] for this command.
+    if (axisIndex == GPAD_VIRTAXIS_NONE)
+    {
+        for (int axis = 0; axis < GPAD_VIRTAXIS_COUNT; ++axis)
+        {
+            if (gaGlob->virtualAxes[axis].physicalAxis == realIndex)
+                gaGlob->virtualAxes[axis].physicalAxis = GPAD_PHYSAXIS_NONE;
+        }
+        dvar_modifiedFlags |= 1u;
+        return;
+    }
+#endif
     if ( realIndex != GPAD_PHYSAXIS_NONE
         && (unsigned int)realIndex >= GPAD_PHYSAXIS_COUNT
         && !Assert_MyHandler(

@@ -11,6 +11,10 @@
 #include <string.h>
 #include <math.h>
 #include <stdlib.h>
+#if defined(__ANDROID__)
+#include <cstdint>
+#include <limits>
+#endif
 #include "bg_misc.h"
 #include <cgame/cg_bolt.h>
 #include "bg_weapons.h"
@@ -419,7 +423,12 @@ void BG_AnimParseError(const char *msg, ...)
     va_list va; // [esp+418h] [ebp+Ch] BYREF
 
     va_start(va, msg);
+#if defined(__ANDROID__)
+    vsnprintf(text, 0x400u, msg, va);
+#else
     _vsnprintf(text, 0x400u, msg, va);
+#endif
+    va_end(va);
     if ( globalFilename )
     {
         CurrentParseLine = Com_GetCurrentParseLine();
@@ -460,6 +469,13 @@ unsigned int __cdecl BG_AnimationIndexForString(const char *string)
             ++ia;
             ++loadAnim;
         }
+#if defined(__ANDROID__)
+        if(*g_piNumLoadAnims>=1024 || strlen(string)>=sizeof(g_pLoadAnims[0].szAnimName))
+        {
+            Com_Error(ERR_DROP,"Player animation name/count exceeds its actual parser record capacity");
+            std::abort();
+        }
+#endif
         loadAnima = &g_pLoadAnims[*g_piNumLoadAnims];
         Scr_FindAnim(
             SCRIPTINSTANCE_SERVER,
@@ -3407,12 +3423,31 @@ scr_animtree_t __cdecl BG_FindAnimTree(const char *filename, int bEnforceExists)
 unsigned int iNumPlayerAnims;
 void __cdecl BG_LoadAnim(const char *levelName)
 {
+#if defined(__ANDROID__)
+    BG_CheckThread();
+    if(!bgs || !bgs->AllocXAnim)
+    {
+        Com_Error(ERR_FATAL,"Player animation parsing requires its actual animation allocator owner");
+        std::abort();
+    }
+    // Finalization and SP actor lookup happen after BG_LoadAnim returns.
+    // Keep the parser rows with the actual map animation arena through that phase.
+    constexpr std::size_t parserBytes=sizeof(loadAnim_t)*1024;
+    static_assert(parserBytes<=std::numeric_limits<unsigned int>::max());
+    loadAnim_t *playerAnims=static_cast<loadAnim_t *>(bgs->AllocXAnim(static_cast<unsigned int>(parserBytes)));
+    if(!playerAnims || reinterpret_cast<std::uintptr_t>(playerAnims)%alignof(loadAnim_t))
+    {
+        Com_Error(ERR_FATAL,"Player animation allocator returned absent or misaligned parser storage");
+        std::abort();
+    }
+#else
     LargeLocal playerAnims_large_local(sizeof(loadAnim_t) * 1024 /*73728*/); // [esp+0h] [ebp-Ch] BYREF
     //loadAnim_t (*playerAnims)[1024]; // [esp+8h] [ebp-4h]
 
     //LargeLocal::LargeLocal(&playerAnims_large_local, 73728);
     //playerAnims = (loadAnim_t (*)[1024])LargeLocal::GetBuf(&playerAnims_large_local);
     loadAnim_t *playerAnims = (loadAnim_t *)playerAnims_large_local.GetBuf();
+#endif
     BG_CheckThread();
     iassert(bgs);
 
@@ -3426,7 +3461,11 @@ void __cdecl BG_LoadAnim(const char *levelName)
         levelName);
     Scr_PrecacheAnimTrees(
         SCRIPTINSTANCE_SERVER,
+#if defined(__ANDROID__)
+        bgs->AllocXAnim,
+#else
         (void*(*)(int))bgs->AllocXAnim,
+#endif
         bgs->anim_user,
         bgs == &level_bgs);
     BG_FindAnimTrees();

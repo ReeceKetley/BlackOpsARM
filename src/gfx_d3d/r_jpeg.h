@@ -20,6 +20,9 @@ extern "C" {
 
 #include <d3d9.h>
 
+void *__cdecl Z_MallocJpeg(unsigned int size);
+void __cdecl Z_FreeJpeg(void *ptr);
+
 void __cdecl R_SaveJpg(
                 char *filename,
                 int quality,
@@ -37,6 +40,11 @@ jpeg_decompress_struct *__cdecl R_ReadJpgSetup(
                 int *width,
                 int *height,
                 _D3DFORMAT *imageFormat);
+#if defined(__ANDROID__)
+// Setup borrows data until read/abort. Consume or abort each context on its
+// creating thread before that thread exits; distinct pairs may coexist.
+void __cdecl R_ReadJpgAbort(jpeg_decompress_struct *context);
+#endif
 void *__cdecl Jpeg_HunkAlloc(unsigned int size);
 void Jpeg_Error();
 char __cdecl R_ReadJpg(jpeg_decompress_struct *context, unsigned __int8 *pixels, int pitch, int height);

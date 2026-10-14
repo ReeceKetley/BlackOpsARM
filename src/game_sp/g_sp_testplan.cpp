@@ -42,6 +42,10 @@
 #include <string>
 #include <vector>
 
+#if defined(__ANDROID__)
+#include <platform/android/bounded_format.h>
+#define sprintf_s bo1::android::FormatChecked
+#endif
 extern bot_info_t botInfos[32]; // sv_bot_mp.cpp
 
 // HEADLESS TEST HARNESS ONLY - not game logic. The plan is a list of steps "go to the trigger of

@@ -1,5 +1,8 @@
 #include "win_shared.h"
 
+#if defined(__ANDROID__)
+#include <platform/android/snap_float.h>
+#else
 #include <Windows.h>
 #include <xmmintrin.h>
 
@@ -31,10 +34,16 @@ unsigned int __cdecl Sys_MillisecondsRaw()
     return Sys_MillisecondsRaw_Win32();
 }
 
+#endif
+
 // Banker's rounding via SSE cvtss2si (matches SnapFloat in qcommon/common.h).
 static inline int Sys_SnapFloatComponent(float f)
 {
+#if defined(__ANDROID__)
+    return bo1::android::SnapFloatToInt32(f);
+#else
     return _mm_cvtss_si32(_mm_set_ss(f));
+#endif
 }
 
 // https://github.com/id-Software/Quake-III-Arena/blob/master/code/win32/win_shared.c

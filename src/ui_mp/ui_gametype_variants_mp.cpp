@@ -481,6 +481,19 @@ void SetNextPopupToAddOrEditConfirm()
     Dvar_SetStringByName("ui_gv_nextpopup", (char*)nextPopup);
 }
 
+#if defined(__ANDROID__)
+void __cdecl UI_GV_EditSelectedRule_f()
+{
+    GVRule *rule = GetSelectedRule(0);
+    if (rule)
+    {
+        const GVRule oldRule = *rule;
+        UI_GV_UpdateRuleFromDvars(rule);
+        if (memcmp(&oldRule, rule, sizeof(oldRule)))
+            UI_Gametype_MarkDirty();
+    }
+}
+#else
 void __cdecl UI_GV_EditSelectedRule_f()
 {
     int v0; // ecx
@@ -513,7 +526,19 @@ void __cdecl UI_GV_EditSelectedRule_f()
             UI_Gametype_MarkDirty();
     }
 }
+#endif
 
+#if defined(__ANDROID__)
+GVRule *__cdecl GetSelectedRule(int localClientNum)
+{
+    int ruleSelected; // [esp+0h] [ebp-8h]
+    uiInfo_s *dc; // [esp+4h] [ebp-4h]
+
+    dc = UI_GetInfo(localClientNum);
+    ruleSelected = Menu_GetFeederSelection(&dc->uiDC, 0, 44, "gametype_variants");
+    return GetRuleForFeederIndex(ruleSelected);
+}
+#else
 GVGlob *__cdecl GetSelectedRule(int localClientNum)
 {
     int ruleSelected; // [esp+0h] [ebp-8h]
@@ -523,7 +548,29 @@ GVGlob *__cdecl GetSelectedRule(int localClientNum)
     ruleSelected = Menu_GetFeederSelection(&dc->uiDC, 0, 44, "gametype_variants");
     return GetRuleForFeederIndex(ruleSelected);
 }
+#endif
 
+#if defined(__ANDROID__)
+GVRule *__cdecl GetRuleForFeederIndex(int feederIndex)
+{
+    int i; // [esp+4h] [ebp-8h]
+    int validIndex; // [esp+8h] [ebp-4h]
+
+    if (gvGlob.ruleCount < 0 || gvGlob.ruleCount > 64 || feederIndex < 0 || feederIndex >= gvGlob.ruleCount)
+        return 0;
+    validIndex = 0;
+    for ( i = 0; i < 64; ++i )
+    {
+        if ( gvGlob.rules[i].isValid )
+        {
+            if ( validIndex == feederIndex )
+                return &gvGlob.rules[i];
+            ++validIndex;
+        }
+    }
+    return 0;
+}
+#else
 GVGlob *__cdecl GetRuleForFeederIndex(int feederIndex)
 {
     int i; // [esp+4h] [ebp-8h]
@@ -543,6 +590,7 @@ GVGlob *__cdecl GetRuleForFeederIndex(int feederIndex)
     }
     return 0;
 }
+#endif
 
 void __cdecl UI_GV_UpdateRuleFromDvars(GVRule *rule)
 {
@@ -831,6 +879,20 @@ int __cdecl UI_GV_GetFirstInvalidRuleIndex()
     return -1;
 }
 
+#if defined(__ANDROID__)
+void __cdecl UI_GV_DeleteSelected_f()
+{
+    GVRule *rule; // [esp+0h] [ebp-4h]
+
+    rule = GetSelectedRule(0);
+    if ( rule )
+    {
+        UI_Gametype_MarkDirty();
+        rule->isValid = 0;
+        Dvar_SetInt((dvar_s *)ui_gv_rulecount, --gvGlob.ruleCount);
+    }
+}
+#else
 void __cdecl UI_GV_DeleteSelected_f()
 {
     GVGlob *rule; // [esp+0h] [ebp-4h]
@@ -843,6 +905,7 @@ void __cdecl UI_GV_DeleteSelected_f()
         Dvar_SetInt((dvar_s *)ui_gv_rulecount, --gvGlob.ruleCount);
     }
 }
+#endif
 
 void __cdecl UI_GV_NavForward_f()
 {
@@ -1162,6 +1225,47 @@ char *__cdecl GetItemGroupDisplayValue(itemGroup_t itemGroup, const char *value)
     return (char *)"";
 }
 
+#if defined(__ANDROID__)
+char *__cdecl UI_FeederItemText_GameVariantRules(int index, int column)
+{
+    char *result; // eax
+    char *displayValue; // [esp+4h] [ebp-8h]
+    GVRule *rule; // [esp+8h] [ebp-4h]
+
+    rule = GetRuleForFeederIndex(index);
+    if ( !rule )
+        return (char *)"";
+    switch ( column )
+    {
+        case 0:
+            result = UI_SafeTranslateString(gvEvents[rule->eventID].m_name);
+            break;
+        case 1:
+            result = UI_SafeTranslateString(gvActions[rule->actionID].m_name);
+            break;
+        case 2:
+            displayValue = UI_GV_GetRuleParamDisplayValue(rule);
+            if ( displayValue && *displayValue )
+                result = displayValue;
+            else
+                result = UI_SafeTranslateString("CUSTOM_GV_PARAM_EMPTY");
+            break;
+        case 3:
+            result = UI_SafeTranslateString(gvTargets[rule->targetID].m_name);
+            break;
+        case 4:
+            if ( rule->m_conditional.hasConditional )
+                result = UI_SafeTranslateString("MPUI_YES");
+            else
+                result = UI_SafeTranslateString("MPUI_NONE");
+            break;
+        default:
+            result = (char *)"";
+            break;
+    }
+    return result;
+}
+#else
 char *__cdecl UI_FeederItemText_GameVariantRules(int index, int column)
 {
     char *result; // eax
@@ -1201,6 +1305,7 @@ char *__cdecl UI_FeederItemText_GameVariantRules(int index, int column)
     }
     return result;
 }
+#endif
 
 char *__cdecl UI_GV_GetRuleParamDisplayValue(GVRule *rule)
 {
@@ -1404,6 +1509,67 @@ char *__cdecl UI_FeederItemText_GameVariants(float feederID, int index, int colu
     return result;
 }
 
+#if defined(__ANDROID__)
+void __cdecl UI_FeederSelection_GameVariantRules(int contextIndex, int index)
+{
+    int FeederIndexFromEventIndex; // eax
+    int FeederIndexFromActionIndex; // eax
+    int FeederIndexFromTargetId; // eax
+    int ParamIndexForValue; // eax
+    int FeederIndexForCondLhsIndex; // eax
+    GVRule *rule; // [esp+0h] [ebp-8h]
+    uiInfo_s *dc; // [esp+4h] [ebp-4h]
+
+    if ( index >= 0 && index < gvGlob.ruleCount )
+    {
+        rule = GetRuleForFeederIndex(index);
+        if (!rule)
+            return;
+        s_isFeederSelectionFromPopupStart = 1;
+        dc = UI_UIContext_GetInfo(contextIndex);
+        FeederIndexFromEventIndex = GetFeederIndexFromEventIndex(rule->eventID);
+        Menu_SetFeederSelection(0, &dc->uiDC, 0, 40, FeederIndexFromEventIndex, "popup_gv_select_event");
+        FeederIndexFromActionIndex = GetFeederIndexFromActionIndex(rule->actionID);
+        Menu_SetFeederSelection(0, &dc->uiDC, 0, 41, FeederIndexFromActionIndex, "popup_gv_select_action");
+        FeederIndexFromTargetId = GetFeederIndexFromTargetId(
+            rule->targetID,
+            gvEvents[rule->eventID].m_targetMask);
+        Menu_SetFeederSelection(0, &dc->uiDC, 0, 43, FeederIndexFromTargetId, "popup_gv_select_target");
+        ParamIndexForValue = GetParamIndexForValue(rule->actionID, rule->parameter.value);
+        Menu_SetFeederSelection(0, &dc->uiDC, 0, 42, ParamIndexForValue, "popup_gv_select_param");
+        FeederIndexForCondLhsIndex = GetFeederIndexForCondLhsIndex(
+            rule->m_conditional.m_lhsIndex,
+            gvEvents[rule->eventID].m_condMask);
+        Menu_SetFeederSelection(0, &dc->uiDC, 0, 35, FeederIndexForCondLhsIndex, "popup_gv_select_cond");
+        Menu_SetFeederSelection(0, &dc->uiDC, 0, 36, rule->m_conditional.m_operatorIndex, "popup_gv_select_cond");
+        Menu_SetFeederSelection(0, &dc->uiDC, 0, 37, rule->m_conditional.m_rhsIndex, "popup_gv_select_cond");
+        if (!rule->m_conditional.hasConditional)
+        {
+            Dvar_SetStringByName("ui_gv_condlhs", (char *)"");
+            Dvar_SetStringByName("ui_gv_condop", (char *)"");
+            Dvar_SetStringByName("ui_gv_condrhs", (char *)"");
+        }
+        s_isFeederSelectionFromPopupStart = 0;
+    }
+    else
+    {
+        Dvar_SetStringByName("ui_gv_event", (char *)"");
+        Dvar_SetStringByName("ui_gv_action", (char *)"");
+        Dvar_SetStringByName("ui_gv_target", (char *)"");
+        Dvar_SetStringByName("ui_gv_param", (char *)"");
+        Dvar_SetStringByName("ui_gv_condlhs", (char *)"");
+        Dvar_SetStringByName("ui_gv_condop", (char *)"");
+        Dvar_SetStringByName("ui_gv_condrhs", (char *)"");
+        Dvar_SetIntByName("ui_gv_event_index", 0);
+        Dvar_SetIntByName("ui_gv_action_index", 0);
+        Dvar_SetIntByName("ui_gv_target_index", 0);
+        Dvar_SetIntByName("ui_gv_param_index", 0);
+        Dvar_SetIntByName("ui_gv_condlhs_index", 0);
+        Dvar_SetIntByName("ui_gv_condop_index", 0);
+        Dvar_SetIntByName("ui_gv_condrhs_index", 0);
+    }
+}
+#else
 void __cdecl UI_FeederSelection_GameVariantRules(int contextIndex, int index)
 {
     int FeederIndexFromEventIndex; // eax
@@ -1461,6 +1627,7 @@ void __cdecl UI_FeederSelection_GameVariantRules(int contextIndex, int index)
         Dvar_SetIntByName("ui_gv_condrhs_index", 0);
     }
 }
+#endif
 
 int __cdecl GetFeederIndexFromEventIndex(int eventIndex)
 {
@@ -1655,6 +1822,33 @@ void __cdecl UI_FeederSelection_GameVariants(int localClientNum, int contextInde
     }
 }
 
+#if defined(__ANDROID__)
+void __cdecl UI_FeederSelection_GameVariantParam(int localClientNum, int contextIndex, int index)
+{
+    bool v3; // [esp+0h] [ebp-14h]
+    GVRule *rule; // [esp+4h] [ebp-10h]
+    char *paramText; // [esp+10h] [ebp-4h]
+
+    paramText = UI_FeederItemText_GameVariantParams(index, 0);
+    if ( GetActionByDvarIndex("ui_gv_action_index")->m_parameterType == 4 )
+    {
+        paramText = (char *)Dvar_GetString("ui_gv_param");
+        v3 = paramText && *paramText;
+        if ( !Dvar_GetInt("ui_gv_iscreatingnew") && !v3 )
+        {
+            rule = GetSelectedRule(localClientNum);
+            if ( rule )
+            {
+                if ( rule->parameter.hasParameter )
+                    paramText = rule->parameter.value;
+            }
+        }
+    }
+    Dvar_SetStringByName("ui_gv_param", paramText);
+    Dvar_SetIntByName("ui_gv_param_index", index);
+    Dvar_SetStringByName("ui_gv_nextpopup", (char *)"popup_gv_select_target");
+}
+#else
 void __cdecl UI_FeederSelection_GameVariantParam(int localClientNum, int contextIndex, int index)
 {
     bool v3; // [esp+0h] [ebp-14h]
@@ -1680,6 +1874,7 @@ void __cdecl UI_FeederSelection_GameVariantParam(int localClientNum, int context
     Dvar_SetIntByName("ui_gv_param_index", index);
     Dvar_SetStringByName("ui_gv_nextpopup", (char *)"popup_gv_select_target");
 }
+#endif
 
 void __cdecl UI_FeederSelection_GameVariantCondLhs(int localClientNum, int contextIndex, int index)
 {
@@ -1805,6 +2000,13 @@ void __cdecl UI_GameVariants_WriteToMemoryFile(MemoryFile *memFile)
 {
     int i; // [esp+4h] [ebp-4h]
 
+#if defined(__ANDROID__)
+    if (gvGlob.ruleCount < 0 || gvGlob.ruleCount > 64)
+    {
+        Com_Error(ERR_DROP, "PLATFORM_ERR_SAVEGAME_BAD");
+        return;
+    }
+#endif
     for ( i = 0; i < UI_GetGVRulesCount(); ++i )
     {
         if ( gvGlob.rules[i].isValid )
@@ -1838,6 +2040,13 @@ char __cdecl UI_GameVariants_ReadGameVariantRuleChunk(MemoryFile *memFile)
     size = v3;
     if ( version == 2 )
     {
+#if defined(__ANDROID__)
+        if (gvGlob.ruleCount < 0 || gvGlob.ruleCount >= 64)
+        {
+            Com_Error(ERR_DROP, "PLATFORM_ERR_SAVEGAME_BAD");
+            return 0; // No row/count publication if the error callback returns.
+        }
+#endif
         rule = &gvGlob.rules[gvGlob.ruleCount++];
         Dvar_SetInt((dvar_s *)ui_gv_rulecount, gvGlob.ruleCount);
         rule->isValid = 1;
@@ -1966,7 +2175,11 @@ void __cdecl Scr_GameVariants_GetRule()
     int ruleNum; // [esp+4h] [ebp-4h]
 
     ruleNum = Scr_GetInt(0, SCRIPTINSTANCE_SERVER);
+#if defined(__ANDROID__)
+    if (ruleNum >= 0 && ruleNum < 64 && ruleNum < gvGlob.ruleCount)
+#else
     if (ruleNum >= 0 && ruleNum <= gvGlob.ruleCount)
+#endif
     {
         rule = &gvGlob.rules[ruleNum];
         Scr_MakeArray(SCRIPTINSTANCE_SERVER);
@@ -1987,6 +2200,17 @@ void __cdecl Scr_GameVariants_GetRule()
 
 GVGlob::GVGlob()
 {
+#if defined(__ANDROID__)
+    // A 266-byte GVRule row is not a four-byte-aligned GVGlob container.
+    for (GVRule &rule : rules)
+    {
+        rule.m_conditional.hasConditional = false;
+        rule.m_conditional.m_lhsIndex = 0;
+        rule.m_conditional.m_operatorIndex = 0;
+        rule.m_conditional.m_rhsIndex = 0;
+    }
+#else
+
     int v2; // [esp+4h] [ebp-Ch]
     GVGlob *i; // [esp+8h] [ebp-8h]
 
@@ -1998,6 +2222,7 @@ GVGlob::GVGlob()
         i->rules[0].m_conditional.m_operatorIndex = 0;
         i->rules[0].m_conditional.m_rhsIndex = 0;
     }
+#endif
 }
 
 GVAction::GVAction(

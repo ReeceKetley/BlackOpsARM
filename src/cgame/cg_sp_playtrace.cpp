@@ -14,6 +14,11 @@
 #include <qcommon/common.h>
 #include <gfx_d3d/r_dvars.h>
 #include <Windows.h>
+#if defined(__ANDROID__)
+#include <platform/win32_compat/win32_time.h>
+#include <platform/android/bounded_format.h>
+#define sprintf_s bo1::android::FormatChecked
+#endif
 #include <algorithm>
 #include <cstdio>
 #include <game_sp/g_sp_measure.h>
@@ -59,12 +64,30 @@ void ResetWindow(int now)
 
 void AddFrameTime()
 {
+#if defined(__ANDROID__)
+    bo1::win32::LARGE_INTEGER t{};
+    if (!bo1::win32::QueryPerformanceCounter(&t))
+    {
+        Com_Error(ERR_FATAL, "Native playtrace counter query failed");
+        std::abort();
+    }
+#else
     LARGE_INTEGER t;
     QueryPerformanceCounter(&t);
+#endif
     if (s_ticksPerMs == 0.0)
     {
+#if defined(__ANDROID__)
+        bo1::win32::LARGE_INTEGER f{};
+        if (!bo1::win32::QueryPerformanceFrequency(&f) || f.QuadPart <= 0)
+        {
+            Com_Error(ERR_FATAL, "Native playtrace counter frequency unavailable");
+            std::abort();
+        }
+#else
         LARGE_INTEGER f;
         QueryPerformanceFrequency(&f);
+#endif
         s_ticksPerMs = (double)f.QuadPart / 1000.0;
     }
     if (s_lastFrameTick && s_frameCount < MAX_FRAME_TIMES)

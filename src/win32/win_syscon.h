@@ -2,6 +2,7 @@
 
 #include <Windows.h>
 
+#if !defined(__ANDROID__)
 struct WinConData // sizeof=0x620
 {                                       // XREF: .data:s_wcd/r
     HWND__ *hWnd;                       // XREF: InputLineWndProc(HWND__ *,uint,uint,long)+3A/r
@@ -31,6 +32,9 @@ struct WinConData // sizeof=0x620
 LRESULT __stdcall InputLineWndProc(HWND__ *hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 void __cdecl Sys_CreateConsole(HINSTANCE__ *hInstance);
 LRESULT __stdcall ConWndProc(HWND__ *hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+#else
+void __cdecl Sys_CreateConsole(HINSTANCE__ *hInstance);
+#endif
 int __cdecl Conbuf_CleanText(const char *source, char *target, int sizeofTarget);
 void __cdecl Sys_DestroyConsole();
 void __cdecl Sys_ShowConsole();

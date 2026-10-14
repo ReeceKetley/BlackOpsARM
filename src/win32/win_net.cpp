@@ -1,3 +1,4 @@
+#if !defined(BO1_NATIVE_COM_BOOT)
 #include "win_net.h"
 #include <universal/q_shared.h>
 #include <qcommon/net_chan_mp.h>
@@ -26,7 +27,7 @@ int numIP;
 unsigned __int8 localIP[16][4];
 unsigned __int8 g_debugPacket[1][8192];
 
-int g_debugServer;
+extern int g_debugServer;
 SOCKET ip_socket = INVALID_SOCKET;
 SOCKET socks_socket;
 int cl_nat_overflow_detected;
@@ -116,11 +117,48 @@ unsigned int __cdecl NET_IPSocket(const char *net_interface, int port)
 }
 
 
+#endif // normal socket bodies before shared wait service
+#if defined(__ANDROID__)
+#include <platform/win32_compat/win32_time.h>
+#if defined(BO1_NATIVE_RENDER_OWNER_DISPATCH)
+#include <platform/android/renderer_window.h>
+#endif
+#endif
 void __cdecl NET_Sleep(unsigned int msec)
 {
+#if defined(__ANDROID__)
+#if defined(BO1_NATIVE_RENDER_OWNER_DISPATCH)
+    if (bo1::android::PumpRendererOwnerRequestsIfOwner())
+    {
+        // Keep actual owner requests alive even during long initialization waits.
+        // Sleep remains a real scheduler operation; no engine event is signalled.
+        if (msec == 0)
+            bo1::win32::Sleep(0);
+        else if (msec == 0xffffffffu)
+            for (;;)
+            {
+                bo1::win32::Sleep(16);
+                bo1::android::PumpRendererOwnerRequestsIfOwner();
+            }
+        else
+            while (msec)
+            {
+                const unsigned interval = msec > 16 ? 16 : msec;
+                bo1::win32::Sleep(interval);
+                msec -= interval;
+                bo1::android::PumpRendererOwnerRequestsIfOwner();
+            }
+        bo1::android::PumpRendererOwnerRequestsIfOwner();
+        return;
+    }
+#endif
+    bo1::win32::Sleep(msec);
+#else
     Sleep(msec);
+#endif
 }
 
+#if !defined(BO1_NATIVE_COM_BOOT)
 const char *__cdecl NET_ErrorString()
 {
     const char *result; // eax
@@ -310,18 +348,60 @@ void __cdecl SockadrToNetadr(sockaddr *s, netadr_t *a)
     }
 }
 
+#endif // normal sockaddr conversion before shared address resolution
+#if !defined(BO1_NATIVE_COM_BOOT) || defined(BO1_NATIVE_NET_ADDRESS_POLICY)
+#if defined(__ANDROID__)
+#include <platform/android/network_addresses.h>
+#endif
 int __cdecl Sys_StringToAdr(const char *s, netadr_t *a)
 {
+#if defined(__ANDROID__)
+    return bo1::android::ResolveIPv4Host(s, a) ? 1 : 0;
+#else
     sockaddr sadr; // [esp+0h] [ebp-14h] BYREF
 
     if ( !Sys_StringToSockaddr(s, &sadr) )
         return 0;
     SockadrToNetadr(&sadr, a);
     return 1;
+#endif
 }
 
+#endif // shared address resolution
+#if !defined(BO1_NATIVE_COM_BOOT) || defined(BO1_NATIVE_UDP_ENGINE)
+#if defined(__ANDROID__)
+#include <platform/android/udp_socket.h>
+#include <qcommon/common.h>
+#include <cerrno>
+#include <cstdlib>
+#include <cstring>
+
+static void NativeRequireSocketPoolDisabled()
+{
+    if(!Dvar_GetBool("cl_socketpool_enabled"))return;
+    const int count=Dvar_GetInt("cl_socketpool_size");
+    if(count<0 || count>50) {
+        Com_Error(ERR_FATAL,"Native socket pool size %d exceeds the canonical0..50 bound",count);
+        std::abort();
+    }
+    // The working reference never creates pool sockets or routes sends through
+    // them. Enabling cannot manufacture receives/NAT observations from fd0.
+    Com_Error(ERR_FATAL,"cl_socketpool_enabled requests %d sockets, but no actual socket-pool producer/send lifecycle exists in the working reference or native owner",count);
+    std::abort();
+}
+#endif
 int __cdecl Sys_GetPacket(netadr_t *net_from, msg_t *net_message)
 {
+#if defined(__ANDROID__)
+    if (!net_message || !net_from || net_message->maxsize <= 0) { errno = EINVAL; return 0; }
+    std::size_t received = 0;
+    const int result = bo1::android::ReceiveUdp(net_message->data, net_message->maxsize, net_from, &received);
+    if (result != 1) return 0;
+    net_message->readcount = 0;
+    net_message->cursize = static_cast<int>(received);
+    return 1;
+#else
+
 #if 0
     char *v3; // eax
     int ret; // [esp+14h] [ebp-4h]
@@ -410,8 +490,11 @@ int __cdecl Sys_GetPacket(netadr_t *net_from, msg_t *net_message)
     }
     return 0;
 #endif
+#endif // native packet receive
 }
 
+#endif // shared packet receive
+#if !defined(BO1_NATIVE_COM_BOOT)
 void NetadrToSockadr(netadr_t *a, struct sockaddr *s) {
     memset(s, 0, sizeof(*s));
 
@@ -442,8 +525,20 @@ void NetadrToSockadr(netadr_t *a, struct sockaddr *s) {
 //#endif //_XBOX
 }
 
+#endif // normal socket address conversion
+#if !defined(BO1_NATIVE_COM_BOOT) || defined(BO1_NATIVE_UDP_ENGINE)
 char __cdecl Sys_SendPacket(unsigned int length, unsigned __int8 *data, netadr_t to)
 {
+#if defined(__ANDROID__)
+    NativeRequireSocketPoolDisabled();
+    if (to.type != NA_IP && to.type != NA_BROADCAST)
+    {
+        Com_Error(ERR_FATAL, "Sys_SendPacket: bad address type");
+        return 0;
+    }
+    return bo1::android::SendUdp(data, length, to) ? 1 : 0;
+#else
+
 #if 0
     const char *v4; // eax
     char *v5; // eax
@@ -536,8 +631,14 @@ char __cdecl Sys_SendPacket(unsigned int length, unsigned __int8 *data, netadr_t
     Com_PrintError(16, "Sys_SendPacket: %s\n", v4);
     return 0;
 #endif
+#endif // native packet send
 }
 
+#endif // normal packet send before shared LAN classification
+#if !defined(BO1_NATIVE_COM_BOOT) || defined(BO1_NATIVE_NET_ADDRESS_POLICY)
+#if defined(__ANDROID__)
+#include <platform/android/network_addresses.h>
+#endif
 bool __cdecl Sys_IsLANAddress_IgnoreSubnet(netadr_t adr)
 {
     if ( adr.type == NA_LOOPBACK )
@@ -559,10 +660,17 @@ bool __cdecl Sys_IsLANAddress_IgnoreSubnet(netadr_t adr)
 
 int __cdecl Sys_IsLANAddress(netadr_t adr)
 {
+#if defined(__ANDROID__)
+    unsigned char localIP[16][4];
+    int numIP = 0;
+#endif
     int i; // [esp+0h] [ebp-8h]
 
     if ( Sys_IsLANAddress_IgnoreSubnet(adr) )
         return 1;
+#if defined(__ANDROID__)
+    if (!bo1::android::ReadLocalIPv4(localIP, 16, &numIP)) return 0;
+#endif
     for ( i = 0; i < numIP; ++i )
     {
         if ( adr.ip[0] == localIP[i][0] && adr.ip[1] == localIP[i][1] && adr.ip[2] == localIP[i][2] )
@@ -571,6 +679,8 @@ int __cdecl Sys_IsLANAddress(netadr_t adr)
     return 0;
 }
 
+#endif // shared LAN classification
+#if !defined(BO1_NATIVE_COM_BOOT)
 void __cdecl Sys_ShowIP()
 {
     int i; // [esp+0h] [ebp-4h]
@@ -631,6 +741,14 @@ int NET_GetLocalAddress()
 }
 #endif
 
+#endif // normal interface enumeration before shared UDP opening
+#if !defined(BO1_NATIVE_COM_BOOT) || defined(BO1_NATIVE_UDP_ENGINE)
+#if defined(__ANDROID__)
+#include <platform/android/udp_socket.h>
+#include <universal/dvar.h>
+const dvar_t *ip;
+const dvar_t *port;
+#endif
 void __cdecl NET_OpenIP()
 {
     ip = _Dvar_RegisterString("net_ip", "localhost", 0x20u, "Network IP Address");
@@ -639,11 +757,27 @@ void __cdecl NET_OpenIP()
     // ADD - network augmentation to replace demonware net (cod4)
     for (int i = 0; i < 10; ++i)
     {
+#if defined(__ANDROID__)
+        const int requestedPort = i + port->current.integer;
+        if (requestedPort > 65535) break;
+        const bool opened = bo1::android::OpenUdp(ip->current.string, static_cast<unsigned short>(requestedPort));
+#else
         ip_socket = NET_IPSocket(ip->current.string, i + port->current.integer);
+#endif
+#if defined(__ANDROID__)
+        if (opened)
+#else
         if (ip_socket)
+#endif
         {
+#if defined(__ANDROID__)
+            Dvar_SetInt((dvar_s *)port, bo1::android::BoundUdpPort());
+#else
             Dvar_SetInt((dvar_s *)port, i + port->current.integer);
+#endif
+#if !defined(__ANDROID__)
             NET_GetLocalAddress();
+#endif
             return;
         }
     }
@@ -651,6 +785,8 @@ void __cdecl NET_OpenIP()
     // END
 }
 
+#endif // shared UDP opening
+#if !defined(BO1_NATIVE_COM_BOOT)
 int __cdecl dwPlatformInit(bdNetStartParams *params)
 {
 #ifdef BO1_LIVE
@@ -720,13 +856,24 @@ int __cdecl dwPlatformInit(bdNetStartParams *params)
 #endif
 }
 
+#endif // normal DW setup before shared reference socket-pool policy
+#if !defined(BO1_NATIVE_COM_BOOT) || defined(BO1_NATIVE_UDP_ENGINE)
 void __cdecl NET_SocketPool_Init()
 {
+#if defined(__ANDROID__)
+    NativeRequireSocketPoolDisabled();
+#else
     Dvar_GetBool("cl_socketpool_enabled");
+#endif
 }
 
+#endif // shared reference socket-pool policy
+#if !defined(BO1_NATIVE_COM_BOOT) || defined(BO1_NATIVE_UDP_ENGINE)
 void __cdecl Sys_CheckForNATOverflow()
 {
+#if defined(__ANDROID__)
+    NativeRequireSocketPoolDisabled();
+#else
     int i; // [esp+0h] [ebp-4h]
     int ia; // [esp+0h] [ebp-4h]
 
@@ -756,10 +903,15 @@ void __cdecl Sys_CheckForNATOverflow()
             cl_nat_overflow_detected = 0;
         }
     }
+#endif // native optional pool policy versus original Windows NAT algorithm
 }
 
 int __cdecl Sys_SocketPool_GetPacket(netadr_t *net_from, msg_t *net_message)
 {
+#if defined(__ANDROID__)
+    NativeRequireSocketPoolDisabled();
+    return 0; // Disabled owns no pool producer; leave output intact.
+#else
     const char *v3; // eax
     int i; // [esp+0h] [ebp-24h]
     sockaddr from; // [esp+4h] [ebp-20h] BYREF
@@ -794,8 +946,21 @@ int __cdecl Sys_SocketPool_GetPacket(netadr_t *net_from, msg_t *net_message)
         }
     }
     return 0;
+#endif // native optional pool policy versus original Windows receive algorithm
 }
 
+#endif // normal socket pool before shared UDP configuration
+#if !defined(BO1_NATIVE_COM_BOOT) || defined(BO1_NATIVE_UDP_ENGINE)
+#if defined(__ANDROID__)
+#include "win_net.h"
+const dvar_t *net_noudp;
+const dvar_t *net_socksEnabled;
+const dvar_t *net_socksServer;
+const dvar_t *net_socksPort;
+const dvar_t *net_socksUsername;
+const dvar_t *net_socksPassword;
+int networkingEnabled;
+#endif
 void __cdecl NET_Config(int enableNetworking)
 {
     int start; // [esp+0h] [ebp-Ch]
@@ -836,6 +1001,10 @@ void __cdecl NET_Config(int enableNetworking)
         }
         if ( stop )
         {
+#if defined(__ANDROID__)
+            if (!bo1::android::CloseUdp())
+                Com_PrintWarning(16, "UDP close failed: %s\n", std::strerror(errno));
+#else
             if ( ip_socket && ip_socket != -1 )
             {
                 closesocket(ip_socket);
@@ -846,11 +1015,19 @@ void __cdecl NET_Config(int enableNetworking)
                 closesocket(socks_socket);
                 socks_socket = 0;
             }
+#endif // native UDP shutdown
         }
         if ( start )
         {
             if ( !net_noudp->current.enabled )
             {
+#if defined(__ANDROID__)
+                if (net_socksEnabled->current.enabled)
+                {
+                    Com_Error(ERR_FATAL, "Native SOCKS transport is not implemented");
+                    std::abort();
+                }
+#endif
                 NET_OpenIP();
                 NET_SocketPool_Init();
             }
@@ -898,6 +1075,33 @@ void __cdecl NET_Restart()
     NET_Config(networkingEnabled);
 }
 
+#endif // shared UDP configuration/dvars/restart
+#if !defined(BO1_NATIVE_COM_BOOT) || defined(BO1_NATIVE_UDP_ENGINE)
+#if defined(__ANDROID__)
+#include <platform/android/debug_tcp.h>
+#include <qcommon/cmd.h>
+#include <qcommon/threads.h>
+#include <universal/critical_sections.h>
+#include <platform/critical_section_services.h>
+#include <clientscript/cscr_debugger.h>
+#include <universal/com_memory.h>
+#include <cerrno>
+#include <cstdint>
+unsigned __int8 g_debugPacket[1][8192];
+static std::uint32_t nativeDebugReadBytes;
+static unsigned nativeDebugReplyPos;
+static unsigned char nativeDebugReply[4];
+unsigned int ip_debugSocket[2];
+unsigned int ip_debugServerSocket[2];
+int sys_debugMessageType[1];
+int g_debugPacketPos[1];
+char *g_debugReadBytes;
+int g_debugReadBytesSent;
+int g_debugWriteBytes;
+int g_debugReadBytesRemote;
+int g_debugClient;
+extern int g_debugServer;
+#endif
 void __cdecl NET_InitDebug()
 {
     g_debugClient = 0;
@@ -915,6 +1119,10 @@ int NET_InitDebugStreams()
 
     for ( i = 0; i < 2; ++i )
     {
+#if defined(__ANDROID__)
+        if (ip_debugServerSocket[i]) bo1::android::CloseDebugTcp(ip_debugServerSocket[i]);
+        if (ip_debugSocket[i]) bo1::android::CloseDebugTcp(ip_debugSocket[i]);
+#endif
         ip_debugServerSocket[i] = 0;
         ip_debugSocket[i] = 0;
         result = i + 1;
@@ -926,14 +1134,27 @@ int NET_InitDebugStreams()
         result = ia + 1;
     }
     g_debugReadBytes = 0;
+#if defined(__ANDROID__)
+    nativeDebugReadBytes = 0;
+    g_debugReadBytes = reinterpret_cast<char *>(&nativeDebugReadBytes);
+    nativeDebugReplyPos = 0;
+#endif
     g_debugReadBytesSent = 0;
     g_debugWriteBytes = 0;
     g_debugReadBytesRemote = 0;
     return result;
 }
 
+#endif // normal debug setup before shared networking init
+#if !defined(BO1_NATIVE_COM_BOOT) || defined(BO1_NATIVE_UDP_ENGINE)
 void __cdecl NET_Init()
 {
+#if defined(__ANDROID__)
+    NET_GetDvars();
+    NET_Config(1);
+    NET_InitDebug();
+#else
+
     int r; // [esp+0h] [ebp-4h]
 
     r = WSAStartup(0x101u, &winsockdata);
@@ -949,8 +1170,16 @@ void __cdecl NET_Init()
         NET_Config(1);
         NET_InitDebug();
     }
+#endif // native networking init
 }
 
+#endif // shared networking init
+#if !defined(BO1_NATIVE_COM_BOOT) || defined(BO1_NATIVE_UDP_ENGINE)
+#if defined(__ANDROID__)
+static const char *DebugTransportErrorString() { return strerror(errno); }
+#else
+static const char *DebugTransportErrorString() { return NET_ErrorString(); }
+#endif
 void __cdecl Sys_Listen_f()
 {
     const char *v0; // eax
@@ -971,9 +1200,13 @@ void __cdecl Sys_Listen_f()
                 Sys_DebugSocketError("Sys_Listen_f: failed to connect");
                 return;
             }
+#if defined(__ANDROID__)
+            if (!bo1::android::ListenDebugTcp(ip_debugServerSocket[i]))
+#else
             if ( listen(ip_debugServerSocket[i], 5) == -1 )
+#endif
             {
-                v0 = NET_ErrorString();
+                v0 = DebugTransportErrorString();
                 v1 = va("Sys_Listen_f: listen: %s\n", v0);
                 Sys_DebugSocketError(v1);
                 return;
@@ -985,13 +1218,21 @@ void __cdecl Sys_Listen_f()
                 __debugbreak();
         }
         g_debugClient = 1;
+#if !defined(__ANDROID__)
         if ( !Sys_IsHeadless() ) // zombies: headless never changes a system setting (SPI_SETFOREGROUNDLOCKTIMEOUT)
             SystemParametersInfoA(0x2001u, 0, 0, 3u);
+#endif
     }
 }
 
 unsigned int __cdecl NET_TCPIPSocket(char *net_interface, int port, int type)
 {
+#if defined(__ANDROID__)
+    if (type != 0 && type != 1) { errno = EINVAL; return 0; }
+    const unsigned handle = bo1::android::OpenDebugTcp(net_interface, port, type == 1);
+    if (!handle) Com_PrintWarning(16, "WARNING: NET_TCPIPSocket: %s\n", strerror(errno));
+    return handle;
+#else
     const char *v3; // eax
     const char *v5; // eax
     const char *v6; // eax
@@ -1011,7 +1252,7 @@ unsigned int __cdecl NET_TCPIPSocket(char *net_interface, int port, int type)
     {
         if ( WSAGetLastError() != 10047 )
         {
-            v3 = NET_ErrorString();
+            v3 = DebugTransportErrorString();
             Com_PrintWarning(16, "WARNING: NET_TCPIPSocket: socket: %s\n", v3);
         }
         return 0;
@@ -1020,7 +1261,7 @@ unsigned int __cdecl NET_TCPIPSocket(char *net_interface, int port, int type)
     {
         if ( ioctlsocket(newsocket, -2147195266, (u_long *)&_true) == -1 )
         {
-            v5 = NET_ErrorString();
+            v5 = DebugTransportErrorString();
             Com_PrintWarning(16, "WARNING: NET_TCPIPSocket: ioctl FIONBIO: %s\n", v5);
             return 0;
         }
@@ -1040,7 +1281,7 @@ unsigned int __cdecl NET_TCPIPSocket(char *net_interface, int port, int type)
                 err = WSAGetLastError();
                 if ( err != 10035 )
                 {
-                    v7 = NET_ErrorString();
+                    v7 = DebugTransportErrorString();
                     Com_PrintWarning(16, "WARNING: NET_TCPIPSocket: connect: %s\n", v7);
                     closesocket(newsocket);
                     return 0;
@@ -1055,17 +1296,21 @@ unsigned int __cdecl NET_TCPIPSocket(char *net_interface, int port, int type)
         }
         else if ( bind(newsocket, (const struct sockaddr *)&address, 16) == -1 )
         {
-            v6 = NET_ErrorString();
+            v6 = DebugTransportErrorString();
             Com_PrintWarning(16, "WARNING: NET_TCPIPSocket: bind: %s\n", v6);
             closesocket(newsocket);
             return 0;
         }
         return newsocket;
     }
+#endif
 }
 
 int __cdecl NET_Select(unsigned int socket)
 {
+#if defined(__ANDROID__)
+    return bo1::android::DebugTcpConnected(socket, 5000);
+#else
     const char *v2; // eax
     fd_set readfds; // [esp+0h] [ebp-220h] BYREF
     int err; // [esp+10Ch] [ebp-114h]
@@ -1083,7 +1328,7 @@ int __cdecl NET_Select(unsigned int socket)
     {
         if ( err == -1 )
         {
-            v2 = NET_ErrorString();
+            v2 = DebugTransportErrorString();
             Com_PrintWarning(16, "WARNING: NET_Select: connect: %s\n", v2);
             return 0;
         }
@@ -1097,6 +1342,7 @@ int __cdecl NET_Select(unsigned int socket)
         Com_Printf(16, "NET_Select: NET_Select: timeout\n");
         return 0;
     }
+#endif
 }
 
 void __cdecl Sys_DebugSocketError(const char *message)
@@ -1105,10 +1351,7 @@ void __cdecl Sys_DebugSocketError(const char *message)
     Com_Printf(16, "%s\n", message);
 }
 
-int __cdecl Sys_IsRemoteDebugServer()
-{
-    return g_debugServer;
-}
+
 
 char __cdecl Sys_StartRemoteDebugServer()
 {
@@ -1160,8 +1403,10 @@ void __cdecl Sys_Connect_f()
             if ( !Assert_MyHandler("C:\\projects_pc\\cod\\codsrc\\src\\win32\\win_net.cpp", 1947, 0, "%s", "!g_debugServer") )
                 __debugbreak();
         }
+#if !defined(__ANDROID__)
         if ( !Sys_IsHeadless() ) // zombies: headless never changes a system setting (SPI_SETFOREGROUNDLOCKTIMEOUT)
             SystemParametersInfoA(0x2001u, 0, 0, 3u);
+#endif
         Scr_ConnectRemote(SCRIPTINSTANCE_SERVER);
     }
 }
@@ -1174,17 +1419,30 @@ void __cdecl NET_ShutdownDebug()
     {
         if ( ip_debugSocket[i] )
         {
+#if defined(__ANDROID__)
+            bo1::android::CloseDebugTcp(ip_debugSocket[i]);
+#else
             closesocket(ip_debugSocket[i]);
+#endif
             ip_debugSocket[i] = 0;
         }
         if ( ip_debugServerSocket[i] )
         {
+#if defined(__ANDROID__)
+            bo1::android::CloseDebugTcp(ip_debugServerSocket[i]);
+#else
             closesocket(ip_debugServerSocket[i]);
+#endif
             ip_debugServerSocket[i] = 0;
         }
     }
     //if ( Sys_IsRemoteDebugClient() )
         //BLOPS_NULLSUB();
+#if defined(__ANDROID__)
+    g_debugClient = 0;
+    g_debugServer = 0;
+    NET_InitDebugStreams();
+#endif
 }
 
 void __cdecl NET_RestartDebug()
@@ -1195,6 +1453,24 @@ void __cdecl NET_RestartDebug()
 
 int __cdecl Sys_ReadDebugSocketData(char *buffer, int len, int blocking)
 {
+#if defined(__ANDROID__)
+    if (len < 0 || (!buffer && len)) { Sys_DebugSocketError("Invalid debug read"); return 0; }
+    bool started = false;
+    while (len) {
+        const int read = bo1::android::ReadDebugTcp(ip_debugSocket[0], buffer, len);
+        if (read > 0) {
+            Sys_SendDebugReadBytes(read);
+            if (!ip_debugSocket[0]) return 0;
+            buffer += read; len -= read; started = true;
+        } else if (read < 0 && bo1::android::DebugTcpWouldBlock()) {
+            if (!blocking && !started) return 0;
+            Sys_SendDebugReadBytesInternal();
+            if (!ip_debugSocket[0]) return 0;
+            NET_Sleep(1);
+        } else { Sys_DebugSocketError(read == 0 ? "Debug socket EOF" : strerror(errno)); return 0; }
+    }
+    return 1;
+#else
     const char *v4; // eax
     const char *v5; // eax
     int err; // [esp+0h] [ebp-10h]
@@ -1245,15 +1521,30 @@ block:
     }
     else
     {
-        v4 = NET_ErrorString();
+        v4 = DebugTransportErrorString();
         v5 = va("Sys_ReadDebugSocketData: %s", v4);
         Sys_DebugSocketError(v5);
     }
     return 0;
+#endif
 }
 
 void Sys_SendDebugReadBytesInternal()
 {
+#if defined(__ANDROID__)
+    std::uint32_t previous;
+    memcpy(&previous, &g_debugReadBytesSent, 4);
+    const std::uint32_t count = nativeDebugReadBytes;
+    if (count == previous) return;
+    unsigned offset = 0;
+    while (offset < 4) {
+        const int sent = bo1::android::WriteDebugTcp(ip_debugSocket[1], reinterpret_cast<const char *>(&count) + offset, 4 - offset);
+        if (sent > 0) offset += sent;
+        else if (sent < 0 && bo1::android::DebugTcpWouldBlock()) NET_Sleep(1);
+        else { Sys_DebugSocketError(sent == 0 ? "Debug reply socket closed" : strerror(errno)); return; }
+    }
+    memcpy(&g_debugReadBytesSent, &count, 4);
+#else
     const char *v0; // eax
     const char *v1; // eax
 
@@ -1272,24 +1563,35 @@ void Sys_SendDebugReadBytesInternal()
         }
         if ( send(ip_debugSocket[1], g_debugReadBytes, 4, 0) == -1 )
         {
-            v0 = NET_ErrorString();
+            v0 = DebugTransportErrorString();
             v1 = va("Sys_SendDebugReadBytes: %s", v0);
             Sys_DebugSocketError(v1);
         }
     }
+#endif
 }
 
 void __cdecl Sys_SendDebugReadBytes(int read)
 {
+#if defined(__ANDROID__)
+    nativeDebugReadBytes += static_cast<std::uint32_t>(read);
+    std::uint32_t previous;
+    memcpy(&previous, &g_debugReadBytesSent, 4);
+    if (nativeDebugReadBytes - previous >= 0x2000) Sys_SendDebugReadBytesInternal();
+#else
     *(unsigned int *)g_debugReadBytes += read;
     if ( *(unsigned int *)g_debugReadBytes - g_debugReadBytesSent >= 0x2000 )
         Sys_SendDebugReadBytesInternal();
+#endif
 }
 
 int __cdecl Sys_ReadDebugSocketInt()
 {
     int value; // [esp+0h] [ebp-4h] BYREF
 
+#if defined(__ANDROID__)
+    value = 0;
+#endif
     Sys_ReadDebugSocketData((char *)&value, 4, 1);
     return value;
 }
@@ -1299,6 +1601,11 @@ char *__cdecl Sys_ReadDebugSocketString()
     unsigned int buffer; // [esp+0h] [ebp-100Ch] BYREF
     char in[4100]; // [esp+4h] [ebp-1008h] BYREF
 
+#if defined(__ANDROID__)
+    if (!Sys_ReadDebugSocketData(reinterpret_cast<char *>(&buffer), 4, 1)) return nullptr;
+    if (buffer >= 0x1000) { Sys_DebugSocketError("Invalid debug string length"); return nullptr; }
+    if (!Sys_ReadDebugSocketData(in, buffer, 1)) return nullptr;
+#else
     Sys_ReadDebugSocketData((char *)&buffer, 4, 1);
     if ( buffer >= 0x1000
         && !Assert_MyHandler(
@@ -1312,6 +1619,7 @@ char *__cdecl Sys_ReadDebugSocketString()
         __debugbreak();
     }
     Sys_ReadDebugSocketData(in, buffer, 1);
+#endif
     in[buffer] = 0;
     return CopyString(in, "Sys_ReadDebugSocketString", 0, SCRIPTINSTANCE_SERVER);
 }
@@ -1321,6 +1629,9 @@ void __cdecl Sys_WriteDebugSocketData(unsigned __int8 *buffer, int len)
     int pos; // [esp+0h] [ebp-10h]
     unsigned int copyLen; // [esp+8h] [ebp-8h]
 
+#if defined(__ANDROID__)
+    if (len < 0 || (!buffer && len)) { Sys_DebugSocketError("Invalid debug write"); return; }
+#endif
     if ( !com_errorEntered && Sys_IsRemoteDebugServer() )
     {
         pos = g_debugPacketPos[0];
@@ -1354,6 +1665,9 @@ void __cdecl Sys_WriteDebugSocketData(unsigned __int8 *buffer, int len)
                 pos = 0;
                 g_debugPacketPos[0] = 0;
                 Sys_DebugSend(0, (const char *)g_debugPacket, 0x2000, "Sys_WriteDebugSocketData");
+#if defined(__ANDROID__)
+                if (!ip_debugSocket[0]) return;
+#endif
             }
         }
     }
@@ -1361,6 +1675,34 @@ void __cdecl Sys_WriteDebugSocketData(unsigned __int8 *buffer, int len)
 
 void __cdecl Sys_DebugSend(int channel, const char *buf, int len, const char *name)
 {
+#if defined(__ANDROID__)
+    if (channel < 0 || channel >= 2 || len < 0 || (!buf && len) || !ip_debugSocket[channel]) {
+        Sys_DebugSocketError("Invalid or closed debug send"); return;
+    }
+    // Wire byte counters are fixed 32-bit wrapping sequence numbers.
+    std::uint32_t written;
+    memcpy(&written, &g_debugWriteBytes, 4);
+    written += static_cast<std::uint32_t>(len);
+    memcpy(&g_debugWriteBytes, &written, 4);
+    while (!Sys_DebugCanSend()) {
+        const int read = bo1::android::ReadDebugTcp(ip_debugSocket[1], nativeDebugReply + nativeDebugReplyPos, 4 - nativeDebugReplyPos);
+        if (read > 0) {
+            nativeDebugReplyPos += read;
+            if (nativeDebugReplyPos == 4) {
+                memcpy(&g_debugReadBytesRemote, nativeDebugReply, 4);
+                nativeDebugReplyPos = 0;
+            }
+        } else if (read < 0 && bo1::android::DebugTcpWouldBlock()) NET_Sleep(1);
+        else { Sys_DebugSocketError(read == 0 ? "Debug reply socket EOF" : strerror(errno)); return; }
+    }
+    while (len) {
+        const int sent = bo1::android::WriteDebugTcp(ip_debugSocket[channel], buf, len);
+        if (sent > 0) { buf += sent; len -= sent; }
+        else if (sent < 0 && bo1::android::DebugTcpWouldBlock()) NET_Sleep(1);
+        else { Sys_DebugSocketError(sent == 0 ? "Debug socket closed" : strerror(errno)); return; }
+    }
+    (void)name;
+#else
     const char *v4; // eax
     const char *v5; // eax
     const char *v6; // eax
@@ -1400,7 +1742,7 @@ void __cdecl Sys_DebugSend(int channel, const char *buf, int len, const char *na
                 }
                 else
                 {
-                    v4 = NET_ErrorString();
+                    v4 = DebugTransportErrorString();
                     v5 = va("Sys_DebugSend: %s", v4);
                     Sys_DebugSocketError(v5);
                 }
@@ -1423,7 +1765,7 @@ void __cdecl Sys_DebugSend(int channel, const char *buf, int len, const char *na
         {
             if ( WSAGetLastError() != 10035 )
             {
-                v6 = NET_ErrorString();
+                v6 = DebugTransportErrorString();
                 v7 = va("%s: %s", name, v6);
                 Sys_DebugSocketError(v7);
                 return;
@@ -1435,11 +1777,19 @@ void __cdecl Sys_DebugSend(int channel, const char *buf, int len, const char *na
     {
         Sys_DebugSocketError("Sys_DebugSend: Socket closed");
     }
+#endif
 }
 
 bool __cdecl Sys_DebugCanSend()
 {
+#if defined(__ANDROID__)
+    std::uint32_t written, received;
+    memcpy(&written, &g_debugWriteBytes, 4);
+    memcpy(&received, &g_debugReadBytesRemote, 4);
+    return written - received <= 40960;
+#else
     return g_debugWriteBytes - g_debugReadBytesRemote <= 40960;
+#endif
 }
 
 void __cdecl Sys_WriteDebugSocketInt(int value)
@@ -1465,6 +1815,9 @@ void __cdecl Sys_FlushDebugSocketData()
 
 bool __cdecl Sys_DebugSocketReady(int channel)
 {
+#if defined(__ANDROID__)
+    if (channel < 0 || channel >= 2) return false;
+#endif
     return ip_debugSocket[channel] != 0;
 }
 
@@ -1503,13 +1856,22 @@ int __cdecl Sys_UpdateDebugSocket()
         {
             if ( !ip_debugServerSocket[i] )
                 return 0;
+#if defined(__ANDROID__)
+            ip_debugSocket[i] = bo1::android::AcceptDebugTcp(ip_debugServerSocket[i]);
+            if (!ip_debugSocket[i])
+#else
             ip_debugSocket[i] = accept(ip_debugServerSocket[i], 0, 0);
             if ( ip_debugSocket[i] == -1 )
+#endif
             {
                 ip_debugSocket[i] = 0;
+#if defined(__ANDROID__)
+                if (!bo1::android::DebugTcpWouldBlock())
+#else
                 if ( WSAGetLastError() != 10035 )
+#endif
                 {
-                    v1 = NET_ErrorString();
+                    v1 = DebugTransportErrorString();
                     v2 = va("Sys_UpdateDebugSocket: %s\n", v1);
                     Sys_DebugSocketError(v2);
                 }
@@ -1544,3 +1906,11 @@ void __cdecl Sys_AckDebugSocket()
     sys_debugMessageType[0] = 0;
 }
 
+
+#endif
+
+int g_debugServer;
+int __cdecl Sys_IsRemoteDebugServer()
+{
+    return g_debugServer;
+}

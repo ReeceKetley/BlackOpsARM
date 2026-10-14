@@ -3,7 +3,11 @@
 #include <universal/assertive.h>
 #include "r_init.h"
 #include <qcommon/common.h>
+#if defined(__ANDROID__)
+#include <cstdlib>
+#endif
 
+#if !defined(__ANDROID__)
 DDraw ddraw;
 
 DDraw *DDraw::Instance()
@@ -25,6 +29,8 @@ DDraw::DDraw()
     }
 }
 
+#endif
+
 unsigned int __cdecl R_AvailableTextureMemory()
 {
     unsigned int texMemInMegs; // [esp+0h] [ebp-Ch]
@@ -35,6 +41,9 @@ unsigned int __cdecl R_AvailableTextureMemory()
     {
         __debugbreak();
     }
+#if defined(__ANDROID__)
+    if (!dx.device) { Com_Error(ERR_FATAL, "Texture-memory query requires the actual D3D device"); std::abort(); }
+#endif
     vidMemInMegs = R_VideoMemory();
     //texMemInMegs = (unsigned int)((int (__thiscall *)(IDirect3DDevice9 *, IDirect3DDevice9 *))dx.device->GetAvailableTextureMem)(
     //                                                             dx.device,
@@ -69,6 +78,14 @@ unsigned int __cdecl R_AvailableTextureMemory()
 
 unsigned int __cdecl R_VideoMemory()
 {
+#if defined(__ANDROID__)
+    // DirectDraw is a separate Windows-only optional physical-memory probe.
+    // Keep the canonical unknown-value fallback; texture memory still comes
+    // from the actual initialized D3D device below.
+    Com_Printf(8, "DirectDraw video-memory probe is unavailable on Android.\n");
+    return 0;
+#else
+
     const DDraw *v1; // [esp+8h] [ebp-10h]
     const DDraw *v2; // [esp+Ch] [ebp-Ch]
     unsigned int total; // [esp+10h] [ebp-8h] BYREF
@@ -122,8 +139,11 @@ unsigned int __cdecl R_VideoMemory()
         size >>= 1;
     Com_Printf(8, "Rounded video memory size: %i MB.\n", size);
     return size;
+
+#endif
 }
 
+#if !defined(__ANDROID__)
 //const DDraw *__cdecl DDraw::Instance()
 //{
 //    if ( (`DDraw::Instance'::`2'::`local static guard' & 1) == 0 )
@@ -270,3 +290,5 @@ int __stdcall R_DDEnumDrasticCallback(
     return 1;
 }
 
+
+#endif

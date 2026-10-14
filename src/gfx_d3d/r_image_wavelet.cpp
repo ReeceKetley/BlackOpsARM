@@ -2,6 +2,20 @@
 #include <universal/assertive.h>
 #include <universal/q_shared.h>
 
+#if defined(__ANDROID__)
+// The compressed mip stream has byte alignment: an RGB base mip consumes three
+// bytes and subsequent bit refills advance by arbitrary byte counts.
+static unsigned Wavelet_ReadLE16(const unsigned __int8 *data)
+{
+    return static_cast<unsigned>(data[0]) | (static_cast<unsigned>(data[1]) << 8);
+}
+static unsigned Wavelet_ReadLE32(const unsigned __int8 *data)
+{
+    return Wavelet_ReadLE16(data) | (static_cast<unsigned>(data[2]) << 16) |
+           (static_cast<unsigned>(data[3]) << 24);
+}
+#endif
+
 const WaveletHuffmanDecode waveletDecodeAlpha[4096] =
 {
   { 32768, 4 },
@@ -12358,7 +12372,11 @@ void __cdecl Wavelet_DecompressLevel(unsigned __int8 *src, unsigned __int8 *dst,
     {
         if (!decode->dataInitialized)
         {
+#if defined(__ANDROID__)
+            decode->value = Wavelet_ReadLE16(decode->data);
+#else
             decode->value = *(unsigned short *)decode->data;
+#endif
             decode->bit = 0;
             decode->data += 2;
             decode->dataInitialized = 1;
@@ -12490,9 +12508,13 @@ void __cdecl Wavelet_ConsumeBits(unsigned __int16 bitCount, WaveletDecode *decod
         __debugbreak();
     }
     decode->value >>= bitCount;
+#if defined(__ANDROID__)
+    decode->value |= Wavelet_ReadLE32(decode->data) >> decode->bit << (16 - bitCount);
+#else
     decode->value |= ((*((unsigned __int8 *)decode->data + 3) << 24)
                                     | (*((unsigned __int8 *)decode->data + 2) << 16)
                                     | (unsigned int)*(unsigned __int16 *)decode->data) >> decode->bit << (16 - bitCount);
+#endif
     decode->bit += bitCount;
     decode->data += (int)decode->bit >> 3;
     decode->bit &= 7u;

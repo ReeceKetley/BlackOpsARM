@@ -1,4 +1,16 @@
 #include "destructible.h"
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+#include <cstring>
+#endif
+
+static inline void BO1_DestructiblePrefetch(const char *address)
+{
+#if defined(__ANDROID__)
+    __builtin_prefetch(address, 0, 1);
+#else
+    _mm_prefetch(address, 1);
+#endif
+}
 #include <game_mp/g_utils_mp.h>
 #include <game_mp/g_main_mp.h>
 #include <cgame_mp/cg_local_mp.h>
@@ -1875,9 +1887,15 @@ int __cdecl G_GetTagTransform(gentity_s *ent, DestructibleDef *ddef, int pieceIn
     if ( boneName && Com_GetServerDObj(ent->s.number) && G_DObjGetWorldTagMatrix(ent, boneName, tagMat) )
         return boneName;
     AnglesToAxis(ent->r.currentAngles, tagMat);
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+    tagMat[3][0] = ent->r.currentOrigin[0];
+    tagMat[3][1] = ent->r.currentOrigin[1];
+    tagMat[3][2] = ent->r.currentOrigin[2];
+#else
     (*tagMat)[9] = ent->r.currentOrigin[0];
     (*tagMat)[10] = ent->r.currentOrigin[1];
     (*tagMat)[11] = ent->r.currentOrigin[2];
+#endif
     return boneName;
 }
 
@@ -2278,20 +2296,20 @@ void __cdecl CG_UpdateDestructibles(int localClientNum, int msec)
 {
     unsigned int i; // [esp+40h] [ebp-8h]
 
-    _mm_prefetch((const char *)cg_destructibles[localClientNum], 1);
-    _mm_prefetch((const char *)&cg_destructibles[localClientNum][1], 1);
-    _mm_prefetch((const char *)&cg_destructibles[localClientNum][2], 1);
-    _mm_prefetch((const char *)&cg_destructibles[localClientNum][3], 1);
-    _mm_prefetch((const char *)&cg_destructibles[localClientNum][4], 1);
-    _mm_prefetch((const char *)&cg_destructibles[localClientNum][5], 1);
-    _mm_prefetch((const char *)&cg_destructibles[localClientNum][6], 1);
+    BO1_DestructiblePrefetch((const char *)cg_destructibles[localClientNum]);
+    BO1_DestructiblePrefetch((const char *)&cg_destructibles[localClientNum][1]);
+    BO1_DestructiblePrefetch((const char *)&cg_destructibles[localClientNum][2]);
+    BO1_DestructiblePrefetch((const char *)&cg_destructibles[localClientNum][3]);
+    BO1_DestructiblePrefetch((const char *)&cg_destructibles[localClientNum][4]);
+    BO1_DestructiblePrefetch((const char *)&cg_destructibles[localClientNum][5]);
+    BO1_DestructiblePrefetch((const char *)&cg_destructibles[localClientNum][6]);
     cg_updateTime[localClientNum] += msec;
     if ( cg_updateTime[localClientNum] > 300 )
     {
         cg_updateTime[localClientNum] -= 300;
         for ( i = 0; i < cg_numDestructibles[localClientNum]; ++i )
         {
-            _mm_prefetch((const char *)&cg_destructibles[localClientNum][i + 7], 1);
+            BO1_DestructiblePrefetch((const char *)&cg_destructibles[localClientNum][i + 7]);
             if ( cg_destructibles[localClientNum][i].entNum != 1023 )
             {
                 CG_DestructibleUpdateBurn(localClientNum, &cg_destructibles[localClientNum][i]);
@@ -2858,8 +2876,12 @@ void __cdecl CG_DestructibleHitEvent(int localClientNum, int event, const entity
                             {
                                 CG_DObjGetWorldTagMatrix(&self->pose, obj, boneName, bone_axis, bone_axis[3]);
                                 v7 = bone_axis[3];
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+                                std::memcpy(hitp, bone_axis[3], sizeof(hitp));
+#else
                                 *(_QWORD *)hitp = *(_QWORD *)&bone_axis[3][0];
                                 hitp[2] = bone_axis[3][2];
+#endif
                             }
                             else
                             {
@@ -3593,12 +3615,21 @@ void __cdecl Vec3RotateTranspose(const float *in, const float (*matrix)[3], floa
     {
         __debugbreak();
     }
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+    *out = (float)((float)(*in * matrix[0][0]) + (float)(in[1] * (float)matrix[1][0]))
+             + (float)(in[2] * (float)matrix[2][0]);
+    out[1] = (float)((float)(*in * (float)matrix[0][1]) + (float)(in[1] * (float)matrix[1][1]))
+                 + (float)(in[2] * (float)matrix[2][1]);
+    out[2] = (float)((float)(*in * (float)matrix[0][2]) + (float)(in[1] * (float)matrix[1][2]))
+                 + (float)(in[2] * (float)matrix[2][2]);
+#else
     *out = (float)((float)(*in * (*matrix)[0]) + (float)(in[1] * (float)(*matrix)[3]))
              + (float)(in[2] * (float)(*matrix)[6]);
     out[1] = (float)((float)(*in * (float)(*matrix)[1]) + (float)(in[1] * (float)(*matrix)[4]))
                  + (float)(in[2] * (float)(*matrix)[7]);
     out[2] = (float)((float)(*in * (float)(*matrix)[2]) + (float)(in[1] * (float)(*matrix)[5]))
                  + (float)(in[2] * (float)(*matrix)[8]);
+#endif
 }
 
 void __cdecl CG_DestructibleUpdatePoses(int localClientNum, int msec)

@@ -4,7 +4,11 @@
 #include <qcommon/cm_load.h>
 #include <cgame_mp/cg_local_mp.h>
 #include <universal/dvar.h>
+#if defined(_WIN32)
 #include <intrin.h>
+#elif defined(__ANDROID__)
+#include <dlfcn.h>
+#endif
 #include <windows.h>
 
 CgEntCollNode cgEntCollNodes_data[1][MAX_CL_ENTNUM]; // mod (L43): retail [1536]
@@ -17,7 +21,11 @@ CgEntCollNode *cgEntCollNodes[1] = { cgEntCollNodes_data[0] };
 // free sectors hold no entities). The first failure prints the ops since the last good check (op, entity, the node's
 // sector before and after, the entity's eType/number, the caller as exe offset) once.
 static const dvar_s *cg_collTreeCheck;
-struct CgCollOp { unsigned short ent, before, after; unsigned char op, eType; int number; uintptr_t caller; };
+struct CgCollOp { unsigned short ent, before, after; unsigned char op, eType; int number; uintptr_t caller;
+#if defined(__ANDROID__)
+    bool moduleRelative;
+#endif
+};
 static CgCollOp s_collOps[256];
 static unsigned int s_collOpCount, s_collOpsSinceCheck;
 static bool s_collTreeReported;
@@ -93,8 +101,14 @@ static void CG_CollTreeOp(int localClientNum, unsigned int entIndex, int op, uin
             for (unsigned int k = s_collOpCount - n; k != s_collOpCount; ++k)
             {
                 const CgCollOp *o = &s_collOps[k & 255];
+#if defined(__ANDROID__)
+                Com_Printf(1, "BO1_COLLTREE op %u: %s ent %u sector %u -> %u eType %u number %d caller %s0x%llX\n", k,
+                    o->op ? "link" : "unlink", o->ent, o->before, o->after, o->eType, o->number,
+                    o->moduleRelative ? "module+" : "address ", static_cast<unsigned long long>(o->caller));
+#else
                 Com_Printf(1, "BO1_COLLTREE op %u: %s ent %u sector %u -> %u eType %u number %d caller +0x%llX\n", k,
                     o->op ? "link" : "unlink", o->ent, o->before, o->after, o->eType, o->number, static_cast<unsigned long long>(o->caller));
+#endif
             }
             return;
         }
@@ -107,7 +121,16 @@ static void CG_CollTreeOp(int localClientNum, unsigned int entIndex, int op, uin
     o->before = o->after = cgEntCollNodes[localClientNum][entIndex].sector;
     o->eType = (unsigned char)cent->nextState.eType;
     o->number = cent->nextState.number;
+#if defined(__ANDROID__)
+    Dl_info module{};
+    o->moduleRelative=dladdr(reinterpret_cast<const void *>(caller),&module) && module.dli_fbase;
+    if(o->moduleRelative)
+        o->caller=caller-reinterpret_cast<uintptr_t>(module.dli_fbase);
+    else
+        o->caller=caller; // Retain the real address when symbol/module lookup fails.
+#else
     o->caller = caller - reinterpret_cast<uintptr_t>(GetModuleHandleA(0));
+#endif
 }
 
 

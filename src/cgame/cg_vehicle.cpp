@@ -350,7 +350,11 @@ void    CG_Vehicle_PreControllers(
     barrelPitchAlreadySet = 0;
     if (!cent->vehicle)
     {
+#if defined(__ANDROID__)
+        cent->vehicle = (cgVehicle_s *)MT_Alloc(sizeof(cgVehicle_s), 21, SCRIPTINSTANCE_SERVER);
+#else
         cent->vehicle = (cgVehicle_s *)MT_Alloc(84, 21, SCRIPTINSTANCE_SERVER);
+#endif
         if (!cent->vehicle
             && !Assert_MyHandler("C:\\projects_pc\\cod\\codsrc\\src\\cgame\\cg_vehicle.cpp", 347, 0, "%s", "cent->vehicle"))
         {
@@ -385,7 +389,11 @@ void    CG_Vehicle_PreControllers(
     }
     if (!cent->vehicle->vehicle_cache && numWheels > 0)
     {
+#if defined(__ANDROID__)
+        cent->vehicle->vehicle_cache = (vehicle_cache_t *)MT_Alloc(sizeof(vehicle_cache_t), 21, SCRIPTINSTANCE_SERVER);
+#else
         cent->vehicle->vehicle_cache = (vehicle_cache_t *)MT_Alloc(1928, 21, SCRIPTINSTANCE_SERVER);
+#endif
         if (!cent->vehicle->vehicle_cache
             && !Assert_MyHandler(
                 "C:\\projects_pc\\cod\\codsrc\\src\\cgame\\cg_vehicle.cpp",

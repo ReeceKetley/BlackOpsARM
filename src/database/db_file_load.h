@@ -2,6 +2,7 @@
 #include "db_zone_types.h"
 
 #include <Windows.h>
+#include <platform/win32_compat/async_file_types.h>
 #include <zlib/zlib.h>
 #include "db_registry.h"
 
@@ -74,7 +75,14 @@ char __cdecl DB_LoadXFile(
 
 extern XAssetList *varXAssetList;
 
+#if defined(__ANDROID__)
+#include <atomic>
+extern std::atomic<unsigned int> g_loadingAssets;
+static_assert(sizeof(std::atomic<unsigned int>) == 4);
+static_assert(std::atomic<unsigned int>::is_always_lock_free);
+#else
 extern volatile unsigned int g_loadingAssets;
+#endif
 
 // Trace/debug: bytes consumed from the decompressed FastFile stream since the zone's streams were initialised.
 unsigned long long DB_XFileBytesLoaded();

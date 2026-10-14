@@ -1,5 +1,8 @@
 #pragma once
 
+#include <universal/dvar.h>
+extern const dvar_t *gpad_enabled;
+
 enum GamepadPhysicalAxis : __int32
 {                                       // XREF: GamepadVirtualAxisMapping/r
                                         // StickToCodeMap/r ...
@@ -14,7 +17,7 @@ enum GamepadPhysicalAxis : __int32
     GPAD_PHYSAXIS_RTRIGGER = 0x4,
     GPAD_PHYSAXIS_LTRIGGER = 0x5,
     GPAD_PHYSAXIS_COUNT    = 0x6,
-    GPAD_PHYSAXIS_NONE     = 0xFFFFFFFF, // XREF: .data:axisSameStick/s
+    GPAD_PHYSAXIS_NONE     = -1, // XREF: .data:axisSameStick/s
 };
 
 enum GamePadStickDir : __int32
@@ -35,7 +38,7 @@ enum GamepadVirtualAxis : __int32
     GPAD_VIRTAXIS_PITCH   = 0x4,
     GPAD_VIRTAXIS_ATTACK  = 0x5,
     GPAD_VIRTAXIS_COUNT   = 0x6,
-    GPAD_VIRTAXIS_NONE    = 0xFFFFFFFF,
+    GPAD_VIRTAXIS_NONE    = -1,
 };
 inline GamepadVirtualAxis &operator++(GamepadVirtualAxis &t)
 {
@@ -55,7 +58,7 @@ enum GamepadMapping : __int32
     GPAD_MAP_LINEAR  = 0x0,
     GPAD_MAP_SQUARED = 0x1,
     GPAD_MAP_COUNT   = 0x2,
-    GPAD_MAP_NONE    = 0xFFFFFFFF,
+    GPAD_MAP_NONE    = -1,
 };
 
 
@@ -106,6 +109,11 @@ struct GpadAxesGlob // sizeof=0x48
                                         // Axis_Unbindall_f+2E/w
 };
 
+#if defined(__ANDROID__)
+static_assert(sizeof(GamepadVirtualAxisMapping) == 8);
+static_assert(sizeof(GpadAxesGlob) == 72);
+#endif
+
 void __cdecl CL_ResetLastGamePadEventTime();
 void __cdecl CL_InitGamepadCommands();
 void __cdecl Bind_GP_SticksConfigs_f();
@@ -138,9 +146,32 @@ void __cdecl CL_GamepadButtonEvent(
                 GamePadButton gamePadButton);
 bool __cdecl CL_CheckForIgnoreDueToRepeat(int localClientNum, int key, int repeatCount, int time);
 char __cdecl IsGamepadKey(int key);
+double __cdecl GPad_GetButton(int portIndex, GamePadButton button);
+// Platform state queries used by canonical engine input; independent of XInput ABI.
+bool __cdecl GPad_IsStickPressed(int portIndex, GamePadStick stick, GamePadStickDir stickDir);
+bool __cdecl GPad_IsStickReleased(int portIndex, GamePadStick stick, GamePadStickDir stickDir);
+bool __cdecl GPad_IsButtonPressed(int portIndex, GamePadButton button);
+bool __cdecl GPad_IsActive(int portIndex);
+double __cdecl GPad_GetStick(int portIndex, GamePadStick stick);
 void __cdecl CL_GamepadButtonEventForPort(
                 int portIndex,
                 int key,
                 int buttonEvent,
                 unsigned int time,
                 GamePadButton button);
+
+// Shared controller configuration; independent of XInput device types.
+extern const dvar_t *gpad_debug;
+extern const dvar_t *gpad_button_lstick_deflect_max;
+extern const dvar_t *gpad_button_rstick_deflect_max;
+extern const dvar_t *gpad_button_deadzone;
+extern const dvar_t *gpad_stick_deadzone_min;
+extern const dvar_t *gpad_stick_deadzone_max;
+extern const dvar_t *gpad_stick_pressed;
+extern const dvar_t *gpad_stick_pressed_hysteresis;
+extern const dvar_t *gpad_rumble;
+extern const dvar_t *gpad_menu_scroll_delay_first;
+extern const dvar_t *gpad_menu_scroll_delay_rest;
+extern const dvar_t *gpad_buttonsConfig;
+extern const dvar_t *gpad_sticksConfig;
+extern const dvar_t *gpad_present;

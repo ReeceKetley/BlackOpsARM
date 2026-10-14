@@ -6,6 +6,10 @@
 #include <qcommon/common.h>
 #include "record_dsound.h"
 #include <win32/win_voice.h>
+#if defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST)
+#include <algorithm>
+#include <cmath>
+#endif
 
 int(__cdecl *current_audioCallback)(audioSample_t *);
 
@@ -24,6 +28,35 @@ void __cdecl Record_SetRecordingCallback(int (__cdecl *new_audioCallback)(audioS
 
 int __cdecl Record_QueueAudioDataForEncoding(audioSample_t *sample)
 {
+#if defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST)
+    if (!sample || !sample->buffer || sample->bytesPerSample != 2 || sample->channels != 1 ||
+        sample->lengthInSamples < 0 || sample->lengthInSamples > 4096 ||
+        sample->lengthInBytes != sample->lengthInSamples * 2 || !std::isfinite(voice_current_scaler))
+    { Com_PrintError(9, "Invalid actual voice PCM capture bounds\n"); return 0; }
+    auto *pcm=reinterpret_cast<short *>(sample->buffer);voice_current_voicelevel=0;
+    for(int i=0;i<sample->lengthInSamples;++i) {
+        pcm[i]=static_cast<short>(std::clamp(pcm[i]*voice_current_scaler,-32768.0f,32767.0f));
+        voice_current_voicelevel+=std::abs(static_cast<int>(pcm[i]));
+    }
+    if(sample->lengthInSamples)voice_current_voicelevel/=sample->lengthInSamples;
+    if(!Voice_SendVoiceData() || !IN_IsTalkKeyHeld()) {samples_in_partial_audio_buffer=0;CL_VoiceTransmit(0);return 0;}
+    const int frame=Encode_GetFrameSize();
+    if(frame<=0 || frame>640 || samples_in_partial_audio_buffer<0 || samples_in_partial_audio_buffer>=frame)
+    {Com_PrintError(9,"Invalid actual Speex frame assembly bounds\n");return 0;}
+    int offset=0,total=0;
+    while(offset<sample->lengthInSamples) {
+        const int copy=(std::min)(frame-samples_in_partial_audio_buffer,sample->lengthInSamples-offset);
+        memcpy(partial_audio_buffer+samples_in_partial_audio_buffer,pcm+offset,copy*sizeof(short));
+        offset+=copy;samples_in_partial_audio_buffer+=copy;
+        if(samples_in_partial_audio_buffer==frame) {
+            const int bytes=Encode_Sample(partial_audio_buffer,enc_buffer,sizeof(enc_buffer));
+            samples_in_partial_audio_buffer=0;
+            if(bytes<0) {Com_PrintError(9,"Actual Speex frame encode failed\n");return total;}
+            if(bytes) {Client_SendVoiceData(bytes,enc_buffer);total+=bytes;}
+        }
+    }
+    sample->sampleOffset=offset;return total;
+#else
     __int64 v1; // rax
     int v3; // [esp+0h] [ebp-2028h]
     int v4; // [esp+8h] [ebp-2020h]
@@ -133,6 +166,7 @@ int __cdecl Record_QueueAudioDataForEncoding(audioSample_t *sample)
         CL_VoiceTransmit(0);
         return 0;
     }
+#endif
 }
 
 int __cdecl Record_AudioCallback(audioSample_t *sample)
@@ -162,6 +196,9 @@ int __cdecl Record_DestroySample(dsound_sample_t *sample)
 
 void __cdecl Record_Shutdown()
 {
+#if defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST)
+    samples_in_partial_audio_buffer=0;enc_buffer_pos=0;voice_current_voicelevel=0;
+#endif
     Encode_Shutdown();
     DSOUNDRecord_Shutdown();
 }

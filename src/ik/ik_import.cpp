@@ -1,3 +1,9 @@
+#if defined(BO1_NATIVE_IK_INIT)
+#include <platform/common_boot_api.h>
+#include <ik/ik_system.h>
+#include <qcommon/clipmap_state.h>
+#include <clientscript/cscr_stringlist.h>
+#else
 #include "ik_import.h"
 #include <clientscript/cscr_stringlist.h>
 #include <xanim/dobj_utils.h>
@@ -20,37 +26,11 @@ bool forcePlayerClip;
 
 IKLayerNames offLayer = IKLAYER_COUNT;
 
-unsigned __int16 ikImportMiscBoneStringVars[3];
+extern unsigned __int16 ikImportMiscBoneStringVars[3];
 
-const char *ikImportBoneStrings[23] =
-{
-  "tag_origin",
-  "j_mainroot",
-  "j_spinelower",
-  "j_spineupper",
-  "j_spine4",
-  "j_neck",
-  "j_head",
-  "j_clavicle_le",
-  "j_shoulder_le",
-  "j_elbow_le",
-  "j_wrist_le",
-  "j_wristtwist_le",
-  "j_clavicle_ri",
-  "j_shoulder_ri",
-  "j_elbow_ri",
-  "j_wrist_ri",
-  "j_hip_le",
-  "j_knee_le",
-  "j_ankle_le",
-  "j_hip_ri",
-  "j_knee_ri",
-  "j_ankle_ri",
-  "tag_weapon_right"
-};
+extern const char *ikImportBoneStrings[23];
 
-const char *ikImportMiscBoneStrings[3] =
-{ "left_hand_ik", "right_hand_ik", "tag_head" };
+extern const char *ikImportMiscBoneStrings[3];
 
 IKBoneNames minBoneExtents[6] =
 {
@@ -64,119 +44,9 @@ IKBoneNames minBoneExtents[6] =
 
 int notMovedTime = 200;
 
-unsigned __int16 ikImportBoneStringVars[24];
+extern unsigned __int16 ikImportBoneStringVars[24];
 
-void __cdecl IKImport_InitVars(IKSystem *ikSystem)
-{
-    ikSystem->localClipMap = (unsigned __int8 *)CM_GetClipMap();
-    ikSystem->dvars[0] = _Dvar_RegisterBool("ik_enable", 1, 0x4080u, "Turn on/off IK");
-    ikSystem->dvars[1] = _Dvar_RegisterInt(
-                                                 "ik_debug",
-                                                 0,
-                                                 0,
-                                                 2,
-                                                 0x4080u,
-                                                 "Set to one of the IK debug values in ik_types.h");
-    ikSystem->dvars[2] = _Dvar_RegisterBool("ik_pelvis_test", 0, 0x4080u, "Turn on/off IK pelvis test");
-    ikSystem->dvars[3] = _Dvar_RegisterBool("ik_foot_test", 0, 0x4080u, "Turn on/off IK foot test");
-    ikSystem->dvars[4] = _Dvar_RegisterBool("ik_hand_test", 0, 0x4080u, "Turn on/off IK hand test");
-    ikSystem->dvars[5] = _Dvar_RegisterBool("ik_left_hand_lerp_test", 0, 0x4080u, "Turn on/off left-hand lerp test");
-    ikSystem->dvars[6] = _Dvar_RegisterBool("ik_right_hand_lerp_test", 0, 0x4080u, "Turn on/off right-hand lerp test");
-    ikSystem->dvars[7] = _Dvar_RegisterBool("ik_enable_player_hand", 1, 0x4080u, "Turn on/off player hand IK");
-    ikSystem->dvars[8] = _Dvar_RegisterBool("ik_enable_player_terrain", 1, 0x4080u, "Turn on/off player terrain IK");
-    ikSystem->dvars[9] = _Dvar_RegisterBool("ik_enable_ai_hand", 0, 0x4080u, "Turn on/off AI hand IK");
-    ikSystem->dvars[10] = _Dvar_RegisterInt(
-                                                    "ik_enable_ai_terrain",
-                                                    2,
-                                                    0,
-                                                    2,
-                                                    0x4080u,
-                                                    "Turn on/off AI terrain IK (0 = OFF, 1 = All, 2 = Heros)");
-    ikSystem->dvars[11] = _Dvar_RegisterInt(
-                                                    "ik_ai_hand_tuning",
-                                                    0,
-                                                    0,
-                                                    2,
-                                                    0x4080u,
-                                                    "Turn on/off AI hand IK tuning. 1 = Use anim flag. 2 = Force on for all anims.");
-    ikSystem->dvars[12] = _Dvar_RegisterVec3(
-                                                    "ik_ai_hand_offset_vec",
-                                                    (0.0),
-                                                    (0.0),
-                                                    (0.0),
-                                                    -10.0,
-                                                    10.0,
-                                                    0x4080u,
-                                                    "Offset vector for hand tuning");
-    ikSystem->dvars[13] = _Dvar_RegisterVec3(
-                                                    "ik_ai_hand_rotation_vec",
-                                                    (0.0),
-                                                    (0.0),
-                                                    (0.0),
-                                                    -180.0,
-                                                    180.0,
-                                                    0x4080u,
-                                                    "Rotation vector for hand tuning");
-    ikSystem->dvars[14] = _Dvar_RegisterBool(
-                                                    "ik_paranoid_matrix_checks",
-                                                    0,
-                                                    0x4080u,
-                                                    "Turn on/off THOROUGH matrix validity checks");
-    ikSystem->dvars[15] = _Dvar_RegisterFloat(
-                                                    "ik_actor_tracking_scale",
-                                                    1.0,
-                                                    0.0,
-                                                    1.0,
-                                                    0x4080u,
-                                                    "Adjust the amount of rotation that is applied during head/eye tracking");
-    ikSystem->dvars[16] = _Dvar_RegisterFloat(
-                                                    "ik_pitch_limit_thresh",
-                                                    10.0,
-                                                    0.0,
-                                                    180.0,
-                                                    0x1000u,
-                                                    "Pitch angle at which headtracking starts to be constrained");
-    ikSystem->dvars[17] = _Dvar_RegisterFloat(
-                                                    "ik_pitch_limit_max",
-                                                    60.0,
-                                                    0.0,
-                                                    180.0,
-                                                    0x1000u,
-                                                    "Pitch angle at which headtracking is entirely constrained");
-    ikSystem->dvars[18] = _Dvar_RegisterFloat(
-                                                    "ik_roll_limit_thresh",
-                                                    30.0,
-                                                    0.0,
-                                                    180.0,
-                                                    0x1000u,
-                                                    "Roll angle at which headtracking starts to be constrained");
-    ikSystem->dvars[19] = _Dvar_RegisterFloat(
-                                                    "ik_roll_limit_max",
-                                                    100.0,
-                                                    0.0,
-                                                    180.0,
-                                                    0x1000u,
-                                                    "Roll angle at which headtracking is entirely constrained");
-    ikSystem->dvars[20] = _Dvar_RegisterFloat(
-                                                    "ik_yaw_limit_thresh",
-                                                    10.0,
-                                                    0.0,
-                                                    180.0,
-                                                    0x1000u,
-                                                    "Yaw angle at which headtracking starts to be constrained");
-    ikSystem->dvars[21] = _Dvar_RegisterFloat(
-                                                    "ik_yaw_limit_max",
-                                                    90.0,
-                                                    0.0,
-                                                    180.0,
-                                                    0x1000u,
-                                                    "Yaw angle at which headtracking is entirely constrained");
-    ikSystem->dvars[22] = _Dvar_RegisterBool(
-                                                    "ik_dvar_lookatentity_notorso",
-                                                    0,
-                                                    0x1000u,
-                                                    "No torso deformation in lookatentity transforms");
-}
+
 
 bool __cdecl IKImport_GetVar_IK_Enable()
 {
@@ -243,21 +113,7 @@ int __cdecl IKImport_GetVar_IK_Hand_Tuning(IKState *ikState)
     return ikState->dvarValues[11].integer;
 }
 
-void __cdecl IKImport_GetBoneStrings(char **outBoneStrings)
-{
-    int i; // [esp+0h] [ebp-4h]
-    int ia; // [esp+0h] [ebp-4h]
 
-    for ( i = 0; i < 23; ++i )
-    {
-        ikImportBoneStringVars[i] = Scr_AllocString((char *)ikImportBoneStrings[i], 1, SCRIPTINSTANCE_SERVER);
-        outBoneStrings[i] = (char *)ikImportBoneStrings[i];
-    }
-    for ( ia = 0; ia < 3; ++ia )
-        ikImportMiscBoneStringVars[ia] = Scr_AllocString((char *)ikImportMiscBoneStrings[ia], 1, SCRIPTINSTANCE_SERVER);
-    ikSystem.ikImportBoneStringVars = ikImportBoneStringVars;
-    ikSystem.ikImportMiscBoneStringVars = ikImportMiscBoneStringVars;
-}
 
 char __cdecl IKImport_GetBoneLookups(IKState *ikState, IKBoneNames ikBoneName)
 {
@@ -1381,18 +1237,18 @@ void __cdecl IKImport_DrawAxisOrigin(float (*mat44)[4], float colorScale)
     blue[1] = colorScale * 0.0;
     blue[2] = colorScale * 1.0;
     blue[3] = colorScale * 1.0;
-    end[0] = (float)(5.0 * (*mat44)[0]) + (*mat44)[12];
-    end[1] = (float)(5.0 * (*mat44)[1]) + (*mat44)[13];
-    end[2] = (float)(5.0 * (*mat44)[2]) + (*mat44)[14];
-    CG_DebugLine(&(*mat44)[12], end, red, 0, 1);
-    end[0] = (float)(5.0 * (*mat44)[4]) + (*mat44)[12];
-    end[1] = (float)(5.0 * (*mat44)[5]) + (*mat44)[13];
-    end[2] = (float)(5.0 * (*mat44)[6]) + (*mat44)[14];
-    CG_DebugLine(&(*mat44)[12], end, green, 0, 1);
-    end[0] = (float)(5.0 * (*mat44)[8]) + (*mat44)[12];
-    end[1] = (float)(5.0 * (*mat44)[9]) + (*mat44)[13];
-    end[2] = (float)(5.0 * (*mat44)[10]) + (*mat44)[14];
-    CG_DebugLine(&(*mat44)[12], end, blue, 0, 1);
+    end[0] = (float)(5.0 * mat44[0][0]) + mat44[3][0];
+    end[1] = (float)(5.0 * mat44[0][1]) + mat44[3][1];
+    end[2] = (float)(5.0 * mat44[0][2]) + mat44[3][2];
+    CG_DebugLine(&mat44[3][0], end, red, 0, 1);
+    end[0] = (float)(5.0 * mat44[1][0]) + mat44[3][0];
+    end[1] = (float)(5.0 * mat44[1][1]) + mat44[3][1];
+    end[2] = (float)(5.0 * mat44[1][2]) + mat44[3][2];
+    CG_DebugLine(&mat44[3][0], end, green, 0, 1);
+    end[0] = (float)(5.0 * mat44[2][0]) + mat44[3][0];
+    end[1] = (float)(5.0 * mat44[2][1]) + mat44[3][1];
+    end[2] = (float)(5.0 * mat44[2][2]) + mat44[3][2];
+    CG_DebugLine(&mat44[3][0], end, blue, 0, 1);
 }
 
 void __cdecl IKImport_DrawLine(float *start, float *end, int colorType)
@@ -1439,9 +1295,14 @@ void IKImport_DebugPrint(const char *fmt, ...)
 
     va_start(va, fmt);
     maxDebugPrintMsg = 256;
+#if defined(__ANDROID__)
+    vsnprintf(msg, 0x100u, fmt, va);
+#else
     _vsnprintf(msg, 0x100u, fmt, va);
+#endif
+    va_end(va);
     msg[255] = 0;
-    Com_Printf(0, msg);
+    Com_Printf(0, "%s", msg);
 }
 
 clientInfo_t *__cdecl IKImport_GetClientInfo(IKState *ikState)
@@ -2750,3 +2611,162 @@ double __cdecl IKImport_GetMaxLayerLerp(IKState *ikState)
     return max;
 }
 
+
+#endif
+const char *ikImportBoneStrings[23] =
+{
+  "tag_origin",
+  "j_mainroot",
+  "j_spinelower",
+  "j_spineupper",
+  "j_spine4",
+  "j_neck",
+  "j_head",
+  "j_clavicle_le",
+  "j_shoulder_le",
+  "j_elbow_le",
+  "j_wrist_le",
+  "j_wristtwist_le",
+  "j_clavicle_ri",
+  "j_shoulder_ri",
+  "j_elbow_ri",
+  "j_wrist_ri",
+  "j_hip_le",
+  "j_knee_le",
+  "j_ankle_le",
+  "j_hip_ri",
+  "j_knee_ri",
+  "j_ankle_ri",
+  "tag_weapon_right"
+};
+const char *ikImportMiscBoneStrings[3] =
+{ "left_hand_ik", "right_hand_ik", "tag_head" };
+unsigned __int16 ikImportBoneStringVars[24];
+unsigned __int16 ikImportMiscBoneStringVars[3];
+void __cdecl IKImport_InitVars(IKSystem *ikSystem)
+{
+    ikSystem->localClipMap = (unsigned __int8 *)CM_GetClipMap();
+    ikSystem->dvars[0] = _Dvar_RegisterBool("ik_enable", 1, 0x4080u, "Turn on/off IK");
+    ikSystem->dvars[1] = _Dvar_RegisterInt(
+                                                 "ik_debug",
+                                                 0,
+                                                 0,
+                                                 2,
+                                                 0x4080u,
+                                                 "Set to one of the IK debug values in ik_types.h");
+    ikSystem->dvars[2] = _Dvar_RegisterBool("ik_pelvis_test", 0, 0x4080u, "Turn on/off IK pelvis test");
+    ikSystem->dvars[3] = _Dvar_RegisterBool("ik_foot_test", 0, 0x4080u, "Turn on/off IK foot test");
+    ikSystem->dvars[4] = _Dvar_RegisterBool("ik_hand_test", 0, 0x4080u, "Turn on/off IK hand test");
+    ikSystem->dvars[5] = _Dvar_RegisterBool("ik_left_hand_lerp_test", 0, 0x4080u, "Turn on/off left-hand lerp test");
+    ikSystem->dvars[6] = _Dvar_RegisterBool("ik_right_hand_lerp_test", 0, 0x4080u, "Turn on/off right-hand lerp test");
+    ikSystem->dvars[7] = _Dvar_RegisterBool("ik_enable_player_hand", 1, 0x4080u, "Turn on/off player hand IK");
+    ikSystem->dvars[8] = _Dvar_RegisterBool("ik_enable_player_terrain", 1, 0x4080u, "Turn on/off player terrain IK");
+    ikSystem->dvars[9] = _Dvar_RegisterBool("ik_enable_ai_hand", 0, 0x4080u, "Turn on/off AI hand IK");
+    ikSystem->dvars[10] = _Dvar_RegisterInt(
+                                                    "ik_enable_ai_terrain",
+                                                    2,
+                                                    0,
+                                                    2,
+                                                    0x4080u,
+                                                    "Turn on/off AI terrain IK (0 = OFF, 1 = All, 2 = Heros)");
+    ikSystem->dvars[11] = _Dvar_RegisterInt(
+                                                    "ik_ai_hand_tuning",
+                                                    0,
+                                                    0,
+                                                    2,
+                                                    0x4080u,
+                                                    "Turn on/off AI hand IK tuning. 1 = Use anim flag. 2 = Force on for all anims.");
+    ikSystem->dvars[12] = _Dvar_RegisterVec3(
+                                                    "ik_ai_hand_offset_vec",
+                                                    (0.0),
+                                                    (0.0),
+                                                    (0.0),
+                                                    -10.0,
+                                                    10.0,
+                                                    0x4080u,
+                                                    "Offset vector for hand tuning");
+    ikSystem->dvars[13] = _Dvar_RegisterVec3(
+                                                    "ik_ai_hand_rotation_vec",
+                                                    (0.0),
+                                                    (0.0),
+                                                    (0.0),
+                                                    -180.0,
+                                                    180.0,
+                                                    0x4080u,
+                                                    "Rotation vector for hand tuning");
+    ikSystem->dvars[14] = _Dvar_RegisterBool(
+                                                    "ik_paranoid_matrix_checks",
+                                                    0,
+                                                    0x4080u,
+                                                    "Turn on/off THOROUGH matrix validity checks");
+    ikSystem->dvars[15] = _Dvar_RegisterFloat(
+                                                    "ik_actor_tracking_scale",
+                                                    1.0,
+                                                    0.0,
+                                                    1.0,
+                                                    0x4080u,
+                                                    "Adjust the amount of rotation that is applied during head/eye tracking");
+    ikSystem->dvars[16] = _Dvar_RegisterFloat(
+                                                    "ik_pitch_limit_thresh",
+                                                    10.0,
+                                                    0.0,
+                                                    180.0,
+                                                    0x1000u,
+                                                    "Pitch angle at which headtracking starts to be constrained");
+    ikSystem->dvars[17] = _Dvar_RegisterFloat(
+                                                    "ik_pitch_limit_max",
+                                                    60.0,
+                                                    0.0,
+                                                    180.0,
+                                                    0x1000u,
+                                                    "Pitch angle at which headtracking is entirely constrained");
+    ikSystem->dvars[18] = _Dvar_RegisterFloat(
+                                                    "ik_roll_limit_thresh",
+                                                    30.0,
+                                                    0.0,
+                                                    180.0,
+                                                    0x1000u,
+                                                    "Roll angle at which headtracking starts to be constrained");
+    ikSystem->dvars[19] = _Dvar_RegisterFloat(
+                                                    "ik_roll_limit_max",
+                                                    100.0,
+                                                    0.0,
+                                                    180.0,
+                                                    0x1000u,
+                                                    "Roll angle at which headtracking is entirely constrained");
+    ikSystem->dvars[20] = _Dvar_RegisterFloat(
+                                                    "ik_yaw_limit_thresh",
+                                                    10.0,
+                                                    0.0,
+                                                    180.0,
+                                                    0x1000u,
+                                                    "Yaw angle at which headtracking starts to be constrained");
+    ikSystem->dvars[21] = _Dvar_RegisterFloat(
+                                                    "ik_yaw_limit_max",
+                                                    90.0,
+                                                    0.0,
+                                                    180.0,
+                                                    0x1000u,
+                                                    "Yaw angle at which headtracking is entirely constrained");
+    ikSystem->dvars[22] = _Dvar_RegisterBool(
+                                                    "ik_dvar_lookatentity_notorso",
+                                                    0,
+                                                    0x1000u,
+                                                    "No torso deformation in lookatentity transforms");
+}
+
+void __cdecl IKImport_GetBoneStrings(char **outBoneStrings)
+{
+    int i; // [esp+0h] [ebp-4h]
+    int ia; // [esp+0h] [ebp-4h]
+
+    for ( i = 0; i < 23; ++i )
+    {
+        ikImportBoneStringVars[i] = Scr_AllocString((char *)ikImportBoneStrings[i], 1, SCRIPTINSTANCE_SERVER);
+        outBoneStrings[i] = (char *)ikImportBoneStrings[i];
+    }
+    for ( ia = 0; ia < 3; ++ia )
+        ikImportMiscBoneStringVars[ia] = Scr_AllocString((char *)ikImportMiscBoneStrings[ia], 1, SCRIPTINSTANCE_SERVER);
+    ikSystem.ikImportBoneStringVars = ikImportBoneStringVars;
+    ikSystem.ikImportMiscBoneStringVars = ikImportMiscBoneStringVars;
+}

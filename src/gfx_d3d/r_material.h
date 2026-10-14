@@ -34,7 +34,11 @@ enum surfaceType_t : __int32
     SF_GLASS_MESH           = 0xF,
     SF_END_FX               = 0x10,
     SF_NUM_SURFACE_TYPES    = 0x10,
+#if defined(__clang__)
+    SF_FORCE_32_BITS        = -1,
+#else
     SF_FORCE_32_BITS        = 0xFFFFFFFF,
+#endif
 };
 
 enum GfxDepthRangeType : __int32
@@ -42,7 +46,11 @@ enum GfxDepthRangeType : __int32
                                         // ?R_ChangeDepthRange@@YAXPAUGfxCmdBufState@@W4GfxDepthRangeType@@@Z/r ...
     GFX_DEPTH_RANGE_SCENE     = 0x0,
     GFX_DEPTH_RANGE_VIEWMODEL = 0x2,
+#if defined(__clang__)
+    GFX_DEPTH_RANGE_FULL      = -1,
+#else
     GFX_DEPTH_RANGE_FULL      = 0xFFFFFFFF,
+#endif
 };
 
 enum MaterialVertexDeclType : __int32

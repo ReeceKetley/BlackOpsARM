@@ -17505,10 +17505,18 @@ void __cdecl GScr_AddEntity(gentity_s *pEnt)
 
 void __cdecl Scr_ParseGameTypeList()
 {
+#if defined(__ANDROID__)
+    // Both canonical parsers have no arguments; their return is unused here.
+    if(useFastFile->current.enabled)
+        Scr_ParseGameTypeList_FastFile();
+    else
+        Scr_ParseGameTypeList_LoadObj();
+#else
     if ( useFastFile->current.enabled )
         ((void (__cdecl *)(void (*)()))Scr_ParseGameTypeList_FastFile)(Scr_ParseGameTypeList_FastFile);
     else
         ((void (__cdecl *)(int (*)()))Scr_ParseGameTypeList_LoadObj)(Scr_ParseGameTypeList_LoadObj);
+#endif
 }
 
 int Scr_ParseGameTypeList_LoadObj()
@@ -17553,7 +17561,11 @@ int Scr_ParseGameTypeList_LoadObj()
             dest = g_scr_data.gametype.list[v11].pszScript;
             I_strncpyz(dest, src, 64);
             //strlwr(dest);
+#if defined(__ANDROID__)
+            I_strlwr(dest);
+#else
             _strlwr(dest);
+#endif
             qpath = va("maps/mp/gametypes/%s.txt", src);
             len = FS_FOpenFileByMode(qpath, &f, FS_READ);
             if ( len > 0 && len < 1024 )

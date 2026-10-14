@@ -6,6 +6,7 @@
 #include <qcommon/common.h>
 #include <string.h>
 #include <ctype.h>
+#include <bit>
 
 snd_speaker_config snd_speaker_configs[3] =
 {
@@ -612,17 +613,18 @@ int __cdecl SND_HashName(const char *name)
 {
     unsigned int v2; // kr00_4
     unsigned int i; // [esp+10h] [ebp-Ch]
-    int hash; // [esp+14h] [ebp-8h]
+    unsigned int hash; // Explicit original modulo-32-bit hash arithmetic.
 
     if ( !name || !*name )
         return 0;
     v2 = strlen(name);
     hash = 5381;
     for ( i = 0; i < v2; ++i )
-        hash = (hash << 16) + (hash << 6) + tolower(name[i]) - hash;
+        hash = (hash << 16) + (hash << 6) + static_cast<unsigned int>(tolower(static_cast<unsigned char>(name[i]))) - hash;
     if ( !hash )
         return 1;
-    return hash;
+    static_assert(sizeof(int) == sizeof(unsigned int));
+    return std::bit_cast<int>(hash);
 }
 
 void __cdecl Snd_SpeakerMapSetVolume(snd_speaker_map *map, int in, int out, float volume)

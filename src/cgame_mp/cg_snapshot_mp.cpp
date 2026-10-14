@@ -1,3 +1,4 @@
+#include <platform/bo1_native_width.h>
 #include <qcommon/actor_model_state.h>
 #include <game_sp/actor_sp_ext.h>
 #include <game_sp/g_sp_measure.h>
@@ -230,10 +231,18 @@ void __cdecl CG_ShutdownEntity(int localClientNum, centity_s *cent, bool shutdow
     {
         if ( cent->vehicle->vehicle_cache )
         {
+#if defined(__ANDROID__)
+            MT_Free((unsigned char *)cent->vehicle->vehicle_cache, sizeof(vehicle_cache_t), SCRIPTINSTANCE_SERVER);
+#else
             MT_Free((unsigned char *)cent->vehicle->vehicle_cache, 1928, SCRIPTINSTANCE_SERVER);
+#endif
             cent->vehicle->vehicle_cache = 0;
         }
+#if defined(__ANDROID__)
+        MT_Free((unsigned char *)cent->vehicle, sizeof(cgVehicle_s), SCRIPTINSTANCE_SERVER);
+#else
         MT_Free((unsigned char *)cent->vehicle, 84, SCRIPTINSTANCE_SERVER);
+#endif
         cent->vehicle = 0;
     }
     auto_rigid_body::remove_ent(cent);
@@ -877,7 +886,21 @@ void __cdecl CG_SetNextSnap(int localClientNum, snapshot_s *snap)
             clientState = &snap->clients[num];
             ci = &cgameGlob->bgs.clientinfo[clientState->clientIndex];
             CG_CopyScoreFromClientState(localClientNum, ci, clientState);
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+            if ( (ci->score.place < 1 || ci->score.place > 32)
+                && !Assert_MyHandler(
+                            __FILE__,
+                            __LINE__,
+                            0,
+                            "ci->score.place not in [1, 32]\n\t%i not in [1, 32]",
+                            ci->score.place) )
+            {
+                __debugbreak();
+            }
+            cgameGlob->scoreOrder[ci->score.place - 1] = ci->clientNum;
+#else
             cgameGlob->teamPlayers[ci->score.place + 3] = ci->clientNum;
+#endif
             CG_CopyUIVisibilityBitsFomClientState(localClientNum, ci, clientState);
         }
         CG_UpdateScoreData(localClientNum);

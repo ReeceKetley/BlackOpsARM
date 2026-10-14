@@ -1,4 +1,10 @@
 #include <platform/bo1_native_width.h>
+#if defined(__ANDROID__)
+#include <platform/android/oom_error.h>
+#endif
+#if defined(BO1_NATIVE_PMEM)
+#include <platform/native_pmem_api.h>
+#else
 #include <Windows.h>
 
 #include "physicalmemory.h"
@@ -9,6 +15,8 @@
 #include <qcommon/mem_track.h>
 #include "../../tl/tl_system.h"
 #include <win32/win_main.h>
+
+#endif
 
 bool g_physicalMemoryInit;
 PhysicalMemory g_mem;
@@ -299,8 +307,12 @@ unsigned __int8 *__cdecl _PMem_AllocNamed(
         g_overAllocatedSize = g_mem.prim[0].pos - lowPos;
         if ( g_overAllocatedSize > 0 )
         {
+#if defined(__ANDROID__)
+            bo1::android::ReportAllocationFailure("C:\\projects_pc\\cod\\codsrc\\src\\universal\\physicalmemory.cpp", 1090,"PMem_AllocNamed high",g_mem.name,size,g_overAllocatedSize,true);
+#else
             Com_Printf(16, "requested size:    %d    over allocation:    %d\n", size, g_overAllocatedSize);
             Sys_OutOfMemErrorInternal("C:\\projects_pc\\cod\\codsrc\\src\\universal\\physicalmemory.cpp", 1090);
+#endif
         }
         allocedSize = g_mem.prim[allocType].pos - lowPos;
         g_mem.prim[allocType].pos = lowPos;
@@ -312,12 +324,16 @@ unsigned __int8 *__cdecl _PMem_AllocNamed(
         g_overAllocatedSize = size + lowPos - g_mem.prim[1].pos;
         if ( g_overAllocatedSize > 0 )
         {
+#if defined(__ANDROID__)
+            bo1::android::ReportAllocationFailure("C:\\projects_pc\\cod\\codsrc\\src\\universal\\physicalmemory.cpp", 1056,"PMem_AllocNamed low",g_mem.name,size,g_overAllocatedSize,true);
+#else
             Com_PrintError(
                 16,
                 "Need %i more bytes of '%s' physical ram for alloc to succeed\n",
                 g_overAllocatedSize,
                 g_mem.name);
             Sys_OutOfMemErrorInternal("C:\\projects_pc\\cod\\codsrc\\src\\universal\\physicalmemory.cpp", 1056);
+#endif
         }
         allocedSize = highPos - g_mem.prim[allocType].pos;
         g_mem.prim[allocType].pos = highPos;

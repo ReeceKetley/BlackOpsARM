@@ -1,4 +1,5 @@
 #include <universal/profile.h>
+#include <platform/bo1_native_width.h>
 #include <qcommon/actor_model_state.h>
 #include <new>
 #include <game_sp/g_sp_measure.h>
@@ -1761,7 +1762,11 @@ actor_think_result_t __fastcall Actor_CallThink(actor_s *self)
     self->Physics.m_gjkcc_input = &gjkcc_in;
     gjkcc_prolog(&gjkcc_in, self->Physics.vOrigin);
     //eThinkResult = ((int (__thiscall *)(actor_s *))AIFuncTable[self->species][self->eState[self->stateLevel]].pfnThink)(self);
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+    eThinkResult = AIFuncTable[self->species][self->eState[self->stateLevel]].pfnThink(self);
+#else
     eThinkResult = (actor_think_result_t)((int (__thiscall *)(actor_s *))AIFuncTable[self->species][self->eState[self->stateLevel]].pfnThink)(self);
+#endif
     gjkcc_epilog(&gjkcc_in, self->Physics.vOrigin);
     self->Physics.m_gjkcc_input = 0;
     if ( (unsigned int)eThinkResult > ACTOR_THINK_MOVE_TO_BODY_QUEUE

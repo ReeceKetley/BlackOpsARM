@@ -1,4 +1,7 @@
 #include "cg_anim_commands.h"
+#if defined(__ANDROID__)
+#include <cstdio>
+#endif
 #include "cg_local_mp.h"
 #include "cg_ents_mp.h"
 #include <qcommon/msg_anim_commands.h>
@@ -298,14 +301,25 @@ namespace
             const float weight = G_SP_MeasureEffectiveWeight(tree, anim);
             if (weight < 0.05f)
                 continue;
+#if defined(__ANDROID__)
+            const int n = std::snprintf(out + used, size - used, "%s%s:%.2f", used ? "," : "",
+                XAnimGetAnimName(anims, anim), weight);
+            if (n >= size - used)
+                break;
+#else
             const int n = _snprintf_s(out + used, size - used, _TRUNCATE, "%s%s:%.2f", used ? "," : "",
                 XAnimGetAnimName(anims, anim), weight);
+#endif
             if (n < 0)
                 break;
             used += n;
         }
         if (!used)
+#if defined(__ANDROID__)
+            std::snprintf(out, size, "%s", "-");
+#else
             strcpy_s(out, size, "-");
+#endif
     }
 }
 

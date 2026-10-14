@@ -4,6 +4,9 @@
 #include <live/live.h>
 #include "physicalmemory.h"
 #include <minilzo/minilzo.h>
+#if defined(__ANDROID__)
+#include <cstdlib>
+#endif
 
 bool s_isLzoInitialized;
 
@@ -17,7 +20,15 @@ void __cdecl MemFile_CommonInit(
     if ( !s_isLzoInitialized )
     {
         //__lzopro_lzo_init_v2(0x2020u, 2, 4, 4, 4, 4, 4, 4, 4, 24);
+#if defined(__ANDROID__)
+        if (lzo_init() != LZO_E_OK)
+        {
+            Com_Error(ERR_FATAL, "Native memory-file LZO ABI initialization failed");
+            std::abort();
+        }
+#else
         lzo_init(); // sizeof-based: the Win32 literal arguments fail the size check on x64
+#endif
         s_isLzoInitialized = 1;
     }
     if ( !memFile

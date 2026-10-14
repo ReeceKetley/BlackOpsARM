@@ -1,0 +1,11 @@
+# Native optional socket pool policy
+
+Frozen owner: `src/win32/win_net.cpp`. No new source or header is required. Existing FULL `BO1_NATIVE_COM_BOOT`, `BO1_NATIVE_UDP_ENGINE` and network address ownership selects the actual native bodies. Root production full400 compiled these owners and no pool symbols remain undefined.
+
+The working Windows tree contains no pool socket producer, send count/time publication, or pool send path. Its normal send uses `ip_socket`; native normal send owns the actual `udp_socket` descriptor. Implementing a producer here would invent a subsystem. `cl_socketpool_enabled` defaults false. Disabled Init/GetPacket/NAT preserve the canonical early returns and packet outputs; ordinary send/receive continue through actual native UDP. Enabling any pool consumer, initializer or send path validates the canonical 0..50 bound, then reports fatal unsupported producer/lifecycle and aborts even if the fatal reporter unexpectedly returns. Enabled optional socket pooling and its NAT overflow/wrap algorithm remain unimplemented. No fake receive/NAT success or timer publication is provided.
+
+The original Windows branches and arrays remain unchanged. Normal whole-TU MSVC x86/x64 `/O2` builds pass: `build-android-audit/native_socket_pool_policy/windows/{x86,x64}.log`. Native whole-TU compile is `compile2.log`.
+
+Focused actual-owner fixture `tools/port/tests/native_socket_pool_policy_tests.cpp` is built by `build-native-socket-pool-policy.ps1`. It links the actual Dvar/string/critical-section owners and native network implementation; unrelated logging/localization/script error paths use named fail-stop isolated providers, not pool/parser substitutes. HONOR UBSan run passes 56 checks: genuine fd0 UDP ownership, native sockaddr lengths, real loopback wire bytes, oversized datagram rejection and metadata/canary preservation, disabled pool outputs, actual Dvar defaults/domain, and four enabled/bounds failure paths with deliberately returning fatal reporter. Child failures leave parent descriptor ownership and wire output intact. `honor-run1.log` records evidence; `source-sha256.json` records frozen source/fixture/binary hashes.
+
+This proof establishes disabled optional policy and existing UDP boundaries, not pool functionality, NAT wrap handling, full engine initialization, or rendered networking readiness.

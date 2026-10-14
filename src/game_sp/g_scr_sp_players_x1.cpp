@@ -12,6 +12,9 @@
 //  - SP server command letters are sent unchanged: KB's cgame either does not use the letter or
 //    (refreshhudammocounter's 'J') runs the same function for it.
 #include "g_scr_sp_players_x1.h"
+#if defined(__ANDROID__)
+#include <platform/android/legacy_crt.h>
+#endif
 #include "scr_sp_tables.h"
 #include "g_sp_levelstart.h"
 #include "g_sp_ext.h"

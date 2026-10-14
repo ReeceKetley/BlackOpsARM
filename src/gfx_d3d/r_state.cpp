@@ -648,7 +648,11 @@ void    R_GenerateWorldOutdoorLookupMatrix(GfxCmdBufSourceState *source, float (
 
     MatrixMultiply44(worldMatrix.m, g_drawConsts.outdoorLookupMatrix, outMatrix);
 
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+    Vec4Add(outMatrix[3], worldOffset, outMatrix[3]);
+#else
     Vec4Add(&(*outMatrix)[12], worldOffset, &(*outMatrix)[12]);
+#endif
 
     static_assert(MATRIX_VERSIONS_INDEX(CONST_SRC_CODE_WORLD_OUTDOOR_LOOKUP_MATRIX) == 7);
     source->constVersions[CONST_SRC_CODE_WORLD_OUTDOOR_LOOKUP_MATRIX] = source->matrixVersions[MATRIX_VERSIONS_INDEX(CONST_SRC_CODE_WORLD_OUTDOOR_LOOKUP_MATRIX)];
@@ -2753,12 +2757,21 @@ void __cdecl UpdateVPosToWorld(GfxCmdBufSourceState *source)
         vposx_to_world[1] = v3 * (float)(*invViewM44)[1];
         vposx_to_world[2] = v3 * (float)(*invViewM44)[2];
         vposx_to_world[3] = v3 * (float)(*invViewM44)[3];
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+        v2 = (float)(2.0 * invHeight) / (float)projM44[1][1];
+        vposy_to_world[0] = v2 * (float)invViewM44[1][0];
+        vposy_to_world[1] = v2 * (float)invViewM44[1][1];
+        vposy_to_world[2] = v2 * (float)invViewM44[1][2];
+        vposy_to_world[3] = v2 * (float)invViewM44[1][3];
+        v1 = -1.0 / (float)projM44[1][1];
+#else
         v2 = (float)(2.0 * invHeight) / (float)(*projM44)[5];
         vposy_to_world[0] = v2 * (float)(*invViewM44)[4];
         vposy_to_world[1] = v2 * (float)(*invViewM44)[5];
         vposy_to_world[2] = v2 * (float)(*invViewM44)[6];
         vposy_to_world[3] = v2 * (float)(*invViewM44)[7];
         v1 = -1.0 / (float)(*projM44)[5];
+#endif
         scale1[0] = 1.0 / (*projM44)[0];
         scale1[1] = v1;
         scale1[2] = -1.0f;

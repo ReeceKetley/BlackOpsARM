@@ -6,6 +6,9 @@
 #include "r_dvars.h"
 #include <universal/com_workercmds.h>
 #include "r_workercmds.h"
+#if defined(__ANDROID__)
+#include <platform/atomic32.h>
+#endif
 
 WaterGlob waterGlob;
 volatile unsigned int g_waterLock;
@@ -29,7 +32,11 @@ void __cdecl R_UploadWaterTextureInternal(water_t **data)
     WaterAmplitudesFromFrequencies(waterGlob.H, water);
     WaterPixelsFromAmplitudes((GfxColor *)waterGlob.pixels, waterGlob.H, water);
     GenerateMipMaps(D3DFMT_L8, waterGlob.pixels, water);
+#if defined(__ANDROID__)
+    bo1::atomic32::Decrement32(&g_waterLock);
+#else
     _InterlockedExchangeAdd(&g_waterLock, 0xFFFFFFFF);
+#endif
 }
 
 void __cdecl WaterFrequenciesAtTime(complex_s *H, const water_t *water, float t)
@@ -65,8 +72,13 @@ void __cdecl WaterFrequenciesAtTime(complex_s *H, const water_t *water, float t)
     H0 = water->H0;
     while ( vecKIndex < vecKCount )
     {
+#if defined(__ANDROID__)
+        __builtin_prefetch((const char *)wTerm + 512, 0, 1);
+        __builtin_prefetch((const char *)&H0[64], 0, 1);
+#else
         _mm_prefetch((const char *)wTerm + 512, 1);
         _mm_prefetch((const char *)&H0[64], 1);
+#endif
         if ( *(unsigned int *)wTerm )
         {
             v3 = (__int64)(*wTerm * ta);

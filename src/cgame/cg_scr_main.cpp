@@ -1,4 +1,5 @@
 #include <platform/engine_random.h>
+#include <platform/bo1_native_width.h>
 #include <qcommon/cm_mapkit.h>
 #include <database/db_registry.h>
 #include "cg_scr_main.h"
@@ -5130,6 +5131,18 @@ void __cdecl CScr_SetFxAngles(unsigned int givenAxisCount, float (*axis)[3], flo
     }
     else if ( givenAxisCount == 2 )
     {
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+        v4 = -( (float)((float)(axis[0][0] * axis[2][0]) + (float)(axis[0][1] * axis[2][1])) + (float)(axis[0][2] * axis[2][2]));
+        axis[2][0] = (float)(v4 * axis[0][0]) + axis[2][0];
+        axis[2][1] = (float)(v4 * axis[0][1]) + axis[2][1];
+        axis[2][2] = (float)(v4 * axis[0][2]) + axis[2][2];
+        if ( Vec3Normalize(axis[2]) == 0.0 )
+        {
+            error = va("forward and up vectors are the same direction or exact opposite directions");
+            Scr_Error(SCRIPTINSTANCE_CLIENT, error, 0);
+        }
+        Vec3Cross(axis[2], axis[0], axis[1]);
+#else
         v4 = -( (float)((float)((*axis)[0] * (*axis)[6]) + (float)((*axis)[1] * (*axis)[7])) + (float)((*axis)[2] * (*axis)[8]));
         (*axis)[6] = (float)(v4 * (*axis)[0]) + (*axis)[6];
         (*axis)[7] = (float)(v4 * (*axis)[1]) + (*axis)[7];
@@ -5140,6 +5153,7 @@ void __cdecl CScr_SetFxAngles(unsigned int givenAxisCount, float (*axis)[3], flo
             Scr_Error(SCRIPTINSTANCE_CLIENT, error, 0);
         }
         Vec3Cross(&(*axis)[6], (const float *)axis, &(*axis)[3]);
+#endif
         AxisToAngles(axis, angles);
     }
     else
@@ -8260,7 +8274,11 @@ void __cdecl CScr_UseAnimTree(scr_entref_t entref)
         }
         Scr_Error(SCRIPTINSTANCE_CLIENT, "Cannot set an animtree into an entity that has no model.", 0);
     }
+#if defined(__ANDROID__)
+    pSelf->tree = XAnimCreateTree(animtree.anims, CG_AllocAnimTree);
+#else
     pSelf->tree = XAnimCreateTree(animtree.anims, (void *(__cdecl *)(unsigned int))CG_AllocAnimTree);
+#endif
     DObjSetTree(obj, pSelf->tree);
     Scr_AddInt(1, SCRIPTINSTANCE_CLIENT);
 }

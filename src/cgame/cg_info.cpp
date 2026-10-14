@@ -1,4 +1,5 @@
 #include "cg_info.h"
+#include <platform/bo1_native_width.h>
 #include <cgame_mp/cg_local_mp.h>
 #include <client_mp/cl_scrn_mp.h>
 #include <cgame_mp/cg_servercmds_mp.h>
@@ -16,7 +17,11 @@ void __cdecl CG_LoadingString(int localClientNum, const char *s)
     if ( s && *s )
     {
         v3 = va("LOADING... %s\n", s);
+#if defined(__ANDROID__)
+        Com_Printf(14, "%s", v3);
+#else
         Com_Printf(14, v3);
+#endif
     }
     SCR_UpdateLoadScreen();
 }
@@ -24,7 +29,11 @@ void __cdecl CG_LoadingString(int localClientNum, const char *s)
 void __cdecl CG_DrawInformation(int localClientNum)
 {
     int v1; // [esp+1Ch] [ebp-30h]
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+    bool (__cdecl *v2)(void);
+#else
     unsigned __int8 (*v2)(void); // [esp+20h] [ebp-2Ch]
+#endif
     bool serverLoading; // [esp+27h] [ebp-25h]
     Font_s *font; // [esp+2Ch] [ebp-20h]
     float width; // [esp+30h] [ebp-1Ch]
@@ -48,10 +57,17 @@ void __cdecl CG_DrawInformation(int localClientNum)
     }
     CL_GetConfigString(0);
     UI_DrawMapLevelshot(localClientNum);
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+    if ( useFastFile->current.enabled )
+        v2 = CG_IsShowingProgress_FastFile;
+    else
+        v2 = CG_IsShowingProgress_LoadObj;
+#else
     if ( useFastFile->current.enabled )
         v2 = (unsigned __int8 (*)(void))CG_IsShowingProgress_FastFile;
     else
         v2 = (unsigned __int8 (*)(void))CG_IsShowingProgress_LoadObj;
+#endif
     if ( !v2() && serverLoading && g_waitingForServer )
     {
         font = UI_GetFontHandle(&scrPlaceFull, 0, 0.5);

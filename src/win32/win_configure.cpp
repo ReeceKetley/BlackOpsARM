@@ -1,3 +1,9 @@
+#if defined(BO1_NATIVE_MACHINE_INFO)
+#include <platform/common_boot_api.h>
+#include <qcommon/sys_info.h>
+void Sys_GetPhysicalCpuCount(SysInfo *);
+long double Sys_BenchmarkGHz();
+#else
 #include "win_configure.h"
 
 #include <Windows.h>
@@ -272,36 +278,7 @@ bool __cdecl Sys_SupportsSSE()
     //return ((unsigned int)&cls.wagerServers[5331].basictraining & _EDX) != 0;
 }
 
-void __cdecl Sys_SetAutoConfigureGHz(SysInfo *sysInfo)
-{
-    double multiCpuFactor; // [esp+8h] [ebp-8h]
 
-    Sys_GetPhysicalCpuCount(sysInfo);
-    if ( sysInfo->physicalCpuCount < 1
-        && !Assert_MyHandler(
-                    "C:\\projects_pc\\cod\\codsrc\\src\\win32\\win_configure.cpp",
-                    493,
-                    0,
-                    "sysInfo->physicalCpuCount >= 1\n\t%i, %i",
-                    sysInfo->physicalCpuCount,
-                    1) )
-    {
-        __debugbreak();
-    }
-    if ( sysInfo->physicalCpuCount == 1 )
-    {
-        multiCpuFactor = 1.0;
-    }
-    else if ( sysInfo->physicalCpuCount == 2 )
-    {
-        multiCpuFactor = 1.75;
-    }
-    else
-    {
-        multiCpuFactor = 2.0;
-    }
-    sysInfo->configureGHz = Sys_BenchmarkGHz() * multiCpuFactor;
-}
 
 void __cdecl Sys_GetPhysicalCpuCount(SysInfo *sysInfo)
 {
@@ -479,6 +456,42 @@ unsigned int __cdecl Sys_AddApicIdIfUnique(
     return existingCount + 1;
 }
 
+
+
+
+#endif
+
+void __cdecl Sys_SetAutoConfigureGHz(SysInfo *sysInfo)
+{
+    double multiCpuFactor; // [esp+8h] [ebp-8h]
+
+    Sys_GetPhysicalCpuCount(sysInfo);
+    if ( sysInfo->physicalCpuCount < 1
+        && !Assert_MyHandler(
+                    "C:\\projects_pc\\cod\\codsrc\\src\\win32\\win_configure.cpp",
+                    493,
+                    0,
+                    "sysInfo->physicalCpuCount >= 1\n\t%i, %i",
+                    sysInfo->physicalCpuCount,
+                    1) )
+    {
+        __debugbreak();
+    }
+    if ( sysInfo->physicalCpuCount == 1 )
+    {
+        multiCpuFactor = 1.0;
+    }
+    else if ( sysInfo->physicalCpuCount == 2 )
+    {
+        multiCpuFactor = 1.75;
+    }
+    else
+    {
+        multiCpuFactor = 2.0;
+    }
+    sysInfo->configureGHz = Sys_BenchmarkGHz() * multiCpuFactor;
+}
+
 long double __cdecl Sys_BenchmarkGHz()
 {
     // BO1TODO
@@ -526,4 +539,3 @@ long double __cdecl Sys_BenchmarkGHz()
     return 2.4; // swag
 #endif
 }
-

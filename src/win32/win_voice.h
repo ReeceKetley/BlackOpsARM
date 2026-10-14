@@ -20,3 +20,6 @@ int __cdecl mixerSetMicrophoneMute(unsigned __int8 bMute);
 int __cdecl Live_GetClientNumForXuid(const SessionData_s *session, unsigned __int64 xuid);
 
 extern float voice_current_scaler;
+#if defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST)
+bool Voice_HasOwnedResources(); // Actual codec/device/sample ownership, not initialized readiness.
+#endif

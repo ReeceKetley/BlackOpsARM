@@ -78,7 +78,11 @@ void __cdecl TaskManager_ClearTask(overlappedTask *task)
         task->finalStatus = bdRemoteTask::bdStatus::BD_EMPTY;
         task->errorCode = BD_NO_ERROR;
         task->type = 0;
+#if defined(__ANDROID__)
+        task->active = false;
+#else
         *(unsigned int *)&task->active = 0;
+#endif
         task->controllerIndex = 0;
         task->data = 0;
         task->miscData = 0;

@@ -1,6 +1,9 @@
 #include "huffman.h"
 #include <universal/com_shared.h>
 #include <cstdlib>
+#if defined(__ANDROID__)
+#include <cstring>
+#endif
 #include <universal/q_shared.h>
 
 thread_local int bloc;
@@ -65,7 +68,12 @@ void __cdecl Huff_offsetTransmit(huff_t *huff, int ch, unsigned __int8 *fout, in
 
 void __cdecl Huff_Init(huffman_t *huff)
 {
+#if defined(__ANDROID__)
+    if (!huff) std::abort();
+    std::memset(huff, 0, sizeof(*huff));
+#else
     Com_Memset((unsigned int *)huff, 0, 19476);
+#endif
     huff->compressDecompress.loc[256] = &huff->compressDecompress.nodeList[huff->compressDecompress.blocNode++];
     huff->compressDecompress.tree = huff->compressDecompress.loc[256];
     huff->compressDecompress.tree->symbol = 256;
@@ -79,13 +87,23 @@ nodetype *__cdecl Huff_initNode(huff_t *huff, int ch, int weight)
 {
     nodetype *tnode; // [esp+0h] [ebp-4h]
 
+#if defined(__ANDROID__)
+    if (!huff || ch < 0 || ch > 257 || huff->blocNode < 0 ||
+        static_cast<unsigned int>(huff->blocNode) >= sizeof(huff->nodeList)/sizeof(huff->nodeList[0]))
+        std::abort();
+#endif
     tnode = &huff->nodeList[huff->blocNode++];
     tnode->symbol = ch;
     tnode->weight = weight;
     tnode->left = 0;
     tnode->right = 0;
     tnode->parent = 0;
+#if defined(__ANDROID__)
+    // Internal nodes describe branches, not byte/NYT symbol lookup entries.
+    if (ch <= 256) huff->loc[ch] = tnode;
+#else
     huff->loc[ch] = tnode;
+#endif
     return tnode;
 }
 

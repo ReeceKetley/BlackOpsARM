@@ -1163,7 +1163,11 @@ void __cdecl FX_DrawElem_Cloud_Main(FxDrawState *draw)
     if ( v1 )
     {
         offset = ((1024 - v1 + 1) * LOWORD(fx_randomTable[draw->randomSeed + 29])) >> 16;
+#if defined(__ANDROID__)
+        _InterlockedExchangeAdd(const_cast<volatile unsigned int *>(&draw->system->gfxCloudCount), 1u);
+#else
         _InterlockedExchangeAdd((volatile unsigned long long* )&draw->system->gfxCloudCount, 1u);
+#endif
         visuals.anonymous = FX_GetElemVisuals(draw->elemDef, draw->randomSeed).anonymous;
         if ( !visuals.anonymous
             && !Assert_MyHandler(
@@ -2164,12 +2168,12 @@ void __cdecl Fx_GenTrail_PopulateSegmentDrawState(
     outState->basis[0][0] = (*basis)[0];
     outState->basis[0][1] = (*basis)[1];
     outState->basis[0][2] = (*basis)[2];
-    outState->basis[1][0] = (*basis)[3];
-    outState->basis[1][1] = (*basis)[4];
-    outState->basis[1][2] = (*basis)[5];
+    outState->basis[1][0] = basis[1][0];
+    outState->basis[1][1] = basis[1][1];
+    outState->basis[1][2] = basis[1][2];
     outState->rotation = draw->visState.rotationTotal;
-    *(double *)outState->size = *(double *)draw->visState.size;
-    *(unsigned int *)outState->color = *(unsigned int *)draw->visState.color;
+    memcpy(outState->size, draw->visState.size, sizeof(outState->size));
+    memcpy(outState->color, draw->visState.color, sizeof(outState->color));
     outState->uCoord = (float)(spawnDist / (float)trailDef->repeatDist) + uCoordOffset;
 }
 

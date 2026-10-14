@@ -1,3 +1,6 @@
+#if defined(BO1_NATIVE_SOCKET_ROUTER_FRAME)
+#include <platform/android/thread_services.h>
+#else
 #include "live_win_common.h"
 #include <qcommon/com_clients.h>
 #include "live_win.h"
@@ -175,10 +178,18 @@ void __cdecl Live_ShowPlayerProfile(int localClientNum, unsigned __int64 playerX
     menuDef_t *menu; // [esp+Ch] [ebp-4h]
 
     ControllerIndex = Com_LocalClient_GetControllerIndex(localClientNum);
+#if defined(__ANDROID__)
+    v4 = Live_GetXuid(ControllerIndex);
+#else
     LODWORD(v4) = Live_GetXuid(ControllerIndex);
+#endif
     if ( playerXUID && playerXUID != v4 )
     {
+#if defined(__ANDROID__)
+        v5 = va("%llu", static_cast<unsigned long long>(playerXUID));
+#else
         v5 = va("%11d", (unsigned int)playerXUID);
+#endif
         Dvar_SetStringByName("selectedPlayerXuid", v5);
         Dvar_SetStringByName("selectedFriendName", playerName);
         uiInfo = UI_GetInfo(localClientNum);
@@ -190,6 +201,8 @@ void __cdecl Live_ShowPlayerProfile(int localClientNum, unsigned __int64 playerX
         }
     }
 }
+
+#endif
 
 void __cdecl SocketRouter_EmergencyFrame()
 {

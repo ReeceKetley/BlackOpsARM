@@ -3,6 +3,9 @@
 #include <gfx_d3d/r_material_load_obj.h>
 #include "FxCurve.h"
 #include <qcommon/common.h>
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+#include <cstring>
+#endif
 
 float4 NATIVE_VERTEX_PERM = { { 3.972236e-34, 0.0, 0.0, 0.0 } };
 
@@ -1579,8 +1582,13 @@ void __cdecl Byte4PackVertexColor(const float *from, unsigned __int8 *to)
     scale.v[1] = 255.0f;
     scale.v[2] = 255.0f;
     scale.v[3] = 255.0f;
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+    // The caller owns four floats (alignment four), not two aligned uint64_t values.
+    std::memcpy(v35.v, from, sizeof(v35.v));
+#else
     *(_QWORD *)v35.v = *(_QWORD *)from;
     *(_QWORD *)&v35.unitVec[2].packed = *((_QWORD *)from + 1);
+#endif
     scaled.v[0] = v35.v[0] * 255.0;
     scaled.v[1] = v35.v[1] * 255.0;
     scaled.v[2] = v35.v[2] * 255.0;
@@ -1665,7 +1673,12 @@ void __cdecl Byte4PackVertexColor(const float *from, unsigned __int8 *to)
     permed.unitVec[0].array[1] = v14[0].unitVec[0].array[NATIVE_VERTEX_PERM.unitVec[0].array[2]];
     permed.unitVec[0].array[2] = v14[0].unitVec[0].array[NATIVE_VERTEX_PERM.unitVec[0].array[1]];
     permed.unitVec[0].array[3] = v14[0].unitVec[0].array[NATIVE_VERTEX_PERM.unitVec[0].array[0]];
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+    // The output contract owns four bytes and does not require word alignment.
+    std::memcpy(to, &permed.u[0], sizeof(permed.u[0]));
+#else
     *(unsigned int *)to = permed.u[0];
+#endif
 }
 
 void __cdecl FX_SampleCurve3D(const FxCurve *curve, float scale, float time, float *value)

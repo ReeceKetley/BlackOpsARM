@@ -1914,6 +1914,13 @@ void __thiscall UIViewer::Draw(int localClientNum, bool _ingame, unsigned int ey
     }
 }
 
+#if defined(__ANDROID__)
+static void __cdecl ForceLoadWeaponEnumerated(XAssetHeader header, void *)
+{
+    ForceLoadWeapon(header);
+}
+#endif
+
 void __thiscall UIViewer::SetupStreamer()
 {
     int colCount; // [esp+8h] [ebp-1Ch]
@@ -1930,7 +1937,11 @@ void __thiscall UIViewer::SetupStreamer()
         R_StreamSetUIConfig(1);
         rowCount = StringTable_RowCount(this->bodyHeadTable);
         colCount = StringTable_ColumnCount(this->bodyHeadTable);
+#if defined(__ANDROID__)
+        DB_EnumXAssets(ASSET_TYPE_WEAPON, ForceLoadWeaponEnumerated, 0, 0);
+#else
         DB_EnumXAssets(ASSET_TYPE_WEAPON, (void (__cdecl *)(XAssetHeader, void *))ForceLoadWeapon, 0, 0);
+#endif
         for ( row = 0; row < rowCount; ++row )
         {
             partType = StringTable_GetColumnValueForRow(this->bodyHeadTable, row, 1);

@@ -1,0 +1,11 @@
+#pragma once
+struct IDirect3DDevice9;
+namespace bo1::android::performance::gpu {
+// Called only by canonical render execution and its serialized release path.
+void Begin(IDirect3DDevice9 *device);
+// Optional bounded phase profiling; disabled builds perform no query work.
+void Mark(int index);
+void BeforePresent();
+void Presented(bool activeSuccessfulSurface);
+void Release();
+}

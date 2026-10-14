@@ -298,10 +298,7 @@ struct __declspec(align(4)) XAnimState // sizeof=0x20
         // padding byte
 };
 
-// mod: anim info pool. Retail uses 4096 entries; bo1_mod_scriptvars 1 (startup) uses XANIM_INFO_MAX.
-// Info indices are uint16 in XAnimInfo / XAnimTree_s and short in the anim command code, so at most 32768.
-#define XANIM_INFO_MAX 16384
-extern int g_xAnimInfoCount;
+#include <xanim/xanim_limits.h>
 
 struct __declspec(align(4)) XAnimInfo // sizeof=0x40
 {                                                                             // XREF: .data:g_xAnimInfo/r
@@ -422,8 +419,20 @@ XAnim_s *__cdecl XAnimCreateAnimsWithValues(
                 int size,
                 unsigned int iTotalValueCount,
                 void *(__cdecl *Alloc)(int));
+#if defined(__ANDROID__)
+XAnim_s *__cdecl XAnimCreateAnimsWithValues(
+                const char *debugName,
+                int size,
+                unsigned int iTotalValueCount,
+                void *(__cdecl *Alloc)(unsigned int));
+void *__cdecl Hunk_AllocXAnimPrecacheSigned(int size);
+#endif
 void __cdecl XAnimFreeList(XAnim_s *anims);
 XAnimTree_s *__cdecl XAnimCreateTree(XAnim_s *anims, void *(__cdecl *Alloc)(unsigned int));
+#if defined(__ANDROID__)
+XAnimTree_s *__cdecl XAnimCreateTree(XAnim_s *anims, void *(__cdecl *Alloc)(int));
+XAnimTree_s *__cdecl XAnimCreateTree(XAnim_s *anims, char *(__cdecl *Alloc)(int));
+#endif
 void __cdecl XAnimFreeTree(
                 XAnimTree_s *tree,
                 void (__cdecl *Free)(void *, int, scriptInstance_t),

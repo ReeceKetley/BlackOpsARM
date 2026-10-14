@@ -1,6 +1,9 @@
 #include "live_steam_achievements.h"
 #include <qcommon/common.h>
 #include <qcommon/cmd.h>
+#if defined(__ANDROID__)
+#include <platform/android/legacy_crt.h>
+#endif
 
 Achievement_t g_Achievements[3] =
 {
@@ -119,9 +122,15 @@ void __thiscall CSteamAchievements::OnUserStatsReceived(UserStatsReceived_t *pCa
                 v5 = SteamUserStats();
                 v2 = v5->GetAchievementDisplayAttribute(ach->m_pchAchievementID, "name");
                 _snprintf(ach->m_rgchName, 0x80u, "%s", v2);
+#if defined(__ANDROID__)
+                ach->m_rgchName[sizeof(ach->m_rgchName)-1]=0;
+#endif
                 v4 = SteamUserStats();
                 v3 = v4->GetAchievementDisplayAttribute(ach->m_pchAchievementID, "desc");
                 _snprintf(ach->m_rgchDescription, 0x100u, "%s", v3);
+#if defined(__ANDROID__)
+                ach->m_rgchDescription[sizeof(ach->m_rgchDescription)-1]=0;
+#endif
             }
         }
         else
@@ -152,6 +161,9 @@ void __thiscall CSteamAchievements::OnAchievementStored(UserAchievementStored_t 
 
 void __cdecl LiveSteam_Achievements_Init()
 {
+#if defined(__ANDROID__)
+    if(g_liveSteamAchievements) return;
+#endif
     g_liveSteamAchievements = new CSteamAchievements(g_Achievements, 3);
 
     Cmd_AddCommandInternal("livesteam_giveachivement", LiveSteam_GiveAchievement_f, &LiveSteam_GiveAchievement_f_VAR);
@@ -175,6 +187,9 @@ void __cdecl LiveSteam_GiveAchievement_f()
 void __cdecl LiveSteam_ResetAchievement_f()
 {
     //CSteamAchievements::ResetStats(g_liveSteamAchievements);
+#if defined(__ANDROID__)
+    if(!g_liveSteamAchievements) { Com_PrintWarning(23,"Steam achievement owner is not initialized\n"); return; }
+#endif
     g_liveSteamAchievements->ResetStats();
 }
 

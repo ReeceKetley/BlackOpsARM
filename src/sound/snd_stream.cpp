@@ -1,4 +1,11 @@
 #include "snd_stream.h"
+#include <cctype>
+#if defined(__ANDROID__)
+#include <platform/android/file_services.h>
+#define _stricmp I_stricmp
+#define InterlockedCompareExchangePointer _InterlockedCompareExchangePointer
+#define InterlockedExchangePointer _InterlockedExchangePointer
+#endif
 #include <qcommon/threads.h>
 #include <universal/physicalmemory.h>
 #include <tl/tl_system.h>
@@ -1519,7 +1526,11 @@ char __cdecl Snd_ReadBuffer(char *filename, unsigned int start_offset, unsigned 
     signed __int32 v5; // eax
     unsigned int v6; // [esp+0h] [ebp-138h]
     int j; // [esp+10h] [ebp-128h]
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+    char *filenameCursor;
+#else
     snd_stream_file *c; // [esp+14h] [ebp-124h]
+#endif
     char os_filename[260]; // [esp+18h] [ebp-120h] BYREF
     unsigned int i; // [esp+120h] [ebp-18h]
     unsigned int read_size; // [esp+124h] [ebp-14h]
@@ -1560,8 +1571,14 @@ char __cdecl Snd_ReadBuffer(char *filename, unsigned int start_offset, unsigned 
     if ( file )
         goto LABEL_31;
     I_strncpyz(free_file->filename, filename, 260);
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+    // Advance within the filename member, retaining the original tolower byte semantics.
+    for ( filenameCursor = free_file->filename; *filenameCursor; ++filenameCursor )
+        *filenameCursor = tolower(*filenameCursor);
+#else
     for ( c = free_file; c->filename[0]; c = (snd_stream_file *)((char *)c + 1) )
         c->filename[0] = tolower(c->filename[0]);
+#endif
     for ( j = 0; !file && j < 2; ++j )
     {
         if ( !j )

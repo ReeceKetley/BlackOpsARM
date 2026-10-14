@@ -1,4 +1,7 @@
 #include <universal/csp_field_offset.h>
+#if defined(__ANDROID__)
+#include <platform/android/legacy_crt.h>
+#endif
 #include "bg_weapons_load_obj.h"
 #include "bg_weapons.h"
 #include "bg_animation.h"

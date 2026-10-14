@@ -1,3 +1,6 @@
+#if defined(__ANDROID__)
+#include <platform/android/legacy_crt.h>
+#endif
 #include "ui_server.h"
 #include "ui_shared.h"
 #include <client_mp/cl_ui_pc_mp.h>

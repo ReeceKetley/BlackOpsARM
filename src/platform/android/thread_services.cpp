@@ -1,5 +1,8 @@
 #include "thread_services.h"
 #include <universal/thread_data.h>
+#if defined(__ANDROID__) && defined(BO1_NATIVE_SCHEDULING_SERVICES)
+#include "scheduling_services.h"
+#endif
 #include <array>
 #include <atomic>
 #include <cstdio>
@@ -43,7 +46,9 @@ bool isRole(int role) {
 }
 
 void bo1::android::RegisterThreadRole(ThreadContext_t role) {
-    if (role != THREAD_CONTEXT_MAIN && role != THREAD_CONTEXT_BACKEND && role != THREAD_CONTEXT_DATABASE)
+    if (role != THREAD_CONTEXT_MAIN && role != THREAD_CONTEXT_BACKEND && role != THREAD_CONTEXT_DATABASE
+        && role != THREAD_CONTEXT_STREAM && role != THREAD_CONTEXT_OCCLUSION && role != THREAD_CONTEXT_SERVER
+        && !(role>=THREAD_CONTEXT_WORKER0 && role<=THREAD_CONTEXT_WORKER7))
         fail("unsupported role", static_cast<int>(role));
     if (binding.retired) fail("retired role cannot rebind", static_cast<int>(role));
     if (binding.role != THREAD_CONTEXT_INVALID) {
@@ -62,20 +67,33 @@ void bo1::android::RegisterThreadRole(ThreadContext_t role) {
     }
 #endif
     Com_InitThreadData(role);
+#if defined(__ANDROID__) && defined(BO1_NATIVE_SCHEDULING_SERVICES)
+    bo1::android::RegisterSchedulingThread(role);
+#endif
 }
 void bo1::android::RetireThreadRole() {
     const int role = current();
     if (role == THREAD_CONTEXT_MAIN) fail("main retirement unsupported", role);
+#if defined(__ANDROID__) && defined(BO1_NATIVE_SCHEDULING_SERVICES)
+    bo1::android::RetireSchedulingThread(static_cast<ThreadContext_t>(role));
+#endif
     for (auto &value : values[role]) value = nullptr;
     binding.retired = true;
     binding.role = THREAD_CONTEXT_INVALID;
     // claimed deliberately remains true: no worker restart/quiescence proof.
 }
 void __cdecl Sys_InitMainThread() { bo1::android::RegisterThreadRole(THREAD_CONTEXT_MAIN); }
+void bo1::android::ResetJoinedWorkerRole(ThreadContext_t role) {
+    if(!Sys_IsMainThread() || (role!=THREAD_CONTEXT_OCCLUSION && (role<THREAD_CONTEXT_WORKER0 || role>THREAD_CONTEXT_WORKER7)))
+        fail("invalid joined worker reset",role);
+    for(auto value:values[role])if(value)fail("worker TLS not retired",role);
+    if(!claimed[role].exchange(false,std::memory_order_acq_rel))fail("unclaimed worker reset",role);
+}
 void __cdecl Sys_InitThread(int context) { bo1::android::RegisterThreadRole(static_cast<ThreadContext_t>(context)); }
 int __cdecl Sys_GetThreadContext() { return current(); }
 bool __cdecl Sys_IsMainThread() { return isRole(THREAD_CONTEXT_MAIN); }
 bool __cdecl Sys_IsRenderThread() { return isRole(THREAD_CONTEXT_BACKEND); }
 bool __cdecl Sys_IsDatabaseThread() { return isRole(THREAD_CONTEXT_DATABASE); }
+bool __cdecl Sys_IsStreamThread() { return isRole(THREAD_CONTEXT_STREAM); }
 void __cdecl Sys_SetValue(int index, void *data) { slot(index); values[current()][index] = data; }
 void *__cdecl Sys_GetValue(int index) { slot(index); return values[current()][index]; }

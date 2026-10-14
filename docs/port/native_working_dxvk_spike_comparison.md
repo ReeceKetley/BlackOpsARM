@@ -1,0 +1,31 @@
+# Working tablet DXVK spike comparison
+
+2026-10-14. Read-only audit of `D:/Desktop/Black Ops 2 Android/dxvk spike/dxvk` against current engine/provider sources. No spike/provider/engine source, native binary, configuration or device state was changed. No AGENTS.md was found inside the spike; its Android profile and source were inspected as evidence. Root retains full build/device ownership.
+
+The strongest reusable result is exact provider identity: the saved working `android/baseline/dxvk-d3d9-bench-after.apk` contains SDL SHA256 `11C28146F62F5BB13CEE863C1203D574324EF83931F1C668A3A181B470235E11` and DXVK D3D9 SHA256 `6E546EE31B8E45AF75EC0385E7B0B33A0BFEFD4810F9DD9B7237BB3FF7D9CF18`. These are byte-identical to the protected `DXVK-Native/android/app/src/main/jniLibs/arm64-v8a` binaries linked/packaged by the engine. The spike's retained compat log reports successful SM3, A8R8G8B8 target/texture, DXT1/DXT5, D24S8/INTZ, render-target switching, Reset and Present. `final-cube.txt` records240 measured frames and successful completion. These are real toy-rendering proofs on the same tablet, not engine scene/lifecycle proof.
+
+## Exact working application setup
+
+`android/spike/spike.cpp::SDL_main` line531 initializes SDL video, then creates a genuine Vulkan/fullscreen SDL window before Direct3DCreate9. Requested1280x720 is not used blindly: it reads SDL_GetWindowSize and uses the real returned Android surface dimensions for backbuffer sizing. Android_CreateWindow adjusts size to actual Android_SurfaceWidth/Height and tracks a real ANativeWindow. D3D creation uses SDL_Window as HWND, default adapter/HAL, HARDWARE_VERTEXPROCESSING plus FPU_PRESERVE, WindowedTRUE, DISCARD, X8R8G8B8, actual width/height, automatic D24S8 depth and INTERVAL_IMMEDIATE. It draws and presents directly on its single SDL_main owner and polls actual SDL events.
+
+SpikeActivity extends the matching genuine SDLActivity; library order is SDL2, dxvk_d3d9, main. It sets error-only logging, no log path, app-private state-cache directory and requested HUD option. Manifest selects landscape, fullscreen no-title theme and API28 minimum. Profile records DXVK Native1.9.2/SDL2.30.11/NDK30/Vulkan1.1.128 on Adreno610. The current port retains these same protected providers; no SDK, Vulkan or vendor-driver upgrade is needed for the already demonstrated capabilities.
+
+## Display-mode conclusion
+
+The spike never calls GetAdapterModeCount or EnumAdapterModes. Its success therefore does not prove exclusive-mode availability or that creating the SDL window first fixes enumeration. The exact protected/spike Android SDL video/window sources and DXVK adapter/SDL WSI sources match. SDL starts its format field at RGB565; Android_SetFormat is called from SDL_egl.c only. Android_CreateWindow explicitly skips EGL surface creation for a Vulkan window, so Vulkan window creation itself does not update that SDL format through this path. The SDLSurface native resize callback supplies actual dimensions/rate but no format. DXVK CacheModes filters by requested bpp, while GetAdapterDisplayMode reads current dimensions/rate independently.
+
+This makes the current engine windowed fallback appropriate: actual current display may size a D3D windowed renderer without being advertised as a supported exclusive mode. Frozen engine r_init.cpp continues to query and diagnose provider modes, seeds only windowed resolution/refresh Dvars from a valid actual current mode, and leaves exclusive mode counts/capability gates untouched. The actual432 diagnostics remain the authority for exact runtime format/count/refresh values. The earlier claim that Vulkan window creation itself would repair RGB565 enumeration was not supported and is corrected here.
+
+## Engine differences to preserve or verify
+
+- Engine canonical order performs interface/capability/mode queries before its tracked SDL window. Windowed current mode removes the unsupported exclusive-enumeration prerequisite; no dummy early window should be inserted.
+- Root's explicit SDK `r_fullscreen0` and `r_borderless1` selects real composited full-display styling with D3D WindowedTRUE. Native borderless sizing reads actual SDL display bounds/rate and validates actual desktop-fullscreen flags and drawable. This is consistent with the spike's D3D windowed presentation despite different SDL fullscreen styling.
+- Engine uses actual Vulkan drawable size, canonical A8R8G8B8 backbuffer and independently owned depth/render resources rather than spike auto-depth. Compat evidence covers these formats, but engine resource creation remains actual-run work.
+- Engine canonical r_vsync defaults1 and selects D3D interval1/FIFO. Spike uses immediate and DXVK requests immediate then mailbox, with profile observing mailbox. Do not import toy FPS or force immediate solely to advance boot; actual presentation remains to be verified.
+- Engine dispatches window-sensitive creation/reset/destruction to the installed SDL owner while canonical engine backend/thread ownership is retained. The spike does not exercise this multi-thread lifecycle. Full engine Present and lifecycle behavior must be proven independently.
+
+## Preserve the validated binary, not the later experiment
+
+Loose spike `libdxvk_d3d9.so` SHA256 `583C33D2C7FA8C862E88D6024DCF6B504D79DA1C1D3F84E18EAC25C663F8D0BF` is newer and differs from the working saved APK/current protected binary. Its sources add pre-rotation transform/extent/blit mapping. `prerotate-clear.txt` records a failed Present at frame0 and zero measured frames. The Android profile describes the working identity-transform version and its retained SUBOPTIMAL acceptance fix, not a validated later rotation experiment. The current protected source already accepts VK_SUBOPTIMAL_KHR without rebuilding each frame. No experimental swapchain/rotation/vendor changes are recommended for startup.
+
+`build-android-audit/native_working_dxvk_spike_audit1/readonly-source-binary-manifest.json` records selected source/binary hashes and APK contained-library identity. Engine r_init.cpp remains frozen SHA256 `8EEECBE6024F4FE39DA5C2D8BADB55421F469D8F5FA0F0953CEC6BFE70082A91`. No fixtures, builds or device commands were run by this audit owner.

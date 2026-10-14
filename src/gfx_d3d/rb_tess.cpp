@@ -1,3 +1,4 @@
+#include <platform/bo1_native_width.h>
 #include "rb_tess.h"
 #include "r_dvars.h"
 #include "r_debug.h"
@@ -977,6 +978,58 @@ void __cdecl RB_CreateParticleCloud2dAxis(const GfxParticleCloud *cloud, const f
 
     if ( !cloud && !Assert_MyHandler("C:\\projects_pc\\cod\\codsrc\\src\\gfx_d3d\\rb_tess.cpp", 1146, 0, "%s", "cloud") )
         __debugbreak();
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+    if ( *viewUp >= 0.001 || viewUp[1] >= 0.001 )
+    {
+        viewRight_4 = -1.0 * *viewUp;
+        //viewAxis[0][0] = COERCE_FLOAT(LODWORD(-1.0f) ^ _mask__NegFloat_) * viewUp[1];
+        viewAxis[0][0] = (-(-1.0f) ) * viewUp[1];
+        viewAxis[0][1] = viewRight_4;
+        v6 = viewUp[1];
+        viewAxis[1][0] = *viewUp;
+        viewAxis[1][1] = v6;
+        viewAxisLength = Vec2Length(viewAxis[0]);
+        if ( viewAxisLength <= 0.0
+            && !Assert_MyHandler(
+                        "C:\\projects_pc\\cod\\codsrc\\src\\gfx_d3d\\rb_tess.cpp",
+                        1165,
+                        0,
+                        "%s\n\t(viewAxisLength) = %g",
+                        "(viewAxisLength > 0)",
+                        viewAxisLength) )
+        {
+            __debugbreak();
+        }
+        v5 = viewAxisLength - Vec2Length(viewAxis[1]);
+        if ( fabs(v5) >= 0.001
+            && !Assert_MyHandler(
+                        "C:\\projects_pc\\cod\\codsrc\\src\\gfx_d3d\\rb_tess.cpp",
+                        1166,
+                        0,
+                        "%s",
+                        "fabs( viewAxisLength - Vec2Length( viewAxis[1] ) ) < EQUAL_EPSILON") )
+        {
+            __debugbreak();
+        }
+        v4 = cloud->radius[0] / viewAxisLength;
+        viewAxis[0][0] = v4 * viewAxis[0][0];
+        viewAxis[0][1] = v4 * viewAxis[0][1];
+        if ( cloud->radius[0] > viewAxisLength )
+        {
+            v3 = cloud->radius[0] / viewAxisLength;
+            viewAxis[1][0] = v3 * viewAxis[1][0];
+            viewAxis[1][1] = v3 * viewAxis[1][1];
+        }
+    }
+    else
+    {
+        viewAxis[0][0] = cloud->radius[0];
+        viewAxis[0][1] = 0.0f;
+        v7 = cloud->radius[1];
+        viewAxis[1][0] = 0.0f;
+        viewAxis[1][1] = v7;
+    }
+#else
     if ( *viewUp >= 0.001 || viewUp[1] >= 0.001 )
     {
         viewRight_4 = -1.0 * *viewUp;
@@ -1027,6 +1080,7 @@ void __cdecl RB_CreateParticleCloud2dAxis(const GfxParticleCloud *cloud, const f
         (*viewAxis)[2] = 0.0f;
         (*viewAxis)[3] = v7;
     }
+#endif
 }
 
 void __cdecl R_DrawXModelSkinnedModelSurf(GfxCmdBufContext context, const GfxModelSkinnedSurface *modelSurf)

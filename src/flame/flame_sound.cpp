@@ -46,7 +46,14 @@ void __cdecl Flame_Class_Source_Sound(
         listener[1] = playerState->origin[1];
         listener[2] = playerState->origin[2];
         renderList = source->currentStream->renderList;
+#if defined(__ANDROID__)
+        iassert(renderList);
+        iassert(table->flameVar_streamFuelNumSegments >= 1.0f && table->flameVar_streamFuelNumSegments < 129.0f);
+        points[0][0] = renderList->fuelVerts[0][0];
+        points[0][1] = renderList->fuelVerts[0][1];
+#else
         *(_QWORD *)&points[0][0] = *(_QWORD *)&renderList->fuelVerts[0][0];
+#endif
         points[0][2] = renderList->fuelVerts[0][2];
         v6 = source->currentStream->renderList->fuelVerts[(int)table->flameVar_streamFuelNumSegments - 1];
         points[1][0] = *v6;

@@ -768,7 +768,11 @@ void (__cdecl *__cdecl G_FindSpawnFunc(
 int __cdecl G_CallSpawnEntity(gentity_s *ent)
 {
     const gitem_s *item; // [esp+0h] [ebp-Ch]
+#if defined(__ANDROID__)
+    void (__cdecl *spawnFunc)(gentity_s *, SpawnVar *);
+#else
     void (__cdecl *spawnFunc)(gentity_s *); // [esp+4h] [ebp-8h]
+#endif
     char *classname; // [esp+8h] [ebp-4h]
 
     if ( level.spawnVar.spawnVarsValid
@@ -792,7 +796,11 @@ int __cdecl G_CallSpawnEntity(gentity_s *ent)
         }
         else
         {
+#if defined(__ANDROID__)
+            spawnFunc = G_FindSpawnFunc(classname, s_bspOrDynamicSpawns, 7);
+#else
             spawnFunc = (void (__cdecl *)(gentity_s *))G_FindSpawnFunc(classname, s_bspOrDynamicSpawns, 7);
+#endif
             if ( spawnFunc )
             {
                 //if ( spawnFunc == G_FreeEntityWrapper
@@ -805,7 +813,11 @@ int __cdecl G_CallSpawnEntity(gentity_s *ent)
                 //{
                 //    __debugbreak();
                 //}
+#if defined(__ANDROID__)
+                spawnFunc(ent, nullptr);
+#else
                 ((void (__cdecl *)(gentity_s *, unsigned int))spawnFunc)(ent, 0);
+#endif
                 if ( !ent->r.inuse
                     && !Assert_MyHandler(
                                 "C:\\projects_pc\\cod\\codsrc\\src\\game_mp\\g_spawn_mp.cpp",

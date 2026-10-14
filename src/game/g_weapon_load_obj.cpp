@@ -90,18 +90,45 @@ char __cdecl G_ParseWeaponAccurayGraphInternal(
         return 1;
     if ( !*graphName )
         return 1;
+#if defined(__ANDROID__)
+    const int pathLength = snprintf(string, sizeof(string), "accuracy/%s/%s", dirName, graphName);
+    if (pathLength < 0 || static_cast<size_t>(pathLength) >= sizeof(string))
+    {
+        Com_PrintWarning(15, "WARNING: ai weapon accuracy path is too long\n");
+        return 0;
+    }
+#else
     sprintf(string, "accuracy/%s/%s", dirName, graphName);
+#endif
     v6 = FS_FOpenFileByMode(string, &f, FS_READ);
     if ( v6 >= 0 )
     {
+#if defined(__ANDROID__)
+        if (v6 < len || FS_Read((unsigned __int8 *)buffer, len, f) != static_cast<unsigned int>(len))
+        {
+            FS_FCloseFile(f);
+            Com_PrintWarning(15, "WARNING: truncated ai weapon accuracy file '%s'\n", string);
+            return 0;
+        }
+#else
         FS_Read((unsigned __int8 *)buffer, len, f);
+#endif
         buffer[len] = 0;
         if ( !strncmp(buffer, last, len) )
         {
             if ( v6 - len < 0x4000 )
             {
                 memset((unsigned __int8 *)buffer, 0, 0x4000u);
+#if defined(__ANDROID__)
+                if (FS_Read((unsigned __int8 *)buffer, v6 - len, f) != static_cast<unsigned int>(v6 - len))
+                {
+                    FS_FCloseFile(f);
+                    Com_PrintWarning(15, "WARNING: truncated ai weapon accuracy file '%s'\n", string);
+                    return 0;
+                }
+#else
                 FS_Read((unsigned __int8 *)buffer, v6 - len, f);
+#endif
                 buffer[v6 - len] = 0;
                 FS_FCloseFile(f);
                 knotCounta = 0;
@@ -174,6 +201,16 @@ char __cdecl G_ParseAIWeaponAccurayGraphFile(
     tokenb = Com_Parse(&buffer);
     v4 = atoi(tokenb->token);
     *knotCount = v4;
+#if defined(__ANDROID__)
+    // The caller owns sixteen pairs; the original loop rejects a sixteenth
+    // pair. Reject empty/invalid declarations before indexing its last pair.
+    if (v4 <= 0 || v4 >= 16)
+    {
+        Com_PrintError(15, "ERROR: \"%s\" Invalid ai weapon accuracy knot count\n", fileName);
+        Com_EndParseSession();
+        return 0;
+    }
+#endif
     knotCountIndex = 0;
     while ( 1 )
     {
@@ -183,12 +220,20 @@ char __cdecl G_ParseAIWeaponAccurayGraphFile(
         if ( token->token[0] == 125 )
             break;
         v5 = atof(token->token);
+#if defined(__ANDROID__)
+        knots[knotCountIndex][0] = v5;
+#else
         (*knots)[2 * knotCountIndex] = v5;
+#endif
         tokena = Com_Parse(&buffer);
         if ( !tokena->token[0] || tokena->token[0] == 125 )
             break;
         v6 = atof(tokena->token);
+#if defined(__ANDROID__)
+        knots[knotCountIndex++][1] = v6;
+#else
         (*knots)[2 * knotCountIndex++ + 1] = v6;
+#endif
         if ( knotCountIndex >= 16 )
         {
             Com_PrintWarning(15, "WARNING: \"%s\" has too many graph knots\n", fileName);
@@ -199,7 +244,11 @@ char __cdecl G_ParseAIWeaponAccurayGraphFile(
     Com_EndParseSession();
     if ( knotCountIndex == *knotCount )
     {
+#if defined(__ANDROID__)
+        if (knots[knotCountIndex - 1][0] == 1.0)
+#else
         if ( (*knots)[2 * knotCountIndex - 2] == 1.0 )
+#endif
         {
             return 1;
         }

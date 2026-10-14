@@ -1,3 +1,7 @@
+#if defined(BO1_SCRIPT_VARIABLE_LIMITS_ONLY)
+#include <clientscript/script_variable_limits.h>
+#else
+#include <cctype>
 #include "cscr_variable.h"
 #include <universal/com_memory.h>
 #include <qcommon/common.h>
@@ -14,6 +18,9 @@
 #include "cscr_tempmemory.h"
 #include <universal/q_parse.h>
 #include <database/db_registry.h>
+#if defined(__ANDROID__)
+#include <platform/bo1_bytecode_io.h>
+#endif
 
 #undef GetObject // windows aids
 
@@ -427,11 +434,14 @@ void __cdecl Scr_DumpScriptVariablesDefault(scriptInstance_t inst)
 
 const char *gScriptVarsAlloc = "ScriptVars";
 
+#endif // BO1_SCRIPT_VARIABLE_LIMITS_ONLY
+
 // mod: set to 0x10000 for the server instance by Com_Init when bo1_mod_scriptvars is 1 (before Scr_InitVariables)
 unsigned int g_scrVarChildBegin[2] = { 0x8000, 0x8000 };
 // mod: server child pool size; Com_Init sets it for bo1_mod_scriptvars 2+ (before Scr_InitVariables)
 unsigned int g_scrVarChildSize[2] = { 0x3FFFE, 0x3FFFE };
 
+#if !defined(BO1_SCRIPT_VARIABLE_LIMITS_ONLY)
 // mod: a server pool grown by bo1_mod_scriptvars 2+ (tens of MB) does not fit the physical-memory block
 // (PMem "Out of memory" at startup), so it comes from the OS; retail sizes keep the PMem path. Never freed, like PMem.
 static unsigned __int8 *Scr_AllocVarsMem(scriptInstance_t inst, unsigned int size, unsigned int alignment, signed int type,
@@ -7215,7 +7225,11 @@ unsigned int __cdecl Scr_FindField(const char *name, int *type, scriptInstance_t
         if ( !I_stricmp(name, pos) )
         {
             posa = &pos[len];
+#if defined(__ANDROID__)
+            index = bo1::bytecode::Load<uint16_t>(posa);
+#else
             index = *(unsigned __int16 *)posa;
+#endif
             *type = posa[2];
             return index;
         }
@@ -7354,7 +7368,11 @@ void __cdecl Scr_AddFieldsForFile(scriptInstance_t inst, char *filename)
         }
         while ( v5 );
         targetPos += len;
+#if defined(__ANDROID__)
+        bo1::bytecode::Store<uint16_t>(targetPos, static_cast<uint16_t>(index));
+#else
         *(_WORD *)targetPos = index;
+#endif
         targetPos += 2;
         *targetPos++ = type;
     }
@@ -7804,3 +7822,5 @@ unsigned int __cdecl Scr_FindAllEndons(scriptInstance_t inst, unsigned int threa
     }
     return count;
 }
+
+#endif // BO1_SCRIPT_VARIABLE_LIMITS_ONLY

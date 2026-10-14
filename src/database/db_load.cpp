@@ -7895,6 +7895,9 @@ XAsset *__cdecl AllocLoad_FxElemVisStateSample()
 
 #endif
 #if !defined(BO1_STRINGTABLE_INDEX_GATE)
+#if defined(__ANDROID__)
+void DB_NativeAuditWeaponModelArray(const char *, const char *, const WeaponDef *, const char *, XModel *const *, unsigned);
+#endif
 void __cdecl Load_WeaponDef(bool atStreamStart)
 {
 #if BO1_NATIVE_64BIT
@@ -7907,6 +7910,9 @@ void __cdecl Load_WeaponDef(bool atStreamStart)
 #endif
     varXString = &varWeaponDef->szOverlayName;
     Load_XString(0);
+#if defined(__ANDROID__)
+    const unsigned nativeGunModelOffset = static_cast<unsigned>(reinterpret_cast<uintptr_t>(varWeaponDef->gunXModel));
+#endif
     if ( varWeaponDef->gunXModel )
     {
         if ( varWeaponDef->gunXModel == (XModel **)-1 )
@@ -7917,9 +7923,16 @@ void __cdecl Load_WeaponDef(bool atStreamStart)
         }
         else
         {
+#if defined(__ANDROID__)
+            DB_ConvertOffsetToPointerArray(&varWeaponDef->gunXModel, 16);
+#else
             DB_ConvertOffsetToPointer((unsigned int *)&varWeaponDef->gunXModel);
+#endif
         }
     }
+#if defined(__ANDROID__)
+    DB_NativeAuditWeaponModelArray("load", varWeaponVariantDef->szInternalName, varWeaponDef, "gunXModel", varWeaponDef->gunXModel, nativeGunModelOffset);
+#endif
     varXModelPtr = &varWeaponDef->handXModel;
     Load_XModelPtr(0);
     varXString = &varWeaponDef->szModeName;
@@ -8111,6 +8124,9 @@ void __cdecl Load_WeaponDef(bool atStreamStart)
     Load_MaterialHandle(0);
     varMaterialHandle = &varWeaponDef->reticleSide;
     Load_MaterialHandle(0);
+#if defined(__ANDROID__)
+    const unsigned nativeWorldModelOffset = static_cast<unsigned>(reinterpret_cast<uintptr_t>(varWeaponDef->worldModel));
+#endif
     if ( varWeaponDef->worldModel )
     {
         if ( varWeaponDef->worldModel == (XModel **)-1 )
@@ -8121,9 +8137,16 @@ void __cdecl Load_WeaponDef(bool atStreamStart)
         }
         else
         {
+#if defined(__ANDROID__)
+            DB_ConvertOffsetToPointerArray(&varWeaponDef->worldModel, 16);
+#else
             DB_ConvertOffsetToPointer((unsigned int *)&varWeaponDef->worldModel);
+#endif
         }
     }
+#if defined(__ANDROID__)
+    DB_NativeAuditWeaponModelArray("load", varWeaponVariantDef->szInternalName, varWeaponDef, "worldModel", varWeaponDef->worldModel, nativeWorldModelOffset);
+#endif
     varXModelPtr = &varWeaponDef->worldClipModel;
     Load_XModelPtr(0);
     varXModelPtr = &varWeaponDef->rocketModel;

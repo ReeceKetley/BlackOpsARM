@@ -1,0 +1,9 @@
+# Native inline matrix transform row bounds
+
+The focused actual math fixture exposed com_math.h314 MatrixTransformVector while executing MatrixInverseOrthogonal43: (*in2)[3] crossed a declared three-float row. Root preserves the actual inline functions and assertions, using direct in2[row][column] for exactly18 native scalar reads across MatrixTransformVector and MatrixTransposeTransformVector. Each float formula, cast and operation order remains; original Windows statements are retained verbatim in else branches.
+
+Source SHA521641AA4899497A15339C5E56274682EE35B899CDBC77EEEEB63A853D5472D1. Root direct source comparison of both selected Windows bodies against read-only BlackOps64 is true: build-android-audit/native_registry_closure/math-inline-windows-oracle1.json. The coordinated math owner rebuilt the genuine whole native math TU and normal Windows x86/x64 after this shared header changed; takeover_math_matrix_rows_windows2 is the current proof. Earlier pre-header compile checks do not stand in for this final build.
+
+Final actual HONOR UBSan fixture passes MatrixInverseOrthogonal43 and direct two inline calls with asymmetric matrix{{1,2,3},{0,1,4},{5,6,0}} and vector{2,-1,3}. Transform output{17,21,2}, transpose-transform output{9,11,4} prove distinct orientations. Full fixture also covers actual quaternion signs, asymmetric3x3/4x3/4x4 operations, inverses/transposes/planes/rotated bounds/knots and output canaries. Retain original math-matrix-row-honor-failed-header1.log and failed-inverse44-2.log; the tests were kept while actual missing typed accesses were repaired. No stubbed numerical owners or weakened assertion/sanitizer.
+
+Root full421 production build remains the integration gate. This fixture proves those numerical and bounds paths, not every color/projection function, entity spawning, map-main execution or simulation. See native_math_matrix_rows_integration.md for the coordinated source batch.

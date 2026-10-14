@@ -2,6 +2,9 @@
 #include <platform/startup_services_api.h>
 #else
 #include "q_parse.h"
+#if defined(__ANDROID__)
+#include <platform/android/legacy_crt.h>
+#endif
 #include <qcommon/common.h>
 #include <qcommon/threads.h>
 #include "assertive.h"

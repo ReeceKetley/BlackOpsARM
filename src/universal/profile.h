@@ -20,6 +20,10 @@
 // command line sets bo1_frameperf (win_main.cpp). Per zone: inclusive time of the current frame on the main thread
 // (outermost entry only) and on all other threads, read and cleared once per frame by G_SP_FramePerfEnd.
 #include <platform/profile_services.h>
+#if defined(__ANDROID__)
+#include <platform/android/server_profiler_sampler.h>
+#include <atomic>
+#endif
 
 struct BO1ProfZone
 {
@@ -50,7 +54,13 @@ enum BO1FirstUseKind
     BO1_FIRST_KINDS
 };
 extern volatile long g_bo1FirstUse[BO1_FIRST_KINDS];
-extern volatile long g_bo1RenderFirstUse[BO1_FIRST_KINDS]; // same counts, read per render frame (RB_SwapBuffers)
+#if defined(__ANDROID__)
+using BO1RenderCounter = int;
+static_assert(sizeof(BO1RenderCounter)==4);
+#else
+using BO1RenderCounter = long;
+#endif
+extern volatile BO1RenderCounter g_bo1RenderFirstUse[BO1_FIRST_KINDS]; // same counts, read per render frame (RB_SwapBuffers)
 void BO1_ProfFirstUse(int kind, unsigned long long key, const char *name); // call only when g_bo1ProfOn
 int BO1_ProfFirstUseNames(char *out, int size); // recent first-used pass names (material:technique), then cleared
 
@@ -70,16 +80,24 @@ enum BO1RenderCountKind
     BO1_RC_BUF_LOCK_KB,   // bytes locked by them (0 = whole buffer, not counted)
     BO1_RC_KINDS
 };
-extern volatile long g_bo1RenderCount[BO1_RC_KINDS];
-inline void BO1_RenderCount(int kind, long n) { if (g_bo1ProfOn) BO1_ProfileAdd(&g_bo1RenderCount[kind], n); }
+extern volatile BO1RenderCounter g_bo1RenderCount[BO1_RC_KINDS];
+inline void BO1_RenderCount(int kind, long n) {
+    if(g_bo1ProfOn) {
+#if defined(__ANDROID__)
+        __atomic_fetch_add(&g_bo1RenderCount[kind],static_cast<int>(n),__ATOMIC_SEQ_CST);
+#else
+        BO1_ProfileAdd(&g_bo1RenderCount[kind],n);
+#endif
+    }
+}
 
 // GPU phases: frame start..draw commands, shadow maps, depth prepass, lit (+reflected, resolves), decal / sun /
 // coronas / dlights / distortion, emissive (effects), post effects, rest of the frame (2D, UI)
 #define BO1_GPU_SEGS 8
 struct BO1RenderFrame
 {
-    volatile long frame;   // render frame number (1-based); written last, when the entry is complete
-    volatile long state;   // 0 GPU times pending, 1 resolved, 2 GPU times unavailable
+    volatile BO1RenderCounter frame;   // render frame number (1-based); written last, when the entry is complete
+    volatile BO1RenderCounter state;   // 0 GPU times pending, 1 resolved, 2 GPU times unavailable
     float swapMs;          // Present end to Present end (the render thread's frame)
     float presentMs;       // time inside Present()
     float gpuMs;           // GPU timestamp: first command after the previous Present to the last before this one
@@ -89,9 +107,9 @@ struct BO1RenderFrame
     float presentProcMs;   // whole-process CPU cycles during Present (QueryProcessCycleTime), in ms of one CPU
     float presentMainMs;   // main thread CPU cycles during Present
     char threads[128];     // Present >= 10 ms: the 3 threads with the most CPU during it, start module+offset:ms
-    long first[BO1_FIRST_KINDS]; // first uses (profile.h BO1FirstUseKind) drawn in this render frame
+    BO1RenderCounter first[BO1_FIRST_KINDS]; // first uses (profile.h BO1FirstUseKind) drawn in this render frame
     float gpuSeg[BO1_GPU_SEGS]; // GPU ms per phase (RB_BO1GpuMark in RB_StandardDrawCommands), -1 = not drawn
-    long counts[BO1_RC_KINDS];
+    BO1RenderCounter counts[BO1_RC_KINDS];
 };
 #define BO1_RENDER_RING 64
 extern BO1RenderFrame g_bo1RenderRing[BO1_RENDER_RING]; // index frame % BO1_RENDER_RING
@@ -170,14 +188,26 @@ enum SvProfCat
     SVPROF_PHYSICS, // Actor_Physics (ground, slide, step), less its traces
     SVPROF_COUNT
 };
+#if defined(__ANDROID__)
+extern std::atomic<int> g_svProfOn;
+extern std::atomic<unsigned long> g_svProfThread;
+static_assert(std::atomic<int>::is_always_lock_free && std::atomic<unsigned long>::is_always_lock_free);
+#else
 extern volatile int g_svProfOn;
 extern unsigned long g_svProfThread;
+#endif
 extern unsigned long long g_svProfTicks[SVPROF_COUNT];
 extern unsigned int g_svProfCalls[SVPROF_COUNT];
 extern int g_svProfStack[64];
 extern int g_svProfDepth;
 extern unsigned long long g_svProfLast;
-extern volatile long g_modRendWarn[6]; // mod (L43): renderer overflows since start: [0] shader constant sets, [1] skinned cache, [2] special models (r_mod_gfxEnts); [3] window peak of special-model slots wanted in a frame, [4] this frame's refused slots, [5] frames wanting more than 256
+#if defined(__ANDROID__)
+using Bo1RenderWarningCounter = int; // Windows LONG counters remain four bytes on LP64.
+#else
+using Bo1RenderWarningCounter = long;
+#endif
+static_assert(sizeof(Bo1RenderWarningCounter)==4);
+extern volatile Bo1RenderWarningCounter g_modRendWarn[6]; // [0..2] overflows, [3] window peak, [4] current refusals, [5] over-budget frames
 
 struct SvProfScope
 {
@@ -190,6 +220,9 @@ struct SvProfScope
         const unsigned long long now = BO1_ProfileTicks();
         g_svProfTicks[g_svProfStack[g_svProfDepth]] += now - g_svProfLast;
         g_svProfStack[++g_svProfDepth] = cat;
+#if defined(__ANDROID__)
+        bo1::android::SetServerSampleCategory(cat);
+#endif
         ++g_svProfCalls[cat];
         g_svProfLast = now;
     }
@@ -201,6 +234,9 @@ struct SvProfScope
         g_svProfTicks[g_svProfStack[g_svProfDepth]] += now - g_svProfLast;
         if (g_svProfDepth > 0)
             --g_svProfDepth;
+#if defined(__ANDROID__)
+        bo1::android::SetServerSampleCategory(g_svProfStack[g_svProfDepth]);
+#endif
         g_svProfLast = now;
     }
 };

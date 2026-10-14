@@ -86,7 +86,13 @@ void __cdecl Demo_SaveToStreamBuffer(unsigned __int8 *data, unsigned int dataSiz
 void __cdecl Demo_RecordSentPacket(unsigned int size);
 bool __cdecl Demo_ShouldThrottle();
 unsigned int __cdecl Demo_ThrottleStream(unsigned int dataSize);
-int __cdecl Demo_WriteToStream(unsigned __int8 *data, unsigned int dataSize);
+int __cdecl Demo_WriteToStream(unsigned __int8 *data, unsigned int dataSize);
+#if defined(__ANDROID__)
+// Actual fileshare callback ABI; offset must equal bytes already delivered.
+// Streaming storage cannot replay retired bytes for retry/range requests.
+unsigned int __cdecl Demo_StreamUploadDataCallback(void *data, unsigned int size, unsigned int offset);
+static_assert(sizeof(demoSaveCmd)==16 && alignof(demoSaveCmd)==8);
+#endif
 int __cdecl Demo_SaveCallback(jqBatch *batch);
 unsigned __int8 *__cdecl Demo_GetActiveMemoryBuffer();
 unsigned __int8 *__cdecl Demo_SwapActiveMemoryBuffer();

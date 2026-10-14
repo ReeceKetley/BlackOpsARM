@@ -1,4 +1,5 @@
 #include "r_stream.h"
+#include <platform/bo1_native_width.h>
 #include "r_dvars.h"
 #include <xanim/xanim.h>
 #include <xanim/xmodel_utils.h>
@@ -24,6 +25,13 @@
 #include <DynEntity/DynEntity_load_obj.h>
 #include <DynEntity/DynEntity_client.h>
 #include "r_rendercmds.h"
+#if defined(__ANDROID__)
+#include <atomic>
+#include <platform/android/command_line_services.h>
+#define BO1_STREAM_PREFETCH(address, locality) __builtin_prefetch(address, 0, locality)
+#else
+#define BO1_STREAM_PREFETCH(address, locality) _mm_prefetch(address, locality)
+#endif
 
 
 volatile unsigned int r_stream_sortLimit = 1;
@@ -108,8 +116,14 @@ StreamFrontendGlob streamFrontendGlob;
 StreamImageParts s_streamImages;
 int s_streamImageParts = I_stristr(GetCommandLineA(), "bo1_mod_zones") ? STREAM_MAX_IMAGE_PARTS_MOD : STREAM_MAX_IMAGE_PARTS;
 int s_streamImageWords = s_streamImageParts / 32;
+#if defined(__ANDROID__)
+std::atomic<unsigned int> streamDisabledCount;
+std::atomic<bool> streamIsInitialized;
+static_assert(sizeof(std::atomic<unsigned int>) == 4 && std::atomic<unsigned int>::is_always_lock_free);
+#else
 volatile unsigned int streamDisabledCount;
 bool streamIsInitialized;
+#endif
 
 char streamUIConfigSet; // not a real name
 
@@ -126,12 +140,20 @@ bool __cdecl R_StreamIsEnabled()
 
 void __cdecl R_StreamPushDisable()
 {
+#if defined(__ANDROID__)
+    streamDisabledCount.fetch_add(1u);
+#else
     _InterlockedExchangeAdd(&streamDisabledCount, 1u);
+#endif
 }
 
 void __cdecl R_StreamPopDisable()
 {
+#if defined(__ANDROID__)
+    if ( static_cast<std::int32_t>(streamDisabledCount.fetch_sub(1u) - 1u) < 0
+#else
     if ( _InterlockedDecrement(&streamDisabledCount) < 0
+#endif
         && !Assert_MyHandler("C:\\projects_pc\\cod\\codsrc\\src\\gfx_d3d\\r_stream.cpp", 279, 0, "%s", "disableCount >= 0") )
     {
         __debugbreak();
@@ -1942,8 +1964,8 @@ void __cdecl R_StreamUpdateDynamicModels(
     {
         dynEntIda = rgp.world->sceneDynModel[entIndexc].dynEntId;
         dynEntDefa = DynEnt_GetEntityDef(dynEntIda, DYNENT_DRAW_MODEL);
-        _mm_prefetch((const char *)dynEntDefa->xModel, 1);
-        _mm_prefetch((const char *)dynEntDefa->destroyedxModel, 1);
+        BO1_STREAM_PREFETCH((const char *)dynEntDefa->xModel, 1);
+        BO1_STREAM_PREFETCH((const char *)dynEntDefa->destroyedxModel, 1);
         ClientPose = DynEnt_GetClientPose(dynEntIda, DYNENT_DRAW_MODEL);
         R_StreamUpdate_AddDynamicXModelDistance(dynEntDefa->xModel, viewPos, ClientPose->pose.origin, 1.0, 1, distanceScale);
         if (dynEntDefa->destroyedxModel)
@@ -2014,14 +2036,14 @@ void __cdecl R_StreamUpdateForBModel(
         material = modelSurf->surf->material;
         if (material && material->textureCount)
         {
-            _mm_prefetch((const char *)&modelSurf[1], 1);
+            BO1_STREAM_PREFETCH((const char *)&modelSurf[1], 1);
             if (rg.renderHiResShot && !isVisible)
                 return;
             mip1radiusSq = bmodel->writable.mip1radiusSq;
             v10 = distanceScale[isVisible];
             distSq_4 = PointDistSqFromBounds(viewPos, bmodel->writable.mins, bmodel->writable.maxs) * v10;
             distSq = mip1radiusSq / (float)(distSq_4 + 100.0);
-            _mm_prefetch((const char *)modelSurf[1].surf, 1);
+            BO1_STREAM_PREFETCH((const char *)modelSurf[1].surf, 1);
             R_StreamTouchImagesFromMaterial(material, distSq);
             if (altMaterial)
                 R_StreamTouchImagesFromMaterial(altMaterial, distSq);
@@ -2132,7 +2154,13 @@ void __cdecl R_Stream_UpdateStaticModelsCmd(char *data)
 
     StreamUpdateCmd *cmd = (StreamUpdateCmd *)data;
 
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+    alignas(16) float4 nativeViewPos = {};
+    memcpy(nativeViewPos.v, cmd->viewPos, 3 * sizeof(float));
+    s_viewPos = nativeViewPos;
+#else
     memcpy(&s_viewPos, cmd->viewPos, sizeof(s_viewPos)); // unaligned source: no aligned vector load
+#endif
     for (unsigned int instId = 0; instId < g_worldDpvs->smodelCount; ++instId)
     {
         R_StreamUpdateStaticModel(instId, cmd->viewPos, cmd->maxDistSq, cmd->distanceScale);
@@ -2144,7 +2172,13 @@ void __cdecl R_Stream_UpdateStaticSurfacesCmd(char *data)
     PROF_SCOPED("R_Stream_UpdateStaticSurfacesCmd");
 
     StreamUpdateCmd *cmd = (StreamUpdateCmd *)data;
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+    alignas(16) float4 nativeViewPos = {};
+    memcpy(nativeViewPos.v, cmd->viewPos, 3 * sizeof(float));
+    s_viewPos = nativeViewPos;
+#else
     memcpy(&s_viewPos, cmd->viewPos, sizeof(s_viewPos)); // unaligned source: no aligned vector load
+#endif
 
     for (unsigned int surfId = 0; surfId < g_worldDpvs->staticSurfaceCount; ++surfId)
     {
@@ -2243,6 +2277,15 @@ void __cdecl MultiplePointDistSqFromBounds(
 {
     float4 v6; // [esp-20h] [ebp-120h]
     float4 v7; // [esp-10h] [ebp-110h]
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+    // Surface bounds own three coordinates; the distance math never uses lane 3.
+    alignas(16) float4 nativeMins = {};
+    alignas(16) float4 nativeMaxs = {};
+    memcpy(nativeMins.v, mip0mins, 3 * sizeof(float));
+    memcpy(nativeMaxs.v, mip0maxs, 3 * sizeof(float));
+    mip0mins = nativeMins.v;
+    mip0maxs = nativeMaxs.v;
+#endif
 
     if ( (reinterpret_cast<uintptr_t>(&s_viewPos) & 0xF) != 0
         && !Assert_MyHandler(
@@ -2276,10 +2319,15 @@ void __cdecl MultiplePointDistSqFromBounds(
         __debugbreak();
     }
 #endif
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+    v6 = nativeMins;
+    v7 = nativeMaxs;
+#else
     *(_QWORD *)v7.v = *(_QWORD *)mip0maxs;
     *(_QWORD *)&v7.unitVec[2].packed = *((_QWORD *)mip0maxs + 1);
     *(_QWORD *)v6.v = *(_QWORD *)mip0mins;
     *(_QWORD *)&v6.unitVec[2].packed = *((_QWORD *)mip0mins + 1);
+#endif
     distances->distanceForHimip = FastPointDistSqFromBounds(v6, v7) * distanceScale;
     distances->importance = himipRadiusSq / (float)(distances->distanceForHimip + 100.0);
 }
@@ -2590,7 +2638,13 @@ int __cdecl r_stream_updateCallback(jqBatch *batch)
     if (batch->Module->Group.ExecutingBatchCount > 1)
         return 1;
     cmd = (StreamUpdateCmd *)jqLockData(batch);
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+    alignas(16) float4 nativeViewPos = {};
+    memcpy(nativeViewPos.v, cmd->viewPos, 3 * sizeof(float));
+    s_viewPos = nativeViewPos;
+#else
     memcpy(&s_viewPos, cmd->viewPos, sizeof(s_viewPos)); // unaligned source: no aligned vector load
+#endif
     R_StreamUpdateStatic(cmd->viewPos, cmd->maxDistSq, cmd->distanceScale);
     jqUnlockData(batch);
     return 0;
@@ -2648,7 +2702,13 @@ void __cdecl R_StreamUpdateStatic(const float *viewPos, float maxDistSq, float *
 
     PROF_SCOPED("R_Stream update static");
 
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+    alignas(16) float4 nativeViewPos = {};
+    memcpy(nativeViewPos.v, viewPos, 3 * sizeof(float));
+    s_viewPos = nativeViewPos;
+#else
     memcpy(&s_viewPos, viewPos, sizeof(s_viewPos)); // unaligned source: no aligned vector load
+#endif
 
     if (rgp.world->streamInfo.aabbTreeCount > 0)
     {

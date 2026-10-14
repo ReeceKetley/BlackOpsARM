@@ -1,14 +1,12 @@
+#if defined(BO1_NATIVE_REFERENCE_QUERY_ONLY)
+#include <universal/assertive.h>
+#endif
+#if !defined(BO1_NATIVE_REFERENCE_QUERY_ONLY)
 #include "splitscreen.h"
 #include <universal/assertive.h>
 #include <ui/ui_main.h>
 #include <qcommon/com_clients.h>
 #include "cl_main.h"
-
-// This is used as a generic "Return 1" function
-int __cdecl CL_LocalClient_GetActiveCount()
-{
-    return 1;
-}
 
 char __cdecl CL_LocalClient_IsActive(int localClientNum)
 {
@@ -26,21 +24,7 @@ char __cdecl CL_LocalClient_IsActive(int localClientNum)
     return 1;
 }
 
-char __cdecl CL_LocalClient_IsFirstActive(int localClientNum)
-{
-    if ( localClientNum
-        && !Assert_MyHandler(
-                    "C:\\projects_pc\\cod\\codsrc\\src\\client\\splitscreen.cpp",
-                    64,
-                    0,
-                    "%s\n\t(localClientNum) = %i",
-                    "(localClientNum >= 0 && localClientNum < 1)",
-                    localClientNum) )
-    {
-        __debugbreak();
-    }
-    return 1;
-}
+
 
 char __cdecl CL_AllLocalClientsDisconnected()
 {
@@ -112,4 +96,26 @@ const char *__cdecl CL_ControllerIndex_GetUsername()
 {
     return name->current.string;
 }
+#endif
+// This is used as a generic "Return 1" function
+int __cdecl CL_LocalClient_GetActiveCount()
+{
+    return 1;
+}
 
+
+char __cdecl CL_LocalClient_IsFirstActive(int localClientNum)
+{
+    if ( localClientNum
+        && !Assert_MyHandler(
+                    "C:\\projects_pc\\cod\\codsrc\\src\\client\\splitscreen.cpp",
+                    64,
+                    0,
+                    "%s\n\t(localClientNum) = %i",
+                    "(localClientNum >= 0 && localClientNum < 1)",
+                    localClientNum) )
+    {
+        __debugbreak();
+    }
+    return 1;
+}

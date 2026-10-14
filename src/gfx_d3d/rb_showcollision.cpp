@@ -6,6 +6,10 @@
 #include "rb_stats.h"
 #include <physics/phys_render.h>
 #include "rb_debug.h"
+#if defined(__ANDROID__)
+#include <qcommon/common.h>
+#include <cstdlib>
+#endif
 
 int showCollisionContentMasks[10] = { 0, 210624, 65536, 8192, 128, 512, 131072, 1024, 64, 4096 };
 
@@ -33,6 +37,11 @@ void __cdecl RB_ShowCollision(const GfxViewParms *viewParms)
     {
         __debugbreak();
     }
+#if defined(__ANDROID__)
+    if (!viewParms || !r_showCollision || r_showCollision->current.integer < 0 || r_showCollision->current.integer >= ARRAY_COUNT(showCollisionContentMasks)) {
+        Com_Error(ERR_FATAL,"Invalid collision-debug view/mode"); std::abort();
+    }
+#endif
     if ( r_showCollision->current.integer )
     {
         contentMask = showCollisionContentMasks[r_showCollision->current.integer];
@@ -95,6 +104,9 @@ void __cdecl BuildFrustumPlanes(const GfxViewParms *viewParms, cplane_s *frustum
     {
         __debugbreak();
     }
+#if defined(__ANDROID__)
+    if (!viewParms || !frustumPlanes) { Com_Error(ERR_FATAL,"Invalid collision frustum output/input"); std::abort(); }
+#endif
     R_FrustumClipPlanes(&viewParms->viewProjectionMatrix, frustumSidePlanes, 5, dpvsFrustumPlanes);
     for ( planeIndex = 0; planeIndex < 5; ++planeIndex )
     {
@@ -154,6 +166,12 @@ void __cdecl RB_DrawCollisionPoly(int numPoints, float (*points)[3], const float
     {
         __debugbreak();
     }
+#if defined(__ANDROID__)
+    if (!points || !colorFloat || numPoints < 3 || static_cast<unsigned>(numPoints) > ARRAY_COUNT(tess.verts)
+        || 3ULL*static_cast<unsigned>(numPoints-2) > ARRAY_COUNT(tess.indices)) {
+        Com_Error(ERR_FATAL,"Collision polygon exceeds actual tessellation capacity"); std::abort();
+    }
+#endif
     if ( r_showCollisionPolyType->current.integer == 2 || !r_showCollisionPolyType->current.integer )
     {
         R_ConvertColorToBytes(colorFloat, (unsigned __int8 *)&color);
@@ -161,7 +179,11 @@ void __cdecl RB_DrawCollisionPoly(int numPoints, float (*points)[3], const float
         R_TrackPrims(&gfxCmdBufState.prim, GFX_PRIM_STATS_DEBUG);
         RB_CheckTessOverflow(numPoints, 3 * (numPoints - 2));
         for ( vertIndex = 0; vertIndex < numPoints; ++vertIndex )
+#if defined(__ANDROID__)
+            RB_SetPolyVert(points[vertIndex], color, vertIndex + tess.vertexCount);
+#else
             RB_SetPolyVert(&(*points)[3 * vertIndex], color, vertIndex + tess.vertexCount);
+#endif
         for ( vertIndexa = 2; vertIndexa < numPoints; ++vertIndexa )
         {
             tess.indices[tess.indexCount] = tess.vertexCount;
@@ -179,8 +201,13 @@ void __cdecl RB_DrawCollisionPoly(int numPoints, float (*points)[3], const float
         for ( vertIndexb = 0; vertIndexb < numPoints; ++vertIndexb )
         {
             vertCount = RB_AddDebugLine(
+#if defined(__ANDROID__)
+                                        points[vertIndexPrev],
+                                        points[vertIndexb],
+#else
                                         &(*points)[3 * vertIndexPrev],
                                         &(*points)[3 * vertIndexb],
+#endif
                                         colorFloat,
                                         r_showCollisionDepthTest->current.enabled,
                                         vertCount,

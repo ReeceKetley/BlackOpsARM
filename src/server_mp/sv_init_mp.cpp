@@ -1,4 +1,11 @@
 #include "sv_init_mp.h"
+#if defined(__ANDROID__)
+#include <atomic>
+#include <win32/win_main.h>
+#include <clientscript/cscr_variable.h>
+#include <climits>
+#include <cstdlib>
+#endif
 #include <server/server.h>
 #include <qcommon/common.h>
 #include <clientscript/cscr_stringlist.h>
@@ -121,7 +128,12 @@ const dvar_t *sv_network_fps;
 const dvar_t *sv_assistWorkers;
 const dvar_t *sv_clientArchive;
 
+#if defined(__ANDROID__)
+static_assert(sizeof(unsigned int)==4 && std::atomic<unsigned int>::is_always_lock_free);
+std::atomic<unsigned int> sv_thread_owns_game;
+#else
 volatile unsigned int sv_thread_owns_game;
+#endif
 
 void __cdecl SV_SetConfigstring(int index, char *val)
 {
@@ -821,11 +833,37 @@ void __cdecl    SV_SpawnServer(int controllerIndex, char *server, int mapIsPrelo
 
     if (G_OnlyConnectingPaths())
         Path_InitPaths();
+#if defined(__ANDROID__)
+    if (Sys_IsHeadless())
+        Com_Printf(16, "BO1_SERVER_SPAWN_COMPLETE level_time=%d frame=%d script_time=%u\n",
+                   level.time, level.framenum, static_cast<unsigned>(gScrVarPub[SCRIPTINSTANCE_SERVER].time));
+#endif
+
 
 }
 
 const int ikStateSize = (int)Bo1_MaxSize(sizeof(IKState), 3680);
 unsigned __int8 *sv_ikBuf;
+#if defined(__ANDROID__)
+// These snapshot payloads remain their canonical fixed-width runtime/disk contract.
+static_assert(sizeof(MatchState) == 128 && sizeof(entityState_s) == 224 && sizeof(clientState_s) == 208);
+static_assert(sizeof(cachedSnapshot_t) == 36 && sizeof(archivedEntity_s) == 256 && sizeof(archivedSnapshot_s) == 8);
+// Match actual native object alignment while retaining each canonical minimum.
+template <typename T> static constexpr int SVMemoryAlignment(int original)
+{
+    return alignof(T) > static_cast<size_t>(original) ? static_cast<int>(alignof(T)) : original;
+}
+static size_t SVMemoryBlockBudget(size_t count, size_t stride, size_t alignment)
+{
+    if (count > (static_cast<size_t>(INT_MAX) - (alignment - 1)) / stride)
+    {
+        Com_Error(ERR_FATAL, "Native SV client memory block exceeds Hunk_UserAlloc integer size");
+        std::abort();
+    }
+    return count * stride + alignment - 1;
+}
+#endif
+
 size_t __cdecl SV_AllocateClientMemory_SizeRequired(int maxLocalClients, int maxClients)
 {
     int v3; // [esp+0h] [ebp-Ch]
@@ -840,6 +878,33 @@ size_t __cdecl SV_AllocateClientMemory_SizeRequired(int maxLocalClients, int max
     else
         v3 = 2;
 
+#if defined(__ANDROID__)
+    if (maxClients < 1 || maxClients > 32 || maxLocalClients < 0 || maxLocalClients > 1)
+    {
+        Com_Error(ERR_FATAL, "Native SV client counts exceed canonical configured domains");
+        std::abort();
+    }
+    const size_t clients = static_cast<size_t>(maxClients);
+    const size_t cached = static_cast<size_t>(v3) * v4;
+    size_t native = 0;
+    native += SVMemoryBlockBudget(clients, sizeof(client_t), SVMemoryAlignment<client_t>(4));
+    native += SVMemoryBlockBudget(32 * clients, sizeof(MatchState), SVMemoryAlignment<MatchState>(4));
+    native += SVMemoryBlockBudget(2688 * clients, sizeof(entityState_s), SVMemoryAlignment<entityState_s>(4));
+    native += SVMemoryBlockBudget(32 * clients * clients, sizeof(clientState_s), SVMemoryAlignment<clientState_s>(4));
+    native += SVMemoryBlockBudget(512, sizeof(cachedSnapshot_t), SVMemoryAlignment<cachedSnapshot_t>(128));
+    native += SVMemoryBlockBudget(clients, sizeof(MatchState), SVMemoryAlignment<MatchState>(4));
+    native += SVMemoryBlockBudget(80 * clients, sizeof(archivedEntity_s), SVMemoryAlignment<archivedEntity_s>(128));
+    native += SVMemoryBlockBudget(cached, Bo1_MaxSize(sizeof(cachedClient_s), 10112), SVMemoryAlignment<cachedClient_s>(4));
+    native += SVMemoryBlockBudget(1200, sizeof(archivedSnapshot_s), SVMemoryAlignment<archivedSnapshot_s>(4));
+    native += SVMemoryBlockBudget(0x1000000, sizeof(unsigned char), 4);
+    native += SVMemoryBlockBudget(32, ikStateSize, SVMemoryAlignment<IKState>(16));
+    if (native > INT_MAX)
+    {
+        Com_Error(ERR_FATAL, "Native SV client memory budget exceeds Hunk_UserAlloc integer size");
+        std::abort();
+    }
+    return native;
+#else
     return ((sizeof(client_t) - 544000) * maxClients
         + 0x118D00 * maxClients
         + 0x1A00 * maxClients * maxClients
@@ -850,6 +915,7 @@ size_t __cdecl SV_AllocateClientMemory_SizeRequired(int maxLocalClients, int max
         + (int)Bo1_MaxSize(sizeof(cachedClient_s), 10112) * v3 * v4
         + 0x1002580
         + 0x20 * ikStateSize);
+#endif
 }
 
 void __cdecl SV_AllocateClientMemory(HunkUser *hunk, int maxLocalClients, int maxClients)
@@ -859,32 +925,70 @@ void __cdecl SV_AllocateClientMemory(HunkUser *hunk, int maxLocalClients, int ma
 
     // KB's client_t is 544120 bytes (server.h static_assert), the exe's 544000: allocating the exe's size overran
     // every client by 120 bytes into the next one. Allocate the real size; SizeRequired adds the difference.
-    svs.clients = (client_t *)Hunk_UserAlloc(hunk, sizeof(client_t) * maxClients, 4, "svs.clients");
+    svs.clients = (client_t *)Hunk_UserAlloc(hunk, sizeof(client_t) * maxClients,
+#if defined(__ANDROID__)
+        SVMemoryAlignment<client_t>(4),
+#else
+        4,
+#endif
+        "svs.clients");
     memset((unsigned __int8 *)svs.clients, 0, sizeof(client_t) * maxClients);
     svs.numSnapshotMatchStates = 32 * maxClients;
-    svs.snapshotMatchStates = (MatchState *)Hunk_UserAlloc(hunk, maxClients << 12, 4, "svs.snapshotMatchStates");
+    svs.snapshotMatchStates = (MatchState *)Hunk_UserAlloc(hunk, maxClients << 12,
+#if defined(__ANDROID__)
+        SVMemoryAlignment<MatchState>(4),
+#else
+        4,
+#endif
+        "svs.snapshotMatchStates");
     memset((unsigned __int8 *)svs.snapshotMatchStates, 0, svs.numSnapshotMatchStates << 7);
     svs.numSnapshotEntities = 2688 * maxClients;
-    svs.snapshotEntities = (entityState_s *)Hunk_UserAlloc(hunk, 602112 * maxClients, 4, "svs.snapshotEntities");
+    svs.snapshotEntities = (entityState_s *)Hunk_UserAlloc(hunk, 602112 * maxClients,
+#if defined(__ANDROID__)
+        SVMemoryAlignment<entityState_s>(4),
+#else
+        4,
+#endif
+        "svs.snapshotEntities");
     memset((unsigned __int8 *)svs.snapshotEntities, 0, 224 * svs.numSnapshotEntities);
     svs.numSnapshotClients = 32 * maxClients * maxClients;
-    svs.snapshotClients = (clientState_s *)Hunk_UserAlloc(hunk, 6656 * maxClients * maxClients, 4, "svs.snapshotClients");
+    svs.snapshotClients = (clientState_s *)Hunk_UserAlloc(hunk, 6656 * maxClients * maxClients,
+#if defined(__ANDROID__)
+        SVMemoryAlignment<clientState_s>(4),
+#else
+        4,
+#endif
+        "svs.snapshotClients");
     memset((unsigned __int8 *)svs.snapshotClients, 0, 208 * svs.numSnapshotClients);
-    svs.cachedSnapshotFrames = (cachedSnapshot_t *)Hunk_UserAlloc(hunk, 18432, 128, "svs.cachedSnapshotFrames");
+    svs.cachedSnapshotFrames = (cachedSnapshot_t *)Hunk_UserAlloc(hunk, 18432,
+#if defined(__ANDROID__)
+        SVMemoryAlignment<cachedSnapshot_t>(128),
+#else
+        128,
+#endif
+        "svs.cachedSnapshotFrames");
     memset((unsigned __int8 *)svs.cachedSnapshotFrames, 0, 0x4800u);
     svs.numCachedSnapshotMatchStates = maxClients;
     svs.cachedSnapshotMatchStates = (MatchState *)Hunk_UserAlloc(
                                                                                                     hunk,
                                                                                                     maxClients << 7,
-                                                                                                    4,
-                                                                                                    "svs.cachedSnapshotMatchStates");
+#if defined(__ANDROID__)
+        SVMemoryAlignment<MatchState>(4),
+#else
+        4,
+#endif
+        "svs.cachedSnapshotMatchStates");
     memset((unsigned __int8 *)svs.cachedSnapshotMatchStates, 0, svs.numCachedSnapshotMatchStates << 7);
     svs.numCachedSnapshotEntities = 80 * maxClients;
     svs.cachedSnapshotEntities = (archivedEntity_s *)Hunk_UserAlloc(
                                                                                                          hunk,
                                                                                                          20480 * maxClients,
-                                                                                                         128,
-                                                                                                         "svs.cachedSnapshotEntities");
+#if defined(__ANDROID__)
+        SVMemoryAlignment<archivedEntity_s>(128),
+#else
+        128,
+#endif
+        "svs.cachedSnapshotEntities");
     memset((unsigned __int8 *)svs.cachedSnapshotEntities, 0, svs.numCachedSnapshotEntities << 8);
     if ( maxClients > 2 )
         v4 = maxClients;
@@ -895,13 +999,31 @@ void __cdecl SV_AllocateClientMemory(HunkUser *hunk, int maxLocalClients, int ma
     else
         v3 = 2;
     svs.numCachedSnapshotClients = v3 * v4;
-    svs.cachedSnapshotClients = (cachedClient_s *)Hunk_UserAlloc(hunk, (int)Bo1_MaxSize(sizeof(cachedClient_s), 10112) * v3 * v4, 4, "svs.cachedSnapshotClients");
+    svs.cachedSnapshotClients = (cachedClient_s *)Hunk_UserAlloc(hunk, (int)Bo1_MaxSize(sizeof(cachedClient_s), 10112) * v3 * v4,
+#if defined(__ANDROID__)
+        SVMemoryAlignment<cachedClient_s>(4),
+#else
+        4,
+#endif
+        "svs.cachedSnapshotClients");
     memset((unsigned __int8 *)svs.cachedSnapshotClients, 0, (int)Bo1_MaxSize(sizeof(cachedClient_s), 10112) * svs.numCachedSnapshotClients);
-    svs.archivedSnapshotFrames = (archivedSnapshot_s *)Hunk_UserAlloc(hunk, 9600, 4, "svs.archivedSnapshotFrames");
+    svs.archivedSnapshotFrames = (archivedSnapshot_s *)Hunk_UserAlloc(hunk, 9600,
+#if defined(__ANDROID__)
+        SVMemoryAlignment<archivedSnapshot_s>(4),
+#else
+        4,
+#endif
+        "svs.archivedSnapshotFrames");
     memset((unsigned __int8 *)svs.archivedSnapshotFrames, 0, 0x2580u);
     svs.archivedSnapshotBuffer = (unsigned __int8 *)Hunk_UserAlloc(hunk, 0x1000000, 4, "svs.archivedSnapshotBuffer");
     memset(svs.archivedSnapshotBuffer, 0, 0x1000000);
-    sv_ikBuf = (unsigned __int8 *)Hunk_UserAlloc(hunk, 32 * ikStateSize, 16, "sv_ikStatesArray");
+    sv_ikBuf = (unsigned __int8 *)Hunk_UserAlloc(hunk, 32 * ikStateSize,
+#if defined(__ANDROID__)
+        SVMemoryAlignment<IKState>(16),
+#else
+        16,
+#endif
+        "sv_ikStatesArray");
     memset(sv_ikBuf, 0, 32 * ikStateSize);
     IK_AllocateLocalClientMemory(sv_ikBuf, -1);
 }
@@ -1360,12 +1482,20 @@ void __cdecl SV_FinalMessage(const char *message)
 
 void __cdecl SV_ClearServerThreadOwnsGame()
 {
+#if defined(__ANDROID__)
+    sv_thread_owns_game.exchange(0,std::memory_order_seq_cst);
+#else
     _InterlockedExchange(&sv_thread_owns_game, 0);
+#endif
 }
 
 void __cdecl SV_IncServerThreadOwnsGame()
 {
+#if defined(__ANDROID__)
+    sv_thread_owns_game.fetch_add(1,std::memory_order_seq_cst);
+#else
     _InterlockedExchangeAdd(&sv_thread_owns_game, 1u);
+#endif
 }
 
 void __cdecl SV_DecServerThreadOwnsGame()
@@ -1380,7 +1510,11 @@ void __cdecl SV_DecServerThreadOwnsGame()
     {
         __debugbreak();
     }
+#if defined(__ANDROID__)
+    sv_thread_owns_game.fetch_sub(1,std::memory_order_seq_cst);
+#else
     _InterlockedExchangeAdd(&sv_thread_owns_game, 0xFFFFFFFF);
+#endif
 }
 
 int __cdecl SV_GetServerThreadOwnsGame()

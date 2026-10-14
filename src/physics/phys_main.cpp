@@ -1,4 +1,10 @@
 #include "phys_main.h"
+#if defined(__ANDROID__)
+#include <cstdio>
+#include <cstdlib>
+#include <qcommon/threads.h>
+#define _snprintf std::snprintf
+#endif
 #include "phys_effects.h"
 #include <tl/tl_system.h>
 #include "phys_mem_new.h"
@@ -141,6 +147,9 @@ axis_aligned_sweep_and_prune *g_axis_aligned_sweep_and_prune;
 
 bool gravityChange;
 static bool physInited = false;
+#if defined(__ANDROID__)
+static bool physInitializing = false;
+#endif
 void __cdecl Phys_Init()
 {
     phys_surface_type_info v0; // [esp+30h] [ebp-68h] BYREF
@@ -152,12 +161,24 @@ void __cdecl Phys_Init()
     float surfaceBounce; // [esp+84h] [ebp-14h]
     int i; // [esp+88h] [ebp-10h]
 
+#if defined(__ANDROID__)
+    // Physics initialization and its globals belong to the engine main thread.
+    if (!Sys_IsMainThread() || physInitializing)
+    {
+        _tlAssert(__FILE__, __LINE__, "main thread and no active physics initializer", "invalid physics initialization owner/reentry");
+        std::abort();
+    }
+    if (!physInited)
+        physInitializing = true;
+#endif
     physGlob.timeLastSnapshot = 0;
     physGlob.timeLastUpdate = 0;
     Phys_InitSoundAliases();
     if ( !physInited )
     {
+#if !defined(__ANDROID__)
         physInited = 1;
+#endif
         phys_gravity = _Dvar_RegisterFloat(
                                          "phys_gravity",
                                          -800.0,
@@ -472,6 +493,10 @@ void __cdecl Phys_Init()
             surface_type_info_database_set(32, i, &v0);
         }
         RB_SetDebugBrushesAndPatchesCallback(render_debug_brushes_and_patches);
+#if defined(__ANDROID__)
+        physInited = true;
+        physInitializing = false;
+#endif
     }
 }
 
@@ -3031,7 +3056,11 @@ void __cdecl Phys_BodyGrabSnapshotNitrous(PhysObjUserData *userData, float delta
 
     body = userData->body;
     v2 = body;
+#if defined(__ANDROID__)
+    __builtin_prefetch(&v2, 0, 1);
+#else
     _mm_prefetch((const char *)&v2, 1);
+#endif
     if ( !body && !Assert_MyHandler("C:\\projects_pc\\cod\\codsrc\\src\\physics\\phys_main.cpp", 1360, 0, "%s", "body") )
         __debugbreak();
     rb2w = &userData->body->m_mat;
@@ -4121,9 +4150,9 @@ rigid_body_constraint_ragdoll * Phys_CreateSwivel(
         axis_abs.x = v68;
         axis_abs.y = v67;
         axis_abs.z = v66;
-        v64 = (*axes)[3];
-        v63 = (*axes)[4];
-        v62 = (*axes)[5];
+        v64 = axes[1][0];
+        v63 = axes[1][1];
+        v62 = axes[1][2];
         ref_abs.x = v64;
         ref_abs.y = v63;
         ref_abs.z = v62;

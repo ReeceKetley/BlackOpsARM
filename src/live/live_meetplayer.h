@@ -2,6 +2,12 @@
 
 #include <universal/q_shared.h>
 #include <Windows.h>
+#if defined(__ANDROID__)
+#include <platform/win32_compat/win32_types.h>
+using Bo1MeetPlayerTime = bo1::win32::FILETIME;
+#else
+using Bo1MeetPlayerTime = _FILETIME;
+#endif
 
 struct XuidInfo // sizeof=0x30
 {                                       // XREF: .data:recentPlayerInfo/r
@@ -9,7 +15,7 @@ struct XuidInfo // sizeof=0x30
                                         // UI_FeederItemText_CommmonPlayerListHandler+D6/r ...
     char gamertag[32];                  // XREF: UI_FeederItemText_CommmonPlayerListHandler+DF/o
                                         // UI_FeederDataExtended_RecentPlayers+E9/o ...
-    _FILETIME systemTime;
+    Bo1MeetPlayerTime systemTime;
 };
 
 struct __declspec(align(8)) MetPlayerInfo // sizeof=0x970
@@ -51,7 +57,7 @@ void __cdecl LiveMeetPlayer_UpdateMeetPlayerList(
                 int localControllerIndex,
                 unsigned __int64 playeruid,
                 const char *playername);
-void __cdecl LiveMeetPlayer_SetCurrentTime(_FILETIME *currentTime);
+void __cdecl LiveMeetPlayer_SetCurrentTime(Bo1MeetPlayerTime *currentTime);
 char __cdecl LiveMeetPlayer_AddPlayerAtSlot(
                 int localControllerIndex,
                 unsigned __int64 playeruid,

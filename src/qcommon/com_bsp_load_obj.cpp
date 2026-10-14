@@ -1089,6 +1089,11 @@ void __cdecl Com_ShutdownWorld()
 
     comWorld.isInUse = 0;
     Target = 0;
+#if defined(__ANDROID__)
+    // The original exchange on a local serves as a full ordering barrier.
+    __atomic_thread_fence(__ATOMIC_SEQ_CST);
+#else
     InterlockedExchange(&Target, 0);
+#endif
 }
 

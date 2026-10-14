@@ -3,6 +3,9 @@
 #include <qcommon/common.h>
 #include <DW/dwLogOn_pc.h>
 #include <steam/steam_api.h>
+#if defined(__ANDROID__)
+#include <climits>
+#endif
 
 LiveSteamClient::LiveSteamClient()
 {
@@ -17,6 +20,15 @@ void LiveSteamClient::RequestEncryptedAppTicket(const void *data, unsigned int s
     //ISteamUser *v3; // [esp+4h] [ebp-14h]
     //__int64 hSteamAPICall; // [esp+10h] [ebp-8h]
 
+#if defined(__ANDROID__)
+    if(m_SteamCallResultEncryptedAppTicket.IsActive()) m_SteamCallResultEncryptedAppTicket.Cancel();
+    resultOnRequestEncryptedAppTicket=k_EResultNone;
+    auto *user=SteamUser();
+    if(!user || (!data && size) || size>INT_MAX) { resultOnRequestEncryptedAppTicket=k_EResultFail; return; }
+    const SteamAPICall_t call=user->RequestEncryptedAppTicket(const_cast<void *>(data),static_cast<int>(size));
+    if(call==k_uAPICallInvalid) { resultOnRequestEncryptedAppTicket=k_EResultFail; return; }
+    m_SteamCallResultEncryptedAppTicket.Set(call,this,&LiveSteamClient::OnRequestEncryptedAppTicket);
+#else
     this->resultOnRequestEncryptedAppTicket = k_EResultNone;
     if (!SteamUser()) // no-steam: no Steam client, no ticket
         return;
@@ -48,6 +60,7 @@ void LiveSteamClient::RequestEncryptedAppTicket(const void *data, unsigned int s
         );
     }
 
+#endif
 #if 0
     //v3 = SteamUser();
     //hSteamAPICall = v3->RequestEncryptedAppTicket(v3, data, size);
@@ -78,6 +91,10 @@ char __thiscall LiveSteamClient::GetRetrievedEncryptedAppTicket(
 {
     ISteamUser *v5; // [esp+0h] [ebp-Ch]
     bool result; // [esp+Bh] [ebp-1h]
+#if defined(__ANDROID__)
+    if(ticketSize) *ticketSize=0;
+    if(!ticketBuf || !ticketSize || !ticketBufSize) return 0;
+#endif
 
     if ((this->resultOnRequestEncryptedAppTicket != k_EResultOK || !ticketBufSize)
         && !Assert_MyHandler(
@@ -94,6 +111,9 @@ char __thiscall LiveSteamClient::GetRetrievedEncryptedAppTicket(
     if (!SteamUser()) // no-steam
         return 0;
     result = SteamUser()->GetEncryptedAppTicket(ticketBuf, ticketBufSize, ticketSize);
+#if defined(__ANDROID__)
+    if(!result || *ticketSize>ticketBufSize) { *ticketSize=0; return 0; }
+#endif
     Com_DPrintf(30, "STEAM: Retrieved ticket from Steam, sending to DemonWare\n");
     return result;
 }
@@ -104,6 +124,9 @@ void __thiscall LiveSteamClient::OnRequestEncryptedAppTicket(
 {
     EResult result; // [esp+4h] [ebp-4h]
 
+#if defined(__ANDROID__)
+    if(bIOFailure || !pEncryptedAppTicketResponse) { resultOnRequestEncryptedAppTicket=k_EResultFail; return; }
+#endif
     if ( !bIOFailure )
     {
         result = pEncryptedAppTicketResponse->m_eResult;

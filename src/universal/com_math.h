@@ -311,11 +311,19 @@ inline void MatrixTransformVector(const float *in1, const float (*in2)[3], float
 {
     iassert(in1 != out);
 
+#if defined(__ANDROID__)
+    out[0] = (float)((float)(*in1 * in2[0][0]) + (float)(in1[1] * (float)in2[1][0])) + (float)(in1[2] * (float)in2[2][0]);
+    out[1] = (float)((float)(*in1 * (float)in2[0][1]) + (float)(in1[1] * (float)in2[1][1]))
+        + (float)(in1[2] * (float)in2[2][1]);
+    out[2] = (float)((float)(*in1 * (float)in2[0][2]) + (float)(in1[1] * (float)in2[1][2]))
+        + (float)(in1[2] * (float)in2[2][2]);
+#else
     out[0] = (float)((float)(*in1 * (*in2)[0]) + (float)(in1[1] * (float)(*in2)[3])) + (float)(in1[2] * (float)(*in2)[6]);
     out[1] = (float)((float)(*in1 * (float)(*in2)[1]) + (float)(in1[1] * (float)(*in2)[4]))
         + (float)(in1[2] * (float)(*in2)[7]);
     out[2] = (float)((float)(*in1 * (float)(*in2)[2]) + (float)(in1[1] * (float)(*in2)[5]))
         + (float)(in1[2] * (float)(*in2)[8]);
+#endif
 }
 
 inline void __cdecl MatrixTransposeTransformVector(const float *in1, const float (*in2)[3], float *out)
@@ -325,11 +333,19 @@ inline void __cdecl MatrixTransposeTransformVector(const float *in1, const float
     {
         __debugbreak();
     }
+#if defined(__ANDROID__)
+    *out = (float)((float)(*in1 * in2[0][0]) + (float)(in1[1] * (float)in2[0][1])) + (float)(in1[2] * (float)in2[0][2]);
+    out[1] = (float)((float)(*in1 * (float)in2[1][0]) + (float)(in1[1] * (float)in2[1][1]))
+        + (float)(in1[2] * (float)in2[1][2]);
+    out[2] = (float)((float)(*in1 * (float)in2[2][0]) + (float)(in1[1] * (float)in2[2][1]))
+        + (float)(in1[2] * (float)in2[2][2]);
+#else
     *out = (float)((float)(*in1 * (*in2)[0]) + (float)(in1[1] * (float)(*in2)[1])) + (float)(in1[2] * (float)(*in2)[2]);
     out[1] = (float)((float)(*in1 * (float)(*in2)[3]) + (float)(in1[1] * (float)(*in2)[4]))
         + (float)(in1[2] * (float)(*in2)[5]);
     out[2] = (float)((float)(*in1 * (float)(*in2)[6]) + (float)(in1[1] * (float)(*in2)[7]))
         + (float)(in1[2] * (float)(*in2)[8]);
+#endif
 }
 /*
 ===========================================================================

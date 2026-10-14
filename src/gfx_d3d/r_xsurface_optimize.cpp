@@ -10,6 +10,14 @@ void __cdecl XModelOptimizeCallback(XModel *data)
     _XModelOptimize(data);
 }
 
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+// Resource actions invoke void(void *); preserve the canonical typed payload.
+static void __cdecl XModelOptimizeCallbackResource(void *data)
+{
+    XModelOptimizeCallback(static_cast<XModel *>(data));
+}
+#endif
+
 void __cdecl XModelOptimize(XModel *model)
 {
     if ( XModelBad(model)
@@ -28,7 +36,11 @@ void __cdecl XModelOptimize(XModel *model)
     }
     else
     {
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+        RB_Resource_CallbackParam(XModelOptimizeCallbackResource, model);
+#else
         RB_Resource_CallbackParam((void (__cdecl *)(void *))XModelOptimizeCallback, model);
+#endif
         RB_Resource_Flush();
     }
 }
@@ -142,6 +154,14 @@ void __cdecl XModelUnoptimizeCallback(XModel *data)
     XModelUnoptimize(data);
 }
 
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+// Resource actions invoke void(void *); preserve the canonical typed payload.
+static void __cdecl XModelUnoptimizeCallbackResource(void *data)
+{
+    XModelUnoptimizeCallback(static_cast<XModel *>(data));
+}
+#endif
+
 void __cdecl XModelUnoptimize(XModel *model)
 {
     int lodIndex; // [esp+0h] [ebp-14h]
@@ -172,7 +192,11 @@ void __cdecl XModelUnoptimize(XModel *model)
     }
     else
     {
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+        RB_Resource_CallbackParam(XModelUnoptimizeCallbackResource, model);
+#else
         RB_Resource_CallbackParam((void (__cdecl *)(void *))XModelUnoptimizeCallback, model);
+#endif
         RB_Resource_Flush();
     }
 }

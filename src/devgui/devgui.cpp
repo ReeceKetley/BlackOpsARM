@@ -11,6 +11,7 @@
 #include "devgui_util.h"
 #include "devgui_input.h"
 #include <universal/com_pack.h>
+#include <platform/bo1_native_width.h>
 
 devguiGlob_t devguiGlob;
 
@@ -123,7 +124,11 @@ int __cdecl DevGui_CreateMenu(uint16_t parentHandle, const char *label, __int16 
     }
 
     char v5; // [esp+3h] [ebp-25h]
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+    char *labelCursor;
+#else
     DevMenuItem *v6; // [esp+8h] [ebp-20h]
+#endif
     unsigned __int16 handle; // [esp+10h] [ebp-18h]
     unsigned __int16 *prevNext; // [esp+14h] [ebp-14h]
     DevMenuItem *menu; // [esp+18h] [ebp-10h]
@@ -136,6 +141,15 @@ int __cdecl DevGui_CreateMenu(uint16_t parentHandle, const char *label, __int16 
         Com_Error(ERR_DROP, "Too many devgui entries (more than %i)", 2048);
     devguiGlob.nextFreeMenu = *(DevMenuItem **)menu->label;
     handle = DevGui_GetMenuHandle(menu);
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+    // The decompiled cursor advances through label bytes, not menu records.
+    labelCursor = menu->label;
+    do
+    {
+        v5 = *label;
+        *labelCursor++ = *label++;
+    } while (v5);
+#else
     v6 = menu;
     do
     {
@@ -143,6 +157,7 @@ int __cdecl DevGui_CreateMenu(uint16_t parentHandle, const char *label, __int16 
         v6->label[0] = *label++;
         v6 = (DevMenuItem *)((char *)v6 + 1);
     } while (v5);
+#endif
     menu->childType = 0;
     menu->childMenuMemory = 0;
     menu->sortKey = sortKey;

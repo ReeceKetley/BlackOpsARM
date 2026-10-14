@@ -1,7 +1,9 @@
 #include "phys_transient_allocator.h"
 #include "phys_mem_new.h"
 #include <cstdint>
+#if !defined(__ANDROID__)
 #include <intrin.h>
+#endif
 
 void phys_transient_allocator::reset()
 {
@@ -72,6 +74,29 @@ void __thiscall phys_transient_allocator::resize()
     }
 }
 
+#if defined(__ANDROID__)
+static inline bool TransientAllocationFits(char *cur, char *end, int size, int alignment, char *&aligned)
+{
+    // Empty/reset allocators must grow before any pointer arithmetic, including size zero.
+    if (!cur || !end || size < 0 || alignment <= 0 || (alignment & (alignment - 1)))
+        return false;
+
+    const uintptr_t address = reinterpret_cast<uintptr_t>(cur);
+    const uintptr_t endAddress = reinterpret_cast<uintptr_t>(end);
+    const uintptr_t mask = static_cast<uintptr_t>(alignment - 1);
+    if (address > endAddress || address > UINTPTR_MAX - mask)
+        return false;
+
+    const uintptr_t alignedAddress = (address + mask) & ~mask;
+    if (alignedAddress > endAddress || static_cast<uintptr_t>(size) > endAddress - alignedAddress)
+        return false;
+
+    // The aligned cursor and requested extent are now within the current owned block.
+    aligned = cur + (alignedAddress - address);
+    return true;
+}
+#endif
+
 static inline char *TransientAlignUp(char *p, int alignment)
 {
     return (char *)(~(uintptr_t)(alignment - 1) & ((uintptr_t)p + (uintptr_t)(alignment - 1)));
@@ -84,10 +109,16 @@ char *phys_transient_allocator::mt_allocate_internal(int size, int alignment)
 
     do
     {
+#if defined(__ANDROID__)
+        cur = __atomic_load_n(&this->m_cur, __ATOMIC_SEQ_CST);
+        if (!TransientAllocationFits(cur, this->m_end, size, alignment, aligned))
+            return nullptr;
+#else
         cur = this->m_cur;
         aligned = TransientAlignUp(cur, alignment);
         if (aligned + size > this->m_end)
             return 0;
+#endif
     } while (_InterlockedCompareExchangePointer((void *volatile *)&this->m_cur, aligned + size, cur) != cur);
     return aligned;
 }
@@ -103,8 +134,12 @@ void *__thiscall phys_transient_allocator::allocate(
     void *ptr;
 
     transient_allocator_update_largest_size();
+#if defined(__ANDROID__)
+    if (TransientAllocationFits(this->m_cur, this->m_end, size, alignment, v8))
+#else
     v8 = TransientAlignUp(this->m_cur, alignment);
     if (v8 + size <= this->m_end)
+#endif
     {
         this->m_cur = v8 + size;
         ptr = v8;
@@ -117,8 +152,12 @@ void *__thiscall phys_transient_allocator::allocate(
     {
         //phys_transient_allocator::resize();
         this->resize();
+#if defined(__ANDROID__)
+        if (TransientAllocationFits(this->m_cur, this->m_end, size, alignment, v7))
+#else
         v7 = TransientAlignUp(this->m_cur, alignment);
         if (v7 + size <= this->m_end)
+#endif
         {
             this->m_cur = v7 + size;
             ptr = v7;
@@ -170,8 +209,12 @@ void *__thiscall phys_transient_allocator::mt_allocate(
     {
         //minspec_read_write_mutex::WriteLock(&this->m_mutex);
         this->m_mutex.WriteLock();
+#if defined(__ANDROID__)
+        if (TransientAllocationFits(this->m_cur, this->m_end, size, alignment, v8))
+#else
         v8 = TransientAlignUp(this->m_cur, alignment);
         if (v8 + size <= this->m_end)
+#endif
         {
             this->m_cur = v8 + size;
             ptr = v8;
@@ -183,8 +226,12 @@ void *__thiscall phys_transient_allocator::mt_allocate(
         if (!ptr)
         {
             phys_transient_allocator::resize();
+#if defined(__ANDROID__)
+            if (TransientAllocationFits(this->m_cur, this->m_end, size, alignment, v7))
+#else
             v7 = TransientAlignUp(this->m_cur, alignment);
             if (v7 + size <= this->m_end)
+#endif
             {
                 this->m_cur = v7 + size;
                 ptr = v7;

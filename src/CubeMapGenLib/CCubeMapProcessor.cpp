@@ -7,6 +7,11 @@
 // (C) 2005 ATI Research, Inc., All rights reserved.
 //--------------------------------------------------------------------------------------
 #include "CCubeMapProcessor.h"
+#if defined(__ANDROID__)
+#include <platform/win32_compat/win32_time.h>
+#include <cwchar>
+using bo1::win32::Sleep;
+#endif
 
 #define CP_PI   3.14159265358979323846
 
@@ -197,7 +202,16 @@ int32 sg_CubeCornerList[6][4] = {
 //--------------------------------------------------------------------------------------
 void CPFatalError(WCHAR *a_Msg)
 {
+#if defined(__ANDROID__)
+   std::fputs("CubeMap processor fatal error: ",stderr);
+   if(a_Msg) for(const wchar_t *text=a_Msg;*text;++text) {
+      const auto code=static_cast<unsigned int>(*text);
+      if(code>=32 && code<127) std::fputc(code,stderr); else std::fprintf(stderr,"\\u%04x",code);
+   }
+   std::fputc('\n',stderr); std::fflush(stderr);
+#else
    MessageBoxW(NULL, a_Msg, L"Error: Application Terminating", MB_OK);
+#endif
    exit(EM_FATAL_ERROR);
 }
 
@@ -1238,6 +1252,22 @@ void CCubeMapProcessor::Clear(void)
 //--------------------------------------------------------------------------------------
 void CCubeMapProcessor::TerminateActiveThreads(void)
 {
+#if defined(__ANDROID__)
+   m_CancelRequested.store(true, std::memory_order_release);
+   bo1::android::FilterWorker *primary;
+   { std::lock_guard lock(m_WorkerMutex); primary=m_ThreadHandle[0]; }
+   if (primary) primary->Join();
+   // Primary is now retired; it cannot create another secondary worker.
+   bo1::android::FilterWorker *secondary;
+   { std::lock_guard lock(m_WorkerMutex); secondary=m_ThreadHandle[1]; }
+   if (secondary) secondary->Join();
+   std::lock_guard lock(m_WorkerMutex);
+   for(int32 i=0;i<CP_MAX_FILTER_THREADS;++i) {
+      delete m_ThreadHandle[i]; m_ThreadHandle[i]=nullptr;
+      m_bThreadInitialized[i]=FALSE;
+   }
+   if (m_Status==CP_STATUS_PROCESSING) m_Status=CP_STATUS_FILTER_TERMINATED;
+#else
    int32 i;
 
    for(i=0; i<CP_MAX_FILTER_THREADS; i++)
@@ -1254,6 +1284,7 @@ void CCubeMapProcessor::TerminateActiveThreads(void)
       }
    }
 
+#endif
 }
 
 
@@ -1552,21 +1583,49 @@ void CCubeMapProcessor::FilterCubeMapMipChain(float32 a_BaseFilterAngle, float32
       m_bThreadInitialized[1] = TRUE;
 
       //setup filtering options for thread1
+#if !defined(__ANDROID__)
+#if !defined(__ANDROID__)
       sg_FilterOptionsCPU1.m_cmProc = this;
-      sg_FilterOptionsCPU1.m_SrcCubeMap = m_InputSurface; 
+#endif
+#if !defined(__ANDROID__)
+      sg_FilterOptionsCPU1.m_SrcCubeMap = m_InputSurface;
+#endif 
+#if !defined(__ANDROID__)
       sg_FilterOptionsCPU1.m_DstCubeMap = m_OutputSurface[0];
+#endif
+#if !defined(__ANDROID__)
       sg_FilterOptionsCPU1.m_FilterConeAngle = a_BaseFilterAngle;
+#endif
+#if !defined(__ANDROID__)
       sg_FilterOptionsCPU1.m_FilterType = a_FilterType;
-      sg_FilterOptionsCPU1.m_bUseSolidAngle = a_bUseSolidAngle; 
-      sg_FilterOptionsCPU1.m_FaceIdxStart = 3; 
-      sg_FilterOptionsCPU1.m_FaceIdxEnd = 5; 
-      sg_FilterOptionsCPU1.m_ThreadIdx = 1; 
+#endif
+#if !defined(__ANDROID__)
+      sg_FilterOptionsCPU1.m_bUseSolidAngle = a_bUseSolidAngle;
+#endif 
+#if !defined(__ANDROID__)
+      sg_FilterOptionsCPU1.m_FaceIdxStart = 3;
+#endif 
+#if !defined(__ANDROID__)
+      sg_FilterOptionsCPU1.m_FaceIdxEnd = 5;
+#endif 
+#if !defined(__ANDROID__)
+      sg_FilterOptionsCPU1.m_ThreadIdx = 1;
+#endif 
+#endif
 
       m_ThreadProgress[1].m_CurrentMipLevel = 0;
       m_ThreadProgress[1].m_CurrentFace = 3;
       m_ThreadProgress[1].m_CurrentRow = 0;
 
       //start thread 1
+#if defined(__ANDROID__)
+      { std::lock_guard lock(m_WorkerMutex);
+        if(m_CancelRequested.load(std::memory_order_acquire)) return;
+        m_ThreadHandle[1]=new bo1::android::FilterWorker([=,this] {
+          FilterCubeSurfaces(m_InputSurface,m_OutputSurface[0],a_BaseFilterAngle,a_FilterType,a_bUseSolidAngle,3,5,1);
+        });
+      }
+#else
       m_ThreadHandle[1] = CreateThread(
          &secAttr,                     //security attributes
          0,                            //0 is sentinel for use default stack size
@@ -1574,6 +1633,7 @@ void CCubeMapProcessor::FilterCubeMapMipChain(float32 a_BaseFilterAngle, float32
          (LPVOID)NULL,                 // pass nothing into function
          NULL,                         // no creation flags (run thread immediately)
          &m_ThreadID[1] );
+#endif
 
 
 
@@ -1595,6 +1655,9 @@ void CCubeMapProcessor::FilterCubeMapMipChain(float32 a_BaseFilterAngle, float32
    m_ThreadProgress[0].m_CurrentFace = 0;
 
 
+#if defined(__ANDROID__)
+   if (m_CancelRequested.load(std::memory_order_acquire)) return;
+#endif
    FixupCubeEdges(m_OutputSurface[0], a_FixupType, a_FixupWidth);
 
    //Cone angle start (for generating subsequent mip levels)
@@ -1603,6 +1666,9 @@ void CCubeMapProcessor::FilterCubeMapMipChain(float32 a_BaseFilterAngle, float32
    //generate subsequent mip levels
    for(i=0; i<(m_NumMipLevels-1); i++)
    {
+#if defined(__ANDROID__)
+      if (m_CancelRequested.load(std::memory_order_acquire)) return;
+#endif
       m_ThreadProgress[0].m_CurrentMipLevel = i+1;
       m_ThreadProgress[0].m_CurrentRow = 0;
       m_ThreadProgress[0].m_CurrentFace = 0;
@@ -1625,6 +1691,9 @@ void CCubeMapProcessor::FilterCubeMapMipChain(float32 a_BaseFilterAngle, float32
       coneAngle = coneAngle * a_MipAnglePerLevelScale;
    }
 
+#if defined(__ANDROID__)
+   if (m_CancelRequested.load(std::memory_order_acquire)) return;
+#endif
    m_Status = CP_STATUS_FILTER_COMPLETED;
 }
 
@@ -1752,6 +1821,9 @@ void CCubeMapProcessor::FilterCubeSurfaces(CImageSurface *a_SrcCubeMap, CImageSu
         //iterate over dst cube map face texel
         for(v = 0; v < dstSize; v++)
         {
+#if defined(__ANDROID__)
+           if (m_CancelRequested.load(std::memory_order_acquire)) return;
+#endif
            m_ThreadProgress[a_ThreadIdx].m_CurrentRow = v;
 
             for(u=0; u<dstSize; u++)
@@ -1786,11 +1858,13 @@ void CCubeMapProcessor::FilterCubeSurfaces(CImageSurface *a_SrcCubeMap, CImageSu
 void CCubeMapProcessor::InitiateFiltering(float32 a_BaseFilterAngle, float32 a_InitialMipAngle, 
       float32 a_MipAnglePerLevelScale, int32 a_FilterType, int32 a_FixupType, int32 a_FixupWidth, bool8 a_bUseSolidAngle )
 {
+#if !defined(__ANDROID__)
    SECURITY_ATTRIBUTES secAttr;
 
    secAttr.nLength = sizeof(SECURITY_ATTRIBUTES);
    secAttr.lpSecurityDescriptor = NULL;            //use same security descriptor as parent
    secAttr.bInheritHandle = TRUE;                  //handle is inherited by new processes spawning from this one
+#endif
 
    //set filtering options in main class to determine 
    m_BaseFilterAngle = a_BaseFilterAngle;
@@ -1801,24 +1875,51 @@ void CCubeMapProcessor::InitiateFiltering(float32 a_BaseFilterAngle, float32 a_I
    //terminate preexisting threads if needed
    TerminateActiveThreads();
 
+#if defined(__ANDROID__)
+   m_CancelRequested.store(false, std::memory_order_release);
+#endif
    //start thread if at least one filter thread is available
    if(m_NumFilterThreads > 0)
    {
       //consider thread to be initialized
       m_bThreadInitialized[0] = TRUE;
 
+#if !defined(__ANDROID__)
+#if !defined(__ANDROID__)
       sg_FilterOptionsCPU0.m_cmProc = this;
+#endif
+#endif
 
+#if !defined(__ANDROID__)
       sg_FilterOptionsCPU0.m_BaseFilterAngle = a_BaseFilterAngle;
+#endif
+#if !defined(__ANDROID__)
       sg_FilterOptionsCPU0.m_InitialMipAngle = a_InitialMipAngle;
-      sg_FilterOptionsCPU0.m_MipAnglePerLevelScale = a_MipAnglePerLevelScale; 
+#endif
+#if !defined(__ANDROID__)
+      sg_FilterOptionsCPU0.m_MipAnglePerLevelScale = a_MipAnglePerLevelScale;
+#endif 
+#if !defined(__ANDROID__)
       sg_FilterOptionsCPU0.m_FilterType = a_FilterType;
+#endif
+#if !defined(__ANDROID__)
       sg_FilterOptionsCPU0.m_FixupType = a_FixupType;
+#endif
+#if !defined(__ANDROID__)
       sg_FilterOptionsCPU0.m_FixupWidth = a_FixupWidth;
+#endif
+#if !defined(__ANDROID__)
       sg_FilterOptionsCPU0.m_bUseSolidAngle = a_bUseSolidAngle;
+#endif
 
       m_Status = CP_STATUS_PROCESSING;
 
+#if defined(__ANDROID__)
+      std::lock_guard lock(m_WorkerMutex);
+      m_ThreadHandle[0]=new bo1::android::FilterWorker([=,this] {
+         FilterCubeMapMipChain(a_BaseFilterAngle,a_InitialMipAngle,a_MipAnglePerLevelScale,a_FilterType,a_FixupType,a_FixupWidth,a_bUseSolidAngle);
+      });
+#else
       m_ThreadHandle[0] = CreateThread(
          &secAttr,                     //security attributes
          0,                            //0 is sentinel for use default stack size
@@ -1826,6 +1927,7 @@ void CCubeMapProcessor::InitiateFiltering(float32 a_BaseFilterAngle, float32 a_I
          (LPVOID)NULL,                 // pass nothing into function
          NULL,                         // no creation flags (run thread immediately)
          &m_ThreadID[0] );
+#endif
    }
    else //otherwise call filtering function from the current process
    {
@@ -1966,6 +2068,11 @@ void CCubeMapProcessor::FlipOutputCubemapFaces(void)
 //--------------------------------------------------------------------------------------
 bool8 CCubeMapProcessor::IsFilterThreadActive(uint32 a_ThreadIdx)
 {
+#if defined(__ANDROID__)
+   if(a_ThreadIdx>=CP_MAX_FILTER_THREADS) std::abort();
+   std::lock_guard lock(m_WorkerMutex);
+   return m_ThreadHandle[a_ThreadIdx] && m_ThreadHandle[a_ThreadIdx]->Active();
+#else
    if( (m_bThreadInitialized[a_ThreadIdx] == FALSE) ||
        (m_ThreadHandle[a_ThreadIdx] == NULL) 
        )
@@ -1985,6 +2092,7 @@ bool8 CCubeMapProcessor::IsFilterThreadActive(uint32 a_ThreadIdx)
    }
    
    return FALSE;
+#endif
 }
 
 
@@ -2122,6 +2230,22 @@ void CCubeMapProcessor::EstimateFilterThreadProgress(SFilterProgress *a_FilterPr
 //--------------------------------------------------------------------------------------
 WCHAR *CCubeMapProcessor::GetFilterProgressString(void)
 {
+#if defined(__ANDROID__)
+   wchar_t progress[2][CP_MAX_PROGRESS_STRING]{};
+   if(m_NumFilterThreads<0 || m_NumFilterThreads>2) std::abort();
+   for(int32 i=0;i<m_NumFilterThreads;++i) {
+      if(IsFilterThreadActive(i)) {
+         EstimateFilterThreadProgress(&m_ThreadProgress[i]);
+         std::swprintf(progress[i],CP_MAX_PROGRESS_STRING,L"%5.2f%% Complete (Level %d, Face %d, Row %d)",
+            100.0f*m_ThreadProgress[i].m_FractionCompleted.load(),m_ThreadProgress[i].m_CurrentMipLevel.load(),
+            m_ThreadProgress[i].m_CurrentFace.load(),m_ThreadProgress[i].m_CurrentRow.load());
+      } else std::swprintf(progress[i],CP_MAX_PROGRESS_STRING,L"Inactive");
+   }
+   if(m_NumFilterThreads==2) std::swprintf(m_ProgressString,CP_MAX_PROGRESS_STRING,L"Thread 0: %ls\nThread 1: %ls",progress[0],progress[1]);
+   else if(m_NumFilterThreads==1) std::swprintf(m_ProgressString,CP_MAX_PROGRESS_STRING,L"Thread 0: %ls",progress[0]);
+   else std::swprintf(m_ProgressString,CP_MAX_PROGRESS_STRING,L"Caller-thread filtering");
+   return m_ProgressString;
+#else
    WCHAR threadProgressString[CP_MAX_FILTER_THREADS][CP_MAX_PROGRESS_STRING];
    int32 i;
 
@@ -2175,6 +2299,7 @@ WCHAR *CCubeMapProcessor::GetFilterProgressString(void)
    }
 
    return m_ProgressString;
+#endif
 }
 
 

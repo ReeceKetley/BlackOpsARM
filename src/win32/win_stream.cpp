@@ -1,3 +1,11 @@
+#if defined(BO1_NATIVE_STREAM_WORKER)
+#include <platform/common_boot_api.h>
+#include <platform/android/stream_worker.h>
+#include <universal/profile.h>
+#include <setjmp.h>
+void R_StreamUpdate_ReadTextures();
+void Snd_StreamUpdate();
+#else
 #include "win_stream.h"
 #include <universal/assertive.h>
 #include <universal/profile.h>
@@ -6,6 +14,7 @@
 #include <sound/snd_stream.h>
 #include <setjmp.h>
 
+#endif
 bool g_streamReadThreadSpawned;
 
 char __cdecl Stream_Init()

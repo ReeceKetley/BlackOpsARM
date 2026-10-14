@@ -23,6 +23,14 @@
 #include <game_mp/g_main_mp.h>
 #include <universal/com_shared.h>
 #include <time.h>
+#if defined(__ANDROID__)
+#include <platform/android/legacy_crt.h>
+#include <mutex>
+#include <condition_variable>
+#include <cstdint>
+#include <array>
+#include <cstdlib>
+#endif
 
 uploadStreamData_t s_uploadStreamData;
 uploadStreamHistory_t s_uploadStreamUsage;
@@ -40,6 +48,30 @@ jqWorkerCmd Demo_SaveWorkerCmd = { &Demo_SaveModule, JQ_CMD_SIZE(demoSaveCmd, 12
 int g_democlientindex;
 
 SnapshotInfo_s g_snapInfo;
+
+#if defined(__ANDROID__)
+static std::mutex demo_streamMutex;
+static std::condition_variable demo_streamChanged;
+static unsigned int demo_streamUsed;
+static std::uint64_t demo_streamGeneration;
+static std::uint64_t demo_streamDelivered;
+static std::mutex demo_streamCallbackMutex;
+static constexpr unsigned int demo_streamCapacity=sizeof(s_uploadStreamData.buffer);
+struct NativeDemoThrottleSnapshot {
+    bool active,overflow;
+    unsigned int used;
+    int sendHistoryIndex;
+    uploadSendInfo sendHistory[100];
+};
+static NativeDemoThrottleSnapshot Demo_NativeThrottleSnapshot() {
+    std::lock_guard<std::mutex> lock(demo_streamMutex);
+    NativeDemoThrottleSnapshot snapshot{};
+    snapshot.active=s_uploadStreamData.active; snapshot.overflow=s_uploadStreamData.overflow;
+    snapshot.used=demo_streamUsed; snapshot.sendHistoryIndex=s_uploadStreamData.sendHistoryIndex;
+    memcpy(snapshot.sendHistory,s_uploadStreamData.sendHistory,sizeof(snapshot.sendHistory));
+    return snapshot;
+}
+#endif
 
 void __cdecl Demo_StartSaveProcess()
 {
@@ -60,7 +92,12 @@ void __cdecl Demo_StartSaveProcess()
 }
 
 void __cdecl Demo_Save(unsigned __int8 *data, int size, bool writeInfoFile)
-{
+{
+#if defined(__ANDROID__)
+    if(!data || size<0 || static_cast<unsigned int>(size)>sizeof(demo.msgBuf0)) {
+        Com_Error(ERR_DROP,"Demo save input exceeds the original message-buffer bounds"); std::abort();
+    }
+#endif
     demoSaveCmd cmd; // [esp+0h] [ebp-Ch] BYREF
 
     if ( demo_save_smp->current.enabled )
@@ -77,7 +114,12 @@ void __cdecl Demo_Save(unsigned __int8 *data, int size, bool writeInfoFile)
 }
 
 void __cdecl Demo_SaveInternal(unsigned __int8 *data, int size, bool writeInfoFile)
-{
+{
+#if defined(__ANDROID__)
+    if(!data || size<0 || static_cast<unsigned int>(size)>sizeof(demo.msgBuf0)) {
+        Com_Error(ERR_DROP,"Demo save input exceeds the original message-buffer bounds"); std::abort();
+    }
+#endif
     const char *v3; // eax
     unsigned int compressedSize; // [esp+8h] [ebp-38h]
     unsigned int bytesWritten; // [esp+Ch] [ebp-34h]
@@ -87,10 +129,16 @@ void __cdecl Demo_SaveInternal(unsigned __int8 *data, int size, bool writeInfoFi
 
     memset(demo.memBlock.compressedMsgBuf, 0, sizeof(demo.memBlock.compressedMsgBuf));
     MSG_Init(&compressedMsg, demo.memBlock.compressedMsgBuf, 49152);
-    compressedSize = MSG_CompressWithZLib(data, size, demo.memBlock.compressedMsgBuf, 0xC000u);
+    compressedSize = MSG_CompressWithZLib(data, size, demo.memBlock.compressedMsgBuf, 0xC000u);
+#if defined(__ANDROID__)
+    if(!compressedSize) { Com_Error(ERR_DROP,"Demo message compression failed"); std::abort(); }
+#endif
     demo.memBlock.compressedSize = compressedSize;
     demo.memBlock.uncompressedSize = size;
     bytesWritten = Demo_Write((char *)&demo.memBlock, compressedSize + 8, demo.demoFileHandle);
+#if defined(__ANDROID__)
+    if(bytesWritten!=compressedSize+8) { Com_Error(ERR_DROP,"Demo compressed message file write was incomplete"); std::abort(); }
+#endif
     demo.totalSize += bytesWritten;
     v3 = va(
                  "DEMO: CurSize: %d CompressedSize: %d. Written %d bytes to demo file %s.demo\n",
@@ -106,6 +154,25 @@ void __cdecl Demo_SaveInternal(unsigned __int8 *data, int size, bool writeInfoFi
 
 void __cdecl Demo_StartStreaming(int controllerIndex)
 {
+#if defined(__ANDROID__)
+    bool busy;
+    {
+        std::lock_guard<std::mutex> lock(demo_streamMutex);
+        busy=s_uploadStreamData.active || demo_streamUsed!=0;
+        if(!busy) {
+            ++demo_streamGeneration;
+            demo_streamDelivered=0;
+            s_uploadStreamData.writer=0; s_uploadStreamData.reader=0;
+            s_uploadStreamData.controllerIndex=controllerIndex; s_uploadStreamData.overflow=false;
+            s_uploadStreamData.lastWrite=0;
+            s_uploadStreamUsage.changed=false; s_uploadStreamUsage.highwater=0;
+            memset(s_uploadStreamData.sendHistory,0,sizeof(s_uploadStreamData.sendHistory));
+            s_uploadStreamData.sendHistoryIndex=0; s_uploadStreamData.active=true;
+        }
+    }
+    if(busy) { Com_Error(ERR_DROP,"Demo stream restart would discard an active or undrained stream"); std::abort(); }
+    demo_streamChanged.notify_all();
+#else
     s_uploadStreamData.active = 1;
     s_uploadStreamData.writer = 0;
     s_uploadStreamData.reader = 0;
@@ -115,12 +182,21 @@ void __cdecl Demo_StartStreaming(int controllerIndex)
     s_uploadStreamUsage.highwater = 0;
     memset((unsigned __int8 *)s_uploadStreamData.sendHistory, 0, sizeof(s_uploadStreamData.sendHistory));
     s_uploadStreamData.sendHistoryIndex = 0;
+#endif
 }
 
 void __cdecl Demo_StopStreaming()
 {
+#if defined(__ANDROID__)
+    {
+        std::lock_guard<std::mutex> lock(demo_streamMutex);
+        s_uploadStreamData.active=false;
+    }
+    demo_streamChanged.notify_all();
+#else
     s_uploadStreamData.active = 0;
     Sys_SetDemoStreamingEvent();
+#endif
 }
 
 bool __cdecl Demo_AreDifferencesValid(int diffBefore, int diffAfter)
@@ -132,6 +208,10 @@ bool __cdecl Demo_AreDifferencesValid(int diffBefore, int diffAfter)
 
 void __cdecl Demo_AppendToStreamingHistory(int val, bool isAdded)
 {
+#if defined(__ANDROID__)
+    std::lock_guard<std::mutex> lock(demo_streamMutex);
+    if(isAdded && s_uploadStreamUsage.highwater<val) s_uploadStreamUsage.highwater=val;
+#else
     int i; // [esp+0h] [ebp-4h]
 
     // BO1TODO: this is s_uploadStreamUsage struct -2 offset or something
@@ -149,24 +229,72 @@ void __cdecl Demo_AppendToStreamingHistory(int val, bool isAdded)
 
     if ( isAdded && s_uploadStreamUsage.highwater < val )
         s_uploadStreamUsage.highwater = val;
+#endif
 }
 
 int __cdecl Demo_GetCurrUsedBuffer()
 {
+#if defined(__ANDROID__)
+    std::lock_guard<std::mutex> lock(demo_streamMutex);
+    return static_cast<int>(demo_streamUsed);
+#else
     if ( s_uploadStreamData.reader == s_uploadStreamData.writer )
         return 0;
     if ( s_uploadStreamData.writer <= s_uploadStreamData.reader )
         return s_uploadStreamData.writer + 393216 - s_uploadStreamData.reader;
     return s_uploadStreamData.writer - s_uploadStreamData.reader;
+#endif
 }
 
 int __cdecl Demo_CurrAvailableBuffer()
 {
+#if defined(__ANDROID__)
+    std::lock_guard<std::mutex> lock(demo_streamMutex);
+    return static_cast<int>(demo_streamCapacity-1-demo_streamUsed);
+#else
     return 393216 - Demo_GetCurrUsedBuffer();
+#endif
 }
 
 void __cdecl Demo_SaveToStreamBuffer(unsigned __int8 *data, unsigned int dataSize)
 {
+#if defined(__ANDROID__)
+    if(!dataSize) return;
+    if(!data) { Com_Error(ERR_DROP,"Demo stream received null storage"); std::abort(); }
+    const auto now=Sys_Milliseconds();
+    bool rejected=false,stopRecording=false;
+    int controllerIndex=0;
+    {
+        std::lock_guard<std::mutex> lock(demo_streamMutex);
+        if(!s_uploadStreamData.active) return;
+        controllerIndex=s_uploadStreamData.controllerIndex;
+        if(dataSize>demo_streamCapacity-1-demo_streamUsed) {
+            rejected=true; s_uploadStreamData.overflow=true; s_uploadStreamData.active=false;
+        } else {
+            const unsigned int writer=s_uploadStreamData.writer;
+            const unsigned int first=dataSize<demo_streamCapacity-writer ? dataSize : demo_streamCapacity-writer;
+            memcpy(s_uploadStreamData.buffer+writer,data,first);
+            if(dataSize>first) memcpy(s_uploadStreamData.buffer,data+first,dataSize-first);
+            s_uploadStreamData.writer=(writer+dataSize)%demo_streamCapacity;
+            demo_streamUsed+=dataSize; s_uploadStreamData.lastWrite=now;
+            if(s_uploadStreamUsage.highwater<static_cast<int>(demo_streamUsed))
+                s_uploadStreamUsage.highwater=static_cast<int>(demo_streamUsed);
+            if(demo_streamCapacity-1-demo_streamUsed<49152 && !s_uploadStreamData.overflow) {
+                s_uploadStreamData.overflow=true; stopRecording=true;
+            }
+        }
+    }
+    demo_streamChanged.notify_all();
+    if(rejected) {
+        LiveStorage_FileShare_AbortOperation(controllerIndex,FILESHARE_LOCATION_POOLEDSTORAGE);
+        Live_DelayedComError("Demo streaming buffer overflow.");
+        return;
+    }
+    if(stopRecording) {
+        Com_PrintError(16,"Stopping demo recording due to dangerously low buffer space");
+        Cbuf_InsertText(0,"demo_stoprecord;");
+    }
+#else
     int CurrUsedBuffer; // eax
     volatile int overflowAmount; // [esp+10h] [ebp-14h]
     int fillAmount; // [esp+14h] [ebp-10h]
@@ -219,10 +347,19 @@ void __cdecl Demo_SaveToStreamBuffer(unsigned __int8 *data, unsigned int dataSiz
         s_uploadStreamData.overflow = 1;
         Cbuf_InsertText(0, "demo_stoprecord;");
     }
+#endif
 }
 
 void __cdecl Demo_RecordSentPacket(unsigned int size)
 {
+#if defined(__ANDROID__)
+    const auto now=Sys_Milliseconds();
+    std::lock_guard<std::mutex> lock(demo_streamMutex);
+    const int index=s_uploadStreamData.sendHistoryIndex;
+    s_uploadStreamData.sendHistory[index].ms=now;
+    s_uploadStreamData.sendHistory[index].size=size;
+    s_uploadStreamData.sendHistoryIndex=(index+1)%100;
+#else
     int index; // [esp+0h] [ebp-4h]
 
     if ( s_uploadStreamData.sendHistoryIndex >= 0x64u
@@ -240,15 +377,127 @@ void __cdecl Demo_RecordSentPacket(unsigned int size)
     s_uploadStreamData.sendHistory[index].ms = Sys_Milliseconds();
     s_uploadStreamData.sendHistory[index].size = size;
     s_uploadStreamData.sendHistoryIndex = (index + 1) % 100;
+#endif
 }
 
 bool __cdecl Demo_ShouldThrottle()
 {
+#if defined(__ANDROID__)
+    std::lock_guard<std::mutex> lock(demo_streamMutex);
     return s_uploadStreamData.active || s_uploadStreamData.overflow;
+#else
+    return s_uploadStreamData.active || s_uploadStreamData.overflow;
+#endif
 }
 
 unsigned int __cdecl Demo_ThrottleStream(unsigned int dataSize)
 {
+#if defined(__ANDROID__)
+    const auto snapshot=Demo_NativeThrottleSnapshot();
+
+    int v1; // eax
+    float v3; // [esp+0h] [ebp-30h]
+    float v4; // [esp+4h] [ebp-2Ch]
+    int timeUntilThrottle; // [esp+8h] [ebp-28h]
+    int bytesPerSecond; // [esp+Ch] [ebp-24h]
+    int minInterval; // [esp+10h] [ebp-20h]
+    float packetsPerSecond; // [esp+14h] [ebp-1Ch]
+    int throttlePointTime; // [esp+18h] [ebp-18h]
+    unsigned int currentTime; // [esp+1Ch] [ebp-14h]
+    unsigned int index; // [esp+20h] [ebp-10h]
+    std::int64_t historicalBytes; // [esp+24h] [ebp-Ch]
+    float howScrewedAreWe; // [esp+28h] [ebp-8h]
+    float howScrewedAreWea; // [esp+28h] [ebp-8h]
+    int timeSinceLast; // [esp+2Ch] [ebp-4h]
+
+    if ((snapshot.active || snapshot.overflow))
+    {
+        if (snapshot.overflow)
+        {
+            howScrewedAreWe = 0.75f;
+        }
+        else
+        {
+            howScrewedAreWea = (float)((float)((float)snapshot.used / 393216.0) * 2.0) - 0.2;
+            if ((float)(howScrewedAreWea - 1.0) < 0.0)
+                v4 = howScrewedAreWea;
+            else
+                v4 = 1.0f;
+            if ((float)(0.0 - howScrewedAreWea) < 0.0)
+                v3 = v4;
+            else
+                v3 = 0.0f;
+            howScrewedAreWe = v3;
+        }
+        packetsPerSecond = (float)((float)(demo_packetsPerSecondMax->current.integer
+            - demo_packetsPerSecondMin->current.integer)
+            * howScrewedAreWe)
+            + (float)demo_packetsPerSecondMin->current.integer;
+        bytesPerSecond = demo_bytesPerSecondMin->current.integer
+            + (int)(float)((float)(demo_bytesPerSecondMax->current.integer
+                - demo_bytesPerSecondMin->current.integer)
+                * howScrewedAreWe);
+    }
+    else
+    {
+        packetsPerSecond = 99.0f;
+        bytesPerSecond = Live_GetUploadSpeed() / 16;
+    }
+    minInterval = (int)(float)(1000.0 / packetsPerSecond);
+    historicalBytes = static_cast<std::int64_t>(bytesPerSecond) - dataSize;
+    index = snapshot.sendHistoryIndex - 1;
+    if (!snapshot.sendHistoryIndex)
+        index = 99;
+    timeSinceLast = Sys_Milliseconds() - snapshot.sendHistory[index].ms;
+    if (timeSinceLast < minInterval)
+    {
+        Com_Printf(16, "DEMO THROTTLE CLOSED FOR INTERVAL: %dms\n", minInterval - timeSinceLast);
+        NET_Sleep(minInterval - timeSinceLast);
+    }
+    currentTime = Sys_Milliseconds();
+    throttlePointTime = 0;
+    while (index != snapshot.sendHistoryIndex)
+    {
+        if (index >= 0x64
+            && !Assert_MyHandler(
+                "C:\\projects_pc\\cod\\codsrc\\src\\demo\\demo_recording.cpp",
+                502,
+                0,
+                "index doesn't index DEMOSTREAMING_SEND_HISTORY\n\t%i not in [0, %i)",
+                index,
+                100))
+        {
+            __debugbreak();
+        }
+        if (!snapshot.sendHistory[index].size)
+            break;
+        historicalBytes -= snapshot.sendHistory[index].size;
+        if (historicalBytes <= 0)
+        {
+            throttlePointTime = snapshot.sendHistory[index].ms;
+            break;
+        }
+        if (--index == -1)
+            index = 99;
+    }
+    timeUntilThrottle = currentTime - throttlePointTime;
+    v1 = (demo_streamCapacity-1-snapshot.used);
+    if ((int)(currentTime - throttlePointTime) >= 1000)
+    {
+        Com_Printf(16, "DEMO THROTTLE OPEN: %dms, %dbytes. Buffer Available: %d\n", 1000 - timeUntilThrottle, dataSize, v1);
+    }
+    else
+    {
+        Com_Printf(
+            16,
+            "DEMO THROTTLE CLOSED: %dms, %dbytes. Buffer Available: %d\n",
+            1000 - timeUntilThrottle,
+            dataSize,
+            v1);
+        NET_Sleep(1000 - timeUntilThrottle);
+    }
+    return dataSize;
+#else
     int v1; // eax
     float v3; // [esp+0h] [ebp-30h]
     float v4; // [esp+4h] [ebp-2Ch]
@@ -351,10 +600,33 @@ unsigned int __cdecl Demo_ThrottleStream(unsigned int dataSize)
         NET_Sleep(1000 - timeUntilThrottle);
     }
     return dataSize;
+#endif
 }
 
 int __cdecl Demo_WriteToStream(unsigned __int8 *data, unsigned int dataSize)
 {
+#if defined(__ANDROID__)
+    if(!dataSize) return 0;
+    if(!data) { Com_Error(ERR_DROP,"Demo upload received null destination"); std::abort(); }
+    unsigned int bytesToUpload;
+    {
+        std::unique_lock<std::mutex> lock(demo_streamMutex);
+        const auto generation=demo_streamGeneration;
+        demo_streamChanged.wait(lock,[generation] {
+            return demo_streamUsed || !s_uploadStreamData.active || demo_streamGeneration!=generation;
+        });
+        if(demo_streamGeneration!=generation || !demo_streamUsed) return 0;
+        const unsigned int reader=s_uploadStreamData.reader;
+        bytesToUpload=dataSize<demo_streamUsed ? dataSize : demo_streamUsed;
+        if(bytesToUpload>demo_streamCapacity-reader) bytesToUpload=demo_streamCapacity-reader;
+        memcpy(data,s_uploadStreamData.buffer+reader,bytesToUpload);
+        s_uploadStreamData.reader=(reader+bytesToUpload)%demo_streamCapacity;
+        demo_streamUsed-=bytesToUpload;
+        demo_streamDelivered+=bytesToUpload;
+    }
+    Demo_RecordSentPacket(bytesToUpload);
+    return static_cast<int>(bytesToUpload);
+#else
     int CurrUsedBuffer; // eax
     int bytesToUpload; // [esp+0h] [ebp-4h]
 
@@ -404,7 +676,30 @@ int __cdecl Demo_WriteToStream(unsigned __int8 *data, unsigned int dataSize)
     Demo_AppendToStreamingHistory(CurrUsedBuffer, 0);
     Demo_RecordSentPacket(bytesToUpload);
     return bytesToUpload;
+#endif
 }
+
+#if defined(__ANDROID__)
+unsigned int __cdecl Demo_StreamUploadDataCallback(void *data, unsigned int size, unsigned int offset)
+{
+    if(!data && size) { Com_Error(ERR_DROP,"Demo upload received null destination"); std::abort(); }
+    bool nonSequential;
+    unsigned int result=0;
+    {
+        std::lock_guard<std::mutex> callbackLock(demo_streamCallbackMutex);
+        {
+            std::lock_guard<std::mutex> streamLock(demo_streamMutex);
+            nonSequential=demo_streamDelivered>UINT32_MAX || offset!=demo_streamDelivered;
+        }
+        if(!nonSequential)
+            result=static_cast<unsigned int>(Demo_WriteToStream(static_cast<unsigned char *>(data),size));
+    }
+    if(nonSequential) {
+        Com_Error(ERR_DROP,"Demo streaming upload does not support retry or nonsequential offsets"); std::abort();
+    }
+    return result;
+}
+#endif
 
 int __cdecl Demo_SaveCallback(jqBatch *batch)
 {
@@ -1214,7 +1509,15 @@ void __cdecl Demo_PopulateStaticInfoData(demoMetaInfo *info)
     info->day = systemTime.tm_mday;
     info->hour = systemTime.tm_hour;
     info->min = systemTime.tm_min;
+#if defined(__ANDROID__)
+    const time_t now=time(nullptr);
+    if(now<0 || static_cast<std::uint64_t>(now)>UINT32_MAX) {
+        Com_Error(ERR_DROP,"Demo creation time is outside the fixed32 file domain"); std::abort();
+    }
+    info->createTime=static_cast<unsigned int>(now);
+#else
     info->createTime = _time64(0);
+#endif
 }
 
 unsigned int __cdecl Demo_WriteToBuffer(
@@ -1224,14 +1527,51 @@ unsigned int __cdecl Demo_WriteToBuffer(
                 int bytesWritten,
                 int maxBufferSize)
 {
+#if defined(__ANDROID__)
+    if(bytesWritten<0 || maxBufferSize<0 || bytesWritten>maxBufferSize ||
+       size>static_cast<unsigned int>(maxBufferSize-bytesWritten) || (!to && size) || (!from && size)) return 0;
+    if(size) memcpy(to,from,size);
+    return size;
+#else
     if ( (int)(size + bytesWritten) >= maxBufferSize )
         return 0;
     memcpy(to, from, size);
     return size;
+#endif
 }
 
 unsigned int __cdecl Demo_WriteInfoDataToBuffer(demoMetaInfo *info, unsigned __int8 *buffer, int maxBufferSize)
 {
+#if defined(__ANDROID__)
+    static_assert(sizeof(demoConnectedPlayersInfo)==24 && offsetof(demoConnectedPlayersInfo,xuid)==8);
+    static_assert(sizeof(demoDefaultBookmarkInfo)==12 && sizeof(demoHeliPatchesInfo)==24);
+    if(!info || !buffer || maxBufferSize<0 || info->numConnectedPlayersInfoCount<0 ||
+       info->numConnectedPlayersInfoCount>50 || info->numDefaultBookmarksCount<0 ||
+       info->numDefaultBookmarksCount>1000 || info->numHeliPatchesCount<0 || info->numHeliPatchesCount>32) return 0;
+    const unsigned int required=644u+24u*info->numConnectedPlayersInfoCount+
+        12u*info->numDefaultBookmarksCount+24u*info->numHeliPatchesCount;
+    if(required>static_cast<unsigned int>(maxBufferSize)) return 0;
+    unsigned int offset=0;
+    auto append=[&](const void *data,unsigned int bytes) {
+        memcpy(buffer+offset,data,bytes); offset+=bytes;
+    };
+    const int version=demo.header.version;
+    append(&version,4); append(&info->startTime,4); append(&info->endTime,4);
+    append(&info->numConnectedPlayersInfoCount,4); append(&info->numDefaultBookmarksCount,4);
+    append(&info->numHeliPatchesCount,4); append(info->author,32); append(info->gameType,256);
+    append(info->mapName,256); append(info->name,22); append(info->description,22);
+    append(&info->week,4); append(&info->month,4); append(&info->year,4);
+    append(&info->day,4); append(&info->hour,4); append(&info->min,4);
+    for(int i=0;i<info->numConnectedPlayersInfoCount;++i) {
+        if(!info->connectedPlayers[i].disconnectTime) info->connectedPlayers[i].disconnectTime=info->endTime;
+        append(&info->connectedPlayers[i],24);
+    }
+    for(int i=0;i<info->numDefaultBookmarksCount;++i) append(&info->defaultBookmarks[i],12);
+    for(int i=0;i<info->numHeliPatchesCount;++i) append(&info->heliPatches[i],24);
+    const unsigned int payloadBytes=offset;
+    append(&payloadBytes,4); append(&version,4);
+    return offset;
+#else
     unsigned int v3; // eax
     int bytesWritten; // [esp+0h] [ebp-10h]
     unsigned int bytesWrittena; // [esp+0h] [ebp-10h]
@@ -1418,10 +1758,20 @@ unsigned int __cdecl Demo_WriteInfoDataToBuffer(demoMetaInfo *info, unsigned __i
                                         totalBytesWritten,
                                         maxBufferSize);
     return bytesWrittens + totalBytesWritten;
+#endif
 }
 
 void __cdecl Demo_WriteInfoData(int handle, demoMetaInfo *info)
 {
+#if defined(__ANDROID__)
+    std::array<unsigned char,644+50*24+1000*12+32*24> buffer;
+    const auto count=Demo_WriteInfoDataToBuffer(info,buffer.data(),buffer.size());
+    if(!count) { Com_Error(ERR_DROP,"Demo metadata is invalid or exceeds the fixed file bounds"); std::abort(); }
+    if(Demo_Write(reinterpret_cast<char *>(buffer.data()),count,handle)!=count) {
+        Com_Error(ERR_DROP,"Demo metadata file write was incomplete"); std::abort();
+    }
+    Demo_Printf(258,va("DEMO Info: Written %d bytes to demo file.\n",count));
+#else
     const char *v2; // eax
     unsigned int bytesWritten; // [esp+0h] [ebp-10h]
     unsigned int bytesWrittena; // [esp+0h] [ebp-10h]
@@ -1486,6 +1836,7 @@ void __cdecl Demo_WriteInfoData(int handle, demoMetaInfo *info)
     Demo_Write((char *)&version, 4u, handle);
     v2 = va("DEMO Info: Written %d bytes to demo file.\n", totalBytesWritten + 8);
     Demo_Printf(258, v2);
+#endif
 }
 
 void __cdecl Demo_InfoPlayerConnected(int clientNum)
@@ -1503,8 +1854,12 @@ void __cdecl Demo_InfoPlayerConnected(int clientNum)
         demo.info.connectedPlayers[index].connectTime = svs.time;
         v1 = index;
         clients = svs.clients;
+#if defined(__ANDROID__)
+        demo.info.connectedPlayers[v1].xuid=svs.clients[clientNum].dw_userID;
+#else
         LODWORD(demo.info.connectedPlayers[v1].xuid) = svs.clients[clientNum].dw_userID;
         HIDWORD(demo.info.connectedPlayers[v1].xuid) = HIDWORD(clients[clientNum].dw_userID);
+#endif
         if ( demo.info.connectedPlayers[index].clientNum != clientNum
             && !Assert_MyHandler(
                         "C:\\projects_pc\\cod\\codsrc\\src\\demo\\demo_recording.cpp",

@@ -204,7 +204,11 @@ void __cdecl R_DrawTrianglesLit(
                 __debugbreak();
             }
             bspSurf = &rgp.world->dpvs.surfaces[surfIndex];
+#if defined(__ANDROID__)
+            __builtin_prefetch(&rgp.world->dpvs.surfaces[list[index + 1]].lightmapIndex, 0, 1);
+#else
             _mm_prefetch((const char *)&rgp.world->dpvs.surfaces[list[index + 1]].lightmapIndex, 1);
+#endif
             if ( r_lightConflicts->current.color[0]
                  | (reflectionProbeIndex - bspSurf->reflectionProbeIndex)
                  | (lightmapIndex - bspSurf->lightmapIndex) )

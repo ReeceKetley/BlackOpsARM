@@ -1,4 +1,9 @@
 #include "net_chan_mp.h"
+#if defined(__ANDROID__)
+#include <platform/android/legacy_crt.h>
+#include <cstdio>
+#include <cstdlib>
+#endif
 #include "cmd.h"
 #include <client/cl_main.h>
 #include "common.h"
@@ -1072,11 +1077,20 @@ __int64 __cdecl StringToInt64(const char *str)
 
 void __cdecl XUIDToString(unsigned __int64 *xuid, char *str)
 {
+#if defined(__ANDROID__)
+    // Preserve the existing16-digit lowercase hexadecimal XUID contract.
+    std::sprintf(str, "%llx", static_cast<unsigned long long>(*xuid));
+#else
     _ui64toa(*xuid, str, 0x10u);
+#endif
 }
 
 void __cdecl StringToXUID(const char *str, unsigned __int64 *xuid)
 {
+#if defined(__ANDROID__)
+    *xuid = std::strtoull(str, nullptr, 16);
+#else
     *xuid = _strtoui64(str, 0, 16);
+#endif
 }
 

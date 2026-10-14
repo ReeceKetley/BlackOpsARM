@@ -17,7 +17,12 @@
 // the round-1 first spawn by a script-fixed 8250 ms (MEASURED: 4 of 4 KB runs, k1-c9-c1x, k1-c9-measure, k1-c10-a,
 // k1-c12-a). bo1_testclient_replay_align > 0 still forces a fixed value.
 #include "g_sp_headless_move.h"
+#if !defined(__ANDROID__)
 #include <Windows.h>
+#else
+#include <platform/android/stdio_services.h>
+#include <shared_mutex>
+#endif
 #include "g_sp_levelstart.h"
 #include <client_mp/g_client_mp.h>
 #include <game_mp/g_main_mp.h>
@@ -154,7 +159,11 @@ static bool SP_HeadlessReplayLoad()
 {
     if (s_replayLoaded || s_replayFailed)
         return s_replayLoaded;
+#if defined(__ANDROID__)
+    FILE *f=bo1::android::OpenStdio(g_replayPath->current.string,"rb");
+#else
     FILE *f = fopen(g_replayPath->current.string, "rb");
+#endif
     if (!f)
     {
         s_replayFailed = true;
@@ -191,7 +200,11 @@ static bool SP_HeadlessReplayLoad()
             clock = sscanf(line + 6, "%d %d %d %d", &s_replayClockOffset, &s_replayFirstSpawn, &s_replayDown,
                 &s_replayEnd) == 4;
     }
+#if defined(__ANDROID__)
+    bo1::android::CloseStdio(f);
+#else
     fclose(f);
+#endif
     const int snapped = SP_ReplaySnapClock();
     s_replayLoaded = clock && !s_replayCmds.empty() && !s_replayPs.empty();
     s_replayFailed = !s_replayLoaded;
@@ -530,7 +543,11 @@ bool G_SP_HeadlessReplayCommand(client_t *client, usercmd_s *cmd)
 // weapon key press: it selects the mapped weapon once the predicted playerState holds it (within 1 s), and never
 // fights a script SwitchToWeapon in between. From the second button word only bit 44 is sent: the dive-to-prone
 // press (CL_AddCurrentStanceToCmd's CL_STANCE_DIVE_TO_PRONE; Dtp_IsDtp tests it; session4 holds it for 2 cmds per dive).
+#if defined(__ANDROID__)
+static std::shared_mutex s_localLock;
+#else
 static SRWLOCK s_localLock = SRWLOCK_INIT;
+#endif
 static bool s_localValid, s_localPlaying;
 static int s_localToLevel0;
 static float s_localDelta[3];
@@ -585,15 +602,31 @@ bool G_SP_HeadlessReplayLocalFrame(client_t *client)
         if (ps->commandTime >= SP_ReplayToLevel(s_replayCmds.front().t))
             recNow = SP_ReplayDrift(ps, &err, &snapped, &recViewheight);
     }
+#if defined(__ANDROID__)
+    // The server frame is the sole publisher. Build the weapon map before
+    // publication: engine lookup/log callbacks must not run under a lock
+    // that nonlocal fatal error recovery can leave permanently held.
+    s_localLock.lock_shared();
+    const bool needWeaponMap = !s_localValid;
+    s_localLock.unlock_shared();
+    if (needWeaponMap)
+        SP_ReplayLocalWeaponMap();
+    s_localLock.lock();
+#else
     AcquireSRWLockExclusive(&s_localLock);
     if (!s_localValid)
         SP_ReplayLocalWeaponMap();
+#endif
     s_localValid = true;
     s_localPlaying = playing;
     s_localToLevel0 = SP_ReplayToLevel(0);
     if (playing)
         Vec3Copy(player->client->ps.delta_angles, s_localDelta);
+#if defined(__ANDROID__)
+    s_localLock.unlock();
+#else
     ReleaseSRWLockExclusive(&s_localLock);
+#endif
     if (playing)
     {
         const playerState_s *ps = &player->client->ps;
@@ -621,12 +654,20 @@ static size_t SP_ReplayUpperBound(int t)
 
 bool G_SP_HeadlessReplayLocalCommand(usercmd_s *cmd, const playerState_s *predictedPs)
 {
+#if defined(__ANDROID__)
+    s_localLock.lock_shared();
+#else
     AcquireSRWLockShared(&s_localLock);
+#endif
     const bool valid = s_localValid, playing = s_localPlaying;
     const int toLevel0 = s_localToLevel0;
     float delta[3];
     Vec3Copy(s_localDelta, delta);
+#if defined(__ANDROID__)
+    s_localLock.unlock_shared();
+#else
     ReleaseSRWLockShared(&s_localLock);
+#endif
     if (!valid)
         return false;
     cmd->forwardmove = cmd->rightmove = 0;

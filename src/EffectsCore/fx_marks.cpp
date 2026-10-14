@@ -1,4 +1,13 @@
 #include "fx_marks.h"
+static inline void Bo1MarkPrefetch(const char *address)
+{
+#if defined(__ANDROID__)
+    __builtin_prefetch(address, 0, 1);
+#else
+    _mm_prefetch(address, 1);
+#endif
+}
+
 #include <cstddef>
 #include <qcommon/cm_mapkit.h>
 #include <universal/assertive.h>
@@ -3071,7 +3080,7 @@ void __cdecl FX_ExpandMarkVerts_NoTransform_GfxPackedVertex_(
 
     if (!mark && !Assert_MyHandler("C:\\projects_pc\\cod\\codsrc\\src\\EffectsCore\\fx_marks.cpp", 1484, 0, "%s", "mark"))
         __debugbreak();
-    _mm_prefetch((const char *)mark, 1);
+    Bo1MarkPrefetch((const char *)mark);
     verts = R_GetMarkMeshVerts(baseVertex);
     pointCount = mark->pointCount;
     if (mark->radius < 0.1
@@ -3122,8 +3131,8 @@ void __cdecl FX_ExpandMarkVerts_NoTransform_GfxPackedVertex_(
         markPoint = (const FxMarkPoint *)group;
         do
         {
-            _mm_prefetch((const char *)&markPoint[5], 1);
-            _mm_prefetch((const char *)&outVert[2], 1);
+            Bo1MarkPrefetch((const char *)&markPoint[5]);
+            Bo1MarkPrefetch((const char *)&outVert[2]);
             castOutVert = (GfxPackedVertex *)outVert;
             delta = markPoint->xyz[0] - mark->origin[0];
             delta_4 = markPoint->xyz[1] - mark->origin[1];
@@ -3200,7 +3209,7 @@ void __cdecl FX_ExpandMarkVerts_NoTransform_GfxWorldVertex_(
 
     if (!mark && !Assert_MyHandler("C:\\projects_pc\\cod\\codsrc\\src\\EffectsCore\\fx_marks.cpp", 1484, 0, "%s", "mark"))
         __debugbreak();
-    _mm_prefetch((const char *)mark, 1);
+    Bo1MarkPrefetch((const char *)mark);
     verts = R_GetMarkMeshVerts(baseVertex);
     pointCount = mark->pointCount;
     if (mark->radius < 0.1
@@ -3251,8 +3260,8 @@ void __cdecl FX_ExpandMarkVerts_NoTransform_GfxWorldVertex_(
         markPoint = (const FxMarkPoint *)group;
         do
         {
-            _mm_prefetch((const char *)&markPoint[5], 1);
-            _mm_prefetch((const char *)&outVert[2], 1);
+            Bo1MarkPrefetch((const char *)&markPoint[5]);
+            Bo1MarkPrefetch((const char *)&outVert[2]);
             castOutVert = outVert;
             delta = markPoint->xyz[0] - mark->origin[0];
             delta_4 = markPoint->xyz[1] - mark->origin[1];

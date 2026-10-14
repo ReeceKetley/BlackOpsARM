@@ -1,4 +1,7 @@
 #include "ui_gameinfo_mp.h"
+#if defined(__ANDROID__)
+#include <cstdlib>
+#endif
 #include <universal/q_parse.h>
 #include <ui/ui_utils.h>
 #include <universal/com_files.h>
@@ -7,7 +10,12 @@
 
 char *ui_arenaInfos[128];
 int ui_numArenas;
+#if defined(__ANDROID__)
+// All maps, 128 map names, then the enum terminator.
+const char *ui_browserMapNameTable[130];
+#else
 const char *ui_browserMapNameTable[129];
+#endif
 
 const dvar_t *ui_browserMap;
 
@@ -156,6 +164,33 @@ void __cdecl UI_LoadArenas()
 
 char __cdecl UI_LoadModArenas()
 {
+#if defined(__ANDROID__)
+    unsigned char buffer[8193];
+    int file = 0;
+    const int len = FS_FOpenFileRead("mod.arena", &file);
+    if (!file)
+    {
+        Com_PrintWarning(13, "Customized mod.arena file not found\n");
+        return 0;
+    }
+    if (len <= 0 || len > 8192)
+    {
+        FS_FCloseFile(file);
+        Com_PrintWarning(13, "Invalid customized arena file size: %d\n", len);
+        return 0;
+    }
+    const unsigned int received = FS_Read(buffer, static_cast<unsigned int>(len), file);
+    FS_FCloseFile(file);
+    if (received != static_cast<unsigned int>(len))
+    {
+        Com_PrintWarning(13, "Incomplete customized arena file read\n");
+        return 0;
+    }
+    buffer[len] = 0;
+    ui_numArenas = UI_ParseInfos(reinterpret_cast<const char *>(buffer),
+        128 - ui_numArenas, &ui_arenaInfos[ui_numArenas]);
+    return 1;
+#else
     int len; // [esp+0h] [ebp-2010h]
     unsigned __int8 buffer[8192]; // [esp+8h] [ebp-2008h] BYREF
     int file; // [esp+200Ch] [ebp-4h] BYREF
@@ -189,6 +224,7 @@ char __cdecl UI_LoadModArenas()
         Com_PrintWarning(13, "Customized arena file not found: %s\n", "mod.arena");
         return 0;
     }
+#endif
 }
 
 void __cdecl UI_LoadModsMap(FF_DIR source)
@@ -398,8 +434,22 @@ void __cdecl UI_LoadMaps()
     memset((unsigned __int8 *)sharedUiInfo.mapList, 0, sizeof(sharedUiInfo.mapList));
     v0 = StringTable_Lookup(table.stringTable, 0, "maxnum_map", 1);
     sharedUiInfo.mapCount = atoi(v0);
+#if defined(__ANDROID__)
+    if (sharedUiInfo.mapCount < 0 || static_cast<unsigned int>(sharedUiInfo.mapCount) > sizeof(sharedUiInfo.mapList) / sizeof(sharedUiInfo.mapList[0]))
+    {
+        Com_Error(ERR_DROP, "UI map/game-type table count exceeds destination capacity" );
+        std::abort();
+    }
+#endif
     v1 = StringTable_Lookup(table.stringTable, 0, "mappack_count", 1);
     mapPackCount = atoi(v1);
+#if defined(__ANDROID__)
+    if (mapPackCount < 0 || static_cast<unsigned int>(mapPackCount) > sizeof(sharedUiInfo.contentPackList) / sizeof(sharedUiInfo.contentPackList[0]))
+    {
+        Com_Error(ERR_DROP, "UI map/game-type table count exceeds destination capacity" );
+        std::abort();
+    }
+#endif
     for (i = 0; i < mapPackCount; ++i)
     {
         Com_sprintf(packIndex, 4u, "%i", i);
@@ -452,6 +502,13 @@ void __cdecl UI_LoadCustomMatchGameTypes()
     }
     v0 = StringTable_Lookup(table, 0, "maxnum_gametype", 1);
     sharedUiInfo.numCustomMatchGameTypes = atoi(v0);
+#if defined(__ANDROID__)
+    if (sharedUiInfo.numCustomMatchGameTypes < 0 || static_cast<unsigned int>(sharedUiInfo.numCustomMatchGameTypes) > sizeof(sharedUiInfo.customMatchGameTypes) / sizeof(sharedUiInfo.customMatchGameTypes[0]))
+    {
+        Com_Error(ERR_DROP, "UI map/game-type table count exceeds destination capacity" );
+        std::abort();
+    }
+#endif
     for ( i = 0; i < sharedUiInfo.numCustomMatchGameTypes; ++i )
     {
         Com_sprintf(index, 4u, "%i", i);

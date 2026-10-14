@@ -16,6 +16,9 @@
 #include <game_mp/g_main_mp.h>
 #include <glass/glass_server.h>
 #include <DynEntity/DynEntity_server.h>
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+#include <cstring>
+#endif
 
 unsigned int __cdecl SV_ClipHandleForEntity(const gentity_s *ent)
 {
@@ -881,10 +884,16 @@ int __cdecl SV_SightTracePointToEntity(const sightpointtrace_t *clip, int entnum
             absmax[1] = entAxis[3][1] + v5[1];
             absmax[2] = entAxis[3][2] + v5[2];
         }
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+        // Copy the three float components without requiring eight-byte source alignment.
+        std::memcpy(extents.start.vec.v, clip->start, 3 * sizeof(float));
+        std::memcpy(extents.end.vec.v, clip->end, 3 * sizeof(float));
+#else
         *(_QWORD *)extents.start.vec.v = *(_QWORD *)clip->start;
         extents.start.vec.u[2] = LODWORD(clip->start[2]);
         *(_QWORD *)extents.end.vec.v = *(_QWORD *)clip->end;
         extents.end.vec.u[2] = LODWORD(clip->end[2]);
+#endif
         CM_CalcTraceExtents(&extents);
         if ( !intersect_extents_aabb(&extents, absmin, absmax, 1.0) )
             return 0;
@@ -1056,10 +1065,16 @@ void __cdecl SV_TracePoint(trace_t *results, const float *start, const float *en
         }
     }
     clip.contentmask = context->mask;
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+    // Leave the fourth trace-vector lane unchanged, as in the original three-float copy.
+    std::memcpy(clip.extents.start.vec.v, start, 3 * sizeof(float));
+    std::memcpy(clip.extents.end.vec.v, end, 3 * sizeof(float));
+#else
     *(_QWORD *)clip.extents.start.vec.v = *(_QWORD *)start;
     clip.extents.start.vec.v[2] = start[2];
     *(_QWORD *)clip.extents.end.vec.v = *(_QWORD *)end;
     clip.extents.end.vec.v[2] = end[2];
+#endif
     CM_CalcTraceExtents(&clip.extents);
     clip.ignoreEntParams = context->ignoreEntParams;
     clip.bLocational = context->locational;

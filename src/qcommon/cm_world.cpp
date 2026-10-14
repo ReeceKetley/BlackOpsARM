@@ -3,6 +3,11 @@
 #include "cm_world.h"
 #include "com_profilemapload.h"
 #include <cstring>
+#if defined(__ANDROID__)
+#include <cstdint>
+#include <cstdlib>
+#include <limits>
+#endif
 #include <vector>
 #include <algorithm>
 #include "cm_load.h"
@@ -591,6 +596,42 @@ unsigned __int16 __cdecl CM_AllocWorldSector(float *mins, float *maxs)
     return nodeIndex;
 }
 
+#if defined(__ANDROID__)
+void __cdecl CM_AddStaticModelToNode(cStaticModel_s *staticModel, unsigned __int16 childNodeIndex)
+{
+    const auto fail = [](const char *reason) {
+        Com_Error(ERR_FATAL, "Native static-model sector insertion: %s", reason);
+        std::abort();
+    };
+    if (!cm.staticModelList || !staticModel || !cm.numStaticModels
+        || cm.numStaticModels > std::numeric_limits<unsigned __int16>::max()
+        || childNodeIndex < SECTOR_HEAD || childNodeIndex >= s_cmSectorCount
+        || childNodeIndex >= CM_WORLD_SECTORS_CAP)
+        fail("invalid model array/count or sector index");
+    const auto base = reinterpret_cast<std::uintptr_t>(cm.staticModelList);
+    const auto address = reinterpret_cast<std::uintptr_t>(staticModel);
+    const auto bytes = static_cast<std::size_t>(cm.numStaticModels) * sizeof(*staticModel);
+    if (base > std::numeric_limits<std::uintptr_t>::max() - bytes
+        || address < base || address - base >= bytes
+        || (address - base) % sizeof(*staticModel))
+        fail("model does not identify an actual array element");
+    const auto modelnum = static_cast<unsigned int>((address - base) / sizeof(*staticModel));
+    unsigned __int16 *link = &cm_world.sectors[childNodeIndex].contents.staticModels;
+    // Validate genuine destination links before publishing either changed link.
+    unsigned __int16 previous = 0;
+    for (unsigned __int16 current = *link; current;
+        current = cm.staticModelList[current - 1].writable.nextModelInWorldSector)
+    {
+        if (current > cm.numStaticModels || current <= previous || current == modelnum + 1)
+            fail("invalid, unsorted, cyclic or duplicate destination link");
+        previous = current;
+    }
+    while (*link && static_cast<unsigned int>(*link) - 1 <= modelnum)
+        link = &cm.staticModelList[*link - 1].writable.nextModelInWorldSector;
+    staticModel->writable.nextModelInWorldSector = *link;
+    *link = static_cast<unsigned __int16>(modelnum + 1);
+}
+#else
 void __cdecl CM_AddStaticModelToNode(cStaticModel_s *staticModel, unsigned __int16 childNodeIndex)
 {
     unsigned int modelnum; // [esp+0h] [ebp-8h]
@@ -606,6 +647,7 @@ void __cdecl CM_AddStaticModelToNode(cStaticModel_s *staticModel, unsigned __int
     staticModel->writable.nextModelInWorldSector = prevStaticModel->writable.nextModelInWorldSector;
     prevStaticModel->writable.nextModelInWorldSector = modelnum + 1;
 }
+#endif
 
 unsigned int CM_LinkAllStaticModels()
 {
@@ -846,24 +888,46 @@ void __cdecl CM_AreaEntities_r(unsigned int nodeIndex, areaParms_t *ap)
 void __cdecl CM_PointTraceStaticModels(trace_t *results, const float *start, const float *end, int contentmask)
 {
     locTraceWork_t tw; // [esp+14h] [ebp-58h] BYREF
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+    float start_[4];
+    float end_[4];
+#else
     _QWORD start_[2]; // [esp+4Ch] [ebp-20h] BYREF
     _QWORD end_[2]; // [esp+5Ch] [ebp-10h] BYREF
+#endif
 
     PROF_SCOPED("pointtracestaticmodels");
     SVPROF_SCOPED(SVPROF_TRACE); // mod (L43): bo1_mod_svprof
     ////TraceExtents::TraceExtents(&tw.extents);
     tw.contents = contentmask;
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+    // Three float components; caller vectors only require float alignment.
+    std::memcpy(tw.extents.start.vec.v, start, 3 * sizeof(float));
+    std::memcpy(tw.extents.end.vec.v, end, 3 * sizeof(float));
+#else
     *(_QWORD *)tw.extents.start.vec.v = *(_QWORD *)start;
     tw.extents.start.vec.v[2] = start[2];
     *(_QWORD *)tw.extents.end.vec.v = *(_QWORD *)end;
     tw.extents.end.vec.v[2] = end[2];
+#endif
     CM_CalcTraceExtents(&tw.extents);
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+    std::memcpy(start_, tw.extents.start.vec.v, 3 * sizeof(float));
+    std::memcpy(end_, tw.extents.end.vec.v, 3 * sizeof(float));
+    start_[3] = 0.0f;
+    std::memcpy(&end_[3], &results->fraction, sizeof(float));
+#else
     start_[0] = *(_QWORD *)tw.extents.start.vec.v;
     start_[1] = __PAIR64__(0, tw.extents.start.vec.u[2]);
     end_[0] = *(_QWORD *)tw.extents.end.vec.v;
     LODWORD(end_[1]) = tw.extents.end.vec.u[2];
     HIDWORD(end_[1]) = LODWORD(results->fraction);
+#endif
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+    CM_PointTraceStaticModels_r(&tw, 1u, start_, end_, results);
+#else
     CM_PointTraceStaticModels_r(&tw, 1u, (const float *)start_, (const float *)end_, results);
+#endif
 }
 
 void __cdecl CM_PointTraceStaticModels_r(
@@ -953,10 +1017,16 @@ int __cdecl CM_PointTraceStaticModelsComplete(const float *start, const float *e
 
     //TraceExtents::TraceExtents(&clip.extents);
     clip.contents = contentmask;
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+    // Three float components; caller vectors only require float alignment.
+    std::memcpy(clip.extents.start.vec.v, start, 3 * sizeof(float));
+    std::memcpy(clip.extents.end.vec.v, end, 3 * sizeof(float));
+#else
     *(_QWORD *)clip.extents.start.vec.v = *(_QWORD *)start;
     clip.extents.start.vec.v[2] = start[2];
     *(_QWORD *)clip.extents.end.vec.v = *(_QWORD *)end;
     clip.extents.end.vec.v[2] = end[2];
+#endif
     CM_CalcTraceExtents(&clip.extents);
     return CM_PointTraceStaticModelsComplete_r(&clip, 1u, clip.extents.start.vec.v, clip.extents.end.vec.v);
 }
@@ -1038,8 +1108,13 @@ int __cdecl CM_PointTraceStaticModelsComplete_r(
 
 void __cdecl CM_ClipMoveToEntities(moveclip_t *clip, trace_t *trace)
 {
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+    float start[4];
+    float end[4];
+#else
     _QWORD start[2]; // [esp+1Ch] [ebp-20h] BYREF
     _QWORD end[2]; // [esp+2Ch] [ebp-10h] BYREF
+#endif
 
     PROF_SCOPED("clipmoveentities");
     SVPROF_SCOPED(SVPROF_TRACE); // mod (L43): bo1_mod_svprof
@@ -1055,13 +1130,25 @@ void __cdecl CM_ClipMoveToEntities(moveclip_t *clip, trace_t *trace)
     {
         __debugbreak();
     }
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+    // The fourth traversal lane is a fraction, not a coordinate.
+    std::memcpy(start, clip->extents.start.vec.v, 3 * sizeof(float));
+    std::memcpy(end, clip->extents.end.vec.v, 3 * sizeof(float));
+    start[3] = 0.0f;
+    std::memcpy(&end[3], &trace->fraction, sizeof(float));
+#else
     start[0] = *(_QWORD *)clip->extents.start.vec.v;
     LODWORD(start[1]) = clip->extents.start.vec.u[2];
     end[0] = *(_QWORD *)clip->extents.end.vec.v;
     LODWORD(end[1]) = clip->extents.end.vec.u[2];
     HIDWORD(start[1]) = 0;
     HIDWORD(end[1]) = LODWORD(trace->fraction);
+#endif
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+    CM_ClipMoveToEntities_r(clip, 1u, start, end, trace);
+#else
     CM_ClipMoveToEntities_r(clip, 1u, (const float *)start, (const float *)end, trace);
+#endif
 }
 
 void __cdecl CM_ClipMoveToEntities_r(
@@ -1308,8 +1395,13 @@ int __cdecl CM_ClipSightTraceToEntities_r(
 
 void __cdecl CM_PointTraceToEntities(pointtrace_t *clip, trace_t *trace, col_context_t *context)
 {
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+    float start[4];
+    float end[4];
+#else
     _QWORD start[2]; // [esp+18h] [ebp-20h] BYREF
     _QWORD end[2]; // [esp+28h] [ebp-10h] BYREF
+#endif
 
     PROF_SCOPED("pointtraceentities");
     SVPROF_SCOPED(SVPROF_TRACE); // mod (L43): bo1_mod_svprof
@@ -1325,13 +1417,25 @@ void __cdecl CM_PointTraceToEntities(pointtrace_t *clip, trace_t *trace, col_con
     {
         __debugbreak();
     }
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+    // The fourth traversal lane is a fraction, not a coordinate.
+    std::memcpy(start, clip->extents.start.vec.v, 3 * sizeof(float));
+    std::memcpy(end, clip->extents.end.vec.v, 3 * sizeof(float));
+    start[3] = 0.0f;
+    std::memcpy(&end[3], &trace->fraction, sizeof(float));
+#else
     start[0] = *(_QWORD *)clip->extents.start.vec.v;
     LODWORD(start[1]) = clip->extents.start.vec.u[2];
     end[0] = *(_QWORD *)clip->extents.end.vec.v;
     LODWORD(end[1]) = clip->extents.end.vec.u[2];
     HIDWORD(start[1]) = 0;
     HIDWORD(end[1]) = LODWORD(trace->fraction);
+#endif
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+    CM_PointTraceToEntities_r(clip, 1u, start, end, trace, context);
+#else
     CM_PointTraceToEntities_r(clip, 1u, (const float *)start, (const float *)end, trace, context);
+#endif
 }
 
 void __cdecl CM_PointTraceToEntities_r(

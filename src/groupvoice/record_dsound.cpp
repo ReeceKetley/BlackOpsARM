@@ -1,3 +1,69 @@
+#if defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST)
+#include "record_dsound.h"
+#include "record.h"
+#include <platform/android/voice_audio.h>
+#include <qcommon/common.h>
+#include <array>
+#include <memory>
+#include <cstring>
+#include <new>
+bool g_recording_initialized;
+int g_sound_channels=1,g_sound_recordFrequency=8192,g_sound_recordBufferSize=51200,g_sound_recordVolume=255;
+bool g_currently_recording;
+dsound_sample_t *g_current_sample,*s_recordingSamplePtr;
+dsound_sample_t s_recordingSamples[33];
+static std::array<bool,33> sampleUsed{};
+static std::unique_ptr<bo1::android::VoiceCapture> capture;
+static unsigned Slot(dsound_sample_t *sample){for(unsigned i=0;i<33;++i)if(sample==&s_recordingSamples[i] && sampleUsed[i])return i;return 33;}
+void DSOUNDRecord_UpdateSample(dsound_sample_t *sample) {
+    if(!g_recording_initialized || !sample || sample!=g_current_sample)return;
+    if(!capture || !capture->Live())Com_Error(ERR_FATAL,"Actual SDL voice capture device failed");
+    if(!current_audioCallback)Com_Error(ERR_FATAL,"Actual voice capture consumer is missing");
+    std::array<std::int16_t,4096> pcm{};
+    const auto count=capture->Read(pcm);
+    if(count<0)Com_Error(ERR_FATAL,"Actual SDL voice capture read failed");
+    if(count>0) {audioSample_t data{};data.buffer=reinterpret_cast<unsigned char *>(pcm.data());data.lengthInBytes=count*2;data.lengthInSamples=count;data.bytesPerSample=2;data.frequency=g_sound_recordFrequency;data.channels=1;current_audioCallback(&data);}
+}
+void DSOUNDRecord_Frame(){if(g_currently_recording)DSOUNDRecord_UpdateSample(g_current_sample);}
+dsound_sample_t *DSOUNDRecord_NewSample(){
+    if(!g_recording_initialized)return nullptr;
+    for(unsigned i=0;i<sampleUsed.size();++i)if(!sampleUsed[i]){sampleUsed[i]=true;auto *sample=&s_recordingSamples[i];*sample={};sample->frequency=g_sound_recordFrequency;sample->volume=g_sound_recordVolume;sample->pan=128;sample->channels=g_sound_channels;sample->stopPosition=-1;sample->playMode=2;return sample;}
+    Com_PrintError(9,"Voice sample pool exhausted\n");return nullptr;
+}
+int DSOUNDRecord_DestroySample(dsound_sample_t *sample){
+    if(!sample)return 0;unsigned index=33;
+    for(unsigned i=0;i<33;++i)if(sample==&s_recordingSamples[i]){index=i;break;}
+    if(index==33 || !sampleUsed[index])return 0;
+    if(sample==g_current_sample && DSOUNDRecord_Stop(sample)<0)return 0;
+    delete sample->DSB;sample->DSB=nullptr;sample->DSCB=nullptr;sampleUsed[index]=false;return 1;
+}
+HRESULT DSOUNDRecord_Start(dsound_sample_t *sample){
+    if(!g_recording_initialized || Slot(sample)==33 || sample->DSB || !capture || g_currently_recording || !capture->Start())return E_FAIL;
+    sample->DSCB=capture.get();g_current_sample=sample;g_currently_recording=true;return S_OK;
+}
+HRESULT DSOUNDRecord_Stop(dsound_sample_t *sample){
+    if(!sample || sample!=g_current_sample || !capture || !capture->Stop())return E_FAIL;
+    sample->DSCB=nullptr;g_current_sample=nullptr;g_currently_recording=false;return S_OK;
+}
+int DSOUNDRecord_Init(bool){
+    if(g_recording_initialized)return capture && capture->Live();
+    if(BO1_VoiceHasOwnedResources()){Com_PrintError(9,"Voice capture still owns prior resources\n");return 0;}
+    auto owner=std::unique_ptr<bo1::android::VoiceCapture>(new(std::nothrow) bo1::android::VoiceCapture);
+    if(!owner || !owner->Open(g_sound_recordFrequency,g_sound_channels)){Com_PrintError(9,"Actual SDL voice capture initialization failed: %s\n",SDL_GetError());return 0;}
+    capture=std::move(owner);sampleUsed.fill(false);s_recordingSamplePtr=s_recordingSamples;g_current_sample=nullptr;g_currently_recording=false;g_recording_initialized=true;return 1;
+}
+void DSOUNDRecord_Shutdown(){
+    // Close the actual device first: SDL guarantees callback quiescence, even
+    // when a hot-unplug made Stop fail. Then retire each owned sample slot.
+    capture.reset();g_current_sample=nullptr;g_currently_recording=false;
+    for(unsigned i=0;i<33;++i)if(sampleUsed[i])DSOUNDRecord_DestroySample(&s_recordingSamples[i]);
+    g_recording_initialized=false;
+}
+void BO1_VoiceRetirePlaybackSamples(){for(unsigned i=0;i<33;++i)if(sampleUsed[i] && s_recordingSamples[i].DSB)DSOUNDRecord_DestroySample(&s_recordingSamples[i]);}
+bool BO1_VoiceHasOwnedResources(){if(capture)return true;for(bool used:sampleUsed)if(used)return true;return false;}
+bool BO1_VoiceCaptureControls(unsigned level,bool mute){return capture && capture->Controls(level,mute);}
+bool BO1_VoiceCaptureRoute(char *out,unsigned capacity){return capture && capture->Route(out,capacity);}
+#else
 #include "record_dsound.h"
 #include "record.h"
 #include <qcommon/common.h>
@@ -297,3 +363,5 @@ void __cdecl DSOUNDRecord_Shutdown()
         Com_PrintError(9, "Error releasing direct sound instance!    %d\n", hr);
 }
 
+
+#endif

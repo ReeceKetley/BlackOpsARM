@@ -1,5 +1,6 @@
 param([Parameter(Mandatory=$true)][string]$OutputDirectory,
       [string[]]$TranslationUnits=@('src/qcommon/common.cpp'),
+      [string[]]$AdditionalCompilerOptions=@(),
       [string]$VcVars='C:/BuildTools/VC/Auxiliary/Build/vcvarsall.bat')
 $ErrorActionPreference='Stop'
 $taskRoot=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
@@ -19,7 +20,7 @@ foreach($taskArch in @('x86','x64')){
     foreach($taskUnit in ($TranslationUnits+@('tools/port/build_startup_services_windows_compile.ps1'))){$taskHashes[$taskUnit]=(Get-FileHash -LiteralPath (Join-Path $taskRoot $taskUnit) -Algorithm SHA256).Hash}
     $taskHashes|ConvertTo-Json|Out-File (Join-Path $taskArchOutput 'source-manifest.json') -Encoding utf8
     $taskSources=($TranslationUnits|ForEach-Object{'"'+(Join-Path $taskRoot $_)+'"'}) -join ' '
-    $taskCommand='"'+$VcVars+'" '+$taskArch+' >nul && cl /nologo /W3 /std:c++20 /EHsc /MTd /O2 /D_DEBUG=1 '+$taskDefines+' /I"'+(Join-Path $taskRoot 'src')+'" /I"'+$taskRoot+'" /I"C:/Program Files (x86)/Microsoft DirectX SDK (June 2010)/Include" /c '+$taskSources+' /Fo"'+$taskArchOutput+'/"'
+    $taskCommand='"'+$VcVars+'" '+$taskArch+' >nul && cl /nologo /W3 /std:c++20 /EHsc /MTd /O2 /D_DEBUG=1 '+$taskDefines+' '+($AdditionalCompilerOptions -join ' ')+' /I"'+(Join-Path $taskRoot 'src')+'" /I"'+$taskRoot+'" /I"C:/Program Files (x86)/Microsoft DirectX SDK (June 2010)/Include" /c '+$taskSources+' /Fo"'+$taskArchOutput+'/"'
     $taskCommand|Out-File (Join-Path $taskArchOutput 'command.txt') -Encoding utf8
     $ErrorActionPreference='Continue'
     & cmd /d /s /c $taskCommand *> (Join-Path $taskArchOutput 'compile.log')

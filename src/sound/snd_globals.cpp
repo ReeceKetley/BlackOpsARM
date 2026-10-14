@@ -286,13 +286,25 @@ double __cdecl Snd_CurveEval(const snd_curve *curve, float x)
         return curve->points[7][1];
     for ( i = 1; i < 8; ++i )
     {
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+        // name[32] and id precede the owned points: offsets 8*i+28/32 are row i-1.
+        if ( curve->points[i][0] >= x && x >= curve->points[i - 1][0] )
+        {
+            t = (float)(x - curve->points[i - 1][0])
+                / (float)(curve->points[i][0] - curve->points[i - 1][0]);
+#else
         if ( curve->points[i][0] >= x && x >= *(float *)&curve->name[8 * i + 28] )
         {
             t = (float)(x - *(float *)&curve->name[8 * i + 28])
                 / (float)(curve->points[i][0] - *(float *)&curve->name[8 * i + 28]);
+#endif
             // zombies (L16): SP 0x0058CC9B..0x0058CCAB does the whole lerp on the x87 (fld1; fsub; fmulp; fmul dword;
             // faddp), so t * y1 is a double product; the decompiled float * float was a single-precision mulss.
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+            return (1.0 - t) * curve->points[i - 1][1] + (double)t * curve->points[i][1];
+#else
             return (1.0 - t) * *(float *)&curve->name[8 * i + 32] + (double)t * curve->points[i][1];
+#endif
         }
     }
     Com_PrintError(9, "invalid curve data in curve '%s'\n", curve->name);

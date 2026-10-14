@@ -1,4 +1,16 @@
+#if defined(BO1_XANIM_LIMITS_ONLY)
+#include <xanim/xanim_limits.h>
+#else
 #include "xanim.h"
+#if defined(__ANDROID__)
+#include <cstdint>
+#include <cstdlib>
+#include <limits>
+#include <type_traits>
+#define XANIM_PRECACHE_SIGNED_OWNER Hunk_AllocXAnimPrecacheSigned
+#else
+#define XANIM_PRECACHE_SIGNED_OWNER (void *(__cdecl *)(int))Hunk_AllocXAnimPrecache
+#endif
 #include "xmodel.h"
 #include "xanim_clientnotify.h"
 
@@ -14,7 +26,10 @@
 #include <gfx_d3d/r_rendercmds.h>
 
 XAnimInfo g_xAnimInfo[XANIM_INFO_MAX]; // mod: retail 4096 used unless bo1_mod_scriptvars (g_xAnimInfoCount)
+#endif // BO1_XANIM_LIMITS_ONLY
+
 int g_xAnimInfoCount = 4096;
+#if !defined(BO1_XANIM_LIMITS_ONLY)
 unsigned int g_endNotetrackName;
 bool g_anim_developer;
 XAnimClientNotifyList *g_clientList;
@@ -86,8 +101,24 @@ void __cdecl XAnimFree(XAnimParts *parts, scriptInstance_t inst)
 
 void *__cdecl Hunk_AllocXAnimPrecache(unsigned int size)
 {
+#if defined(__ANDROID__)
+    return Hunk_AllocAlign(size, alignof(XAnimParts), "XAnimPrecache", 13);
+#else
     return Hunk_AllocAlign(size, 4, "XAnimPrecache", 13);
+#endif
 }
+
+#if defined(__ANDROID__)
+void *__cdecl Hunk_AllocXAnimPrecacheSigned(int size)
+{
+    if(size<0)
+    {
+        Com_Error(ERR_FATAL,"Negative native XAnim precache allocation");
+        std::abort();
+    }
+    return Hunk_AllocXAnimPrecache(static_cast<unsigned int>(size));
+}
+#endif
 
 XAnimParts *__cdecl XAnimPrecache(char *name, void *(__cdecl *Alloc)(int))
 {
@@ -99,7 +130,7 @@ XAnimParts *__cdecl XAnimPrecache(char *name, void *(__cdecl *Alloc)(int))
     if ( useFastFile->current.enabled )
         result = (XAnimParts *)XAnimFindData_FastFile(name);
     else
-        result = XAnimFindData_LoadObj(name, (void *(__cdecl *)(int))Hunk_AllocXAnimPrecache);
+        result = XAnimFindData_LoadObj(name, XANIM_PRECACHE_SIGNED_OWNER);
     if ( !result )
     {
         parts = XAnimLoadFile(name, Alloc, 0);
@@ -109,7 +140,7 @@ XAnimParts *__cdecl XAnimPrecache(char *name, void *(__cdecl *Alloc)(int))
             if ( useFastFile->current.enabled )
                 Data_LoadObj = (XAnimParts *)XAnimFindData_FastFile("void");
             else
-                Data_LoadObj = XAnimFindData_LoadObj((char *)"void", (void *(__cdecl *)(int))Hunk_AllocXAnimPrecache);
+                Data_LoadObj = XAnimFindData_LoadObj((char *)"void", XANIM_PRECACHE_SIGNED_OWNER);
             defaultParts = Data_LoadObj;
             if ( !Data_LoadObj )
             {
@@ -188,7 +219,7 @@ void __cdecl XAnimCreate(XAnim_s *anims, unsigned int animIndex, char *name)
     if ( useFastFile->current.enabled )
         Data_LoadObj = (XAnimParts *)XAnimFindData_FastFile(name);
     else
-        Data_LoadObj = XAnimFindData_LoadObj(name, (void *(__cdecl *)(int))Hunk_AllocXAnimPrecache);
+        Data_LoadObj = XAnimFindData_LoadObj(name, XANIM_PRECACHE_SIGNED_OWNER);
     parts = Data_LoadObj;
     if ( useFastFile->current.enabled || Data_LoadObj )
     {
@@ -366,6 +397,59 @@ void __cdecl XAnimSetValueSection(
     anims->entries[animIndex].paramCount = iValueCount;
 }
 
+#if defined(__ANDROID__)
+template<class Size>
+static XAnim_s *XAnimCreateTypedAnims(const char *debugName,int size,unsigned int totalValueCount,void *(__cdecl *Alloc)(Size))
+{
+    static_assert(std::is_same_v<Size,int> || std::is_same_v<Size,unsigned int>);
+    const auto fail=[](const char *reason){Com_Error(ERR_FATAL,"Native XAnim allocation: %s",reason);std::abort();};
+    if(!debugName && !Assert_MyHandler("C:\\projects_pc\\cod\\codsrc\\src\\xanim\\xanim.cpp",683,0,"%s","debugName"))__debugbreak();
+    if(!Alloc && !Assert_MyHandler("C:\\projects_pc\\cod\\codsrc\\src\\xanim\\xanim.cpp",684,0,"%s","Alloc"))__debugbreak();
+    if(!debugName || !Alloc || size<=0 || static_cast<unsigned>(size)>static_cast<unsigned>(std::numeric_limits<unsigned __int16>::max())+1u)
+        fail("invalid callback or animation index count");
+    const auto entriesBytes=offsetof(XAnim_s,entries)+static_cast<std::size_t>(size)*sizeof(XAnimEntry);
+    const auto maximum=static_cast<std::size_t>(std::numeric_limits<int>::max());
+    if(entriesBytes>maximum || totalValueCount>(maximum-entriesBytes)/sizeof(XAnimParam))
+        fail("entry/parameter byte count exceeds actual signed allocator range");
+    const auto animsBytes=entriesBytes+static_cast<std::size_t>(totalValueCount)*sizeof(XAnimParam);
+    const auto debugNameBytes=std::strlen(debugName)+1;
+    if(debugNameBytes>maximum)fail("debug name exceeds allocator range");
+    auto *anims=static_cast<XAnim_s *>(Alloc(static_cast<Size>(animsBytes)));
+    if(!anims || reinterpret_cast<std::uintptr_t>(anims)%alignof(XAnim_s))fail("allocator returned null or misaligned animation storage");
+    std::memset(anims,0,animsBytes);
+    anims->size=static_cast<unsigned>(size);
+    anims->paramSize=totalValueCount;
+    // The actual allocation owns the complete native tail, not entries[1].
+    if(totalValueCount)anims->params=reinterpret_cast<XAnimParam *>(reinterpret_cast<unsigned char *>(anims)+entriesBytes);
+    if(g_anim_developer)
+    {
+        char *name=static_cast<char *>(Hunk_UserAlloc(g_DebugHunkUser,static_cast<int>(debugNameBytes),4,"XAnimCreateAnims"));
+        if(!name || reinterpret_cast<std::uintptr_t>(name)%4)fail("debug allocator returned invalid name storage");
+        std::memcpy(name,debugName,debugNameBytes);anims->debugName=name;
+        const auto namesBytes=sizeof(const char *)*static_cast<std::size_t>(size);
+        anims->debugAnimNames=static_cast<const char **>(Hunk_UserAlloc(g_DebugHunkUser,static_cast<int>(namesBytes),alignof(const char *),"XAnimCreateAnims"));
+        if(!anims->debugAnimNames || reinterpret_cast<std::uintptr_t>(anims->debugAnimNames)%alignof(const char *))fail("debug allocator returned invalid pointer-array storage");
+        std::memset(anims->debugAnimNames,0,namesBytes);
+    }
+    anims->wasLoggedIfMissing=static_cast<bool *>(Hunk_UserAlloc(g_DebugHunkUser,size,4,"XAnimCreateAnims"));
+    if(!anims->wasLoggedIfMissing || reinterpret_cast<std::uintptr_t>(anims->wasLoggedIfMissing)%alignof(bool))fail("debug allocator returned invalid missing-name storage");
+    std::memset(anims->wasLoggedIfMissing,0,size);
+    if(Hunk_DataOnHunk(reinterpret_cast<unsigned __int8 *>(anims)))Hunk_AddData(2,anims,Alloc);
+    return anims;
+}
+XAnim_s *__cdecl XAnimCreateAnims(const char *debugName,int size,void *(__cdecl *Alloc)(unsigned int))
+{
+    return XAnimCreateTypedAnims(debugName,size,0,Alloc);
+}
+XAnim_s *__cdecl XAnimCreateAnimsWithValues(const char *debugName,int size,unsigned int totalValueCount,void *(__cdecl *Alloc)(int))
+{
+    return XAnimCreateTypedAnims(debugName,size,totalValueCount,Alloc);
+}
+XAnim_s *__cdecl XAnimCreateAnimsWithValues(const char *debugName,int size,unsigned int totalValueCount,void *(__cdecl *Alloc)(unsigned int))
+{
+    return XAnimCreateTypedAnims(debugName,size,totalValueCount,Alloc);
+}
+#else
 XAnim_s *__cdecl XAnimCreateAnims(const char *debugName, int size, void *(__cdecl *Alloc)(unsigned int))
 {
     return XAnimCreateAnimsWithValues(debugName, size, 0, (void*(*)(int))Alloc);
@@ -415,7 +499,39 @@ XAnim_s *__cdecl XAnimCreateAnimsWithValues(
         Hunk_AddData(2, anims, Alloc);
     return anims;
 }
+#endif
 
+#if defined(__ANDROID__)
+void __cdecl XAnimFreeList(XAnim_s *anims)
+{
+    unsigned int i; // [esp+0h] [ebp-4h]
+
+    if ( anims->debugName )
+    {
+        Hunk_UserFree(g_DebugHunkUser, (void *)anims->debugName);
+        anims->debugName = 0;
+    }
+    if ( anims->debugAnimNames )
+    {
+        for ( i = 0; i < anims->size; ++i )
+        {
+            if ( anims->debugAnimNames[i] )
+            {
+                Hunk_UserFree(g_DebugHunkUser, (void *)anims->debugAnimNames[i]);
+                anims->debugAnimNames[i] = 0;
+            }
+        }
+        Hunk_UserFree(g_DebugHunkUser, anims->debugAnimNames);
+        anims->debugAnimNames = 0;
+
+    }
+    if (anims->wasLoggedIfMissing)
+    {
+        Hunk_UserFree(g_DebugHunkUser, anims->wasLoggedIfMissing);
+        anims->wasLoggedIfMissing = nullptr;
+    }
+}
+#else
 void __cdecl XAnimFreeList(XAnim_s *anims)
 {
     unsigned int i; // [esp+0h] [ebp-4h]
@@ -441,7 +557,51 @@ void __cdecl XAnimFreeList(XAnim_s *anims)
         anims->wasLoggedIfMissing = 0;
     }
 }
+#endif
 
+#if defined(__ANDROID__)
+template<class Result, class Size>
+static XAnimTree_s *XAnimCreateTypedTree(XAnim_s *anims, Result (__cdecl *Alloc)(Size))
+{
+    static_assert(std::is_same_v<Size, int> || std::is_same_v<Size, unsigned int>);
+    static_assert(std::is_same_v<Result, void *> || std::is_same_v<Result, char *>);
+    const auto fail = [](const char *reason) {
+        Com_Error(ERR_FATAL, "Native XAnim tree allocation: %s", reason);
+        std::abort();
+    };
+    if (!anims && !Assert_MyHandler("C:\\projects_pc\\cod\\codsrc\\src\\xanim\\xanim.cpp", 795, 0, "%s", "anims"))
+        __debugbreak();
+    if (!anims) fail("null animation owner");
+    if (!anims->size && !Assert_MyHandler("C:\\projects_pc\\cod\\codsrc\\src\\xanim\\xanim.cpp", 798, 0, "%s", "size"))
+        __debugbreak();
+    if (!anims->size || !Alloc) fail("empty animation owner or null allocator");
+    const int entrySize = XAnimTreeSize();
+    if (entrySize <= 0 || static_cast<std::size_t>(entrySize) != sizeof(XAnimTree_s))
+        fail("invalid native tree size");
+    // Only the returned data pointer converts; invoke the exact callback type.
+    auto *tree = static_cast<XAnimTree_s *>(static_cast<void *>(Alloc(static_cast<Size>(entrySize))));
+    if (!tree || reinterpret_cast<std::uintptr_t>(tree) % alignof(XAnimTree_s))
+        fail("allocator returned null or misaligned tree storage");
+    std::memset(tree, 0, static_cast<std::size_t>(entrySize));
+    tree->anims = anims;
+    return tree;
+}
+
+XAnimTree_s *__cdecl XAnimCreateTree(XAnim_s *anims, void *(__cdecl *Alloc)(unsigned int))
+{
+    return XAnimCreateTypedTree(anims, Alloc);
+}
+
+XAnimTree_s *__cdecl XAnimCreateTree(XAnim_s *anims, void *(__cdecl *Alloc)(int))
+{
+    return XAnimCreateTypedTree(anims, Alloc);
+}
+
+XAnimTree_s *__cdecl XAnimCreateTree(XAnim_s *anims, char *(__cdecl *Alloc)(int))
+{
+    return XAnimCreateTypedTree(anims, Alloc);
+}
+#else
 XAnimTree_s *__cdecl XAnimCreateTree(XAnim_s *anims, void *(__cdecl *Alloc)(unsigned int))
 {
     XAnimTree_s *tree; // [esp+0h] [ebp-Ch]
@@ -457,6 +617,8 @@ XAnimTree_s *__cdecl XAnimCreateTree(XAnim_s *anims, void *(__cdecl *Alloc)(unsi
     tree->anims = anims;
     return tree;
 }
+
+#endif
 
 void __cdecl XAnimFreeTree(
                 XAnimTree_s *tree,
@@ -4297,11 +4459,11 @@ void __cdecl XAnimSetupSyncNodes_r(XAnim_s *anims, unsigned int animIndex, int p
                 if ( IsXAssetDefault )
                 {
                     if ( !useFastFile->current.enabled )
-                        XAnimPrecache((char *)"void_loop", (void *(__cdecl *)(int))Hunk_AllocXAnimPrecache);
+                        XAnimPrecache((char *)"void_loop", XANIM_PRECACHE_SIGNED_OWNER);
                     if ( useFastFile->current.enabled )
                         Data_LoadObj = (XAnimParts *)XAnimFindData_FastFile("void_loop");
                     else
-                        Data_LoadObj = XAnimFindData_LoadObj((char*)"void_loop", (void *(__cdecl *)(int))Hunk_AllocXAnimPrecache);
+                        Data_LoadObj = XAnimFindData_LoadObj((char*)"void_loop", XANIM_PRECACHE_SIGNED_OWNER);
                     anims->entries[animIndex].parts = Data_LoadObj;
                     if ( !anims->entries[animIndex].parts )
                         Com_Error(ERR_DROP, "Cannot find 'xanim/%s' that you should have", "void_loop");
@@ -5079,3 +5241,5 @@ void __cdecl XAnim_SetTime(float time, int frameCount, XAnimTime *animTime)
     animTime->frameIndex = (int)animTime->frameFrac;
 }
 
+
+#endif // BO1_XANIM_LIMITS_ONLY

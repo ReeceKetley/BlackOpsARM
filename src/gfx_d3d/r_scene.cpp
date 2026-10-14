@@ -1,6 +1,10 @@
 #include <qcommon/cm_mapkit.h>
 #include <cgame/cg_sp_client_ext.h>
 #include "r_scene.h"
+#if defined(__ANDROID__)
+#include <cstdio>
+#define _snprintf std::snprintf
+#endif
 
 #include <Windows.h>
 #include "r_dvars.h"
@@ -1390,8 +1394,12 @@ void R_AddXModelSurfacesCamera(
         skinnedCachedOffset = modelSurf->surf.skinnedCachedOffset;
         if (skinnedCachedOffset == -3)
         {
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+            surfId += GFX_MODEL_HIDDEN_SURFACE_SIZE / 4;
+#else
             ++surfId;
-            modelSurf = (GfxModelRigidSurface *)((char *)modelSurf + 4);
+#endif
+            modelSurf = (GfxModelRigidSurface *)((char *)modelSurf + GFX_MODEL_HIDDEN_SURFACE_SIZE);
         }
         else
         {
@@ -1565,8 +1573,12 @@ GfxDrawSurf *__cdecl R_AddXModelSurfaces(
         skinnedCachedOffset = modelSurf->surf.skinnedCachedOffset;
         if ( modelSurf->surf.skinnedCachedOffset == -3 )
         {
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+            surfId += GFX_MODEL_HIDDEN_SURFACE_SIZE / 4;
+#else
             ++surfId;
-            modelSurf = (GfxModelRigidSurface *)((char *)modelSurf + 4);
+#endif
+            modelSurf = (GfxModelRigidSurface *)((char *)modelSurf + GFX_MODEL_HIDDEN_SURFACE_SIZE);
         }
         else
         {
@@ -1789,7 +1801,7 @@ void __cdecl R_AddDObjSurfacesCamera(
                     {
                         if ( skinnedCachedOffset == -3 )
                         {
-                            surfSize = 4;
+                            surfSize = GFX_MODEL_HIDDEN_SURFACE_SIZE;
                             goto LABEL_34;
                         }
                         surfType = SF_XMODEL_SKINNED;
@@ -1992,7 +2004,7 @@ LABEL_25:
             {
                 if ( skinnedCachedOffset == -3 )
                 {
-                    surfSize = 4;
+                    surfSize = GFX_MODEL_HIDDEN_SURFACE_SIZE;
 LABEL_24:
                     ++subMatIndex;
                     ++material;

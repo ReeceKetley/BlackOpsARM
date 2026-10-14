@@ -1,7 +1,12 @@
 ﻿#include <qcommon/cm_mapkit.h>
+#include <platform/bo1_native_width.h>
 // mod: mapkit-fix-4a - read by Sys_HeadlessShotsFrame (win_main.cpp): kit window boards were in the scene but culled
 int g_bo1SceneBrushTotal, g_bo1SceneBrushDrawn;
 #include "r_dpvs.h"
+#if defined(__ANDROID__)
+#include <cstdio>
+#define _snprintf std::snprintf
+#endif
 
 #include "r_reflection_probe.h"
 #include "r_init.h"
@@ -68,13 +73,29 @@ void __cdecl R_FrustumClipPlanes(
     for ( planeIndex = 0; planeIndex < sidePlaneCount; ++planeIndex )
     {
         for ( term = 0; term < 4; ++term )
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+            frustumPlanes[planeIndex].coeffs[term] = (float)((float)((float)((float)sidePlanes[planeIndex][0]
+#else
             frustumPlanes[planeIndex].coeffs[term] = (float)((float)((float)((float)(*sidePlanes)[4 * planeIndex]
+#endif
                                                                                                                                          * viewProjMtx->m[term][0])
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+                                                                                                                         + (float)((float)sidePlanes[planeIndex][1]
+#else
                                                                                                                          + (float)((float)(*sidePlanes)[4 * planeIndex + 1]
+#endif
                                                                                                                                          * viewProjMtx->m[term][1]))
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+                                                                                                         + (float)((float)sidePlanes[planeIndex][2]
+#else
                                                                                                          + (float)((float)(*sidePlanes)[4 * planeIndex + 2]
+#endif
                                                                                                                          * viewProjMtx->m[term][2]))
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+                                                                                         + (float)((float)sidePlanes[planeIndex][3] * viewProjMtx->m[term][3]);
+#else
                                                                                          + (float)((float)(*sidePlanes)[4 * planeIndex + 3] * viewProjMtx->m[term][3]);
+#endif
         length = Vec3Length(frustumPlanes[planeIndex].coeffs);
         if ( length <= 0.0
             && !Assert_MyHandler("C:\\projects_pc\\cod\\codsrc\\src\\gfx_d3d\\r_dpvs.cpp", 508, 0, "%s", "length > 0") )
@@ -3028,9 +3049,15 @@ unsigned int __cdecl R_PortalClipPlanesNoFrustum(
             v5->coeffs[2] = v6[2];
             plane = &planes[planeCount];
             plane->coeffs[3] = 0.001
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+                                             - (float)((float)((float)(plane->coeffs[0] * (float)winding[windingVertIndex][0])
+                                                                             + (float)(plane->coeffs[1] * (float)winding[windingVertIndex][1]))
+                                                             + (float)(plane->coeffs[2] * (float)winding[windingVertIndex][2]));
+#else
                                              - (float)((float)((float)(plane->coeffs[0] * (float)(*winding)[3 * windingVertIndex])
                                                                              + (float)(plane->coeffs[1] * (float)(*winding)[3 * windingVertIndex + 1]))
                                                              + (float)(plane->coeffs[2] * (float)(*winding)[3 * windingVertIndex + 2]));
+#endif
             R_SetDpvsPlaneSides(plane);
             ++planeCount;
         }
@@ -3061,11 +3088,19 @@ void __cdecl R_GetSidePlaneNormals(const float (*winding)[3], unsigned int verte
         vertexIndex = vertexCount - 1;
         for ( vertexIndexNext = 0; vertexIndexNext < vertexCount; ++vertexIndexNext )
         {
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+            delta[0] = (float)winding[vertexIndexNext][0] - (float)winding[vertexIndex][0];
+            delta[1] = (float)winding[vertexIndexNext][1] - (float)winding[vertexIndex][1];
+            delta[2] = (float)winding[vertexIndexNext][2] - (float)winding[vertexIndex][2];
+            Vec3Cross(dpvsGlob.viewOrg, delta, normals[vertexIndex]);
+            Vec3Normalize(normals[vertexIndex]);
+#else
             delta[0] = (float)(*winding)[3 * vertexIndexNext] - (float)(*winding)[3 * vertexIndex];
             delta[1] = (float)(*winding)[3 * vertexIndexNext + 1] - (float)(*winding)[3 * vertexIndex + 1];
             delta[2] = (float)(*winding)[3 * vertexIndexNext + 2] - (float)(*winding)[3 * vertexIndex + 2];
             Vec3Cross(dpvsGlob.viewOrg, delta, &(*normals)[3 * vertexIndex]);
             Vec3Normalize(&(*normals)[3 * vertexIndex]);
+#endif
             vertexIndex = vertexIndexNext;
         }
     }
@@ -3074,17 +3109,30 @@ void __cdecl R_GetSidePlaneNormals(const float (*winding)[3], unsigned int verte
         for ( vertexIndex = 0; vertexIndex < vertexCount; ++vertexIndex )
         {
             v3 = &delta[3 * vertexIndex];
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+            v4 = (float *)winding[vertexIndex];
+#else
             v4 = (float *)&(*winding)[3 * vertexIndex];
+#endif
             *v3 = *v4 - dpvsGlob.viewOrg[0];
             v3[1] = v4[1] - dpvsGlob.viewOrg[1];
             v3[2] = v4[2] - dpvsGlob.viewOrg[2];
         }
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+        memcpy(&delta[3 * vertexCount], delta, 8);
+#else
         *(_QWORD *)&delta[3 * vertexCount] = *(_QWORD *)delta;
+#endif
         delta[3 * vertexCount + 2] = delta[2];
         for ( vertexIndex = 0; vertexIndex < vertexCount; ++vertexIndex )
         {
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+            Vec3Cross(&delta[3 * vertexIndex + 3], &delta[3 * vertexIndex], normals[vertexIndex]);
+            Vec3Normalize(normals[vertexIndex]);
+#else
             Vec3Cross(&delta[3 * vertexIndex + 3], &delta[3 * vertexIndex], &(*normals)[3 * vertexIndex]);
             Vec3Normalize(&(*normals)[3 * vertexIndex]);
+#endif
         }
     }
 }
@@ -3291,49 +3339,98 @@ double __cdecl R_FurthestPointOnWinding(const float (*points)[3], int pointCount
     int pointIndexa; // [esp+24h] [ebp-Ch]
     float distMax; // [esp+2Ch] [ebp-4h]
 
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+    if ( (float)((float)((float)((float)(plane->coeffs[0] * points[0][0]) + (float)(plane->coeffs[1] * (float)points[0][1]))
+                                         + (float)(plane->coeffs[2] * (float)points[0][2]))
+#else
     if ( (float)((float)((float)((float)(plane->coeffs[0] * (*points)[0]) + (float)(plane->coeffs[1] * (float)(*points)[1]))
                                          + (float)(plane->coeffs[2] * (float)(*points)[2]))
+#endif
                          + plane->coeffs[3]) <= (float)((float)((float)((float)(plane->coeffs[0]
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+                                                                                                                                    * (float)points[pointCount - 1][0])
+#else
                                                                                                                                     * (float)(*points)[3 * pointCount - 3])
+#endif
                                                                                                                     + (float)(plane->coeffs[1]
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+                                                                                                                                    * (float)points[pointCount - 1][1]))
+                                                                                                    + (float)(plane->coeffs[2] * (float)points[pointCount - 1][2]))
+#else
                                                                                                                                     * (float)(*points)[3 * pointCount - 2]))
                                                                                                     + (float)(plane->coeffs[2] * (float)(*points)[3 * pointCount - 1]))
+#endif
                                                                                     + plane->coeffs[3]) )
     {
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+        distMax = (float)((float)((float)(plane->coeffs[0] * (float)points[pointCount - 1][0])
+                                                        + (float)(plane->coeffs[1] * (float)points[pointCount - 1][1]))
+                                        + (float)(plane->coeffs[2] * (float)points[pointCount - 1][2]))
+#else
         distMax = (float)((float)((float)(plane->coeffs[0] * (float)(*points)[3 * pointCount - 3])
                                                         + (float)(plane->coeffs[1] * (float)(*points)[3 * pointCount - 2]))
                                         + (float)(plane->coeffs[2] * (float)(*points)[3 * pointCount - 1]))
+#endif
                         + plane->coeffs[3];
         for ( pointIndexa = pointCount - 2;
                     pointIndexa > 0
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+             && distMax <= (float)((float)((float)((float)(plane->coeffs[0] * (float)points[pointIndexa][0])
+                                                                                     + (float)(plane->coeffs[1] * (float)points[pointIndexa][1]))
+                                                                     + (float)(plane->coeffs[2] * (float)points[pointIndexa][2]))
+#else
              && distMax <= (float)((float)((float)((float)(plane->coeffs[0] * (float)(*points)[3 * pointIndexa])
                                                                                      + (float)(plane->coeffs[1] * (float)(*points)[3 * pointIndexa + 1]))
                                                                      + (float)(plane->coeffs[2] * (float)(*points)[3 * pointIndexa + 2]))
+#endif
                                                      + plane->coeffs[3]);
                     --pointIndexa )
         {
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+            distMax = (float)((float)((float)(plane->coeffs[0] * (float)points[pointIndexa][0])
+                                                            + (float)(plane->coeffs[1] * (float)points[pointIndexa][1]))
+                                            + (float)(plane->coeffs[2] * (float)points[pointIndexa][2]))
+#else
             distMax = (float)((float)((float)(plane->coeffs[0] * (float)(*points)[3 * pointIndexa])
                                                             + (float)(plane->coeffs[1] * (float)(*points)[3 * pointIndexa + 1]))
                                             + (float)(plane->coeffs[2] * (float)(*points)[3 * pointIndexa + 2]))
+#endif
                             + plane->coeffs[3];
         }
     }
     else
     {
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+        distMax = (float)((float)((float)(plane->coeffs[0] * points[0][0]) + (float)(plane->coeffs[1] * (float)points[0][1]))
+                                        + (float)(plane->coeffs[2] * (float)points[0][2]))
+#else
         distMax = (float)((float)((float)(plane->coeffs[0] * (*points)[0]) + (float)(plane->coeffs[1] * (float)(*points)[1]))
                                         + (float)(plane->coeffs[2] * (float)(*points)[2]))
+#endif
                         + plane->coeffs[3];
         for ( pointIndex = 1;
                     pointIndex < pointCount - 1
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+             && distMax <= (float)((float)((float)((float)(plane->coeffs[0] * (float)points[pointIndex][0])
+                                                                                     + (float)(plane->coeffs[1] * (float)points[pointIndex][1]))
+                                                                     + (float)(plane->coeffs[2] * (float)points[pointIndex][2]))
+#else
              && distMax <= (float)((float)((float)((float)(plane->coeffs[0] * (float)(*points)[3 * pointIndex])
                                                                                      + (float)(plane->coeffs[1] * (float)(*points)[3 * pointIndex + 1]))
                                                                      + (float)(plane->coeffs[2] * (float)(*points)[3 * pointIndex + 2]))
+#endif
                                                      + plane->coeffs[3]);
                     ++pointIndex )
         {
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+            distMax = (float)((float)((float)(plane->coeffs[0] * (float)points[pointIndex][0])
+                                                            + (float)(plane->coeffs[1] * (float)points[pointIndex][1]))
+                                            + (float)(plane->coeffs[2] * (float)points[pointIndex][2]))
+#else
             distMax = (float)((float)((float)(plane->coeffs[0] * (float)(*points)[3 * pointIndex])
                                                             + (float)(plane->coeffs[1] * (float)(*points)[3 * pointIndex + 1]))
                                             + (float)(plane->coeffs[2] * (float)(*points)[3 * pointIndex + 2]))
+#endif
                             + plane->coeffs[3];
         }
     }
@@ -3506,13 +3603,21 @@ int __cdecl R_ChopPortal(
         return 0;
     if ( dpvsGlob.farPlaneEnabled )
     {
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+        w = R_ChopPortalWinding(w, &vertCount, &dpvsGlob.farPlane, (float (*)[3])v[w == (const float (*)[3])v]);
+#else
         w = R_ChopPortalWinding(w, &vertCount, &dpvsGlob.farPlane, (float (*)[3])(*v)[128 * (w == (const float (*)[3])v)]);
+#endif
         if ( !vertCount )
             return 0;
     }
     for ( planeIndex = 0; planeIndex < planeCount; ++planeIndex )
     {
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+        w = R_ChopPortalWinding(w, &vertCount, &planes[planeIndex], (float (*)[3])v[w == (const float (*)[3])v]);
+#else
         w = R_ChopPortalWinding(w, &vertCount, &planes[planeIndex], (float (*)[3])(*v)[128 * (w == (const float (*)[3])v)]);
+#endif
         if ( !vertCount )
             return 0;
     }
@@ -3544,9 +3649,15 @@ const float (*__cdecl R_ChopPortalWinding(
     backCount = 0;
     for ( vertexIndex = 0; vertexIndex < *vertexCount; ++vertexIndex )
     {
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+        distForVert[vertexIndex] = (float)((float)((float)((float)(plane->coeffs[0] * (float)vertsIn[vertexIndex][0])
+                                                                                                         + (float)(plane->coeffs[1] * (float)vertsIn[vertexIndex][1]))
+                                                                                         + (float)(plane->coeffs[2] * (float)vertsIn[vertexIndex][2]))
+#else
         distForVert[vertexIndex] = (float)((float)((float)((float)(plane->coeffs[0] * (float)(*vertsIn)[3 * vertexIndex])
                                                                                                          + (float)(plane->coeffs[1] * (float)(*vertsIn)[3 * vertexIndex + 1]))
                                                                                          + (float)(plane->coeffs[2] * (float)(*vertsIn)[3 * vertexIndex + 2]))
+#endif
                                                                          + plane->coeffs[3])
                                                          - 0.001;
         sideForVert[vertexIndex] = 2;
@@ -3575,8 +3686,13 @@ const float (*__cdecl R_ChopPortalWinding(
             {
                 if ( sideForVert[vertexIndex] == 2 )
                 {
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+                    v7 = vertsOut[newVertCount];
+                    v8 = (float *)vertsIn[vertexIndex];
+#else
                     v7 = &(*vertsOut)[3 * newVertCount];
                     v8 = (float *)&(*vertsIn)[3 * vertexIndex];
+#endif
                     *v7 = *v8;
                     v7[1] = v8[1];
                     v7[2] = v8[2];
@@ -3586,8 +3702,13 @@ const float (*__cdecl R_ChopPortalWinding(
                 {
                     if ( !sideForVert[vertexIndex] )
                     {
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+                        v5 = vertsOut[newVertCount];
+                        v6 = (float *)vertsIn[vertexIndex];
+#else
                         v5 = &(*vertsOut)[3 * newVertCount];
                         v6 = (float *)&(*vertsIn)[3 * vertexIndex];
+#endif
                         *v5 = *v6;
                         v5[1] = v6[1];
                         v5[2] = v6[2];
@@ -3596,15 +3717,31 @@ const float (*__cdecl R_ChopPortalWinding(
                     if ( sideForVert[vertexIndex + 1] != 2 && sideForVert[vertexIndex + 1] != sideForVert[vertexIndex] )
                     {
                         lerpFactor = distForVert[vertexIndex] / (float)(distForVert[vertexIndex] - distForVert[vertexIndex + 1]);
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+                        v = vertsIn[((vertexIndex + 1) % *vertexCount)];
+                        vertsOut[newVertCount][0] = (float)((float)(*v - (float)vertsIn[vertexIndex][0]) * lerpFactor)
+                                                                                    + (float)vertsIn[vertexIndex][0];
+                        vertsOut[newVertCount][1] = (float)((float)(v[1] - (float)vertsIn[vertexIndex][1])
+#else
                         v = &(*vertsIn)[3 * ((vertexIndex + 1) % *vertexCount)];
                         (*vertsOut)[3 * newVertCount] = (float)((float)(*v - (float)(*vertsIn)[3 * vertexIndex]) * lerpFactor)
                                                                                     + (float)(*vertsIn)[3 * vertexIndex];
                         (*vertsOut)[3 * newVertCount + 1] = (float)((float)(v[1] - (float)(*vertsIn)[3 * vertexIndex + 1])
+#endif
                                                                                                             * lerpFactor)
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+                                                                                            + (float)vertsIn[vertexIndex][1];
+                        vertsOut[newVertCount++][2] = (float)((float)(v[2] - (float)vertsIn[vertexIndex][2])
+#else
                                                                                             + (float)(*vertsIn)[3 * vertexIndex + 1];
                         (*vertsOut)[3 * newVertCount++ + 2] = (float)((float)(v[2] - (float)(*vertsIn)[3 * vertexIndex + 2])
+#endif
                                                                                                                 * lerpFactor)
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+                                                                                                + (float)vertsIn[vertexIndex][2];
+#else
                                                                                                 + (float)(*vertsIn)[3 * vertexIndex + 2];
+#endif
                     }
                 }
             }
@@ -4584,8 +4721,13 @@ void __cdecl R_SetupWorldSurfacesDpvs(const GfxViewParms *viewParms, unsigned in
                     v6[2] = cross[2];
                     v6[3] = v18;
                     ++out;
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+                    if ( (float)((float)((float)(out[-1][0] * insideViewPos[0]) + (float)(out[-1][1] * insideViewPos[1]))
+                                         + (float)(out[-1][2] * insideViewPos[2])) > out[-1][3] )
+#else
                     if ( (float)((float)((float)((*out)[-4] * insideViewPos[0]) + (float)((*out)[-3] * insideViewPos[1]))
                                          + (float)((*out)[-2] * insideViewPos[2])) > (*out)[-1] )
+#endif
                         viewPointInside = 0;
                     if ( (usePlanes & (1 << j)) != 0 )
                     {
@@ -4594,9 +4736,15 @@ void __cdecl R_SetupWorldSurfacesDpvs(const GfxViewParms *viewParms, unsigned in
                     }
                     else
                     {
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+                        v4 = out[-1];
+                        v5 = out[-2];
+                        out[-1][0] = out[-2][0];
+#else
                         v4 = &(*out)[-4];
                         v5 = &(*out)[-8];
                         (*out)[-4] = (*out)[-8];
+#endif
                         v4[1] = v5[1];
                         v4[2] = v5[2];
                         v4[3] = v5[3];
@@ -5099,9 +5247,15 @@ unsigned int __cdecl R_PortalClipPlanes(
                 v9->coeffs[2] = v10[2];
                 plane = &planes[planeCount];
                 plane->coeffs[3] = 0.001
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+                                                 - (float)((float)((float)(plane->coeffs[0] * (float)winding[windingVertIndex][0])
+                                                                                 + (float)(plane->coeffs[1] * (float)winding[windingVertIndex][1]))
+                                                                 + (float)(plane->coeffs[2] * (float)winding[windingVertIndex][2]));
+#else
                                                  - (float)((float)((float)(plane->coeffs[0] * (float)(*winding)[3 * windingVertIndex])
                                                                                  + (float)(plane->coeffs[1] * (float)(*winding)[3 * windingVertIndex + 1]))
                                                                  + (float)(plane->coeffs[2] * (float)(*winding)[3 * windingVertIndex + 2]));
+#endif
                 R_SetDpvsPlaneSides(plane);
                 ++planeCount;
             }
@@ -5128,48 +5282,92 @@ double __cdecl R_NearestPointOnWinding(const float (*points)[3], int pointCount,
     int pointIndex; // [esp+28h] [ebp-8h]
     int pointIndexa; // [esp+28h] [ebp-8h]
 
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+    if ( (float)((float)((float)((float)(plane->coeffs[0] * (float)points[pointCount - 1][0])
+                                                         + (float)(plane->coeffs[1] * (float)points[pointCount - 1][1]))
+                                         + (float)(plane->coeffs[2] * (float)points[pointCount - 1][2]))
+                         + plane->coeffs[3]) <= (float)((float)((float)((float)(plane->coeffs[0] * points[0][0])
+                                                                                                                    + (float)(plane->coeffs[1] * (float)points[0][1]))
+                                                                                                    + (float)(plane->coeffs[2] * (float)points[0][2]))
+#else
     if ( (float)((float)((float)((float)(plane->coeffs[0] * (float)(*points)[3 * pointCount - 3])
                                                          + (float)(plane->coeffs[1] * (float)(*points)[3 * pointCount - 2]))
                                          + (float)(plane->coeffs[2] * (float)(*points)[3 * pointCount - 1]))
                          + plane->coeffs[3]) <= (float)((float)((float)((float)(plane->coeffs[0] * (*points)[0])
                                                                                                                     + (float)(plane->coeffs[1] * (float)(*points)[1]))
                                                                                                     + (float)(plane->coeffs[2] * (float)(*points)[2]))
+#endif
                                                                                     + plane->coeffs[3]) )
     {
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+        distMin = (float)((float)((float)(plane->coeffs[0] * (float)points[pointCount - 1][0])
+                                                        + (float)(plane->coeffs[1] * (float)points[pointCount - 1][1]))
+                                        + (float)(plane->coeffs[2] * (float)points[pointCount - 1][2]))
+#else
         distMin = (float)((float)((float)(plane->coeffs[0] * (float)(*points)[3 * pointCount - 3])
                                                         + (float)(plane->coeffs[1] * (float)(*points)[3 * pointCount - 2]))
                                         + (float)(plane->coeffs[2] * (float)(*points)[3 * pointCount - 1]))
+#endif
                         + plane->coeffs[3];
         for ( pointIndexa = pointCount - 2;
                     pointIndexa > 0
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+             && (float)((float)((float)((float)(plane->coeffs[0] * (float)points[pointIndexa][0])
+                                                                + (float)(plane->coeffs[1] * (float)points[pointIndexa][1]))
+                                                + (float)(plane->coeffs[2] * (float)points[pointIndexa][2]))
+#else
              && (float)((float)((float)((float)(plane->coeffs[0] * (float)(*points)[3 * pointIndexa])
                                                                 + (float)(plane->coeffs[1] * (float)(*points)[3 * pointIndexa + 1]))
                                                 + (float)(plane->coeffs[2] * (float)(*points)[3 * pointIndexa + 2]))
+#endif
                                 + plane->coeffs[3]) <= distMin;
                     --pointIndexa )
         {
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+            distMin = (float)((float)((float)(plane->coeffs[0] * (float)points[pointIndexa][0])
+                                                            + (float)(plane->coeffs[1] * (float)points[pointIndexa][1]))
+                                            + (float)(plane->coeffs[2] * (float)points[pointIndexa][2]))
+#else
             distMin = (float)((float)((float)(plane->coeffs[0] * (float)(*points)[3 * pointIndexa])
                                                             + (float)(plane->coeffs[1] * (float)(*points)[3 * pointIndexa + 1]))
                                             + (float)(plane->coeffs[2] * (float)(*points)[3 * pointIndexa + 2]))
+#endif
                             + plane->coeffs[3];
         }
     }
     else
     {
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+        distMin = (float)((float)((float)(plane->coeffs[0] * points[0][0]) + (float)(plane->coeffs[1] * (float)points[0][1]))
+                                        + (float)(plane->coeffs[2] * (float)points[0][2]))
+#else
         distMin = (float)((float)((float)(plane->coeffs[0] * (*points)[0]) + (float)(plane->coeffs[1] * (float)(*points)[1]))
                                         + (float)(plane->coeffs[2] * (float)(*points)[2]))
+#endif
                         + plane->coeffs[3];
         for ( pointIndex = 1;
                     pointIndex < pointCount - 1
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+             && (float)((float)((float)((float)(plane->coeffs[0] * (float)points[pointIndex][0])
+                                                                + (float)(plane->coeffs[1] * (float)points[pointIndex][1]))
+                                                + (float)(plane->coeffs[2] * (float)points[pointIndex][2]))
+#else
              && (float)((float)((float)((float)(plane->coeffs[0] * (float)(*points)[3 * pointIndex])
                                                                 + (float)(plane->coeffs[1] * (float)(*points)[3 * pointIndex + 1]))
                                                 + (float)(plane->coeffs[2] * (float)(*points)[3 * pointIndex + 2]))
+#endif
                                 + plane->coeffs[3]) <= distMin;
                     ++pointIndex )
         {
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+            distMin = (float)((float)((float)(plane->coeffs[0] * (float)points[pointIndex][0])
+                                                            + (float)(plane->coeffs[1] * (float)points[pointIndex][1]))
+                                            + (float)(plane->coeffs[2] * (float)points[pointIndex][2]))
+#else
             distMin = (float)((float)((float)(plane->coeffs[0] * (float)(*points)[3 * pointIndex])
                                                             + (float)(plane->coeffs[1] * (float)(*points)[3 * pointIndex + 1]))
                                             + (float)(plane->coeffs[2] * (float)(*points)[3 * pointIndex + 2]))
+#endif
                             + plane->coeffs[3];
         }
     }
@@ -5200,7 +5398,11 @@ void __cdecl R_ProjectPortal(
 
     for ( windingVertIndex = 0; windingVertIndex < vertexCount; ++windingVertIndex )
     {
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+        xyz = winding[windingVertIndex];
+#else
         xyz = &(*winding)[3 * windingVertIndex];
+#endif
 
         float w = xyz[0] * dpvsGlob.viewProjMtx->m[0][3]
                 + xyz[1] * dpvsGlob.viewProjMtx->m[1][3]
@@ -5359,9 +5561,15 @@ unsigned int __cdecl R_AddBevelPlanes(
         {
             for ( windingVertIndex = 0; windingVertIndex < vertexCount; ++windingVertIndex )
             {
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+                if ( (float)((float)((float)((float)windingNormals[windingVertIndex][0] * planes[planeCount].coeffs[0])
+                                                     + (float)((float)windingNormals[windingVertIndex][1] * planes[planeCount].coeffs[1]))
+                                     + (float)((float)windingNormals[windingVertIndex][2] * planes[planeCount].coeffs[2])) > r_portalBevels->current.value )
+#else
                 if ( (float)((float)((float)((float)(*windingNormals)[3 * windingVertIndex] * planes[planeCount].coeffs[0])
                                                      + (float)((float)(*windingNormals)[3 * windingVertIndex + 1] * planes[planeCount].coeffs[1]))
                                      + (float)((float)(*windingNormals)[3 * windingVertIndex + 2] * planes[planeCount].coeffs[2])) > r_portalBevels->current.value )
+#endif
                 {
                     if ( (r_showPortals->current.integer & 2) != 0 )
                         R_AddDebugLine(

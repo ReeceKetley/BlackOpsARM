@@ -1,3 +1,4 @@
+#include <platform/bo1_native_width.h>
 #include "cg_drawtools.h"
 #include <gfx_d3d/r_gfx.h>
 #include <gfx_d3d/r_material.h>
@@ -226,6 +227,28 @@ void __cdecl CG_DrawRotatedQuadPic(
     s = sin(v7);
     for ( i = 0; i < 4; ++i )
     {
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+        v25 = x / ScrPlace_HiResGetScale();
+        v24 = v25 * scrPlace->scaleRealToVirtual[0];
+        v22 = verts[i][0];
+        v23 = v22 / ScrPlace_HiResGetScale();
+        v21 = v23 * scrPlace->scaleRealToVirtual[0];
+        v19 = verts[i][1];
+        v20 = v19 / ScrPlace_HiResGetScale();
+        v17 = (float)((float)(v21 * c) + v24) - (float)((float)(v20 * scrPlace->scaleRealToVirtual[1]) * s);
+        v18 = ScrPlace_HiResGetScale() * v17;
+        xy[i][0] = v18 * scrPlace->scaleVirtualToReal[0];
+        v16 = y / ScrPlace_HiResGetScale();
+        v15 = v16 * scrPlace->scaleRealToVirtual[1];
+        v13 = verts[i][0];
+        v14 = v13 / ScrPlace_HiResGetScale();
+        v12 = v14 * scrPlace->scaleRealToVirtual[0];
+        v10 = verts[i][1];
+        v11 = v10 / ScrPlace_HiResGetScale();
+        v8 = (float)((float)(v12 * s) + v15) + (float)((float)(v11 * scrPlace->scaleRealToVirtual[1]) * c);
+        v9 = ScrPlace_HiResGetScale() * v8;
+        xy[i][1] = v9 * scrPlace->scaleVirtualToReal[1];
+#else
         v25 = x / ScrPlace_HiResGetScale();
         v24 = v25 * scrPlace->scaleRealToVirtual[0];
         v22 = (*verts)[2 * i];
@@ -246,6 +269,7 @@ void __cdecl CG_DrawRotatedQuadPic(
         v8 = (float)((float)(v12 * s) + v15) + (float)((float)(v11 * scrPlace->scaleRealToVirtual[1]) * c);
         v9 = ScrPlace_HiResGetScale() * v8;
         xy[i][1] = v9 * scrPlace->scaleVirtualToReal[1];
+#endif
     }
     R_AddCmdDrawQuadPic(xy, color, material);
 }
@@ -844,12 +868,12 @@ void __cdecl ConvertQuatToMat(const DObjAnimMat *mat, float (*axis)[3])
     (*axis)[0] = 1.0 - (float)(yy + zz);
     (*axis)[1] = xy + zw;
     (*axis)[2] = xz - yw;
-    (*axis)[3] = xy - zw;
-    (*axis)[4] = 1.0 - (float)(xx + zz);
-    (*axis)[5] = yz + xw;
-    (*axis)[6] = xz + yw;
-    (*axis)[7] = yz - xw;
-    (*axis)[8] = 1.0 - (float)(xx + yy);
+    axis[1][0] = xy - zw;
+    axis[1][1] = 1.0 - (float)(xx + zz);
+    axis[1][2] = yz + xw;
+    axis[2][0] = xz + yw;
+    axis[2][1] = yz - xw;
+    axis[2][2] = 1.0 - (float)(xx + yy);
 }
 
 void __cdecl CG_DebugLine(const float *start, const float *end, const float *color, int depthTest, int duration)

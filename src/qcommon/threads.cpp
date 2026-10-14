@@ -1,3 +1,28 @@
+#if defined(__ANDROID__)
+#include <atomic>
+#include <platform/android/quit_services.h>
+std::atomic<int> g_databaseStopServer;
+#else
+int g_databaseStopServer;
+#endif
+unsigned int s_cpuCount;
+extern const char *s_threadNames[15];
+extern void *occlusionEvent;
+#if defined(BO1_NATIVE_CPU_QUERIES)
+#include <platform/common_boot_api.h>
+#include <platform/android/stream_worker.h>
+void *demoStreamingReady;
+#if defined(BO1_NATIVE_SERVER_THREAD)
+#include <platform/android/server_thread.h>
+#include <platform/critical_section_services.h>
+#include <live/live_win_common.h>
+#endif
+#if defined(BO1_NATIVE_RENDER_HANDOFF)
+#include <platform/android/render_worker.h>
+static std::atomic<void *> smpData{};
+void Sys_SetWorkerCmdEvent();
+#endif
+#else
 #include "threads.h"
 
 #include <Windows.h>
@@ -9,26 +34,6 @@
 #include <gfx_d3d/rb_resource.h>
 #include <win32/win_common.h>
 
-const char *s_threadNames[15] =
-{
-  "Main",
-  "Backend",
-  "Worker0",
-  "Worker1",
-  "Worker2",
-  "Worker3",
-  "Worker4",
-  "Worker5",
-  "Worker6",
-  "Worker7",
-  "Server",
-  "occlusion",
-  "TitleServer",
-  "Database",
-  "Stream"
-};
-
-unsigned int s_cpuCount;
 DWORD threadId[15];
 void *threadHandle[15];
 void *g_threadValues[15][5];
@@ -43,59 +48,49 @@ void(__cdecl *threadFunc[15])(unsigned int);
 
 void *demoStreamingReady;
 unsigned int g_networkOverrideThread;
-ThreadOwner g_discReadsOwner;
 
+#if defined(__ANDROID__)
+std::atomic<void *> smpData{};
+#else
 void *volatile smpData;
-int g_databaseStopServer;
+#endif
+
 volatile unsigned int s_winThreadLock;
 
 void *wakeServerEvent;
-void *serverCompletedEvent;
+extern void *serverCompletedEvent;
 void *allowServerNetworkEvent;
 void *serverNetworkCompletedEvent;
 
-void *sndInitializedEvent;
-void *streamCompletedEvent;
-void *streamEvent;
-void *occlusionEvent;
+extern void *sndInitializedEvent;
+extern void *streamCompletedEvent;
+extern void *streamEvent;
 
-void *wakeDatabaseEvent;
-void *databaseCompletedEvent;
-void *databaseCompletedEvent2;
-void *resumedDatabaseEvent;
 
-void *renderPausedEvent;
-void *renderCompletedEvent;
-void *resourcesFlushedEvent;
-void *resourcesQueuedEvent;
-void *rendererRunningEvent;
-void *backendEvent[2];
-void *updateSpotLightEffectEvent;
-void *updateEffectsEvent;
-void *d3dDeviceOKEvent;
-void *d3dDeviceHardStartEvent;
-void *d3dShutdownEvent;
-void *d3dDeviceWinMessageEvent;
-void *win32QuitEvent;
-void *win32ScriptDebuggerDrawEvent;
-void *rgRegisteredEvent;
-void *renderEvent;
-unsigned int __cdecl Sys_GetDefaultWorkerThreadsCount()
-{
-    unsigned int cpuCount; // [esp+0h] [ebp-4h]
+extern void *wakeDatabaseEvent;
+extern void *databaseCompletedEvent;
+extern void *databaseCompletedEvent2;
+extern void *resumedDatabaseEvent;
 
-    cpuCount = Sys_GetCpuCount();
-    if ( cpuCount <= 4 )
-        return 2;
-    if ( cpuCount > 0xA )
-        return 8;
-    return cpuCount - 2;
-}
+extern void *renderPausedEvent;
+extern void *renderCompletedEvent;
+extern void *resourcesFlushedEvent;
+extern void *resourcesQueuedEvent;
+extern void *rendererRunningEvent;
+extern void *backendEvent[2];
+extern void *updateSpotLightEffectEvent;
+extern void *updateEffectsEvent;
+extern void *d3dDeviceOKEvent;
+extern void *d3dDeviceHardStartEvent;
+extern void *d3dShutdownEvent;
+extern void *d3dDeviceWinMessageEvent;
+extern void *win32QuitEvent;
+extern void *win32ScriptDebuggerDrawEvent;
+extern void *rgRegisteredEvent;
+extern void *renderEvent;
 
-unsigned int __cdecl Sys_GetCpuCount()
-{
-    return s_cpuCount;
-}
+
+
 
 void __cdecl Sys_InitMainThread()
 {
@@ -293,6 +288,8 @@ DWORD WINAPI Sys_ThreadMain(LPVOID parameter)
     return 0;
 }
 
+#endif // preceding Win32 thread lifecycle
+#if !defined(BO1_NATIVE_CPU_QUERIES) || defined(__ANDROID__)
 void __cdecl Sys_InitDemoStreamingEvent()
 {
     Sys_CreateEvent(0, 0, &demoStreamingReady);
@@ -303,6 +300,8 @@ void __cdecl Sys_WaitForDemoStreamingEvent()
     Sys_WaitForSingleObject(&demoStreamingReady);
 }
 
+#endif // genuine demo auto-reset event
+#if !defined(BO1_NATIVE_CPU_QUERIES)
 void __cdecl Sys_WaitForSingleObject(void **event)
 {
     unsigned int result; // [esp+0h] [ebp-4h]
@@ -321,16 +320,22 @@ void __cdecl Sys_WaitForSingleObject(void **event)
     }
 }
 
+#endif // preceding Win32 wait primitive
+#if !defined(BO1_NATIVE_CPU_QUERIES) || defined(__ANDROID__)
 void __cdecl Sys_SetDemoStreamingEvent()
 {
     Sys_SetEvent(&demoStreamingReady);
 }
 
+#endif // genuine demo event publication
+#if !defined(BO1_NATIVE_CPU_QUERIES)
 void __cdecl Sys_SetEvent(void **event)
 {
     SetEvent(*event);
 }
 
+#endif // preceding Win32 lifecycle
+#if !defined(BO1_NATIVE_CPU_QUERIES) || defined(BO1_NATIVE_SERVER_THREAD)
 void __cdecl Sys_InitServerEvents()
 {
     // zombies: SP Sys_InitServerEvents (SP 0x004040F0) is the same four event calls and g_networkOverrideThread
@@ -358,6 +363,8 @@ void __cdecl Sys_InitServerEvents()
     Sys_LeaveCriticalSection(CRITSECT_NETTHREAD_OVERRIDE);
 }
 
+#endif // canonical server event initialization
+#if !defined(BO1_NATIVE_CPU_QUERIES)
 void __cdecl Sys_ResetEvent(void **event)
 {
     ResetEvent(*event);
@@ -401,59 +408,6 @@ char __cdecl Sys_SpawnDatabaseThread(void (__cdecl *function)(unsigned int))
     return 1;
 }
 
-void __cdecl Sys_SuspendDiscReads(ThreadOwner owner)
-{
-    if ( owner == THREAD_OWNER_NONE
-        && !Assert_MyHandler(
-                    "C:\\projects_pc\\cod\\codsrc\\src\\qcommon\\threads.cpp",
-                    1325,
-                    0,
-                    "%s",
-                    "owner != THREAD_OWNER_NONE") )
-    {
-        __debugbreak();
-    }
-    g_discReadsOwner = owner;
-    Sys_ResetEvent(&resumedDatabaseEvent);
-}
-
-void __cdecl Sys_ResumeDiscReads(ThreadOwner owner)
-{
-    if ( owner == THREAD_OWNER_NONE
-        && !Assert_MyHandler(
-                    "C:\\projects_pc\\cod\\codsrc\\src\\qcommon\\threads.cpp",
-                    1343,
-                    0,
-                    "%s",
-                    "owner != THREAD_OWNER_NONE") )
-    {
-        __debugbreak();
-    }
-    if ( g_discReadsOwner != owner
-        && !Assert_MyHandler(
-                    "C:\\projects_pc\\cod\\codsrc\\src\\qcommon\\threads.cpp",
-                    1344,
-                    0,
-                    "g_discReadsOwner == owner\n\t%i, %i",
-                    g_discReadsOwner,
-                    owner) )
-    {
-        __debugbreak();
-    }
-    g_discReadsOwner = THREAD_OWNER_NONE;
-    Sys_SetEvent(&resumedDatabaseEvent);
-}
-
-bool __cdecl Sys_HaveSuspendedDiscReads(ThreadOwner owner)
-{
-    return g_discReadsOwner == owner;
-}
-
-void __cdecl Sys_WaitDiscReads()
-{
-    Sys_WaitForSingleObject(&resumedDatabaseEvent);
-}
-
 void __cdecl Sys_InitWorkerThreadContext()
 {
     threadId[2] = jqWorkers[1].ThreadId;
@@ -475,14 +429,24 @@ void __cdecl Sys_ResumeThread(unsigned int threadContext)
     ResumeThread(threadHandle[threadContext]);
 }
 
+#endif // native thread services own preceding Win32 lifecycle
+#if !defined(BO1_NATIVE_CPU_QUERIES) || defined(BO1_NATIVE_RENDER_HANDOFF)
 void *__cdecl Sys_RendererSleep()
 {
+#if defined(__ANDROID__)
+    return smpData.exchange(nullptr, std::memory_order_acquire);
+#else
     return InterlockedExchangePointer(&smpData, nullptr);
+#endif
 }
 
 bool __cdecl Sys_RendererReady()
 {
+#if defined(__ANDROID__)
+    return smpData.load(std::memory_order_acquire) != nullptr;
+#else
     return smpData != 0;
+#endif
 }
 
 void __cdecl Sys_RenderCompleted()
@@ -491,29 +455,12 @@ void __cdecl Sys_RenderCompleted()
     Sys_SetWorkerCmdEvent();
 }
 
-void __cdecl Sys_FrontEndSleep()
-{
 
-    PROF_SCOPED("frontend sleep");
-    Sys_WaitForSingleObject(&rendererRunningEvent);
-}
 
-int __cdecl Sys_WaitRenderer()
-{
-    PROF_SCOPED("Sys_WaitRenderer");
 
-    if (IsDedicatedServer())
-        return 0;
 
-    if (!Sys_IsMainThread())
-        return 0;
-
-    while (Sys_QueryD3DDeviceOKEvent() && !Sys_WaitForSingleObjectTimeout(&renderCompletedEvent, 1u))
-        ;
-
-    return 0;
-}
-
+#endif
+#if !defined(BO1_NATIVE_CPU_QUERIES)
 bool __cdecl Sys_WaitForSingleObjectTimeout(void **event, unsigned int msec)
 {
     if ( msec == -1
@@ -524,30 +471,25 @@ bool __cdecl Sys_WaitForSingleObjectTimeout(void **event, unsigned int msec)
     return WaitForSingleObject(*event, msec) == 0;
 }
 
+#endif
+#if !defined(BO1_NATIVE_CPU_QUERIES) || defined(BO1_NATIVE_RENDER_HANDOFF)
 void __cdecl Sys_WakeRenderer(void *data)
 {
     Sys_ResetEvent(&renderCompletedEvent);
+#if defined(__ANDROID__)
+    smpData.store(data, std::memory_order_release);
+#else
     InterlockedExchangePointer(&smpData, data);
+#endif
     //PIXSetMarker(-1, "set smpData");
     Sys_SetEvent(&backendEvent[1]);
     Sys_SetWorkerCmdEvent();
 }
 
-void __cdecl Sys_NotifyRenderer()
-{
-    if ( !backendEvent[1]
-        && !Assert_MyHandler(
-                    "C:\\projects_pc\\cod\\codsrc\\src\\qcommon\\threads.cpp",
-                    1641,
-                    0,
-                    "%s",
-                    "Sys_IsEventInitialized( backendEvent[BACKEND_EVENT_GENERIC] )") )
-    {
-        __debugbreak();
-    }
-    Sys_SetEvent(&backendEvent[1]);
-}
 
+
+#endif
+#if !defined(BO1_NATIVE_CPU_QUERIES) || defined(BO1_NATIVE_SERVER_THREAD)
 void __cdecl Sys_SleepServer()
 {
     bool result; // [esp+8h] [ebp-4h]
@@ -577,7 +519,13 @@ bool __cdecl Sys_WaitStartServer(unsigned int timeout)
 {
     bool start; // [esp+0h] [ebp-4h]
 
+#if defined(BO1_NATIVE_SERVER_THREAD)
+    bo1::android::ServerTerminalCheckpoint();
+#endif
     start = Sys_WaitForSingleObjectTimeout(&wakeServerEvent, timeout);
+#if defined(BO1_NATIVE_SERVER_THREAD)
+    bo1::android::ServerTerminalCheckpoint();
+#endif
     if ( start )
         Sys_ResetEvent(&serverCompletedEvent);
     if ( g_databaseStopServer )
@@ -585,77 +533,19 @@ bool __cdecl Sys_WaitStartServer(unsigned int timeout)
     return start;
 }
 
+#endif // canonical server waits
+#if !defined(BO1_NATIVE_CPU_QUERIES)
 bool __cdecl Sys_IsServerThread()
 {
     return Sys_GetCurrentThreadId() == threadId[10];
 }
 
-void __cdecl Sys_DatabaseCompleted()
-{
-    g_databaseStopServer = 1;
-    if ( serverCompletedEvent )
-        Sys_WaitForSingleObject(&serverCompletedEvent);
-    Sys_SetEvent(&databaseCompletedEvent);
-}
 
-void __cdecl Sys_WaitStartDatabase()
-{
-    Sys_WaitForSingleObject(&wakeDatabaseEvent);
-}
 
-bool __cdecl Sys_IsDatabaseReady()
-{
-    bool result; // [esp+0h] [ebp-4h]
 
-    result = Sys_WaitForSingleObjectTimeout(&databaseCompletedEvent, 0);
-    if ( result )
-        SocketRouter_EmergencyFrame();
-    return result;
-}
 
-void __cdecl Sys_SyncDatabase()
-{
-
-    while ( !Sys_WaitForSingleObjectTimeout(&databaseCompletedEvent, 1u) )
-    {
-        R_Cinematic_ForceRelinquishIO();
-        if ( Sys_IsRenderThread() )
-            RB_Resource_Update(5);
-        SocketRouter_EmergencyFrame();
-    }
-}
-
-void __cdecl Sys_WakeDatabase()
-{
-    Sys_ResetEvent(&databaseCompletedEvent);
-}
-
-void __cdecl Sys_NotifyDatabase()
-{
-    Sys_SetEvent(&wakeDatabaseEvent);
-}
-
-void __cdecl Sys_DatabaseCompleted2()
-{
-    g_databaseStopServer = 0;
-    Sys_SetEvent(&databaseCompletedEvent2);
-}
-
-bool __cdecl Sys_IsDatabaseReady2()
-{
-    bool result; // [esp+0h] [ebp-4h]
-
-    result = Sys_WaitForSingleObjectTimeout(&databaseCompletedEvent2, 0);
-    if ( result )
-        SocketRouter_EmergencyFrame();
-    return result;
-}
-
-void __cdecl Sys_WakeDatabase2()
-{
-    Sys_ResetEvent(&databaseCompletedEvent2);
-}
-
+#endif
+#if !defined(BO1_NATIVE_CPU_QUERIES) || defined(BO1_NATIVE_RENDER_HANDOFF)
 void __cdecl Sys_StopRenderer()
 {
     Sys_ResetEvent(&rendererRunningEvent);
@@ -667,6 +557,8 @@ void __cdecl Sys_StartRenderer()
     Sys_SetEvent(&rendererRunningEvent);
 }
 
+#endif
+#if !defined(BO1_NATIVE_CPU_QUERIES)
 bool __cdecl Sys_IsRenderThread()
 {
     return Sys_GetCurrentThreadId() == threadId[1];
@@ -680,11 +572,6 @@ bool __cdecl Sys_IsDatabaseThread()
 bool __cdecl Sys_IsMainThread()
 {
     return Sys_GetCurrentThreadId() == threadId[0];
-}
-
-const char *__cdecl Sys_GetCurrentThreadName()
-{
-    return s_threadNames[Sys_GetThreadContext()];
 }
 
 int __cdecl Sys_GetThreadContext()
@@ -716,6 +603,8 @@ void *__cdecl Sys_GetValue(int valueIndex)
     return g_dwTlsIndex[valueIndex];
 }
 
+#endif
+#if !defined(BO1_NATIVE_CPU_QUERIES) || defined(BO1_NATIVE_RENDER_HANDOFF)
 void __cdecl Sys_SetWorkerCmdEvent()
 {
     Sys_SetEvent(backendEvent);
@@ -726,32 +615,18 @@ bool __cdecl Sys_WaitBackendEvent(unsigned int msec)
     return Sys_WaitForSingleObjectTimeout(&backendEvent[1], msec);
 }
 
-void __cdecl Sys_SetUpdateSpotLightEffectEvent()
-{
-    Sys_SetEvent(&updateSpotLightEffectEvent);
-}
 
-void __cdecl Sys_ResetUpdateSpotLightEffectEvent()
-{
-    Sys_ResetEvent(&updateSpotLightEffectEvent);
-}
 
-void __cdecl Sys_WaitUpdateNonDependentEffectsCompleted()
-{
-    PROF_SCOPED("wait non-dependent fx");
-    Sys_WaitForSingleObject(&updateEffectsEvent);
-}
 
-void __cdecl Sys_SetUpdateNonDependentEffectsEvent()
-{
-    Sys_SetEvent(&updateEffectsEvent);
-}
 
-void __cdecl Sys_ResetUpdateNonDependentEffectsEvent()
-{
-    Sys_ResetEvent(&updateEffectsEvent);
-}
 
+
+
+
+
+
+#endif
+#if !defined(BO1_NATIVE_CPU_QUERIES)
 void __cdecl Sys_SuspendOtherThreads()
 {
     unsigned int threadIndex; // [esp+0h] [ebp-8h]
@@ -765,16 +640,12 @@ void __cdecl Sys_SuspendOtherThreads()
     }
 }
 
-void __cdecl Sys_SetWin32QuitEvent()
-{
-    Sys_SetEvent(&win32QuitEvent);
-}
 
-bool __cdecl Sys_QueryWin32QuitEvent()
-{
-    return Sys_WaitForSingleObjectTimeout(&win32QuitEvent, 0);
-}
 
+
+
+#endif // preceding Win32 thread/display lifecycle
+#if !defined(BO1_NATIVE_CPU_QUERIES) || defined(BO1_NATIVE_RENDER_HANDOFF)
 void __cdecl Sys_WaitD3DDeviceOKEvent()
 {
     Sys_WaitForSingleObject(&d3dDeviceOKEvent);
@@ -790,41 +661,19 @@ void __cdecl Sys_SetD3DDeviceOKEvent()
     Sys_SetEvent(&d3dDeviceOKEvent);
 }
 
-bool __cdecl Sys_QueryD3DDeviceOKEvent()
-{
-    PROF_SCOPED("Sys_QueryD3DDeviceOKEvent"); // ADD
-    return Sys_WaitForSingleObjectTimeout(&d3dDeviceOKEvent, 0);
-}
 
-void __cdecl Sys_WaitResourcesFlushedEvent()
-{
-    Sys_WaitForSingleObject(&resourcesFlushedEvent);
-}
 
-void __cdecl Sys_ClearResourcesFlushedEvent()
-{
-    Sys_ResetEvent(&resourcesFlushedEvent);
-}
 
-void __cdecl Sys_SetResourcesFlushedEvent()
-{
-    Sys_SetEvent(&resourcesFlushedEvent);
-}
 
-void __cdecl Sys_WaitResourcesQueuedEvent(unsigned int msec)
-{
-    Sys_WaitForSingleObjectTimeout(&resourcesQueuedEvent, msec);
-}
 
-void __cdecl Sys_ClearResourcesQueuedEvent()
-{
-    Sys_ResetEvent(&resourcesQueuedEvent);
-}
 
-void __cdecl Sys_SetResourcesQueuedEvent()
-{
-    Sys_SetEvent(&resourcesQueuedEvent);
-}
+
+
+
+
+
+
+
 
 void __cdecl Sys_SetD3DDeviceStartEvent()
 {
@@ -841,20 +690,11 @@ void __cdecl Sys_WaitRGRegisteredEvent()
     Sys_WaitForSingleObject(&rgRegisteredEvent);
 }
 
-void __cdecl Sys_SetRGRegisteredEvent()
-{
-    Sys_SetEvent(&rgRegisteredEvent);
-}
 
-void __cdecl Sys_ClearRGRegisteredEvent()
-{
-    Sys_ResetEvent(&rgRegisteredEvent);
-}
 
-bool __cdecl Sys_QueryRGRegisteredEvent()
-{
-    return Sys_WaitForSingleObjectTimeout(&rgRegisteredEvent, 0);
-}
+
+
+
 
 bool __cdecl Sys_QueryRenderEvent()
 {
@@ -876,6 +716,8 @@ bool __cdecl Sys_QueryD3DShutdownEvent()
     return Sys_WaitForSingleObjectTimeout(&d3dShutdownEvent, 0);
 }
 
+#endif // canonical render synchronization event methods
+#if !defined(BO1_NATIVE_CPU_QUERIES)
 char __cdecl Sys_SpawnStreamThread(void (__cdecl *function)(unsigned int))
 {
     Sys_CreateEvent(1, 0, &sndInitializedEvent);
@@ -892,24 +734,11 @@ char __cdecl Sys_SpawnStreamThread(void (__cdecl *function)(unsigned int))
     return 1;
 }
 
-int __cdecl Sys_StreamSleep()
-{
-    Sys_SetEvent(&streamCompletedEvent);
-    Sys_WaitForSingleObject(&sndInitializedEvent);
-    Sys_WaitForSingleObject(&streamEvent);
-    Sys_ResetEvent(&streamCompletedEvent);
-    return 0;
-}
 
-void __cdecl Sys_SetSndInitializedEvent()
-{
-    Sys_SetEvent(&sndInitializedEvent);
-}
 
-void __cdecl Sys_WakeStream()
-{
-    Sys_SetEvent(&streamEvent);
-}
+
+
+
 
 bool __cdecl Sys_IsStreamThread()
 {
@@ -936,16 +765,12 @@ void __cdecl Sys_SpawnOcclusion(void (__cdecl *function)(unsigned int))
     }
 }
 
-void __cdecl Sys_WaitForOcclusion()
-{
-    Sys_WaitForSingleObject(&occlusionEvent);
-}
 
-void __cdecl Sys_SetOcclusion()
-{
-    Sys_SetEvent(&occlusionEvent);
-}
 
+
+
+#endif // preceding Win32 lifecycle
+#if !defined(BO1_NATIVE_CPU_QUERIES) || defined(BO1_NATIVE_SERVER_THREAD)
 void __cdecl Sys_SetServerAllowNetworkEvent()
 {
     Sys_SetEvent(&allowServerNetworkEvent);
@@ -959,6 +784,14 @@ void __cdecl Sys_ResetServerAllowNetworkEvent()
 void __cdecl Sys_SetServerNetworkCompletedEvent()
 {
     Sys_EnterCriticalSection(CRITSECT_NETTHREAD_OVERRIDE);
+#if defined(__ANDROID__)
+    if (g_networkOverrideThread != Sys_GetCurrentThreadId())
+    {
+        Sys_LeaveCriticalSection(CRITSECT_NETTHREAD_OVERRIDE);
+        Assert_MyHandler(__FILE__,3131,0,"%s","g_networkOverrideThread == Sys_GetCurrentThreadId()");
+        std::abort();
+    }
+#endif
     if ( g_networkOverrideThread != Sys_GetCurrentThreadId()
         && !Assert_MyHandler(
                     "C:\\projects_pc\\cod\\codsrc\\src\\qcommon\\threads.cpp",
@@ -977,6 +810,14 @@ void __cdecl Sys_SetServerNetworkCompletedEvent()
 void __cdecl Sys_ResetServerNetworkCompletedEvent()
 {
     Sys_EnterCriticalSection(CRITSECT_NETTHREAD_OVERRIDE);
+#if defined(__ANDROID__)
+    if (g_networkOverrideThread)
+    {
+        Sys_LeaveCriticalSection(CRITSECT_NETTHREAD_OVERRIDE);
+        Assert_MyHandler(__FILE__,3148,0,"%s","!g_networkOverrideThread");
+        std::abort();
+    }
+#endif
     if ( g_networkOverrideThread
         && !Assert_MyHandler(
                     "C:\\projects_pc\\cod\\codsrc\\src\\qcommon\\threads.cpp",
@@ -1017,6 +858,8 @@ void __cdecl Sys_WaitServerNetworkCompleted()
     Sys_WaitForSingleObject(&serverNetworkCompletedEvent);
 }
 
+#endif // canonical server network protocol
+#if !defined(BO1_NATIVE_CPU_QUERIES)
 void __cdecl Win_LockThreadAffinity()
 {
     if ( s_cpuCount != 1 && _InterlockedIncrement(&s_winThreadLock) == 1 )
@@ -1216,4 +1059,376 @@ void __cdecl Sys_ModApplyPriority(int mode)
     s_appliedPriority = mode;
     Com_Printf(16, "bo1_mod_priority %d: process class 0x%x (started 0x%x), main thread %s\n", mode,
         GetPriorityClass(GetCurrentProcess()), s_startClass, mode ? "above normal" : "normal");
+}
+
+#endif
+
+const char *s_threadNames[15] =
+{
+  "Main", "Backend", "Worker0", "Worker1", "Worker2", "Worker3",
+  "Worker4", "Worker5", "Worker6", "Worker7", "Server", "occlusion",
+  "TitleServer", "Database", "Stream"
+};
+
+const char *__cdecl Sys_GetCurrentThreadName()
+{
+    return s_threadNames[Sys_GetThreadContext()];
+}
+
+unsigned int __cdecl Sys_GetCpuCount()
+{
+    return s_cpuCount;
+}
+
+unsigned int __cdecl Sys_GetDefaultWorkerThreadsCount()
+{
+    unsigned int cpuCount; // [esp+0h] [ebp-4h]
+
+    cpuCount = Sys_GetCpuCount();
+    if ( cpuCount <= 4 )
+        return 2;
+    if ( cpuCount > 0xA )
+        return 8;
+    return cpuCount - 2;
+}
+
+#if defined(BO1_NATIVE_CPU_QUERIES)
+#include <platform/android/stream_worker.h>
+#endif
+void *sndInitializedEvent;
+void *streamCompletedEvent;
+void *streamEvent;
+int __cdecl Sys_StreamSleep()
+{
+    Sys_SetEvent(&streamCompletedEvent);
+    Sys_WaitForSingleObject(&sndInitializedEvent);
+    Sys_WaitForSingleObject(&streamEvent);
+    Sys_ResetEvent(&streamCompletedEvent);
+    return 0;
+}
+
+void __cdecl Sys_SetSndInitializedEvent()
+{
+    Sys_SetEvent(&sndInitializedEvent);
+}
+
+void __cdecl Sys_WakeStream()
+{
+    Sys_SetEvent(&streamEvent);
+}
+
+#if defined(BO1_NATIVE_CPU_QUERIES)
+#include <platform/android/database_worker.h>
+#endif
+void *serverCompletedEvent;
+void *wakeDatabaseEvent;
+void *databaseCompletedEvent;
+void *databaseCompletedEvent2;
+void *resumedDatabaseEvent;
+void __cdecl Sys_WaitStartDatabase()
+{
+    Sys_WaitForSingleObject(&wakeDatabaseEvent);
+}
+
+void __cdecl Sys_WakeDatabase()
+{
+    Sys_ResetEvent(&databaseCompletedEvent);
+}
+
+void __cdecl Sys_WakeDatabase2()
+{
+    Sys_ResetEvent(&databaseCompletedEvent2);
+}
+
+void __cdecl Sys_DatabaseCompleted()
+{
+    g_databaseStopServer = 1;
+    if ( serverCompletedEvent )
+        Sys_WaitForSingleObject(&serverCompletedEvent);
+    Sys_SetEvent(&databaseCompletedEvent);
+}
+
+void __cdecl Sys_DatabaseCompleted2()
+{
+    g_databaseStopServer = 0;
+    Sys_SetEvent(&databaseCompletedEvent2);
+}
+
+void __cdecl Sys_WaitDiscReads()
+{
+    Sys_WaitForSingleObject(&resumedDatabaseEvent);
+}
+bool Sys_DatabaseStopsServer(){return g_databaseStopServer != 0;}
+
+#include <qcommon/thread_owner.h>
+#if defined(BO1_NATIVE_CPU_QUERIES)
+#include <universal/assertive.h>
+#include <platform/android/thread_services.h>
+#include <live/live_win_common.h>
+// The selected platform wrapper still calls the real cinematic/resource APIs.
+// These dependencies must be linked before full database startup can run.
+void __cdecl R_Cinematic_ForceRelinquishIO();
+void __cdecl RB_Resource_Update(int msec);
+#endif
+#if defined(__ANDROID__)
+std::atomic<ThreadOwner> g_discReadsOwner{THREAD_OWNER_NONE};
+#else
+ThreadOwner g_discReadsOwner;
+#endif
+void __cdecl Sys_SuspendDiscReads(ThreadOwner owner)
+{
+    if ( owner == THREAD_OWNER_NONE
+        && !Assert_MyHandler(
+                    "C:\\projects_pc\\cod\\codsrc\\src\\qcommon\\threads.cpp",
+                    1325,
+                    0,
+                    "%s",
+                    "owner != THREAD_OWNER_NONE") )
+    {
+        __debugbreak();
+    }
+    g_discReadsOwner = owner;
+    Sys_ResetEvent(&resumedDatabaseEvent);
+}
+
+void __cdecl Sys_ResumeDiscReads(ThreadOwner owner)
+{
+    if ( owner == THREAD_OWNER_NONE
+        && !Assert_MyHandler(
+                    "C:\\projects_pc\\cod\\codsrc\\src\\qcommon\\threads.cpp",
+                    1343,
+                    0,
+                    "%s",
+                    "owner != THREAD_OWNER_NONE") )
+    {
+        __debugbreak();
+    }
+    if ( g_discReadsOwner != owner
+        && !Assert_MyHandler(
+                    "C:\\projects_pc\\cod\\codsrc\\src\\qcommon\\threads.cpp",
+                    1344,
+                    0,
+                    "g_discReadsOwner == owner\n\t%i, %i",
+#if defined(__ANDROID__)
+                    g_discReadsOwner.load(),
+#else
+                    g_discReadsOwner,
+#endif
+                    owner) )
+    {
+        __debugbreak();
+    }
+    g_discReadsOwner = THREAD_OWNER_NONE;
+    Sys_SetEvent(&resumedDatabaseEvent);
+}
+
+bool __cdecl Sys_HaveSuspendedDiscReads(ThreadOwner owner)
+{
+    return g_discReadsOwner == owner;
+}
+
+
+
+bool __cdecl Sys_IsDatabaseReady()
+{
+    bool result; // [esp+0h] [ebp-4h]
+
+    result = Sys_WaitForSingleObjectTimeout(&databaseCompletedEvent, 0);
+    if ( result )
+        SocketRouter_EmergencyFrame();
+    return result;
+}
+
+void __cdecl Sys_SyncDatabase()
+{
+
+    while ( !Sys_WaitForSingleObjectTimeout(&databaseCompletedEvent, 1u) )
+    {
+        R_Cinematic_ForceRelinquishIO();
+        if ( Sys_IsRenderThread() )
+            RB_Resource_Update(5);
+        SocketRouter_EmergencyFrame();
+    }
+}
+
+
+
+void __cdecl Sys_NotifyDatabase()
+{
+    Sys_SetEvent(&wakeDatabaseEvent);
+}
+
+
+
+bool __cdecl Sys_IsDatabaseReady2()
+{
+    bool result; // [esp+0h] [ebp-4h]
+
+    result = Sys_WaitForSingleObjectTimeout(&databaseCompletedEvent2, 0);
+    if ( result )
+        SocketRouter_EmergencyFrame();
+    return result;
+}
+
+#if defined(BO1_NATIVE_CPU_QUERIES)
+#include <platform/android/render_worker.h>
+#endif
+void *renderPausedEvent;
+void *renderCompletedEvent;
+void *resourcesFlushedEvent;
+void *resourcesQueuedEvent;
+void *rendererRunningEvent;
+void *updateSpotLightEffectEvent;
+void *updateEffectsEvent;
+void *d3dDeviceOKEvent;
+void *d3dDeviceHardStartEvent;
+void *d3dShutdownEvent;
+void *d3dDeviceWinMessageEvent;
+void *win32QuitEvent;
+void *win32ScriptDebuggerDrawEvent;
+void *rgRegisteredEvent;
+void *renderEvent;
+void *backendEvent[2];
+void __cdecl Sys_WaitResourcesFlushedEvent()
+{
+    Sys_WaitForSingleObject(&resourcesFlushedEvent);
+}
+
+void __cdecl Sys_ClearResourcesFlushedEvent()
+{
+    Sys_ResetEvent(&resourcesFlushedEvent);
+}
+
+void __cdecl Sys_SetResourcesFlushedEvent()
+{
+    Sys_SetEvent(&resourcesFlushedEvent);
+}
+
+void __cdecl Sys_WaitResourcesQueuedEvent(unsigned int msec)
+{
+    Sys_WaitForSingleObjectTimeout(&resourcesQueuedEvent, msec);
+}
+
+void __cdecl Sys_ClearResourcesQueuedEvent()
+{
+    Sys_ResetEvent(&resourcesQueuedEvent);
+}
+
+void __cdecl Sys_SetResourcesQueuedEvent()
+{
+    Sys_SetEvent(&resourcesQueuedEvent);
+}
+
+void __cdecl Sys_SetRGRegisteredEvent()
+{
+    Sys_SetEvent(&rgRegisteredEvent);
+}
+
+void __cdecl Sys_ClearRGRegisteredEvent()
+{
+    Sys_ResetEvent(&rgRegisteredEvent);
+}
+
+bool __cdecl Sys_QueryRGRegisteredEvent()
+{
+    return Sys_WaitForSingleObjectTimeout(&rgRegisteredEvent, 0);
+}
+
+bool __cdecl Sys_QueryD3DDeviceOKEvent()
+{
+    PROF_SCOPED("Sys_QueryD3DDeviceOKEvent"); // ADD
+    return Sys_WaitForSingleObjectTimeout(&d3dDeviceOKEvent, 0);
+}
+
+int __cdecl Sys_WaitRenderer()
+{
+    PROF_SCOPED("Sys_WaitRenderer");
+
+    if (IsDedicatedServer())
+        return 0;
+
+    if (!Sys_IsMainThread())
+        return 0;
+
+    while (Sys_QueryD3DDeviceOKEvent() && !Sys_WaitForSingleObjectTimeout(&renderCompletedEvent, 1u))
+        ;
+
+    return 0;
+}
+
+void __cdecl Sys_FrontEndSleep()
+{
+
+    PROF_SCOPED("frontend sleep");
+    Sys_WaitForSingleObject(&rendererRunningEvent);
+}
+
+void __cdecl Sys_NotifyRenderer()
+{
+    if ( !backendEvent[1]
+        && !Assert_MyHandler(
+                    "C:\\projects_pc\\cod\\codsrc\\src\\qcommon\\threads.cpp",
+                    1641,
+                    0,
+                    "%s",
+                    "Sys_IsEventInitialized( backendEvent[BACKEND_EVENT_GENERIC] )") )
+    {
+        __debugbreak();
+    }
+    Sys_SetEvent(&backendEvent[1]);
+}
+
+void __cdecl Sys_SetUpdateSpotLightEffectEvent()
+{
+    Sys_SetEvent(&updateSpotLightEffectEvent);
+}
+
+void __cdecl Sys_ResetUpdateSpotLightEffectEvent()
+{
+    Sys_ResetEvent(&updateSpotLightEffectEvent);
+}
+
+void __cdecl Sys_WaitUpdateNonDependentEffectsCompleted()
+{
+    PROF_SCOPED("wait non-dependent fx");
+    Sys_WaitForSingleObject(&updateEffectsEvent);
+}
+
+void __cdecl Sys_SetUpdateNonDependentEffectsEvent()
+{
+    Sys_SetEvent(&updateEffectsEvent);
+}
+
+void __cdecl Sys_ResetUpdateNonDependentEffectsEvent()
+{
+    Sys_ResetEvent(&updateEffectsEvent);
+}
+
+#if defined(BO1_NATIVE_CPU_QUERIES)
+#include <platform/android/occlusion_worker.h>
+#endif
+void *occlusionEvent;
+void __cdecl Sys_WaitForOcclusion()
+{
+    Sys_WaitForSingleObject(&occlusionEvent);
+}
+
+void __cdecl Sys_SetOcclusion()
+{
+    Sys_SetEvent(&occlusionEvent);
+}
+
+void __cdecl Sys_SetWin32QuitEvent()
+{
+#if defined(__ANDROID__)
+    // Native requests also exist before the render owner creates its events.
+    Sys_SetQuitRequested();
+    if(!win32QuitEvent)return;
+#endif
+    Sys_SetEvent(&win32QuitEvent);
+}
+
+bool __cdecl Sys_QueryWin32QuitEvent()
+{
+    return Sys_WaitForSingleObjectTimeout(&win32QuitEvent, 0);
 }

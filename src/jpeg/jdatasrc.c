@@ -216,17 +216,45 @@ static void NULLSUBB(struct jpeg_decompress_struct *__formal)
 {
 
 }
+#if defined(__ANDROID__)
+METHODDEF(boolean) memory_input_exhausted(j_decompress_ptr cinfo)
+{
+  ERREXIT(cinfo, JERR_INPUT_EOF);
+  return FALSE;
+}
+METHODDEF(void) memory_skip_input(j_decompress_ptr cinfo, long count)
+{
+  if (count <= 0) return;
+  if ((size_t)count > cinfo->src->bytes_in_buffer) {
+    ERREXIT(cinfo, JERR_INPUT_EOF);
+    return;
+  }
+  cinfo->src->next_input_byte += count;
+  cinfo->src->bytes_in_buffer -= count;
+}
+#endif
 void __cdecl jpeg_memory_src(j_decompress_ptr cinfo, const unsigned __int8 *pubData, int iBytes)
 {
     my_source_mgr *src; // [esp+0h] [ebp-4h]
 
     if (!cinfo->src)
+#if defined(__ANDROID__)
+        cinfo->src = (struct jpeg_source_mgr *)cinfo->mem->alloc_small((struct jpeg_common_struct *)cinfo, 0, sizeof(my_source_mgr));
+#else
         cinfo->src = (struct jpeg_source_mgr *)cinfo->mem->alloc_small((struct jpeg_common_struct *)cinfo, 0, 32);
+#endif
     src = (my_source_mgr *)cinfo->src;
     src->pub.init_source = init_source;
+#if defined(__ANDROID__)
+    if (iBytes < 0 || (!pubData && iBytes)) ERREXIT(cinfo, JERR_INPUT_EMPTY);
+    src->pub.fill_input_buffer = memory_input_exhausted;
+    src->pub.skip_input_data = memory_skip_input;
+    src->pub.resync_to_restart = jpeg_resync_to_restart;
+#else
     src->pub.fill_input_buffer = 0;
     src->pub.skip_input_data = skip_input_data;
     src->pub.resync_to_restart = (unsigned __int8(__cdecl *)(struct jpeg_decompress_struct *, int))jpeg_resync_to_restart;
+#endif
     src->pub.term_source = NULLSUBB;
     src->pub.bytes_in_buffer = iBytes;
     src->pub.next_input_byte = pubData;

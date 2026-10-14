@@ -6,6 +6,28 @@
 #include "r_init.h"
 #include "r_bsp.h"
 #include "r_reflection_probe.h"
+#if defined(__ANDROID__)
+#include <climits>
+#include <cstdint>
+#include <cstdlib>
+#include <qcommon/common.h>
+
+static int R_NativeAabbOffset(const void *target, const void *base)
+{
+    const uintptr_t targetAddress = reinterpret_cast<uintptr_t>(target);
+    const uintptr_t baseAddress = reinterpret_cast<uintptr_t>(base);
+    const bool negative = targetAddress < baseAddress;
+    const uintptr_t magnitude = negative ? baseAddress - targetAddress : targetAddress - baseAddress;
+    if (magnitude > static_cast<uintptr_t>(INT_MAX) + (negative ? 1u : 0u))
+    {
+        Com_Error(ERR_DROP, "Static-model AABB child offset exceeds signed 32-bit range");
+        std::abort();
+    }
+    if (negative && magnitude == static_cast<uintptr_t>(INT_MAX) + 1u)
+        return INT_MIN;
+    return negative ? -static_cast<int>(magnitude) : static_cast<int>(magnitude);
+}
+#endif
 
 void __cdecl R_AllocStaticModels(GfxAabbTree *tree)
 {
@@ -138,7 +160,12 @@ void __cdecl R_SortGfxAabbTree(GfxWorld *world, GfxAabbTree *tree)
                     ++count;
                 if ( smodelIndexCount )
                     ++count;
+#if defined(__ANDROID__)
+                tree->childrenOffset = R_NativeAabbOffset(
+                    Hunk_AllocAlign(sizeof(GfxAabbTree) * count, alignof(GfxAabbTree), "R_SortGfxAabbTree", 22), tree);
+#else
                 tree->childrenOffset = Hunk_AllocAlign(40 * count, 4, "R_SortGfxAabbTree", 22) - (unsigned __int8 *)tree;
+#endif
                 if ( tree->surfaceCount )
                 {
                     childTreeb = (GfxAabbTree *)((char *)&tree[tree->childCount++] + tree->childrenOffset);
@@ -461,6 +488,25 @@ void __cdecl R_AddStaticModelToAabbTree_r(GfxWorld *world, GfxAabbTree *tree, in
         {
             if ( childIndexa >= tree->childCount )
             {
+#if defined(__ANDROID__)
+                newChildren = Hunk_AllocAlign(sizeof(GfxAabbTree) * (tree->childCount + 1),
+                    alignof(GfxAabbTree), "R_AddStaticModelToAabbTree_r", 22);
+                memset(newChildren, 0, sizeof(GfxAabbTree) * (tree->childCount + 1));
+                children = (unsigned __int8 *)tree + tree->childrenOffset;
+                if (tree->childCount)
+                    memcpy(newChildren, children, sizeof(GfxAabbTree) * tree->childCount);
+                tree->childrenOffset = R_NativeAabbOffset(newChildren, tree);
+                auto *nativeChildren = reinterpret_cast<GfxAabbTree *>(newChildren);
+                auto *oldChildren = reinterpret_cast<GfxAabbTree *>(children);
+                for (childIndexb = 0; childIndexb < tree->childCount; ++childIndexb)
+                {
+                    if (oldChildren[childIndexb].childrenOffset)
+                        nativeChildren[childIndexb].childrenOffset = R_NativeAabbOffset(
+                            reinterpret_cast<unsigned char *>(&oldChildren[childIndexb])
+                                + oldChildren[childIndexb].childrenOffset,
+                            &nativeChildren[childIndexb]);
+                }
+#else
                 newChildren = Hunk_AllocAlign(40 * (tree->childCount + 1), 4, "R_AddStaticModelToAabbTree_r", 22);
                 children = (unsigned __int8 *)tree + tree->childrenOffset;
                 memcpy(newChildren, children, 40 * tree->childCount);
@@ -469,6 +515,7 @@ void __cdecl R_AddStaticModelToAabbTree_r(GfxWorld *world, GfxAabbTree *tree, in
                     *(unsigned int *)&newChildren[40 * childIndexb + 36] = &children[40 * childIndexb
                                                                                                                                      + *(unsigned int *)&children[40 * childIndexb + 36]]
                                                                                                                  - &newChildren[40 * childIndexb];
+#endif
                 childTreea = (GfxAabbTree *)((char *)&tree[tree->childCount++] + tree->childrenOffset);
                 childTreea->mins[0] = smodelInst->mins[0];
                 childTreea->mins[1] = smodelInst->mins[1];

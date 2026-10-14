@@ -8,7 +8,12 @@ static const SPEntitySaveField s_badPlaceFields[] = {
 static const SPEntitySaveField s_badPlaceBrushFields[] = {
     { offsetof(badplace_parms_t, brush.volume), sizeof(((badplace_parms_t *)0)->brush.volume), 2 } // SP 0x00A5402C
 };
-#if !defined(BO1_PORT_X64)
+#if defined(__ANDROID__)
+// Runtime pointer growth matches the existing x64 derived save-image model;
+// this check does not certify retail save-format compatibility.
+static_assert(sizeof(badplace_t) == 48 && sizeof(badplace_parms_t) == 32,
+    "Android native bad-place runtime image");
+#elif !defined(BO1_PORT_X64)
 static_assert(sizeof(badplace_t) == 0x2C && sizeof(badplace_parms_t) == 0x1C, "DERIVED bad place image");
 #endif
 #if !defined(BO1_PORT_X64)

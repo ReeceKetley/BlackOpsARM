@@ -118,6 +118,19 @@ HRESULT STDMETHODCALLTYPE SDXA2Effect::LockForProcess(
                 unsigned int OutputLockedParameterCount,
                 const XAPO_LOCKFORPROCESS_BUFFER_PARAMETERS *out)
 {
+#if defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST)
+    if (locked || InputLockedParameterCount != 1 || OutputLockedParameterCount != 1 ||
+        !in || !out || !in->pFormat || !out->pFormat ||
+        in->MaxFrameCount != out->MaxFrameCount || !in->MaxFrameCount ||
+        in->MaxFrameCount > SDXA2_MAX_FRAME_COUNT || (in->MaxFrameCount & 3) ||
+        in->pFormat->nChannels == 0 || in->pFormat->nChannels > 8 ||
+        in->pFormat->nChannels != out->pFormat->nChannels ||
+        in->pFormat->nSamplesPerSec != out->pFormat->nSamplesPerSec ||
+        in->pFormat->wBitsPerSample != 32 || out->pFormat->wBitsPerSample != 32 ||
+        in->pFormat->wFormatTag != WAVE_FORMAT_EXTENSIBLE ||
+        out->pFormat->wFormatTag != WAVE_FORMAT_EXTENSIBLE)
+        return static_cast<HRESULT>(static_cast<int>(FAUDIO_E_UNSUPPORTED_FORMAT));
+#endif
     iassert(!locked);
 
     this->locked = 1;
@@ -147,6 +160,30 @@ void __stdcall SDXA2Effect::Process(
     float *input; // [esp+0h] [ebp-8h]
     float *output; // [esp+4h] [ebp-4h]
 
+#if defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST)
+    if (!locked || InputProcessParameterCount != 1 || OutputProcessParameterCount != 1 ||
+        !pInputProcessParameters || !pOutputProcessParameters)
+        std::abort();
+    const auto count = pInputProcessParameters[0].ValidFrameCount;
+    if (count > frameCount || count > SDXA2_MAX_FRAME_COUNT || (count & 3)) std::abort();
+    pOutputProcessParameters[0].ValidFrameCount = count;
+    if (!count) { pOutputProcessParameters[0].BufferFlags = XAPO_BUFFER_SILENT; return; }
+    input = static_cast<float *>(pInputProcessParameters[0].pBuffer);
+    output = static_cast<float *>(pOutputProcessParameters[0].pBuffer);
+    if (!input || !output) std::abort();
+    if (pInputProcessParameters[0].BufferFlags == XAPO_BUFFER_SILENT)
+        memset(input, 0, sizeof(float) * count * channelCount);
+    if (!IsEnabled)
+    {
+        memmove(output, input, sizeof(float) * count * channelCount);
+        pOutputProcessParameters[0].BufferFlags = pInputProcessParameters[0].BufferFlags;
+        return;
+    }
+    SND_DspUninterleave(channelCount, count, input, interleave);
+    this->Process(channelCount, count, interleave);
+    SND_DspInterleave(channelCount, count, interleave, output);
+    pOutputProcessParameters[0].BufferFlags = XAPO_BUFFER_VALID;
+#else
     iassert(locked);
     iassert(InputProcessParameterCount == 1);
     iassert(OutputProcessParameterCount == 1);
@@ -167,6 +204,7 @@ void __stdcall SDXA2Effect::Process(
     SND_DspUninterleave(this->channelCount, this->frameCount, input, this->interleave);
     this->Process(this->channelCount, this->frameCount, this->interleave);
     SND_DspInterleave(this->channelCount, this->frameCount, this->interleave, output);
+#endif
 }
 
 SDXA2SourceEffect::SDXA2SourceEffect() 
@@ -208,7 +246,11 @@ void __thiscall SDXA2SourceEffect::Process(
     }
     for ( i = 0; i < channelCount; ++i )
         SND_DspFxSourceMono(
+#if defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST)
+            &this->params,
+#else
             (const snd_dsp_futz_param *)&this->params,
+#endif
             &this->state[i],
             frameCount,
             &data[frameCount * i],

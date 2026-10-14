@@ -39,12 +39,8 @@ struct DBReorderAssetEntry // sizeof=0x10
     const char *assetName;
 };
 
-struct XZoneInfo // sizeof=0xC
-{                                       // XREF: DB_UpdateDebugZone(void)+1E/w
-    const char *name;                   // XREF: DB_UpdateDebugZone(void)+15/w
-    int allocFlags;                     // XREF: DB_UpdateDebugZone(void)+18/w
-    int freeFlags;                      // XREF: DB_UpdateDebugZone(void)+1B/w
-};
+#include <database/db_zone_info.h>
+
 
 struct XZone // sizeof=0x40
 {                                       // XREF: .data:g_zones/r

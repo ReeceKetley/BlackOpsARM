@@ -1,4 +1,7 @@
 #include "cg_visionsets.h"
+#if defined(__ANDROID__)
+#include <platform/android/legacy_crt.h>
+#endif
 #include <universal/com_memory.h>
 #include <universal/dvar.h>
 #include <universal/q_shared.h>
@@ -126,9 +129,21 @@ void __cdecl CG_RegisterVisionSetsDvars()
     showVisionSetDebugInfo = _Dvar_RegisterInt("showVisionSetDebugInfo", -1, -1, 3, 0x80u, "Enables visionset debug info");
 }
 
+#if defined(__ANDROID__)
+// DB enumeration invokes (header, context); the canonical owner takes header only.
+static void __cdecl CG_AddVisionSetMenuItemEnumerated(XAssetHeader header, void *)
+{
+    CG_AddVisionSetMenuItem(header);
+}
+#endif
+
 void __cdecl CG_InitVisionSetsMenu()
 {
+#if defined(__ANDROID__)
+    DB_EnumXAssets(ASSET_TYPE_RAWFILE, CG_AddVisionSetMenuItemEnumerated, 0, 0);
+#else
     DB_EnumXAssets(ASSET_TYPE_RAWFILE, (void (__cdecl *)(XAssetHeader, void *))CG_AddVisionSetMenuItem, 0, 0);
+#endif
 }
 
 void __cdecl CG_AddVisionSetMenuItem(XAssetHeader header)

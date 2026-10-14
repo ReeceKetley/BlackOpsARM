@@ -33,8 +33,8 @@ void BO1_ProfRegister(BO1ProfZone *zone)
 #include <string.h>
 
 volatile long g_bo1FirstUse[BO1_FIRST_KINDS];
-volatile long g_bo1RenderFirstUse[BO1_FIRST_KINDS];
-volatile long g_bo1RenderCount[BO1_RC_KINDS];
+volatile BO1RenderCounter g_bo1RenderFirstUse[BO1_FIRST_KINDS];
+volatile BO1RenderCounter g_bo1RenderCount[BO1_RC_KINDS];
 BO1RenderFrame g_bo1RenderRing[BO1_RENDER_RING];
 #if defined(__ANDROID__)
 static std::mutex s_firstLock;
@@ -57,7 +57,11 @@ void BO1_ProfFirstUse(int kind, unsigned long long key, const char *name)
     if (s_firstSeen[kind]->insert(key).second)
     {
         BO1_ProfileAdd(&g_bo1FirstUse[kind], 1);
+#if defined(__ANDROID__)
+        __atomic_fetch_add(&g_bo1RenderFirstUse[kind],1,__ATOMIC_SEQ_CST);
+#else
         BO1_ProfileAdd(&g_bo1RenderFirstUse[kind], 1);
+#endif
         if (name)
         {
             const int len = (int)strlen(name);
@@ -110,13 +114,18 @@ int BO1_ProfFirstUseNames(char *out, int size)
 #endif
 
 // mod (L43): bo1_mod_svprof (profile.h SvProfScope); the window report is BO1_SvProfFrame in sv_main_mp.cpp
+#if defined(__ANDROID__)
+std::atomic<int> g_svProfOn{0};
+std::atomic<unsigned long> g_svProfThread{0};
+#else
 volatile int g_svProfOn;
 unsigned long g_svProfThread;
+#endif
 unsigned long long g_svProfTicks[SVPROF_COUNT];
 unsigned int g_svProfCalls[SVPROF_COUNT];
 int g_svProfStack[64];
 int g_svProfDepth;
 unsigned long long g_svProfLast;
-volatile long g_modRendWarn[6];
+volatile Bo1RenderWarningCounter g_modRendWarn[6];
 unsigned long long g_svProfBuiltinTicks[SVPROF_MAX_BUILTINS];
 unsigned int g_svProfBuiltinCalls[SVPROF_MAX_BUILTINS];

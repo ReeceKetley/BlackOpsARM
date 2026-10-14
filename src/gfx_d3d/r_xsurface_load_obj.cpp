@@ -6,6 +6,9 @@
 #include "r_dvars.h"
 #include <qcommon/com_bsp_load_obj.h>
 #include <set>
+#if defined(__ANDROID__)
+#include <algorithm>
+#endif
 
 #if 0
 void __cdecl XModelReadSurface(XModel *model, unsigned __int8 **pos, void *(__cdecl *Alloc)(int), XSurface *surface)
@@ -946,7 +949,11 @@ void XModelReadSurface(
     /* ------------------------------------------------------------
        Read rigid vertex lists
        ------------------------------------------------------------ */
+#if defined(__ANDROID__)
+    XRigidVertList rigidLists[161]{};
+#else
     XRigidVertList rigidLists[161];
+#endif
     unsigned int vertListCount = 0;
     unsigned int rigidVertCount = 0;
 
@@ -1105,8 +1112,13 @@ void XModelReadSurface(
             uint16_t b = surface->triIndices[i + 1];
             uint16_t c = surface->triIndices[i + 2];
 
+#if defined(__ANDROID__)
+            uint16_t lo = std::min(a, std::min(b, c));
+            uint16_t hi = std::max(a, std::max(b, c));
+#else
             uint16_t lo = min(a, min(b, c));
             uint16_t hi = max(a, max(b, c));
+#endif
             uint16_t mid = a ^ b ^ c ^ lo ^ hi;
 
             uint64_t key =
@@ -1129,10 +1141,19 @@ void XModelReadSurface(
        Final surface buffers
        ------------------------------------------------------------ */
     surface->vertListCount = vertListCount;
+#if defined(__ANDROID__)
+    // Count is bounded by rigidLists above; these are native runtime objects.
+    const int rigidListBytes = sizeof(XRigidVertList) * vertListCount;
+    surface->vertList =
+        vertListCount ? (XRigidVertList *)Alloc(rigidListBytes) : NULL;
+    if (vertListCount)
+        memcpy(surface->vertList, rigidLists, rigidListBytes);
+#else
     surface->vertList =
         vertListCount ? (XRigidVertList *)Alloc(12 * vertListCount) : NULL;
 
     memcpy(surface->vertList, rigidLists, 12 * vertListCount);
+#endif
 
     surface->verts0 =
         (GfxPackedVertex *)Alloc(32 * surface->vertCount);
@@ -1263,7 +1284,11 @@ void __cdecl XModelReadSurface_BuildCollisionTree(
     {
         __debugbreak();
     }
+#if defined(__ANDROID__)
+    memset(&options, 0, sizeof(options));
+#else
     memset(&options, 0, 12);
+#endif
     options.mins = 0;
     options.maxs = 0;
     options.maintainValidBounds = 1;

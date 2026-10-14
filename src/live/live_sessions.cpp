@@ -62,8 +62,12 @@ int __cdecl Session_BuildQoSPayload()
     }
     if ( !memcmp(qos_payload, s_qosPayload, 8u) )
         return 0;
+#if defined(__ANDROID__)
+    memcpy(s_qosPayload,qos_payload,sizeof(s_qosPayload));
+#else
     *(unsigned int *)s_qosPayload = *(unsigned int *)qos_payload;
     *(unsigned int *)&s_qosPayload[4] = *(unsigned int *)&qos_payload[4];
+#endif
     return qosMessage.cursize;
 }
 

@@ -11,6 +11,11 @@
 namespace bo1::win32 {
 using BOOL = std::int32_t;
 using DWORD = std::uint32_t;
+struct FILETIME {
+    DWORD dwLowDateTime;
+    DWORD dwHighDateTime;
+};
+static_assert(sizeof(FILETIME) == 8 && alignof(FILETIME) == 4);
 
 // Only QuadPart is required in this phase. This is not a full LARGE_INTEGER
 // union replacement; code needing LowPart/HighPart must extend/test that contract.

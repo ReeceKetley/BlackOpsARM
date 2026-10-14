@@ -10,6 +10,22 @@
 #include "com_math_anglevectors.h"
 #include <qcommon/common.h>
 
+#if defined(__ANDROID__)
+#include <cstddef>
+// A matrix/plane/knot pointer owns rows, not an oversized first-row array.
+// Deduce the actual row width, preserving each scalar's order and address.
+template <typename T, std::size_t Columns>
+static inline T &Bo1_MathElement(T (*rows)[Columns], std::size_t index)
+{
+    return rows[index / Columns][index % Columns];
+}
+#define BO1_MATH_ELEMENT(rows, index) Bo1_MathElement((rows), (index))
+#define BO1_MATH_BOUND_OFFSET(bounds, index, bytes) Bo1_MathElement((bounds), (index) + (bytes) / static_cast<int>(sizeof(float)))
+#else
+#define BO1_MATH_ELEMENT(rows, index) (*(rows))[(index)]
+#define BO1_MATH_BOUND_OFFSET(bounds, index, bytes) (*(float *)((char *)&(*(bounds))[(index)] + (bytes)))
+#endif
+
 float bytedirs[162][3] =
 {
   { -0.52573103, 0.0, 0.85065103 },
@@ -370,23 +386,23 @@ double __cdecl GraphGetValueFromFraction(int knotCount, const float (*knots)[2],
     {
         __debugbreak();
     }
-    if ( (*knots)[2 * knotCount - 2] != 1.0
+    if ( BO1_MATH_ELEMENT(knots, 2 * knotCount - 2) != 1.0
         && !Assert_MyHandler(
                     "C:\\projects_pc\\cod\\codsrc\\src\\universal\\com_math.cpp",
                     470,
                     0,
                     "%s\n\t(knots[knotCount - 1][0]) = %g",
                     "(knots[knotCount - 1][0] == 1.0f)",
-                    (*knots)[2 * knotCount - 2]) )
+                    BO1_MATH_ELEMENT(knots, 2 * knotCount - 2)) )
     {
         __debugbreak();
     }
     for ( knotIndex = 1; knotIndex < knotCount; ++knotIndex )
     {
-        if ( (*knots)[2 * knotIndex] >= fraction )
+        if ( BO1_MATH_ELEMENT(knots, 2 * knotIndex) >= fraction )
         {
-            adjustedFrac = (float)(fraction - (float)(*knots)[2 * knotIndex - 2])
-                                     / (float)((float)(*knots)[2 * knotIndex] - (float)(*knots)[2 * knotIndex - 2]);
+            adjustedFrac = (float)(fraction - (float)BO1_MATH_ELEMENT(knots, 2 * knotIndex - 2))
+                                     / (float)((float)BO1_MATH_ELEMENT(knots, 2 * knotIndex) - (float)BO1_MATH_ELEMENT(knots, 2 * knotIndex - 2));
             if ( (adjustedFrac < 0.0 || adjustedFrac > 1.0)
                 && !Assert_MyHandler(
                             "C:\\projects_pc\\cod\\codsrc\\src\\universal\\com_math.cpp",
@@ -398,30 +414,30 @@ double __cdecl GraphGetValueFromFraction(int knotCount, const float (*knots)[2],
             {
                 __debugbreak();
             }
-            if ( ((*knots)[2 * knotIndex - 1] < 0.0 || (*knots)[2 * knotIndex - 1] > 1.0)
+            if ( (BO1_MATH_ELEMENT(knots, 2 * knotIndex - 1) < 0.0 || BO1_MATH_ELEMENT(knots, 2 * knotIndex - 1) > 1.0)
                 && !Assert_MyHandler(
                             "C:\\projects_pc\\cod\\codsrc\\src\\universal\\com_math.cpp",
                             479,
                             0,
                             "%s\n\t(knots[knotIndex - 1][1]) = %g",
                             "(knots[knotIndex - 1][1] >= 0.0f && knots[knotIndex - 1][1] <= 1.0f)",
-                            (*knots)[2 * knotIndex - 1]) )
+                            BO1_MATH_ELEMENT(knots, 2 * knotIndex - 1)) )
             {
                 __debugbreak();
             }
-            if ( ((*knots)[2 * knotIndex + 1] < 0.0 || (*knots)[2 * knotIndex + 1] > 1.0)
+            if ( (BO1_MATH_ELEMENT(knots, 2 * knotIndex + 1) < 0.0 || BO1_MATH_ELEMENT(knots, 2 * knotIndex + 1) > 1.0)
                 && !Assert_MyHandler(
                             "C:\\projects_pc\\cod\\codsrc\\src\\universal\\com_math.cpp",
                             480,
                             0,
                             "%s\n\t(knots[knotIndex][1]) = %g",
                             "(knots[knotIndex][1] >= 0.0f && knots[knotIndex][1] <= 1.0f)",
-                            (*knots)[2 * knotIndex + 1]) )
+                            BO1_MATH_ELEMENT(knots, 2 * knotIndex + 1)) )
             {
                 __debugbreak();
             }
-            result = (float)((float)((float)(*knots)[2 * knotIndex + 1] - (float)(*knots)[2 * knotIndex - 1]) * adjustedFrac)
-                         + (float)(*knots)[2 * knotIndex - 1];
+            result = (float)((float)((float)BO1_MATH_ELEMENT(knots, 2 * knotIndex + 1) - (float)BO1_MATH_ELEMENT(knots, 2 * knotIndex - 1)) * adjustedFrac)
+                         + (float)BO1_MATH_ELEMENT(knots, 2 * knotIndex - 1);
             break;
         }
     }
@@ -904,7 +920,7 @@ int __cdecl BoxInPlanes(const float (*planes)[4], unsigned int numPlanes, const 
 
     for ( planeIndex = 0; planeIndex < numPlanes; ++planeIndex )
     {
-        plane = &(*planes)[4 * planeIndex];
+        plane = &BO1_MATH_ELEMENT(planes, 4 * planeIndex);
         if ( (float)((float)((float)((float)(*plane * *mins) + (float)(plane[1] * mins[1])) + (float)(plane[2] * mins[2]))
                              + plane[3]) < 0.0 )
             v12 = 1.0f;
@@ -958,10 +974,10 @@ int __cdecl SphereInPlanes(const float (*planes)[4], unsigned int numPlanes, con
 
     for ( planeIndex = 0; planeIndex < numPlanes; ++planeIndex )
     {
-        if ( (float)((float)((float)((float)((float)((float)(*planes)[4 * planeIndex] * *center)
-                                                                             + (float)((float)(*planes)[4 * planeIndex + 1] * center[1]))
-                                                             + (float)((float)(*planes)[4 * planeIndex + 2] * center[2]))
-                                             + (float)(*planes)[4 * planeIndex + 3])
+        if ( (float)((float)((float)((float)((float)((float)BO1_MATH_ELEMENT(planes, 4 * planeIndex) * *center)
+                                                                             + (float)((float)BO1_MATH_ELEMENT(planes, 4 * planeIndex + 1) * center[1]))
+                                                             + (float)((float)BO1_MATH_ELEMENT(planes, 4 * planeIndex + 2) * center[2]))
+                                             + (float)BO1_MATH_ELEMENT(planes, 4 * planeIndex + 3))
                              - radius) > 0.0 )
             return 0;
     }
@@ -972,18 +988,18 @@ void __cdecl MatrixIdentity33(float (*out)[3])
 {
     if ( !out && !Assert_MyHandler("C:\\projects_pc\\cod\\codsrc\\src\\universal\\com_math.cpp", 1227, 0, "%s", "out") )
         __debugbreak();
-    (*out)[0] = 0.0;
-    (*out)[1] = 0.0;
-    (*out)[2] = 0.0;
-    (*out)[3] = 0.0;
-    (*out)[4] = 0.0;
-    (*out)[5] = 0.0;
-    (*out)[6] = 0.0;
-    (*out)[7] = 0.0;
-    (*out)[8] = 0.0;
-    (*out)[0] = 1.0f;
-    (*out)[4] = 1.0f;
-    (*out)[8] = 1.0f;
+    BO1_MATH_ELEMENT(out, 0) = 0.0;
+    BO1_MATH_ELEMENT(out, 1) = 0.0;
+    BO1_MATH_ELEMENT(out, 2) = 0.0;
+    BO1_MATH_ELEMENT(out, 3) = 0.0;
+    BO1_MATH_ELEMENT(out, 4) = 0.0;
+    BO1_MATH_ELEMENT(out, 5) = 0.0;
+    BO1_MATH_ELEMENT(out, 6) = 0.0;
+    BO1_MATH_ELEMENT(out, 7) = 0.0;
+    BO1_MATH_ELEMENT(out, 8) = 0.0;
+    BO1_MATH_ELEMENT(out, 0) = 1.0f;
+    BO1_MATH_ELEMENT(out, 4) = 1.0f;
+    BO1_MATH_ELEMENT(out, 8) = 1.0f;
 }
 
 void __cdecl MatrixIdentity44(float (*out)[4])
@@ -995,50 +1011,50 @@ void __cdecl MatrixIdentity44(float (*out)[4])
 
 void __cdecl MatrixMultiply(const float (*in1)[3], const float (*in2)[3], float (*out)[3])
 {
-    (*out)[0] = (float)((float)((*in1)[0] * (*in2)[0]) + (float)((float)(*in1)[1] * (float)(*in2)[3]))
-                        + (float)((float)(*in1)[2] * (float)(*in2)[6]);
-    (*out)[1] = (float)((float)((*in1)[0] * (float)(*in2)[1]) + (float)((float)(*in1)[1] * (float)(*in2)[4]))
-                        + (float)((float)(*in1)[2] * (float)(*in2)[7]);
-    (*out)[2] = (float)((float)((*in1)[0] * (float)(*in2)[2]) + (float)((float)(*in1)[1] * (float)(*in2)[5]))
-                        + (float)((float)(*in1)[2] * (float)(*in2)[8]);
-    (*out)[3] = (float)((float)((float)(*in1)[3] * (*in2)[0]) + (float)((float)(*in1)[4] * (float)(*in2)[3]))
-                        + (float)((float)(*in1)[5] * (float)(*in2)[6]);
-    (*out)[4] = (float)((float)((float)(*in1)[3] * (float)(*in2)[1]) + (float)((float)(*in1)[4] * (float)(*in2)[4]))
-                        + (float)((float)(*in1)[5] * (float)(*in2)[7]);
-    (*out)[5] = (float)((float)((float)(*in1)[3] * (float)(*in2)[2]) + (float)((float)(*in1)[4] * (float)(*in2)[5]))
-                        + (float)((float)(*in1)[5] * (float)(*in2)[8]);
-    (*out)[6] = (float)((float)((float)(*in1)[6] * (*in2)[0]) + (float)((float)(*in1)[7] * (float)(*in2)[3]))
-                        + (float)((float)(*in1)[8] * (float)(*in2)[6]);
-    (*out)[7] = (float)((float)((float)(*in1)[6] * (float)(*in2)[1]) + (float)((float)(*in1)[7] * (float)(*in2)[4]))
-                        + (float)((float)(*in1)[8] * (float)(*in2)[7]);
-    (*out)[8] = (float)((float)((float)(*in1)[6] * (float)(*in2)[2]) + (float)((float)(*in1)[7] * (float)(*in2)[5]))
-                        + (float)((float)(*in1)[8] * (float)(*in2)[8]);
+    BO1_MATH_ELEMENT(out, 0) = (float)((float)(BO1_MATH_ELEMENT(in1, 0) * BO1_MATH_ELEMENT(in2, 0)) + (float)((float)BO1_MATH_ELEMENT(in1, 1) * (float)BO1_MATH_ELEMENT(in2, 3)))
+                        + (float)((float)BO1_MATH_ELEMENT(in1, 2) * (float)BO1_MATH_ELEMENT(in2, 6));
+    BO1_MATH_ELEMENT(out, 1) = (float)((float)(BO1_MATH_ELEMENT(in1, 0) * (float)BO1_MATH_ELEMENT(in2, 1)) + (float)((float)BO1_MATH_ELEMENT(in1, 1) * (float)BO1_MATH_ELEMENT(in2, 4)))
+                        + (float)((float)BO1_MATH_ELEMENT(in1, 2) * (float)BO1_MATH_ELEMENT(in2, 7));
+    BO1_MATH_ELEMENT(out, 2) = (float)((float)(BO1_MATH_ELEMENT(in1, 0) * (float)BO1_MATH_ELEMENT(in2, 2)) + (float)((float)BO1_MATH_ELEMENT(in1, 1) * (float)BO1_MATH_ELEMENT(in2, 5)))
+                        + (float)((float)BO1_MATH_ELEMENT(in1, 2) * (float)BO1_MATH_ELEMENT(in2, 8));
+    BO1_MATH_ELEMENT(out, 3) = (float)((float)((float)BO1_MATH_ELEMENT(in1, 3) * BO1_MATH_ELEMENT(in2, 0)) + (float)((float)BO1_MATH_ELEMENT(in1, 4) * (float)BO1_MATH_ELEMENT(in2, 3)))
+                        + (float)((float)BO1_MATH_ELEMENT(in1, 5) * (float)BO1_MATH_ELEMENT(in2, 6));
+    BO1_MATH_ELEMENT(out, 4) = (float)((float)((float)BO1_MATH_ELEMENT(in1, 3) * (float)BO1_MATH_ELEMENT(in2, 1)) + (float)((float)BO1_MATH_ELEMENT(in1, 4) * (float)BO1_MATH_ELEMENT(in2, 4)))
+                        + (float)((float)BO1_MATH_ELEMENT(in1, 5) * (float)BO1_MATH_ELEMENT(in2, 7));
+    BO1_MATH_ELEMENT(out, 5) = (float)((float)((float)BO1_MATH_ELEMENT(in1, 3) * (float)BO1_MATH_ELEMENT(in2, 2)) + (float)((float)BO1_MATH_ELEMENT(in1, 4) * (float)BO1_MATH_ELEMENT(in2, 5)))
+                        + (float)((float)BO1_MATH_ELEMENT(in1, 5) * (float)BO1_MATH_ELEMENT(in2, 8));
+    BO1_MATH_ELEMENT(out, 6) = (float)((float)((float)BO1_MATH_ELEMENT(in1, 6) * BO1_MATH_ELEMENT(in2, 0)) + (float)((float)BO1_MATH_ELEMENT(in1, 7) * (float)BO1_MATH_ELEMENT(in2, 3)))
+                        + (float)((float)BO1_MATH_ELEMENT(in1, 8) * (float)BO1_MATH_ELEMENT(in2, 6));
+    BO1_MATH_ELEMENT(out, 7) = (float)((float)((float)BO1_MATH_ELEMENT(in1, 6) * (float)BO1_MATH_ELEMENT(in2, 1)) + (float)((float)BO1_MATH_ELEMENT(in1, 7) * (float)BO1_MATH_ELEMENT(in2, 4)))
+                        + (float)((float)BO1_MATH_ELEMENT(in1, 8) * (float)BO1_MATH_ELEMENT(in2, 7));
+    BO1_MATH_ELEMENT(out, 8) = (float)((float)((float)BO1_MATH_ELEMENT(in1, 6) * (float)BO1_MATH_ELEMENT(in2, 2)) + (float)((float)BO1_MATH_ELEMENT(in1, 7) * (float)BO1_MATH_ELEMENT(in2, 5)))
+                        + (float)((float)BO1_MATH_ELEMENT(in1, 8) * (float)BO1_MATH_ELEMENT(in2, 8));
 }
 
 void __cdecl MatrixVecMultiply(const float (*mulMat)[3], const float *mulVec, float *solution)
 {
-    *solution = (float)((float)((*mulMat)[0] * *mulVec) + (float)((float)(*mulMat)[1] * mulVec[1]))
-                        + (float)((float)(*mulMat)[2] * mulVec[2]);
-    solution[1] = (float)((float)((float)(*mulMat)[3] * *mulVec) + (float)((float)(*mulMat)[4] * mulVec[1]))
-                            + (float)((float)(*mulMat)[5] * mulVec[2]);
-    solution[2] = (float)((float)((float)(*mulMat)[6] * *mulVec) + (float)((float)(*mulMat)[7] * mulVec[1]))
-                            + (float)((float)(*mulMat)[8] * mulVec[2]);
+    *solution = (float)((float)(BO1_MATH_ELEMENT(mulMat, 0) * *mulVec) + (float)((float)BO1_MATH_ELEMENT(mulMat, 1) * mulVec[1]))
+                        + (float)((float)BO1_MATH_ELEMENT(mulMat, 2) * mulVec[2]);
+    solution[1] = (float)((float)((float)BO1_MATH_ELEMENT(mulMat, 3) * *mulVec) + (float)((float)BO1_MATH_ELEMENT(mulMat, 4) * mulVec[1]))
+                            + (float)((float)BO1_MATH_ELEMENT(mulMat, 5) * mulVec[2]);
+    solution[2] = (float)((float)((float)BO1_MATH_ELEMENT(mulMat, 6) * *mulVec) + (float)((float)BO1_MATH_ELEMENT(mulMat, 7) * mulVec[1]))
+                            + (float)((float)BO1_MATH_ELEMENT(mulMat, 8) * mulVec[2]);
 }
 
 void __cdecl MatrixVecMultiply(const float (*mulMat)[4], const float *mulVec, float *solution)
 {
-    *solution = (float)((float)((float)((*mulMat)[0] * *mulVec) + (float)((float)(*mulMat)[1] * mulVec[1]))
-                                        + (float)((float)(*mulMat)[2] * mulVec[2]))
-                        + (float)((float)(*mulMat)[3] * mulVec[3]);
-    solution[1] = (float)((float)((float)((float)(*mulMat)[4] * *mulVec) + (float)((float)(*mulMat)[5] * mulVec[1]))
-                                            + (float)((float)(*mulMat)[6] * mulVec[2]))
-                            + (float)((float)(*mulMat)[7] * mulVec[3]);
-    solution[2] = (float)((float)((float)((float)(*mulMat)[8] * *mulVec) + (float)((float)(*mulMat)[9] * mulVec[1]))
-                                            + (float)((float)(*mulMat)[10] * mulVec[2]))
-                            + (float)((float)(*mulMat)[11] * mulVec[3]);
-    solution[3] = (float)((float)((float)((float)(*mulMat)[12] * *mulVec) + (float)((float)(*mulMat)[13] * mulVec[1]))
-                                            + (float)((float)(*mulMat)[14] * mulVec[2]))
-                            + (float)((float)(*mulMat)[15] * mulVec[3]);
+    *solution = (float)((float)((float)(BO1_MATH_ELEMENT(mulMat, 0) * *mulVec) + (float)((float)BO1_MATH_ELEMENT(mulMat, 1) * mulVec[1]))
+                                        + (float)((float)BO1_MATH_ELEMENT(mulMat, 2) * mulVec[2]))
+                        + (float)((float)BO1_MATH_ELEMENT(mulMat, 3) * mulVec[3]);
+    solution[1] = (float)((float)((float)((float)BO1_MATH_ELEMENT(mulMat, 4) * *mulVec) + (float)((float)BO1_MATH_ELEMENT(mulMat, 5) * mulVec[1]))
+                                            + (float)((float)BO1_MATH_ELEMENT(mulMat, 6) * mulVec[2]))
+                            + (float)((float)BO1_MATH_ELEMENT(mulMat, 7) * mulVec[3]);
+    solution[2] = (float)((float)((float)((float)BO1_MATH_ELEMENT(mulMat, 8) * *mulVec) + (float)((float)BO1_MATH_ELEMENT(mulMat, 9) * mulVec[1]))
+                                            + (float)((float)BO1_MATH_ELEMENT(mulMat, 10) * mulVec[2]))
+                            + (float)((float)BO1_MATH_ELEMENT(mulMat, 11) * mulVec[3]);
+    solution[3] = (float)((float)((float)((float)BO1_MATH_ELEMENT(mulMat, 12) * *mulVec) + (float)((float)BO1_MATH_ELEMENT(mulMat, 13) * mulVec[1]))
+                                            + (float)((float)BO1_MATH_ELEMENT(mulMat, 14) * mulVec[2]))
+                            + (float)((float)BO1_MATH_ELEMENT(mulMat, 15) * mulVec[3]);
 }
 
 void __cdecl MatrixVecMultiplyProject(const float (*mulMat)[4], const float *mulVec, float *solution)
@@ -1068,31 +1084,31 @@ void __cdecl MatrixMultiplyEquals(const float (*in)[3], float (*out)[3])
     float temp_16; // [esp+18h] [ebp-8h]
     float temp_20; // [esp+1Ch] [ebp-4h]
 
-    temp_0 = (float)((float)((*in)[0] * (*out)[0]) + (float)((float)(*in)[1] * (*out)[3]))
-                                    + (float)((float)(*in)[2] * (*out)[6]);
-    temp_4 = (float)((float)((*in)[0] * (*out)[1]) + (float)((float)(*in)[1] * (*out)[4]))
-                                                + (float)((float)(*in)[2] * (*out)[7]);
-    temp_8 = (float)((float)((*in)[0] * (*out)[2]) + (float)((float)(*in)[1] * (*out)[5]))
-                 + (float)((float)(*in)[2] * (*out)[8]);
-    temp_12 = (float)((float)((float)(*in)[3] * (*out)[0]) + (float)((float)(*in)[4] * (*out)[3]))
-                    + (float)((float)(*in)[5] * (*out)[6]);
-    temp_16 = (float)((float)((float)(*in)[3] * (*out)[1]) + (float)((float)(*in)[4] * (*out)[4]))
-                    + (float)((float)(*in)[5] * (*out)[7]);
-    temp_20 = (float)((float)((float)(*in)[3] * (*out)[2]) + (float)((float)(*in)[4] * (*out)[5]))
-                    + (float)((float)(*in)[5] * (*out)[8]);
-    (*out)[6] = (float)((float)((float)(*in)[6] * (*out)[0]) + (float)((float)(*in)[7] * (*out)[3]))
-                        + (float)((float)(*in)[8] * (*out)[6]);
-    (*out)[7] = (float)((float)((float)(*in)[6] * (*out)[1]) + (float)((float)(*in)[7] * (*out)[4]))
-                        + (float)((float)(*in)[8] * (*out)[7]);
-    (*out)[8] = (float)((float)((float)(*in)[6] * (*out)[2]) + (float)((float)(*in)[7] * (*out)[5]))
-                        + (float)((float)(*in)[8] * (*out)[8]);
-    //*(_QWORD *)&(*out)[0] = temp;
-    (*out)[0] = temp_0;
-    (*out)[1] = temp_4;
-    (*out)[2] = temp_8;
-    (*out)[3] = temp_12;
-    (*out)[4] = temp_16;
-    (*out)[5] = temp_20;
+    temp_0 = (float)((float)(BO1_MATH_ELEMENT(in, 0) * BO1_MATH_ELEMENT(out, 0)) + (float)((float)BO1_MATH_ELEMENT(in, 1) * BO1_MATH_ELEMENT(out, 3)))
+                                    + (float)((float)BO1_MATH_ELEMENT(in, 2) * BO1_MATH_ELEMENT(out, 6));
+    temp_4 = (float)((float)(BO1_MATH_ELEMENT(in, 0) * BO1_MATH_ELEMENT(out, 1)) + (float)((float)BO1_MATH_ELEMENT(in, 1) * BO1_MATH_ELEMENT(out, 4)))
+                                                + (float)((float)BO1_MATH_ELEMENT(in, 2) * BO1_MATH_ELEMENT(out, 7));
+    temp_8 = (float)((float)(BO1_MATH_ELEMENT(in, 0) * BO1_MATH_ELEMENT(out, 2)) + (float)((float)BO1_MATH_ELEMENT(in, 1) * BO1_MATH_ELEMENT(out, 5)))
+                 + (float)((float)BO1_MATH_ELEMENT(in, 2) * BO1_MATH_ELEMENT(out, 8));
+    temp_12 = (float)((float)((float)BO1_MATH_ELEMENT(in, 3) * BO1_MATH_ELEMENT(out, 0)) + (float)((float)BO1_MATH_ELEMENT(in, 4) * BO1_MATH_ELEMENT(out, 3)))
+                    + (float)((float)BO1_MATH_ELEMENT(in, 5) * BO1_MATH_ELEMENT(out, 6));
+    temp_16 = (float)((float)((float)BO1_MATH_ELEMENT(in, 3) * BO1_MATH_ELEMENT(out, 1)) + (float)((float)BO1_MATH_ELEMENT(in, 4) * BO1_MATH_ELEMENT(out, 4)))
+                    + (float)((float)BO1_MATH_ELEMENT(in, 5) * BO1_MATH_ELEMENT(out, 7));
+    temp_20 = (float)((float)((float)BO1_MATH_ELEMENT(in, 3) * BO1_MATH_ELEMENT(out, 2)) + (float)((float)BO1_MATH_ELEMENT(in, 4) * BO1_MATH_ELEMENT(out, 5)))
+                    + (float)((float)BO1_MATH_ELEMENT(in, 5) * BO1_MATH_ELEMENT(out, 8));
+    BO1_MATH_ELEMENT(out, 6) = (float)((float)((float)BO1_MATH_ELEMENT(in, 6) * BO1_MATH_ELEMENT(out, 0)) + (float)((float)BO1_MATH_ELEMENT(in, 7) * BO1_MATH_ELEMENT(out, 3)))
+                        + (float)((float)BO1_MATH_ELEMENT(in, 8) * BO1_MATH_ELEMENT(out, 6));
+    BO1_MATH_ELEMENT(out, 7) = (float)((float)((float)BO1_MATH_ELEMENT(in, 6) * BO1_MATH_ELEMENT(out, 1)) + (float)((float)BO1_MATH_ELEMENT(in, 7) * BO1_MATH_ELEMENT(out, 4)))
+                        + (float)((float)BO1_MATH_ELEMENT(in, 8) * BO1_MATH_ELEMENT(out, 7));
+    BO1_MATH_ELEMENT(out, 8) = (float)((float)((float)BO1_MATH_ELEMENT(in, 6) * BO1_MATH_ELEMENT(out, 2)) + (float)((float)BO1_MATH_ELEMENT(in, 7) * BO1_MATH_ELEMENT(out, 5)))
+                        + (float)((float)BO1_MATH_ELEMENT(in, 8) * BO1_MATH_ELEMENT(out, 8));
+    //*(_QWORD *)&BO1_MATH_ELEMENT(out, 0) = temp;
+    BO1_MATH_ELEMENT(out, 0) = temp_0;
+    BO1_MATH_ELEMENT(out, 1) = temp_4;
+    BO1_MATH_ELEMENT(out, 2) = temp_8;
+    BO1_MATH_ELEMENT(out, 3) = temp_12;
+    BO1_MATH_ELEMENT(out, 4) = temp_16;
+    BO1_MATH_ELEMENT(out, 5) = temp_20;
 }
 
 void __cdecl MatrixMultiply43(const float (*in1)[3], const float (*in2)[3], float (*out)[3])
@@ -1107,35 +1123,35 @@ void __cdecl MatrixMultiply43(const float (*in1)[3], const float (*in2)[3], floa
     {
         __debugbreak();
     }
-    (*out)[0] = (float)((float)((*in1)[0] * (*in2)[0]) + (float)((float)(*in1)[1] * (float)(*in2)[3]))
-                        + (float)((float)(*in1)[2] * (float)(*in2)[6]);
-    (*out)[3] = (float)((float)((float)(*in1)[3] * (*in2)[0]) + (float)((float)(*in1)[4] * (float)(*in2)[3]))
-                        + (float)((float)(*in1)[5] * (float)(*in2)[6]);
-    (*out)[6] = (float)((float)((float)(*in1)[6] * (*in2)[0]) + (float)((float)(*in1)[7] * (float)(*in2)[3]))
-                        + (float)((float)(*in1)[8] * (float)(*in2)[6]);
-    (*out)[1] = (float)((float)((*in1)[0] * (float)(*in2)[1]) + (float)((float)(*in1)[1] * (float)(*in2)[4]))
-                        + (float)((float)(*in1)[2] * (float)(*in2)[7]);
-    (*out)[4] = (float)((float)((float)(*in1)[3] * (float)(*in2)[1]) + (float)((float)(*in1)[4] * (float)(*in2)[4]))
-                        + (float)((float)(*in1)[5] * (float)(*in2)[7]);
-    (*out)[7] = (float)((float)((float)(*in1)[6] * (float)(*in2)[1]) + (float)((float)(*in1)[7] * (float)(*in2)[4]))
-                        + (float)((float)(*in1)[8] * (float)(*in2)[7]);
-    (*out)[2] = (float)((float)((*in1)[0] * (float)(*in2)[2]) + (float)((float)(*in1)[1] * (float)(*in2)[5]))
-                        + (float)((float)(*in1)[2] * (float)(*in2)[8]);
-    (*out)[5] = (float)((float)((float)(*in1)[3] * (float)(*in2)[2]) + (float)((float)(*in1)[4] * (float)(*in2)[5]))
-                        + (float)((float)(*in1)[5] * (float)(*in2)[8]);
-    (*out)[8] = (float)((float)((float)(*in1)[6] * (float)(*in2)[2]) + (float)((float)(*in1)[7] * (float)(*in2)[5]))
-                        + (float)((float)(*in1)[8] * (float)(*in2)[8]);
-    (*out)[9] = (float)((float)((float)((float)(*in1)[9] * (*in2)[0]) + (float)((float)(*in1)[10] * (float)(*in2)[3]))
-                                        + (float)((float)(*in1)[11] * (float)(*in2)[6]))
-                        + (float)(*in2)[9];
-    (*out)[10] = (float)((float)((float)((float)(*in1)[9] * (float)(*in2)[1])
-                                                         + (float)((float)(*in1)[10] * (float)(*in2)[4]))
-                                         + (float)((float)(*in1)[11] * (float)(*in2)[7]))
-                         + (float)(*in2)[10];
-    (*out)[11] = (float)((float)((float)((float)(*in1)[9] * (float)(*in2)[2])
-                                                         + (float)((float)(*in1)[10] * (float)(*in2)[5]))
-                                         + (float)((float)(*in1)[11] * (float)(*in2)[8]))
-                         + (float)(*in2)[11];
+    BO1_MATH_ELEMENT(out, 0) = (float)((float)(BO1_MATH_ELEMENT(in1, 0) * BO1_MATH_ELEMENT(in2, 0)) + (float)((float)BO1_MATH_ELEMENT(in1, 1) * (float)BO1_MATH_ELEMENT(in2, 3)))
+                        + (float)((float)BO1_MATH_ELEMENT(in1, 2) * (float)BO1_MATH_ELEMENT(in2, 6));
+    BO1_MATH_ELEMENT(out, 3) = (float)((float)((float)BO1_MATH_ELEMENT(in1, 3) * BO1_MATH_ELEMENT(in2, 0)) + (float)((float)BO1_MATH_ELEMENT(in1, 4) * (float)BO1_MATH_ELEMENT(in2, 3)))
+                        + (float)((float)BO1_MATH_ELEMENT(in1, 5) * (float)BO1_MATH_ELEMENT(in2, 6));
+    BO1_MATH_ELEMENT(out, 6) = (float)((float)((float)BO1_MATH_ELEMENT(in1, 6) * BO1_MATH_ELEMENT(in2, 0)) + (float)((float)BO1_MATH_ELEMENT(in1, 7) * (float)BO1_MATH_ELEMENT(in2, 3)))
+                        + (float)((float)BO1_MATH_ELEMENT(in1, 8) * (float)BO1_MATH_ELEMENT(in2, 6));
+    BO1_MATH_ELEMENT(out, 1) = (float)((float)(BO1_MATH_ELEMENT(in1, 0) * (float)BO1_MATH_ELEMENT(in2, 1)) + (float)((float)BO1_MATH_ELEMENT(in1, 1) * (float)BO1_MATH_ELEMENT(in2, 4)))
+                        + (float)((float)BO1_MATH_ELEMENT(in1, 2) * (float)BO1_MATH_ELEMENT(in2, 7));
+    BO1_MATH_ELEMENT(out, 4) = (float)((float)((float)BO1_MATH_ELEMENT(in1, 3) * (float)BO1_MATH_ELEMENT(in2, 1)) + (float)((float)BO1_MATH_ELEMENT(in1, 4) * (float)BO1_MATH_ELEMENT(in2, 4)))
+                        + (float)((float)BO1_MATH_ELEMENT(in1, 5) * (float)BO1_MATH_ELEMENT(in2, 7));
+    BO1_MATH_ELEMENT(out, 7) = (float)((float)((float)BO1_MATH_ELEMENT(in1, 6) * (float)BO1_MATH_ELEMENT(in2, 1)) + (float)((float)BO1_MATH_ELEMENT(in1, 7) * (float)BO1_MATH_ELEMENT(in2, 4)))
+                        + (float)((float)BO1_MATH_ELEMENT(in1, 8) * (float)BO1_MATH_ELEMENT(in2, 7));
+    BO1_MATH_ELEMENT(out, 2) = (float)((float)(BO1_MATH_ELEMENT(in1, 0) * (float)BO1_MATH_ELEMENT(in2, 2)) + (float)((float)BO1_MATH_ELEMENT(in1, 1) * (float)BO1_MATH_ELEMENT(in2, 5)))
+                        + (float)((float)BO1_MATH_ELEMENT(in1, 2) * (float)BO1_MATH_ELEMENT(in2, 8));
+    BO1_MATH_ELEMENT(out, 5) = (float)((float)((float)BO1_MATH_ELEMENT(in1, 3) * (float)BO1_MATH_ELEMENT(in2, 2)) + (float)((float)BO1_MATH_ELEMENT(in1, 4) * (float)BO1_MATH_ELEMENT(in2, 5)))
+                        + (float)((float)BO1_MATH_ELEMENT(in1, 5) * (float)BO1_MATH_ELEMENT(in2, 8));
+    BO1_MATH_ELEMENT(out, 8) = (float)((float)((float)BO1_MATH_ELEMENT(in1, 6) * (float)BO1_MATH_ELEMENT(in2, 2)) + (float)((float)BO1_MATH_ELEMENT(in1, 7) * (float)BO1_MATH_ELEMENT(in2, 5)))
+                        + (float)((float)BO1_MATH_ELEMENT(in1, 8) * (float)BO1_MATH_ELEMENT(in2, 8));
+    BO1_MATH_ELEMENT(out, 9) = (float)((float)((float)((float)BO1_MATH_ELEMENT(in1, 9) * BO1_MATH_ELEMENT(in2, 0)) + (float)((float)BO1_MATH_ELEMENT(in1, 10) * (float)BO1_MATH_ELEMENT(in2, 3)))
+                                        + (float)((float)BO1_MATH_ELEMENT(in1, 11) * (float)BO1_MATH_ELEMENT(in2, 6)))
+                        + (float)BO1_MATH_ELEMENT(in2, 9);
+    BO1_MATH_ELEMENT(out, 10) = (float)((float)((float)((float)BO1_MATH_ELEMENT(in1, 9) * (float)BO1_MATH_ELEMENT(in2, 1))
+                                                         + (float)((float)BO1_MATH_ELEMENT(in1, 10) * (float)BO1_MATH_ELEMENT(in2, 4)))
+                                         + (float)((float)BO1_MATH_ELEMENT(in1, 11) * (float)BO1_MATH_ELEMENT(in2, 7)))
+                         + (float)BO1_MATH_ELEMENT(in2, 10);
+    BO1_MATH_ELEMENT(out, 11) = (float)((float)((float)((float)BO1_MATH_ELEMENT(in1, 9) * (float)BO1_MATH_ELEMENT(in2, 2))
+                                                         + (float)((float)BO1_MATH_ELEMENT(in1, 10) * (float)BO1_MATH_ELEMENT(in2, 5)))
+                                         + (float)((float)BO1_MATH_ELEMENT(in1, 11) * (float)BO1_MATH_ELEMENT(in2, 8)))
+                         + (float)BO1_MATH_ELEMENT(in2, 11);
 }
 
 void __cdecl MatrixMultiply44(const float (*in1)[4], const float (*in2)[4], float (*out)[4])
@@ -1150,59 +1166,59 @@ void __cdecl MatrixMultiply44(const float (*in1)[4], const float (*in2)[4], floa
     {
         __debugbreak();
     }
-    (*out)[0] = (float)((float)((float)((*in1)[0] * (*in2)[0]) + (float)((float)(*in1)[1] * (float)(*in2)[4]))
-                                        + (float)((float)(*in1)[2] * (float)(*in2)[8]))
-                        + (float)((float)(*in1)[3] * (float)(*in2)[12]);
-    (*out)[1] = (float)((float)((float)((*in1)[0] * (float)(*in2)[1]) + (float)((float)(*in1)[1] * (float)(*in2)[5]))
-                                        + (float)((float)(*in1)[2] * (float)(*in2)[9]))
-                        + (float)((float)(*in1)[3] * (float)(*in2)[13]);
-    (*out)[2] = (float)((float)((float)((*in1)[0] * (float)(*in2)[2]) + (float)((float)(*in1)[1] * (float)(*in2)[6]))
-                                        + (float)((float)(*in1)[2] * (float)(*in2)[10]))
-                        + (float)((float)(*in1)[3] * (float)(*in2)[14]);
-    (*out)[3] = (float)((float)((float)((*in1)[0] * (float)(*in2)[3]) + (float)((float)(*in1)[1] * (float)(*in2)[7]))
-                                        + (float)((float)(*in1)[2] * (float)(*in2)[11]))
-                        + (float)((float)(*in1)[3] * (float)(*in2)[15]);
-    (*out)[4] = (float)((float)((float)((float)(*in1)[4] * (*in2)[0]) + (float)((float)(*in1)[5] * (float)(*in2)[4]))
-                                        + (float)((float)(*in1)[6] * (float)(*in2)[8]))
-                        + (float)((float)(*in1)[7] * (float)(*in2)[12]);
-    (*out)[5] = (float)((float)((float)((float)(*in1)[4] * (float)(*in2)[1]) + (float)((float)(*in1)[5] * (float)(*in2)[5]))
-                                        + (float)((float)(*in1)[6] * (float)(*in2)[9]))
-                        + (float)((float)(*in1)[7] * (float)(*in2)[13]);
-    (*out)[6] = (float)((float)((float)((float)(*in1)[4] * (float)(*in2)[2]) + (float)((float)(*in1)[5] * (float)(*in2)[6]))
-                                        + (float)((float)(*in1)[6] * (float)(*in2)[10]))
-                        + (float)((float)(*in1)[7] * (float)(*in2)[14]);
-    (*out)[7] = (float)((float)((float)((float)(*in1)[4] * (float)(*in2)[3]) + (float)((float)(*in1)[5] * (float)(*in2)[7]))
-                                        + (float)((float)(*in1)[6] * (float)(*in2)[11]))
-                        + (float)((float)(*in1)[7] * (float)(*in2)[15]);
-    (*out)[8] = (float)((float)((float)((float)(*in1)[8] * (*in2)[0]) + (float)((float)(*in1)[9] * (float)(*in2)[4]))
-                                        + (float)((float)(*in1)[10] * (float)(*in2)[8]))
-                        + (float)((float)(*in1)[11] * (float)(*in2)[12]);
-    (*out)[9] = (float)((float)((float)((float)(*in1)[8] * (float)(*in2)[1]) + (float)((float)(*in1)[9] * (float)(*in2)[5]))
-                                        + (float)((float)(*in1)[10] * (float)(*in2)[9]))
-                        + (float)((float)(*in1)[11] * (float)(*in2)[13]);
-    (*out)[10] = (float)((float)((float)((float)(*in1)[8] * (float)(*in2)[2])
-                                                         + (float)((float)(*in1)[9] * (float)(*in2)[6]))
-                                         + (float)((float)(*in1)[10] * (float)(*in2)[10]))
-                         + (float)((float)(*in1)[11] * (float)(*in2)[14]);
-    (*out)[11] = (float)((float)((float)((float)(*in1)[8] * (float)(*in2)[3])
-                                                         + (float)((float)(*in1)[9] * (float)(*in2)[7]))
-                                         + (float)((float)(*in1)[10] * (float)(*in2)[11]))
-                         + (float)((float)(*in1)[11] * (float)(*in2)[15]);
-    (*out)[12] = (float)((float)((float)((float)(*in1)[12] * (*in2)[0]) + (float)((float)(*in1)[13] * (float)(*in2)[4]))
-                                         + (float)((float)(*in1)[14] * (float)(*in2)[8]))
-                         + (float)((float)(*in1)[15] * (float)(*in2)[12]);
-    (*out)[13] = (float)((float)((float)((float)(*in1)[12] * (float)(*in2)[1])
-                                                         + (float)((float)(*in1)[13] * (float)(*in2)[5]))
-                                         + (float)((float)(*in1)[14] * (float)(*in2)[9]))
-                         + (float)((float)(*in1)[15] * (float)(*in2)[13]);
-    (*out)[14] = (float)((float)((float)((float)(*in1)[12] * (float)(*in2)[2])
-                                                         + (float)((float)(*in1)[13] * (float)(*in2)[6]))
-                                         + (float)((float)(*in1)[14] * (float)(*in2)[10]))
-                         + (float)((float)(*in1)[15] * (float)(*in2)[14]);
-    (*out)[15] = (float)((float)((float)((float)(*in1)[12] * (float)(*in2)[3])
-                                                         + (float)((float)(*in1)[13] * (float)(*in2)[7]))
-                                         + (float)((float)(*in1)[14] * (float)(*in2)[11]))
-                         + (float)((float)(*in1)[15] * (float)(*in2)[15]);
+    BO1_MATH_ELEMENT(out, 0) = (float)((float)((float)(BO1_MATH_ELEMENT(in1, 0) * BO1_MATH_ELEMENT(in2, 0)) + (float)((float)BO1_MATH_ELEMENT(in1, 1) * (float)BO1_MATH_ELEMENT(in2, 4)))
+                                        + (float)((float)BO1_MATH_ELEMENT(in1, 2) * (float)BO1_MATH_ELEMENT(in2, 8)))
+                        + (float)((float)BO1_MATH_ELEMENT(in1, 3) * (float)BO1_MATH_ELEMENT(in2, 12));
+    BO1_MATH_ELEMENT(out, 1) = (float)((float)((float)(BO1_MATH_ELEMENT(in1, 0) * (float)BO1_MATH_ELEMENT(in2, 1)) + (float)((float)BO1_MATH_ELEMENT(in1, 1) * (float)BO1_MATH_ELEMENT(in2, 5)))
+                                        + (float)((float)BO1_MATH_ELEMENT(in1, 2) * (float)BO1_MATH_ELEMENT(in2, 9)))
+                        + (float)((float)BO1_MATH_ELEMENT(in1, 3) * (float)BO1_MATH_ELEMENT(in2, 13));
+    BO1_MATH_ELEMENT(out, 2) = (float)((float)((float)(BO1_MATH_ELEMENT(in1, 0) * (float)BO1_MATH_ELEMENT(in2, 2)) + (float)((float)BO1_MATH_ELEMENT(in1, 1) * (float)BO1_MATH_ELEMENT(in2, 6)))
+                                        + (float)((float)BO1_MATH_ELEMENT(in1, 2) * (float)BO1_MATH_ELEMENT(in2, 10)))
+                        + (float)((float)BO1_MATH_ELEMENT(in1, 3) * (float)BO1_MATH_ELEMENT(in2, 14));
+    BO1_MATH_ELEMENT(out, 3) = (float)((float)((float)(BO1_MATH_ELEMENT(in1, 0) * (float)BO1_MATH_ELEMENT(in2, 3)) + (float)((float)BO1_MATH_ELEMENT(in1, 1) * (float)BO1_MATH_ELEMENT(in2, 7)))
+                                        + (float)((float)BO1_MATH_ELEMENT(in1, 2) * (float)BO1_MATH_ELEMENT(in2, 11)))
+                        + (float)((float)BO1_MATH_ELEMENT(in1, 3) * (float)BO1_MATH_ELEMENT(in2, 15));
+    BO1_MATH_ELEMENT(out, 4) = (float)((float)((float)((float)BO1_MATH_ELEMENT(in1, 4) * BO1_MATH_ELEMENT(in2, 0)) + (float)((float)BO1_MATH_ELEMENT(in1, 5) * (float)BO1_MATH_ELEMENT(in2, 4)))
+                                        + (float)((float)BO1_MATH_ELEMENT(in1, 6) * (float)BO1_MATH_ELEMENT(in2, 8)))
+                        + (float)((float)BO1_MATH_ELEMENT(in1, 7) * (float)BO1_MATH_ELEMENT(in2, 12));
+    BO1_MATH_ELEMENT(out, 5) = (float)((float)((float)((float)BO1_MATH_ELEMENT(in1, 4) * (float)BO1_MATH_ELEMENT(in2, 1)) + (float)((float)BO1_MATH_ELEMENT(in1, 5) * (float)BO1_MATH_ELEMENT(in2, 5)))
+                                        + (float)((float)BO1_MATH_ELEMENT(in1, 6) * (float)BO1_MATH_ELEMENT(in2, 9)))
+                        + (float)((float)BO1_MATH_ELEMENT(in1, 7) * (float)BO1_MATH_ELEMENT(in2, 13));
+    BO1_MATH_ELEMENT(out, 6) = (float)((float)((float)((float)BO1_MATH_ELEMENT(in1, 4) * (float)BO1_MATH_ELEMENT(in2, 2)) + (float)((float)BO1_MATH_ELEMENT(in1, 5) * (float)BO1_MATH_ELEMENT(in2, 6)))
+                                        + (float)((float)BO1_MATH_ELEMENT(in1, 6) * (float)BO1_MATH_ELEMENT(in2, 10)))
+                        + (float)((float)BO1_MATH_ELEMENT(in1, 7) * (float)BO1_MATH_ELEMENT(in2, 14));
+    BO1_MATH_ELEMENT(out, 7) = (float)((float)((float)((float)BO1_MATH_ELEMENT(in1, 4) * (float)BO1_MATH_ELEMENT(in2, 3)) + (float)((float)BO1_MATH_ELEMENT(in1, 5) * (float)BO1_MATH_ELEMENT(in2, 7)))
+                                        + (float)((float)BO1_MATH_ELEMENT(in1, 6) * (float)BO1_MATH_ELEMENT(in2, 11)))
+                        + (float)((float)BO1_MATH_ELEMENT(in1, 7) * (float)BO1_MATH_ELEMENT(in2, 15));
+    BO1_MATH_ELEMENT(out, 8) = (float)((float)((float)((float)BO1_MATH_ELEMENT(in1, 8) * BO1_MATH_ELEMENT(in2, 0)) + (float)((float)BO1_MATH_ELEMENT(in1, 9) * (float)BO1_MATH_ELEMENT(in2, 4)))
+                                        + (float)((float)BO1_MATH_ELEMENT(in1, 10) * (float)BO1_MATH_ELEMENT(in2, 8)))
+                        + (float)((float)BO1_MATH_ELEMENT(in1, 11) * (float)BO1_MATH_ELEMENT(in2, 12));
+    BO1_MATH_ELEMENT(out, 9) = (float)((float)((float)((float)BO1_MATH_ELEMENT(in1, 8) * (float)BO1_MATH_ELEMENT(in2, 1)) + (float)((float)BO1_MATH_ELEMENT(in1, 9) * (float)BO1_MATH_ELEMENT(in2, 5)))
+                                        + (float)((float)BO1_MATH_ELEMENT(in1, 10) * (float)BO1_MATH_ELEMENT(in2, 9)))
+                        + (float)((float)BO1_MATH_ELEMENT(in1, 11) * (float)BO1_MATH_ELEMENT(in2, 13));
+    BO1_MATH_ELEMENT(out, 10) = (float)((float)((float)((float)BO1_MATH_ELEMENT(in1, 8) * (float)BO1_MATH_ELEMENT(in2, 2))
+                                                         + (float)((float)BO1_MATH_ELEMENT(in1, 9) * (float)BO1_MATH_ELEMENT(in2, 6)))
+                                         + (float)((float)BO1_MATH_ELEMENT(in1, 10) * (float)BO1_MATH_ELEMENT(in2, 10)))
+                         + (float)((float)BO1_MATH_ELEMENT(in1, 11) * (float)BO1_MATH_ELEMENT(in2, 14));
+    BO1_MATH_ELEMENT(out, 11) = (float)((float)((float)((float)BO1_MATH_ELEMENT(in1, 8) * (float)BO1_MATH_ELEMENT(in2, 3))
+                                                         + (float)((float)BO1_MATH_ELEMENT(in1, 9) * (float)BO1_MATH_ELEMENT(in2, 7)))
+                                         + (float)((float)BO1_MATH_ELEMENT(in1, 10) * (float)BO1_MATH_ELEMENT(in2, 11)))
+                         + (float)((float)BO1_MATH_ELEMENT(in1, 11) * (float)BO1_MATH_ELEMENT(in2, 15));
+    BO1_MATH_ELEMENT(out, 12) = (float)((float)((float)((float)BO1_MATH_ELEMENT(in1, 12) * BO1_MATH_ELEMENT(in2, 0)) + (float)((float)BO1_MATH_ELEMENT(in1, 13) * (float)BO1_MATH_ELEMENT(in2, 4)))
+                                         + (float)((float)BO1_MATH_ELEMENT(in1, 14) * (float)BO1_MATH_ELEMENT(in2, 8)))
+                         + (float)((float)BO1_MATH_ELEMENT(in1, 15) * (float)BO1_MATH_ELEMENT(in2, 12));
+    BO1_MATH_ELEMENT(out, 13) = (float)((float)((float)((float)BO1_MATH_ELEMENT(in1, 12) * (float)BO1_MATH_ELEMENT(in2, 1))
+                                                         + (float)((float)BO1_MATH_ELEMENT(in1, 13) * (float)BO1_MATH_ELEMENT(in2, 5)))
+                                         + (float)((float)BO1_MATH_ELEMENT(in1, 14) * (float)BO1_MATH_ELEMENT(in2, 9)))
+                         + (float)((float)BO1_MATH_ELEMENT(in1, 15) * (float)BO1_MATH_ELEMENT(in2, 13));
+    BO1_MATH_ELEMENT(out, 14) = (float)((float)((float)((float)BO1_MATH_ELEMENT(in1, 12) * (float)BO1_MATH_ELEMENT(in2, 2))
+                                                         + (float)((float)BO1_MATH_ELEMENT(in1, 13) * (float)BO1_MATH_ELEMENT(in2, 6)))
+                                         + (float)((float)BO1_MATH_ELEMENT(in1, 14) * (float)BO1_MATH_ELEMENT(in2, 10)))
+                         + (float)((float)BO1_MATH_ELEMENT(in1, 15) * (float)BO1_MATH_ELEMENT(in2, 14));
+    BO1_MATH_ELEMENT(out, 15) = (float)((float)((float)((float)BO1_MATH_ELEMENT(in1, 12) * (float)BO1_MATH_ELEMENT(in2, 3))
+                                                         + (float)((float)BO1_MATH_ELEMENT(in1, 13) * (float)BO1_MATH_ELEMENT(in2, 7)))
+                                         + (float)((float)BO1_MATH_ELEMENT(in1, 14) * (float)BO1_MATH_ELEMENT(in2, 11)))
+                         + (float)((float)BO1_MATH_ELEMENT(in1, 15) * (float)BO1_MATH_ELEMENT(in2, 15));
 }
 
 void __cdecl MatrixTranspose(const float (*in)[3], float (*out)[3])
@@ -1212,15 +1228,15 @@ void __cdecl MatrixTranspose(const float (*in)[3], float (*out)[3])
     {
         __debugbreak();
     }
-    (*out)[0] = (*in)[0];
-    (*out)[1] = (*in)[3];
-    (*out)[2] = (*in)[6];
-    (*out)[3] = (*in)[1];
-    (*out)[4] = (*in)[4];
-    (*out)[5] = (*in)[7];
-    (*out)[6] = (*in)[2];
-    (*out)[7] = (*in)[5];
-    (*out)[8] = (*in)[8];
+    BO1_MATH_ELEMENT(out, 0) = BO1_MATH_ELEMENT(in, 0);
+    BO1_MATH_ELEMENT(out, 1) = BO1_MATH_ELEMENT(in, 3);
+    BO1_MATH_ELEMENT(out, 2) = BO1_MATH_ELEMENT(in, 6);
+    BO1_MATH_ELEMENT(out, 3) = BO1_MATH_ELEMENT(in, 1);
+    BO1_MATH_ELEMENT(out, 4) = BO1_MATH_ELEMENT(in, 4);
+    BO1_MATH_ELEMENT(out, 5) = BO1_MATH_ELEMENT(in, 7);
+    BO1_MATH_ELEMENT(out, 6) = BO1_MATH_ELEMENT(in, 2);
+    BO1_MATH_ELEMENT(out, 7) = BO1_MATH_ELEMENT(in, 5);
+    BO1_MATH_ELEMENT(out, 8) = BO1_MATH_ELEMENT(in, 8);
 }
 
 void __cdecl MatrixTranspose44(const mat4x4 &in, mat4x4 &out)
@@ -1251,23 +1267,23 @@ void __cdecl MatrixInverse(const float (*in)[3], float (*out)[3])
     float deta; // [esp+0h] [ebp-4h]
 
     iassert(in != out);
-    det = (float)((float)((float)((float)((float)(*in)[8] * (float)(*in)[4]) - (float)((float)(*in)[7] * (float)(*in)[5]))
-                                            * (*in)[0])
-                            - (float)((float)((float)((float)(*in)[8] * (float)(*in)[1]) - (float)((float)(*in)[7] * (float)(*in)[2]))
-                                            * (float)(*in)[3]))
-            + (float)((float)((float)((float)(*in)[5] * (float)(*in)[1]) - (float)((float)(*in)[4] * (float)(*in)[2]))
-                            * (float)(*in)[6]);
+    det = (float)((float)((float)((float)((float)BO1_MATH_ELEMENT(in, 8) * (float)BO1_MATH_ELEMENT(in, 4)) - (float)((float)BO1_MATH_ELEMENT(in, 7) * (float)BO1_MATH_ELEMENT(in, 5)))
+                                            * BO1_MATH_ELEMENT(in, 0))
+                            - (float)((float)((float)((float)BO1_MATH_ELEMENT(in, 8) * (float)BO1_MATH_ELEMENT(in, 1)) - (float)((float)BO1_MATH_ELEMENT(in, 7) * (float)BO1_MATH_ELEMENT(in, 2)))
+                                            * (float)BO1_MATH_ELEMENT(in, 3)))
+            + (float)((float)((float)((float)BO1_MATH_ELEMENT(in, 5) * (float)BO1_MATH_ELEMENT(in, 1)) - (float)((float)BO1_MATH_ELEMENT(in, 4) * (float)BO1_MATH_ELEMENT(in, 2)))
+                            * (float)BO1_MATH_ELEMENT(in, 6));
     iassert(det);
     deta = 1.0 / det;
-    (*out)[0] = (float)((float)((float)(*in)[8] * (float)(*in)[4]) - (float)((float)(*in)[7] * (float)(*in)[5])) * deta;
-    (*out)[1] = -((float)((float)(*in)[8] * (float)(*in)[1]) - (float)((float)(*in)[7] * (float)(*in)[2])) * deta;
-    (*out)[2] = (float)((float)((float)(*in)[5] * (float)(*in)[1]) - (float)((float)(*in)[4] * (float)(*in)[2])) * deta;
-    (*out)[3] = -((float)((float)(*in)[8] * (float)(*in)[3]) - (float)((float)(*in)[6] * (float)(*in)[5])) * deta;
-    (*out)[4] = (float)((float)((float)(*in)[8] * (*in)[0]) - (float)((float)(*in)[6] * (float)(*in)[2])) * deta;
-    (*out)[5] = -((float)((float)(*in)[5] * (*in)[0]) - (float)((float)(*in)[3] * (float)(*in)[2])) * deta;
-    (*out)[6] = (float)((float)((float)(*in)[7] * (float)(*in)[3]) - (float)((float)(*in)[6] * (float)(*in)[4])) * deta;
-    (*out)[7] = -((float)((float)(*in)[7] * (*in)[0]) - (float)((float)(*in)[6] * (float)(*in)[1])) * deta;
-    (*out)[8] = (float)((float)((float)(*in)[4] * (*in)[0]) - (float)((float)(*in)[3] * (float)(*in)[1])) * deta;
+    BO1_MATH_ELEMENT(out, 0) = (float)((float)((float)BO1_MATH_ELEMENT(in, 8) * (float)BO1_MATH_ELEMENT(in, 4)) - (float)((float)BO1_MATH_ELEMENT(in, 7) * (float)BO1_MATH_ELEMENT(in, 5))) * deta;
+    BO1_MATH_ELEMENT(out, 1) = -((float)((float)BO1_MATH_ELEMENT(in, 8) * (float)BO1_MATH_ELEMENT(in, 1)) - (float)((float)BO1_MATH_ELEMENT(in, 7) * (float)BO1_MATH_ELEMENT(in, 2))) * deta;
+    BO1_MATH_ELEMENT(out, 2) = (float)((float)((float)BO1_MATH_ELEMENT(in, 5) * (float)BO1_MATH_ELEMENT(in, 1)) - (float)((float)BO1_MATH_ELEMENT(in, 4) * (float)BO1_MATH_ELEMENT(in, 2))) * deta;
+    BO1_MATH_ELEMENT(out, 3) = -((float)((float)BO1_MATH_ELEMENT(in, 8) * (float)BO1_MATH_ELEMENT(in, 3)) - (float)((float)BO1_MATH_ELEMENT(in, 6) * (float)BO1_MATH_ELEMENT(in, 5))) * deta;
+    BO1_MATH_ELEMENT(out, 4) = (float)((float)((float)BO1_MATH_ELEMENT(in, 8) * BO1_MATH_ELEMENT(in, 0)) - (float)((float)BO1_MATH_ELEMENT(in, 6) * (float)BO1_MATH_ELEMENT(in, 2))) * deta;
+    BO1_MATH_ELEMENT(out, 5) = -((float)((float)BO1_MATH_ELEMENT(in, 5) * BO1_MATH_ELEMENT(in, 0)) - (float)((float)BO1_MATH_ELEMENT(in, 3) * (float)BO1_MATH_ELEMENT(in, 2))) * deta;
+    BO1_MATH_ELEMENT(out, 6) = (float)((float)((float)BO1_MATH_ELEMENT(in, 7) * (float)BO1_MATH_ELEMENT(in, 3)) - (float)((float)BO1_MATH_ELEMENT(in, 6) * (float)BO1_MATH_ELEMENT(in, 4))) * deta;
+    BO1_MATH_ELEMENT(out, 7) = -((float)((float)BO1_MATH_ELEMENT(in, 7) * BO1_MATH_ELEMENT(in, 0)) - (float)((float)BO1_MATH_ELEMENT(in, 6) * (float)BO1_MATH_ELEMENT(in, 1))) * deta;
+    BO1_MATH_ELEMENT(out, 8) = (float)((float)((float)BO1_MATH_ELEMENT(in, 4) * BO1_MATH_ELEMENT(in, 0)) - (float)((float)BO1_MATH_ELEMENT(in, 3) * (float)BO1_MATH_ELEMENT(in, 1))) * deta;
 }
 
 void __cdecl MatrixInverseOrthogonal43(const float (*in)[3], float (*out)[3])
@@ -1275,10 +1291,10 @@ void __cdecl MatrixInverseOrthogonal43(const float (*in)[3], float (*out)[3])
     float origin[3]; // [esp+4h] [ebp-Ch] BYREF
 
     MatrixTranspose(in, out);
-    origin[0] = 0.0 - (float)(*in)[9];
-    origin[1] = 0.0 - (float)(*in)[10];
-    origin[2] = 0.0 - (float)(*in)[11];
-    MatrixTransformVector(origin, out, &(*out)[9]);
+    origin[0] = 0.0 - (float)BO1_MATH_ELEMENT(in, 9);
+    origin[1] = 0.0 - (float)BO1_MATH_ELEMENT(in, 10);
+    origin[2] = 0.0 - (float)BO1_MATH_ELEMENT(in, 11);
+    MatrixTransformVector(origin, out, &BO1_MATH_ELEMENT(out, 9));
 }
 
 void __cdecl MatrixInverse44(const mat4x4 &mat, mat4x4 &dst)
@@ -1360,7 +1376,11 @@ void __cdecl MatrixInverse44(const mat4x4 &mat, mat4x4 &dst)
 
         det = 1.0 / det;
         for (i = 0; i < 16; ++i)
+#if defined(__ANDROID__)
+                BO1_MATH_ELEMENT(dst, i) = BO1_MATH_ELEMENT(dst, i) * det;
+#else
                 (dst)[0][i] = (dst)[0][i] * det;
+#endif
 }
 
 void __cdecl MatrixTransformVector44(const float *vec, const float (*mat)[4], float *out)
@@ -1370,18 +1390,18 @@ void __cdecl MatrixTransformVector44(const float *vec, const float (*mat)[4], fl
     {
         __debugbreak();
     }
-    *out = (float)((float)((float)(*vec * (*mat)[0]) + (float)(vec[1] * (float)(*mat)[4]))
-                             + (float)(vec[2] * (float)(*mat)[8]))
-             + (float)(vec[3] * (float)(*mat)[12]);
-    out[1] = (float)((float)((float)(*vec * (float)(*mat)[1]) + (float)(vec[1] * (float)(*mat)[5]))
-                                 + (float)(vec[2] * (float)(*mat)[9]))
-                 + (float)(vec[3] * (float)(*mat)[13]);
-    out[2] = (float)((float)((float)(*vec * (float)(*mat)[2]) + (float)(vec[1] * (float)(*mat)[6]))
-                                 + (float)(vec[2] * (float)(*mat)[10]))
-                 + (float)(vec[3] * (float)(*mat)[14]);
-    out[3] = (float)((float)((float)(*vec * (float)(*mat)[3]) + (float)(vec[1] * (float)(*mat)[7]))
-                                 + (float)(vec[2] * (float)(*mat)[11]))
-                 + (float)(vec[3] * (float)(*mat)[15]);
+    *out = (float)((float)((float)(*vec * BO1_MATH_ELEMENT(mat, 0)) + (float)(vec[1] * (float)BO1_MATH_ELEMENT(mat, 4)))
+                             + (float)(vec[2] * (float)BO1_MATH_ELEMENT(mat, 8)))
+             + (float)(vec[3] * (float)BO1_MATH_ELEMENT(mat, 12));
+    out[1] = (float)((float)((float)(*vec * (float)BO1_MATH_ELEMENT(mat, 1)) + (float)(vec[1] * (float)BO1_MATH_ELEMENT(mat, 5)))
+                                 + (float)(vec[2] * (float)BO1_MATH_ELEMENT(mat, 9)))
+                 + (float)(vec[3] * (float)BO1_MATH_ELEMENT(mat, 13));
+    out[2] = (float)((float)((float)(*vec * (float)BO1_MATH_ELEMENT(mat, 2)) + (float)(vec[1] * (float)BO1_MATH_ELEMENT(mat, 6)))
+                                 + (float)(vec[2] * (float)BO1_MATH_ELEMENT(mat, 10)))
+                 + (float)(vec[3] * (float)BO1_MATH_ELEMENT(mat, 14));
+    out[3] = (float)((float)((float)(*vec * (float)BO1_MATH_ELEMENT(mat, 3)) + (float)(vec[1] * (float)BO1_MATH_ELEMENT(mat, 7)))
+                                 + (float)(vec[2] * (float)BO1_MATH_ELEMENT(mat, 11)))
+                 + (float)(vec[3] * (float)BO1_MATH_ELEMENT(mat, 15));
 }
 
 void __cdecl MatrixTransformVector43(const float *in1, const float (*in2)[3], float *out)
@@ -1391,15 +1411,15 @@ void __cdecl MatrixTransformVector43(const float *in1, const float (*in2)[3], fl
     {
         __debugbreak();
     }
-    *out = (float)((float)((float)(*in1 * (*in2)[0]) + (float)(in1[1] * (float)(*in2)[3]))
-                             + (float)(in1[2] * (float)(*in2)[6]))
-             + (float)(*in2)[9];
-    out[1] = (float)((float)((float)(*in1 * (float)(*in2)[1]) + (float)(in1[1] * (float)(*in2)[4]))
-                                 + (float)(in1[2] * (float)(*in2)[7]))
-                 + (float)(*in2)[10];
-    out[2] = (float)((float)((float)(*in1 * (float)(*in2)[2]) + (float)(in1[1] * (float)(*in2)[5]))
-                                 + (float)(in1[2] * (float)(*in2)[8]))
-                 + (float)(*in2)[11];
+    *out = (float)((float)((float)(*in1 * BO1_MATH_ELEMENT(in2, 0)) + (float)(in1[1] * (float)BO1_MATH_ELEMENT(in2, 3)))
+                             + (float)(in1[2] * (float)BO1_MATH_ELEMENT(in2, 6)))
+             + (float)BO1_MATH_ELEMENT(in2, 9);
+    out[1] = (float)((float)((float)(*in1 * (float)BO1_MATH_ELEMENT(in2, 1)) + (float)(in1[1] * (float)BO1_MATH_ELEMENT(in2, 4)))
+                                 + (float)(in1[2] * (float)BO1_MATH_ELEMENT(in2, 7)))
+                 + (float)BO1_MATH_ELEMENT(in2, 10);
+    out[2] = (float)((float)((float)(*in1 * (float)BO1_MATH_ELEMENT(in2, 2)) + (float)(in1[1] * (float)BO1_MATH_ELEMENT(in2, 5)))
+                                 + (float)(in1[2] * (float)BO1_MATH_ELEMENT(in2, 8)))
+                 + (float)BO1_MATH_ELEMENT(in2, 11);
 }
 
 void __cdecl MatrixTransposeTransformVector43(const float *in1, const float (*in2)[3], float *out)
@@ -1413,14 +1433,14 @@ void __cdecl MatrixTransposeTransformVector43(const float *in1, const float (*in
     {
         __debugbreak();
     }
-    temp = *in1 - (float)(*in2)[9];
-    temp_4 = in1[1] - (float)(*in2)[10];
-    temp_8 = in1[2] - (float)(*in2)[11];
-    *out = (float)((float)((*in2)[0] * temp) + (float)((float)(*in2)[1] * temp_4)) + (float)((float)(*in2)[2] * temp_8);
-    out[1] = (float)((float)((float)(*in2)[3] * temp) + (float)((float)(*in2)[4] * temp_4))
-                 + (float)((float)(*in2)[5] * temp_8);
-    out[2] = (float)((float)((float)(*in2)[6] * temp) + (float)((float)(*in2)[7] * temp_4))
-                 + (float)((float)(*in2)[8] * temp_8);
+    temp = *in1 - (float)BO1_MATH_ELEMENT(in2, 9);
+    temp_4 = in1[1] - (float)BO1_MATH_ELEMENT(in2, 10);
+    temp_8 = in1[2] - (float)BO1_MATH_ELEMENT(in2, 11);
+    *out = (float)((float)(BO1_MATH_ELEMENT(in2, 0) * temp) + (float)((float)BO1_MATH_ELEMENT(in2, 1) * temp_4)) + (float)((float)BO1_MATH_ELEMENT(in2, 2) * temp_8);
+    out[1] = (float)((float)((float)BO1_MATH_ELEMENT(in2, 3) * temp) + (float)((float)BO1_MATH_ELEMENT(in2, 4) * temp_4))
+                 + (float)((float)BO1_MATH_ELEMENT(in2, 5) * temp_8);
+    out[2] = (float)((float)((float)BO1_MATH_ELEMENT(in2, 6) * temp) + (float)((float)BO1_MATH_ELEMENT(in2, 7) * temp_4))
+                 + (float)((float)BO1_MATH_ELEMENT(in2, 8) * temp_8);
 }
 
 void __cdecl MatrixTransformVector43Equals(float *out, const float *in)
@@ -1490,15 +1510,15 @@ void __cdecl UnitQuatToAxis(const float *quat, float (*axis)[3])
     scaledZ = quat[2] + quat[2];
     zw = scaledZ * quat[3];
     zz = scaledZ * quat[2];
-    (*axis)[0] = 1.0 - (float)(yy + zz);
-    (*axis)[1] = xy + zw;
-    (*axis)[2] = xz - yw;
-    (*axis)[3] = xy - zw;
-    (*axis)[4] = 1.0 - (float)(xx + zz);
-    (*axis)[5] = yz + xw;
-    (*axis)[6] = xz + yw;
-    (*axis)[7] = yz - xw;
-    (*axis)[8] = 1.0 - (float)(xx + yy);
+    BO1_MATH_ELEMENT(axis, 0) = 1.0 - (float)(yy + zz);
+    BO1_MATH_ELEMENT(axis, 1) = xy + zw;
+    BO1_MATH_ELEMENT(axis, 2) = xz - yw;
+    BO1_MATH_ELEMENT(axis, 3) = xy - zw;
+    BO1_MATH_ELEMENT(axis, 4) = 1.0 - (float)(xx + zz);
+    BO1_MATH_ELEMENT(axis, 5) = yz + xw;
+    BO1_MATH_ELEMENT(axis, 6) = xz + yw;
+    BO1_MATH_ELEMENT(axis, 7) = yz - xw;
+    BO1_MATH_ELEMENT(axis, 8) = 1.0 - (float)(xx + yy);
 }
 
 void __cdecl UnitQuatToForward(const float *quat, float *forward)
@@ -1640,11 +1660,11 @@ void __cdecl FinitePerspectiveMatrix(float tanHalfFovX, float tanHalfFovY, float
 
     memset((unsigned __int8 *)mtx, 0, 0x40u);
 
-    (*mtx)[0] = 1.0 / tanHalfFovX;
-    (*mtx)[5] = 1.0 / tanHalfFovY;
-    (*mtx)[10] = -zFar / (zNear - zFar);
-    (*mtx)[11] = 1.0;
-    (*mtx)[14] = zNear * zFar / (zNear - zFar);
+    BO1_MATH_ELEMENT(mtx, 0) = 1.0 / tanHalfFovX;
+    BO1_MATH_ELEMENT(mtx, 5) = 1.0 / tanHalfFovY;
+    BO1_MATH_ELEMENT(mtx, 10) = -zFar / (zNear - zFar);
+    BO1_MATH_ELEMENT(mtx, 11) = 1.0;
+    BO1_MATH_ELEMENT(mtx, 14) = zNear * zFar / (zNear - zFar);
 }
 
 // Some aislop used here to cleanup
@@ -1775,12 +1795,12 @@ void __cdecl SpotLightProjectionMatrix(float cosFov, float zNear, float zFar, fl
         v4 = 0.001f;
     Q = zFar / (float)(zFar - v4);
     cotanFov = 1.0 / (float)(sqrtf(1.0 - (float)(cosFov * cosFov)) / cosFov);
-    (*mtx)[0] = cotanFov;
-    (*mtx)[5] = cotanFov;
-    (*mtx)[10] = Q;
-    (*mtx)[11] = 1.0f;
-    //(*mtx)[14] = COERCE_FLOAT(LODWORD(Q) ^ _mask__NegFloat_) * v4;
-    (*mtx)[14] = -Q * v4;
+    BO1_MATH_ELEMENT(mtx, 0) = cotanFov;
+    BO1_MATH_ELEMENT(mtx, 5) = cotanFov;
+    BO1_MATH_ELEMENT(mtx, 10) = Q;
+    BO1_MATH_ELEMENT(mtx, 11) = 1.0f;
+    //BO1_MATH_ELEMENT(mtx, 14) = COERCE_FLOAT(LODWORD(Q) ^ _mask__NegFloat_) * v4;
+    BO1_MATH_ELEMENT(mtx, 14) = -Q * v4;
 }
 
 void __cdecl InfinitePerspectiveMatrix(float tanHalfFovX, float tanHalfFovY, float zNear, float (*mtx)[4])
@@ -1790,11 +1810,11 @@ void __cdecl InfinitePerspectiveMatrix(float tanHalfFovX, float tanHalfFovY, flo
 
         memset((unsigned __int8 *)mtx, 0, sizeof(mat4x4));
 
-        (*mtx)[0] = MAX_11BIT_FLT / tanHalfFovX;
-        (*mtx)[5] = MAX_11BIT_FLT / tanHalfFovY;
-        (*mtx)[10] = MAX_11BIT_FLT;
-        (*mtx)[11] = 1.0f;
-        (*mtx)[14] = -zNear * MAX_11BIT_FLT;
+        BO1_MATH_ELEMENT(mtx, 0) = MAX_11BIT_FLT / tanHalfFovX;
+        BO1_MATH_ELEMENT(mtx, 5) = MAX_11BIT_FLT / tanHalfFovY;
+        BO1_MATH_ELEMENT(mtx, 10) = MAX_11BIT_FLT;
+        BO1_MATH_ELEMENT(mtx, 11) = 1.0f;
+        BO1_MATH_ELEMENT(mtx, 14) = -zNear * MAX_11BIT_FLT;
 }
 
 void __cdecl MatrixForViewer(const float *origin, const float (*axis)[3], float (*mtx)[4])
@@ -1803,22 +1823,22 @@ void __cdecl MatrixForViewer(const float *origin, const float (*axis)[3], float 
     iassert(origin);
     iassert(axis);
 
-    ((*mtx)[0]) = -((*axis)[3]);
-    ((*mtx)[4]) = -((*axis)[4]);
-    ((*mtx)[8]) = -((*axis)[5]);
-    ((*mtx)[12]) = -((float)((float)(*origin * (*mtx)[0]) + (float)(origin[1] * (*mtx)[4])) + (float)(origin[2] * (*mtx)[8]));
-    (*mtx)[1] = (*axis)[6];
-    (*mtx)[5] = (*axis)[7];
-    (*mtx)[9] = (*axis)[8];
-    ((*mtx)[13]) = -((float)((float)(*origin * (*mtx)[1]) + (float)(origin[1] * (*mtx)[5])) + (float)(origin[2] * (*mtx)[9]));
-    (*mtx)[2] = (*axis)[0];
-    (*mtx)[6] = (*axis)[1];
-    (*mtx)[10] = (*axis)[2];
-    ((*mtx)[14]) = -((float)((float)(*origin * (*mtx)[2]) + (float)(origin[1] * (*mtx)[6])) + (float)(origin[2] * (*mtx)[10]));
-    (*mtx)[3] = 0.0f;
-    (*mtx)[7] = 0.0f;
-    (*mtx)[11] = 0.0f;
-    (*mtx)[15] = 1.0f;
+    (BO1_MATH_ELEMENT(mtx, 0)) = -(BO1_MATH_ELEMENT(axis, 3));
+    (BO1_MATH_ELEMENT(mtx, 4)) = -(BO1_MATH_ELEMENT(axis, 4));
+    (BO1_MATH_ELEMENT(mtx, 8)) = -(BO1_MATH_ELEMENT(axis, 5));
+    (BO1_MATH_ELEMENT(mtx, 12)) = -((float)((float)(*origin * BO1_MATH_ELEMENT(mtx, 0)) + (float)(origin[1] * BO1_MATH_ELEMENT(mtx, 4))) + (float)(origin[2] * BO1_MATH_ELEMENT(mtx, 8)));
+    BO1_MATH_ELEMENT(mtx, 1) = BO1_MATH_ELEMENT(axis, 6);
+    BO1_MATH_ELEMENT(mtx, 5) = BO1_MATH_ELEMENT(axis, 7);
+    BO1_MATH_ELEMENT(mtx, 9) = BO1_MATH_ELEMENT(axis, 8);
+    (BO1_MATH_ELEMENT(mtx, 13)) = -((float)((float)(*origin * BO1_MATH_ELEMENT(mtx, 1)) + (float)(origin[1] * BO1_MATH_ELEMENT(mtx, 5))) + (float)(origin[2] * BO1_MATH_ELEMENT(mtx, 9)));
+    BO1_MATH_ELEMENT(mtx, 2) = BO1_MATH_ELEMENT(axis, 0);
+    BO1_MATH_ELEMENT(mtx, 6) = BO1_MATH_ELEMENT(axis, 1);
+    BO1_MATH_ELEMENT(mtx, 10) = BO1_MATH_ELEMENT(axis, 2);
+    (BO1_MATH_ELEMENT(mtx, 14)) = -((float)((float)(*origin * BO1_MATH_ELEMENT(mtx, 2)) + (float)(origin[1] * BO1_MATH_ELEMENT(mtx, 6))) + (float)(origin[2] * BO1_MATH_ELEMENT(mtx, 10)));
+    BO1_MATH_ELEMENT(mtx, 3) = 0.0f;
+    BO1_MATH_ELEMENT(mtx, 7) = 0.0f;
+    BO1_MATH_ELEMENT(mtx, 11) = 0.0f;
+    BO1_MATH_ELEMENT(mtx, 15) = 1.0f;
 }
 
 void __cdecl AnglesSubtract(const float *v1, const float *v2, float *v3)
@@ -2102,39 +2122,39 @@ void __cdecl GetRotatedBounds(
 
     for ( axisIndex = 0; axisIndex < 3; ++axisIndex )
     {
-        (*rotatedBounds)[axisIndex] = origin[axisIndex];
-        (*rotatedBounds)[axisIndex + 3] = origin[axisIndex];
-        offset = (*axis)[axisIndex] >= 0.0 ? 0 : 0xC;
-        (*rotatedBounds)[axisIndex] = (float)(*(float *)((char *)*baseBounds + offset) * (float)(*axis)[axisIndex])
-                                                                + (*rotatedBounds)[axisIndex];
-        (*rotatedBounds)[axisIndex + 3] = (float)(*(float *)((char *)&(*baseBounds)[3] - offset) * (float)(*axis)[axisIndex])
-                                                                        + (*rotatedBounds)[axisIndex + 3];
-        offseta = (*axis)[axisIndex + 3] >= 0.0 ? 0 : 0xC;
-        (*rotatedBounds)[axisIndex] = (float)(*(float *)((char *)&(*baseBounds)[1] + offseta) * (float)(*axis)[axisIndex + 3])
-                                                                + (*rotatedBounds)[axisIndex];
-        (*rotatedBounds)[axisIndex + 3] = (float)(*(float *)((char *)&(*baseBounds)[4] - offseta)
-                                                                                        * (float)(*axis)[axisIndex + 3])
-                                                                        + (*rotatedBounds)[axisIndex + 3];
-        offsetb = (*axis)[axisIndex + 6] >= 0.0 ? 0 : 0xC;
-        (*rotatedBounds)[axisIndex] = (float)(*(float *)((char *)&(*baseBounds)[2] + offsetb) * (float)(*axis)[axisIndex + 6])
-                                                                + (*rotatedBounds)[axisIndex];
-        (*rotatedBounds)[axisIndex + 3] = (float)(*(float *)((char *)&(*baseBounds)[5] - offsetb)
-                                                                                        * (float)(*axis)[axisIndex + 6])
-                                                                        + (*rotatedBounds)[axisIndex + 3];
+        BO1_MATH_ELEMENT(rotatedBounds, axisIndex) = origin[axisIndex];
+        BO1_MATH_ELEMENT(rotatedBounds, axisIndex + 3) = origin[axisIndex];
+        offset = BO1_MATH_ELEMENT(axis, axisIndex) >= 0.0 ? 0 : 0xC;
+        BO1_MATH_ELEMENT(rotatedBounds, axisIndex) = (float)(BO1_MATH_BOUND_OFFSET(baseBounds, 0, offset) * (float)BO1_MATH_ELEMENT(axis, axisIndex))
+                                                                + BO1_MATH_ELEMENT(rotatedBounds, axisIndex);
+        BO1_MATH_ELEMENT(rotatedBounds, axisIndex + 3) = (float)(BO1_MATH_BOUND_OFFSET(baseBounds, 3, -offset) * (float)BO1_MATH_ELEMENT(axis, axisIndex))
+                                                                        + BO1_MATH_ELEMENT(rotatedBounds, axisIndex + 3);
+        offseta = BO1_MATH_ELEMENT(axis, axisIndex + 3) >= 0.0 ? 0 : 0xC;
+        BO1_MATH_ELEMENT(rotatedBounds, axisIndex) = (float)(BO1_MATH_BOUND_OFFSET(baseBounds, 1, offseta) * (float)BO1_MATH_ELEMENT(axis, axisIndex + 3))
+                                                                + BO1_MATH_ELEMENT(rotatedBounds, axisIndex);
+        BO1_MATH_ELEMENT(rotatedBounds, axisIndex + 3) = (float)(BO1_MATH_BOUND_OFFSET(baseBounds, 4, -offseta)
+                                                                                        * (float)BO1_MATH_ELEMENT(axis, axisIndex + 3))
+                                                                        + BO1_MATH_ELEMENT(rotatedBounds, axisIndex + 3);
+        offsetb = BO1_MATH_ELEMENT(axis, axisIndex + 6) >= 0.0 ? 0 : 0xC;
+        BO1_MATH_ELEMENT(rotatedBounds, axisIndex) = (float)(BO1_MATH_BOUND_OFFSET(baseBounds, 2, offsetb) * (float)BO1_MATH_ELEMENT(axis, axisIndex + 6))
+                                                                + BO1_MATH_ELEMENT(rotatedBounds, axisIndex);
+        BO1_MATH_ELEMENT(rotatedBounds, axisIndex + 3) = (float)(BO1_MATH_BOUND_OFFSET(baseBounds, 5, -offsetb)
+                                                                                        * (float)BO1_MATH_ELEMENT(axis, axisIndex + 6))
+                                                                        + BO1_MATH_ELEMENT(rotatedBounds, axisIndex + 3);
     }
 }
 
 void __cdecl AxisClear(float (*axis)[3])
 {
-    (*axis)[0] = 1.0f;
-    (*axis)[1] = 0.0f;
-    (*axis)[2] = 0.0f;
-    (*axis)[3] = 0.0f;
-    (*axis)[4] = 1.0f;
-    (*axis)[5] = 0.0f;
-    (*axis)[6] = 0.0f;
-    (*axis)[7] = 0.0f;
-    (*axis)[8] = 1.0f;
+    BO1_MATH_ELEMENT(axis, 0) = 1.0f;
+    BO1_MATH_ELEMENT(axis, 1) = 0.0f;
+    BO1_MATH_ELEMENT(axis, 2) = 0.0f;
+    BO1_MATH_ELEMENT(axis, 3) = 0.0f;
+    BO1_MATH_ELEMENT(axis, 4) = 1.0f;
+    BO1_MATH_ELEMENT(axis, 5) = 0.0f;
+    BO1_MATH_ELEMENT(axis, 6) = 0.0f;
+    BO1_MATH_ELEMENT(axis, 7) = 0.0f;
+    BO1_MATH_ELEMENT(axis, 8) = 1.0f;
 }
 
 void __cdecl AxisTranspose(const float (*in)[3], float (*out)[3])
@@ -2144,24 +2164,24 @@ void __cdecl AxisTranspose(const float (*in)[3], float (*out)[3])
     {
         __debugbreak();
     }
-    (*out)[0] = (*in)[0];
-    (*out)[1] = (*in)[3];
-    (*out)[2] = (*in)[6];
-    (*out)[3] = (*in)[1];
-    (*out)[4] = (*in)[4];
-    (*out)[5] = (*in)[7];
-    (*out)[6] = (*in)[2];
-    (*out)[7] = (*in)[5];
-    (*out)[8] = (*in)[8];
+    BO1_MATH_ELEMENT(out, 0) = BO1_MATH_ELEMENT(in, 0);
+    BO1_MATH_ELEMENT(out, 1) = BO1_MATH_ELEMENT(in, 3);
+    BO1_MATH_ELEMENT(out, 2) = BO1_MATH_ELEMENT(in, 6);
+    BO1_MATH_ELEMENT(out, 3) = BO1_MATH_ELEMENT(in, 1);
+    BO1_MATH_ELEMENT(out, 4) = BO1_MATH_ELEMENT(in, 4);
+    BO1_MATH_ELEMENT(out, 5) = BO1_MATH_ELEMENT(in, 7);
+    BO1_MATH_ELEMENT(out, 6) = BO1_MATH_ELEMENT(in, 2);
+    BO1_MATH_ELEMENT(out, 7) = BO1_MATH_ELEMENT(in, 5);
+    BO1_MATH_ELEMENT(out, 8) = BO1_MATH_ELEMENT(in, 8);
 }
 
 void __cdecl AxisTransformVec3(const float (*axes)[3], const float *vec, float *out)
 {
-    *out = (float)((float)(*vec * (*axes)[0]) + (float)(vec[1] * (float)(*axes)[3])) + (float)(vec[2] * (float)(*axes)[6]);
-    out[1] = (float)((float)(*vec * (float)(*axes)[1]) + (float)(vec[1] * (float)(*axes)[4]))
-                 + (float)(vec[2] * (float)(*axes)[7]);
-    out[2] = (float)((float)(*vec * (float)(*axes)[2]) + (float)(vec[1] * (float)(*axes)[5]))
-                 + (float)(vec[2] * (float)(*axes)[8]);
+    *out = (float)((float)(*vec * BO1_MATH_ELEMENT(axes, 0)) + (float)(vec[1] * (float)BO1_MATH_ELEMENT(axes, 3))) + (float)(vec[2] * (float)BO1_MATH_ELEMENT(axes, 6));
+    out[1] = (float)((float)(*vec * (float)BO1_MATH_ELEMENT(axes, 1)) + (float)(vec[1] * (float)BO1_MATH_ELEMENT(axes, 4)))
+                 + (float)(vec[2] * (float)BO1_MATH_ELEMENT(axes, 7));
+    out[2] = (float)((float)(*vec * (float)BO1_MATH_ELEMENT(axes, 2)) + (float)(vec[1] * (float)BO1_MATH_ELEMENT(axes, 5)))
+                 + (float)(vec[2] * (float)BO1_MATH_ELEMENT(axes, 8));
 }
 
 void __cdecl YawToAxis(float yaw, float (*axis)[3])
@@ -2169,12 +2189,12 @@ void __cdecl YawToAxis(float yaw, float (*axis)[3])
     float right[3]; // [esp+10h] [ebp-Ch] BYREF
 
     YawVectors(yaw, (float *)axis, right);
-    (*axis)[6] = 0.0f;
-    (*axis)[7] = 0.0f;
-    (*axis)[8] = 1.0f;
-    (*axis)[3] = 0.0 - right[0];
-    (*axis)[4] = 0.0 - right[1];
-    (*axis)[5] = 0.0 - right[2];
+    BO1_MATH_ELEMENT(axis, 6) = 0.0f;
+    BO1_MATH_ELEMENT(axis, 7) = 0.0f;
+    BO1_MATH_ELEMENT(axis, 8) = 1.0f;
+    BO1_MATH_ELEMENT(axis, 3) = 0.0 - right[0];
+    BO1_MATH_ELEMENT(axis, 4) = 0.0 - right[1];
+    BO1_MATH_ELEMENT(axis, 5) = 0.0 - right[2];
 }
 
 void __cdecl AxisToAngles(const float (*axis)[3], float *angles)
@@ -2229,10 +2249,10 @@ void __cdecl Axis4ToAngles(const float (*axis)[4], float *angles)
     float fSin; // [esp+38h] [ebp-4h]
 
     vectoangles((const float *)axis, angles);
-    right[0] = (*axis)[4];
-    right[1] = (*axis)[5];
-    right[2] = (*axis)[6];
-    right[3] = (*axis)[7];
+    right[0] = BO1_MATH_ELEMENT(axis, 4);
+    right[1] = BO1_MATH_ELEMENT(axis, 5);
+    right[2] = BO1_MATH_ELEMENT(axis, 6);
+    right[3] = BO1_MATH_ELEMENT(axis, 7);
     //rad = COERCE_FLOAT(*((unsigned int *)angles + 1) ^ _mask__NegFloat_) * 0.017453292;
     rad = -angles[1] * 0.017453292;
     fCos = cos(rad);
@@ -2359,10 +2379,10 @@ int __cdecl ProjectedWindingContainsCoplanarPoint(
     vertIndexPrev = vertCount - 1;
     for ( vertIndex = 0; vertIndex < vertCount; ++vertIndex )
     {
-        if ( (float)((float)((float)(point[x] - (float)(*verts)[3 * vertIndexPrev + x])
-                                             * (float)((float)(*verts)[3 * vertIndex + y] - (float)(*verts)[3 * vertIndexPrev + y]))
-                             + (float)((float)(point[y] - (float)(*verts)[3 * vertIndexPrev + y])
-                                             * (float)((float)(*verts)[3 * vertIndexPrev + x] - (float)(*verts)[3 * vertIndex + x]))) < 0.0 )
+        if ( (float)((float)((float)(point[x] - (float)BO1_MATH_ELEMENT(verts, 3 * vertIndexPrev + x))
+                                             * (float)((float)BO1_MATH_ELEMENT(verts, 3 * vertIndex + y) - (float)BO1_MATH_ELEMENT(verts, 3 * vertIndexPrev + y)))
+                             + (float)((float)(point[y] - (float)BO1_MATH_ELEMENT(verts, 3 * vertIndexPrev + y))
+                                             * (float)((float)BO1_MATH_ELEMENT(verts, 3 * vertIndexPrev + x) - (float)BO1_MATH_ELEMENT(verts, 3 * vertIndex + x)))) < 0.0 )
             return 0;
         vertIndexPrev = vertIndex;
     }
@@ -2730,28 +2750,28 @@ void __cdecl AxisToQuat(const float (*mat)[3], float *out)
     int best; // [esp+50h] [ebp-8h]
     float testSizeSq; // [esp+54h] [ebp-4h]
 
-    test[0][0] = (float)(*mat)[5] - (float)(*mat)[7];
-    test[0][1] = (float)(*mat)[6] - (float)(*mat)[2];
-    test[0][2] = (float)(*mat)[1] - (float)(*mat)[3];
-    test[0][3] = (float)((float)((*mat)[0] + (float)(*mat)[4]) + (float)(*mat)[8]) + 1.0;
+    test[0][0] = (float)BO1_MATH_ELEMENT(mat, 5) - (float)BO1_MATH_ELEMENT(mat, 7);
+    test[0][1] = (float)BO1_MATH_ELEMENT(mat, 6) - (float)BO1_MATH_ELEMENT(mat, 2);
+    test[0][2] = (float)BO1_MATH_ELEMENT(mat, 1) - (float)BO1_MATH_ELEMENT(mat, 3);
+    test[0][3] = (float)((float)(BO1_MATH_ELEMENT(mat, 0) + (float)BO1_MATH_ELEMENT(mat, 4)) + (float)BO1_MATH_ELEMENT(mat, 8)) + 1.0;
     testSizeSq = Vec4LengthSq(test[0]);
     if ( testSizeSq < 1.0 )
     {
-        test[1][0] = (float)(*mat)[6] + (float)(*mat)[2];
-        test[1][1] = (float)(*mat)[7] + (float)(*mat)[5];
-        test[1][2] = (float)((float)((float)(*mat)[8] - (float)(*mat)[4]) - (*mat)[0]) + 1.0;
+        test[1][0] = (float)BO1_MATH_ELEMENT(mat, 6) + (float)BO1_MATH_ELEMENT(mat, 2);
+        test[1][1] = (float)BO1_MATH_ELEMENT(mat, 7) + (float)BO1_MATH_ELEMENT(mat, 5);
+        test[1][2] = (float)((float)((float)BO1_MATH_ELEMENT(mat, 8) - (float)BO1_MATH_ELEMENT(mat, 4)) - BO1_MATH_ELEMENT(mat, 0)) + 1.0;
         test[1][3] = test[0][2];
         testSizeSq = Vec4LengthSq(test[1]);
         if ( testSizeSq < 1.0 )
         {
-            test[2][0] = (float)((float)((*mat)[0] - (float)(*mat)[4]) - (float)(*mat)[8]) + 1.0;
-            test[2][1] = (float)(*mat)[3] + (float)(*mat)[1];
+            test[2][0] = (float)((float)(BO1_MATH_ELEMENT(mat, 0) - (float)BO1_MATH_ELEMENT(mat, 4)) - (float)BO1_MATH_ELEMENT(mat, 8)) + 1.0;
+            test[2][1] = (float)BO1_MATH_ELEMENT(mat, 3) + (float)BO1_MATH_ELEMENT(mat, 1);
             *(_QWORD *)&test[2][2] = __PAIR64__(LODWORD(test[0][0]), LODWORD(test[1][0]));
             testSizeSq = Vec4LengthSq(test[2]);
             if ( testSizeSq < 1.0 )
             {
                 test[3][0] = test[2][1];
-                test[3][1] = (float)((float)((float)(*mat)[4] - (*mat)[0]) - (float)(*mat)[8]) + 1.0;
+                test[3][1] = (float)((float)((float)BO1_MATH_ELEMENT(mat, 4) - BO1_MATH_ELEMENT(mat, 0)) - (float)BO1_MATH_ELEMENT(mat, 8)) + 1.0;
                 *(_QWORD *)&test[3][2] = __PAIR64__(LODWORD(test[0][1]), LODWORD(test[1][1]));
                 testSizeSq = Vec4LengthSq(test[3]);
                 if ( testSizeSq < 1.0
@@ -3081,33 +3101,33 @@ void __cdecl colorTempMatrix(float (*finalMatrix)[4], float colorTemp)
     MatrixMultiply44((const float (*)[4])in1, bradfordMI, (float (*)[4])v11);
     MatrixMultiply44(sRGBtoXYZ, (const float (*)[4])v11, (float (*)[4])in1);
     MatrixMultiply44((const float (*)[4])in1, XYZtosRGB, finalMatrix);
-    (*finalMatrix)[0] = (*finalMatrix)[0] + 0.00048828125;
-    v10 = floor((float)((*finalMatrix)[0] * 1024.0));
-    (*finalMatrix)[0] = v10 / 1024.0;
-    (*finalMatrix)[1] = (*finalMatrix)[1] + 0.00048828125;
-    v9 = floor((float)((*finalMatrix)[1] * 1024.0));
-    (*finalMatrix)[1] = v9 / 1024.0;
-    (*finalMatrix)[2] = (*finalMatrix)[2] + 0.00048828125;
-    v8 = floor((float)((*finalMatrix)[2] * 1024.0));
-    (*finalMatrix)[2] = v8 / 1024.0;
-    (*finalMatrix)[4] = (*finalMatrix)[4] + 0.00048828125;
-    v7 = floor((float)((*finalMatrix)[4] * 1024.0));
-    (*finalMatrix)[4] = v7 / 1024.0;
-    (*finalMatrix)[5] = (*finalMatrix)[5] + 0.00048828125;
-    v6 = floor((float)((*finalMatrix)[5] * 1024.0));
-    (*finalMatrix)[5] = v6 / 1024.0;
-    (*finalMatrix)[6] = (*finalMatrix)[6] + 0.00048828125;
-    v5 = floor((float)((*finalMatrix)[6] * 1024.0));
-    (*finalMatrix)[6] = v5 / 1024.0;
-    (*finalMatrix)[8] = (*finalMatrix)[8] + 0.00048828125;
-    v4 = floor((float)((*finalMatrix)[8] * 1024.0));
-    (*finalMatrix)[8] = v4 / 1024.0;
-    (*finalMatrix)[9] = (*finalMatrix)[9] + 0.00048828125;
-    v3 = floor((float)((*finalMatrix)[9] * 1024.0));
-    (*finalMatrix)[9] = v3 / 1024.0;
-    (*finalMatrix)[10] = (*finalMatrix)[10] + 0.00048828125;
-    v2 = floor((float)((*finalMatrix)[10] * 1024.0));
-    (*finalMatrix)[10] = v2 / 1024.0;
+    BO1_MATH_ELEMENT(finalMatrix, 0) = BO1_MATH_ELEMENT(finalMatrix, 0) + 0.00048828125;
+    v10 = floor((float)(BO1_MATH_ELEMENT(finalMatrix, 0) * 1024.0));
+    BO1_MATH_ELEMENT(finalMatrix, 0) = v10 / 1024.0;
+    BO1_MATH_ELEMENT(finalMatrix, 1) = BO1_MATH_ELEMENT(finalMatrix, 1) + 0.00048828125;
+    v9 = floor((float)(BO1_MATH_ELEMENT(finalMatrix, 1) * 1024.0));
+    BO1_MATH_ELEMENT(finalMatrix, 1) = v9 / 1024.0;
+    BO1_MATH_ELEMENT(finalMatrix, 2) = BO1_MATH_ELEMENT(finalMatrix, 2) + 0.00048828125;
+    v8 = floor((float)(BO1_MATH_ELEMENT(finalMatrix, 2) * 1024.0));
+    BO1_MATH_ELEMENT(finalMatrix, 2) = v8 / 1024.0;
+    BO1_MATH_ELEMENT(finalMatrix, 4) = BO1_MATH_ELEMENT(finalMatrix, 4) + 0.00048828125;
+    v7 = floor((float)(BO1_MATH_ELEMENT(finalMatrix, 4) * 1024.0));
+    BO1_MATH_ELEMENT(finalMatrix, 4) = v7 / 1024.0;
+    BO1_MATH_ELEMENT(finalMatrix, 5) = BO1_MATH_ELEMENT(finalMatrix, 5) + 0.00048828125;
+    v6 = floor((float)(BO1_MATH_ELEMENT(finalMatrix, 5) * 1024.0));
+    BO1_MATH_ELEMENT(finalMatrix, 5) = v6 / 1024.0;
+    BO1_MATH_ELEMENT(finalMatrix, 6) = BO1_MATH_ELEMENT(finalMatrix, 6) + 0.00048828125;
+    v5 = floor((float)(BO1_MATH_ELEMENT(finalMatrix, 6) * 1024.0));
+    BO1_MATH_ELEMENT(finalMatrix, 6) = v5 / 1024.0;
+    BO1_MATH_ELEMENT(finalMatrix, 8) = BO1_MATH_ELEMENT(finalMatrix, 8) + 0.00048828125;
+    v4 = floor((float)(BO1_MATH_ELEMENT(finalMatrix, 8) * 1024.0));
+    BO1_MATH_ELEMENT(finalMatrix, 8) = v4 / 1024.0;
+    BO1_MATH_ELEMENT(finalMatrix, 9) = BO1_MATH_ELEMENT(finalMatrix, 9) + 0.00048828125;
+    v3 = floor((float)(BO1_MATH_ELEMENT(finalMatrix, 9) * 1024.0));
+    BO1_MATH_ELEMENT(finalMatrix, 9) = v3 / 1024.0;
+    BO1_MATH_ELEMENT(finalMatrix, 10) = BO1_MATH_ELEMENT(finalMatrix, 10) + 0.00048828125;
+    v2 = floor((float)(BO1_MATH_ELEMENT(finalMatrix, 10) * 1024.0));
+    BO1_MATH_ELEMENT(finalMatrix, 10) = v2 / 1024.0;
 }
 
 void __cdecl colorTempToXYZ(float colorTemp, float *XYZ)
@@ -3245,35 +3265,35 @@ void __cdecl colorSaturationMatrix(float (*finalMatrix)[4], float saturation)
 
     r = (float)(1.0 - saturation) * 0.25;
     g = (float)(1.0 - saturation) * 0.5;
-    (*finalMatrix)[0] = r + saturation;
-    (*finalMatrix)[1] = r;
-    (*finalMatrix)[2] = r;
-    (*finalMatrix)[3] = 0.0f;
-    (*finalMatrix)[4] = g;
-    (*finalMatrix)[5] = g + saturation;
-    (*finalMatrix)[6] = g;
-    (*finalMatrix)[7] = 0.0f;
-    (*finalMatrix)[8] = r;
-    (*finalMatrix)[9] = r;
-    (*finalMatrix)[10] = r + saturation;
-    (*finalMatrix)[15] = 0.0f;
-    (*finalMatrix)[12] = 0.0f;
-    (*finalMatrix)[13] = 0.0f;
-    (*finalMatrix)[14] = 0.0f;
-    (*finalMatrix)[15] = 1.0f;
+    BO1_MATH_ELEMENT(finalMatrix, 0) = r + saturation;
+    BO1_MATH_ELEMENT(finalMatrix, 1) = r;
+    BO1_MATH_ELEMENT(finalMatrix, 2) = r;
+    BO1_MATH_ELEMENT(finalMatrix, 3) = 0.0f;
+    BO1_MATH_ELEMENT(finalMatrix, 4) = g;
+    BO1_MATH_ELEMENT(finalMatrix, 5) = g + saturation;
+    BO1_MATH_ELEMENT(finalMatrix, 6) = g;
+    BO1_MATH_ELEMENT(finalMatrix, 7) = 0.0f;
+    BO1_MATH_ELEMENT(finalMatrix, 8) = r;
+    BO1_MATH_ELEMENT(finalMatrix, 9) = r;
+    BO1_MATH_ELEMENT(finalMatrix, 10) = r + saturation;
+    BO1_MATH_ELEMENT(finalMatrix, 15) = 0.0f;
+    BO1_MATH_ELEMENT(finalMatrix, 12) = 0.0f;
+    BO1_MATH_ELEMENT(finalMatrix, 13) = 0.0f;
+    BO1_MATH_ELEMENT(finalMatrix, 14) = 0.0f;
+    BO1_MATH_ELEMENT(finalMatrix, 15) = 1.0f;
 }
 
 void __cdecl AxisCopy(const float (*in)[3], float (*out)[3])
 {
-    (*out)[0] = (*in)[0];
-    (*out)[1] = (*in)[1];
-    (*out)[2] = (*in)[2];
-    (*out)[3] = (*in)[3];
-    (*out)[4] = (*in)[4];
-    (*out)[5] = (*in)[5];
-    (*out)[6] = (*in)[6];
-    (*out)[7] = (*in)[7];
-    (*out)[8] = (*in)[8];
+    BO1_MATH_ELEMENT(out, 0) = BO1_MATH_ELEMENT(in, 0);
+    BO1_MATH_ELEMENT(out, 1) = BO1_MATH_ELEMENT(in, 1);
+    BO1_MATH_ELEMENT(out, 2) = BO1_MATH_ELEMENT(in, 2);
+    BO1_MATH_ELEMENT(out, 3) = BO1_MATH_ELEMENT(in, 3);
+    BO1_MATH_ELEMENT(out, 4) = BO1_MATH_ELEMENT(in, 4);
+    BO1_MATH_ELEMENT(out, 5) = BO1_MATH_ELEMENT(in, 5);
+    BO1_MATH_ELEMENT(out, 6) = BO1_MATH_ELEMENT(in, 6);
+    BO1_MATH_ELEMENT(out, 7) = BO1_MATH_ELEMENT(in, 7);
+    BO1_MATH_ELEMENT(out, 8) = BO1_MATH_ELEMENT(in, 8);
 }
 
 void __cdecl Vec3Rotate(const float *in, const float (*matrix)[3], float *out)
@@ -3283,12 +3303,12 @@ void __cdecl Vec3Rotate(const float *in, const float (*matrix)[3], float *out)
     {
         __debugbreak();
     }
-    *out = (float)((float)(*in * (*matrix)[0]) + (float)(in[1] * (float)(*matrix)[1]))
-        + (float)(in[2] * (float)(*matrix)[2]);
-    out[1] = (float)((float)(*in * (float)(*matrix)[3]) + (float)(in[1] * (float)(*matrix)[4]))
-        + (float)(in[2] * (float)(*matrix)[5]);
-    out[2] = (float)((float)(*in * (float)(*matrix)[6]) + (float)(in[1] * (float)(*matrix)[7]))
-        + (float)(in[2] * (float)(*matrix)[8]);
+    *out = (float)((float)(*in * BO1_MATH_ELEMENT(matrix, 0)) + (float)(in[1] * (float)BO1_MATH_ELEMENT(matrix, 1)))
+        + (float)(in[2] * (float)BO1_MATH_ELEMENT(matrix, 2));
+    out[1] = (float)((float)(*in * (float)BO1_MATH_ELEMENT(matrix, 3)) + (float)(in[1] * (float)BO1_MATH_ELEMENT(matrix, 4)))
+        + (float)(in[2] * (float)BO1_MATH_ELEMENT(matrix, 5));
+    out[2] = (float)((float)(*in * (float)BO1_MATH_ELEMENT(matrix, 6)) + (float)(in[1] * (float)BO1_MATH_ELEMENT(matrix, 7)))
+        + (float)(in[2] * (float)BO1_MATH_ELEMENT(matrix, 8));
 }
 
 float __cdecl Vec3Length(const vec3r v)
@@ -3634,6 +3654,8 @@ float Q_fabs(float f)
     tmp &= 0x7FFFFFFF;
     return *(float *)&tmp;
 }
+#undef BO1_MATH_BOUND_OFFSET
+#undef BO1_MATH_ELEMENT
 #endif
 
 #include "com_math.h"

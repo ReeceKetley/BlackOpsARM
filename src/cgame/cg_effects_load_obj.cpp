@@ -5,6 +5,18 @@
 #include <universal/q_parse.h>
 #include <universal/surfaceflags.h>
 #include <EffectsCore/fx_load_obj.h>
+#if defined(__ANDROID__)
+#include <climits>
+static int CG_CompareImpactFilesNative(const void *first, const void *second)
+{
+    return compare_impact_files(static_cast<const char **>(const_cast<void *>(first)),
+                                static_cast<const char **>(const_cast<void *>(second)));
+}
+static const char *CG_FleshTypeNameNative(int index)
+{
+    return CG_FleshTypeToName(static_cast<unsigned int>(index));
+}
+#endif
 
 const char *const g_TypeName[21] =
 {
@@ -68,8 +80,13 @@ FxImpactTable *__cdecl CG_RegisterImpactEffects_LoadObj(const char *mapname)
         Com_sprintf(mapdir, 0x40u, "fx/maps/%s", mapname);
         CG_RegisterImpactEffectsForDir(mapdir, &effectFile, listbuf);
     }
+#if defined(__ANDROID__)
+    fx = (FxImpactTable *)Hunk_AllocAlign(sizeof(FxImpactTable), alignof(FxImpactTable), "CG_RegisterImpactEffects", 8);
+    v1 = Hunk_AllocAlign(21 * sizeof(FxImpactEntry), alignof(FxImpactEntry), "CG_RegisterImpactEffects", 8);
+#else
     fx = (FxImpactTable *)Hunk_AllocAlign(8u, 4, "CG_RegisterImpactEffects", 8);
     v1 = Hunk_AllocAlign(0xB7Cu, 4, "CG_RegisterImpactEffects", 8);
+#endif
     fx->table = (FxImpactEntry *)v1;
     iBadCount = 0;
     for ( i = 0; i < 0x15; ++i )
@@ -80,7 +97,13 @@ FxImpactTable *__cdecl CG_RegisterImpactEffects_LoadObj(const char *mapname)
                      effectFile.flesh[i],
                      g_TypeName[i],
                      fx->table[i].flesh,
+#if defined(__ANDROID__)
+                     // Original linear slot: 21*31 - 161*4 + 31*i = 31*i+7.
+                     // Surface type seven is flesh; address its actual row.
+                     (char *)effectFile.nonflesh[i][7]);
+#else
                      (char *)effectFile.flesh[-161][31 * i]);
+#endif
         iBadCount += v3;
     }
     if ( iBadCount )
@@ -197,7 +220,11 @@ int __cdecl CG_RegisterImpactEffects_Flesh(
                      szEffectFile,
                      pszTypeName,
                      fx,
+#if defined(__ANDROID__)
+                     CG_FleshTypeNameNative,
+#else
                      (const char *(__cdecl *)(int))CG_FleshTypeToName,
+#endif
                      defaultEffectName);
 }
 
@@ -220,7 +247,11 @@ const char *__cdecl CG_FleshTypeToName(unsigned int fleshTypeId)
 
 void __cdecl CG_RegisterImpactEffectsForDir(char *dir, EffectFile *effectFile, char *listbuf)
 {
+#if defined(__ANDROID__)
+    const char *base[4097];
+#else
     void *base[4097]; // [esp+10h] [ebp-4020h] BYREF
+#endif
     void *buffer; // [esp+4014h] [ebp-1Ch]
     unsigned int num; // [esp+4018h] [ebp-18h]
     int len; // [esp+401Ch] [ebp-14h]
@@ -238,19 +269,53 @@ void __cdecl CG_RegisterImpactEffectsForDir(char *dir, EffectFile *effectFile, c
         for ( i = 0; i < num; ++i )
         {
             base[i] = qpath;
+#if defined(__ANDROID__)
+            const char *nameEnd = static_cast<const char *>(memchr(qpath, 0, listbuf + 0x10000 - qpath));
+            if (!nameEnd)
+            {
+                Com_PrintError(21, "ERROR: unterminated impact CSV file list\n");
+                return;
+            }
+            qpath = const_cast<char *>(nameEnd) + 1;
+#else
             qpath += strlen(qpath) + 1;
+#endif
         }
+#if defined(__ANDROID__)
+        qsort(base, num, sizeof(*(base)), CG_CompareImpactFilesNative);
+#else
         qsort(base, num, sizeof(*(base)), (int (__cdecl *)(const void *, const void *))compare_impact_files);
+#endif
         for ( i = 0; i < num; ++i )
         {
             qpath = va("%s/%s", dir, (const char *)base[i]);
             len = FS_FOpenFileByMode(qpath, &f, FS_READ);
             if ( len >= 0 )
             {
+#if defined(__ANDROID__)
+                if (len == INT_MAX)
+                {
+                    FS_FCloseFile(f);
+                    Com_PrintError(21, "ERROR: impact CSV file exceeds temporary allocation capacity\n");
+                    return;
+                }
+#endif
                 Hunk_CheckTempMemoryHighClear();
                 buffer = (void *)Hunk_AllocateTempMemoryHigh(len + 1, "CG_RegisterImpactEffects");
+#if defined(__ANDROID__)
+                const bool complete = FS_Read((unsigned __int8 *)buffer, len, f) == static_cast<unsigned int>(len);
+#else
                 FS_Read((unsigned __int8 *)buffer, len, f);
+#endif
                 FS_FCloseFile(f);
+#if defined(__ANDROID__)
+                if (!complete)
+                {
+                    Hunk_ClearTempMemoryHigh();
+                    Com_PrintError(21, "ERROR: truncated impact CSV file '%s'\n", qpath);
+                    return;
+                }
+#endif
                 *((_BYTE *)buffer + len) = 0;
                 Com_BeginParseSession(qpath);
                 Com_SetCSV(1);
@@ -333,6 +398,9 @@ LABEL_20:
     if ( v9 < 64 )
     {
         effectName = (char *)Hunk_AllocateTempMemory(v9 + 1, "CG_ParseImpactEffects");
+#if defined(__ANDROID__)
+        memcpy(effectName, tokenb->token, v9 + 1);
+#else
         v8 = tokenb;
         v7 = effectName;
         do
@@ -343,6 +411,7 @@ LABEL_20:
             ++v7;
         }
         while ( v6 );
+#endif
         if ( iSurfaceType < 0
             && iFleshType < 0
             && !Assert_MyHandler(

@@ -1,4 +1,5 @@
 #include "snd_public_async.h"
+#include <platform/bo1_native_width.h>
 #include <qcommon/common.h>
 #include "snd_dvar.h"
 #include "snd_public_async_q.h"
@@ -429,6 +430,23 @@ void __cdecl SND_SetListener(
         if ( cmd )
         {
             cmd->type = SND_COMMAND_SET_LISTENER;
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+            cmd->context.set_listener.listener = listener;
+            cmd->context.set_listener.clientNum = clientNum;
+            cmd->context.set_listener.team = team;
+            cmd->context.set_listener.origin[0] = origin[0];
+            cmd->context.set_listener.origin[1] = origin[1];
+            cmd->context.set_listener.origin[2] = origin[2];
+            cmd->context.set_listener.axis[0][0] = axis[0][0];
+            cmd->context.set_listener.axis[0][1] = axis[0][1];
+            cmd->context.set_listener.axis[0][2] = axis[0][2];
+            cmd->context.set_listener.axis[1][0] = axis[1][0];
+            cmd->context.set_listener.axis[1][1] = axis[1][1];
+            cmd->context.set_listener.axis[1][2] = axis[1][2];
+            cmd->context.set_listener.axis[2][0] = axis[2][0];
+            cmd->context.set_listener.axis[2][1] = axis[2][1];
+            cmd->context.set_listener.axis[2][2] = axis[2][2];
+#else
             cmd->context.play.alias = listener;
             cmd->context.play.fadeTimeMs = clientNum;
             cmd->context.set_game_state.cg_time = team;
@@ -444,6 +462,7 @@ void __cdecl SND_SetListener(
             cmd->context.set_listener.axis[2][0] = (*axis)[6];
             cmd->context.set_listener.axis[2][1] = (*axis)[7];
             cmd->context.set_listener.axis[2][2] = (*axis)[8];
+#endif
             SND_CommandPush(cmd);
         }
     }
@@ -729,12 +748,21 @@ void __cdecl SND_SetEntState(SndEntHandle handle)
         if ( cmd )
         {
             cmd->type = SND_COMMAND_SET_ENT_STATE;
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+            cmd->context.set_ent_state.handle = handle;
+            CG_GetSoundEntityOrientation(
+                handle,
+                cmd->context.set_ent_state.origin,
+                cmd->context.set_ent_state.orientation,
+                cmd->context.set_ent_state.velocity);
+#else
             cmd->context.stop_alias.ent = handle;
             CG_GetSoundEntityOrientation(
                 handle,
                 &cmd->context.set_playback_attenuation.attenuation,
                 (float (*)[3])&cmd->context.play.position[2],
                 &cmd->context.set_listener.origin[1]);
+#endif
             SND_CommandPush(cmd);
         }
     }

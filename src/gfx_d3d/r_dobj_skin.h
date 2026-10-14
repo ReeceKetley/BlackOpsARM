@@ -1,4 +1,5 @@
 #pragma once
+#include <platform/bo1_native_width.h>
 #include <xanim/dobj.h>
 #include <xanim/xanim.h>
 #include "r_scene.h"
@@ -84,6 +85,14 @@ struct GfxModelRigidSurface // sizeof=0x38
     GfxModelSkinnedSurface surf;
     GfxScaledPlacement placement;
 };
+
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+// Hidden entries share the runtime stream with pointer-containing model surfaces.
+#define GFX_MODEL_HIDDEN_SURFACE_SIZE alignof(GfxModelRigidSurface)
+unsigned int R_AllocModelSurfaces(unsigned int size);
+#else
+#define GFX_MODEL_HIDDEN_SURFACE_SIZE 4
+#endif
 
 struct __declspec(align(8)) SkinXModelCmd // sizeof=0x30
 {

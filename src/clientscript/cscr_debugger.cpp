@@ -1,6 +1,11 @@
 #if !defined(BO1_STARTUP_SERVICES)
 #include <platform/bo1_native_width.h>
 #include "cscr_debugger.h"
+#if defined(__ANDROID__)
+#include "cscr_animtree.h"
+#include <cstdint>
+#include <platform/bo1_bytecode_io.h>
+#endif
 #include <universal/assertive.h>
 #include "cscr_compiler.h"
 #include "cscr_parser.h"
@@ -327,7 +332,11 @@ $LN6_152:
             if ( codePosa )
             {
                 success = 1;
+#if defined(__ANDROID__)
+                v11=bo1::bytecode::Load<std::uint16_t>(codePosa+1);
+#else
                 v11 = *(_WORD *)(codePosa + 1);
+#endif
                 builtinIndex = v11;
                 if ( v11 >= gScrCompilePub[inst].func_table_size
                     && !Assert_MyHandler(
@@ -804,7 +813,12 @@ void __thiscall Scr_ScriptWindow::EnterCallInternal(scriptInstance_t inst)
             if ( Sys_IsRemoteDebugServer() )
                 Sys_EndWriteDebugSocket();
         }
+#if defined(__ANDROID__)
+        ++codePos;
+        v3=BO1_NARROW_DECODE(const char,bo1::bytecode::Load<std::uint32_t>(codePos));
+#else
         v3 = *(const char **)++codePos;
+#endif
         codePos += 4;
         destCodePos = v3;
         Scr_GetSourcePosOfType(inst, v3 - 1, 4, &pos);

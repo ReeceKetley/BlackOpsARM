@@ -13,17 +13,27 @@ unsigned int g_snd_bankCount;
 SndPatch *g_snd_patches[8];
 unsigned int g_snd_patchCount;
 
+template<auto FindRow>
+static void *SND_FindRowAdapter(unsigned int id)
+{
+    return FindRow(id);
+}
+static void *SND_FindRowReferenceZero(unsigned int)
+{
+    // These table kinds deliberately use RETURN_ZERO32 in the working reference.
+    return reinterpret_cast<void *>(static_cast<std::uintptr_t>(RETURN_ZERO32()));
+}
 void *(__cdecl *const SND_FIND_ROW[9])(unsigned int) =
 {
-  (void*(*)(unsigned int))SND_FindRowAlias,
-  (void*(*)(unsigned int))SND_FindRowGroup,
-  (void*(*)(unsigned int))SND_FindRowCurve,
-  (void*(*)(unsigned int))SND_FindRowPan,
-  (void*(*)(unsigned int))RETURN_ZERO32,
-  (void*(*)(unsigned int))RETURN_ZERO32,
-  (void*(*)(unsigned int))SND_FindRowContext,
-  (void*(*)(unsigned int))RETURN_ZERO32,
-  (void*(*)(unsigned int))SND_FindRowMaster
+  SND_FindRowAdapter<SND_FindRowAlias>,
+  SND_FindRowAdapter<SND_FindRowGroup>,
+  SND_FindRowAdapter<SND_FindRowCurve>,
+  SND_FindRowAdapter<SND_FindRowPan>,
+  SND_FindRowReferenceZero,
+  SND_FindRowReferenceZero,
+  SND_FindRowAdapter<SND_FindRowContext>,
+  SND_FindRowReferenceZero,
+  SND_FindRowAdapter<SND_FindRowMaster>
 };
 
 const char *SND_TABLE_NAMES[9] =

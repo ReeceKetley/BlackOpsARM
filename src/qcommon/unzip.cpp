@@ -267,22 +267,42 @@ const char * gzerror OF((gzFile file, int *errnum));
 */
 static int unzlocal_getShort (ZIP_FILE* fin, uLong *pX)
 {
+#if defined(__ANDROID__)
+    unsigned char bytes[2];
+    if (ZIP_fread(bytes, sizeof(bytes), fin) != sizeof(bytes))
+        return UNZ_ERRNO;
+    *pX = static_cast<unsigned int>(bytes[0])
+        | (static_cast<unsigned int>(bytes[1]) << 8);
+    return UNZ_OK;
+#else
 	short	v;
 
 	ZIP_fread( &v, sizeof(v),fin );
 
 	*pX = LittleShort( v);
 	return UNZ_OK;
+#endif
 }
 
 static int unzlocal_getLong (ZIP_FILE *fin, uLong *pX)
 {
+#if defined(__ANDROID__)
+    unsigned char bytes[4];
+    if (ZIP_fread(bytes, sizeof(bytes), fin) != sizeof(bytes))
+        return UNZ_ERRNO;
+    *pX = static_cast<unsigned long>(bytes[0])
+        | (static_cast<unsigned long>(bytes[1]) << 8)
+        | (static_cast<unsigned long>(bytes[2]) << 16)
+        | (static_cast<unsigned long>(bytes[3]) << 24);
+    return UNZ_OK;
+#else
 	int		v;
 
 	ZIP_fread( &v, sizeof(v),fin );
 
 	*pX = LittleLong( v);
 	return UNZ_OK;
+#endif
 }
 
 

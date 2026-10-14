@@ -27,6 +27,15 @@ BOOL QueryPerformanceFrequency(LARGE_INTEGER* frequency)
     return 1; // Successful calls leave this thread's last-error value untouched.
 }
 
+BOOL QueryPerformanceCounter(LARGE_INTEGER* counter)
+{
+    if (!counter) { SetLastError(ERROR_INVALID_PARAMETER); return 0; }
+    timespec value{};
+    if (clock_gettime(CLOCK_MONOTONIC, &value)) timeFailure("clock_gettime");
+    counter->QuadPart = static_cast<std::int64_t>(value.tv_sec) * 1000000000LL + value.tv_nsec;
+    return 1;
+}
+
 void Sleep(DWORD milliseconds)
 {
     if (milliseconds == 0) {

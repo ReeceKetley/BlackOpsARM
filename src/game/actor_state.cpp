@@ -1,4 +1,5 @@
 #include "actor_state.h"
+#include <platform/bo1_native_width.h>
 #include <game_mp/g_main_mp.h>
 #include <game_mp/actor_mp.h>
 
@@ -161,7 +162,11 @@ void __fastcall Actor_ThinkStateTransitions(actor_s *self)
                 {
                     __debugbreak();
                 }
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+                Actor_FinishState(self, self->eState[self->stateLevel - 1]);
+#else
                 Actor_FinishState(self, *((ai_state_t *)&self->legsAnimDuration + self->stateLevel));
+#endif
                 Actor_ResumePopedState(self, self->eState[self->stateLevel]);
                 break;
             default:
@@ -193,7 +198,11 @@ int __fastcall Actor_StartState(actor_s *self, ai_state_t eStartedState)
         __debugbreak();
     }
     self->eState[self->stateLevel] = eStartedState;
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+    return AIFuncTable[self->species][eStartedState].pfnStart(
+#else
     return ((int (__fastcall *)(actor_s *, ai_state_t))AIFuncTable[self->species][eStartedState].pfnStart)(
+#endif
                      self,
                      self->eState[self->stateLevel]);
 }
@@ -287,7 +296,11 @@ char __fastcall Actor_ResumeState(actor_s *self, ai_state_t ePrevState)
 int __cdecl Actor_GetNextPopedState(actor_s *self)
 {
     if ( self->stateLevel )
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+        return self->eState[self->stateLevel - 1];
+#else
         return *(&self->legsAnimDuration + self->stateLevel);
+#endif
     else
         return 1;
 }
@@ -370,8 +383,13 @@ void __fastcall Actor_SimplifyStateTransitions(actor_s *self)
 
     while ( self->transitionCount >= 2 )
     {
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+        eCmd1 = self->StateTransitions[self->transitionCount - 2].eTransition;
+        eCmd2 = self->StateTransitions[self->transitionCount - 1].eTransition;
+#else
         eCmd1 = (ai_state_transition_t)self->eSubState[2 * self->transitionCount + 5];
         eCmd2 = (ai_state_transition_t )(*(&self->iStateTime + 2 * self->transitionCount));
+#endif
         if ( (unsigned int)eCmd1 >= 4
             && !Assert_MyHandler(
                         "C:\\projects_pc\\cod\\codsrc\\src\\game\\actor_state.cpp",
@@ -405,8 +423,13 @@ void __fastcall Actor_SimplifyStateTransitions(actor_s *self)
             return;
         if ( eTransition )
         {
+#if BO1_NATIVE_64BIT && !defined(_WIN32)
+            self->StateTransitions[self->transitionCount - 2].eTransition = eTransition;
+            self->StateTransitions[self->transitionCount - 2].eState = self->StateTransitions[self->transitionCount - 1].eState;
+#else
             self->eSubState[2 * self->transitionCount + 5] = (ai_substate_t )(eTransition);
             self->eSubState[2 * self->transitionCount + 6] = (ai_substate_t )(*(&self->preThinkTime + 2 * self->transitionCount));
+#endif
             --self->transitionCount;
         }
         else

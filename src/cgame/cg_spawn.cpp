@@ -1,4 +1,7 @@
 #include "cg_spawn.h"
+#if defined(__ANDROID__)
+#include <platform/android/legacy_crt.h>
+#endif
 #include <game/g_load_utils.h>
 #include "cg_scr_main.h"
 #include <cgame_mp/cg_local_mp.h>

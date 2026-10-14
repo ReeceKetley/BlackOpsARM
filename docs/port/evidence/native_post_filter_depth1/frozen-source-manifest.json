@@ -1,0 +1,22 @@
+{
+  "src\\platform\\android\\post_filter_depth.h": {
+    "sha256": "33d77ebb1dbf6c0d1498f4757768664ce00e2ab47f13fafe75f4fede20db5c3b",
+    "size": 841
+  },
+  "src\\platform\\android\\post_filter_depth.cpp": {
+    "sha256": "15bdcfe1f78e32ca8160323a28c31a6948e3d3c4e8aaa4e08793383e7eb1ba8f",
+    "size": 4052
+  },
+  "docs\\port\\evidence\\native_post_filter_depth1\\fixture.cpp": {
+    "sha256": "833b95a249993f39c3e8dbe78586ac910967e0261a3a3dc42fa00373708ae6ad",
+    "size": 1762
+  },
+  "docs\\port\\evidence\\native_post_filter_depth1\\d3d9.h": {
+    "sha256": "7f6e8a24929340ed2756dd73c19415fcc359f07a67abaa8043a8c1342df5a175",
+    "size": 1304
+  },
+  "docs\\port\\evidence\\native_post_filter_depth1\\check.py": {
+    "sha256": "c5d601a9f4eb59baf67d0647d54f6fb7402d72c7b9165a5a4055e1e07583e090",
+    "size": 2361
+  }
+}

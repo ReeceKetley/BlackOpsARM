@@ -354,7 +354,7 @@ jpeg_fill_bit_buffer (bitread_working_state * state,
       }
 
       /* OK, load c into get_buffer */
-      get_buffer = (get_buffer << 8) | c;
+      get_buffer = JPEG_SHIFT32(get_buffer, 8) | c;
       bits_left += 8;
     } /* end while */
   } else {
@@ -374,7 +374,7 @@ jpeg_fill_bit_buffer (bitread_working_state * state,
 	cinfo->entropy->insufficient_data = TRUE;
       }
       /* Fill the buffer with zero bits */
-      get_buffer <<= MIN_GET_BITS - bits_left;
+      get_buffer = JPEG_SHIFT32(get_buffer, MIN_GET_BITS - bits_left);
       bits_left = MIN_GET_BITS;
     }
   }

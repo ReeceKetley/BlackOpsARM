@@ -8,6 +8,7 @@
 #include <limits>
 #include <map>
 #include <mutex>
+#include <new>
 
 #if !defined(__ANDROID__) || !defined(__aarch64__)
 #error This virtual memory implementation requires Android ARM64
@@ -94,9 +95,37 @@ void Z_VirtualDecommit(char *ptr, int size, int type)
 }
 void Z_VirtualFree(void *ptr, int type)
 {
+    if (!ptr) return; // Original Z_VirtualFree accepts null.
     std::lock_guard<std::mutex> lock(reservationMutex);
     const auto it = reservations.find(reinterpret_cast<std::uintptr_t>(ptr));
     if (it == reservations.end() || (it->second.type != -1 && it->second.type != type)) fail("invalid release");
     if (munmap(ptr, it->second.bytes)) fail("munmap release");
     reservations.erase(it);
+}
+
+char *Z_TryVirtualAlloc(int size, const char *, int type)
+{
+    if (size <= 0 || type < 0) fail("invalid virtual allocation");
+    const auto bytes = roundUp(static_cast<std::size_t>(size));
+    void *ptr = mmap(nullptr, bytes, PROT_READ | PROT_WRITE,
+        MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    if (ptr == MAP_FAILED) return nullptr;
+    std::lock_guard<std::mutex> lock(reservationMutex);
+    try {
+        if (!reservations.emplace(reinterpret_cast<std::uintptr_t>(ptr),
+                Reservation{bytes, type}).second) fail("duplicate virtual allocation");
+    } catch (const std::bad_alloc &) {
+        if (munmap(ptr, bytes)) fail("failed allocation registration cleanup");
+        return nullptr;
+    }
+    // The Windows reference's track_z_commit/decommit bodies are disabled.
+    // Ownership/type and actual OS mappings are still tracked here.
+    return static_cast<char *>(ptr);
+}
+
+char *Z_VirtualAlloc(int size, const char *name, int type)
+{
+    auto *ptr = Z_TryVirtualAlloc(size, name, type);
+    if (!ptr) fail("virtual allocation out of memory");
+    return ptr;
 }

@@ -1776,7 +1776,7 @@ void __cdecl constraint_solver_process(
     if (m_list_island_count > 0)
     {
         g_list_island_cur = 0;
-        input = (constraint_solver_task_input *)transient_buffer->allocate(sizeof(constraint_solver_task_input), 4, 0, "phys_transient_allocator out of memory.");
+        input = (constraint_solver_task_input *)transient_buffer->allocate(sizeof(constraint_solver_task_input), alignof(constraint_solver_task_input), 0, "phys_transient_allocator out of memory.");
         input->m_list_island = m_list_island;
         input->m_list_island_count = m_list_island_count;
         input->m_list_island_cur = &g_list_island_cur;
