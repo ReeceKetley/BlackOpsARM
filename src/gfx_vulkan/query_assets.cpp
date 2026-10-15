@@ -5,23 +5,36 @@
 #include <limits>
 namespace bo1::vulkan::query_assets {
 struct Entry {
- std::vector<std::shared_ptr<OcclusionQueries>> backings;std::shared_ptr<OcclusionQueries> latest;
+ std::shared_ptr<OcclusionQueries> latest;unsigned latestIndex{}; // slot of the last issued query
  bool issued=false,cached=false;unsigned value{};std::uint64_t generation{};
 };
 namespace {
  std::mutex mutex;VkDevice device{};bool precise{};
  std::unordered_map<const void*,std::shared_ptr<Entry>,bo1::vulkan::PointerHash> owners;
- std::vector<std::weak_ptr<OcclusionQueries>> live;thread_local RecordingScope* current{};
- bool Drained(){for(auto it=live.begin();it!=live.end();)if(it->expired())it=live.erase(it);else ++it;return owners.empty()&&live.empty();}
- std::shared_ptr<OcclusionQueries> New(std::string& error) {
-  for(auto it=live.begin();it!=live.end();)if(it->expired())it=live.erase(it);else ++it;
-  auto pool=std::make_shared<OcclusionQueries>(device,precise);if(!pool->Create(1,error))return {};
-  live.push_back(pool);return pool;
+ // Frame pools: each holds one slot per owner. Owners keep the pool of their
+ // last result alive; framePools are reused once their submission retires.
+ std::vector<std::shared_ptr<OcclusionQueries>> framePools;thread_local RecordingScope* current{};
+ bool Drained(){
+  if(owners.empty())for(auto it=framePools.begin();it!=framePools.end();)if(it->use_count()==1&&(*it)->Retired())it=framePools.erase(it);else ++it;
+  return owners.empty()&&framePools.empty();
+ }
+ constexpr unsigned MaxOwners=4096;
+ std::shared_ptr<OcclusionQueries> FramePool(unsigned required,std::string& error) {
+  std::shared_ptr<OcclusionQueries> found;
+  for(auto it=framePools.begin();it!=framePools.end();) {
+   if(!(*it)->Retired()){++it;continue;}
+   if((*it)->Capacity()<required){it=framePools.erase(it);continue;} // superseded by a larger pool
+   if(!found)found=*it;++it;
+  }
+  if(found)return found;
+  unsigned capacity=256;while(capacity<required)capacity*=2;if(capacity>MaxOwners)capacity=MaxOwners;
+  auto pool=std::make_shared<OcclusionQueries>(device,precise);if(!pool->Create(capacity,error))return {};
+  framePools.push_back(pool);return pool;
  }
  QueryRead ReadEntry(Entry& entry,unsigned& value,std::string& error) {
   if(!entry.issued)return QueryRead::Pending;
   if(entry.cached){value=entry.value;return QueryRead::Ready;}
-  std::uint64_t samples{},generation{};auto status=entry.latest->Read(0,samples,generation,error);
+  std::uint64_t samples{},generation{};auto status=entry.latest->Read(entry.latestIndex,samples,generation,error);
   if(status==QueryRead::Ready){if(samples>std::numeric_limits<unsigned>::max()){error="Native query sample count exceeds engine width";return QueryRead::Failed;}
    entry.value=unsigned(samples);entry.cached=true;value=entry.value;}
   return status;
@@ -36,8 +49,8 @@ bool Attach(VkDevice next,bool exact,std::string& error) {
 bool Allocate(const void* owner,std::string& error) {
  std::lock_guard<std::mutex> lock(mutex);
  if(!precise){error="Native engine sample-count queries require enabled precise occlusion";return false;}
- if(!device||!owner||owners.count(owner)||owners.size()>=4096){error="Invalid native occlusion owner/context/capacity";return false;}
- auto pool=New(error);if(!pool)return false;auto entry=std::make_shared<Entry>();entry->backings.push_back(pool);entry->latest=pool;owners.emplace(owner,entry);return true;
+ if(!device||!owner||owners.count(owner)||owners.size()>=MaxOwners){error="Invalid native occlusion owner/context/capacity";return false;}
+ owners.emplace(owner,std::make_shared<Entry>());return true;
 }
 bool Has(const void* owner){std::lock_guard<std::mutex> lock(mutex);return owners.count(owner)!=0;}
 void Release(const void* owner){std::lock_guard<std::mutex> lock(mutex);owners.erase(owner);}
@@ -45,21 +58,23 @@ RecordingScope::RecordingScope(VkCommandBuffer c,Arena& a):command(c),arena(a),p
 RecordingScope::~RecordingScope(){current=previous_;}
 bool RecordingScope::Prepare(std::string& error) {
  std::lock_guard<std::mutex> lock(mutex);if(!device||!command||!prepared.empty()){error="Invalid native query frame preparation";return false;}
+ if(owners.empty())return true;
+ auto pool=FramePool(unsigned(owners.size()),error);if(!pool)return false;
+ // Results still held only by the pool about to be reset are read first.
  for(const auto& item:owners) {
   auto& entry=*item.second;unsigned old{};
-  if(entry.issued&&!entry.cached&&entry.latest->Retired()&&ReadEntry(entry,old,error)==QueryRead::Failed)return false;
-  std::shared_ptr<OcclusionQueries> pool;
-  for(auto& candidate:entry.backings)if(candidate->Retired()){pool=candidate;break;}
-  if(!pool){pool=New(error);if(!pool)return false;entry.backings.push_back(pool);}
-  if(!pool->Reset(command,error))return false;
-  arena.pools.push_back(pool);prepared.emplace(item.first,Prepared{item.second,pool});
+  if(entry.issued&&!entry.cached&&entry.latest==pool&&ReadEntry(entry,old,error)==QueryRead::Failed)return false;
  }
+ if(!pool->Reset(command,error))return false;
+ arena.pools.push_back(pool);prepared.reserve(owners.size());
+ unsigned index=0;for(const auto& item:owners)prepared.emplace(item.first,Prepared{item.second,pool,index++});
  return true;
 }
 bool RecordingScope::Submitted(VkFence fence,std::string& error) {
  std::lock_guard<std::mutex> lock(mutex);
  if(active){error="Native query frame submitted with an active query";return false;}
- for(auto& item:prepared)if(!item.second.pool->Submitted(fence,error))return false;return true;
+ // Every prepared owner shares the frame pool: publish it once.
+ if(!prepared.empty()&&!prepared.begin()->second.pool->Submitted(fence,error))return false;return true;
 }
 bool Begin(const void* owner,std::string& error) {
  std::lock_guard<std::mutex> lock(mutex);
@@ -68,14 +83,14 @@ bool Begin(const void* owner,std::string& error) {
  if(found==current->prepared.end()||registered==owners.end()||registered->second!=found->second.entry){error="Native query owner was not prepared for this frame";return false;}
  auto& entry=*found->second.entry;
  if(auto* passes=pass_recording::Current())passes->FlushPendingDraw(); // queries bracket the actual draws
- if(entry.generation==std::numeric_limits<std::uint64_t>::max()||!found->second.pool->Begin(current->command,0,error))return false;
- entry.latest=found->second.pool;entry.issued=true;entry.cached=false;++entry.generation;current->active=owner;return true;
+ if(entry.generation==std::numeric_limits<std::uint64_t>::max()||!found->second.pool->Begin(current->command,found->second.index,error))return false;
+ entry.latest=found->second.pool;entry.latestIndex=found->second.index;entry.issued=true;entry.cached=false;++entry.generation;current->active=owner;return true;
 }
 bool End(const void* owner,std::string& error) {
  std::lock_guard<std::mutex> lock(mutex);
  if(!current||current->active!=owner){error="Native query end has no matching owner";return false;}
  if(auto* passes=pass_recording::Current())passes->FlushPendingDraw();
- auto found=current->prepared.find(owner);if(found==current->prepared.end()||!found->second.pool->End(current->command,0,error))return false;
+ auto found=current->prepared.find(owner);if(found==current->prepared.end()||!found->second.pool->End(current->command,found->second.index,error))return false;
  current->active=nullptr;return true;
 }
 QueryRead Read(const void* owner,unsigned& samples,bool flush,std::string& error) {

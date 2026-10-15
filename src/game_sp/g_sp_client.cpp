@@ -1082,7 +1082,11 @@ void G_SP_HeadlessTestClientFrame(bool afterFrame)
                 gentity_s *player = &g_entities[i];
                 if (svs.clients[i].header.state == CS_ACTIVE && player->client && player->health > 0
                     && player->client->sess.sessionState == SESS_STATE_PLAYING)
+                {
+                    if (!(player->flags & 1))
+                        Com_Printf(16, "bo1_testclient: god mode enabled client %d time %d\n", i, level.time);
                     player->flags |= 1;
+                }
             }
         }
     }

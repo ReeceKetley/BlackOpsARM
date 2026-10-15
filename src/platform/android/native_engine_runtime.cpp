@@ -17,6 +17,9 @@
 #if defined(BO1_NATIVE_FULL_DATABASE)
 #include <SDL.h>
 #include "system_initialization.h"
+#include <client/client.h>
+#include <qcommon/common.h>
+#include <qcommon/cmd.h>
 #endif
 #include <cerrno>
 #include <atomic>
@@ -212,6 +215,12 @@ int bo1::android::RunNativeEngine(NativeEngineEntry entry, int argc, char **argv
     }
     char commandLine[1024] = "+set bo1_headless 1 +set bo1_zombies 1 +set dedicated 1 +set logfile 2 +set net_ip 127.0.0.1";
     if(rendered)std::strcpy(commandLine,"+set bo1_headless 0 +set bo1_zombies 1 +set dedicated 0 +set r_fullscreen 0 +set r_borderless 1 +set r_aaSamples 1 +set logfile 2 +set net_ip 127.0.0.1");
+    // Automatic Kino launches are performance sessions: survive unattended captures.
+    // Use the existing spawn-safe test switch instead of timing a toggling god command.
+    if(rendered && autoStartKino) {
+        std::strcat(commandLine," +set bo1_testclient_god 1");
+        std::fputs("ENGINE ENTRY auto Kino: spawn-safe god mode requested\n",stderr);
+    }
     bo1::android::InstallEngineCommandLine(argv[0], commandLine);
     // The existing policy must reject rendered admission until the actual
     // provider closure is ready. Never fall back to the verified headless mode.
@@ -247,8 +256,18 @@ int bo1::android::RunNativeEngine(NativeEngineEntry entry, int argc, char **argv
     // Same outer ownership as WinMain: poll real input, then the engine frame.
     // Real quit/recovery services own teardown; never return with live workers.
     std::fputs("ENGINE ENTRY entering actual input/frame loop\n",stderr);
+    bool kinoStartupPending=rendered&&autoStartKino;
     for (;;) {
 #if defined(BO1_NATIVE_FULL_DATABASE)
+        // Let the real frontend initialize shared assets and the local client.
+        // Consume this launch request once: returning to menus later stays there.
+        if(kinoStartupPending&&CL_GetLocalClientConnectionState(0)==CA_ACTIVE) {
+            kinoStartupPending=false;
+            if(Com_IsSPFrontEndRunning()) {
+                std::fputs("ENGINE ENTRY auto Kino: active frontend, queueing map zombie_theater once\n",stderr);
+                Cbuf_AddText(0,"map zombie_theater\n");
+            } else std::fputs("ENGINE ENTRY auto Kino: gameplay already active, no map reload\n",stderr);
+        }
         if(rendered)IN_Frame_Native();
         else
 #endif

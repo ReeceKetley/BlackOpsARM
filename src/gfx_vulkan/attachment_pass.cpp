@@ -1,5 +1,6 @@
 #include "attachment_pass.h"
 #include "image_usage.h"
+#include "render_pass_compatibility.h"
 #include <vector>
 #include <algorithm>
 namespace bo1::vulkan {
@@ -31,7 +32,13 @@ std::shared_ptr<SharedAttachmentRenderPass> AttachmentPassCache::Acquire(VkDevic
     if(entries_.size()>=128) {error="Attachment render-pass definition budget exceeded";return {};}
     auto pass=std::make_shared<SharedAttachmentRenderPass>();pass->device=device_;
     if(!Check(vkCreateRenderPass(device_,&info,nullptr,&pass->handle),"cached attachment render pass",error))return {};
-    entries_.push_back({key,pass});return pass;
+    std::vector<std::uint32_t> compatibility;
+    if(RenderPassCompatibility(info,compatibility)) {
+        for(const auto& entry:entries_)if(entry.compatibility==compatibility) {
+            pass->pipelinePass=entry.pass->pipelinePass?entry.pass->pipelinePass:entry.pass;break;
+        }
+    }
+    entries_.push_back({key,pass,std::move(compatibility)});return pass;
 }
 AttachmentPass::~AttachmentPass(){if(framebuffer_&&!sharedFramebuffer_)vkDestroyFramebuffer(device_,framebuffer_,nullptr);if(pass_&&!sharedPass_)vkDestroyRenderPass(device_,pass_,nullptr);}
 bool AttachmentPass::Create(std::shared_ptr<Texture2D> color,std::shared_ptr<Texture2D> depth,bool preserveDepth,std::string& error,bool loadExisting,int depthLoad) {

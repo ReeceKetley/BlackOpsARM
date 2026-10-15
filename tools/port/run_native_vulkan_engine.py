@@ -18,7 +18,7 @@ p = argparse.ArgumentParser()
 p.add_argument('--sdk', type=int, required=True)
 p.add_argument('--build', default='build-android-audit/native_engine_entry1')
 p.add_argument('--stage', type=int, required=True)
-p.add_argument('--height', type=int, choices=(0,720,1080), default=0)
+p.add_argument('--height', type=int, choices=(0,540,720,1080), default=0)
 p.add_argument('--seconds', type=int, default=180)
 a = p.parse_args()
 root = Path(__file__).resolve().parents[2]

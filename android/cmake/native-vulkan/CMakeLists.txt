@@ -18,6 +18,7 @@ add_library(bo1_vulkan_shader STATIC "${BO1_ROOT}/src/gfx_vulkan/shader_translat
     "${BO1_ROOT}/src/gfx_vulkan/graphics_program.cpp"
     "${BO1_ROOT}/src/gfx_vulkan/depth_bias.cpp"
     "${BO1_ROOT}/src/gfx_vulkan/pipeline_key.cpp"
+    "${BO1_ROOT}/src/gfx_vulkan/program_cache.cpp"
     "${BO1_ROOT}/src/gfx_vulkan/resources.cpp"
     "${BO1_ROOT}/src/gfx_vulkan/draw_storage.cpp"
     "${BO1_ROOT}/src/gfx_vulkan/image_usage.cpp"
@@ -27,6 +28,7 @@ target_compile_features(bo1_vulkan_shader PUBLIC cxx_std_17)
 target_include_directories(bo1_vulkan_shader PUBLIC "${BO1_ROOT}/src/gfx_vulkan")
 target_link_libraries(bo1_vulkan_shader PUBLIC bo1_native_shader_compiler vulkan)
 if(ANDROID)
+    target_link_libraries(bo1_vulkan_shader PUBLIC log)
     target_compile_options(bo1_vulkan_shader PRIVATE -fsanitize=undefined -fno-sanitize-recover=undefined)
 endif()
 option(BO1_VULKAN_SHADER_SMOKE "Build focused actual-SM3 translator/device harness" ON)
@@ -39,6 +41,7 @@ if(BO1_VULKAN_SHADER_SMOKE)
         "${BO1_ROOT}/tools/port/tests/native_vulkan_depth_copy.cpp"
         "${BO1_ROOT}/tools/port/tests/native_vulkan_upload_flights.cpp"
         "${BO1_ROOT}/tools/port/tests/native_vulkan_draw_storage.cpp")
+    target_sources(bo1_vulkan_shader_smoke PRIVATE "${BO1_ROOT}/tools/port/tests/native_vulkan_constant_upload.cpp")
     target_include_directories(bo1_vulkan_shader_smoke PRIVATE "${BO1_ROOT}/src")
     target_link_libraries(bo1_vulkan_shader_smoke PRIVATE bo1_vulkan_shader vulkan)
     if(ANDROID)

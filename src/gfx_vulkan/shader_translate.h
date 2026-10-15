@@ -37,6 +37,7 @@ bool TranslateShader(const void* bytecode, std::size_t bytes,
 // Honour the SM1-3 _pp partial-precision hints as SPIR-V RelaxedPrecision in
 // subsequently translated shaders (fp16 ALU/texture paths on mobile GPUs).
 void SetRelaxedPrecision(bool enabled);
+bool RelaxedPrecisionEnabled();
 // SM3 output/input register indices need not agree. Link by semantic rather
 // than assuming TEXCOORD0 occupies the same register in both stages.
 bool TranslateShaderPair(const void* vertex, std::size_t vertexBytes,

@@ -10,8 +10,10 @@ VkImageLayout Final(const Texture2D& image) {
 RecordingScope::RecordingScope(Tracker& t,VkCommandBuffer c):tracker(t),command(c),previous_(current){current=this;}
 RecordingScope::~RecordingScope(){current=previous_;}
 State RecordingScope::Lookup(const std::shared_ptr<Texture2D>& image)const {
- auto p=pending.find(image.get());if(p!=pending.end()&&p->second.image.lock()==image)return p->second;
- auto s=tracker.submitted.find(image.get());if(s!=tracker.submitted.end()&&s->second.image.lock()==image)return s->second;
+ // The caller holds `image`, so a live entry at its address is this image; an
+ // entry for a destroyed image at a reused address has expired.
+ auto p=pending.find(image.get());if(p!=pending.end()&&!p->second.image.expired())return p->second;
+ auto s=tracker.submitted.find(image.get());if(s!=tracker.submitted.end()&&!s->second.image.expired())return s->second;
  State empty;empty.image=image;return empty;
 }
 bool RecordingScope::Validate(std::string& error)const {

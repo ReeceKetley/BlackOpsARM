@@ -20,17 +20,26 @@ public:
     bool Save(std::string& error);
     std::shared_ptr<GraphicsProgram> Acquire(const ProgramDescription&,std::string& error);
     void EraseRenderPass(VkRenderPass);
-    void Clear(){programs_.clear();}
+    void Clear(){programs_.clear();shaderPairs_.clear();}
     // Key timing reads the clock per draw; enable only on reported frames.
-    void SetTiming(bool enabled){timing_=enabled;}
+    void SetTiming(bool enabled,unsigned frame=0){timing_=enabled;frame_=frame;}
     unsigned Hits()const{return hits_;}unsigned Misses()const{return misses_;}
     std::uint64_t KeyNanoseconds()const{return keyNs_;}
     std::uint64_t CreateNanoseconds()const{return createNs_;}
     unsigned Evictions()const{return evictions_;}
     std::size_t Size()const{return programs_.size();}
+    std::size_t ShaderPairs()const{return shaderPairs_.size();}
+    unsigned ShaderPairHits()const{return shaderPairHits_;}
 private:
     VkDevice device_{};VkPipelineCache driver_{};unsigned capacity_{},hits_{},misses_{};std::string path_;bool timing_{};
-    std::uint64_t keyNs_{},createNs_{};unsigned evictions_{};
+    std::uint64_t keyNs_{},createNs_{};unsigned evictions_{},frame_{};
     std::unordered_map<PipelineKey,std::shared_ptr<GraphicsProgram>,PipelineKeyHash> programs_;
+    struct ShaderPair {
+        // Retain immutable bytecode owners: addresses cannot alias after unload.
+        std::shared_ptr<const shader_assets::Record> vertex,pixel;
+        unsigned alphaComparison{},alphaReference{},depthMask{},ubyteMask{};bool relaxed{};
+        std::array<ShaderTranslation,2> shaders;
+    };
+    std::vector<ShaderPair> shaderPairs_;unsigned shaderPairHits_{};
 };
 }

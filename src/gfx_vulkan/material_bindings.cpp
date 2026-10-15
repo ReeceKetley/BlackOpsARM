@@ -1,4 +1,5 @@
 #include "material_bindings.h"
+#include "constant_upload.h"
 #include "pointer_hash.h"
 #include "gfx_d3d/rb_state.h"
 #include "gfx_d3d/r_dvars.h"
@@ -60,7 +61,7 @@ bool Upload(const Draw& draw,Buffer& buffer,VkDeviceSize& cursor,VkDeviceSize al
     vs=std::move(vertex);ps=std::move(pixel);cursor=second+4096;return true;
 }
 bool Upload(const Draw& draw,DrawStorage& storage,VkDeviceSize alignment,
-    std::vector<ProgramResource>& vs,std::vector<ProgramResource>& ps,VkDescriptorPool& pool,std::string& error,const unsigned* constantRows) {
+    std::vector<ProgramResource>& vs,std::vector<ProgramResource>& ps,VkDescriptorPool& pool,std::string& error,const unsigned* constantRows,BindCache* cache) {
     if(!draw.constants||!draw.selection||!draw.selection->vertex||!draw.selection->pixel||!alignment
         ||alignment>std::numeric_limits<VkDeviceSize>::max()-4095){error="Invalid material draw-page capture/alignment";return false;}
     std::vector<ProgramResource> lists[2];bool needed[2]{};
@@ -81,15 +82,12 @@ bool Upload(const Draw& draw,DrawStorage& storage,VkDeviceSize alignment,
         if(!rows||rows>256){error="Invalid native constant row count";return false;}
         size[stage]=VkDeviceSize(rows)*16;
     }
-    const auto first=needed[0]?((size[0]+alignment-1)/alignment)*alignment:0;
-    const VkDeviceSize bytes=first+size[1];
-    DrawStorage::Allocation allocation;if(!storage.Allocate(bytes,alignment,allocation,error))return false;
-    VkDeviceSize offset=allocation.offset;
-    for(unsigned stage=0;stage<2;++stage)if(needed[stage]) {
-        if(!allocation.buffer->Write(offset,draw.constants->floats[stage].data(),size[stage],error))return false;
-        lists[stage].push_back({ResourceKind::Constants,0,{allocation.buffer->Handle(),offset,size[stage]},{}});offset+=first;
-    }
-    vs=std::move(lists[0]);ps=std::move(lists[1]);pool=allocation.descriptors;return true;
+    const void* data[2]={draw.constants->floats[0].data(),draw.constants->floats[1].data()};
+    VkDescriptorBufferInfo ranges[2]{};
+    if(!UploadConstantRanges(storage,alignment,data,size,cache,ranges,pool,error))return false;
+    for(unsigned stage=0;stage<2;++stage)if(needed[stage])
+        lists[stage].push_back({ResourceKind::Constants,0,ranges[stage],{}});
+    vs=std::move(lists[0]);ps=std::move(lists[1]);return true;
 }
 
 }
