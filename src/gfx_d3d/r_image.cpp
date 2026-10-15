@@ -1,3 +1,8 @@
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+#include "gfx_vulkan/image_assets.h"
+#include "gfx_vulkan/shader_assets.h"
+#include "platform/android/native_vulkan_device.h"
+#endif
 #include "r_image.h"
 #include "r_image_globals.h"
 #include <cstdint>
@@ -184,6 +189,13 @@ void __cdecl Image_Release(GfxImage *image)
         for ( platform = 0; platform < 2; ++platform )
             imageGlobals.totalMemory.platform[platform] -= image->cardMemory.platform[platform];
     }
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if (bo1::vulkan::image_assets::Release(image)) {
+        image->cardMemory.platform[0]=image->cardMemory.platform[1]=0;
+        Image_TrackBytes-=image->loadedSize;
+        image->loadedSize=0;image->mapType=0;return;
+    }
+#endif
     if ( image->texture.basemap )
     {
         BO1_RenderCount(BO1_RC_TEX_RELEASE, 1); // p1: bo1_frameperf (measurement only)
@@ -428,6 +440,14 @@ void __cdecl Image_Create2DTexture_PC(
     image->height = height;
     image->depth = 1;
     image->mapType = 3;
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if (bo1::vulkan::shader_assets::Active()) {
+        std::string error;
+        if (!bo1::vulkan::image_assets::Create(image,mipmapCount,imageFlags,unsigned(imageFormat),error))
+            Com_Error(ERR_FATAL,"Native Vulkan image %s: %s",image->name?image->name:"<unnamed>",error.c_str());
+        return;
+    }
+#endif
     usage = Image_GetUsage(imageFlags, imageFormat);
     if ( (imageFlags & 0x40000) != 0 )
         memPool = D3DPOOL_SYSTEMMEM;
@@ -521,6 +541,14 @@ void __cdecl Image_Create3DTexture_PC(
     image->height = height;
     image->depth = depth;
     image->mapType = 4;
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if (bo1::vulkan::shader_assets::Active()) {
+        std::string error;
+        if (!bo1::vulkan::image_assets::Create(image,mipmapCount,imageFlags,unsigned(imageFormat),error))
+            Com_Error(ERR_FATAL,"Native Vulkan image %s: %s",image->name?image->name:"<unnamed>",error.c_str());
+        return;
+    }
+#endif
     Image_GetUsage(imageFlags, imageFormat);
     if ( !Sys_IsRenderThread()
         && !Assert_MyHandler(
@@ -590,6 +618,14 @@ void __cdecl Image_CreateCubeTexture_PC(
     image->height = edgeLen;
     image->depth = 1;
     image->mapType = 5;
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if (bo1::vulkan::shader_assets::Active()) {
+        std::string error;
+        if (!bo1::vulkan::image_assets::Create(image,mipmapCount,0,unsigned(imageFormat),error))
+            Com_Error(ERR_FATAL,"Native Vulkan image %s: %s",image->name?image->name:"<unnamed>",error.c_str());
+        return;
+    }
+#endif
     if ( !gfxMetrics.canMipCubemaps )
         mipmapCount = 1;
     if ( !Sys_IsRenderThread()
@@ -1221,6 +1257,12 @@ void __cdecl R_SetPicmip()
     bool cappedPicmip; // [esp+Bh] [ebp-5h]
     int minPicmip; // [esp+Ch] [ebp-4h]
 
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()) {
+        const auto renderer=bo1::android::native_device::Renderer();
+        if(!renderer||!renderer->Device()||!renderer->Physical())Com_Error(ERR_FATAL,"Picmip requires its actual native Vulkan device");
+    } else
+#endif
     if ( !dx.device
         && !Assert_MyHandler("C:\\projects_pc\\cod\\codsrc\\src\\gfx_d3d\\r_image.cpp", 1598, 0, "%s", "dx.device") )
     {

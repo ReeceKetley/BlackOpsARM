@@ -6,6 +6,9 @@ struct SunShadowMapCallbackUserData
 {
     const GfxSunShadowPartition *partition;
     const GfxDrawSurfListInfo *drawList;
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    const GfxBackEndData *data; // native far-partition cache key and viewport
+#endif
 };
 
 void    R_DrawSunShadowMap(

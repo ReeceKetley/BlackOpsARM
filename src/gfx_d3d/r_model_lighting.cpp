@@ -1,3 +1,9 @@
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+#include "platform/android/native_vulkan_device.h"
+#include "gfx_vulkan/shader_assets.h"
+#include "gfx_vulkan/image_assets.h"
+#include <vector>
+#endif
 #include <qcommon/cm_mapkit.h>
 #include "r_model_lighting.h"
 #include <algorithm>
@@ -13,6 +19,18 @@
 #include "r_primarylights.h"
 #include "r_foliage.h"
 #include "r_init.h"
+
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+namespace {
+struct NativeModelLightingPixels {
+    GfxImage* owner{};
+    std::weak_ptr<bo1::vulkan::Texture2D> texture;
+    std::vector<unsigned int> pixels;
+};
+NativeModelLightingPixels nativeModelLighting;
+static_assert(sizeof(unsigned int)==4,"Model lighting texels require four bytes");
+}
+#endif
 
 struct $ACD36BF6C142509D89D5FAE1478EBC2D // sizeof=0x64
 {                                       // XREF: .data:modelLightGlob/r
@@ -814,6 +832,24 @@ void __cdecl RB_PatchModelLighting(const GfxModelLightingPatch *patchList, unsig
         //    &modelLightGlob.lockedBox,
         //    0,
         //    0);
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+        if(bo1::vulkan::shader_assets::Active()) {
+            const auto image=bo1::vulkan::image_assets::Acquire(modelLightGlob.image);
+            const auto renderer=bo1::android::native_device::Renderer();
+            const auto texels=std::size_t(256)*modelLightGlob.imageHeight*4;
+            if(!patchList||!renderer||renderer->FrameRecording()||!image
+                ||nativeModelLighting.owner!=modelLightGlob.image||nativeModelLighting.texture.lock()!=image->texture
+                ||nativeModelLighting.pixels.size()!=texels) {
+                Com_Error(ERR_FATAL,"Native model lighting update requires its actual atlas before scene recording");return;
+            }
+            for(unsigned i=0;i<patchCount;++i)if(patchList[i].modelLightingIndex>=16u*modelLightGlob.imageHeight) {
+                Com_Error(ERR_FATAL,"Native model lighting patch index exceeds its atlas");return;
+            }
+            modelLightGlob.lockedBox.RowPitch=256*4;
+            modelLightGlob.lockedBox.SlicePitch=256*4*modelLightGlob.imageHeight;
+            modelLightGlob.lockedBox.pBits=nativeModelLighting.pixels.data();
+        } else
+#endif
         modelLightGlob.image->texture.volmap->LockBox(0, &modelLightGlob.lockedBox, 0, 0);
         R_SetModelLightingSampleDeltas();
         R_SetLightGridSampleDeltas(modelLightGlob.lockedBox.RowPitch, modelLightGlob.lockedBox.SlicePitch);
@@ -844,6 +880,15 @@ void __cdecl RB_PatchModelLighting(const GfxModelLightingPatch *patchList, unsig
             __debugbreak();
         }
         //modelLightGlob.image->texture.basemap->__vftable[1].GetDevice(modelLightGlob.image->texture.basemap, 0);
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+        if(bo1::vulkan::shader_assets::Active()) {
+            std::string error;
+            if(!bo1::vulkan::image_assets::QueueUpload(modelLightGlob.image,D3DFMT_A8R8G8B8,0,0,nativeModelLighting.pixels.data(),error)) {
+                modelLightGlob.lockedBox.pBits=nullptr;
+                Com_Error(ERR_FATAL,"Native model lighting upload: %s",error.c_str());return;
+            }
+        } else
+#endif
         modelLightGlob.image->texture.volmap->UnlockBox(0);
         modelLightGlob.lockedBox.pBits = 0;
     }
@@ -1067,9 +1112,35 @@ void __cdecl R_InitModelLightingImage()
     modelLightGlob.image = Image_AllocProg(12, 4u, 1u);
     // mod: query the actual volume-texture cap, not the 2D texture-size cap.
     D3DCAPS9 caps;
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()) {
+        const auto renderer=bo1::android::native_device::Renderer();
+        if(!renderer)Com_Error(ERR_FATAL,"Model lighting atlas needs its native Vulkan device");
+        VkPhysicalDeviceProperties properties{};vkGetPhysicalDeviceProperties(renderer->Physical(),&properties);
+        // Legacy field is capability metadata only; no D3D interface exists.
+        caps.MaxVolumeExtent=properties.limits.maxImageDimension3D;
+        if(caps.MaxVolumeExtent<modelLightGlob.imageHeight)
+            Com_Error(ERR_FATAL,"Model lighting atlas exceeds native Vulkan 3D image limit");
+    } else
+#endif
     if (FAILED(dx.device->GetDeviceCaps(&caps)) || caps.MaxVolumeExtent < modelLightGlob.imageHeight)
         Com_Error(ERR_FATAL, "Model lighting atlas height %u is unsupported by the volume texture device", modelLightGlob.imageHeight);
     Image_SetupAndLoad(modelLightGlob.image, 256, modelLightGlob.imageHeight, 4, 10, D3DFMT_A8R8G8B8);
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()) {
+        const auto image=bo1::vulkan::image_assets::Acquire(modelLightGlob.image);
+        if(!image||image->description.viewType!=VK_IMAGE_VIEW_TYPE_3D||image->description.format!=VK_FORMAT_B8G8R8A8_UNORM
+            ||image->description.extent.width!=256||image->description.extent.height!=modelLightGlob.imageHeight
+            ||image->description.extent.depth!=4) {
+            Com_Error(ERR_FATAL,"Native model lighting allocation has an invalid shape or format");return;
+        }
+        nativeModelLighting.owner=modelLightGlob.image;nativeModelLighting.texture=image->texture;
+        nativeModelLighting.pixels.assign(std::size_t(256)*modelLightGlob.imageHeight*4,0);
+        std::string error;
+        if(!bo1::vulkan::image_assets::QueueUpload(modelLightGlob.image,D3DFMT_A8R8G8B8,0,0,nativeModelLighting.pixels.data(),error))
+            Com_Error(ERR_FATAL,"Native model lighting initial upload: %s",error.c_str());
+    }
+#endif
     Com_Printf(8, "MODEL_LIGHTING_ATLAS: dynamic=%u static=%u total=%u entryBitsY=%u image=256x%ux4 A8R8G8B8 bytes=%u MaxVolumeExtent=%u\n",
         modelLightGlob.xmodelEntryLimit, smodelLightGlob.local.entryLimit, modelLightGlob.totalEntryLimit,
         modelLightGlob.entryBitsY, modelLightGlob.imageHeight, 256 * modelLightGlob.imageHeight * 4 * 4, caps.MaxVolumeExtent);
@@ -1089,6 +1160,9 @@ void __cdecl R_ShutdownModelLightingImage()
     }
     if ( modelLightGlob.image )
     {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+        if(bo1::vulkan::shader_assets::Active())nativeModelLighting={};
+#endif
         Image_Release(modelLightGlob.image);
         modelLightGlob.image = 0;
     }

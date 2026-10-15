@@ -21,6 +21,10 @@
 #include <algorithm>
 #include <qcommon/common.h>
 #include "r_rendercmds.h"
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+#include "gfx_vulkan/shader_assets.h"
+#include "gfx_vulkan/vertex_assets.h"
+#endif
 
 const stream_source_info_t s_streamSourceInfo[18][STREAM_SRC_COUNT] =
 {
@@ -674,6 +678,13 @@ void __cdecl Material_ReleaseTechniqueSetResources(MaterialTechniqueSet *techniq
 
 void __cdecl Material_ReleasePassResources(MaterialPass *pass)
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    // Native shader records are independent of COM slots and survive borrowed
+    // frame ownership. Shared material aliases may release the same owner twice.
+    bo1::vulkan::shader_assets::Release(pass->pixelShader);
+    bo1::vulkan::shader_assets::Release(pass->vertexShader);
+    bo1::vulkan::vertex_assets::Release(pass->vertexDecl);
+#endif
     IDirect3DSurface9 *v1; // [esp+0h] [ebp-10h]
     IDirect3DSurface9 *var; // [esp+4h] [ebp-Ch]
     IDirect3DPixelShader9 *varCopy; // [esp+8h] [ebp-8h]

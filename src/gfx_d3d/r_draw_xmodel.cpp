@@ -1,3 +1,6 @@
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+#include "gfx_vulkan/shader_assets.h"
+#endif
 #include "r_draw_xmodel.h"
 #include "r_state_utils.h"
 #include "r_model_lighting.h"
@@ -232,11 +235,20 @@ void __cdecl R_DrawXModelRigidModelSurf(GfxCmdBufContext context, XSurface *xsur
     args.vertexCount = xsurf->vertCount;
     args.triCount = xsurf->triCount;
     context.state->prim.frameStats.geoIndexCount += 3 * args.triCount;
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()) {
+        R_ChangeIndicesFromOwner(&context.state->prim,&xsurf->indexBuffer);
+    } else {
+#endif
     ib = xsurf->indexBuffer;
     if ( !ib && !Assert_MyHandler("C:\\projects_pc\\cod\\codsrc\\src\\gfx_d3d\\r_draw_xmodel.cpp", 332, 0, "%s", "ib") )
         __debugbreak();
     if ( context.state->prim.indexBuffer != ib )
         R_ChangeIndices(&context.state->prim, ib);
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    }
+#endif
+
     R_SetStreamsForXModelSurface(xsurf, &context.state->prim, 0);
     R_SetupPassPerPrimArgs(context);
     R_DrawIndexedPrimitive(&context.state->prim, &args);

@@ -53,7 +53,7 @@ void Sys_FindInfo() {
         if (value <= 0) failed("CPU maximum frequency");
         if (value > maxKHz) maxKHz = value;
     }
-    sys_info.cpuGHz = static_cast<long double>(maxKHz) / 1000000.0L;
+    sys_info.cpuGHz = static_cast<double>(maxKHz) / 1000000.0;
     struct sysinfo memory{};
     if (sysinfo(&memory)) failed("sysinfo");
     const auto total = static_cast<std::uint64_t>(memory.totalram) * memory.mem_unit;
@@ -69,7 +69,7 @@ void Sys_FindInfo() {
     // This calls the original reference configuration policy, including its
     // existing fixed benchmark estimate. It is not a measured ARM benchmark.
     Sys_SetAutoConfigureGHz(&sys_info);
-    std::fprintf(stderr, "ANDROID INFO CPUs=%d cores=%d maxGHz=%.4Lf RAMMiB=%llu engineRAMMiB=%d SSE=0 SoC=%s %s referenceConfigureGHz=%.2Lf\n",
+    std::fprintf(stderr, "ANDROID INFO CPUs=%d cores=%d maxGHz=%.4f RAMMiB=%llu engineRAMMiB=%d SSE=0 SoC=%s %s referenceConfigureGHz=%.2f\n",
                  sys_info.logicalCpuCount, sys_info.physicalCpuCount, sys_info.cpuGHz,
                  static_cast<unsigned long long>(megabytes), sys_info.sysMB,
                  sys_info.cpuVendor, sys_info.cpuName, sys_info.configureGHz);

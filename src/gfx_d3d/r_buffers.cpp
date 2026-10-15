@@ -1,3 +1,7 @@
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+#include "gfx_vulkan/buffer_assets.h"
+#include "gfx_vulkan/shader_assets.h"
+#endif
 #include <platform/engine_random.h>
 #include "r_buffers.h"
 #include <universal/assertive.h>
@@ -75,6 +79,15 @@ void __cdecl R_UnlockIndexBuffer(IDirect3DIndexBuffer9 *handle)
 
 void *__cdecl R_AllocDynamicVertexBuffer(IDirect3DVertexBuffer9 **vb, int sizeInBytes)
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()) {
+        std::string error;
+        if(!vb||*vb||sizeInBytes<=0) {Com_Error(ERR_FATAL,"Invalid native dynamic vertex allocation");return nullptr;}
+        if(!bo1::vulkan::buffer_assets::Reserve(vb,sizeInBytes,bo1::vulkan::buffer_assets::Kind::Vertex,error))
+            Com_Error(ERR_FATAL,"Native dynamic allocation: %s",error.c_str());
+        return nullptr; // Actual allocation remains unlocked, matching the canonical contract.
+    }
+#endif
     const char *v3; // eax
     const char *v4; // eax
     int hr; // [esp+0h] [ebp-8h]
@@ -107,6 +120,15 @@ void *__cdecl R_AllocDynamicVertexBuffer(IDirect3DVertexBuffer9 **vb, int sizeIn
 
 void *__cdecl R_AllocStaticVertexBuffer(IDirect3DVertexBuffer9 **vb, int sizeInBytes)
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()) {
+        std::string error;
+        if(!vb||*vb||sizeInBytes<=0) {Com_Error(ERR_FATAL,"Invalid native static vertex allocation");return nullptr;}
+        void* mapped=bo1::vulkan::buffer_assets::Begin(vb,sizeInBytes,bo1::vulkan::buffer_assets::Kind::Vertex,error);
+        if(!mapped)Com_Error(ERR_FATAL,"Native static allocation: %s",error.c_str());
+        return mapped;
+    }
+#endif
     const char *v2; // eax
     const char *v3; // eax
     const char *v4; // eax
@@ -191,6 +213,15 @@ void __cdecl R_FreeStaticVertexBuffer(IDirect3DVertexBuffer9 *vb)
 
 void *__cdecl R_AllocDynamicIndexBuffer(IDirect3DIndexBuffer9 **ib, unsigned int sizeInBytes)
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()) {
+        std::string error;
+        if(!ib||*ib||sizeInBytes<=0) {Com_Error(ERR_FATAL,"Invalid native dynamic index allocation");return nullptr;}
+        if(!bo1::vulkan::buffer_assets::Reserve(ib,sizeInBytes,bo1::vulkan::buffer_assets::Kind::Index16,error))
+            Com_Error(ERR_FATAL,"Native dynamic allocation: %s",error.c_str());
+        return nullptr; // Actual allocation remains unlocked, matching the canonical contract.
+    }
+#endif
     const char *v3; // eax
     const char *v4; // eax
     int hr; // [esp+0h] [ebp-8h]
@@ -210,6 +241,15 @@ void *__cdecl R_AllocDynamicIndexBuffer(IDirect3DIndexBuffer9 **ib, unsigned int
 
 void *__cdecl R_AllocStaticIndexBuffer(IDirect3DIndexBuffer9 **ib, int sizeInBytes)
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()) {
+        std::string error;
+        if(!ib||*ib||sizeInBytes<=0) {Com_Error(ERR_FATAL,"Invalid native static index allocation");return nullptr;}
+        void* mapped=bo1::vulkan::buffer_assets::Begin(ib,sizeInBytes,bo1::vulkan::buffer_assets::Kind::Index16,error);
+        if(!mapped)Com_Error(ERR_FATAL,"Native static allocation: %s",error.c_str());
+        return mapped;
+    }
+#endif
     HRESULT hr; // [esp+0h] [ebp-Ch]
     void *indexBufferData; // [esp+4h] [ebp-8h] BYREF
 
@@ -282,6 +322,16 @@ void __cdecl R_FreeStaticIndexBuffer(IDirect3DIndexBuffer9 *ib)
 
 void __cdecl Load_VertexBuffer(IDirect3DVertexBuffer9 **vb, unsigned __int8 *bufferData, int sizeInBytes)
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if (bo1::vulkan::shader_assets::Active()) {
+        if (!vb || *vb) {Com_Error(ERR_FATAL,"Invalid native vertex buffer owner");return;}
+        if (!bufferData) {bo1::vulkan::buffer_assets::Release(vb);return;}
+        std::string error;
+        if (sizeInBytes<=0 || !bo1::vulkan::buffer_assets::Load(vb,bufferData,sizeInBytes,sizeInBytes,bo1::vulkan::buffer_assets::Kind::Vertex,error))
+            Com_Error(ERR_FATAL,"Native vertex buffer load: %s",error.c_str());
+        return;
+    }
+#endif
     unsigned __int8 *v3; // eax
 
     if ( r_loadForRenderer->current.enabled && bufferData )
@@ -306,6 +356,15 @@ void __cdecl Load_VertexBuffer(IDirect3DVertexBuffer9 **vb, unsigned __int8 *buf
 
 void __cdecl R_InitDynamicVertexBufferState(GfxVertexBufferState *vb, int bytes)
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()) {
+        std::string error;
+        if(!vb||vb->buffer||bytes<=0||!bo1::vulkan::buffer_assets::Reserve(&vb->buffer,bytes,bo1::vulkan::buffer_assets::Kind::Vertex,error)) {
+            Com_Error(ERR_FATAL,"Native dynamic vertex allocation: %s",error.c_str());return;
+        }
+        vb->used=0;vb->total=bytes;vb->verts=nullptr;return;
+    }
+#endif
     unsigned __int8 *verts; // [esp+0h] [ebp-4h]
 
     if ( !vb && !Assert_MyHandler("C:\\projects_pc\\cod\\codsrc\\src\\gfx_d3d\\r_buffers.cpp", 545, 0, "%s", "vb") )
@@ -380,6 +439,15 @@ void __cdecl R_CreateDynamicBuffers()
 
 void __cdecl R_InitDynamicIndexBufferState(GfxIndexBufferState *ib, int indexCount)
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()) {
+        std::string error;
+        if(!ib||ib->buffer||indexCount<=0||!bo1::vulkan::buffer_assets::Reserve(&ib->buffer,static_cast<std::size_t>(indexCount)*2,bo1::vulkan::buffer_assets::Kind::Index16,error)) {
+            Com_Error(ERR_FATAL,"Native dynamic index allocation: %s",error.c_str());return;
+        }
+        ib->used=0;ib->total=indexCount;ib->indices=nullptr;return;
+    }
+#endif
     if ( !ib && !Assert_MyHandler("C:\\projects_pc\\cod\\codsrc\\src\\gfx_d3d\\r_buffers.cpp", 569, 0, "%s", "ib") )
         __debugbreak();
     ib->used = 0;
@@ -393,6 +461,14 @@ void __cdecl R_InitDynamicIndexBufferState(GfxIndexBufferState *ib, int indexCou
 
 void __cdecl R_DestroyDynamicBuffers()
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()) {
+        for(auto& vb:gfxBuf.dynamicVertexBufferPool)bo1::vulkan::buffer_assets::Release(&vb.buffer);
+        for(auto& vb:gfxBuf.skinnedCacheVbPool)bo1::vulkan::buffer_assets::Release(&vb.buffer);
+        for(auto& ib:gfxBuf.dynamicIndexBufferPool)bo1::vulkan::buffer_assets::Release(&ib.buffer);
+        for(auto& ib:gfxBuf.preTessIndexBufferPool)bo1::vulkan::buffer_assets::Release(&ib.buffer);
+    }
+#endif
     IDirect3DSurface9 *v0; // [esp+0h] [ebp-14h]
     IDirect3DSurface9 *buffer; // [esp+4h] [ebp-10h]
     IDirect3DSurface9 *var; // [esp+8h] [ebp-Ch]
@@ -651,12 +727,18 @@ void __cdecl R_CreateParticleCloudBuffer()
             }
         }
     }
-    R_FinishStaticIndexBuffer(gfxBuf.particleCloudIndexBuffer);
-    R_FinishStaticVertexBuffer(gfxBuf.particleCloudVertexBuffer);
+    R_FinishStaticIndexBufferFromOwner(&gfxBuf.particleCloudIndexBuffer);
+    R_FinishStaticVertexBufferFromOwner(&gfxBuf.particleCloudVertexBuffer);
 }
 
 void __cdecl R_DestroyParticleCloudBuffer()
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()) {
+        bo1::vulkan::buffer_assets::Release(&gfxBuf.particleCloudVertexBuffer);
+        bo1::vulkan::buffer_assets::Release(&gfxBuf.particleCloudIndexBuffer);return;
+    }
+#endif
     if ( gfxBuf.particleCloudVertexBuffer )
     {
         R_FreeStaticVertexBuffer(gfxBuf.particleCloudVertexBuffer);
@@ -669,3 +751,27 @@ void __cdecl R_DestroyParticleCloudBuffer()
     }
 }
 
+
+void R_FinishStaticVertexBufferFromOwner(IDirect3DVertexBuffer9* const* owner) {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()) {
+        std::string error;
+        if(!owner||*owner||!bo1::vulkan::buffer_assets::Finish(owner,bo1::vulkan::buffer_assets::Kind::Vertex,error))
+            Com_Error(ERR_FATAL,"Native static buffer finish: %s",error.c_str());
+        return;
+    }
+#endif
+    R_FinishStaticVertexBuffer(*owner);
+}
+
+void R_FinishStaticIndexBufferFromOwner(IDirect3DIndexBuffer9* const* owner) {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()) {
+        std::string error;
+        if(!owner||*owner||!bo1::vulkan::buffer_assets::Finish(owner,bo1::vulkan::buffer_assets::Kind::Index16,error))
+            Com_Error(ERR_FATAL,"Native static buffer finish: %s",error.c_str());
+        return;
+    }
+#endif
+    R_FinishStaticIndexBuffer(*owner);
+}

@@ -726,9 +726,16 @@ struct __declspec(align(8)) gjk_polygon_cylinder_t : gjk_base_t // sizeof=0x80
             *result = this->m_center;
             return result;
         }
-        virtual void get_feature(phys_contact_manifold *) const override 
+        virtual void get_feature(phys_contact_manifold *) const override
         {
+#if defined(__ANDROID__)
+            // Retail SP vtable 0x00a075b4, slot4 -> 0x005d2db0: ret 4.
+            // No polygon feature is emitted. The initialized empty feature list
+            // selects phys_contact_manifold_process::process's real one-point
+            // GJK contact fallback; collision response remains active.
+#else
             iassert(0); // should be empty func, just curious if this gets called
+#endif
         }
         virtual float get_geom_radius() const override;
         virtual void calc_aabb(const phys_mat44 *xform, phys_vec3 *aabb_min, phys_vec3 *aabb_max) const override;

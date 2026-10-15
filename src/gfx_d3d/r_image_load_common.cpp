@@ -1,3 +1,7 @@
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+#include "gfx_vulkan/image_assets.h"
+#include "gfx_vulkan/shader_assets.h"
+#endif
 #include "r_image_load_common.h"
 #include <universal/q_shared.h>
 #include "r_init.h"
@@ -319,6 +323,14 @@ void __cdecl Image_UploadData(
                 unsigned __int8 *src)
 {
 
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if (bo1::vulkan::shader_assets::Active()) {
+        std::string error;
+        if (!bo1::vulkan::image_assets::QueueUpload(image,unsigned(format),unsigned(face),mipLevel,src,error))
+            Com_Error(ERR_FATAL,"Native Vulkan image upload: %s",error.c_str());
+        return;
+    }
+#endif
     if ( image->mapType != 5 || !mipLevel || gfxMetrics.canMipCubemaps )
     {
         if ( image->mapType == 4 )

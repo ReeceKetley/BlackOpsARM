@@ -1,3 +1,8 @@
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+#include "gfx_vulkan/buffer_assets.h"
+#include "gfx_vulkan/shader_assets.h"
+#include <qcommon/common.h>
+#endif
 #include "r_meshdata.h"
 #include "rb_backend.h"
 #include "rb_tess.h"
@@ -10,6 +15,13 @@ GfxMeshGlobals gfxMeshGlob;
 
 void __cdecl R_BeginMeshVerts(GfxMeshData *mesh)
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()) {
+        if(!mesh||mesh->vb.verts) {Com_Error(ERR_FATAL,"Native mesh is already mapped or absent");return;}
+        std::string error;mesh->vb.verts=static_cast<unsigned char*>(bo1::vulkan::buffer_assets::MapDiscard(&mesh->vb.buffer,error));
+        if(!mesh->vb.verts)Com_Error(ERR_FATAL,"Native mesh mapping: %s",error.c_str());return;
+    }
+#endif
     if ( mesh->vb.verts
         && !Assert_MyHandler(
                     "C:\\projects_pc\\cod\\codsrc\\src\\gfx_d3d\\r_meshdata.cpp",
@@ -29,6 +41,12 @@ void __cdecl R_BeginMeshVerts(GfxMeshData *mesh)
 
 void __cdecl R_EndMeshVerts(GfxMeshData *mesh)
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()) {
+        if(!mesh) {Com_Error(ERR_FATAL,"Native mesh end has no owner");return;}
+        if(mesh->vb.verts) {R_FinishStaticVertexBufferFromOwner(&mesh->vb.buffer);mesh->vb.verts=nullptr;}return;
+    }
+#endif
     if ( mesh->vb.verts )
     {
         R_UnlockVertexBuffer(mesh->vb.buffer);

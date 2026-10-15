@@ -1,3 +1,13 @@
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+#include "gfx_vulkan/buffer_assets.h"
+#include "gfx_vulkan/shader_assets.h"
+#include "platform/android/native_vulkan_device.h"
+#include "gfx_vulkan/engine_frames.h"
+#include "gfx_vulkan/render_targets.h"
+#include "gfx_vulkan/target_bindings.h"
+#include "gfx_vulkan/pass_recording.h"
+#include <qcommon/common.h>
+#endif
 #include <universal/narrow32.h>
 #if defined(__ANDROID__) && defined(BO1_NATIVE_FULLSCREEN_TRIANGLE) && BO1_NATIVE_FULLSCREEN_TRIANGLE
 #include "platform/android/fullscreen_triangle.h"
@@ -741,6 +751,15 @@ static void R_GetIntZHandles()
 
 void R_ResolveIntZ_PC()
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()) {
+        iassert(dx.supportsIntZ);
+        std::string error;auto scope=bo1::vulkan::pass_recording::Current();
+        if(!scope||!scope->ResolveDepth(gfxCmdBufContext.state,gfxRenderTargets[R_RENDERTARGET_FLOAT_Z].image,error))
+            Com_Error(ERR_FATAL,"Native hardware depth resolve: %s",error.c_str());
+        return;
+    }
+#endif
     NVDX_ObjectHandle__ *v2; // ecx
     float dummy[3]; // [esp+4h] [ebp-10h] BYREF
     NvAPI_Status status; // [esp+10h] [ebp-4h]
@@ -783,6 +802,16 @@ void R_ResolveIntZ_PC()
 
 void __cdecl R_Resolve(GfxCmdBufContext context, GfxImage *image)
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()) {
+        if(!context.state||!image||r_reflectionProbeGenerate->current.enabled) {
+            Com_Error(ERR_FATAL,"Native scene resolve requires its context/image; reflection readback needs a separate provider");return;
+        }
+        std::string error;auto scope=bo1::vulkan::pass_recording::Current();
+        if(!scope||!scope->Resolve(context.state,image,error))Com_Error(ERR_FATAL,"Native scene resolve: %s",error.c_str());
+        return;
+    }
+#endif
     const char *v2; // eax
     const char *v3; // eax
     const char *v4; // eax
@@ -1626,6 +1655,19 @@ void __cdecl R_DrawSurfs(GfxCmdBufContext context, GfxCmdBufState *prepassState,
         R_UpdateViewport(context.source, &viewport);
     }
 
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()) {
+        const auto renderer=bo1::android::native_device::Renderer();
+        const auto selected=bo1::vulkan::target_bindings::Acquire(context.state);
+        const auto target=bo1::vulkan::render_targets::Acquire(selected);
+        if(!renderer||!renderer->Device()||!renderer->Physical()||!renderer->FrameRecording()||!dx.inScene
+            ||!bo1::vulkan::pass_recording::Current()||!context.state
+            ||bo1::vulkan::target_bindings::Owner(&context.state->prim)!=context.state
+            ||!target||(!target->color&&!target->depth)||dx.d3d9||dx.device||context.state->prim.device) {
+            Com_Error(ERR_FATAL,"Native surface draw requires its real Vulkan device, recording scope and target owner");return;
+        }
+    } else
+#endif
     iassert(dx.d3d9 && dx.device);
 
     //if (context.state->prim.device != dx.device)
@@ -4657,6 +4699,33 @@ void __cdecl RB_BeginFrame(GfxBackEndData *data)
         RB_PatchStaticModelCache();
         RB_PatchModelLighting(backEndData->modelLightingPatchList, backEndData->modelLightingPatchCount);
         
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+        if (bo1::android::native_device::Requested())
+        {
+            iassert(!dx.inScene);
+            std::string error;
+            auto frames = bo1::android::native_device::Frames(error);
+            if (!frames || frames->Begin(nullptr, error) != bo1::vulkan::FrameResult::Recording)
+            {
+                Com_Error(ERR_FATAL, "Native scene begin: %s", error.c_str());
+                return;
+            }
+            // These auxiliary displays can be sampled before their first update.
+            // Initialize new allocations only; preserve all subsequent UI/camera data.
+            const GfxRenderTargetId initialTargets[]={R_RENDERTARGET_UI3D,R_RENDERTARGET_MISSILE_CAM};
+            for(const auto target:initialTargets)if(gfxRenderTargets[target].image) {
+                VkClearColorValue initial{{0,0,0,1}};
+                if(target==R_RENDERTARGET_UI3D)initial.float32[3]=0;
+                auto scope=bo1::vulkan::pass_recording::Current();
+                if(!scope||!scope->InitializeColor(gfxRenderTargets[target].image,initial,error)) {
+                    Com_Error(ERR_FATAL,"Native initial auxiliary image contents target=%u: %s",unsigned(target),error.c_str());return;
+                }
+            }
+            dx.inScene = 1;
+        }
+        else
+        {
+#endif
         iassert(dx.device);
         iassert(!dx.inScene);
 
@@ -4674,6 +4743,9 @@ void __cdecl RB_BeginFrame(GfxBackEndData *data)
                 5068,
                 v1);
         }
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+        }
+#endif
         R_InitCmdBufSamplerState(&gfxCmdBufState);
         R_Cinematic_UpdateFrame(0);
         tess.indexCount = 0;
@@ -4703,9 +4775,22 @@ const GfxBackEndData *RB_PatchStaticModelCache()
                 break;
             cachedSurf = R_GetCachedSModelSurf(backEndData->smcPatchList[patchIter]);
             vertCount = XModelGetStaticModelCacheVertCount(rgp.world->dpvs.smodelDrawInsts[cachedSurf->cachedSurf.smodelIndex].model, cachedSurf->cachedSurf.lodIndex);
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+            if(bo1::vulkan::shader_assets::Active()) {
+                if(firstPatchVert>8192||vertCount>8192-firstPatchVert) {Com_Error(ERR_FATAL,"Native static cache patch exceeds staged vertices");return backEndData;}
+                std::string error;
+                if(!bo1::vulkan::buffer_assets::UpdateRange(&gfxBuf.smodelCacheVb,static_cast<std::size_t>(cachedSurf->cachedSurf.baseVertIndex)*32,
+                    &backEndData->smcPatchVerts[firstPatchVert],static_cast<std::size_t>(vertCount)*32,error)) {
+                    Com_Error(ERR_FATAL,"Native static cache patch: %s",error.c_str());return backEndData;
+                }
+            } else {
+#endif
             bufferData = R_LockVertexBuffer(handle, 32 * cachedSurf->cachedSurf.baseVertIndex, 32 * vertCount, 0x1000u);
             Com_Memcpy(bufferData, &backEndData->smcPatchVerts[firstPatchVert], 32 * vertCount);
             R_UnlockVertexBuffer(handle);
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+            }
+#endif
             firstPatchVert += vertCount;
         }
     }
@@ -5483,6 +5568,33 @@ __attribute__((no_instrument_function)) static void RB_NativePerformancePresent(
 #endif
 void RB_SwapBuffers()
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if (bo1::android::native_device::Requested())
+    {
+        iassert(dx.targetWindowIndex >= 0 && dx.targetWindowIndex < dx.windowCount);
+        if (dx.resizeWindow) {Com_Error(ERR_FATAL,"Native engine target resize requires its lifecycle adapter");return;}
+        bool presented=false;
+        if (!rg.renderHiResShot)
+        {
+            std::string error;
+            auto frames=bo1::android::native_device::Frames(error);
+            auto target=bo1::vulkan::render_targets::Acquire(&gfxRenderTargets[R_RENDERTARGET_FRAME_BUFFER]);
+            if (!frames || !target) {Com_Error(ERR_FATAL,"Native window output has no frame owner/target: %s",error.c_str());return;}
+            const auto result=frames->Present(target->color,error);
+            if (result==bo1::vulkan::FrameResult::Failed) {Com_Error(ERR_FATAL,"Native window output: %s",error.c_str());return;}
+            presented=result==bo1::vulkan::FrameResult::Presented;
+            static bool first;
+            if (presented&&!first) {std::fputs("Native engine window output: actual scene sampled, submitted and presented\n",stderr);first=true;}
+        }
+        bo1::android::performance::gpu::Release();
+        bo1::android::performance::Present(presented);
+        FrameMark;
+        mjpeg_draw();
+        R_HW_InsertFence(&dx.swapFence[r_glob.backEndFrameCount % dx.gpuCount]);
+        gfxBuf.dynamicIndexBuffer->used=0;
+        return;
+    }
+#endif
     unsigned __int8 stereoActivated; // [esp+2Fh] [ebp-2Dh] BYREF
     int semaphore; // [esp+30h] [ebp-2Ch]
     int actualShow; // [esp+34h] [ebp-28h]
@@ -5707,7 +5819,27 @@ void RB_SwapBuffers()
 
 void RB_UpdateBackEndDvarOptions()
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    bool applyOptions;
+    if (bo1::android::native_device::Requested())
+    {
+        auto renderer = bo1::android::native_device::Renderer();
+        if (!renderer || !renderer->Device() || !renderer->Physical()
+            || !bo1::android::native_device::WindowAttached())
+        {
+            Com_Error(ERR_FATAL, "Native backend options require the live Vulkan device and attached window");
+            return;
+        }
+        // These are CPU-side option updates. Surface recovery and queue errors
+        // belong to the actual frame transaction, not a synthetic D3D status.
+        applyOptions = true;
+    }
+    else
+        applyOptions = !dx.device->TestCooperativeLevel();
+    if (applyOptions)
+#else
     if ( !dx.device->TestCooperativeLevel() )
+#endif
     {
         if ( R_CheckDvarModified(r_texFilterAnisoMax)
             || R_CheckDvarModified(r_texFilterDisable)
@@ -5990,6 +6122,21 @@ void __cdecl RB_CallExecuteRenderCommands()
     {
       __debugbreak();
     }
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if (bo1::android::native_device::Requested())
+    {
+      iassert(dx.inScene);
+      std::string error;
+      auto frames = bo1::android::native_device::Frames(error);
+      if (!frames || !frames->Submit(false, error))
+      {
+        Com_Error(ERR_FATAL, "Native scene end: %s", error.c_str());
+        return;
+      }
+    }
+    else
+    {
+#endif
     if ( !dx.device
       && !Assert_MyHandler("C:\\projects_pc\\cod\\codsrc\\src\\gfx_d3d\\rb_backend.cpp", 6334, 0, "%s", "dx.device") )
     {
@@ -6010,6 +6157,9 @@ void __cdecl RB_CallExecuteRenderCommands()
         6336,
         v0);
     }
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    }
+#endif
     dx.inScene = 0;
     if ( !r_glob.isRenderingRemoteUpdate )
     {
@@ -6024,6 +6174,35 @@ void __cdecl RB_CallExecuteRenderCommands()
 
 void __cdecl RB_UpdateDynamicBuffers(GfxBackEndData *backendData)
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()) {
+        if(!backendData||!backendData->skinnedCacheVb||!backendData->codeMeshPtr||!backendData->dynamicBufferCurrentFrame) {
+            Com_Error(ERR_FATAL,"Invalid native backend upload owners");return;
+        }
+        std::string error;
+        auto upload=[&](GfxVertexBufferState* vb,bool clamp) {
+            const unsigned used=vb->used;
+            if(!used)return true;
+            if(vb->total<=0||(!clamp&&used>static_cast<unsigned>(vb->total))) {error="Native vertex upload exceeds capacity";return false;}
+            const unsigned bytes=clamp&&used>static_cast<unsigned>(vb->total)?static_cast<unsigned>(vb->total):used;
+            return bo1::vulkan::buffer_assets::Write(&vb->buffer,0,vb->verts,bytes,error);
+        };
+        if(!upload(backendData->skinnedCacheVb,false)||!upload(&backendData->markMesh.vb,true)
+            ||!upload(&backendData->codeMeshPtr->vb,true)||!upload(&backendData->glassMesh.vb,true)) {
+            Com_Error(ERR_FATAL,"Native backend vertex upload: %s",error.c_str());return;
+        }
+        auto* ib=backendData->preTessIb;
+        if(ib&&ib->used) {
+            const int used=ib->used;
+            if(used<0||ib->total<=0) {Com_Error(ERR_FATAL,"Invalid native pre-tess index upload");return;}
+            const auto bytes=static_cast<std::size_t>(used>ib->total?ib->total:used)*2;
+            if(!bo1::vulkan::buffer_assets::Write(&ib->buffer,0,ib->indices,bytes,error)) {
+                Com_Error(ERR_FATAL,"Native pre-tess index upload: %s",error.c_str());return;
+            }
+        }
+        *backendData->dynamicBufferCurrentFrame=0;return;
+    }
+#endif
     unsigned __int8 *v1; // eax
     unsigned int v2; // [esp+0h] [ebp-20h]
     unsigned int v3; // [esp+4h] [ebp-1Ch]
@@ -6363,8 +6542,8 @@ void __cdecl RB_RegisterBackendAssets()
 //void __cdecl RB_SaveScreen_BlendBlurred(const GfxBlendSaveScreenBlurredParam *p, const GfxViewInfo *viewInfo)
 //{
 //    float v2; // xmm0_4
-//    long double v3; // [esp+28h] [ebp-54h]
-//    long double image; // [esp+30h] [ebp-4Ch]
+//    double v3; // [esp+28h] [ebp-54h]
+//    double image; // [esp+30h] [ebp-4Ch]
 //    float t0; // [esp+54h] [ebp-28h]
 //    float s1; // [esp+5Ch] [ebp-20h]
 //    const SavedScreenParams *ssParams; // [esp+60h] [ebp-1Ch]

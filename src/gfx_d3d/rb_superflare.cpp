@@ -1,3 +1,6 @@
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+#include "gfx_vulkan/engine_query_adapters.h"
+#endif
 #include "rb_superflare.h"
 #include "r_dvars.h"
 #include "rb_logfile.h"
@@ -24,6 +27,9 @@ void __cdecl RB_AllocSuperFlareQueries()
             {
                 for ( iFrame = 0; iFrame < 5; ++iFrame )
                 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+                    if(bo1::vulkan::engine_queries::Active())RB_HW_AllocOcclusionQueryFromOwner(&SuperFlareQuery[iFrame][iType][iClient][iPass]);else
+#endif
                     SuperFlareQuery[iFrame][iType][iClient][iPass] = RB_HW_AllocOcclusionQuery();
                     SuperFlareQueryIssued[iFrame][iClient][iPass] = 0;
                 }
@@ -48,6 +54,9 @@ void __cdecl RB_FreeSuperFlareQueries()
             {
                 for ( iFrame = 0; iFrame < 5; ++iFrame )
                 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+                    if(bo1::vulkan::engine_queries::Active()) {RB_HW_ReleaseOcclusionQueryFromOwner(&SuperFlareQuery[iFrame][iType][iClient][iPass]);continue;}
+#endif
                     do
                     {
                         if ( r_logFile )
@@ -102,12 +111,22 @@ void __cdecl RB_DrawSuperFlareOccluders(const GfxViewInfo *viewInfo)
                 {
                     iFrame = r_glob.backEndFrameCount % 5;
                     QueryInitialized = 1;
-                    if ( !SuperFlareQuery[r_glob.backEndFrameCount % 5][0][viewInfo->localClientNum][iPass]
+                    if (
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+bo1::vulkan::engine_queries::Active()?(!RB_HW_HasOcclusionQueryFromOwner(&SuperFlareQuery[r_glob.backEndFrameCount % 5][0][viewInfo->localClientNum][iPass])
+                        || !RB_HW_HasOcclusionQueryFromOwner(&SuperFlareQuery[iFrame][1][viewInfo->localClientNum][iPass])):
+#endif
+!SuperFlareQuery[r_glob.backEndFrameCount % 5][0][viewInfo->localClientNum][iPass]
                         || !SuperFlareQuery[iFrame][1][viewInfo->localClientNum][iPass] )
                     {
                         QueryInitialized = 0;
                     }
-                    if ( !SuperFlareQuery[iFrame][0][viewInfo->localClientNum][iPass]
+                    if (
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+bo1::vulkan::engine_queries::Active()?(!RB_HW_HasOcclusionQueryFromOwner(&SuperFlareQuery[iFrame][0][viewInfo->localClientNum][iPass])
+                        || !RB_HW_HasOcclusionQueryFromOwner(&SuperFlareQuery[iFrame][1][viewInfo->localClientNum][iPass])):
+#endif
+!SuperFlareQuery[iFrame][0][viewInfo->localClientNum][iPass]
                         || !SuperFlareQuery[iFrame][1][viewInfo->localClientNum][iPass] )
                     {
                         QueryInitialized = 0;
@@ -117,10 +136,18 @@ void __cdecl RB_DrawSuperFlareOccluders(const GfxViewInfo *viewInfo)
                         && FilterInfo->passMaterial[iFilter][iPass]
                         && FilterInfo->passQuads[iFilter][iPass] > 0 )
                     {
-                        if ( SuperFlareQueryIssued[iFrame][viewInfo->localClientNum][iPass] )
+                    if ( SuperFlareQueryIssued[iFrame][viewInfo->localClientNum][iPass] )
                         {
-                            PossiblePixelCount = RB_HW_ReadOcclusionQuery(SuperFlareQuery[iFrame][0][viewInfo->localClientNum][iPass]);
-                            VisiblePixelCount = RB_HW_ReadOcclusionQuery(SuperFlareQuery[iFrame][1][viewInfo->localClientNum][iPass]);
+                            PossiblePixelCount =
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+bo1::vulkan::engine_queries::Active()?bo1::vulkan::engine_queries::Read(&SuperFlareQuery[iFrame][0][viewInfo->localClientNum][iPass]):
+#endif
+RB_HW_ReadOcclusionQuery(SuperFlareQuery[iFrame][0][viewInfo->localClientNum][iPass]);
+                            VisiblePixelCount =
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+bo1::vulkan::engine_queries::Active()?bo1::vulkan::engine_queries::Read(&SuperFlareQuery[iFrame][1][viewInfo->localClientNum][iPass]):
+#endif
+RB_HW_ReadOcclusionQuery(SuperFlareQuery[iFrame][1][viewInfo->localClientNum][iPass]);
                             if ( PossiblePixelCount )
                                 Error = VisiblePixelCount > PossiblePixelCount;
                             else
@@ -160,13 +187,19 @@ void __cdecl RB_DrawSuperFlareOccluders(const GfxViewInfo *viewInfo)
                         mat[1] = superFlareOccluderDebug;
                         for ( iOccluder = 0; iOccluder < 2; ++iOccluder )
                         {
-                            RB_HW_BeginOcclusionQuery(SuperFlareQuery[iFrame][iOccluder][viewInfo->localClientNum][iPass]);
+                            #if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+if(bo1::vulkan::engine_queries::Active())bo1::vulkan::engine_queries::Issue(&SuperFlareQuery[iFrame][iOccluder][viewInfo->localClientNum][iPass],D3DISSUE_BEGIN);else
+#endif
+RB_HW_BeginOcclusionQuery(SuperFlareQuery[iFrame][iOccluder][viewInfo->localClientNum][iPass]);
                             RB_SetTessTechnique(mat[iOccluder], 4u);
                             R_TrackPrims(&gfxCmdBufState.prim, GFX_PRIM_STATS_CODE);
                             RB_CheckTessOverflow(4, 6);
                             RB_SetIdentity();
                             RB_DrawSuperFlareOccluder(FilterInfo, iFilter, iPass);
                             RB_EndTessSurface();
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+                            if(bo1::vulkan::engine_queries::Active())bo1::vulkan::engine_queries::Issue(&SuperFlareQuery[iFrame][iOccluder][viewInfo->localClientNum][iPass],1);else
+#endif
                             SuperFlareQuery[iFrame][iOccluder][viewInfo->localClientNum][iPass]->Issue(1);
                             SuperFlareQueryIssued[iFrame][viewInfo->localClientNum][iPass] = 1;
                         }

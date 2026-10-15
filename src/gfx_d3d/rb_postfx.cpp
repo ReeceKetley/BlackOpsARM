@@ -1,4 +1,5 @@
 #include "rb_postfx.h"
+#include "r_sunshadow.h"
 #if defined(__ANDROID__) && defined(BO1_NATIVE_POST_FUSION_TRIAL) && BO1_NATIVE_POST_FUSION_TRIAL
 #include "platform/android/post_fusion_trial.h"
 #endif
@@ -9,6 +10,14 @@
 #include "rb_backend.h"
 #if defined(__ANDROID__)
 #include "platform/android/performance_gpu_overlay.h"
+#endif
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+#include "rb_imagefilter.h"
+#include "gfx_vulkan/pass_recording.h"
+#include "gfx_vulkan/shader_assets.h"
+#include "gfx_vulkan/shader_translate.h"
+#include <cstring>
+#include <string>
 #endif
 
 bool __cdecl RB_UsingDepthOfFieldFX(const GfxViewInfo *viewInfo)
@@ -910,7 +919,7 @@ void __cdecl RB_BloomStreak(const GfxViewInfo *viewInfo, GfxRenderTargetId *srcR
 void __cdecl RB_SetBlurConstants(float radius, float textureScaler)
 {
   double v2; // xmm0_8
-  long double v3; // [esp+0h] [ebp-A8h]
+  double v3; // [esp+0h] [ebp-A8h]
   float v4; // [esp+0h] [ebp-A8h]
   float v5; // [esp+4h] [ebp-A4h]
   float v6; // [esp+8h] [ebp-A0h]
@@ -1019,7 +1028,15 @@ void RB_SetBlurConstants(float radius, float textureScaler)
     float sigma;
     float x;
     float t = 0.0f;
+#if defined(__ANDROID__)
+    // Only the clamped radius determines these weights. Keep per-thread CPU
+    // values across horizontal/vertical passes; constants are still uploaded.
+    struct WeightCache { float sigma; float weights[12]; bool valid; };
+    static thread_local WeightCache cache{};
+    float (&blurWeights)[12] = cache.weights;
+#else
     float blurWeights[12];
+#endif
     int i;
 
     // Clamp radius into [1, 3]
@@ -1030,21 +1047,30 @@ void RB_SetBlurConstants(float radius, float textureScaler)
     else
         sigma = radius;
 
-    // Generate Gaussian weights
-    x = 0.5f;
-    for (i = 0; i < 12; ++i)
+#if defined(__ANDROID__)
+    if (!cache.valid || cache.sigma != sigma)
+#endif
     {
-        float exponent = -(x * x) / (2.0f * sigma * sigma);
-        float w = expf(exponent);
+        // Generate Gaussian weights
+        x = 0.5f;
+        for (i = 0; i < 12; ++i)
+        {
+            float exponent = -(x * x) / (2.0f * sigma * sigma);
+            float w = expf(exponent);
 
-        blurWeights[i] = w;
-        t += 2.0f * w;
-        x += 1.0f;
+            blurWeights[i] = w;
+            t += 2.0f * w;
+            x += 1.0f;
+        }
+
+        // Normalize
+        for (i = 0; i < 12; ++i)
+            blurWeights[i] /= t;
+#if defined(__ANDROID__)
+        cache.sigma = sigma;
+        cache.valid = true;
+#endif
     }
-
-    // Normalize
-    for (i = 0; i < 12; ++i)
-        blurWeights[i] /= t;
 
     // Compute bilinear tap offsets
     float tap01 = (blurWeights[0] + blurWeights[1]) != 0.0f
@@ -1315,6 +1341,112 @@ void    RB_SetVisionSetColorCorrection(const GfxViewInfo *viewInfo)
     R_UpdateCodeConstant(&gfxCmdBufSourceState, CONST_SRC_CODE_POSTFX_CONTROLA, midSMul, midSAdd, midEMul, midEAdd);
 }
 
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+// Native fused post processing (Vulkan backend). Replaces bloom_apply_ldr,
+// postfx_color and postfx_dof_nv_intz (plus their resolve copies) with one
+// full-resolution pass, and dof_downsample_nv_intz with a gather-based native
+// pass. The cheap low-resolution bloom chain and DoF blur/near-CoC passes stay
+// canonical. Special screen effects (flame, revive, poison, ...) keep the
+// original path. r_nativePostFx 0 restores the original passes.
+namespace {
+const dvar_s *r_nativePostFx;
+bool g_nativeDofComposed;
+struct NativeDofDownsampleParams { float eqScene[4], eqViewModel[4], sceneTexel[4]; };
+struct NativeComposeParams { float texel[4], eqScene[4], eqViewModel[4], lerpScale[4], lerpBias[4], film[3][4], grade[11][4]; };
+void CopyConstant(float *destination, unsigned constant, unsigned rows = 1)
+{
+    std::memcpy(destination, gfxCmdBufSourceState.input.consts[constant], rows * sizeof(float[4]));
+}
+bool RB_NativePostWanted(const GfxViewInfo *viewInfo)
+{
+    return r_nativePostFx && r_nativePostFx->current.enabled && bo1::vulkan::shader_assets::Active()
+        && dx.supportsIntZ && !viewInfo->isMissileCamera
+        && !RB_UsingFlameFX(viewInfo) && !RB_UsingReviveFX(viewInfo) && !RB_UsingElectrifiedFX(viewInfo)
+        && !RB_UsingTransportedFX(viewInfo) && !RB_UsingWaterSheetingFX(viewInfo) && !RB_UsingPoison(viewInfo);
+}
+void RB_NativeFullscreen(bo1::vulkan::native_fullscreen::Program program, const bo1::vulkan::native_fullscreen::Input *inputs,
+    unsigned count, const void *parameters, unsigned bytes)
+{
+    std::string error;
+    auto *scope = bo1::vulkan::pass_recording::Current();
+    if (!scope || !scope->NativeFullscreen(gfxCmdBufContext.state, program, inputs, count, parameters, bytes, error))
+        Com_Error(ERR_FATAL, "Native post effect %u: %s", unsigned(program), scope ? error.c_str() : "no recording scope");
+}
+// Called where RB_BloomLDR would composite bloom onto the scene. Returns false
+// to keep the canonical passes.
+bool RB_NativePostCompose(const GfxViewInfo *viewInfo, GfxRenderTargetId bloomRt)
+{
+    using namespace bo1::vulkan::native_fullscreen;
+    g_nativeDofComposed = false;
+    if (!RB_NativePostWanted(viewInfo))
+        return false;
+    const GfxImage *resolved = gfxRenderTargets[R_RENDERTARGET_RESOLVED_SCENE].image;
+    const GfxImage *floatZ = gfxRenderTargets[R_RENDERTARGET_FLOAT_Z].image;
+    NativeComposeParams compose{};
+    RB_SetFilmCurveConstants(viewInfo);
+    CopyConstant(compose.film[0], CONST_SRC_CODE_POSTFX_CONTROL0, 3);
+    RB_SetVisionSetColorCorrection(viewInfo);
+    CopyConstant(compose.grade[0], CONST_SRC_CODE_POSTFX_CONTROL0, 11);
+    const bool dof = RB_UsingDepthOfFieldFX(viewInfo);
+    const float sceneTexel[2] = {
+        1.0f / float(gfxRenderTargets[R_RENDERTARGET_RESOLVED_SCENE].width),
+        1.0f / float(gfxRenderTargets[R_RENDERTARGET_RESOLVED_SCENE].height) };
+    if (dof)
+    {
+        RB_SetDepthOfFieldConstants(viewInfo);
+        CopyConstant(compose.eqScene, CONST_SRC_CODE_DOF_EQUATION_SCENE);
+        CopyConstant(compose.eqViewModel, CONST_SRC_CODE_DOF_EQUATION_VIEWMODEL_AND_FAR_BLUR);
+        CopyConstant(compose.lerpScale, CONST_SRC_CODE_DOF_LERP_SCALE);
+        CopyConstant(compose.lerpBias, CONST_SRC_CODE_DOF_LERP_BIAS);
+        NativeDofDownsampleParams downsample{};
+        std::memcpy(downsample.eqScene, compose.eqScene, sizeof(downsample.eqScene));
+        std::memcpy(downsample.eqViewModel, compose.eqViewModel, sizeof(downsample.eqViewModel));
+        downsample.sceneTexel[0] = sceneTexel[0];
+        downsample.sceneTexel[1] = sceneTexel[1];
+        R_SetRenderTargetSize(&gfxCmdBufSourceState, R_RENDERTARGET_POST_EFFECT_1);
+        R_SetRenderTarget(gfxCmdBufContext, R_RENDERTARGET_POST_EFFECT_1);
+        const Input downsampleInputs[2] = { { resolved, false }, { floatZ, true } };
+        RB_NativeFullscreen(Program::DofDownsample, downsampleInputs, 2, &downsample, sizeof(downsample));
+        // Canonical blur chain from RB_GetDepthOfFieldInputImages, unchanged.
+        RB_GaussianFilterImage(viewInfo->dof.nearBlur * 0.25f, R_RENDERTARGET_POST_EFFECT_1, R_RENDERTARGET_POST_EFFECT_0);
+        R_SetRenderTargetSize(&gfxCmdBufSourceState, R_RENDERTARGET_PINGPONG_0);
+        R_SetRenderTarget(gfxCmdBufContext, R_RENDERTARGET_PINGPONG_0);
+        R_ClearRenderTargetForMultiGpu(gfxCmdBufContext, R_RENDERTARGET_PINGPONG_0);
+        RB_FullScreenFilter(rgp.dofNearCocMaterial);
+        R_SetRenderTargetSize(&gfxCmdBufSourceState, R_RENDERTARGET_POST_EFFECT_1);
+        R_SetRenderTarget(gfxCmdBufContext, R_RENDERTARGET_POST_EFFECT_1);
+        R_SetCodeImageTexture(&gfxCmdBufSourceState, 8u, gfxRenderTargets[R_RENDERTARGET_PINGPONG_0].image);
+        RB_FullScreenFilter(rgp.smallBlurMaterial);
+    }
+    compose.texel[0] = sceneTexel[0];
+    compose.texel[1] = sceneTexel[1];
+    compose.texel[2] = dof ? 1.0f : 0.0f;
+    R_SetRenderTargetSize(&gfxCmdBufSourceState, R_RENDERTARGET_SCENE);
+    R_SetRenderTarget(gfxCmdBufContext, R_RENDERTARGET_SCENE);
+    // Without DoF the depth/blur slots are unread; bind the resolved scene.
+    const Input composeInputs[5] = {
+        { resolved, false },
+        { dof ? floatZ : resolved, true },
+        { dof ? gfxRenderTargets[R_RENDERTARGET_POST_EFFECT_1].image : resolved, false },
+        { dof ? gfxRenderTargets[R_RENDERTARGET_POST_EFFECT_0].image : resolved, false },
+        { gfxRenderTargets[bloomRt].image, false } };
+    RB_NativeFullscreen(Program::PostCompose, composeInputs, 5, &compose, sizeof(compose));
+    g_nativeDofComposed = dof;
+    return true;
+}
+}
+void R_RegisterNativePostDvars()
+{
+    r_nativePostFx = _Dvar_RegisterBool("r_nativePostFx", 1, 0,
+        "Native fused bloom/colour/depth-of-field post processing (0 = original passes)");
+    // Read once at renderer start: shader programs are translated lazily and cached.
+    const dvar_s *halfPrecision = _Dvar_RegisterBool("r_nativeHalfPrecision", 0, 0,
+        "Translate the original shaders' _pp partial-precision hints to Vulkan RelaxedPrecision");
+    bo1::vulkan::SetRelaxedPrecision(halfPrecision && halfPrecision->current.enabled);
+    R_RegisterSunShadowCacheDvar();
+}
+#endif
+
 void __cdecl RB_BloomLDR(const GfxViewInfo *viewInfo)
 {
     float v1; // [esp+14h] [ebp-50h]
@@ -1418,6 +1550,10 @@ void __cdecl RB_BloomLDR(const GfxViewInfo *viewInfo)
     R_SetCodeImageTexture(&gfxCmdBufSourceState, 0x22u, gfxRenderTargets[R_RENDERTARGET_RESOLVED_SCENE].image);
     R_SetCodeImageTexture(&gfxCmdBufSourceState, 0x23u, gfxRenderTargets[srcRt].image);
     R_SetCodeImageTexture(&gfxCmdBufSourceState, 0x24u, gfxRenderTargets[R_RENDERTARGET_RESOLVED_SCENE].image);
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if (RB_NativePostCompose(viewInfo, srcRt))
+        return;
+#endif
 #if defined(__ANDROID__) && defined(BO1_NATIVE_POST_FUSION_TRIAL) && BO1_NATIVE_POST_FUSION_TRIAL
     if (bo1::android::post_fusion_trial::TryBloomColor(viewInfo))
         return;
@@ -1455,13 +1591,13 @@ void __cdecl RB_PoisonFX(const GfxViewInfo *viewInfo)
   double v3; // xmm0_8
   double v4; // xmm0_8
   double v5; // xmm0_8
-  long double v6; // [esp+10h] [ebp-5Ch]
-  long double v7; // [esp+10h] [ebp-5Ch]
-  long double v8; // [esp+10h] [ebp-5Ch]
-  long double v9; // [esp+10h] [ebp-5Ch]
-  long double v10; // [esp+10h] [ebp-5Ch]
-  long double v11; // [esp+10h] [ebp-5Ch]
-  long double v12; // [esp+10h] [ebp-5Ch]
+  double v6; // [esp+10h] [ebp-5Ch]
+  double v7; // [esp+10h] [ebp-5Ch]
+  double v8; // [esp+10h] [ebp-5Ch]
+  double v9; // [esp+10h] [ebp-5Ch]
+  double v10; // [esp+10h] [ebp-5Ch]
+  double v11; // [esp+10h] [ebp-5Ch]
+  double v12; // [esp+10h] [ebp-5Ch]
   float v13; // [esp+1Ch] [ebp-50h]
   float v14; // [esp+1Ch] [ebp-50h]
   float v15; // [esp+20h] [ebp-4Ch]
@@ -2421,6 +2557,9 @@ void __cdecl RB_ProcessPostEffects(const GfxViewInfo *viewInfo)
 #if defined(__ANDROID__)
   bo1::android::performance::gpu::Mark(101);
 #endif
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+  g_nativeDofComposed = false;
+#endif
   RB_BloomLDR(viewInfo);
 
 #if defined(__ANDROID__)
@@ -2470,6 +2609,9 @@ void __cdecl RB_ProcessPostEffects(const GfxViewInfo *viewInfo)
             goto LABEL_29;
           }
           PROF_SCOPED("RB_ApplyDepthOfField");
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+          if (!g_nativeDofComposed) // the native compose already blended DoF
+#endif
           RB_ApplyDepthOfField(viewInfo);
           goto LABEL_29;
         }
@@ -2585,16 +2727,13 @@ void RB_GetResolvedScene()
   R_SetCodeImageTexture(&gfxCmdBufSourceState, 0xAu, gfxRenderTargets[R_RENDERTARGET_RESOLVED_SCENE].image);
 }
 
-void    RB_ApplyDepthOfField(const GfxViewInfo *viewInfo)
+// Scene/viewmodel DoF equations and blur lerps shared by the canonical and
+// native depth-of-field paths.
+void RB_SetDepthOfFieldConstants(const GfxViewInfo *viewInfo)
 {
     float mediumFrac; // [esp+24h] [ebp-34h]
     float smallFrac; // [esp+28h] [ebp-30h]
     float dofEquation[4]; // [esp+3Ch] [ebp-1Ch] BYREF
-
-    iassert(RB_UsingDepthOfFieldFX(viewInfo));
-    iassert(!viewInfo->isMissileCamera);
-    iassert(dx.supportsIntZ || viewInfo->needsFloatZ);
-
     RB_GetSceneDepthOfFieldEquation(
         viewInfo->dof.nearStart,
         viewInfo->dof.nearEnd,
@@ -2634,6 +2773,16 @@ void    RB_ApplyDepthOfField(const GfxViewInfo *viewInfo)
         mediumFrac / (float)(mediumFrac - smallFrac),
         1.0 / (float)(1.0 - mediumFrac),
         -mediumFrac / (float)(1.0 - mediumFrac));
+}
+
+void    RB_ApplyDepthOfField(const GfxViewInfo *viewInfo)
+{
+
+    iassert(RB_UsingDepthOfFieldFX(viewInfo));
+    iassert(!viewInfo->isMissileCamera);
+    iassert(dx.supportsIntZ || viewInfo->needsFloatZ);
+
+    RB_SetDepthOfFieldConstants(viewInfo);
     RB_GetDepthOfFieldInputImages(viewInfo->dof.nearBlur);
     R_SetRenderTargetSize(&gfxCmdBufSourceState, R_RENDERTARGET_FRAME_BUFFER);
     R_SetRenderTarget(gfxCmdBufContext, R_RENDERTARGET_FRAME_BUFFER);
@@ -2812,6 +2961,17 @@ void __cdecl RB_BlurScreen(const GfxViewInfo *viewInfo, float blurRadius)
     HIBYTE(color) = I_RoundBiasToInt((float)((float)(blurRadius / blurRadiusMin) * 255.0));
     blurRadius = 1440.0 / (float)gfxCmdBufSourceState.sceneViewport.height;
   }
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+  if (bo1::vulkan::shader_assets::Active())
+  {
+    // Damage blur reads the current scene through an actual Vulkan copy.
+    R_SetRenderTargetSize(&gfxCmdBufSourceState, R_RENDERTARGET_SCENE);
+    R_SetRenderTarget(gfxCmdBufContext, R_RENDERTARGET_SCENE);
+    R_Resolve(gfxCmdBufContext, gfxRenderTargets[R_RENDERTARGET_RESOLVED_SCENE].image);
+  }
+  else
+#endif
+  {
   imageSurface = Image_GetSurface(gfxRenderTargets[R_RENDERTARGET_RESOLVED_SCENE].image);
   iassert(imageSurface);
   if ( r_logFile && r_logFile->current.integer )
@@ -2850,6 +3010,7 @@ void __cdecl RB_BlurScreen(const GfxViewInfo *viewInfo, float blurRadius)
       "C:\\projects_pc\\cod\\codsrc\\src\\gfx_d3d\\rb_postfx.cpp (%i) imageSurface->Release() failed: %s\n",
       4257,
       v3);
+  }
   }
   RB_GaussianFilterImage(blurRadius, R_RENDERTARGET_RESOLVED_SCENE, R_RENDERTARGET_POST_EFFECT_0);
   R_SetRenderTargetSize(&gfxCmdBufSourceState, R_RENDERTARGET_SCENE);

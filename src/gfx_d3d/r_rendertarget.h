@@ -65,6 +65,10 @@ struct ExtraCamSettings // sizeof=0x10
                                         // R_InitExtraCamRenderTargets(uint,uint,int)+21/w
 };
 
+#if defined(__ANDROID__)
+extern ExtraCamSettings g_extraCamSettings;
+#endif
+
 struct GfxImage;
 
 int __cdecl R_GetDepthStencilFormat(_D3DFORMAT renderTargetFormat);
@@ -136,3 +140,6 @@ void __cdecl R_InitUI3DRenderTarget(
                 bool allocatePingPongBuffer);
 void __cdecl R_ShutdownUI3DRenderTarget(bool freePingPongBuffer);
 
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+bool R_HaveNativeFloatZ(bool isMissileCamera);
+#endif

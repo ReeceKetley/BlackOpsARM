@@ -1,3 +1,9 @@
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+#include "gfx_vulkan/buffer_assets.h"
+#include "gfx_vulkan/shader_assets.h"
+#include "platform/android/native_vulkan_device.h"
+#include <qcommon/common.h>
+#endif
 #include <platform/bo1_native_width.h>
 #include <qcommon/cm_mapkit.h>
 #include "r_rendercmds.h"
@@ -285,6 +291,9 @@ void __cdecl R_FreeGlassRenderBuffers()
 
 void __cdecl R_ShutdownDynamicMesh(GfxMeshData *mesh)
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active())bo1::vulkan::buffer_assets::Release(&mesh->vb.buffer);
+#endif
     IDirect3DVertexBuffer9 *varCopy; // [esp+0h] [ebp-4h]
 
     R_FreeGlobalVariable(mesh->indices);
@@ -443,11 +452,28 @@ void __cdecl R_SyncRenderThread()
         }
         if ( rg.registered && sys_smp_allowed->current.enabled )
         {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+            if (bo1::android::native_device::Requested())
+            {
+                auto renderer=bo1::android::native_device::Renderer();
+                if (!renderer || !renderer->Device() || !renderer->Physical()
+                    || !bo1::android::native_device::WindowAttached())
+                {
+                    Com_Error(ERR_FATAL,"Native renderer synchronization requires its live device and attached window");
+                    return;
+                }
+            }
+            else
+            {
+#endif
             if ( !dx.device
                 && !Assert_MyHandler("C:\\projects_pc\\cod\\codsrc\\src\\gfx_d3d\\r_rendercmds.cpp", 826, 0, "%s", "dx.device") )
             {
                 __debugbreak();
             }
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+            }
+#endif
             if ( r_glob.remoteScreenUpdateNesting
                 && !Assert_MyHandler(
                             "C:\\projects_pc\\cod\\codsrc\\src\\gfx_d3d\\r_rendercmds.cpp",
@@ -2049,10 +2075,31 @@ void __cdecl R_BeginFrame()
             // zombies: SP sets the shader warm flag only when r_shaderWarming is on, after the sorts (SP 0x006D7B25)
             if ( r_shaderWarming && r_shaderWarming->current.enabled )
                 rgp.needMaterialPreload = 1;
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+            if (bo1::android::native_device::Requested())
+            {
+                const auto renderer=bo1::android::native_device::Renderer();
+                if (!renderer || !renderer->Physical())
+                {
+                    Com_Error(ERR_FATAL,"Native frame driver policy requires its actual physical device");
+                    return;
+                }
+                VkPhysicalDeviceProperties properties{};
+                vkGetPhysicalDeviceProperties(renderer->Physical(),&properties);
+                if (strstr(properties.deviceName,"NVIDIA"))
+                    Dvar_SetBool((dvar_s *)r_warm_dpvs,1);
+                Com_Printf(8,"Native frame driver policy: device=%s vendor=%u\n",properties.deviceName,properties.vendorID);
+            }
+            else
+            {
+#endif
             dx.d3d9->GetAdapterIdentifier(dx.adapterIndex, 0, &id);
             v0 = strstr(id.Description, "NVIDIA");
             if ( v0 )
                 Dvar_SetBool((dvar_s *)r_warm_dpvs, 1);
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+            }
+#endif
         }
         v2 = r_skinCache->current.enabled && useFastFile->current.enabled;
         gfxBuf.skinCache = v2;

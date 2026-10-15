@@ -139,3 +139,6 @@ void __cdecl R_DestroyParticleCloudBuffer();
 
 
 extern GfxBuffers gfxBuf;
+void R_FinishStaticVertexBufferFromOwner(IDirect3DVertexBuffer9* const*);
+
+void R_FinishStaticIndexBufferFromOwner(IDirect3DIndexBuffer9* const*);

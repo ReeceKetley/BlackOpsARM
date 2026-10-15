@@ -618,6 +618,10 @@ void __cdecl R_RegisterDvars()
 #if defined(__ANDROID__) && defined(BO1_NATIVE_POST_FUSION_TRIAL) && BO1_NATIVE_POST_FUSION_TRIAL
     bo1::android::post_fusion_trial::RegisterControls();
 #endif
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    void R_RegisterNativePostDvars();
+    R_RegisterNativePostDvars();
+#endif
     int value; // eax
     signed int i; // [esp+20h] [ebp-4h]
 

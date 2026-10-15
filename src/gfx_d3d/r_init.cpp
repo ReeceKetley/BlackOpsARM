@@ -1,3 +1,13 @@
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+#include "platform/android/native_vulkan_device.h"
+#include "platform/android/native_render_size.h"
+#include "gfx_vulkan/engine_frames.h"
+#include "platform/android/native_vulkan_display.h"
+#include "gfx_vulkan/query_assets.h"
+#include "gfx_vulkan/event_fences.h"
+#include "gfx_vulkan/shader_assets.h"
+#include <android/log.h>
+#endif
 #include "r_init.h"
 #if defined(__ANDROID__) && defined(BO1_NATIVE_FULLSCREEN_TRIANGLE) && BO1_NATIVE_FULLSCREEN_TRIANGLE
 #include "platform/android/fullscreen_triangle.h"
@@ -231,6 +241,12 @@ void __cdecl SetGfxConfig(const GfxConfiguration *config)
 #if !defined(BO1_NATIVE_RENDER_GLOBALS)
 void __cdecl R_ReleaseForShutdownOrReset()
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()) {
+        std::string error;if(!bo1::vulkan::event_fences::Clear(error)) {Com_Error(ERR_FATAL,"Native event shutdown: %s",error.c_str());return;}
+        for(unsigned i=0;i<4;++i)RB_HW_ReleaseOcclusionQueryFromOwner(&gfxAssets.pixelCountQuery[i]);
+    }
+#endif
 #if defined(__ANDROID__) && defined(BO1_NATIVE_POST_FUSION_TRIAL) && BO1_NATIVE_POST_FUSION_TRIAL
     bo1::android::post_fusion_trial::Release();
 #endif
@@ -382,6 +398,21 @@ void __cdecl R_UpdateGpuSyncType()
 
 char __cdecl R_CreateDevice(const GfxWindowParms *wndParms)
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::android::native_device::Requested()) {
+        if(!wndParms||!wndParms->hwnd||dx.windowCount||dx.device||dx.d3d9||wndParms->aaSamples!=1) {
+            __android_log_print(ANDROID_LOG_ERROR,"BO1NativeVulkan","canonical_native_device_rejected invalid_window_owner_or_sample_count=1");return 0;
+        }
+        bo1::vulkan::HardwareInfo hardware;std::string error;
+        if(!bo1::android::native_device::Open(reinterpret_cast<SDL_Window*>(wndParms->hwnd),hardware,error)) {
+            __android_log_print(ANDROID_LOG_ERROR,"BO1NativeVulkan","canonical_native_device_failed=%s",error.c_str());return 0;
+        }
+        R_StoreNativeDeviceCaps(hardware);
+        dx.depthStencilFormat=D3DFMT_D24S8;dx.multiSampleType=D3DMULTISAMPLE_NONE;dx.multiSampleQuality=0;dx.gpuCount=1;
+        __android_log_print(ANDROID_LOG_INFO,"BO1NativeVulkan","canonical_native_device_created=1 gpu=%s vendor=%u samples=1 d3d_device_fabricated=0",hardware.properties.deviceName,hardware.properties.vendorID);
+        return 1;
+    }
+#endif
     const char *v1; // eax
     _D3DPRESENT_PARAMETERS_ d3dpp; // [esp+0h] [ebp-44h] BYREF
     HWND__ *hwnd; // [esp+38h] [ebp-Ch]
@@ -606,6 +637,14 @@ HRESULT __cdecl R_CreateDeviceInternal(HWND__ *hwnd, unsigned int behavior, _D3D
 
 bool __cdecl R_GetMonitorDimensions(int *width, int *height)
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::android::native_device::Requested()) {
+        if(!width||!height)return false;
+        bo1::android::native_display::Snapshot display;std::string error;
+        if(!R_SDLOwner([&]{return bo1::android::native_display::Read(int(dx.adapterIndex),display,error);},true)) { *width=*height=0;return false; }
+        *width=display.bounds.w;*height=display.bounds.h;return true;
+    }
+#endif
 #if defined(__ANDROID__)
     if (!width || !height || !dx.d3d9) return false;
     auto monitor = R_SDLOwner([&] { return dx.d3d9->GetAdapterMonitor(dx.adapterIndex); });
@@ -1289,6 +1328,26 @@ void __cdecl R_Init()
 
 void R_InitGraphicsApi()
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if (bo1::android::native_device::Requested())
+    {
+        const auto renderer=bo1::android::native_device::Renderer();
+        if (renderer)
+        {
+            if (dx.device || dx.d3d9 || !renderer->Device() || !renderer->Physical()
+                || !bo1::android::native_device::WindowAttached())
+            {
+                Com_Error(ERR_FATAL,"Native graphics reuse requires its actual device/window without COM objects");
+                return;
+            }
+            // Canonical map registration reinitializes systems while keeping
+            // its graphics device and window alive, just as the D3D path does.
+            R_InitSystems();
+            std::fputs("Native graphics registration: reused live device/window\n",stderr);
+            return;
+        }
+    }
+#endif
     GfxWindowParms wndParms; // [esp+4h] [ebp-28h] BYREF
 
     iassert((dx.device != NULL) == (dx.d3d9 != NULL));
@@ -1333,6 +1392,16 @@ void R_InitSystems()
 
 char __cdecl R_PreCreateWindow()
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::android::native_device::Requested()) {
+        if(dx.d3d9||dx.device||bo1::android::native_device::Renderer()) {Com_Printf(8,"Native precreate requires a drained renderer\n");return 0;}
+        if(!bo1::android::PrepareRendererVideo()) {Com_Printf(8,"Native SDL video unavailable: %s\n",SDL_GetError());return 0;}
+        bo1::vulkan::HardwareInfo hardware;std::string error;
+        if(!bo1::android::native_display::ProbeHardware(hardware,error)) {Com_Printf(8,"Native physical probe: %s\n",error.c_str());return 0;}
+        R_StoreNativeDeviceCaps(hardware);dx.adapterIndex=0;dx.nvInitialized=0;
+        R_EnumDisplayModes(dx.adapterIndex);return 1;
+    }
+#endif
     _D3DADAPTER_IDENTIFIER9 adapterId; // [esp+4h] [ebp-458h] BYREF
 #if defined(__ANDROID__)
     if (!bo1::android::PrepareRendererVideo()) { Com_Printf(8, "SDL video unavailable: %s\n", SDL_GetError()); return 0; }
@@ -1544,10 +1613,27 @@ void __cdecl R_EnumDisplayModes(unsigned int adapterIndex)
     int refreshRateIndex; // [esp+C28h] [ebp-8h]
     int defaultResolutionIndex; // [esp+C2Ch] [ebp-4h]
 
-    modeCountReported = R_WSI_CALL(dx.d3d9->GetAdapterModeCount(adapterIndex, D3DFMT_X8R8G8B8));
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    const bool nativeDisplay=bo1::android::native_device::Requested();
+    bo1::android::native_display::Snapshot nativeModes;std::string nativeDisplayError;
+    if(nativeDisplay&&!R_SDLOwner([&]{return bo1::android::native_display::Read(int(adapterIndex),nativeModes,nativeDisplayError);},true))
+        R_FatalInitError(nativeDisplayError.c_str());
+#endif
+    modeCountReported =
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+        nativeDisplay?unsigned(nativeModes.modes.size()):
+#endif
+        R_WSI_CALL(dx.d3d9->GetAdapterModeCount(adapterIndex, D3DFMT_X8R8G8B8));
 #if defined(__ANDROID__)
     _D3DDISPLAYMODE currentDisplayMode{};
-    HRESULT currentDisplayModeResult = R_WSI_CALL(dx.d3d9->GetAdapterDisplayMode(adapterIndex, &currentDisplayMode));
+    HRESULT currentDisplayModeResult =
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+        nativeDisplay?(currentDisplayMode={unsigned(nativeModes.current.w),unsigned(nativeModes.current.h),unsigned(nativeModes.current.refresh_rate),D3DFMT_UNKNOWN},S_OK):
+#endif
+        R_WSI_CALL(dx.d3d9->GetAdapterDisplayMode(adapterIndex, &currentDisplayMode));
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(!nativeDisplay) {
+#endif
     Com_Printf(8, "Android D3D display: adapter %u enumerated %u current hr 0x%08x %ux%u refresh %u format %u fullscreen %i\n",
         adapterIndex, modeCountReported, static_cast<unsigned>(currentDisplayModeResult), currentDisplayMode.Width,
         currentDisplayMode.Height, currentDisplayMode.RefreshRate, static_cast<unsigned>(currentDisplayMode.Format), Dvar_GetBool("r_fullscreen"));
@@ -1573,11 +1659,20 @@ void __cdecl R_EnumDisplayModes(unsigned int adapterIndex)
         }
         return true;
     }, true);
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    } else {
+        Com_Printf(8,"Native SDL display: index%u modes%u current%ix%i refresh%i SDLformat%s\n",adapterIndex,modeCountReported,nativeModes.current.w,nativeModes.current.h,nativeModes.current.refresh_rate,SDL_GetPixelFormatName(nativeModes.current.format));
+    }
+#endif
 #endif
     dx.displayModeCount = 0;
     for ( modeIndex = 0; modeIndex < modeCountReported && dx.displayModeCount < 0x100; ++modeIndex )
     {
-        hr = R_WSI_CALL(dx.d3d9->EnumAdapterModes(
+        hr =
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+            nativeDisplay?(dx.displayModes[dx.displayModeCount]={unsigned(nativeModes.modes[modeIndex].w),unsigned(nativeModes.modes[modeIndex].h),unsigned(nativeModes.modes[modeIndex].refresh_rate),D3DFMT_UNKNOWN},S_OK):
+#endif
+            R_WSI_CALL(dx.d3d9->EnumAdapterModes(
                      adapterIndex,
                      D3DFMT_X8R8G8B8,
                      modeIndex,
@@ -1593,7 +1688,11 @@ void __cdecl R_EnumDisplayModes(unsigned int adapterIndex)
             if ( !dx.displayModes[dx.displayModeCount].RefreshRate )
                 dx.displayModes[dx.displayModeCount].RefreshRate = 60;
 #else
-            if (modeIndex < 8)
+            if (modeIndex < 8
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+                &&!nativeDisplay
+#endif
+            )
                 Com_Printf(8, "Android D3D mode %u: %ux%u refresh %u format %u\n", modeIndex, mode.Width, mode.Height, mode.RefreshRate, static_cast<unsigned>(mode.Format));
 #endif
             ++dx.displayModeCount;
@@ -1624,6 +1723,13 @@ void __cdecl R_EnumDisplayModes(unsigned int adapterIndex)
                                                  refreshRateCount,
                                                  availableRefreshRates);
     }
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(nativeDisplay&&!resolutionCount&&!Dvar_GetBool("r_fullscreen")&&nativeModes.current.w>=800&&nativeModes.current.h>=600&&nativeModes.current.refresh_rate>0) {
+        // Actual SDL current mode sizes a window; do not synthesize exclusive modes.
+        resolutionCount=R_AddValidResolution(nativeModes.current.w,nativeModes.current.h,resolutionCount,availableResolutions);
+        refreshRateCount=R_AddValidRefreshRate(nativeModes.current.refresh_rate,refreshRateCount,availableRefreshRates);
+    }
+#endif
 #if defined(__ANDROID__)
     if (!resolutionCount && !Dvar_GetBool("r_fullscreen") && currentDisplayModeResult >= 0 &&
         currentDisplayMode.Width >= 800 && currentDisplayMode.Width <= INT32_MAX &&
@@ -1972,6 +2078,20 @@ void R_InitGamma()
 
 void __cdecl R_FinishAttachingToWindow(const GfxWindowParms *wndParms)
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::android::native_device::Requested()) {
+        std::string error;bo1::android::RendererWindowInfo actual{};
+        if(!wndParms||!bo1::android::InspectRendererWindow(reinterpret_cast<SDL_Window*>(wndParms->hwnd),&actual)
+            ||dx.windowCount||dx.windows[0].swapChain||!bo1::android::native_device::AttachWindow(
+            reinterpret_cast<SDL_Window*>(wndParms->hwnd),actual.drawableWidth,actual.drawableHeight,error)) {
+            Com_Error(ERR_FATAL,"Native renderer window attachment: %s",error.c_str());return;
+        }
+        dx.windows[0].hwnd=wndParms->hwnd;dx.windows[0].width=wndParms->displayWidth;dx.windows[0].height=wndParms->displayHeight;
+        dx.windowCount=1;dx.targetWindowIndex=0;
+        __android_log_print(ANDROID_LOG_INFO,"BO1NativeVulkan","canonical_native_window_attached=1 actual_drawable=%ix%i swapchain_real=1 COM_swapchain_fabricated=0",actual.drawableWidth,actual.drawableHeight);
+        return;
+    }
+#endif
     iassert((dx.windowCount >= 0 && dx.windowCount < ((1 / (((((0) ? (0x7fffffff) : (-0x7fffffff)) * (((0) & ~1) == 0))) / (0x7fffffff)) == 1) ? 5 : 1)));
     iassert(dx.windows[dx.windowCount].swapChain);
 
@@ -2012,6 +2132,16 @@ char __cdecl R_CreateForInitOrReset()
 
 
     //hr = dx.device->CreateQuery(D3DQUERYTYPE_EVENT, &dx.gpuSyncDelay);
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()) {
+        R_InitNativeEventQueries();
+        if(!g_allocateMinimalResources) {
+            RB_AllocSunSpriteQueries();RB_AllocCoronaSpriteQueries();RB_AllocSuperFlareQueries();
+            for(gpuIdx=0;gpuIdx<4;++gpuIdx)RB_HW_AllocOcclusionQueryFromOwner(&gfxAssets.pixelCountQuery[gpuIdx]);
+        }
+        return 1;
+    }
+#endif
     hr = dx.device->CreateQuery(D3DQUERYTYPE_EVENT, &dx.flushGpuQuery);
 
     if ( hr >= 0 )
@@ -2082,6 +2212,14 @@ char __cdecl R_CreateWindow(GfxWindowParms *wndParms)
         Com_Printf(8, "SDL window has no usable drawable: %s\n", SDL_GetError()); return 0;
     }
     wndParms->displayWidth=info.drawableWidth; wndParms->displayHeight=info.drawableHeight;
+#if defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::android::native_device::Requested()) {
+        const auto size=bo1::android::native_render_size::Select(info.drawableWidth,info.drawableHeight);
+        wndParms->displayWidth=wndParms->sceneWidth=int(size.width);
+        wndParms->displayHeight=wndParms->sceneHeight=int(size.height);
+        __android_log_print(ANDROID_LOG_INFO,"BO1NativeVulkan","native_render_size selected=%ux%u actual_drawable=%ix%i",size.width,size.height,info.drawableWidth,info.drawableHeight);
+    }
+#endif
     wndParms->hwnd = reinterpret_cast<HWND__ *>(window);
     s_borderlessWindow = wndParms->borderless;
     Com_Printf(8, "Game SDL Vulkan window successfully created.\n");
@@ -2239,6 +2377,20 @@ void R_InitGlobalStructs()
 
 void __cdecl R_ShutdownStreams()
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if (bo1::android::native_device::Requested())
+    {
+        std::string error;
+        auto frames=bo1::android::native_device::Frames(error);
+        if (!frames || !frames->Drain(error))
+        {
+            Com_Error(ERR_FATAL,"Native map renderer retirement: %s",error.c_str());
+            return;
+        }
+        R_ClearAllStreamSources(&gfxCmdBufState.prim);
+        return;
+    }
+#endif
     if ( dx.device )
         R_ClearAllStreamSources(&gfxCmdBufState.prim);
 }
@@ -2395,6 +2547,13 @@ void __cdecl R_BeginRegistrationInternal()
         __debugbreak();
     }
     R_Init();
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::android::native_device::Requested()) {
+        const auto renderer=bo1::android::native_device::Renderer();
+        if(!renderer||!renderer->Device()||!renderer->Physical()||!bo1::android::native_device::WindowAttached())
+            Com_Error(ERR_FATAL,"Native renderer registration requires its actual device and attached window");
+    } else
+#endif
     if ( (!dx.d3d9 || !dx.device)
         && !Assert_MyHandler(
                     "C:\\projects_pc\\cod\\codsrc\\src\\gfx_d3d\\r_init.cpp",
@@ -2706,3 +2865,91 @@ void __cdecl    R_FatalLockError(HRESULT hr)
     std::abort(); // Do not publish renderer state if the fatal callback returns.
 #endif
 }
+
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+#include "gfx_vulkan/hardware_info.h"
+void R_StoreNativeDeviceCaps(const bo1::vulkan::HardwareInfo& hardware) {
+    // Physical limits are distinct from optional features enabled on this device.
+    dx.vendorId=hardware.properties.vendorID;
+    vidConfig.maxTextureSize=std::min(hardware.properties.limits.maxImageDimension2D,65535u);
+    vidConfig.maxTextureMaps=std::min(hardware.properties.limits.maxPerStageDescriptorSamplers,16u);
+    vidConfig.deviceSupportsGamma=false;
+    gfxMetrics.maxAnisotropy=hardware.enabledAnisotropy;
+    gfxMetrics.hasAnisotropicMinFilter=false;gfxMetrics.hasAnisotropicMagFilter=false;
+    gfxMetrics.maxClipPlanes=0;gfxMetrics.canMipCubemaps=hardware.mipCubemaps;
+    gfxMetrics.hasTransparencyMsaa=false;
+    if(!hardware.depthShadowComparison) {
+        Com_Error(ERR_FATAL,"Native renderer requires a supported sampled D24S8 shadow attachment");return;
+    }
+    // Actual depth-only target, comparison VkSampler and SM3 Dref lowering.
+    // Optional linear filtering follows this physical format's capabilities.
+    gfxMetrics.shadowmapFormatPrimary=D3DFMT_D24S8;
+    gfxMetrics.shadowmapFormatSecondary=static_cast<D3DFORMAT>(1280070990u);
+    gfxMetrics.shadowmapBuildTechType=2;gfxMetrics.hasHardwareShadowmap=true;
+    gfxMetrics.shadowmapSamplerState=hardware.depthShadowLinear?98:97;
+    Com_Printf(8,"Native depth shadow path: format=D24S8 linear=%u technique=2 comparison=1\n",hardware.depthShadowLinear?1:0);
+    // No optional-feature, vendor shadow-path or engine initialization claims.
+}
+#endif
+
+void RB_HW_AllocOcclusionQueryFromOwner(IDirect3DQuery9** owner) {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()) {
+        std::string error;if(!owner||*owner||!bo1::vulkan::query_assets::Allocate(owner,error))Com_Error(ERR_FATAL,"Native query allocation: %s",error.c_str());return;
+    }
+#endif
+    if(owner)*owner=RB_HW_AllocOcclusionQuery();
+}
+bool RB_HW_HasOcclusionQueryFromOwner(IDirect3DQuery9* const* owner) {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active())return owner&&!*owner&&bo1::vulkan::query_assets::Has(owner);
+#endif
+    return owner&&*owner;
+}
+HRESULT RB_HW_IssueOcclusionQueryFromOwner(IDirect3DQuery9* const* owner,unsigned issue) {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()) {
+        if(!owner||*owner||(issue!=D3DISSUE_BEGIN&&issue!=D3DISSUE_END))return D3DERR_INVALIDCALL;
+        std::string error;const bool ok=issue==D3DISSUE_BEGIN?bo1::vulkan::query_assets::Begin(owner,error):bo1::vulkan::query_assets::End(owner,error);
+        if(!ok)__android_log_print(ANDROID_LOG_ERROR,"BO1NativeVulkan","native_query_issue_failed=%s",error.c_str());return ok?S_OK:E_FAIL;
+    }
+#endif
+    return owner&&*owner?(*owner)->Issue(issue):D3DERR_INVALIDCALL;
+}
+HRESULT RB_HW_ReadOcclusionQueryFromOwner(IDirect3DQuery9* const* owner,unsigned* samples,unsigned flags) {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()) {
+        if(!owner||*owner||!samples||(flags&~D3DGETDATA_FLUSH))return D3DERR_INVALIDCALL;
+        std::string error;auto status=bo1::vulkan::query_assets::Read(owner,*samples,(flags&D3DGETDATA_FLUSH)!=0,error);
+        if(status==bo1::vulkan::QueryRead::Failed)__android_log_print(ANDROID_LOG_ERROR,"BO1NativeVulkan","native_query_read_failed=%s",error.c_str());
+        return status==bo1::vulkan::QueryRead::Ready?S_OK:status==bo1::vulkan::QueryRead::Pending?S_FALSE:E_FAIL;
+    }
+#endif
+    return owner&&*owner&&samples?(*owner)->GetData(samples,sizeof(*samples),flags):D3DERR_INVALIDCALL;
+}
+void RB_HW_ReleaseOcclusionQueryFromOwner(IDirect3DQuery9** owner) {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()) {bo1::vulkan::query_assets::Release(owner);return;}
+#endif
+    if(owner&&*owner){(*owner)->Release();*owner=nullptr;}
+}
+
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+void R_InitNativeEventQueries() {
+    std::string error;
+    if(dx.flushGpuQuery||!bo1::vulkan::event_fences::Allocate(&dx.flushGpuQuery,error)) {Com_Error(ERR_FATAL,"Native flush event allocation: %s",error.c_str());return;}
+    for(auto& query:dx.fencePool)if(query||!bo1::vulkan::event_fences::Allocate(&query,error)) {Com_Error(ERR_FATAL,"Native event pool allocation: %s",error.c_str());return;}
+    dx.nextFence=0;
+}
+#endif
+
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+void R_DetachNativeWindow(SDL_Window* window) {
+    if(!dx.windowCount)return;
+    if(dx.windowCount!=1||dx.windows[0].swapChain||dx.windows[0].hwnd!=reinterpret_cast<HWND__*>(window)) {
+        Com_Error(ERR_FATAL,"Native window retirement encountered a different engine owner");return;
+    }
+    dx.windows[0]={};dx.windowCount=0;dx.targetWindowIndex=0;
+    __android_log_print(ANDROID_LOG_INFO,"BO1NativeVulkan","canonical_native_window_detached=1 engine_window_count=0");
+}
+#endif

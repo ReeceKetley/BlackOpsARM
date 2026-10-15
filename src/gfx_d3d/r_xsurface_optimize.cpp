@@ -1,3 +1,7 @@
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+#include "gfx_vulkan/buffer_assets.h"
+#include "gfx_vulkan/shader_assets.h"
+#endif
 #include "r_xsurface_optimize.h"
 #include <qcommon/threads.h>
 #include "rb_resource.h"
@@ -64,6 +68,18 @@ void __cdecl _XModelOptimize(XModel *model)
 
 void __cdecl XSurfaceOptimize(XModel *model, XSurface *surf)
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if (bo1::vulkan::shader_assets::Active()) {
+        if (!surf || surf->indexBuffer || !surf->triIndices || !surf->triCount) {Com_Error(ERR_FATAL,"Invalid native index surface");return;}
+        if (!bo1::vulkan::buffer_assets::Acquire(&surf->indexBuffer)) {
+            const std::size_t bytes=std::size_t(surf->triCount)*6,padded=(bytes+31)&~std::size_t(31);std::string error;
+            if (padded>0x200000 || !bo1::vulkan::buffer_assets::Load(&surf->indexBuffer,surf->triIndices,bytes,padded,bo1::vulkan::buffer_assets::Kind::Index16,error)) {
+                Com_Error(ERR_FATAL,"Native index surface load: %s",error.c_str());return;
+            }
+        }
+        if (!(surf->flags&0x80))XSurfaceOptimizeRigid(model,surf);return;
+    }
+#endif
     void *indexBuffer; // [esp+0h] [ebp-Ch]
     int rawIndexBytes; // [esp+4h] [ebp-8h]
     signed int indexBytes; // [esp+8h] [ebp-4h]
@@ -106,6 +122,17 @@ LABEL_10:
 
 void __cdecl XSurfaceOptimizeRigid(XModel *model, XSurface *surface)
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if (bo1::vulkan::shader_assets::Active()) {
+        if (!surface || (surface->flags&0x80) || surface->vb0 || !surface->verts0 || !surface->vertCount) {Com_Error(ERR_FATAL,"Invalid native rigid surface");return;}
+        if (!bo1::vulkan::buffer_assets::Acquire(&surface->vb0)) {
+            const std::size_t bytes=std::size_t(surface->vertCount)*32;std::string error;
+            if (!bo1::vulkan::buffer_assets::Load(&surface->vb0,surface->verts0,bytes,bytes,bo1::vulkan::buffer_assets::Kind::Vertex,error))
+                Com_Error(ERR_FATAL,"Native rigid surface load: %s",error.c_str());
+        }
+        return;
+    }
+#endif
     IDirect3DVertexBuffer9 *vb; // [esp+0h] [ebp-10h] BYREF
     HRESULT hr; // [esp+4h] [ebp-Ch]
     void *vertexBuffer; // [esp+8h] [ebp-8h] BYREF
@@ -203,6 +230,13 @@ void __cdecl XModelUnoptimize(XModel *model)
 
 void __cdecl XSurfaceUnoptimize(XSurface *surf)
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if (bo1::vulkan::shader_assets::Active()) {
+        if (!surf) {Com_Error(ERR_FATAL,"Invalid native surface unload");return;}
+        bo1::vulkan::buffer_assets::Release(&surf->indexBuffer);
+        if (!(surf->flags&0x80))bo1::vulkan::buffer_assets::Release(&surf->vb0);return;
+    }
+#endif
     if ( surf->indexBuffer )
     {
         R_FreeStaticIndexBuffer(surf->indexBuffer);
@@ -217,6 +251,12 @@ void __cdecl XSurfaceUnoptimize(XSurface *surf)
 
 void __cdecl XSurfaceUnoptimizeRigid(XSurface *surf)
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if (bo1::vulkan::shader_assets::Active()) {
+        if (!surf || (surf->flags&0x80)) {Com_Error(ERR_FATAL,"Invalid native rigid unload");return;}
+        bo1::vulkan::buffer_assets::Release(&surf->vb0);return;
+    }
+#endif
     if ( (surf->flags & 0x80) != 0
         && !Assert_MyHandler(
                     "C:\\projects_pc\\cod\\codsrc\\src\\gfx_d3d\\r_xsurface_optimize.cpp",

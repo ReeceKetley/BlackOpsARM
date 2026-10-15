@@ -1,0 +1,27 @@
+# Native scene profile and stable render-pass identities
+
+2026-10-15 stages78/79. The real native SDK597 room renders, but initial submission intervals are roughly1.1-1.2seconds. This is substantially worse than the historical D3D9 room7-9FPS. Backend replacement/mobile performance remains incomplete.
+
+## Actual baseline
+
+SDK598/stage167 engine0535ff9d4d51a1325d2efb3adcb445fb96a0de25 PID5708. Instrumentation measures Begin upload/setup, command recording, ProgramCache key creation/program creation, submission and actual existing fence wait. A two-entry timestamp query pool per fence-retired scene slot records TOP/BOTTOM_OF_PIPE; results are read only after the existing actual scene fence wait, without adding a wait. The real queue advertises48valid timestamp bits; period comes from physical-device properties, and elapsed values use that mask. GPU duration covers the offscreen scene commands, excluding upload submissions and separate window output. Fence wait is wall latency, not a substitute GPU measurement. Query pools retire only after actual drain. Unsupported timestamp queues retain unavailable -1, not guessed timing.
+
+sdk598-native-profile-baseline1-logcat.txt, baseline1.json, fresh matched-marker entry and screenshot preserve actual same-PID native room evidence. Four steady samples frames2210..2240 contain1052-1063draws/26passes. CPU record777.875-805.441ms; key94.796-97.589ms; program creation297.536-303.689ms,106-107cache misses per frame. Real scene GPU136.717-143.524ms, fence wait137.954-145.267ms. Begin upload~1.8ms excludes resource actions before Begin, so total upload cost is not inferred from it. This is an initial scene sample, not a long thermal benchmark or full game workload.
+
+Pipeline keys include raw VkRenderPass identity. Each generated AttachmentPass previously created/destroyed its render pass; Arena::Retire erased associated pipelines so recycled handles could not produce incorrect hits. The baseline eviction delta counts only Begin-to-Submit; much retirement happens in Present, hence reported evictions0 does not prove none. Stage79 measures the whole cycle instead. The ~300ms creation cost is real wall time covering shader translation, descriptor/pipeline layouts, driver pipeline creation and related work, not purely GPU driver time.
+
+## Candidate optimization
+
+AttachmentPassCache owns up to128 immutable exact render-pass definitions for one device/render thread. Its key includes actual color/depth formats, sampled layout policy, independent color/depth loads, depth preservation and aspects. Existing subpass/dependencies/samples are constant. No compatibility guess, render-target substitution or shader change is used: identical descriptions share the same actual VkRenderPass. Definitions remain valid until a drained cache clear; no live eviction/recycled handle hit is allowed.
+
+Per-pass framebuffers and actual image owners still live in fence-retired arenas. Shared definitions contain no image/framebuffer reference. Shared-pass retirement keeps valid program keys; legacy private passes still erase keys before destroying their handles. At full drain, slots retire, program keys clear, then definitions clear. Resize/window cache invalidation remains intact. Correct LOAD/STORE/layout/depth behavior is unchanged.
+
+Engine build passes (native-passcache-stage79-engine-build1.log); SDK599/stage168 engine31b87d3ec31783682c635ca4309031fbd9feb4fb is installed for actual visual/performance comparison, pending. No performance improvement claimed until measured. Remaining CPU recording/key work, ~140ms GPU span, frontend/gameplay/lifecycle and sustained mobile performance require further work.
+
+## Actual candidate result
+
+SDK599/stage168 engine31b87d3ec31783682c635ca4309031fbd9feb4fb PID6847 is alive after activation and adb Enter. sdk599-native-passcache-room1.png visually retains the room, menu, lighting and playing video. Fresh matched launch-marker segment has no assertion/fatal. Profile frames2250..2290 show1058-1072draws/26passes, all cache hits, zero misses, zero program creation and zero full-cycle evictions. Persistent cache has140programs and12render-pass definitions. Framebuffers and images still retire; this does not cache per-frame image contents.
+
+Five candidate samples average462.404ms CPU recording versus790.022ms over four earlier baseline samples: ~328ms less recording. Baseline program creation averaged301.005ms; candidate0. GPU remains ~140ms, consistent with unchanged scene work. This small sequential sample includes animation/normal scheduling variation and is not a controlled thermal benchmark or a general speedup guarantee. The actual screenshot overlay shows1.3FPS/783.51ms interval versus0.8-0.9FPS previously. Still slower than historical D3D9 and far short of target performance. GPU overlay remains unavailable because it is still wired to D3D query ownership; native timestamp evidence is in the logs.
+
+The next CPU targets are~90ms per-frame pipeline-key creation and the remaining draw recording work, with a separate~140ms GPU scene cost. Need finer draw/material/descriptor/geometry timing, actual pass GPU breakdown, GPU overlay integration and continued visual/gameplay/lifecycle validation. Avoid disabling passes or changing appearance based only on CPU timings. Source UTF8/CRLF and SHA/size manifest is native-passcache-stage79-source-proof.json. Scene data evidence sdk599-native-passcache-room1.json/entry/logcat; summary native-passcache-stage79-summary.json.

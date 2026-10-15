@@ -1,3 +1,8 @@
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+#include "gfx_vulkan/engine_query_adapters.h"
+#include "gfx_vulkan/engine_frames.h"
+#include "platform/android/native_vulkan_device.h"
+#endif
 #include "rb_sky.h"
 #if defined(__ANDROID__)
 #include <platform/win32_compat/win32_time.h>
@@ -16,6 +21,32 @@ SunFlareDynamic sunFlareArray[4];
 
 unsigned int __cdecl RB_CalcSunSpriteSamples()
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::engine_queries::Active()) {
+        std::string error;
+        auto fail=[&](){Com_Error(ERR_FATAL,"Native sun calibration failed: %s",error.c_str());std::abort();};
+        if(vidConfig.displayWidth<16||vidConfig.displayHeight<16) {error="Display smaller than sun calibration rectangle";fail();}
+        auto owner=&sunFlareArray[0].sunQuery[0];
+        if(!RB_HW_HasOcclusionQueryFromOwner(owner))return 0;
+        auto frames=bo1::android::native_device::Frames(error);if(!frames)fail();
+        if(frames->Begin(&gfxCmdBufState,error)!=bo1::vulkan::FrameResult::Recording)fail();
+        RB_ResetStatTracking(0);
+        if(tess.indexCount)RB_EndTessSurface();
+        R_ClearScreenInternal(gfxCmdBufState.prim.device,2u,colorWhite,1.0,0,0);
+        R_SetCodeConstantFromVec4(&gfxCmdBufSourceState,CONST_SRC_CODE_MATERIAL_COLOR,(float*)colorWhite);
+        if(RB_HW_IssueOcclusionQueryFromOwner(owner,2)!=S_OK) {error="Sun query begin failed";fail();}
+        R_Set2D(&gfxCmdBufSourceState);
+        RB_DrawStretchPic(rgp.additiveMaterial,0.0,0.0,16.0,16.0,0.0,0.0,1.0,1.0,0xFFFFFFFF,GFX_PRIM_STATS_CODE);
+        if(gfxCmdBufSourceState.viewMode!=VIEW_MODE_2D) {error="Sun calibration requires canonical 2D view";fail();}
+        RB_EndTessSurface();
+        if(RB_HW_IssueOcclusionQueryFromOwner(owner,1)!=S_OK) {error="Sun query end failed";fail();}
+        if(!frames->Submit(true,error))fail();
+        unsigned samples{};
+        if(RB_HW_ReadOcclusionQueryFromOwner(owner,&samples,0)!=S_OK) {error="Submitted sun calibration result unavailable";fail();}
+        Com_Printf(8,"Native sun calibration: actual_samples=%u submitted=1 fence_completed=1\n",samples);
+        return samples;
+    }
+#endif
   const char *v1; // eax
   const char *v2; // eax
   const char *v3; // eax
@@ -216,7 +247,11 @@ void __cdecl RB_DrawSunQuerySprite(SunFlareDynamic *sunFlare)
     {
         __debugbreak();
     }
-    if (!sunFlare->sunQuery[queryIndex])
+    if (
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+bo1::vulkan::engine_queries::Active()?!RB_HW_HasOcclusionQueryFromOwner(&sunFlare->sunQuery[queryIndex]):
+#endif
+!sunFlare->sunQuery[queryIndex])
     {
         RB_UpdateSunVisibilityWithoutQuery(sunFlare);
         return;
@@ -230,7 +265,11 @@ void __cdecl RB_DrawSunQuerySprite(SunFlareDynamic *sunFlare)
         (GfxColor)-16777216);
     if (sunFlare->sunQueryIssued[queryIndex])
     {
-        drawnSampleCount = RB_HW_ReadOcclusionQuery(sunFlare->sunQuery[queryIndex]);
+        drawnSampleCount =
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+bo1::vulkan::engine_queries::Active()?bo1::vulkan::engine_queries::Read(&sunFlare->sunQuery[queryIndex]):
+#endif
+RB_HW_ReadOcclusionQuery(sunFlare->sunQuery[queryIndex]);
         if (drawnSampleCount == -1)
             sunFlare->error = 1;
         sunSpriteSamples = dx.sunSpriteSamples;
@@ -267,8 +306,14 @@ void __cdecl RB_DrawSunQuerySprite(SunFlareDynamic *sunFlare)
     }
     else
     {
-        RB_HW_BeginOcclusionQuery(sunFlare->sunQuery[queryIndex]);
+        #if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+if(bo1::vulkan::engine_queries::Active())bo1::vulkan::engine_queries::Issue(&sunFlare->sunQuery[queryIndex],D3DISSUE_BEGIN);else
+#endif
+RB_HW_BeginOcclusionQuery(sunFlare->sunQuery[queryIndex]);
         RB_EndTessSurface();
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+        if(bo1::vulkan::engine_queries::Active())bo1::vulkan::engine_queries::Issue(&sunFlare->sunQuery[queryIndex],1);else
+#endif
         sunFlare->sunQuery[queryIndex]->Issue(1);
         sunFlare->sunQueryIssued[queryIndex] = 1;
     }
@@ -897,6 +942,9 @@ void __cdecl RB_AllocSunSpriteQueries()
     {
         for ( queryIndex = 0; queryIndex < 2; ++queryIndex )
         {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+            if(bo1::vulkan::engine_queries::Active())RB_HW_AllocOcclusionQueryFromOwner(&sunFlareArray[viewIndex].sunQuery[queryIndex]);else
+#endif
             sunFlareArray[viewIndex].sunQuery[queryIndex] = RB_HW_AllocOcclusionQuery();
             sunFlareArray[viewIndex].sunQueryIssued[queryIndex] = 0;
         }
@@ -913,6 +961,9 @@ void __cdecl RB_FreeSunSpriteQueries()
     {
         for ( queryIndex = 0; queryIndex < 2; ++queryIndex )
         {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+            if(bo1::vulkan::engine_queries::Active()) {RB_HW_ReleaseOcclusionQueryFromOwner(&sunFlareArray[viewIndex].sunQuery[queryIndex]);continue;}
+#endif
             if ( sunFlareArray[viewIndex].sunQuery[queryIndex] )
             {
                 do

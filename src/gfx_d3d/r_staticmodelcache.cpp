@@ -1,3 +1,7 @@
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+#include "gfx_vulkan/buffer_assets.h"
+#include "gfx_vulkan/shader_assets.h"
+#endif
 #include "r_staticmodelcache.h"
 #include <xanim/xmodel_utils.h>
 #include "r_model_lighting.h"
@@ -880,6 +884,9 @@ void __cdecl R_ShutdownStaticModelCache()
     IDirect3DVertexBuffer9 *varCopy; // [esp+0h] [ebp-4h]
 
     R_FlushStaticModelCache();
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active())bo1::vulkan::buffer_assets::Release(&gfxBuf.smodelCacheVb);
+#endif
     if ( gfxBuf.smodelCacheVb )
     {
         do

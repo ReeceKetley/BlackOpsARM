@@ -824,11 +824,11 @@ static bool add_signature_element_from_register(struct vkd3d_shader_sm1_parser *
             {
                 case 0:
                     return add_signature_element(sm1, false, "VPOS", 0,
-                            VKD3D_SHADER_SV_POSITION, register_index, is_dcl, mask);
+                            VKD3D_SHADER_SV_POSITION, SM1_MISC_REGISTER_OFFSET + register_index, is_dcl, mask);
 
                 case 1:
                     return add_signature_element(sm1, false, "VFACE", 0,
-                            VKD3D_SHADER_SV_IS_FRONT_FACE, register_index, is_dcl, 0x1);
+                            VKD3D_SHADER_SV_IS_FRONT_FACE, SM1_MISC_REGISTER_OFFSET + register_index, is_dcl, 0x1);
 
                 default:
                     vkd3d_shader_parser_error(&sm1->p, VKD3D_SHADER_ERROR_D3DBC_INVALID_REGISTER_INDEX,

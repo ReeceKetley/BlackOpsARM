@@ -98,7 +98,7 @@ void __cdecl CG_DrawRotatedPicPhysicalW(
     const float *color,
     Material *material)
 {
-    long double v9; // st7
+    double v9; // st7
     float v10; // [esp+Ch] [ebp-70h]
     float v11; // [esp+Ch] [ebp-70h]
     float v12; // [esp+10h] [ebp-6Ch]
@@ -198,7 +198,7 @@ void __cdecl CG_DrawRotatedQuadPic(
                 const float *color,
                 Material *material)
 {
-    long double v7; // st7
+    double v7; // st7
     float v8; // [esp+0h] [ebp-70h]
     float v9; // [esp+0h] [ebp-70h]
     float v10; // [esp+8h] [ebp-68h]
@@ -524,7 +524,7 @@ void __cdecl CG_DebugBox(
     int depthTest,
     int duration)
 {
-    long double v7; // st7
+    double v7; // st7
     float v8; // [esp+0h] [ebp-9Ch]
     float *v9; // [esp+4h] [ebp-98h]
     unsigned int j; // [esp+1Ch] [ebp-80h]

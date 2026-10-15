@@ -1,3 +1,6 @@
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+#include "gfx_vulkan/shader_assets.h"
+#endif
 #include <universal/narrow32.h>
 #include "r_draw_staticmodel.h"
 #include "r_shade.h"
@@ -146,6 +149,12 @@ void __cdecl R_DrawStaticModelDrawSurfNonOptimized(GfxStaticModelDrawStream *dra
 
 void __cdecl R_SetStaticModelVertexBuffer(GfxCmdBufPrimState *primState, XSurface *xsurf)
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()) {
+        if(!xsurf) {Com_Error(ERR_FATAL,"Native static model has no surface");return;}
+        R_SetStreamSourceFromOwner(primState,&xsurf->vb0,0,32);return;
+    }
+#endif
     IDirect3DVertexBuffer9 *vb; // [esp+0h] [ebp-4h]
 
     if ( !xsurf
@@ -164,6 +173,12 @@ void __cdecl R_SetStaticModelVertexBuffer(GfxCmdBufPrimState *primState, XSurfac
 
 void __cdecl R_SetStaticModelIndexBuffer(GfxCmdBufPrimState *primState, XSurface *xsurf)
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()) {
+        if(!xsurf) {Com_Error(ERR_FATAL,"Native static model has no surface");return;}
+        R_ChangeIndicesFromOwner(primState,&xsurf->indexBuffer);return;
+    }
+#endif
     IDirect3DIndexBuffer9 *ib; // [esp+0h] [ebp-4h]
 
     if ( !xsurf
@@ -330,6 +345,11 @@ void __cdecl R_DrawStaticModelsSkinnedDrawSurfLighting(GfxStaticModelDrawStream 
     R_SetStaticModelSkinnedPrimArgs(&context.state->prim, xsurf, &args);
     R_CheckVertexDataOverflow(32 * args.vertexCount);
     vertexOffset = R_SetVertexData(context.state, xsurf->verts0, args.vertexCount, 32);
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active())
+        R_SetStreamSourceFromOwner(&context.state->prim,&gfxBuf.dynamicVertexBuffer->buffer,vertexOffset,32);
+    else {
+#endif
     vb = gfxBuf.dynamicVertexBuffer->buffer;
     if ( !vb
         && !Assert_MyHandler("C:\\projects_pc\\cod\\codsrc\\src\\gfx_d3d\\r_draw_staticmodel.cpp", 2806, 0, "%s", "vb") )
@@ -337,6 +357,9 @@ void __cdecl R_DrawStaticModelsSkinnedDrawSurfLighting(GfxStaticModelDrawStream 
         __debugbreak();
     }
     R_SetStreamSource(&context.state->prim, vb, vertexOffset, 0x20u);
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    }
+#endif
     smodelCount = drawStream->smodelCount;
     smodelDrawInsts = rgp.world->dpvs.smodelDrawInsts;
     list = drawStream->smodelList;
@@ -444,6 +467,11 @@ void __cdecl R_DrawStaticModelsSkinnedDrawSurf(GfxStaticModelDrawStream *drawStr
     R_SetStaticModelSkinnedPrimArgs(&context.state->prim, xsurf, &args);
     R_CheckVertexDataOverflow(32 * args.vertexCount);
     vertexOffset = R_SetVertexData(context.state, xsurf->verts0, args.vertexCount, 32);
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active())
+        R_SetStreamSourceFromOwner(&context.state->prim,&gfxBuf.dynamicVertexBuffer->buffer,vertexOffset,32);
+    else {
+#endif
     vb = gfxBuf.dynamicVertexBuffer->buffer;
     if ( !vb
         && !Assert_MyHandler("C:\\projects_pc\\cod\\codsrc\\src\\gfx_d3d\\r_draw_staticmodel.cpp", 2843, 0, "%s", "vb") )
@@ -451,6 +479,9 @@ void __cdecl R_DrawStaticModelsSkinnedDrawSurf(GfxStaticModelDrawStream *drawStr
         __debugbreak();
     }
     R_SetStreamSource(&context.state->prim, vb, vertexOffset, 0x20u);
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    }
+#endif
     smodelCount = drawStream->smodelCount;
     smodelDrawInsts = rgp.world->dpvs.smodelDrawInsts;
     list = drawStream->smodelList;
@@ -625,6 +656,11 @@ void __cdecl R_SetStaticModelCachedPrimArgs(const XSurface *xsurf, GfxDrawPrimAr
 
 void __cdecl R_SetStaticModelCachedBuffer(GfxCmdBufState *state, unsigned int cachedIndex)
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active())
+        R_SetStreamSourceFromOwner(&state->prim,&gfxBuf.smodelCacheVb,((cachedIndex-1)&0xFFFFF000)<<9,32);
+    else
+#endif
     R_SetStreamSource(&state->prim, gfxBuf.smodelCacheVb, ((cachedIndex - 1) & 0xFFFFF000) << 9, 0x20u);
 }
 
@@ -824,6 +860,11 @@ const GfxStaticModelDrawInst *__cdecl R_SetupCachedSModelSurface(
         *baseIndex = 3 * xsurf->baseTriIndex;
     args->vertexCount = 0x10000;
     args->triCount = count * xsurf->triCount;
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active())
+        R_SetStreamSourceFromOwner(&state->prim,&gfxBuf.smodelCacheVb,((cachedIndex-1)&0xFFFFF000)<<9,32);
+    else
+#endif
     R_SetStreamSource(&state->prim, gfxBuf.smodelCacheVb, ((cachedIndex - 1) & 0xFFFFF000) << 9, 0x20u);
     state->prim.frameStats.geoIndexCount += 3 * count * xsurf->triCount;
     if ( !state->prim.primStats

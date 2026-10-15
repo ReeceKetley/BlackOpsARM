@@ -9,7 +9,7 @@ using bo1::win32::QueryPerformanceFrequency;
 #include <Windows.h>
 #endif
 
-long double msecPerRawTimerTick;
+double msecPerRawTimerTick;
 
 void __cdecl InitTiming()
 {

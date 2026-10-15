@@ -1,3 +1,8 @@
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+#include "gfx_vulkan/image_assets.h"
+#include "gfx_vulkan/shader_assets.h"
+#include "platform/android/native_vulkan_device.h"
+#endif
 #include "r_cinematic.h"
 #include <win32/win_main.h>
 #include <qcommon/common.h>
@@ -169,8 +174,51 @@ void __cdecl R_CinematicInitSound(const _GUID *guid)
 #endif
 }
 
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+// Snapshot the decoder's pitched L8 plane before Bink reuses its CPU buffer.
+static void R_Cinematic_UploadNativePlane(GfxImage *image, const BINKPLANE *plane,
+    unsigned width, unsigned height, unsigned char clearValue=0)
+{
+    auto renderer=bo1::android::native_device::Renderer();
+    auto record=bo1::vulkan::image_assets::Acquire(image);
+    if(!renderer || renderer->FrameRecording() || !record || !record->texture
+        || record->sourceFormat!=D3DFMT_L8 || record->bytesPerTexel!=1
+        || record->description.extent.width!=width || record->description.extent.height!=height
+        || record->description.extent.depth!=1 || record->description.mipLevels!=1
+        || record->description.arrayLayers!=1 || !width || !height
+        || (plane && (!plane->Buffer || plane->BufferPitch<width))) {
+        Com_Error(ERR_FATAL,"Native cinematic plane requires a real matching L8 image and valid decoder rows outside frame recording");return;
+    }
+    std::string error;
+    // One owned immutable row snapshot; no temporary full-plane vector. The
+    // existing transfer fence still completes before material sampling.
+    if(!bo1::vulkan::image_assets::QueueL8Plane(image,plane?plane->Buffer:nullptr,
+        plane?plane->BufferPitch:0,width,height,clearValue,error))
+        Com_Error(ERR_FATAL,"Native cinematic plane upload: %s",error.c_str());
+}
+#endif
+
 void __cdecl Unlock_Bink_textures2(IDirect3DDevice9 *d3d_device, BINKTEXTURESET *set_textures)
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()) {
+        iassert(set_textures==&cinematicGlob.binkTextureSet);
+        iassert(set_textures->bink_buffers.FrameNum<2);
+        iassert(cinematicGlob.activeTextureSet>=0 && cinematicGlob.activeTextureSet<2);
+        auto &fb=set_textures->bink_buffers;
+        auto &source=fb.Frames[fb.FrameNum];
+        auto &images=cinematicGlob.textureSets[cinematicGlob.activeTextureSet];
+        R_Cinematic_UploadNativePlane(&images.drawImageY,&source.YPlane,fb.YABufferWidth,fb.YABufferHeight);
+        R_Cinematic_UploadNativePlane(&images.drawImageCr,&source.cRPlane,fb.cRcBBufferWidth,fb.cRcBBufferHeight);
+        R_Cinematic_UploadNativePlane(&images.drawImageCb,&source.cBPlane,fb.cRcBBufferWidth,fb.cRcBBufferHeight);
+        if(bo1::vulkan::image_assets::Acquire(&images.drawImageA))
+            R_Cinematic_UploadNativePlane(&images.drawImageA,&source.APlane,fb.YABufferWidth,fb.YABufferHeight);
+        static unsigned reported;
+        if(reported++<2)Com_Printf(8,"Native cinematic decoded planes queued: frame=%u size=%ux%u alpha=%u\n",
+            fb.FrameNum,fb.YABufferWidth,fb.YABufferHeight,source.APlane.Allocate!=0);
+        return;
+    }
+#endif
 #if defined(__ANDROID__)
     iassert(set_textures && set_textures->bink_buffers.FrameNum<2);
     auto &fb=set_textures->bink_buffers;
@@ -435,6 +483,19 @@ IDirect3DTexture9 *__cdecl R_Cinematic_MakeBinkTexture_PC(
 
 void R_Cinematic_ClearBinkDrawTextures()
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()) {
+        iassert(cinematicGlob.activeTextureSet>=0 && cinematicGlob.activeTextureSet<2);
+        auto &fb=cinematicGlob.binkTextureSet.bink_buffers;
+        auto &images=cinematicGlob.textureSets[cinematicGlob.activeTextureSet];
+        R_Cinematic_UploadNativePlane(&images.drawImageY,nullptr,fb.YABufferWidth,fb.YABufferHeight,0);
+        R_Cinematic_UploadNativePlane(&images.drawImageCr,nullptr,fb.cRcBBufferWidth,fb.cRcBBufferHeight,128);
+        R_Cinematic_UploadNativePlane(&images.drawImageCb,nullptr,fb.cRcBBufferWidth,fb.cRcBBufferHeight,128);
+        if(bo1::vulkan::image_assets::Acquire(&images.drawImageA))
+            R_Cinematic_UploadNativePlane(&images.drawImageA,nullptr,fb.YABufferWidth,fb.YABufferHeight,0);
+        return;
+    }
+#endif
     BINKFRAMETEXTURES *textures = &cinematicGlob.binkTextureSet.tex_draw;
 
     iassert(textures->Ytexture);
@@ -1727,7 +1788,11 @@ void __cdecl R_Cinematic_SetRendererImagesToFrame(int frameToSetTo)
     gfxCmdBufInput.codeImages[TEXTURE_SRC_CODE_CINEMATIC_CR] = &textureSet->drawImageCr;
     gfxCmdBufInput.codeImages[TEXTURE_SRC_CODE_CINEMATIC_CB] = &textureSet->drawImageCb;
 
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if (bo1::vulkan::shader_assets::Active() ? bool(bo1::vulkan::image_assets::Acquire(&textureSet->drawImageA)) : bool(textureSet->drawImageA.texture.basemap))
+#else
     if (textureSet->drawImageA.texture.basemap)
+#endif
         gfxCmdBufInput.codeImages[TEXTURE_SRC_CODE_CINEMATIC_A] = &textureSet->drawImageA;
     else
         gfxCmdBufInput.codeImages[TEXTURE_SRC_CODE_CINEMATIC_A] = rgp.whiteImage;

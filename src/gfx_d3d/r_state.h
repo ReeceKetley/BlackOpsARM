@@ -774,3 +774,8 @@ inline void R_SetInputCodeImageSamplerState(
 }
 
 extern unsigned int s_decodeSamplerFilterState[24];
+
+// Owner-aware extension: native buffers have no fabricated COM values.
+void R_ChangeIndicesFromOwner(GfxCmdBufPrimState*,IDirect3DIndexBuffer9* const*);
+
+void R_SetStreamSourceFromOwner(GfxCmdBufPrimState*,IDirect3DVertexBuffer9* const*,unsigned offset,unsigned stride);

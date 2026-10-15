@@ -1,3 +1,9 @@
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+#include "gfx_vulkan/image_assets.h"
+#include "gfx_vulkan/buffer_assets.h"
+#include "gfx_vulkan/shader_assets.h"
+#include "gfx_d3d/r_bsp.h"
+#endif
 #if defined(__ANDROID__)
 #include <atomic>
 #endif
@@ -114,7 +120,13 @@ static bool DB_IsLevelSingletonType(XAssetType);
 #define POOLSIZE_LIGHTDEF         32
 #define POOLSIZE_LIGHTDEF_MOD 64 // mod: capacity for bo1_mod_zones; in use only with it on the command line (DB_InitXAssets)
 #define POOLSIZE_UI_MAP            0
+#if defined(__ANDROID__)
+// Hybrid startup retains MP fonts and the additional SP localized/code font
+// set. common_mp supplies further real overrides; retain them for zone unload.
+#define POOLSIZE_FONT              24
+#else
 #define POOLSIZE_FONT              16
+#endif
 //#define POOLSIZE_MENUFILE          128
 #define POOLSIZE_MENUFILE          164
 //#define POOLSIZE_MENU              850
@@ -1071,7 +1083,13 @@ void __cdecl Mark_MaterialTechniqueSetAsset(MaterialTechniqueSet *techniqueSet)
 void __cdecl Load_GfxImageAsset(XAssetHeader *image)
 {
     RB_Resource_Flush();
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    const auto temporaryOwner=image->image;
+#endif
     image->xmodelPieces = DB_AddXAsset(ASSET_TYPE_IMAGE, (XAssetHeader)image->xmodelPieces).xmodelPieces;
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(temporaryOwner!=image->image)bo1::vulkan::image_assets::Release(temporaryOwner);
+#endif
 }
 
 void __cdecl Mark_GfxImageAsset(GfxImage *image)
@@ -1214,6 +1232,17 @@ void __cdecl Mark_LightDefAsset(GfxLightDef *lightDef)
 
 void __cdecl Load_FontAsset(XAssetHeader *font)
 {
+#if defined(__ANDROID__)
+    // Bounded family diagnostic: actual registration metadata, no asset scans.
+    static unsigned nativeFontRegistrations;
+    if (nativeFontRegistrations < 32 && font && font->font)
+    {
+        ++nativeFontRegistrations;
+        const Font_s* incoming=font->font;
+        Com_Printf(8,"Native font registration %u: name=%s height=%d glyphs=%d\n",
+            nativeFontRegistrations,incoming->fontName,incoming->pixelHeight,incoming->glyphCount);
+    }
+#endif
     font->xmodelPieces = DB_AddXAsset(ASSET_TYPE_FONT, (XAssetHeader)font->xmodelPieces).xmodelPieces;
 }
 
@@ -1498,6 +1527,9 @@ void __cdecl DB_RemoveGfxImage(XAssetHeader header)
 void __cdecl DB_FreeGfxImage(XAssetPoolEntry<EmblemSet> **pool, XAssetHeader header)
 {
     DB_RemoveGfxImage(header);
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    bo1::vulkan::image_assets::Release(header.image);
+#endif
     DB_FreeXAssetHeader_EmblemSet_(pool, header);
 }
 
@@ -2596,6 +2628,23 @@ void __cdecl DB_CloneXAssetInternal(const XAsset *from, XAsset *to)
         __debugbreak();
     }
     size = DB_GetXAssetTypeSize(from->type);
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(from->type==ASSET_TYPE_IMAGE)bo1::vulkan::image_assets::CopyOwner(from->header.image,to->header.image);
+    if(from->type==ASSET_TYPE_GFXWORLD&&bo1::vulkan::shader_assets::Active()) {
+        const auto source=from->header.gfxWorld;const auto destination=to->header.gfxWorld;
+        std::string error;
+        if(!source||!destination||source->draw.vd.worldVb||source->draw.vld.layerVb
+            ||!bo1::vulkan::buffer_assets::CloneOwners({
+                {&source->draw.vd.worldVb,&destination->draw.vd.worldVb},
+                {&source->draw.vld.layerVb,&destination->draw.vld.layerVb}},error)) {
+            Com_Error(ERR_FATAL,"Native world buffer owner clone: %s",error.c_str());return;
+        }
+        static std::atomic<unsigned> traceCount{};
+        if(traceCount.fetch_add(1,std::memory_order_relaxed)<8)Com_Printf(8,"Native world clone: from=%p to=%p vertex_buffer=%u layer_buffer=%u\n",
+            source,destination,bo1::vulkan::buffer_assets::Acquire(&destination->draw.vd.worldVb)?1:0,
+            bo1::vulkan::buffer_assets::Acquire(&destination->draw.vld.layerVb)?1:0);
+    }
+#endif
     memcpy((unsigned __int8 *)to->header.xmodelPieces, (unsigned __int8 *)from->header.xmodelPieces, size);
 }
 #endif
@@ -3553,6 +3602,9 @@ void __cdecl DB_SwapXAsset(XAsset *from, XAsset *to)
     DB_CloneXAssetInternal(to, &asset);
     DB_CloneXAssetInternal(from, to);
     DB_CloneXAssetInternal(&asset, from);
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(asset.type==ASSET_TYPE_IMAGE)bo1::vulkan::image_assets::Release(asset.header.image);
+#endif
 }
 
 void __cdecl DB_DelayedCloneXAsset(XAssetEntry *newEntry)

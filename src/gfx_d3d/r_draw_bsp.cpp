@@ -1,3 +1,10 @@
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+#include "gfx_vulkan/geometry_bindings.h"
+#include "gfx_vulkan/shader_assets.h"
+#include "gfx_vulkan/target_bindings.h"
+#include "r_reflection_probe.h"
+#include <limits>
+#endif
 #include "r_draw_bsp.h"
 #include "rb_tess.h"
 #include "r_vertexstream2.h"
@@ -12,6 +19,33 @@ int g_stream2Stride[18] = { 0, 0, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 0, 0, 0, 0
 
 void __cdecl R_SetStreamsForBspSurface(GfxCmdBufPrimState *state, const srfTriangles_t *tris)
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()) {
+        if(!state||!tris||!g_worldDraw||unsigned(state->vertDeclType)>=18
+            ||tris->firstVertex>std::numeric_limits<unsigned>::max()/44u) {
+            Com_Error(ERR_FATAL,"Invalid native BSP stream source");return;
+        }
+        const unsigned layerStride=g_layerDataStride[state->vertDeclType];
+        const unsigned auxiliaryStride=g_stream2Stride[state->vertDeclType];
+        auto worldOwner=&g_worldDraw->vd.worldVb;auto layerOwner=&g_worldDraw->vld.layerVb;
+        const auto auxiliaryOwner=tris->stream2ByteOffset>=0?R_VertexStream2_GetVB():nullptr;
+        if(*worldOwner||(layerStride&&*layerOwner)||(auxiliaryOwner&&(!auxiliaryStride||*auxiliaryOwner))) {
+            Com_Error(ERR_FATAL,"Native BSP stream contains a COM buffer or invalid auxiliary stride");return;
+        }
+        std::array<bo1::vulkan::geometry_bindings::StreamSource,3> streams{};
+        streams[0]={worldOwner,44u*tris->firstVertex,44};
+        if(layerStride)streams[1]={layerOwner,unsigned(tris->vertexLayerData),layerStride};
+        if(auxiliaryOwner)streams[2]={auxiliaryOwner,unsigned(tris->stream2ByteOffset),auxiliaryStride};
+        std::string error;
+        if(!bo1::vulkan::geometry_bindings::SetStreams(state,streams,error)) {
+            Com_Error(ERR_FATAL,"Native BSP vertex streams: %s",error.c_str());return;
+        }
+        for(unsigned i=0;i<streams.size();++i) {
+            state->streams[i].vb=nullptr;state->streams[i].offset=streams[i].offset;state->streams[i].stride=streams[i].stride;
+        }
+        return;
+    }
+#endif
     int stream2ByteOffset; // [esp+0h] [ebp-34h]
     IDirect3DVertexBuffer9 *v3; // [esp+4h] [ebp-30h]
     int vertexLayerData; // [esp+8h] [ebp-2Ch]
@@ -121,6 +155,20 @@ void __cdecl R_DrawBspDrawSurfsLit(
     context.state->samplerTexture[13] = drawStream.lightmapSecondaryTexture;
     context.state->samplerTexture[14] = drawStream.lightmapSecondaryTextureB;
 }
+
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+// BSP's packed GfxTexture arrays are COM aliases, not GfxImage objects.
+// Bind the canonical world image through the actual command-state owner.
+static void R_BindNativeBspImage(GfxCmdBufPrimState *prim,unsigned slot,const GfxImage *image)
+{
+    auto state=const_cast<GfxCmdBufState *>(bo1::vulkan::target_bindings::Owner(prim));
+    if(!state || &state->prim!=prim || prim->device || !image || slot<12 || slot>15) {
+        Com_Error(ERR_FATAL,"Native BSP image requires its real command and world image");return;
+    }
+    GfxCmdBufContext context{};context.state=state;
+    R_SetSampler(context,slot,slot==15?0x72u:0x62u,image);
+}
+#endif
 
 void __cdecl R_DrawTrianglesLit(
                 GfxTrianglesDrawStream *drawStream,
@@ -242,7 +290,12 @@ void __cdecl R_DrawTrianglesLit(
                     if ( reflectionProbeTexture != newReflectionProbeTexture )
                     {
                         reflectionProbeTexture = newReflectionProbeTexture;
-                        R_HW_SetSamplerTexture(device, 0xFu, newReflectionProbeTexture);
+                        #if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+                            if(bo1::vulkan::shader_assets::Active())
+                                R_BindNativeBspImage(primState,15,g_worldDraw->reflectionProbes[reflectionProbeIndex].reflectionImage);
+                            else
+#endif
+                            R_HW_SetSamplerTexture(device, 0xFu, newReflectionProbeTexture);
                     }
                 }
                 if ( lightmapIndex == 31 )
@@ -302,6 +355,11 @@ void __cdecl R_DrawTrianglesLit(
                         if ( lightmapPrimaryTexture != newLightmapPrimaryTexture )
                         {
                             lightmapPrimaryTexture = newLightmapPrimaryTexture;
+                            #if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+                            if(bo1::vulkan::shader_assets::Active())
+                                R_BindNativeBspImage(primState,12,(conflictTex && (bspSurf->flags&2)) ? blackImage : (override ? overrideImage : (hasSunDirChanged ? rgp.whiteImage : g_worldDraw->lightmaps[lightmapIndex].primary)));
+                            else
+#endif
                             R_HW_SetSamplerTexture(device, 0xCu, newLightmapPrimaryTexture);
                         }
                     }
@@ -327,11 +385,21 @@ void __cdecl R_DrawTrianglesLit(
                         if ( lightmapSecondaryTexture != newLightmapSecondaryTexture )
                         {
                             lightmapSecondaryTexture = newLightmapSecondaryTexture;
+                            #if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+                            if(bo1::vulkan::shader_assets::Active())
+                                R_BindNativeBspImage(primState,13,(conflictTex && (bspSurf->flags&2)) ? blackImage : (override ? rgp.r5g6b5Image : g_worldDraw->lightmaps[lightmapIndex].secondary));
+                            else
+#endif
                             R_HW_SetSamplerTexture(device, 0xDu, newLightmapSecondaryTexture);
                         }
                         if ( lightmapSecondaryTextureB != (const GfxTexture *)newLightmapSecondaryTextureB )
                         {
                             lightmapSecondaryTextureB = &newLightmapSecondaryTextureB->texture;
+                            #if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+                            if(bo1::vulkan::shader_assets::Active())
+                                R_BindNativeBspImage(primState,14,(conflictTex && (bspSurf->flags&2)) ? blackImage : (override ? rgp.g16r16Image : g_worldDraw->lightmaps[lightmapIndex].secondaryB));
+                            else
+#endif
                             R_HW_SetSamplerTexture(device, 0xEu, &newLightmapSecondaryTextureB->texture);
                         }
                     }

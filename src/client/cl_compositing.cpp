@@ -1,3 +1,7 @@
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+#include "gfx_vulkan/event_fences.h"
+#include "gfx_vulkan/shader_assets.h"
+#endif
 #include "cl_compositing.h"
 #include <gfx_d3d/r_material.h>
 #include <gfx_d3d/r_streamalloc.h>
@@ -217,6 +221,12 @@ void __cdecl CL_CompositeEmblemCallback(GfxImage *result)
 
 void __cdecl R_HW_InsertFence(IDirect3DQuery9 **fence)
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()) {
+        std::string error;if(!fence||*fence||!bo1::vulkan::event_fences::Insert(fence,&dx.fencePool[dx.nextFence],error)) {Com_Error(ERR_FATAL,"Native GPU event insert: %s",error.c_str());return;}
+        dx.nextFence=(dx.nextFence+1)%8;return;
+    }
+#endif
     const char *v1; // eax
     int hr; // [esp+4h] [ebp-8h]
 
@@ -362,6 +372,12 @@ void __cdecl CL_CompositeRender()
 // changed to blops2011
 bool __cdecl R_HW_IsFencePending(IDirect3DQuery9 *const *fence)
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()) {
+        bool pending{};std::string error;if(!fence||*fence||!bo1::vulkan::event_fences::Pending(fence,pending,error)) {Com_Error(ERR_FATAL,"Native GPU event read: %s",error.c_str());return true;}
+        return pending;
+    }
+#endif
     HRESULT hr; // [esp+4h] [ebp-Ch]
     unsigned int data; // [esp+8h] [ebp-8h] BYREF
 
@@ -389,10 +405,10 @@ bool __cdecl R_HW_IsFencePending(IDirect3DQuery9 *const *fence)
 //{
 //    float v9; // xmm0_4
 //    float v10; // xmm0_4
-//    long double smoothSize; // [esp+Ch] [ebp-16Ch]
-//    long double v12; // [esp+Ch] [ebp-16Ch]
-//    long double v13; // [esp+14h] [ebp-164h]
-//    long double v14; // [esp+14h] [ebp-164h]
+//    double smoothSize; // [esp+Ch] [ebp-16Ch]
+//    double v12; // [esp+Ch] [ebp-16Ch]
+//    double v13; // [esp+14h] [ebp-164h]
+//    double v14; // [esp+14h] [ebp-164h]
 //    float *p_packed; // [esp+1Ch] [ebp-15Ch]
 //    float v16[3]; // [esp+20h] [ebp-158h] BYREF
 //    _BYTE matPlacement_12[32]; // [esp+38h] [ebp-140h] OVERLAPPED BYREF

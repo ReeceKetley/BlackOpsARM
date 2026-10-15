@@ -481,6 +481,13 @@ int __cdecl R_TrySetMaterialWithFunc(
             break;
         }
     }
+#if defined(__ANDROID__)
+    // These are intentional exclusions in R_SetPrepassMaterial, not missing
+    // techniques. Preserve the skipped draw without reporting a shader error.
+    if (func == R_SetPrepassMaterial && !ret
+        && (((drawSurf.packed >> 55) & 3) == 2 || R_GfxDrawSurf_GetFade(&drawSurf)))
+        return 0;
+#endif
     techName = RB_LogTechniqueType(*techType);
     if ( techAssigned == 255 )
         v5 = "TECHNIQUE_NONE";

@@ -1,3 +1,6 @@
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+#include "gfx_vulkan/engine_query_adapters.h"
+#endif
 #include <universal/narrow32.h>
 #include "rb_pixelcost.h"
 #include "r_init.h"
@@ -11,9 +14,9 @@ struct $24C327571DE1B1A743908CE1FB1197BD // sizeof=0x10030
     // padding byte
     // padding byte
     // padding byte
-    long double msecOverhead;
+    double msecOverhead;
     unsigned __int64 timeBegin;
-    long double msecElapsed;            // XREF: R_PixelCost_EndSurface(GfxCmdBufContext)+A3/r
+    double msecElapsed;            // XREF: R_PixelCost_EndSurface(GfxCmdBufContext)+A3/r
                                         // RB_PixelCost_AccumulateMsec+6/r
     int frameIndex;                     // XREF: R_PixelCost_EndSurface(GfxCmdBufContext)+11F/r
                                         // RB_PixelCost_AccumulateMsec+64/r
@@ -106,7 +109,10 @@ void __cdecl R_PixelCost_BeginSurface(GfxCmdBufContext context)
             RB_PixelCost_ResetPrim(packedKey);
         ++pixelCostGlob.expectedCount;
         //BLOPS_NULLSUB();
-        RB_HW_BeginOcclusionQuery(gfxAssets.pixelCountQuery[r_glob.backEndFrameCount % 4]);
+        #if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+if(bo1::vulkan::engine_queries::Active())bo1::vulkan::engine_queries::Issue(&gfxAssets.pixelCountQuery[r_glob.backEndFrameCount % 4],D3DISSUE_BEGIN);else
+#endif
+RB_HW_BeginOcclusionQuery(gfxAssets.pixelCountQuery[r_glob.backEndFrameCount % 4]);
     }
     else if ( pixelCostMode == GFX_PIXEL_COST_MODE_MEASURE_MSEC )
     {
@@ -283,9 +289,16 @@ void __cdecl R_PixelCost_EndSurface(GfxCmdBufContext context)
 
     if ( pixelCostMode == GFX_PIXEL_COST_MODE_MEASURE_COST )
     {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+        if(bo1::vulkan::engine_queries::Active())bo1::vulkan::engine_queries::Issue(&gfxAssets.pixelCountQuery[r_glob.backEndFrameCount % 4],D3DISSUE_END);else
+#endif
         gfxAssets.pixelCountQuery[r_glob.backEndFrameCount % 4]->Issue(D3DISSUE_END);
         //BLOPS_NULLSUB(); RB_PixelCost_EndTiming()
-        pixelCount = RB_HW_ReadOcclusionQuery(gfxAssets.pixelCountQuery[r_glob.backEndFrameCount % 4]);
+        pixelCount =
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+bo1::vulkan::engine_queries::Active()?bo1::vulkan::engine_queries::Read(&gfxAssets.pixelCountQuery[r_glob.backEndFrameCount % 4]):
+#endif
+RB_HW_ReadOcclusionQuery(gfxAssets.pixelCountQuery[r_glob.backEndFrameCount % 4]);
         if ( pixelCount )
         {
             //v3 = (int)ceil(

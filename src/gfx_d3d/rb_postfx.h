@@ -42,5 +42,6 @@ void __cdecl RB_GetSceneDepthOfFieldEquation(
 void __cdecl RB_GetViewModelDepthOfFieldEquation(float outOfFocus, float inFocus, float *dofEquation);
 double __cdecl RB_GetDepthOfFieldBlurFraction(const GfxViewInfo *viewInfo, float pixelRadiusAtSceneRes);
 void __cdecl RB_GetDepthOfFieldInputImages(float radius);
+void RB_SetDepthOfFieldConstants(const GfxViewInfo *viewInfo);
 double __cdecl RB_GetBlurRadius(float blurRadiusFromCode);
 void __cdecl RB_BlurScreen(const GfxViewInfo *viewInfo, float blurRadius);

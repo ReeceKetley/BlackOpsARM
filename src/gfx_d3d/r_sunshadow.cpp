@@ -4,6 +4,14 @@
 #include "r_dpvs_static.h"
 #include <universal/com_convexhull.h>
 #include "r_pretess.h"
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+#include "gfx_vulkan/shader_assets.h"
+#include <android/log.h>
+#include <cmath>
+#define BO1_SUN_SHADOW_CACHE 1
+#else
+#define BO1_SUN_SHADOW_CACHE 0
+#endif
 
 const float g_shadowFrustumBound[5][2] =
 { { -1.0, -1.0 }, { -1.0, 1.0 }, { 1.0, 1.0 }, { 1.0, -1.0 }, { -1.0, -1.0 } };
@@ -23,6 +31,128 @@ struct ShadowGlobals // sizeof=0x4
 };
 
 ShadowGlobals shadowGlob;
+
+#if BO1_SUN_SHADOW_CACHE
+namespace {
+const dvar_s *r_nativeSunShadowCache;
+// Frontend (main thread) state of the world-locked far partition. Any change
+// of the grid centre, sun, world or map size issues a new key; the backend's
+// cached depth is used only for the key it was stored with.
+struct SunShadowCacheState
+{
+    bool active;     // this frame's setup uses the cache
+    bool valid;      // center/key describe a usable far projection
+    const GfxWorld *world;
+    float sunDir[3];
+    unsigned int mapSize;
+    float center[2]; // far region centre in sun projection, on the snap grid
+    unsigned long long key;
+    unsigned int recenters;
+};
+SunShadowCacheState s_sunShadowCache;
+unsigned long long s_sunShadowCacheSerial;
+// Per back-end data buffer: written by the frontend before the buffer is
+// handed to the render thread (the existing handoff orders it).
+struct SunShadowCacheFrame { const GfxBackEndData *data; unsigned long long key; };
+SunShadowCacheFrame s_sunShadowCacheFrames[2];
+
+void R_SunShadowCacheBeginFrame()
+{
+    SunShadowCacheState &cache = s_sunShadowCache;
+    cache.active = r_nativeSunShadowCache && r_nativeSunShadowCache->current.enabled
+        && bo1::vulkan::shader_assets::Active() && rg.sunShadowFull
+        && rg.sunShadowSize == dx.sunShadowmapSize && rg.sunShadowmapScaleNum == 1.0f;
+    const float *dir = frontEndDataOut->sunLight.dir;
+    if (!cache.active || cache.world != rgp.world || cache.mapSize != dx.sunShadowmapSize
+        || cache.sunDir[0] != dir[0] || cache.sunDir[1] != dir[1] || cache.sunDir[2] != dir[2])
+    {
+        cache.valid = false;
+        cache.world = rgp.world;
+        cache.mapSize = dx.sunShadowmapSize;
+        cache.sunDir[0] = dir[0];
+        cache.sunDir[1] = dir[1];
+        cache.sunDir[2] = dir[2];
+    }
+}
+
+// Places the far partition on the world grid around the cache centre: a fixed
+// full viewport and texel = middle + (p - center) / sampleSizeFar (y flipped),
+// so a texel always covers the same world area while the centre is kept.
+void R_SunShadowCacheLockFar(
+    const float *snappedViewOrgInSunProj,
+    const float *farMins,
+    const float *farMaxs,
+    float tick,
+    float sampleSizeFar,
+    unsigned int partitionRes,
+    float *farViewOrgInTexSpace,
+    GfxViewport *farViewport)
+{
+    SunShadowCacheState &cache = s_sunShadowCache;
+    const float half = 0.5f * (float)partitionRes * sampleSizeFar;
+    const float margin = 32.0f * tick;
+    bool inside = cache.valid;
+    for (int axis = 0; axis < 2 && inside; ++axis)
+        inside = farMins[axis] >= cache.center[axis] - half + margin && farMaxs[axis] <= cache.center[axis] + half - margin;
+    if (!inside)
+    {
+        for (int axis = 0; axis < 2; ++axis)
+            cache.center[axis] = floorf(0.5f * (farMins[axis] + farMaxs[axis]) / tick) * tick;
+        cache.valid = true;
+        cache.key = ++s_sunShadowCacheSerial;
+        if ((cache.recenters++ % 32) == 0)
+            __android_log_print(ANDROID_LOG_INFO, "BO1NativeVulkan",
+                "sun_shadow_cache recenter=%u key=%llu far_extent=%.0fx%.0f region=%.0f",
+                cache.recenters, cache.key, farMaxs[0] - farMins[0], farMaxs[1] - farMins[1], 2.0f * half);
+    }
+    const int middle = (int)(partitionRes >> 1);
+    const long offsetX = lroundf((snappedViewOrgInSunProj[0] - cache.center[0]) / sampleSizeFar);
+    const long offsetY = lroundf((snappedViewOrgInSunProj[1] - cache.center[1]) / sampleSizeFar);
+    farViewOrgInTexSpace[0] = (float)(middle + offsetX) / (float)partitionRes;
+    farViewOrgInTexSpace[1] = (float)(middle - offsetY) / (float)partitionRes;
+    farViewport->x = 0;
+    farViewport->y = 0;
+    farViewport->width = (int)partitionRes;
+    farViewport->height = (int)partitionRes;
+}
+
+// The fixed depth range of the whole world along the sun: both partitions share
+// one depth mapping (receivers reuse near depth for the far lookup).
+void R_SunShadowCacheDepthRange(const float *sunDir, float *nearClip, float *farClip)
+{
+    const float *mins = rgp.world->mins;
+    const float *maxs = rgp.world->maxs;
+    float lo = 0.0f, hi = 0.0f;
+    for (int axis = 0; axis < 3; ++axis)
+    {
+        const float a = sunDir[axis] * mins[axis], b = sunDir[axis] * maxs[axis];
+        lo += a < b ? a : b;
+        hi += a < b ? b : a;
+    }
+    *nearClip = lo;
+    *farClip = hi;
+}
+}
+
+bool R_SunShadowCacheActive()
+{
+    return s_sunShadowCache.active;
+}
+
+unsigned long long R_SunShadowCacheKey(const GfxBackEndData *data)
+{
+    for (const SunShadowCacheFrame &frame : s_sunShadowCacheFrames)
+        if (frame.data == data)
+            return frame.key;
+    return 0;
+}
+
+void R_RegisterSunShadowCacheDvar()
+{
+    r_nativeSunShadowCache = _Dvar_RegisterBool("r_nativeSunShadowCache", 1, 0,
+        "Keep the far sun shadow partition's static casters across frames (world-locked far partition)");
+}
+#endif
 
 void __cdecl R_SunShadowMapBoundingPoly(
                 const GfxSunShadowBoundingPoly *boundingPoly,
@@ -67,6 +197,9 @@ void __cdecl R_SetupSunShadowMaps(const GfxViewParms *viewParms, GfxSunShadow *s
 
     sampleSizeNear = sm_sunSampleSizeNear->current.value;
     sunShadowPartitionRes = dx.sunShadowmapSize;
+#if BO1_SUN_SHADOW_CACHE
+    R_SunShadowCacheBeginFrame();
+#endif
     R_GetSunAxes((float(*)[3][3])sunAxis);
     R_SetupSunShadowMapProjection(
         viewParms,
@@ -79,6 +212,16 @@ void __cdecl R_SetupSunShadowMaps(const GfxViewParms *viewParms, GfxSunShadow *s
     sunOrigin[1] = -sunShadow->sunProj.viewMatrix[3][1];
     sunOrigin[2] = -sunShadow->sunProj.viewMatrix[3][2];
     R_GetSceneExtentsAlongDir(sunOrigin, sunAxis[0], &nearClip, &farClip);
+#if BO1_SUN_SHADOW_CACHE
+    if (s_sunShadowCache.active)
+        R_SunShadowCacheDepthRange(sunAxis[0], &nearClip, &farClip);
+    {
+        extern GfxBackEndData s_backEndData[2];
+        SunShadowCacheFrame &frame = s_sunShadowCacheFrames[frontEndDataOut == &s_backEndData[0] ? 0 : 1];
+        frame.data = frontEndDataOut;
+        frame.key = s_sunShadowCache.active ? s_sunShadowCache.key : 0;
+    }
+#endif
     sunProj = &sunShadow->sunProj;
     for ( partitionIndex = 0; partitionIndex < 2; ++partitionIndex )
     {
@@ -292,6 +435,11 @@ unsigned int __cdecl R_SunShadowMapClipSpaceClipPlanes(
     planeCount = 0;
     for ( pointIndex = 0; pointIndex < boundingPoly->pointCount; ++pointIndex )
     {
+#if BO1_SUN_SHADOW_CACHE
+        // A cached far partition holds every caster of its whole region.
+        if ( partitionIndex && rg.sunShadowFull && s_sunShadowCache.active )
+            continue;
+#endif
         if ( !partitionIndex || !rg.sunShadowFull || pointIsNear[pointIndex] || pointIsNear[pointIndex + 1] )
         {
             (*boundingPolyClipSpacePlanes)[planeCount][0] = frustumBoundPolyInClipSpace[pointIndex + 1][1]
@@ -652,6 +800,18 @@ void __cdecl R_SetupSunShadowMapProjection(
         sampleSizeFar,
         viewOrgInTexSpace[1],
         partitionRes);
+#if BO1_SUN_SHADOW_CACHE
+    if (s_sunShadowCache.active)
+        R_SunShadowCacheLockFar(
+            snappedViewOrgInSunProj,
+            minsInSunProj[1],
+            maxsInSunProj[1],
+            scale,
+            sampleSizeFar,
+            partitionRes,
+            viewOrgInTexSpace[1],
+            &partitionFar->viewport);
+#endif
     sunProj = &sunShadow->sunProj;
 
     sunShadow->sunProj.switchPartition[3] = 1.0 / rg.sunShadowPartitionRatio;

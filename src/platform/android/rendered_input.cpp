@@ -1,4 +1,5 @@
 #include "rendered_input.h"
+#include "native_render_size.h"
 #include "window_lifecycle.h"
 #include "renderer_window.h"
 #include "controller_service.h"
@@ -332,7 +333,14 @@ void FrameRenderedInput() {
     if(motion) {
         WindowLifecycleState state{};
         if(ReadSDLWindow(motionWindow,&state) && state.focused && state.foreground && !state.closing) {
-            const bool recenter=CL_MouseEvent(mouseX,mouseY,static_cast<int>(deltaX),static_cast<int>(deltaY))!=0;
+            int logicalX=mouseX,logicalY=mouseY;
+            if(native_render_size::requestedHeight) {
+                RendererWindowInfo geometry{};
+                if(!InspectRendererWindow(motionWindow,&geometry))fail("native pointer drawable unavailable");
+                native_render_size::MapPointer(logicalX,logicalY,geometry.drawableWidth,geometry.drawableHeight);
+            }
+            // Relative look sensitivity remains in physical mouse units.
+            const bool recenter=CL_MouseEvent(logicalX,logicalY,static_cast<int>(deltaX),static_cast<int>(deltaY))!=0;
             relative(recenter && !primary);
         } else releaseAll();
         motion=false;deltaX=deltaY=0;
@@ -367,6 +375,8 @@ bool DispatchRenderedTouchPointerEvent(int type,unsigned time,int x,int y,int ep
         || x<0 || y<0 || x>=width || y>=height) {
         invalidateTouch();return true;
     }
+    const bool inside=native_render_size::MapPointer(x,y,width,height);
+    if(!inside&&type==RenderedTouchDownEvent)return true;
     const int key=named("MOUSE1");
     int edge=-1;
     {

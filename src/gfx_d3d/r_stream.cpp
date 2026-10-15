@@ -1,3 +1,7 @@
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+#include "gfx_vulkan/shader_assets.h"
+#include "gfx_vulkan/image_assets.h"
+#endif
 #include "r_stream.h"
 #include <platform/bo1_native_width.h>
 #include "r_dvars.h"
@@ -355,6 +359,30 @@ bool __cdecl R_StreamUpdate_ProcessFileCallbacks()
                 bool loadFailed = false;
                 if (Sys_IsRenderThread())
                 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+                    if(bo1::vulkan::shader_assets::Active()) {
+                        const auto previous=bo1::vulkan::image_assets::Acquire(image);
+                        if(!previous)Com_Error(ERR_FATAL,"Native stream reload has no prior image: %s",image->name);
+                        const GfxImage imageCopy=*image;
+                        fileHeader=reinterpret_cast<GfxImageFileHeader*>(request->buffer);
+                        Image_Release(image);
+                        Image_LoadFromData(image,fileHeader,reinterpret_cast<unsigned char*>(&fileHeader[1]));
+                        Z_VirtualFree(request->buffer,20);
+                        const auto next=bo1::vulkan::image_assets::Acquire(image);
+                        // CPU decode/upload publication is distinct from GPU readiness;
+                        // the existing pre-frame Flush submits and fences these texels.
+                        loadFailed=!next||next->uploads.size()!=next->description.mipLevels*next->description.arrayLayers;
+                        if(loadFailed) {
+                            Image_Release(image);*image=imageCopy;std::string error;
+                            if(!bo1::vulkan::image_assets::RestoreOwner(image,previous,error))
+                                Com_Error(ERR_FATAL,"Native stream rollback: %s",error.c_str());
+                        } else {
+                            static unsigned reported;
+                            if(reported<3){++reported;Com_Printf(8,"Native stream reload: image=%s old=%llu new=%llu queued_mips=%u rollback=0\n",image->name,
+                                static_cast<unsigned long long>(previous->serial),static_cast<unsigned long long>(next->serial),unsigned(next->uploads.size()));}
+                        }
+                    } else {
+#endif
                     // zombies: as SP (SP 0x006F9064..0x006F90D0): keep the old texture (AddRef and a copy of the image)
                     // across the reload; if the new texture was not created, release what was made and put the old
                     // image back, skipping the use bits (SP jumps to 0x006F910D); otherwise release the old texture.
@@ -377,6 +405,9 @@ bool __cdecl R_StreamUpdate_ProcessFileCallbacks()
                     {
                         oldTexture->Release();
                     }
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+                    }
+#endif
                 }
                 else
                 {

@@ -12,6 +12,19 @@ void __cdecl Load_CreateMaterialPixelShader(GfxPixelShaderLoadDef *loadDef, Mate
     {
         __debugbreak();
     }
+    #if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if (bo1::vulkan::shader_assets::Active())
+    {
+        if (r_loadForRenderer && !r_loadForRenderer->current.enabled) {
+            bo1::vulkan::shader_assets::Release(mtlShader);mtlShader->prog.ps=0;return;
+        }
+        std::string error;
+        if (!bo1::vulkan::shader_assets::Create(mtlShader,error)) {
+            Com_Error(ERR_FATAL,"Native Vulkan pixel shader %s: %s",mtlShader->name,error.c_str());return;
+        }
+        DB_LoadedExternalData(0x2710u);return;
+    }
+    #endif
     if ( r_loadForRenderer && r_loadForRenderer->current.enabled )
     {
         ProfLoad_Begin("Create pixel shader");
@@ -53,6 +66,19 @@ void __cdecl Load_CreateMaterialVertexShader(GfxVertexShaderLoadDef *loadDef, Ma
     {
         __debugbreak();
     }
+    #if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if (bo1::vulkan::shader_assets::Active())
+    {
+        if ((r_loadForRenderer && !r_loadForRenderer->current.enabled) || skipShaderCreationHack) {
+            bo1::vulkan::shader_assets::Release(mtlShader);mtlShader->prog.vs=0;return;
+        }
+        std::string error;
+        if (!bo1::vulkan::shader_assets::Create(mtlShader,error)) {
+            Com_Error(ERR_FATAL,"Native Vulkan vertex shader %s: %s",mtlShader->name,error.c_str());return;
+        }
+        DB_LoadedExternalData(0x2710u);return;
+    }
+    #endif
     if ( r_loadForRenderer && r_loadForRenderer->current.enabled && !skipShaderCreationHack )
     {
         ProfLoad_Begin("Create vertex shader");
@@ -94,6 +120,19 @@ void __cdecl Load_BuildVertexDecl(MaterialVertexDeclaration **mtlVertDecl)
     int vertDeclType; // [esp+2Ch] [ebp-4h]
 
     memcpy(data, &(*mtlVertDecl)->routing, sizeof(data));
+    #if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if (bo1::vulkan::shader_assets::Active()) {
+        if (r_loadForRenderer && !r_loadForRenderer->current.enabled) {
+            bo1::vulkan::vertex_assets::Release(*mtlVertDecl);(*mtlVertDecl)->isLoaded=1;return;
+        }
+        const stream_source_info_t* rows[18];for(unsigned i=0;i<18;++i)rows[i]=s_streamSourceInfo[i];
+        std::string error;
+        if(!bo1::vulkan::vertex_assets::Create(*mtlVertDecl,rows,s_streamDestInfo,error)) {
+            Com_Error(ERR_FATAL,"Native Vulkan vertex declaration: %s",error.c_str());return;
+        }
+        (*mtlVertDecl)->isLoaded=1;return;
+    }
+    #endif
     for ( vertDeclType = 0; vertDeclType < 18; ++vertDeclType )
     {
         if ( r_loadForRenderer && r_loadForRenderer->current.enabled )

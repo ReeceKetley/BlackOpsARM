@@ -1,3 +1,9 @@
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+#include "gfx_vulkan/shader_assets.h"
+#include "gfx_vulkan/material_bindings.h"
+#include "gfx_vulkan/pass_recording.h"
+#include "platform/android/native_vulkan_device.h"
+#endif
 #include "rb_shade.h"
 #if defined(__ANDROID__) && defined(BO1_NATIVE_FULLSCREEN_TRIANGLE) && BO1_NATIVE_FULLSCREEN_TRIANGLE
 #include "platform/android/fullscreen_triangle.h"
@@ -16,6 +22,19 @@
 
 void __cdecl RB_ClearPixelShader()
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if (bo1::vulkan::shader_assets::Active())
+    {
+        std::string error;
+        if (!bo1::vulkan::material_bindings::Clear(&gfxCmdBufState,2,error))
+        {
+            Com_Error(ERR_FATAL,"Native material selection clear: %s",error.c_str());
+            return;
+        }
+        gfxCmdBufState.pixelShader=nullptr;
+        return;
+    }
+#endif
     if ( gfxCmdBufState.pixelShader )
         R_HW_SetPixelShader(gfxCmdBufState.prim.device, 0);
     gfxCmdBufState.pixelShader = 0;
@@ -54,6 +73,19 @@ void __cdecl R_HW_SetPixelShader(IDirect3DDevice9 *device, const MaterialPixelSh
 
 void __cdecl RB_ClearVertexShader()
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if (bo1::vulkan::shader_assets::Active())
+    {
+        std::string error;
+        if (!bo1::vulkan::material_bindings::Clear(&gfxCmdBufState,1,error))
+        {
+            Com_Error(ERR_FATAL,"Native material selection clear: %s",error.c_str());
+            return;
+        }
+        gfxCmdBufState.vertexShader=nullptr;
+        return;
+    }
+#endif
     if ( gfxCmdBufState.vertexShader )
         R_HW_SetVertexShader(gfxCmdBufState.prim.device, 0);
     gfxCmdBufState.vertexShader = 0;
@@ -92,6 +124,19 @@ void __cdecl R_HW_SetVertexShader(IDirect3DDevice9 *device, const MaterialVertex
 
 void __cdecl RB_ClearVertexDecl()
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if (bo1::vulkan::shader_assets::Active())
+    {
+        std::string error;
+        if (!bo1::vulkan::material_bindings::Clear(&gfxCmdBufState,4,error))
+        {
+            Com_Error(ERR_FATAL,"Native material selection clear: %s",error.c_str());
+            return;
+        }
+        gfxCmdBufState.prim.vertexDecl=nullptr;
+        return;
+    }
+#endif
     if ( gfxCmdBufState.prim.vertexDecl )
         R_SetVertexDecl(&gfxCmdBufState.prim, 0);
     if ( gfxCmdBufState.prim.vertexDecl )
@@ -462,6 +507,13 @@ void __cdecl R_DrawTessTechnique(GfxCmdBufContext context, const GfxDrawPrimArgs
     bool isPixelCostEnabled; // [esp+Fh] [ebp-5h]
     unsigned int passIndex; // [esp+10h] [ebp-4h]
 
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()) {
+        const auto renderer=bo1::android::native_device::Renderer();
+        if(!renderer||!renderer->Device()||!renderer->FrameRecording()||!bo1::vulkan::pass_recording::Current())
+            Com_Error(ERR_FATAL,"Native tessellation draw requires its live device and engine recording transaction");
+    } else
+#endif
     if ( (!dx.d3d9 || !dx.device)
         && !Assert_MyHandler(
                     "C:\\projects_pc\\cod\\codsrc\\src\\gfx_d3d\\rb_shade.cpp",
@@ -515,10 +567,18 @@ void __cdecl R_DrawTessTechnique(GfxCmdBufContext context, const GfxDrawPrimArgs
         R_SetupPass(context, passIndex);
         R_UpdateVertexDecl(context.state);
         R_SetupPassCriticalPixelShaderArgs(context);
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+        if(bo1::vulkan::shader_assets::Active())
+            R_SetStreamSourceFromOwner(&context.state->prim,&gfxBuf.dynamicVertexBuffer->buffer,vertexOffset,32);
+        else {
+#endif
         vb = gfxBuf.dynamicVertexBuffer->buffer;
         if ( !vb && !Assert_MyHandler("C:\\projects_pc\\cod\\codsrc\\src\\gfx_d3d\\rb_shade.cpp", 279, 0, "%s", "vb") )
             __debugbreak();
         R_SetStreamSource(&context.state->prim, vb, vertexOffset, 0x20u);
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+        }
+#endif
         R_SetupPassPerObjectArgs(context);
         R_SetupPassPerPrimArgs(context);
 #if defined(__ANDROID__) && defined(BO1_NATIVE_FILTER_DEPTH_UNBIND) && BO1_NATIVE_FILTER_DEPTH_UNBIND
