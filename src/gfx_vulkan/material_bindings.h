@@ -6,6 +6,7 @@
 #include "geometry_bindings.h"
 #include "draw_storage.h"
 struct GfxCmdBufState;
+namespace bo1::vulkan {struct BindCache;}
 namespace bo1::vulkan::material_bindings {
 struct Selection {std::shared_ptr<const shader_assets::Record> vertex,pixel;std::shared_ptr<const vertex_assets::Record> declaration;unsigned variant{};};
 struct Draw {std::shared_ptr<const Selection> selection;std::shared_ptr<const constant_state::Snapshot> constants;
@@ -25,5 +26,5 @@ void Release(const GfxCmdBufState*);void Clone(const GfxCmdBufState*,const GfxCm
 bool Upload(const Draw&,Buffer&,VkDeviceSize& cursor,VkDeviceSize alignment,
     std::vector<ProgramResource>& vs,std::vector<ProgramResource>& ps,std::string&);
 bool Upload(const Draw&,DrawStorage&,VkDeviceSize alignment,
-    std::vector<ProgramResource>& vs,std::vector<ProgramResource>& ps,VkDescriptorPool&,std::string&,const unsigned* constantRows=nullptr);
+    std::vector<ProgramResource>& vs,std::vector<ProgramResource>& ps,VkDescriptorPool&,std::string&,const unsigned* constantRows=nullptr,BindCache* cache=nullptr);
 }

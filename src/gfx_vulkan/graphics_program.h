@@ -32,6 +32,8 @@ struct ProgramDescription {
 // Resolve canonical normalized D3D bias into fixed-depth Vulkan units.
 bool ResolveDepthBias(ProgramDescription&,VkFormat,float normalizedBias,float slope,std::string&);
 bool ValidateDepthBias(const DepthBiasState&,std::string&);
+void SetCompatibleDescriptorReuse(bool enabled);
+bool CompatibleDescriptorReuse();
 struct ProgramResource {
     ResourceKind kind{};unsigned registerIndex{};
     VkDescriptorBufferInfo buffer{};VkDescriptorImageInfo image{};
@@ -44,7 +46,8 @@ public:
     ~GraphicsProgram();
     GraphicsProgram(const GraphicsProgram&)=delete;
     GraphicsProgram& operator=(const GraphicsProgram&)=delete;
-    bool Create(const ProgramDescription&,VkPipelineCache,std::string& error);
+    bool Create(const ProgramDescription&,VkPipelineCache,std::string& error,
+        const std::array<ShaderTranslation,2>* translated=nullptr);
     // Descriptor pool belongs to a fence-retired frame arena. This object does
     // not reset/free the pool and never steals image/buffer ownership.
     bool BindResources(VkDescriptorPool,const std::vector<ProgramResource>& vertex,
@@ -63,6 +66,8 @@ public:
 private:
     VkDevice device_{};VkPipeline pipeline_{};VkPipelineLayout layout_{};unsigned dynamicCount_{};
     std::array<VkDescriptorSetLayout,2> setLayouts_{};
+    std::array<std::uint64_t,2> layoutBindings_{};
+    std::array<unsigned,2> stageDynamic_{};
     std::array<ShaderTranslation,2> shaders_;
 };
 }

@@ -6,6 +6,44 @@
 #include "r_debug.h"
 #include <qcommon/threads.h>
 
+#if defined(__ANDROID__)
+#include <atomic>
+#include <android/log.h>
+namespace {
+enum VisibilityCounter { Cells, Nodes, FrustumNodes, OccludedNodes, InsideNodes, LeafTests, LeafFrustum, LeafOccluded, CounterCount };
+std::atomic<unsigned long long> visibilityTotals[CounterCount];
+std::atomic<bool> visibilitySample{};
+unsigned visibilityFrame;
+thread_local unsigned long long* visibilityLocal;
+void CountVisibility(VisibilityCounter counter) { if(visibilityLocal)++visibilityLocal[counter]; }
+}
+void R_BeginStaticVisibilityProfile(unsigned frame) {
+    visibilityFrame=frame;
+    const bool sample=(frame%120)==0;
+    if(sample)for(auto& value:visibilityTotals)value.store(0,std::memory_order_relaxed);
+    visibilitySample.store(sample,std::memory_order_relaxed);
+}
+void R_LogStaticVisibilityProfile(int cameraCell) {
+    if(!visibilitySample.load(std::memory_order_relaxed))return;
+    const auto& world=*rgp.world;const auto& dpvs=world.dpvs;
+    unsigned surfaces=0,models=0,cells=0;
+    for(unsigned i=0;i<dpvs.staticSurfaceCount;++i)surfaces+=dpvs.surfaceVisData[0][i]!=0;
+    for(unsigned i=0;i<dpvs.smodelCount;++i)models+=dpvs.smodelVisData[0][i]!=0;
+    for(int i=0;i<world.dpvsPlanes.cellCount;++i)cells+=(dpvsGlob.cellVisibleBits[i>>5]>>(i&31))&1u;
+    unsigned long long values[CounterCount];
+    for(unsigned i=0;i<CounterCount;++i)values[i]=visibilityTotals[i].load(std::memory_order_relaxed);
+    __android_log_print(ANDROID_LOG_INFO,"BO1Visibility",
+        "native_visibility frame=%u camera_cell=%d cells=%u/%d surfaces=%u/%u models=%u/%u occluders=%d/%u enabled=%u skip_pvs=%u single_cell=%u lock_pvs=%u jobs=%llu nodes=%llu node_frustum=%llu node_occluded=%llu node_inside=%llu leaf_tests=%llu leaf_frustum=%llu leaf_occluded=%llu origin=%.1f,%.1f,%.1f",
+        visibilityFrame,cameraCell,cells,world.dpvsPlanes.cellCount,surfaces,dpvs.staticSurfaceCount,models,dpvs.smodelCount,
+        dpvsGlob.numOccluders,world.numOccluders,unsigned(r_enableOccluders->current.enabled),unsigned(r_skipPvs->current.enabled),
+        unsigned(r_singleCell->current.enabled),unsigned(r_lockPvs->current.enabled),values[Cells],values[Nodes],values[FrustumNodes],
+        values[OccludedNodes],values[InsideNodes],values[LeafTests],values[LeafFrustum],values[LeafOccluded],
+        dpvsGlob.viewOrg[0],dpvsGlob.viewOrg[1],dpvsGlob.viewOrg[2]);
+}
+#else
+#define CountVisibility(counter) ((void)0)
+#endif
+
 char __cdecl TestOccluders(const float (*bounds)[3], int numOccluders, float (*plane)[4])
 {
     float v5; // [esp+4h] [ebp-858h]
@@ -1034,11 +1072,34 @@ bool __cdecl R_CalcSurfaceNoDynamicShadow(unsigned int bits, GfxSurface *localSu
     return 0;
 }
 
+#if defined(__ANDROID__)
+void R_UpdateCameraSurfaceShadowFlags()
+{
+    iassert(Sys_IsMainThread());
+    // Camera cell jobs (including their cull groups) must have completed.
+    // Visibility has one byte per surface; only R_CalcSurfaceNoDynamicShadow's
+    // input is a high-bit-first mask. Update each visible receiver exactly once.
+    auto &worldDpvs = rgp.world->dpvs;
+    const unsigned __int8 *visible = worldDpvs.surfaceVisData[0];
+    for (unsigned int surface = 0; surface < worldDpvs.staticSurfaceCount; ++surface)
+    {
+        if (visible[surface])
+            R_CalcSurfaceNoDynamicShadow(0x80000000u,
+                &worldDpvs.surfaces[surface], &worldDpvs.surfaceMaterials[surface]);
+    }
+}
+#endif
+
 void __cdecl R_AddCellStaticSurfacesInFrustumCmd(DpvsStaticCellCmd *data)
 {
     unsigned int viewIndex; // [esp+4h] [ebp-4h]
 
     viewIndex = data->viewIndex;
+#if defined(__ANDROID__)
+    unsigned long long counters[CounterCount]{};
+    visibilityLocal=(!viewIndex&&visibilitySample.load(std::memory_order_relaxed))?counters:nullptr;
+    CountVisibility(Cells);
+#endif
     g_smodelVisData = g_worldDpvs->smodelVisData[viewIndex];
     g_surfaceVisData = g_worldDpvs->surfaceVisData[viewIndex];
 #if defined(BO1_PORT_X64)
@@ -1050,6 +1111,10 @@ void __cdecl R_AddCellStaticSurfacesInFrustumCmd(DpvsStaticCellCmd *data)
     R_AddCellStaticSurfacesInFrustum(data);
     if ( rg.drawWorld )
         R_AddCellCullGroupsInFrustum(data);
+#if defined(__ANDROID__)
+    if(visibilityLocal)for(unsigned i=0;i<CounterCount;++i)visibilityTotals[i].fetch_add(counters[i],std::memory_order_relaxed);
+    visibilityLocal=nullptr;
+#endif
 }
 
 int __cdecl R_AddCellStaticSurfacesInFrustum(DpvsStaticCellCmd *dpvsCell)
@@ -1108,6 +1173,7 @@ int __cdecl R_AddCellStaticSurfacesInFrustum(DpvsStaticCellCmd *dpvsCell)
         }
         v19 = R_AddAabbTreeSurfacesInFrustum_r(tree, &out, 1, dpvsGlob.numOccluders, occluderPlanes);
     }
+#if !defined(__ANDROID__)
     v16 = g_worldDpvs->staticSurfaceCount >> 5;
     for (k = 0; k < v16; ++k)
     {
@@ -1123,6 +1189,7 @@ int __cdecl R_AddCellStaticSurfacesInFrustum(DpvsStaticCellCmd *dpvsCell)
         if (v2)
             R_CalcSurfaceNoDynamicShadow(v2, &g_worldDpvs->surfaces[32 * v5], &g_worldDpvs->surfaceMaterials[32 * v5]);
     }
+#endif
     return v19;
 }
 
@@ -1163,6 +1230,7 @@ int __cdecl R_AddAabbTreeSurfacesInFrustum_r(
     unsigned int smodelIndex; // [esp+1CCh] [ebp-4h]
 
     finalTreeDepth = treeDepth;
+    CountVisibility(Nodes);
     if (numOccluders)
     {
         occluderPlanes = TestOccludersPartial((const float (*)[3])tree, &numOccluders, occluderPlanes);
@@ -1180,8 +1248,9 @@ int __cdecl R_AddAabbTreeSurfacesInFrustum_r(
         plane = (const DpvsPlane *)planes;
         while (planeIndex < planeCount)
         {
-            if (R_DpvsPlaneMaxSignedDistToBox(plane, tree->mins) <= 0.0)
-                return finalTreeDepth;
+            if (R_DpvsPlaneMaxSignedDistToBox(plane, tree->mins) <= 0.0) {
+                CountVisibility(FrustumNodes);return finalTreeDepth;
+            }
             if (R_DpvsPlaneMinSignedDistToBox(plane, tree->mins) < 0.0)
                 clipPlanes.planes[clipPlanes.count++] = *plane;
             ++planeIndex;
@@ -1219,11 +1288,13 @@ int __cdecl R_AddAabbTreeSurfacesInFrustum_r(
                             v10 = smodelIndexes[smodelChildIndex];
                             if (!g_smodelVisData[v10])
                             {
+                                CountVisibility(LeafTests);
                                 minmax = &g_worldDpvs->smodelInsts[v10];
                                 if (!R_CullBoxLeaf(minmax->mins, &clipPlanes))
                                 {
                                     if (TestOccluders((const float (*)[3])minmax, v9, occluderPlanes))
                                     {
+                                        CountVisibility(LeafOccluded);
                                         if (r_showOccluders->current.integer >= 2)
                                             R_AddDebugBox(&frontEndDataOut->debugGlobals, minmax->mins, minmax->maxs, colorOrange);
                                     }
@@ -1232,6 +1303,7 @@ int __cdecl R_AddAabbTreeSurfacesInFrustum_r(
                                         g_smodelVisData[v10] = 1;
                                     }
                                 }
+                                else CountVisibility(LeafFrustum);
                             }
                         }
                     }
@@ -1248,11 +1320,13 @@ int __cdecl R_AddAabbTreeSurfacesInFrustum_r(
                             v7 = v16[i];
                             if (!g_surfaceVisData[v7])
                             {
+                                CountVisibility(LeafTests);
                                 v8 = &g_worldDpvs->surfaces[v7];
                                 if (!R_CullBoxLeaf(v8->bounds[0], &clipPlanes))
                                 {
                                     if (TestOccluders(v8->bounds, v6, occluderPlanes))
                                     {
+                                        CountVisibility(LeafOccluded);
                                         if (r_showOccluders->current.integer >= 2)
                                             R_AddDebugBox(&frontEndDataOut->debugGlobals, v8->bounds[0], v8->bounds[1], colorOrange);
                                     }
@@ -1263,6 +1337,7 @@ int __cdecl R_AddAabbTreeSurfacesInFrustum_r(
                                         g_surfaceVisData[v7] = 1;
                                     }
                                 }
+                                else CountVisibility(LeafFrustum);
                             }
                         }
                     }
@@ -1271,6 +1346,7 @@ int __cdecl R_AddAabbTreeSurfacesInFrustum_r(
         }
         else
         {
+            CountVisibility(InsideNodes);
             if (r_showAabbTrees->current.integer)
                 R_AddDebugBox(&frontEndDataOut->debugGlobals, tree->mins, tree->maxs, colorYellow);
             if (rg.drawSModels)
@@ -1301,9 +1377,11 @@ int __cdecl R_AddAabbTreeSurfacesInFrustum_r(
             }
         }
     }
-    else if (r_showOccluders->current.integer >= 2)
+    else
     {
-        R_AddDebugBox(&frontEndDataOut->debugGlobals, tree->mins, tree->maxs, colorBlue);
+        CountVisibility(OccludedNodes);
+        if (r_showOccluders->current.integer >= 2)
+            R_AddDebugBox(&frontEndDataOut->debugGlobals, tree->mins, tree->maxs, colorBlue);
     }
     return finalTreeDepth;
 }

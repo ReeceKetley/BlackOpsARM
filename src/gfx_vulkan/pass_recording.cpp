@@ -9,18 +9,51 @@
 #include <algorithm>
 #include <limits>
 #include <cstdlib>
+#include <atomic>
+#include <android/log.h>
+#include <string>
+#include <vector>
 namespace bo1::vulkan::pass_recording {
-namespace {thread_local RecordingScope* current{};}
+namespace {thread_local RecordingScope* current{};std::atomic<bool> g_constantUploadReuse{true};}
+void SetConstantUploadReuse(bool enabled){g_constantUploadReuse.store(enabled,std::memory_order_relaxed);}
 RecordingScope* Current(){return current;}
 RecordingScope::RecordingScope(VkCommandBuffer c,VkPhysicalDevice p,VkDevice d,ProgramCache& cache,Buffer& uniforms,VkDescriptorPool pool,
     VkDeviceSize& cursor,VkDeviceSize alignment,std::vector<material_dispatch::Packet>& packets,Arena& arena,DrawStorage* storage,AttachmentPassCache* passCache,VkQueryPool profilePool)
-    :command_(c),physical_(p),device_(d),cache_(cache),uniforms_(uniforms),pool_(pool),cursor_(cursor),alignment_(alignment),packets_(packets),arena_(arena),passCache_(passCache),storage_(storage),previous_(current){profilePool_=profilePool;current=this;}
-RecordingScope::~RecordingScope(){std::string error;if(!Finish(error))std::abort();current=previous_;}
+    :command_(c),physical_(p),device_(d),cache_(cache),uniforms_(uniforms),pool_(pool),cursor_(cursor),alignment_(alignment),packets_(packets),arena_(arena),passCache_(passCache),storage_(storage),previous_(current){profilePool_=profilePool;binds_.compatibleSets=CompatibleDescriptorReuse();binds_.reuseConstants=g_constantUploadReuse.load(std::memory_order_relaxed);current=this;}
+namespace {
+// Diagnostic: which materials write depth after a scene depth resolve (each
+// such write forces another resolve and pass split). Render thread only.
+unsigned g_depthWriteDiagnosticFrame;
+std::atomic<bool> g_singleDepthResolve{};
+}
+void SetSingleDepthResolve(bool enabled){g_singleDepthResolve.store(enabled,std::memory_order_relaxed);}
+RecordingScope::~RecordingScope(){
+    std::string error;if(!Finish(error))std::abort();current=previous_;
+    if(profilePool_)__android_log_print(ANDROID_LOG_INFO,"BO1NativeVulkan",
+        "native_descriptor_profile compatible=%u hits=%llu misses=%llu pipeline_binds=%llu pipeline_skips=%llu bind_calls=%llu bound_sets=%llu",
+        unsigned(binds_.compatibleSets),(unsigned long long)binds_.setHits,(unsigned long long)binds_.setMisses,
+        (unsigned long long)binds_.pipelineBinds,(unsigned long long)binds_.pipelineSkips,
+        (unsigned long long)binds_.descriptorBinds,(unsigned long long)binds_.descriptorSetsBound);
+    if(profilePool_)__android_log_print(ANDROID_LOG_INFO,"BO1NativeVulkan",
+        "native_constant_upload_profile enabled=%u hits=%llu misses=%llu reused_bytes=%llu",
+        unsigned(binds_.reuseConstants),(unsigned long long)binds_.constantUploadHits,
+        (unsigned long long)binds_.constantUploadMisses,(unsigned long long)binds_.constantUploadBytesReused);
+    if(profilePool_)__android_log_print(ANDROID_LOG_INFO,"BO1NativeVulkan",
+        "native_command_profile packets=%zu indexed=%llu triangles=%llu merged=%llu fullscreen=%llu",
+        packets_.size(),(unsigned long long)binds_.indexedCommands,(unsigned long long)binds_.indexedTriangles,
+        (unsigned long long)binds_.mergedRanges,(unsigned long long)binds_.fullscreenCommands);
+    if(!postResolveDepthWriters_.empty()&&(g_depthWriteDiagnosticFrame++%200)==0) {
+        std::string names;for(const auto& n:postResolveDepthWriters_){names+=n;names+=' ';}
+        __android_log_print(ANDROID_LOG_INFO,"BO1NativeVulkan","post_resolve_depth_writers draws=%u materials=%s",postResolveDepthWrites_,names.c_str());
+    }
+}
 bool RecordingScope::Finish(std::string& error){
     FlushPending(binds_);
     if(active_&&!active_->EndTracked(command_,error))return false;
     if(activeProfile_>=0) {
         auto& p=arena_.profile[activeProfile_];p.draws=unsigned(packets_.size()-profileDrawStart_);
+        p.indexedCommands=binds_.indexedCommands-profileIndexedStart_;p.triangles=binds_.indexedTriangles-profileTriangleStart_;
+        p.mergedRanges=binds_.mergedRanges-profileMergedStart_;p.fullscreenCommands=binds_.fullscreenCommands-profileFullscreenStart_;
         vkCmdWriteTimestamp(command_,VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,profilePool_,p.query+1);
         activeProfile_=-1;
     }
@@ -48,6 +81,8 @@ bool RecordingScope::Ensure(std::string& error,unsigned discardMask,const float*
             if(target_->color)p.color=target_->color->createdName;
             if(depth)p.depth=target_->depth->createdName;
             activeProfile_=int(arena_.profile.size());profileDrawStart_=packets_.size();arena_.profile.push_back(std::move(p));
+            profileIndexedStart_=binds_.indexedCommands;profileTriangleStart_=binds_.indexedTriangles;
+            profileMergedStart_=binds_.mergedRanges;profileFullscreenStart_=binds_.fullscreenCommands;
             vkCmdWriteTimestamp(command_,VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,profilePool_,arena_.profile.back().query);
         } else arena_.profileTruncated=true;
     }
@@ -133,6 +168,10 @@ bool RecordingScope::ResolveDepth(GfxCmdBufState* state,const GfxImage* destinat
     // Repeating an identical copy is a no-op: skip it (and the pass split it
     // forces) when neither image's contents changed since that copy.
     const Texture2D* source=target_->depth->texture.get();const Texture2D* copied=dst->texture.get();
+    // Optional (r_nativeDepthResolveOnce): later resolves in a frame keep the
+    // first copy, avoiding a copy plus a scene pass split; depth written after
+    // the first resolve is then absent from the sampled float Z.
+    if(depthResolved_&&g_singleDepthResolve.load(std::memory_order_relaxed)&&image_usage::CanLoad(dst->texture))return true;
     const auto previous=depthCopies_.find(copied);
     if(previous!=depthCopies_.end()&&previous->second.source==source
         &&previous->second.sourceGeneration==DepthGeneration(source)
@@ -142,7 +181,7 @@ bool RecordingScope::ResolveDepth(GfxCmdBufState* state,const GfxImage* destinat
     // Resolved scene depth is sampled only through depth-aspect views (the
     // INTZ float-Z consumer); its stencil plane has no reader, so copy depth.
     if(!Copy(target_->depth,dst,error,VK_IMAGE_ASPECT_DEPTH_BIT))return false;
-    MarkDepthWrite(copied);depthCopies_[copied]={source,DepthGeneration(source),DepthGeneration(copied)};return true;
+    MarkDepthWrite(copied);depthCopies_[copied]={source,DepthGeneration(source),DepthGeneration(copied)};depthResolved_=true;return true;
 }
 bool RecordingScope::Copy(const std::shared_ptr<const image_assets::Record>& src,const std::shared_ptr<const image_assets::Record>& dst,std::string& error,VkImageAspectFlags copyAspects) {
     FlushPending(binds_);
@@ -269,7 +308,7 @@ bool RecordingScope::NativeFullscreen(GfxCmdBufState* state,native_fullscreen::P
     static const float zero[4]{};
     if(!Ensure(error,1u,zero,1,0,true))return false;
     VkPipeline pipeline{};VkPipelineLayout layout{};VkDescriptorSetLayout setLayout{};
-    if(!fullscreen_->Acquire(program,active_->RenderPass(),pipeline,layout,setLayout,error))return false;
+    if(!fullscreen_->Acquire(program,active_->PipelineRenderPass(),pipeline,layout,setLayout,error))return false;
     DrawStorage::Allocation allocation;
     if(!storage_->Allocate(bytes,alignment_,allocation,error)||!allocation.buffer->Write(allocation.offset,parameters,bytes,error))return false;
     VkDescriptorSet set{};VkDescriptorSetAllocateInfo allocate{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO};
@@ -288,7 +327,7 @@ bool RecordingScope::NativeFullscreen(GfxCmdBufState* state,native_fullscreen::P
     vkCmdBindPipeline(command_,VK_PIPELINE_BIND_POINT_GRAPHICS,pipeline);
     vkCmdBindDescriptorSets(command_,VK_PIPELINE_BIND_POINT_GRAPHICS,layout,0,1,&set,0,nullptr);
     vkCmdSetViewport(command_,0,1,&viewport);vkCmdSetScissor(command_,0,1,&scissor);
-    vkCmdDraw(command_,3,1,0,0);MarkDepthWrite(target_->color->texture.get());
+    vkCmdDraw(command_,3,1,0,0);++binds_.fullscreenCommands;MarkDepthWrite(target_->color->texture.get());
     // Engine draws must rebind their pipeline and sets; viewport is re-applied per draw.
     binds_.pipeline=VK_NULL_HANDLE;binds_.layout=VK_NULL_HANDLE;binds_.sets={};binds_.offsetCount=~0u;binds_.last.valid=false;binds_.viewportValid=false;
     return true;
@@ -301,11 +340,19 @@ bool RecordingScope::Draw(const GfxCmdBufPrimState* state,int base,int vertices,
     const bool omitDepth=target_->color&&(state_->activeStateBits[1]&0xf3u)==2u;
     if(active_&&!active_->HasDepth()&&!omitDepth&&target_->depth&&!Finish(error))return false;
     if(!state_||&state_->prim!=state||!Ensure(error,0,nullptr,1,0,omitDepth)||!ApplyViewport(error)){if(error.empty())error="Native material draw has no matching selected target";return false;}
-    material_dispatch::Pass pass;pass.handle=active_->RenderPass();pass.color=bool(target_->color);pass.depth=active_->HasDepth();pass.stencil=pass.depth&&(target_->depth->description.aspects&VK_IMAGE_ASPECT_STENCIL_BIT);
+    material_dispatch::Pass pass;pass.handle=active_->RenderPass();pass.pipelineHandle=active_->PipelineRenderPass();pass.color=bool(target_->color);pass.depth=active_->HasDepth();pass.stencil=pass.depth&&(target_->depth->description.aspects&VK_IMAGE_ASPECT_STENCIL_BIT);
     pass.depthFormat=pass.depth?target_->depth->description.format:VK_FORMAT_UNDEFINED;
     // Canonical depth-write (bit 0) or any stencil use (bit 6) may change the
     // attachment's depth/stencil contents; material_state decodes the same bits.
-    if(pass.depth&&(state_->activeStateBits[1]&0x41u))MarkDepthWrite(target_->depth->texture.get());
+    if(pass.depth&&(state_->activeStateBits[1]&0x41u)) {
+        MarkDepthWrite(target_->depth->texture.get());
+        if(depthResolved_) {
+            ++postResolveDepthWrites_;
+            const char* name=state_->material?state_->material->info.name:"?";
+            if(postResolveDepthWriters_.size()<12&&std::find(postResolveDepthWriters_.begin(),postResolveDepthWriters_.end(),name)==postResolveDepthWriters_.end())
+                postResolveDepthWriters_.push_back(name?name:"?");
+        }
+    }
     if(pass.color)MarkDepthWrite(target_->color->texture.get()); // any colour draw may change it
     if(pass.stencil&&(state_->activeStateBits[1]&0x40u))target_->depth->texture->MarkStencilTouched();
     material_dispatch::RecordingScope recording(state_,command_,physical_,pass,cache_,uniforms_,pool_,cursor_,alignment_,packets_,storage_,storage_?&binds_:nullptr);

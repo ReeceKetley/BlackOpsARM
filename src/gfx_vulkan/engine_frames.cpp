@@ -80,7 +80,7 @@ FrameResult EngineFrames::Begin(GfxCmdBufState* state,std::string& error) {
         vkCmdWriteTimestamp(context_.command,VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,slot.timestamps,0);
     }
     if(state&&!passes_->Bind(state,target_bindings::Acquire(state),error))return FrameResult::Failed;
-    {const bool timed=profileFrame_<3||(profileFrame_+1)%10==0;material_dispatch::ResetProfile(timed);cache_.SetTiming(timed);}
+    {const bool timed=profileFrame_<3||(profileFrame_+1)%10==0;material_dispatch::ResetProfile(timed);cache_.SetTiming(timed,profileFrame_+1);}
     beginMs_=ProfileMs(beginStart);recordStart_=ProfileNow();
     hitStart_=cache_.Hits();missStart_=cache_.Misses();
     keyStart_=cache_.KeyNanoseconds();createStart_=cache_.CreateNanoseconds();
@@ -140,8 +140,10 @@ bool EngineFrames::RetireProfile(Slot& slot,std::string& error) {
             const auto& p=slot.passes.profile[i];
             const double ms=double((stamps[p.query+1]-stamps[p.query])&mask)*timestampPeriod_/1e6;
             __android_log_print(ANDROID_LOG_INFO,"BO1NativeVulkan",
-                "native_pass_profile frame=%u pass=%u target=%d width=%u height=%u draws=%u load_color=%u load_depth=%u gpu_ms=%.3f color=%s depth=%s truncated=%u",
-                saved.frame,i,p.target,p.width,p.height,p.draws,unsigned(p.loadColor),unsigned(p.loadDepth),ms,p.color.c_str(),p.depth.c_str(),unsigned(slot.passes.profileTruncated));
+                "native_pass_profile frame=%u pass=%u target=%d width=%u height=%u draws=%u indexed=%llu triangles=%llu merged=%llu fullscreen=%llu load_color=%u load_depth=%u gpu_ms=%.3f color=%s depth=%s truncated=%u",
+                saved.frame,i,p.target,p.width,p.height,p.draws,(unsigned long long)p.indexedCommands,(unsigned long long)p.triangles,
+                (unsigned long long)p.mergedRanges,(unsigned long long)p.fullscreenCommands,
+                unsigned(p.loadColor),unsigned(p.loadDepth),ms,p.color.c_str(),p.depth.c_str(),unsigned(slot.passes.profileTruncated));
         }
     }
     if(saved.frame<=3||saved.frame%10==0) {

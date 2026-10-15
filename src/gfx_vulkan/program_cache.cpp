@@ -3,6 +3,10 @@
 #include <cstdio>
 #include <cstring>
 #include <vector>
+#include "shader_assets.h"
+#if defined(__ANDROID__)
+#include <android/log.h>
+#endif
 namespace bo1::vulkan {
 ProgramCache::~ProgramCache(){Clear();if(driver_)vkDestroyPipelineCache(device_,driver_,nullptr);}
 void ProgramCache::EraseRenderPass(VkRenderPass pass) {
@@ -62,8 +66,44 @@ std::shared_ptr<GraphicsProgram> ProgramCache::Acquire(const ProgramDescription&
     }
     auto program=std::make_shared<GraphicsProgram>(device_);
     const auto createStart=std::chrono::steady_clock::now();
-    const bool created=program->Create(description,driver_,error);
-    createNs_+=std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now()-createStart).count();
+    const std::array<ShaderTranslation,2>* translated=nullptr;
+    bool pairCached=false;
+    // Pipeline raster/blend/depth/vertex-layout variants do not change linked
+    // SPIR-V. Raw preview/test bytecode keeps the ordinary translation path.
+    if(description.vertexOwner&&description.pixelOwner) {
+        unsigned reference{};static_assert(sizeof(reference)==sizeof(description.alphaTest.reference));
+        std::memcpy(&reference,&description.alphaTest.reference,sizeof(reference));
+        const bool relaxed=RelaxedPrecisionEnabled();
+        for(const auto& pair:shaderPairs_)if(pair.vertex==description.vertexOwner&&pair.pixel==description.pixelOwner
+            &&pair.alphaComparison==description.alphaTest.comparison&&pair.alphaReference==reference
+            &&pair.depthMask==description.pixelDepthSamplerMask&&pair.ubyteMask==description.vertexUbyteMask&&pair.relaxed==relaxed) {
+            translated=&pair.shaders;pairCached=true;++shaderPairHits_;break;
+        }
+        if(!translated) {
+            ShaderPair pair;pair.vertex=description.vertexOwner;pair.pixel=description.pixelOwner;
+            pair.alphaComparison=description.alphaTest.comparison;pair.alphaReference=reference;
+            pair.depthMask=description.pixelDepthSamplerMask;pair.ubyteMask=description.vertexUbyteMask;pair.relaxed=relaxed;
+            if(!TranslateShaderPair(description.vertexBytecode,description.vertexBytes,description.pixelBytecode,description.pixelBytes,
+                pair.shaders[0],pair.shaders[1],&description.alphaTest,description.pixelDepthSamplerMask,description.vertexUbyteMask)) {
+                error=pair.shaders[0].diagnostics+pair.shaders[1].diagnostics;return {};
+            }
+            // Bound CPU-side metadata independently of in-flight GPU programs;
+            // programs own copies of the translated data they need.
+            if(shaderPairs_.size()>=capacity_)shaderPairs_.erase(shaderPairs_.begin());
+            shaderPairs_.push_back(std::move(pair));translated=&shaderPairs_.back().shaders;
+        }
+    }
+    const bool created=program->Create(description,driver_,error,translated);
+    const auto createNs=std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now()-createStart).count();
+    createNs_+=createNs;
+#if defined(__ANDROID__)
+    // Misses are rare and may land between the every-tenth-frame summaries.
+    __android_log_print(ANDROID_LOG_INFO,"BO1NativeVulkan",
+        "native_pipeline_create frame=%u serial=%u total_ms=%.3f success=%u cache_size=%zu vs=%s ps=%s depth_mask=%u ubyte_mask=%u pair_cached=%u pair_count=%zu",
+        frame_,misses_+1,double(createNs)/1e6,unsigned(created),programs_.size(),
+        description.vertexOwner?description.vertexOwner->name.c_str():"<raw>",
+        description.pixelOwner?description.pixelOwner->name.c_str():"<raw>",description.pixelDepthSamplerMask,description.vertexUbyteMask,unsigned(pairCached),shaderPairs_.size());
+#endif
     if(!created)return {};
     programs_.emplace(std::move(key),program);++misses_;return program;
 }

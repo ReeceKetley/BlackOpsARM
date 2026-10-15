@@ -105,7 +105,7 @@ bool DrawIndexed(const GfxCmdBufPrimState* state,int baseIndex,int vertexCount,i
     if(!binds){vkCmdDrawIndexed(current->command,unsigned(count),1,unsigned(baseIndex),0,0);return true;}
     auto& pending=binds->pending;
     if(mergeable&&pending.active&&pending.command==current->command&&unsigned(baseIndex)==pending.first+pending.count
-        &&count<=std::uint64_t(std::numeric_limits<std::uint32_t>::max()-pending.count)) {pending.count+=unsigned(count);return true;}
+        &&count<=std::uint64_t(std::numeric_limits<std::uint32_t>::max()-pending.count)) {pending.count+=unsigned(count);++binds->mergedRanges;return true;}
     FlushPending(*binds);pending={true,current->command,unsigned(baseIndex),unsigned(count)};return true;
 }
 }

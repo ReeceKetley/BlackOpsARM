@@ -15,6 +15,7 @@ struct Pass {
     VkSampleCountFlagBits samples=VK_SAMPLE_COUNT_1_BIT;
     bool color=true,depth=false,stencil=false;
     VkFormat depthFormat=VK_FORMAT_UNDEFINED;
+    VkRenderPass pipelineHandle{}; // optional retained compatible definition
 };
 // Scope owns no GPU objects. The frame owner reserves its uniform buffer/pool
 // and retains packets until the submission fence completes. Reset only after

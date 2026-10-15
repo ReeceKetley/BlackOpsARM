@@ -14,6 +14,7 @@ constexpr unsigned MaxProfilePasses=128;
 constexpr unsigned ProfileQueryCount=2+2*MaxProfilePasses;
 struct PassProfile {
     unsigned query{},width{},height{},draws{};int target{};
+    std::uint64_t indexedCommands{},triangles{},mergedRanges{},fullscreenCommands{};
     bool loadColor{},loadDepth{};std::string color,depth;
 };
 struct Arena {
@@ -56,6 +57,7 @@ private:
     bool Copy(const std::shared_ptr<const image_assets::Record>&,const std::shared_ptr<const image_assets::Record>&,std::string&,VkImageAspectFlags copyAspects=0);
     bool Ensure(std::string&,unsigned discardMask=0,const float* clearColor=nullptr,float clearDepth=1,unsigned clearStencil=0,bool omitDepth=false);bool ApplyViewport(std::string&);
     VkQueryPool profilePool_{};int activeProfile_{-1};std::size_t profileDrawStart_{};
+    std::uint64_t profileIndexedStart_{},profileTriangleStart_{},profileMergedStart_{},profileFullscreenStart_{};
     VkCommandBuffer command_;VkPhysicalDevice physical_;VkDevice device_;ProgramCache& cache_;Buffer& uniforms_;VkDescriptorPool pool_;
     VkDeviceSize& cursor_;VkDeviceSize alignment_;std::vector<material_dispatch::Packet>& packets_;Arena& arena_;
     GfxCmdBufState* state_{};std::shared_ptr<const render_targets::Record> target_;std::shared_ptr<AttachmentPass> active_;
@@ -68,6 +70,7 @@ private:
     std::unordered_map<const Texture2D*,DepthCopy,bo1::vulkan::PointerHash> depthCopies_;
     std::uint64_t depthSerial_{};
     BindCache binds_; // this frame's command buffer only
+    bool depthResolved_{};unsigned postResolveDepthWrites_{};std::vector<std::string> postResolveDepthWriters_; // diagnostic
     native_fullscreen::Library* fullscreen_{};
     void MarkDepthWrite(const Texture2D* image){if(image)depthGenerations_[image]=++depthSerial_;}
     std::uint64_t DepthGeneration(const Texture2D* image)const{auto it=depthGenerations_.find(image);return it==depthGenerations_.end()?0:it->second;}
@@ -76,4 +79,7 @@ private:
 RecordingScope* Current();
 // Render thread, before device teardown; in-flight frames retain the image.
 void ReleaseSunShadowCache();
+// Per-frame policy read by ResolveDepth (any thread may set it).
+void SetSingleDepthResolve(bool enabled);
+void SetConstantUploadReuse(bool enabled);
 }

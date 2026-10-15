@@ -8,6 +8,14 @@ namespace bo1::vulkan::texture_bindings {
 namespace {
 std::mutex mutex;
 std::unordered_map<const GfxCmdBufState*,std::shared_ptr<const Snapshot>,bo1::vulkan::PointerHash> states;
+// Copy-on-write: a snapshot retained by a draw (or the bind fast path, which
+// compares snapshot identity) is never modified. One held only by this map
+// (checked under the mutex every reader takes) is updated in place.
+Snapshot& Writable(std::shared_ptr<const Snapshot>& current) {
+    if(!current)current=std::make_shared<Snapshot>();
+    else if(current.use_count()!=1)current=std::make_shared<Snapshot>(*current);
+    return const_cast<Snapshot&>(*current);
+}
 bool Publish(const GfxCmdBufState* state,unsigned slot,std::shared_ptr<const image_assets::Record> image,unsigned decoded,float bias,std::string& error) {
     if(!image->description.linearSampling&&
         (((decoded>>8)&15)>1||((decoded>>12)&15)>1||((decoded>>16)&15)==2)) {
@@ -20,8 +28,8 @@ bool Publish(const GfxCmdBufState* state,unsigned slot,std::shared_ptr<const ima
     }
     auto sampler=Sampler::Acquire(image->texture->Device(),decoded,image->description.mipLevels,bias,error,image->depthComparison);
     if(!sampler)return false;
-    auto next=it==states.end()?std::make_shared<Snapshot>():std::make_shared<Snapshot>(*it->second);
-    next->slots[slot]={std::move(image),std::move(sampler),decoded,bias};states[state]=std::move(next);return true;
+    auto& current=it==states.end()?states[state]:it->second;
+    Writable(current).slots[slot]={std::move(image),std::move(sampler),decoded,bias};return true;
 }
 }
 bool Set(const GfxCmdBufState* state,unsigned slot,const GfxImage* owner,unsigned decoded,float bias,std::string& error) {
@@ -37,15 +45,14 @@ bool Update(const GfxCmdBufState* state,unsigned slot,unsigned decoded,float bia
         // D3D sampler state is independent of image binding. Preserve the real
         // pending values; no image, VkSampler, or draw readiness is invented.
         if(!Sampler::Validate(decoded,bias,error))return false;
-        auto next=it==states.end()?std::make_shared<Snapshot>():std::make_shared<Snapshot>(*it->second);
-        next->slots[slot].decoded=decoded;next->slots[slot].bias=bias;
-        states[state]=std::move(next);return true;
+        auto& current=it==states.end()?states[state]:it->second;
+        auto& binding=Writable(current).slots[slot];binding.decoded=decoded;binding.bias=bias;return true;
     }
     return Publish(state,slot,it->second->slots[slot].image,decoded,bias,error);
 }
 void Disable(const GfxCmdBufState* state,unsigned slot) {
     std::lock_guard<std::mutex> lock(mutex);auto it=states.find(state);if(it==states.end()||slot>=16)return;
-    auto next=std::make_shared<Snapshot>(*it->second);next->slots[slot]={};it->second=std::move(next);
+    Writable(it->second).slots[slot]={};
 }
 void Clone(const GfxCmdBufState* source,const GfxCmdBufState* destination) {
     std::lock_guard<std::mutex> lock(mutex);if(source==destination)return;

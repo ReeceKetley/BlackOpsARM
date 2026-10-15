@@ -1,8 +1,14 @@
 #include "graphics_program.h"
 #include <algorithm>
+#include <atomic>
+#include <chrono>
+#if defined(__ANDROID__)
+#include <android/log.h>
+#endif
 
 namespace bo1::vulkan {
 namespace {
+std::atomic<bool> compatibleDescriptorReuse{true};
 VkDescriptorType Type(ResourceKind kind) {
     // Constants are dynamic: one descriptor serves every draw's offset.
     return kind==ResourceKind::Constants?VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC:
@@ -13,25 +19,39 @@ bool Result(VkResult value,const char* action,std::string& error) {
     error=std::string(action)+": VkResult="+std::to_string(int(value));return false;
 }
 }
+void SetCompatibleDescriptorReuse(bool enabled){compatibleDescriptorReuse.store(enabled,std::memory_order_relaxed);}
+bool CompatibleDescriptorReuse(){return compatibleDescriptorReuse.load(std::memory_order_relaxed);}
 GraphicsProgram::~GraphicsProgram() {
     if(pipeline_)vkDestroyPipeline(device_,pipeline_,nullptr);
     if(layout_)vkDestroyPipelineLayout(device_,layout_,nullptr);
     for(auto l:setLayouts_)if(l)vkDestroyDescriptorSetLayout(device_,l,nullptr);
 }
-bool GraphicsProgram::Create(const ProgramDescription& d,VkPipelineCache cache,std::string& error) {
+bool GraphicsProgram::Create(const ProgramDescription& d,VkPipelineCache cache,std::string& error,const std::array<ShaderTranslation,2>* cached) {
     error.clear();
     if(!device_||!d.renderPass||pipeline_||layout_||setLayouts_[0]||setLayouts_[1]) {
         error="Invalid device/pass or program already initialized";return false;
     }
+    const auto createStart=std::chrono::steady_clock::now();
     if(!ValidateDepthBias(d.depthBias,error))return false;
-    if(!TranslateShaderPair(d.vertexBytecode,d.vertexBytes,d.pixelBytecode,d.pixelBytes,shaders_[0],shaders_[1],&d.alphaTest,d.pixelDepthSamplerMask,d.vertexUbyteMask)) {
+    if(cached)shaders_=*cached;
+    else if(!TranslateShaderPair(d.vertexBytecode,d.vertexBytes,d.pixelBytecode,d.pixelBytes,shaders_[0],shaders_[1],&d.alphaTest,d.pixelDepthSamplerMask,d.vertexUbyteMask)) {
         error=shaders_[0].diagnostics+shaders_[1].diagnostics;if(error.empty())error="Native shader pair translation failed";return false;
     }
+    const auto translated=std::chrono::steady_clock::now();
     for(unsigned stage=0;stage<2;++stage) {
         std::vector<VkDescriptorSetLayoutBinding> bindings;
         for(const auto& b:shaders_[stage].bindings) {
             bindings.push_back({b.binding,Type(b.kind),1,stage?VK_SHADER_STAGE_FRAGMENT_BIT:VK_SHADER_STAGE_VERTEX_BIT,nullptr});
-            if(b.kind==ResourceKind::Constants)++dynamicCount_;
+            // The SM3 translator fixes type by binding: CBV 0..2, SRV
+            // 16..31, sampler 32..47. With count=1, flags=0 and fixed stage
+            // visibility this bitset exactly describes each stage layout.
+            if(!((b.kind==ResourceKind::Constants&&b.binding<=2)
+                ||(b.kind==ResourceKind::Texture&&b.binding>=16&&b.binding<32)
+                ||(b.kind==ResourceKind::Sampler&&b.binding>=32&&b.binding<48))) {
+                error="Unexpected native descriptor layout mapping";return false;
+            }
+            layoutBindings_[stage]|=std::uint64_t(1)<<b.binding;
+            if(b.kind==ResourceKind::Constants){++dynamicCount_;++stageDynamic_[stage];}
         }
         std::sort(bindings.begin(),bindings.end(),[](const auto& a,const auto& b){return a.binding<b.binding;});
         VkDescriptorSetLayoutCreateInfo info{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO};
@@ -73,7 +93,15 @@ bool GraphicsProgram::Create(const ProgramDescription& d,VkPipelineCache cache,s
     info.stageCount=2;info.pStages=stages;info.pVertexInputState=&input;info.pInputAssemblyState=&assembly;
     info.pViewportState=&viewport;info.pRasterizationState=&raster;info.pMultisampleState=&samples;info.pDepthStencilState=&depth;
     info.pColorBlendState=&blend;info.pDynamicState=&dynamic;info.layout=layout_;info.renderPass=d.renderPass;info.subpass=d.subpass;
+    const auto driverStart=std::chrono::steady_clock::now();
     const VkResult status=vkCreateGraphicsPipelines(device_,cache,1,&info,nullptr,&pipeline_);
+#if defined(__ANDROID__)
+    const auto driverEnd=std::chrono::steady_clock::now();
+    const auto ms=[](auto a,auto b){return std::chrono::duration<double,std::milli>(b-a).count();};
+    __android_log_print(ANDROID_LOG_INFO,"BO1NativeVulkan",
+        "native_pipeline_compile translate_ms=%.3f layout_module_ms=%.3f driver_ms=%.3f total_ms=%.3f result=%d",
+        ms(createStart,translated),ms(translated,driverStart),ms(driverStart,driverEnd),ms(createStart,driverEnd),int(status));
+#endif
     for(auto module:modules)vkDestroyShaderModule(device_,module,nullptr);
     return Result(status,"graphics pipeline",error);
 }
@@ -119,7 +147,12 @@ bool GraphicsProgram::Record(VkCommandBuffer command,VkDescriptorPool pool,const
     thread_local std::vector<VkDescriptorImageInfo> images;thread_local DescriptorSetKey key;
     for(unsigned stage=0;stage<2;++stage) {
         const auto& resources=stage?pixel:vertex;
-        writes.clear();buffers.clear();images.clear();key.layout=setLayouts_[stage];key.words.clear();
+        writes.clear();buffers.clear();images.clear();key.layout=cache.compatibleSets?VK_NULL_HANDLE:setLayouts_[stage];key.words.clear();
+        // All layouts above have flags=0, descriptorCount=1, no immutable
+        // samplers. Together with stage visibility and the binding/type words
+        // below this fully describes compatibility; shader identity and layout
+        // handle do not affect the descriptor contents.
+        key.words.push_back(stage?VK_SHADER_STAGE_FRAGMENT_BIT:VK_SHADER_STAGE_VERTEX_BIT);
         buffers.reserve(shaders_[stage].bindings.size());images.reserve(shaders_[stage].bindings.size());
         for(const auto& binding:shaders_[stage].bindings) {
             const ProgramResource* selected{};
@@ -163,10 +196,29 @@ bool GraphicsProgram::Record(VkCommandBuffer command,VkDescriptorPool pool,const
     if(offsetCount!=dynamicCount_) { error="Dynamic constant offsets do not match program layout";return false; }
     if(cache.pipeline!=pipeline_) {vkCmdBindPipeline(command,VK_PIPELINE_BIND_POINT_GRAPHICS,pipeline_);cache.pipeline=pipeline_;++cache.pipelineBinds;}
     else ++cache.pipelineSkips;
-    if(cache.layout!=layout_||cache.sets!=sets||cache.offsetCount!=offsetCount||cache.offsets!=offsets) {
+    const bool singleBank=stageDynamic_[0]<=1&&stageDynamic_[1]<=1;
+    if(!singleBank)cache.layoutBindings={~std::uint64_t(0),~std::uint64_t(0)};
+    if(cache.compatibleSets&&singleBank) {
+        std::array<std::uint32_t,2> stageOffsets{};unsigned cursor=0;
+        for(unsigned stage=0;stage<2;++stage)if(stageDynamic_[stage])stageOffsets[stage]=offsets[cursor++];
+        const bool compatible0=cache.layout&&cache.layoutBindings[0]==layoutBindings_[0];
+        const bool compatible1=compatible0&&cache.layoutBindings[1]==layoutBindings_[1];
+        const bool bind0=!compatible0||cache.sets[0]!=sets[0]||cache.stageOffsets[0]!=stageOffsets[0];
+        const bool bind1=!compatible1||cache.sets[1]!=sets[1]||cache.stageOffsets[1]!=stageOffsets[1];
+        if(bind0&&bind1) {
+            vkCmdBindDescriptorSets(command,VK_PIPELINE_BIND_POINT_GRAPHICS,layout_,0,2,sets.data(),offsetCount,offsets.data());
+            ++cache.descriptorBinds;cache.descriptorSetsBound+=2;
+        } else if(bind0||bind1) {
+            const unsigned stage=bind1?1:0;
+            vkCmdBindDescriptorSets(command,VK_PIPELINE_BIND_POINT_GRAPHICS,layout_,stage,1,&sets[stage],stageDynamic_[stage],&stageOffsets[stage]);
+            ++cache.descriptorBinds;++cache.descriptorSetsBound;
+        }
+        cache.layoutBindings=layoutBindings_;cache.stageOffsets=stageOffsets;
+    } else if(cache.layout!=layout_||cache.sets!=sets||cache.offsetCount!=offsetCount||cache.offsets!=offsets) {
         vkCmdBindDescriptorSets(command,VK_PIPELINE_BIND_POINT_GRAPHICS,layout_,0,2,sets.data(),offsetCount,offsets.data());
-        cache.layout=layout_;cache.sets=sets;cache.offsets=offsets;cache.offsetCount=offsetCount;
+        ++cache.descriptorBinds;cache.descriptorSetsBound+=2;
     }
+    cache.layout=layout_;cache.sets=sets;cache.offsets=offsets;cache.offsetCount=offsetCount;
     return true;
 }
 }

@@ -3,6 +3,14 @@
 
 struct DpvsStaticCellCmd;
 
+#if defined(__ANDROID__)
+// Main thread: begin before camera cell jobs; report after their worker wait.
+void R_BeginStaticVisibilityProfile(unsigned frame);
+void R_LogStaticVisibilityProfile(int cameraCell);
+// After camera static jobs and before emitting camera BSP surfaces.
+void R_UpdateCameraSurfaceShadowFlags();
+#endif
+
 struct GfxSurface;
 union GfxDrawSurf;
 

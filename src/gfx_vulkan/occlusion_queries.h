@@ -23,6 +23,7 @@ public:
     bool Retired()const;
     bool Published()const{return phase_==Phase::Submitted;}
     bool Precise()const{return precise_;}
+    unsigned Capacity()const{return unsigned(results_.size());}
 private:
     struct Result {bool ended{},cached{};std::uint64_t value{};};
     VkDevice device_{};VkQueryPool pool_{};bool precise_{};VkCommandBuffer command_{};VkFence fence_{};

@@ -1,6 +1,10 @@
 # Project Goal
 
-## Current user objective
+## Current user objective (2026-10-15, native submission transition)
+
+Incrementally move T5 from D3D9-style state submission to direct native render packets while reusing the Vulkan backend. Target Adreno 610 / Vulkan 1.1: sustained minimum 25 FPS in Kino's slow spawn view, with fewer frame-time spikes. Establish repeatable baselines; begin with existing static-model batching and shadow casters, expand measured improvements to further paths, and measure combined CPU/GPU time, draws and frame consistency. Keep small repeatable gains; investigate neutral results and revert regressions. Preserve gameplay/assets and unrelated edits; visual simplifications accepted. Validate on tablet, document evidence, prefix console commands with /, no commit/push. Automatic Kino test launches should enable god mode without console interaction.
+
+## Historical user objectives
 
 Milestone reached (2026-10-15): SDK626 sustains16.1356FPS at720p over179.107seconds (290profiles, sixscreenshots).1080p15FPS and fullgameplay validation remain unproved. Requested goal: reach sustained15+FPS on the HONOR tablet in the native Vulkan menu scene, preferably1080p with720p acceptable. Continue measuring CPU/GPU costs, preserve recognizable appearance, and verify real sustained submissions. Separate performance build is an experiment; retain the existing diagnostics build.
 

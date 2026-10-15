@@ -1350,6 +1350,10 @@ void    RB_SetVisionSetColorCorrection(const GfxViewInfo *viewInfo)
 // original path. r_nativePostFx 0 restores the original passes.
 namespace {
 const dvar_s *r_nativePostFx;
+const dvar_s *r_nativeHalfPrecision;
+const dvar_s *r_nativeDepthResolveOnce;
+const dvar_s *r_nativeDescriptorReuse;
+const dvar_s *r_nativeConstantReuse;
 bool g_nativeDofComposed;
 struct NativeDofDownsampleParams { float eqScene[4], eqViewModel[4], sceneTexel[4]; };
 struct NativeComposeParams { float texel[4], eqScene[4], eqViewModel[4], lerpScale[4], lerpBias[4], film[3][4], grade[11][4]; };
@@ -1359,6 +1363,13 @@ void CopyConstant(float *destination, unsigned constant, unsigned rows = 1)
 }
 bool RB_NativePostWanted(const GfxViewInfo *viewInfo)
 {
+    // Applies to shaders translated from now on (translations are cached), so
+    // a config/console value set after dvar registration still takes effect
+    // for the next level load.
+    bo1::vulkan::SetRelaxedPrecision(r_nativeHalfPrecision && r_nativeHalfPrecision->current.enabled);
+    bo1::vulkan::pass_recording::SetSingleDepthResolve(r_nativeDepthResolveOnce && r_nativeDepthResolveOnce->current.enabled);
+    bo1::vulkan::SetCompatibleDescriptorReuse(r_nativeDescriptorReuse && r_nativeDescriptorReuse->current.enabled);
+    bo1::vulkan::pass_recording::SetConstantUploadReuse(r_nativeConstantReuse && r_nativeConstantReuse->current.enabled);
     return r_nativePostFx && r_nativePostFx->current.enabled && bo1::vulkan::shader_assets::Active()
         && dx.supportsIntZ && !viewInfo->isMissileCamera
         && !RB_UsingFlameFX(viewInfo) && !RB_UsingReviveFX(viewInfo) && !RB_UsingElectrifiedFX(viewInfo)
@@ -1440,9 +1451,17 @@ void R_RegisterNativePostDvars()
     r_nativePostFx = _Dvar_RegisterBool("r_nativePostFx", 1, 0,
         "Native fused bloom/colour/depth-of-field post processing (0 = original passes)");
     // Read once at renderer start: shader programs are translated lazily and cached.
-    const dvar_s *halfPrecision = _Dvar_RegisterBool("r_nativeHalfPrecision", 0, 0,
-        "Translate the original shaders' _pp partial-precision hints to Vulkan RelaxedPrecision");
-    bo1::vulkan::SetRelaxedPrecision(halfPrecision && halfPrecision->current.enabled);
+    r_nativeHalfPrecision = _Dvar_RegisterBool("r_nativeHalfPrecision", 1, 0,
+        "Translate the original shaders' _pp partial-precision hints to Vulkan RelaxedPrecision (shaders translated after the change)");
+    bo1::vulkan::SetRelaxedPrecision(r_nativeHalfPrecision && r_nativeHalfPrecision->current.enabled);
+    r_nativeDepthResolveOnce = _Dvar_RegisterBool("r_nativeDepthResolveOnce", 0, 0,
+        "Reuse the frame's first float Z depth copy instead of copying again (saves a copy and a scene pass split)");
+    r_nativeConstantReuse = _Dvar_RegisterBool("r_nativeConstantReuse", 1, 0,
+        "Reuse unchanged per-stage constant uploads within the native frame (0 = upload every draw)");
+    r_nativeDescriptorReuse = _Dvar_RegisterBool("r_nativeDescriptorReuse", 1, 0,
+        "Reuse frame descriptor sets across identically defined pipeline layouts (0 = exact layout handles)");
+    bo1::vulkan::SetCompatibleDescriptorReuse(r_nativeDescriptorReuse && r_nativeDescriptorReuse->current.enabled);
+    bo1::vulkan::pass_recording::SetConstantUploadReuse(r_nativeConstantReuse && r_nativeConstantReuse->current.enabled);
     R_RegisterSunShadowCacheDvar();
 }
 #endif

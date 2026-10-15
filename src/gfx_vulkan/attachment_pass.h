@@ -9,6 +9,10 @@ namespace bo1::vulkan {
 // share one handle; identities live until a drained Clear, never handle recycling.
 struct SharedAttachmentRenderPass {
     VkDevice device{};VkRenderPass handle{};
+    // Earlier canonical compatible definition, never self-owned. Retain it even
+    // when a pass outlives the cache so pipeline creation cannot see a dead handle.
+    std::shared_ptr<SharedAttachmentRenderPass> pipelinePass;
+    VkRenderPass PipelineHandle()const{return pipelinePass?pipelinePass->handle:handle;}
     ~SharedAttachmentRenderPass();
 };
 // Reference-counted framebuffer: destroyed when the cache and every pass that
@@ -29,7 +33,7 @@ public:
         const std::shared_ptr<Texture2D>& depth,const VkFramebufferCreateInfo&,std::string&);
 private:
     VkDevice device_{};
-    struct Entry {std::array<unsigned,8> key;std::shared_ptr<SharedAttachmentRenderPass> pass;};
+    struct Entry {std::array<unsigned,8> key;std::shared_ptr<SharedAttachmentRenderPass> pass;std::vector<std::uint32_t> compatibility;};
     std::vector<Entry> entries_;
     struct FramebufferEntry {VkRenderPass pass{};std::weak_ptr<Texture2D> color,depth;const Texture2D* colorKey{};const Texture2D* depthKey{};std::shared_ptr<SharedFramebuffer> framebuffer;};
     std::vector<FramebufferEntry> framebuffers_;unsigned lookups_{};
@@ -46,6 +50,9 @@ public:
     void Begin(VkCommandBuffer,const VkClearColorValue&,float depth=1,unsigned stencil=0)const;
     void End(VkCommandBuffer command)const{vkCmdEndRenderPass(command);}
     VkRenderPass RenderPass()const{return pass_;}
+    // Pipeline compilation/cache only; Begin/End and framebuffer retain the
+    // actual definition, including its clear/load/store/layout semantics.
+    VkRenderPass PipelineRenderPass()const{return sharedPass_?sharedPass_->PipelineHandle():pass_;}
     bool HasDepth()const{return bool(depth_);}
     bool SharedRenderPass()const{return bool(sharedPass_);}
 private:

@@ -46,14 +46,16 @@ private:
     bool Rebuild(std::string&);void ReleaseSwapchain();
     bool Owner(std::string&)const;
     FrameResult Begin(bool present,FrameContext&,std::string&);
-    struct Slot { VkCommandBuffer command{};VkSemaphore acquired{};VkFence fence{}; };
+    // Each slot owns its pool: resetting the whole pool once its fence retires
+    // lets the driver keep the command memory instead of freeing it per buffer.
+    struct Slot { VkCommandPool pool{};VkCommandBuffer command{};VkSemaphore acquired{};VkFence fence{}; };
     image_usage::Tracker imageStates_;
     std::unique_ptr<image_usage::RecordingScope> recording_;
     FrameContext current_{};
     unsigned long ownerThread_{};
     bool windowPass_{},windowRecorded_{},failed_{},submitting_{};
     SDL_Window* window_{};VkInstance instance_{};VkSurfaceKHR surface_{};VkPhysicalDevice physical_{};
-    VkDevice device_{};VkQueue queue_{};unsigned family_{};VkCommandPool pool_{};
+    VkDevice device_{};VkQueue queue_{};unsigned family_{};
     VkSwapchainKHR swapchain_{};VkRenderPass renderPass_{};VkExtent2D extent_{};
     std::vector<VkImageView> views_;std::vector<VkFramebuffer> frames_;
     // A semaphore belongs to its swapchain image, not to a CPU frame slot.

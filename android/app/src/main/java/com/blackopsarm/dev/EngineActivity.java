@@ -248,9 +248,12 @@ public final class EngineActivity extends SDLActivity {
             invalidate();
         }
         void readState(int newEpoch, boolean available, boolean playing) {
-            if (epoch != newEpoch || gameplay != playing || !available) clearPointers();
+            // Polled every 100 ms. Each redraw re-renders this full-screen
+            // layer on the GPU the engine uses, so redraw only on change.
+            final boolean changed = epoch != newEpoch || ready != available || gameplay != playing;
+            if (epoch != newEpoch || gameplay != playing || (!available && (ready || pointers.size() != 0))) clearPointers();
             epoch = newEpoch; ready = available; gameplay = playing;
-            invalidate();
+            if (changed) invalidate();
         }
         @Override protected void onSizeChanged(int w, int h, int oldw, int oldh) {
             super.onSizeChanged(w, h, oldw, oldh);
@@ -432,11 +435,14 @@ public final class EngineActivity extends SDLActivity {
         if (getIntent().getBooleanExtra("nativeVulkanBackend", false)
                 && !getIntent().getBooleanExtra("nativeVulkanPresentation", false)) {
             return new String[] {gameRoot, userRoot, "--native-vulkan",
-                    Integer.toString(getIntent().getIntExtra("nativeVulkanHeight", 0))};
+                    Integer.toString(getIntent().getIntExtra("nativeVulkanHeight", 0)),
+                    getIntent().getBooleanExtra("nativeAutoKino", true) ? "--kino" : "--menu"};
         }
-        return new String[] {gameRoot, userRoot,
-                getIntent().getBooleanExtra("nativeVulkanPresentation", false) ? "--vulkan-presentation"
-                : getIntent().getBooleanExtra("nativeVulkanBackend", false) ? "--native-vulkan" : "--rendered"};
+        if (getIntent().getBooleanExtra("nativeVulkanPresentation", false)) {
+            return new String[] {gameRoot, userRoot, "--vulkan-presentation"};
+        }
+        return new String[] {gameRoot, userRoot, "--rendered",
+                getIntent().getBooleanExtra("nativeAutoKino", true) ? "--kino" : "--menu"};
     }
 
     @Override protected void onCreate(Bundle state) {

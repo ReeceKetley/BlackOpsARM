@@ -1,4 +1,7 @@
 #include "shader_translate.h"
+#if defined(__ANDROID__)
+#include <android/log.h>
+#endif
 #include <unordered_map>
 #include <atomic>
 #include <vkd3d_shader.h>
@@ -222,5 +225,13 @@ bool TranslateShaderPair(const void* vertex,std::size_t vertexBytes,
     if(!TranslateShader(vertex,vertexBytes,v,&p.inputs,nullptr,0,vertexUbyteMask)) { vs.diagnostics=std::move(v.diagnostics);return false; }
     vs=std::move(v);ps=std::move(p);return true;
 }
-void SetRelaxedPrecision(bool enabled){relaxedPrecision.store(enabled,std::memory_order_relaxed);}
+bool RelaxedPrecisionEnabled(){return relaxedPrecision.load(std::memory_order_relaxed);}
+void SetRelaxedPrecision(bool enabled){
+    const bool previous=relaxedPrecision.exchange(enabled,std::memory_order_relaxed);
+#if defined(__ANDROID__)
+    if(previous!=enabled)__android_log_print(ANDROID_LOG_INFO,"BO1NativeVulkan","native_relaxed_precision enabled=%d",int(enabled));
+#else
+    (void)previous;
+#endif
+}
 }

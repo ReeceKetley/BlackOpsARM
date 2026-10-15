@@ -75,9 +75,18 @@ bool DrawIndexed(const GfxCmdBufPrimState* state,int baseIndex,int vertexCount,i
     std::vector<VkVertexInputBindingDescription> bindings;
     for(unsigned i=0;i<draw->geometry->streams.size();++i)if(draw->geometry->streams[i].buffer)
         bindings.push_back({i,draw->geometry->streams[i].stride,VK_VERTEX_INPUT_RATE_VERTEX});
-    std::vector<VkVertexInputAttributeDescription> attributes;
+    std::vector<VkVertexInputAttributeDescription> resolved;const std::vector<VkVertexInputAttributeDescription>* routed=&resolved;
     const auto& selected=*draw->selection;unsigned vertexUbyteMask=0;
-    if(!vertex_assets::Resolve(*selected.declaration,selected.variant,selected.vertex->translation,scope.physical,bindings,attributes,error,&vertexUbyteMask))return false;
+    VertexResolveKey resolveKey{selected.declaration.get(),&selected.vertex->translation,selected.variant};
+    for(const auto& binding:bindings){resolveKey.streamMask|=1u<<binding.binding;resolveKey.strides[binding.binding]=binding.stride;}
+    const VertexResolveValue* cachedResolve=nullptr;
+    if(scope.binds){auto found=scope.binds->vertexResolves.find(resolveKey);if(found!=scope.binds->vertexResolves.end())cachedResolve=&found->second;}
+    if(cachedResolve) {routed=&cachedResolve->attributes;vertexUbyteMask=cachedResolve->ubyteMask;}
+    else {
+        if(!vertex_assets::Resolve(*selected.declaration,selected.variant,selected.vertex->translation,scope.physical,bindings,resolved,error,&vertexUbyteMask))return false;
+        if(scope.binds)routed=&scope.binds->vertexResolves.emplace(resolveKey,VertexResolveValue{resolved,vertexUbyteMask}).first->second.attributes;
+    }
+    const auto& attributes=*routed;
     Phase(profile.resolve,timing);
     ProgramDescription d;d.vertexOwner=selected.vertex;d.pixelOwner=selected.pixel;d.vertexBytecode=selected.vertex->bytecode.data();d.vertexBytes=selected.vertex->bytecode.size()*4;
     d.vertexUbyteMask=vertexUbyteMask;
@@ -93,7 +102,7 @@ bool DrawIndexed(const GfxCmdBufPrimState* state,int baseIndex,int vertexCount,i
             d.pixelDepthSamplerMask|=1u<<binding.registerIndex;
         }
     }
-    d.renderPass=scope.pass.handle;d.subpass=scope.pass.subpass;d.samples=scope.pass.samples;d.colorAttachment=scope.pass.color;
+    d.renderPass=scope.pass.pipelineHandle?scope.pass.pipelineHandle:scope.pass.handle;d.subpass=scope.pass.subpass;d.samples=scope.pass.samples;d.colorAttachment=scope.pass.color;
     d.vertexBindings=bindings.data();d.vertexBindingCount=unsigned(bindings.size());
     d.vertexAttributes=attributes.data();d.vertexAttributeCount=unsigned(attributes.size());
     if(!ApplyMaterialState(draw->words[0],draw->words[1],d,error))return false;
@@ -106,7 +115,7 @@ bool DrawIndexed(const GfxCmdBufPrimState* state,int baseIndex,int vertexCount,i
     VkDeviceSize cursor=scope.cursor;std::vector<ProgramResource> vs,ps;
     VkDescriptorPool pool=scope.pool;
     const unsigned rows[2]{program->ConstantRows(0),program->ConstantRows(1)};
-    if(scope.storage) {if(!material_bindings::Upload(*draw,*scope.storage,scope.alignment,vs,ps,pool,error,rows)) {
+    if(scope.storage) {if(!material_bindings::Upload(*draw,*scope.storage,scope.alignment,vs,ps,pool,error,rows,scope.binds)) {
         error+=" material="+std::string(scope.state->material?scope.state->material->info.name:"<none>")
             +" technique="+std::string(scope.state->technique?scope.state->technique->name:"<none>");return false;
     }}

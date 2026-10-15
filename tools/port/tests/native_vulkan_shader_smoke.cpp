@@ -10,6 +10,7 @@
 #include <vector>
 #include <string>
 bool NativeVulkanDrawStorage(VkPhysicalDevice,VkDevice,unsigned);
+bool NativeVulkanConstantUpload(VkPhysicalDevice,VkDevice,unsigned);
 bool NativeVulkanImageCopy(VkPhysicalDevice,VkDevice,unsigned);
 bool NativeVulkanUploadFlights(VkPhysicalDevice,VkDevice,unsigned);
 bool NativeVulkanDepthCopy(VkPhysicalDevice,VkDevice,unsigned);
@@ -54,6 +55,7 @@ bool Program(VkDevice device,const char* name,const void* data,std::size_t bytes
 }
 }
 int main(int argc,char** argv) {
+    std::setvbuf(stdout,nullptr,_IONBF,0);
     VkApplicationInfo app{VK_STRUCTURE_TYPE_APPLICATION_INFO};
     app.pApplicationName="boARM native shader foundation";app.apiVersion=VK_API_VERSION_1_1;
     VkInstanceCreateInfo create{VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO};create.pApplicationInfo=&app;
@@ -116,6 +118,7 @@ int main(int argc,char** argv) {
     }
     const bool arenaOnly=argc>1&&!std::strcmp(argv[1],"--arena-only");
     if(ok&&arenaOnly)ok=NativeVulkanDrawStorage(physical,device,family);
+    if(ok&&arenaOnly)ok=NativeVulkanConstantUpload(physical,device,family);
     const bool flightsOnly=argc>1&&!std::strcmp(argv[1],"--upload-flights-only");
     if(ok&&flightsOnly)ok=NativeVulkanUploadFlights(physical,device,family);
     const bool depthCopyOnly=argc>1&&!std::strcmp(argv[1],"--depth-copy-only");

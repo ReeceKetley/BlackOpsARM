@@ -10,6 +10,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.ScrollView;
@@ -30,6 +31,7 @@ public final class AssetImportActivity extends Activity {
     private ProgressBar progress;
     private Button choose;
     private Button launch;
+    private CheckBox autoKino;
     private Button cancel;
     private boolean ready;
     private int refreshGeneration;
@@ -58,6 +60,13 @@ public final class AssetImportActivity extends Activity {
         layout.addView(status);
         progress = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
         layout.addView(progress);
+        autoKino = new CheckBox(this);
+        autoKino.setText("Start Kino automatically");
+        autoKino.setChecked(getIntent().getBooleanExtra("nativeAutoKino",
+                getPreferences(MODE_PRIVATE).getBoolean("autoKino", true)));
+        autoKino.setOnCheckedChangeListener((button, checked) ->
+                getPreferences(MODE_PRIVATE).edit().putBoolean("autoKino", checked).apply());
+        layout.addView(autoKino);
         choose = button(layout, "Choose game folder", view -> selectFolder());
         launch = button(layout, "Launch game", view -> launchGame());
         cancel = button(layout, "Cancel import", view -> {
@@ -193,6 +202,7 @@ public final class AssetImportActivity extends Activity {
                         engine.putExtra("nativeVulkanPresentation",
                                 activity.getIntent().getBooleanExtra("nativeVulkanPresentation", false));
                         engine.putExtra("nativeVulkanHeight", activity.getIntent().getIntExtra("nativeVulkanHeight", 0));
+                        engine.putExtra("nativeAutoKino", activity.autoKino.isChecked());
                         engine.putExtra("nativeVulkanBackend",
                                 activity.getIntent().getBooleanExtra("nativeVulkanBackend", false));
                         engine.putExtra(EngineActivity.EXTRA_GAME_ROOT, gamePath);

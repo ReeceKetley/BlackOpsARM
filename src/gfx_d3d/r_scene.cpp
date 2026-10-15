@@ -1,6 +1,7 @@
 #include <qcommon/cm_mapkit.h>
 #include <cgame/cg_sp_client_ext.h>
 #include "r_scene.h"
+#include "r_dpvs_static.h"
 #if defined(__ANDROID__)
 #include <cstdio>
 #define _snprintf std::snprintf
@@ -3733,6 +3734,9 @@ void __cdecl R_GenerateSortedDrawSurfs(
     R_DrawFogParams();
     R_SetInputCodeConstant(&viewInfo->input, 0x31u, 0.984375 * viewParmsDraw->zNear, 0.0, 0.0, 0.0);
     R_SetFullSceneViewMesh(viewInfoIndex, viewInfo);
+#if defined(__ANDROID__)
+    R_BeginStaticVisibilityProfile(frontEndDataOut->frameCount);
+#endif
     R_SetupWorldSurfacesDpvs(viewParmsDpvs, forMissileCamView ? 0x41 : 0);
     R_SetViewFrustumPlanes(viewInfo);
     R_SetDoubleVision(viewInfo, sceneParms);
@@ -3804,6 +3808,15 @@ void __cdecl R_GenerateSortedDrawSurfs(
         PROF_SCOPED("wait for r_dpvs_static");
         Sys_WaitWorkerCmdInternal(&r_dpvs_staticWorkerCmd);
     }
+#if defined(__ANDROID__)
+    R_LogStaticVisibilityProfile(v6);
+    // R_SetupWorldSurfacesDpvs has supplied this view's direction/origin.
+    // Initialize the current distance before camera receivers are emitted;
+    // R_SetupSunShadowMapProjection otherwise sets it later in this frame.
+    const float shadowSampleSizeFar = sm_sunSampleSizeNear->current.value * rg.sunShadowPartitionRatio;
+    dpvsGlob.sunShadow.sunShadowDrawDist = (double)dx.sunShadowmapSize * shadowSampleSizeFar;
+    R_UpdateCameraSurfaceShadowFlags();
+#endif
     
     if (!CM_Mapkit_Empty()) // mod: mapkit empty base has no retail skybox
         R_AddSkyboxModel(viewParmsDraw->origin);

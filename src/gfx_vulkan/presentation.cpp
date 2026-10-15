@@ -33,8 +33,8 @@ Presentation::~Presentation() {
     if(device_)vkDeviceWaitIdle(device_);
     ReleaseSwapchain();
     if(device_) {
-        for(auto& slot:slots_) {if(slot.acquired)vkDestroySemaphore(device_,slot.acquired,nullptr);if(slot.fence)vkDestroyFence(device_,slot.fence,nullptr);}
-        if(pool_)vkDestroyCommandPool(device_,pool_,nullptr);vkDestroyDevice(device_,nullptr);
+        for(auto& slot:slots_) {if(slot.acquired)vkDestroySemaphore(device_,slot.acquired,nullptr);if(slot.fence)vkDestroyFence(device_,slot.fence,nullptr);if(slot.pool)vkDestroyCommandPool(device_,slot.pool,nullptr);}
+        vkDestroyDevice(device_,nullptr);
     }
     if(surface_)vkDestroySurfaceKHR(instance_,surface_,nullptr);if(instance_)vkDestroyInstance(instance_,nullptr);
 }
@@ -84,10 +84,10 @@ bool Presentation::Open(SDL_Window* window,bool preferMailbox,std::string& error
     device.enabledExtensionCount=1;device.ppEnabledExtensionNames=&deviceExtension;
     if(!Ok(vkCreateDevice(physical_,&device,nullptr,&device_),"device",error))return false;
     vkGetDeviceQueue(device_,family_,0,&queue_);
-    VkCommandPoolCreateInfo pool{VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO};pool.queueFamilyIndex=family_;pool.flags=VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-    if(!Ok(vkCreateCommandPool(device_,&pool,nullptr,&pool_),"frame pool",error))return false;
+    VkCommandPoolCreateInfo pool{VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO};pool.queueFamilyIndex=family_;pool.flags=VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
     for(auto& slot:slots_) {
-        VkCommandBufferAllocateInfo allocation{VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO};allocation.commandPool=pool_;allocation.level=VK_COMMAND_BUFFER_LEVEL_PRIMARY;allocation.commandBufferCount=1;
+        if(!Ok(vkCreateCommandPool(device_,&pool,nullptr,&slot.pool),"frame pool",error))return false;
+        VkCommandBufferAllocateInfo allocation{VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO};allocation.commandPool=slot.pool;allocation.level=VK_COMMAND_BUFFER_LEVEL_PRIMARY;allocation.commandBufferCount=1;
         VkSemaphoreCreateInfo semaphore{VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO};VkFenceCreateInfo fence{VK_STRUCTURE_TYPE_FENCE_CREATE_INFO};fence.flags=VK_FENCE_CREATE_SIGNALED_BIT;
         if(!Ok(vkAllocateCommandBuffers(device_,&allocation,&slot.command),"frame command",error)
             ||!Ok(vkCreateSemaphore(device_,&semaphore,nullptr,&slot.acquired),"acquire semaphore",error)
@@ -192,7 +192,7 @@ FrameResult Presentation::Begin(bool present,FrameContext& context,std::string& 
     }
     // After acquiring, a recording/submission error is terminal: never reuse an
     // acquire semaphore whose signal has not been consumed by a queue wait.
-    if(!Ok(vkResetCommandBuffer(slot.command,0),"frame reset",error)) {failed_=true;return FrameResult::Failed;}
+    if(!Ok(vkResetCommandPool(device_,slot.pool,0),"frame reset",error)) {failed_=true;return FrameResult::Failed;}
     VkCommandBufferBeginInfo begin{VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};begin.flags=VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
     if(!Ok(vkBeginCommandBuffer(slot.command,&begin),"frame begin",error)) {failed_=true;return FrameResult::Failed;}
     current_={slot.command,extent_,next_,image,generation_};
