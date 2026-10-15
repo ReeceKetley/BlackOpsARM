@@ -190,6 +190,11 @@ public final class AssetImportActivity extends Activity {
                             + "Game storage: " + gamePath);
                     if (launchAfter) {
                         Intent engine = new Intent(activity, EngineActivity.class);
+                        engine.putExtra("nativeVulkanPresentation",
+                                activity.getIntent().getBooleanExtra("nativeVulkanPresentation", false));
+                        engine.putExtra("nativeVulkanHeight", activity.getIntent().getIntExtra("nativeVulkanHeight", 0));
+                        engine.putExtra("nativeVulkanBackend",
+                                activity.getIntent().getBooleanExtra("nativeVulkanBackend", false));
                         engine.putExtra(EngineActivity.EXTRA_GAME_ROOT, gamePath);
                         engine.putExtra(EngineActivity.EXTRA_USER_ROOT, userPath);
                         activity.startActivity(engine);

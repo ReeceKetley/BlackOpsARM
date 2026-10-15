@@ -1,3 +1,7 @@
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+#include "gfx_vulkan/buffer_assets.h"
+#include "gfx_vulkan/shader_assets.h"
+#endif
 #include "r_vertexstream2.h"
 #include <qcommon/common.h>
 
@@ -9,6 +13,18 @@ unsigned int stream2AllocatedSize;
 
 void __cdecl R_VertexStream2_Init(unsigned int stream2ByteSize)
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()) {
+        if(!stream2ByteSize)return;
+        if(stream2AllocatedSize==stream2ByteSize) {
+            auto record=bo1::vulkan::buffer_assets::Acquire(&stream2VertexBuffer);
+            if(!record||record->gpu->Size()!=stream2ByteSize)Com_Error(ERR_FATAL,"Native stream2 allocation state mismatch");return;
+        }
+        if(stream2AllocatedSize)R_VertexStream2_Shutdown();
+        if(!AllocateVertexStream2Buffer(stream2ByteSize)) {Com_Error(ERR_FATAL,"Native stream2 allocation failed");return;}
+        stream2AllocatedSize=stream2ByteSize;R_VertexStream2_Clear();return;
+    }
+#endif
     float *vbPtr; // [esp+0h] [ebp-8h]
 
     Com_Printf(8, "vertex stream 2: --------------------------\n");
@@ -43,6 +59,11 @@ void __cdecl R_VertexStream2_Init(unsigned int stream2ByteSize)
 bool __cdecl AllocateVertexStream2Buffer(unsigned int stream2ByteSize)
 {
     R_AllocDynamicVertexBuffer(&stream2VertexBuffer, stream2ByteSize);
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()) {
+        auto record=bo1::vulkan::buffer_assets::Acquire(&stream2VertexBuffer);return record&&record->gpu->Handle()&&record->gpu->Size()==stream2ByteSize;
+    }
+#endif
     return stream2VertexBuffer != 0;
 }
 
@@ -55,11 +76,22 @@ void __cdecl R_VertexStream2_Shutdown()
 
 void FreeVertexStream2Buffer()
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()) {bo1::vulkan::buffer_assets::Release(&stream2VertexBuffer);return;}
+#endif
     R_FreeStaticVertexBuffer(stream2VertexBuffer);
 }
 
 unsigned __int8 *__cdecl R_VertexStream2_Lock(unsigned int *stream2LockedSize)
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()) {
+        if(!stream2LockedSize) {Com_Error(ERR_FATAL,"Native stream2 lock has no size output");return nullptr;}
+        *stream2LockedSize=stream2AllocatedSize;if(!stream2AllocatedSize)return nullptr;
+        std::string error;auto* mapped=static_cast<unsigned char*>(bo1::vulkan::buffer_assets::MapDiscard(&stream2VertexBuffer,error,true));
+        if(!mapped)Com_Error(ERR_FATAL,"Native stream2 lock: %s",error.c_str());return mapped;
+    }
+#endif
     unsigned __int8 *result; // eax
 
     if ( stream2AllocatedSize )
@@ -77,6 +109,11 @@ unsigned __int8 *__cdecl R_VertexStream2_Lock(unsigned int *stream2LockedSize)
 
 void __cdecl R_VertexStream2_Unlock()
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()) {
+        if(stream2AllocatedSize)R_FinishStaticVertexBufferFromOwner(&stream2VertexBuffer);return;
+    }
+#endif
     if ( stream2AllocatedSize )
         R_UnlockVertexBuffer(stream2VertexBuffer);
 }

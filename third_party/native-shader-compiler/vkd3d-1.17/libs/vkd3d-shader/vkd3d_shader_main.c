@@ -939,6 +939,7 @@ struct vkd3d_shader_scan_context
         {
             VKD3D_SHADER_BLOCK_IF,
             VKD3D_SHADER_BLOCK_LOOP,
+            VKD3D_SHADER_BLOCK_REP,
             VKD3D_SHADER_BLOCK_SWITCH,
         } type;
         bool inside_block;
@@ -1048,7 +1049,7 @@ static struct vkd3d_shader_cf_info *vkd3d_shader_scan_find_innermost_breakable_c
     while (count)
     {
         cf_info = &context->cf_info[--count];
-        if (cf_info->type == VKD3D_SHADER_BLOCK_LOOP
+        if (cf_info->type == VKD3D_SHADER_BLOCK_LOOP || cf_info->type == VKD3D_SHADER_BLOCK_REP
                 || cf_info->type == VKD3D_SHADER_BLOCK_SWITCH)
             return cf_info;
     }
@@ -1065,7 +1066,7 @@ static struct vkd3d_shader_cf_info *vkd3d_shader_scan_find_innermost_loop_cf_inf
     while (count)
     {
         cf_info = &context->cf_info[--count];
-        if (cf_info->type == VKD3D_SHADER_BLOCK_LOOP)
+        if (cf_info->type == VKD3D_SHADER_BLOCK_LOOP || cf_info->type == VKD3D_SHADER_BLOCK_REP)
             return cf_info;
     }
 
@@ -1432,13 +1433,15 @@ static int vkd3d_shader_scan_instruction(struct vkd3d_shader_scan_context *conte
             }
             vkd3d_shader_scan_pop_cf_info(context);
             break;
+        case VSIR_OP_REP:
         case VSIR_OP_LOOP:
             cf_info = vkd3d_shader_scan_push_cf_info(context);
-            cf_info->type = VKD3D_SHADER_BLOCK_LOOP;
+            cf_info->type = instruction->opcode == VSIR_OP_REP ? VKD3D_SHADER_BLOCK_REP : VKD3D_SHADER_BLOCK_LOOP;
             cf_info->inside_block = true;
             break;
+        case VSIR_OP_ENDREP:
         case VSIR_OP_ENDLOOP:
-            if (!(cf_info = vkd3d_shader_scan_get_current_cf_info(context)) || cf_info->type != VKD3D_SHADER_BLOCK_LOOP)
+            if (!(cf_info = vkd3d_shader_scan_get_current_cf_info(context)) || cf_info->type != (instruction->opcode == VSIR_OP_ENDREP ? VKD3D_SHADER_BLOCK_REP : VKD3D_SHADER_BLOCK_LOOP))
             {
                 vkd3d_shader_scan_error(context, VKD3D_SHADER_ERROR_TPF_MISMATCHED_CF,
                         "Encountered ‘endloop’ instruction without corresponding ‘loop’ block.");
@@ -1543,6 +1546,9 @@ static int vkd3d_shader_scan_instruction(struct vkd3d_shader_scan_context *conte
         case VSIR_OP_GATHER4_C:
         case VSIR_OP_SAMPLE_B:
         case VSIR_OP_SAMPLE_C:
+        case VSIR_OP_SAMPLE_C_B:
+        case VSIR_OP_SAMPLE_C_GRAD:
+        case VSIR_OP_SAMPLE_C_LOD:
         case VSIR_OP_SAMPLE_C_LZ:
         case VSIR_OP_SAMPLE_GRAD:
         case VSIR_OP_SAMPLE_LOD:

@@ -281,7 +281,7 @@ double __cdecl randomhash(int value)
 
 void __cdecl PointInCircleFromUniformDeviates(float radiusDeviate, float yawDeviate, float *point)
 {
-    long double v3; // st7
+    double v3; // st7
     float r; // [esp+8h] [ebp-14h]
     float sinYaw; // [esp+14h] [ebp-8h]
     float cosYaw; // [esp+18h] [ebp-4h]
@@ -1457,7 +1457,7 @@ void __cdecl MatrixTransformVector43Equals(float *out, const float *in)
 
 void __cdecl VectorAngleMultiply(float *vec, float angle)
 {
-    long double v2; // st7
+    double v2; // st7
     float temp; // [esp+Ch] [ebp-Ch]
     float x; // [esp+10h] [ebp-8h]
     float y; // [esp+14h] [ebp-4h]

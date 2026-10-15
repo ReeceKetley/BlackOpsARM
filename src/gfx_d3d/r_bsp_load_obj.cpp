@@ -124,7 +124,7 @@ void __cdecl R_CreateWorldVertexBuffer(IDirect3DVertexBuffer9 **vb, int *srcData
         }
         dstData = R_AllocStaticVertexBuffer(vb, sizeInBytes);
         Com_Memcpy(dstData, srcData, sizeInBytes);
-        R_FinishStaticVertexBuffer(*vb);
+        R_FinishStaticVertexBufferFromOwner(vb);
     }
     else
     {

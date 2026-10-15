@@ -35,7 +35,7 @@ static char sgCopyrightString[] = "\r\n\r\n(C) 2004 ATI Research, Inc.\r\n\r\n";
 
    typedef float       float32;
    typedef double      float64;
-   //typedef long double float80; //Windows treats this the same as a double
+   //typedef double float80; //Windows treats this the same as a double
 
    //Unsigned
    typedef unsigned char    uint8;

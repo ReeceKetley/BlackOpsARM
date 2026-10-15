@@ -1,3 +1,9 @@
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+#include "gfx_vulkan/buffer_assets.h"
+#include "gfx_vulkan/constant_state.h"
+#include "gfx_vulkan/material_bindings.h"
+#include "gfx_vulkan/shader_assets.h"
+#endif
 #include "r_shade.h"
 #include "r_state.h"
 #include "r_dvars.h"
@@ -39,6 +45,23 @@ void __cdecl R_SetPassShaderPrimArguments(const GfxCmdBufContext context, unsign
 
 void __cdecl R_SetVertexShaderConstantFromCode_Old(GfxCmdBufContext context, const MaterialShaderArgument *routingData)
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if (bo1::vulkan::shader_assets::Active()) {
+        if(!context.state || !context.source || !routingData) {Com_Error(ERR_FATAL,"Invalid native vertex code constant owner");return;}
+        const auto route=routingData->u.codeConst;const float* data;
+        if(route.index<CONST_SRC_FIRST_CODE_MATRIX) {
+            if(route.rowCount!=1 || !context.source->constVersions[route.index]) {Com_Error(ERR_FATAL,"Invalid native code constant version/count");return;}
+            data=R_GetCodeConstant(context,route.index);
+        } else {
+            if(!route.rowCount || route.firstRow>=4 || route.rowCount>4-route.firstRow) {Com_Error(ERR_FATAL,"Invalid native matrix rows");return;}
+            data=R_GetCodeMatrix(context.source,route.index,route.firstRow);
+        }
+        std::string error;
+        if(!bo1::vulkan::constant_state::Set(context.state,bo1::vulkan::ShaderStage::Vertex,routingData->dest,route.rowCount,data,error)) {Com_Error(ERR_FATAL,"Native code vertex constants: %s",error.c_str());return;}
+        for(unsigned row=0;row<route.rowCount;++row)context.state->vertexShaderConstState[routingData->dest+row]=~std::uint64_t(0);
+        return;
+    }
+#endif
     const char *v2; // eax
     const char *v3; // eax
     unsigned int rowCount; // [esp+30h] [ebp-28h]
@@ -175,6 +198,23 @@ void __cdecl R_SetVertexShaderConstantFromCode_New(
     const GfxCmdBufContext context,
     const MaterialShaderArgument *routingData)
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if (bo1::vulkan::shader_assets::Active()) {
+        if(!context.state || !context.source || !routingData) {Com_Error(ERR_FATAL,"Invalid native vertex code constant owner");return;}
+        const auto route=routingData->u.codeConst;const float* data;
+        if(route.index<CONST_SRC_FIRST_CODE_MATRIX) {
+            if(route.rowCount!=1 || !context.source->constVersions[route.index]) {Com_Error(ERR_FATAL,"Invalid native code constant version/count");return;}
+            data=R_GetCodeConstant(context,route.index);
+        } else {
+            if(!route.rowCount || route.firstRow>=4 || route.rowCount>4-route.firstRow) {Com_Error(ERR_FATAL,"Invalid native matrix rows");return;}
+            data=R_GetCodeMatrix(context.source,route.index,route.firstRow);
+        }
+        std::string error;
+        if(!bo1::vulkan::constant_state::Set(context.state,bo1::vulkan::ShaderStage::Vertex,routingData->dest,route.rowCount,data,error)) {Com_Error(ERR_FATAL,"Native code vertex constants: %s",error.c_str());return;}
+        for(unsigned row=0;row<route.rowCount;++row)context.state->vertexShaderConstState[routingData->dest+row]=~std::uint64_t(0);
+        return;
+    }
+#endif
     const char *v2; // eax
     const char *v3; // eax
     const char *v4; // eax
@@ -406,6 +446,13 @@ void __cdecl R_SetPassPixelShaderStableArguments(const GfxCmdBufContext context,
 
 void __cdecl R_SetPixelShaderConstantFromLiteral(GfxCmdBufState *state, unsigned int dest, const float *literal)
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if (bo1::vulkan::shader_assets::Active()) {
+        std::string error;
+        if(!bo1::vulkan::constant_state::Set(state,bo1::vulkan::ShaderStage::Fragment,dest,1,literal,error)) {Com_Error(ERR_FATAL,"Native literal constant: %s",error.c_str());return;}
+        state->pixelShaderConstState[dest]=~std::uint64_t(0);return;
+    }
+#endif
     if ( dest >= 0x100
         && !Assert_MyHandler(
                     "c:\\projects_pc\\cod\\codsrc\\src\\gfx_d3d\\r_state.h",
@@ -476,6 +523,16 @@ int __cdecl R_IsPixelShaderConstantUpToDate(const GfxCmdBufContext context, cons
 
 void __cdecl R_SetPixelShaderConstantFromCode(const GfxCmdBufContext context, const MaterialShaderArgument *routingData)
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if (bo1::vulkan::shader_assets::Active()) {
+        if(!context.state || !context.source || !routingData || routingData->u.codeConst.index>=CONST_SRC_FIRST_CODE_MATRIX
+            || routingData->u.codeConst.rowCount!=1 || !context.source->constVersions[routingData->u.codeConst.index]) {Com_Error(ERR_FATAL,"Invalid native pixel code constant");return;}
+        std::string error;
+        if(!bo1::vulkan::constant_state::Set(context.state,bo1::vulkan::ShaderStage::Fragment,routingData->dest,1,R_GetCodeConstant(context,routingData->u.codeConst.index),error))
+            Com_Error(ERR_FATAL,"Native pixel code constant: %s",error.c_str());
+        return;
+    }
+#endif
     iassert(context.source->constVersions[routingData->u.codeConst.index]);
     //bcassert(routingData->u.codeConst.index, CONST_SRC_FIRST_CODE_MATRIX);
 
@@ -760,6 +817,13 @@ void __cdecl R_SetPassShaderStableArguments(
 
 void __cdecl R_SetVertexShaderConstantFromLiteral(GfxCmdBufState *state, unsigned int dest, const float *literal)
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if (bo1::vulkan::shader_assets::Active()) {
+        std::string error;
+        if(!bo1::vulkan::constant_state::Set(state,bo1::vulkan::ShaderStage::Vertex,dest,1,literal,error)) {Com_Error(ERR_FATAL,"Native literal constant: %s",error.c_str());return;}
+        state->vertexShaderConstState[dest]=~std::uint64_t(0);return;
+    }
+#endif
     const char *v3; // eax
     const char *v4; // eax
     int v5; // [esp+30h] [ebp-18h]
@@ -843,6 +907,20 @@ int __cdecl R_ReserveIndexData(GfxCmdBufPrimState *state, int triCount)
 
 int __cdecl R_SetIndexData(GfxCmdBufPrimState *state, unsigned __int8 *indices, int triCount)
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()) {
+        auto* ib=gfxBuf.dynamicIndexBuffer;
+        if(!state||!ib||triCount<=0||triCount>ib->total/3||!indices) {Com_Error(ERR_FATAL,"Invalid native dynamic index upload");return 0;}
+        const int baseIndex=R_ReserveIndexData(state,triCount);
+        ib=gfxBuf.dynamicIndexBuffer;
+        std::string error;
+        if(!bo1::vulkan::buffer_assets::Write(&ib->buffer,static_cast<std::size_t>(baseIndex)*2,indices,static_cast<std::size_t>(triCount)*6,error)) {
+            Com_Error(ERR_FATAL,"Native dynamic index upload: %s",error.c_str());return 0;
+        }
+        R_ChangeIndicesFromOwner(state,&ib->buffer);
+        ib->used=baseIndex+triCount*3;return baseIndex;
+    }
+#endif
     unsigned __int8 *v3; // eax
     int baseIndex; // [esp+0h] [ebp-18h]
     unsigned int indexDataSize; // [esp+4h] [ebp-14h]
@@ -871,6 +949,13 @@ int __cdecl R_SetIndexData(GfxCmdBufPrimState *state, unsigned __int8 *indices, 
 
 void __cdecl R_SetPixelShader(GfxCmdBufState *state, const MaterialPixelShader *pixelShader)
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()) {
+        std::string error;
+        if(!bo1::vulkan::material_bindings::Pixel(state,pixelShader,error)) {Com_Error(ERR_FATAL,"Native shader selection: %s",error.c_str());return;}
+        state->pixelShader=pixelShader;return;
+    }
+#endif
     if ( !pixelShader
         && !Assert_MyHandler("C:\\projects_pc\\cod\\codsrc\\src\\gfx_d3d\\r_shade.cpp", 1039, 0, "%s", "pixelShader") )
     {
@@ -896,6 +981,13 @@ void __cdecl R_SetPixelShader(GfxCmdBufState *state, const MaterialPixelShader *
 
 void __cdecl R_UpdateVertexDecl(GfxCmdBufState *state)
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()) {
+        std::string error;
+        if(!state || !state->pass || !bo1::vulkan::material_bindings::Declaration(state,state->pass->vertexDecl,unsigned(state->prim.vertDeclType),error)) {Com_Error(ERR_FATAL,"Native pass declaration: %s",error.c_str());return;}
+        R_SetVertexShader(state,state->pass->vertexShader);return;
+    }
+#endif
     const MaterialPass *pass; // [esp+14h] [ebp-8h]
     const MaterialVertexShader *vertexShader; // [esp+18h] [ebp-4h]
 
@@ -939,6 +1031,13 @@ void __cdecl R_UpdateVertexDecl(GfxCmdBufState *state)
 
 void __cdecl R_SetVertexShader(GfxCmdBufState *state, const MaterialVertexShader *vertexShader)
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()) {
+        std::string error;
+        if(!bo1::vulkan::material_bindings::Vertex(state,vertexShader,error)) {Com_Error(ERR_FATAL,"Native shader selection: %s",error.c_str());return;}
+        state->vertexShader=vertexShader;return;
+    }
+#endif
     if ( state->vertexShader != vertexShader )
     {
         if ( !vertexShader
@@ -1033,6 +1132,22 @@ void __cdecl R_SetState(GfxCmdBufState *state, unsigned int *stateBits)
 
 int __cdecl R_SetVertexData(GfxCmdBufState *state, const void *data, int vertexCount, int stride)
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()) {
+        auto* vb=gfxBuf.dynamicVertexBuffer;
+        if(!state||!vb||!data||vertexCount<=0||stride<=0||vb->total<=0||vb->used>static_cast<unsigned>(vb->total)
+            ||static_cast<std::size_t>(vertexCount)>static_cast<std::size_t>(vb->total-vb->used)/static_cast<unsigned>(stride)) {
+            Com_Error(ERR_FATAL,"Invalid native dynamic vertex upload");return 0;
+        }
+        const unsigned offset=vb->used;
+        const std::size_t bytes=static_cast<std::size_t>(vertexCount)*stride;
+        std::string error;
+        if(!bo1::vulkan::buffer_assets::Write(&vb->buffer,offset,data,bytes,error)) {
+            Com_Error(ERR_FATAL,"Native dynamic vertex upload: %s",error.c_str());return 0;
+        }
+        vb->used+=static_cast<unsigned>(bytes);return static_cast<int>(offset);
+    }
+#endif
     IDirect3DVertexBuffer9 *vb; // [esp+0h] [ebp-14h]
     volatile int vertexOffset; // [esp+4h] [ebp-10h]
     void *bufferData; // [esp+Ch] [ebp-8h]

@@ -1,3 +1,7 @@
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+#include "gfx_vulkan/shader_assets.h"
+#include "gfx_vulkan/render_targets.h"
+#endif
 #include "rb_state.h"
 #include "r_rendercmds.h"
 #include "r_state_utils.h"
@@ -25,12 +29,22 @@ void __cdecl RB_SetInitialState()
   R_InitCmdBufState(&gfxCmdBufState);
   RB_InitSceneViewport();
 
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+  if(bo1::vulkan::shader_assets::Active()) {
+      auto target=bo1::vulkan::render_targets::Acquire(&gfxRenderTargets[R_RENDERTARGET_FRAME_BUFFER]);
+      iassert(target&&target->color&&target->color->texture);
+      if(!g_allocateMinimalResources)iassert(target->depth&&target->depth->texture);
+  } else {
+#endif
   iassert(gfxRenderTargets[R_RENDERTARGET_FRAME_BUFFER].surface.color);
   if (!g_allocateMinimalResources)
   {
       iassert(gfxRenderTargets[R_RENDERTARGET_FRAME_BUFFER].surface.depthStencil);
   }
 
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+  }
+#endif
   iassert(gfxRenderTargets[R_RENDERTARGET_FRAME_BUFFER].width);
   iassert(gfxRenderTargets[R_RENDERTARGET_FRAME_BUFFER].height);
   iassert(gfxCmdBufSourceState.renderTargetWidth == 0);
@@ -57,7 +71,11 @@ void __cdecl RB_UnbindAllImages()
 {
     unsigned int samplerIndex; // [esp+0h] [ebp-8h]
 
-    if ( dx.device )
+    if (
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+bo1::vulkan::shader_assets::Active()||
+#endif
+ dx.device )
     {
         for ( samplerIndex = 0; samplerIndex < vidConfig.maxTextureMaps; ++samplerIndex )
             R_DisableSampler(&gfxCmdBufState, samplerIndex);

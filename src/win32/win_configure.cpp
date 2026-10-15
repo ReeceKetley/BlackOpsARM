@@ -2,7 +2,7 @@
 #include <platform/common_boot_api.h>
 #include <qcommon/sys_info.h>
 void Sys_GetPhysicalCpuCount(SysInfo *);
-long double Sys_BenchmarkGHz();
+double Sys_BenchmarkGHz();
 #else
 #include "win_configure.h"
 
@@ -492,7 +492,7 @@ void __cdecl Sys_SetAutoConfigureGHz(SysInfo *sysInfo)
     sysInfo->configureGHz = Sys_BenchmarkGHz() * multiCpuFactor;
 }
 
-long double __cdecl Sys_BenchmarkGHz()
+double __cdecl Sys_BenchmarkGHz()
 {
     // BO1TODO
 #if 0

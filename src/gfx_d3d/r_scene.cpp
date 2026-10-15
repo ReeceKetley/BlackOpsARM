@@ -530,8 +530,8 @@ void __cdecl R_AddOmniLightToScene(const float *org, const float (*axis)[3], int
     int integer; // xmm0_4
     int v7; // xmm0_4
     float v8; // xmm0_4
-    long double v9; // [esp-50h] [ebp-6Ch]
-    long double v10; // [esp-48h] [ebp-64h]
+    double v9; // [esp-50h] [ebp-6Ch]
+    double v10; // [esp-48h] [ebp-64h]
     float v11; // [esp-40h] [ebp-5Ch]
     float v12; // [esp-3Ch] [ebp-58h]
     float v13; // [esp-38h] [ebp-54h]
@@ -794,12 +794,12 @@ void __cdecl R_AddSpotLightToScene(const float *org, const float (*axis)[3], flo
 {
     double v6; // xmm0_8
     float v7; // xmm0_4
-    long double v8; // [esp+10h] [ebp-6Ch]
-    long double v9; // [esp+10h] [ebp-6Ch]
-    long double v10; // [esp+10h] [ebp-6Ch]
-    long double v11; // [esp+10h] [ebp-6Ch]
-    long double v12; // [esp+10h] [ebp-6Ch]
-    long double v13; // [esp+18h] [ebp-64h]
+    double v8; // [esp+10h] [ebp-6Ch]
+    double v9; // [esp+10h] [ebp-6Ch]
+    double v10; // [esp+10h] [ebp-6Ch]
+    double v11; // [esp+10h] [ebp-6Ch]
+    double v12; // [esp+10h] [ebp-6Ch]
+    double v13; // [esp+18h] [ebp-64h]
     float value; // [esp+1Ch] [ebp-60h]
     float v15; // [esp+28h] [ebp-54h]
     float v16; // [esp+2Ch] [ebp-50h]
@@ -2521,7 +2521,7 @@ void    R_SetSkyDynamicIntensity(const float *viewForward, GfxCmdBufInput *input
 {
 #if 0
     float value; // xmm0_4
-    long double v4; // [esp+1Ch] [ebp-8Ch] BYREF
+    double v4; // [esp+1Ch] [ebp-8Ch] BYREF
     char textBuff[64]; // [esp+28h] [ebp-80h]
     Font_s *v6; // [esp+68h] [ebp-40h]
     float textY; // [esp+6Ch] [ebp-3Ch]
@@ -4265,7 +4265,11 @@ void __cdecl R_SetDepthOfField(GfxViewInfo *viewInfo, const GfxSceneParms *scene
         }
         if ( !dx.supportsIntZ )
         {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+            if (!R_HaveNativeFloatZ(false))
+#else
             if (!gfxRenderTargets[R_RENDERTARGET_FLOAT_Z].surface.color)
+#endif
                 Com_Error(
                     ERR_FATAL,
                     "Depth of field used (enabled via r_dof_enable or r_dof_tweak) with no float-z buffer (r_floatz wasn't enabled "
@@ -4396,8 +4400,8 @@ void __cdecl R_SetPoisonFx(GfxViewInfo *viewInfo, const GfxSceneParms *sceneParm
 {
     float curAmount; // edx
     double v3; // xmm0_8
-    long double POISON_BLUR_SLOW; // [esp+0h] [ebp-1Ch]
-    long double POISON_BLUR_SLOWa; // [esp+0h] [ebp-1Ch]
+    double POISON_BLUR_SLOW; // [esp+0h] [ebp-1Ch]
+    double POISON_BLUR_SLOWa; // [esp+0h] [ebp-1Ch]
     float blend; // [esp+4h] [ebp-18h]
     float blenda; // [esp+4h] [ebp-18h]
     float blur1; // [esp+8h] [ebp-14h]
@@ -5578,7 +5582,11 @@ char __cdecl R_DoesDrawSurfListInfoNeedFloatz(GfxViewInfo *viewInfo, GfxDrawSurf
                 break;
         }
     }
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if (!R_HaveNativeFloatZ(viewInfo->isMissileCamera))
+#else
     if (!gfxRenderTargets[viewInfo->isMissileCamera ? R_RENDERTARGET_FLOAT_Z_MISSILE_CAM : R_RENDERTARGET_FLOAT_Z].surface.color)
+#endif
         Com_Error(ERR_FATAL, "Renderer attempted to use technique that uses floatz buffer, but it wasn't created.\n");
     return 1;
 }

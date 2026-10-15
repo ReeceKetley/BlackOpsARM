@@ -1,3 +1,7 @@
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+#include "gfx_vulkan/image_uploads.h"
+#include "gfx_vulkan/shader_assets.h"
+#endif
 #include "rb_resource.h"
 #include <qcommon/threads.h>
 #include <universal/timing.h>
@@ -327,6 +331,11 @@ void RB_Resource_Update_Internal()
                             data += Image_GetCardMemoryAmountForMipLevel(imageFormat, v3, v2, v1);
                         }
                     }
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+                    if(bo1::vulkan::shader_assets::Active()) {
+                        if(!bo1::vulkan::image_assets::Acquire(image))Com_Error(ERR_FATAL,"Native preload image owner missing");
+                    } else
+#endif
                     image->texture.basemap->PreLoad();
                     Z_VirtualFree(action->data, 20);
                 }
@@ -405,7 +414,7 @@ void RB_Resource_Update_Internal()
                     return;
                 Com_Memcpy(indexBuffer, src, rawIndexBytes);
                 memset(&indexBuffer[rawIndexBytes], 0, indexBytes - rawIndexBytes);
-                R_FinishStaticIndexBuffer(*ib);
+                R_FinishStaticIndexBufferFromOwner(ib);
 LABEL_2:
                 ++resourceIndex;
                 break;
@@ -413,6 +422,11 @@ LABEL_2:
                 goto LABEL_2;
         }
     }
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()) {
+        std::string error;if(!bo1::vulkan::image_uploads::Flush(error))Com_Error(ERR_FATAL,"Native image upload flush: %s",error.c_str());
+    }
+#endif
     Sys_ClearResourcesQueuedEvent();
     Sys_SetResourcesFlushedEvent();
     numResourceActions = 0;

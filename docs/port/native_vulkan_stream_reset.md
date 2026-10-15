@@ -1,0 +1,7 @@
+# Native vertex-stream reset
+
+Stage49, 2026-10-15. Canonical R_ClearAllStreamSources now clears actual geometry sidecars independently of NULL COM handles. ClearVertices clones the current immutable snapshot, clears all three vertex streams, and preserves the index record. Previously captured snapshots retain real buffers for fence retirement. Null command owners fail explicitly; clearing an already-unbound owner is valid. Canonical metadata offsets/strides are zeroed as before. Raw nonzero R_ChangeStreamSource still requires an owner-aware port; no dummy handles added.
+
+SDK563/stage132 passes the previous stream-reset failure and reaches RB_SwapBuffers after actual scene-end Vulkan submission/wait. Next old IDirect3DSwapChain9::Present NULL call. PID14734 actually terminated; follow confirms absence. No native compositor output or Com_Init return proved by that run. Stage50 now integrates real window sampling/presentation separately.
+
+ARM64 build passes. Legacy r_state16748tokens equal after native guards removed and appended owner helpers excluded. Proof stored with stage50: build-android-audit/native-window-stage50-legacy-proof.json. Evidence native-stream-stage49-build1.log, native-stream-stage49-launch1.log, native-stream-stage49-follow1.log and native_registry_closure/sdk563-stream-final-entry.log. No extra asset transfers or broad historical test reruns. Independent old-snapshot GPU-draw/reset coverage is pending; source implements immutable copy preserving borrowers.

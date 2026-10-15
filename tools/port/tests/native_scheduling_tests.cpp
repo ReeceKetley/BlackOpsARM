@@ -21,7 +21,11 @@ void Check(bool ok,const char *reason){if(!ok){std::fprintf(stderr,"FAIL: %s\n",
 void WaitReady(){for(int i=0;i<5000;++i){if(ready.load()==4)return;std::this_thread::sleep_for(std::chrono::milliseconds(1));}_exit(92);}
 bo1::android::SchedulingState Observe(ThreadContext_t role){
     bo1::android::SchedulingState state{};Check(bo1::android::ReadSchedulingState(role,&state),"actual live scheduling role");
-    cpu_set_t kernel{};Check(!sched_getaffinity(state.tid,sizeof(kernel),&kernel) && CPU_EQUAL(&kernel,&state.currentAffinity),"reported affinity equals actual kernel state");
+    // The kernel's effective mask is the requested mask limited to active
+    // (non-paused) CPUs; it must be a non-empty subset of the observed request.
+    cpu_set_t kernel{},outside{};Check(!sched_getaffinity(state.tid,sizeof(kernel),&kernel) && CPU_COUNT(&kernel),"actual effective kernel affinity read");
+    CPU_XOR(&outside,&kernel,&state.currentAffinity);CPU_AND(&outside,&outside,&kernel);
+    Check(!CPU_COUNT(&outside),"effective kernel affinity lies within reported requested affinity");
     errno=0;const int nice=getpriority(PRIO_PROCESS,state.tid);Check(!errno && nice==state.currentNice,"reported nice equals actual kernel state");return state;
 }
 void Worker(ThreadContext_t role){

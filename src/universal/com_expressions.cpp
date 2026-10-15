@@ -1,3 +1,4 @@
+#include <platform/bo1_native_width.h>
 #include "com_expressions.h"
 #include "com_memory.h"
 #include "q_parse.h"
@@ -569,7 +570,13 @@ expressionRpn *__cdecl MakeRPN(expressionEntry *entry, int *length)
                 __debugbreak();
             }
             prog[idxProg].type = 0;
+#if defined(__ANDROID__) && BO1_NATIVE_64BIT
+            // Parser-generated runtime operands may contain native strings.
+            // Copy the full union, not the overlapping four-byte integer lane.
+            v2 = entry->data.operand.internals;
+#else
             v2.intVal = entry->data.operand.internals.intVal;
+#endif
             v3 = idxProg;
             prog[v3].data.cmdIdx = entry->data.op;
             prog[v3].data.constant.internals = v2;

@@ -1,3 +1,8 @@
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+#include "gfx_vulkan/shader_assets.h"
+#include "gfx_vulkan/buffer_assets.h"
+#include "r_meshdata.h"
+#endif
 #include <platform/bo1_native_width.h>
 #include "rb_tess.h"
 #include "r_dvars.h"
@@ -20,6 +25,25 @@
 #include "rb_draw3d.h"
 #include "r_mapkit_render.h"
 #include <qcommon/cm_mapkit.h>
+
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+static unsigned int R_NativeMeshVertexCount(const GfxMeshData* mesh, unsigned int maxVertices)
+{
+    // D3D advertises the entire mesh capacity, while the native upload publishes
+    // only this frame's used prefix. Describe that actual immutable payload.
+    const auto record=mesh?bo1::vulkan::buffer_assets::Acquire(&mesh->vb.buffer):nullptr;
+    if(!mesh||!mesh->vertSize||mesh->vb.total<=0||!record||record->kind!=bo1::vulkan::buffer_assets::Kind::Vertex) {
+        Com_Error(ERR_FATAL,"Native mesh has no real uploaded vertex owner");return 0;
+    }
+    const unsigned int used=mesh->vb.used;
+    const unsigned int capacity=static_cast<unsigned int>(mesh->vb.total);
+    const unsigned int bytes=used<capacity?used:capacity;
+    if(!bytes||bytes%mesh->vertSize||record->payloadBytes!=bytes||bytes/mesh->vertSize>maxVertices) {
+        Com_Error(ERR_FATAL,"Native mesh vertex payload does not match its published frame");return 0;
+    }
+    return bytes/mesh->vertSize;
+}
+#endif
 
 GfxScaledPlacement s_manualObjectPlacement;
 
@@ -201,6 +225,9 @@ unsigned int __cdecl R_TessCodeMeshList(const GfxDrawSurfListArgs *listArgs, Gfx
     indices = 0;
     args.baseIndex = 0;
     args.vertexCount = 0x4000;
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active())args.vertexCount=R_NativeMeshVertexCount(data->codeMeshPtr,0x4000u);
+#endif
     args.triCount = 0;
     drawSurfKey = drawSurf.packed & 0xFFFFFFFFF00F0000uLL;
     R_TrackPrims(&context.state->prim, GFX_PRIM_STATS_FX);
@@ -338,6 +365,9 @@ unsigned int __cdecl R_TessRopeMeshList(const GfxDrawSurfListArgs *listArgs, Gfx
     indices = 0;
     args.baseIndex = 0;
     args.vertexCount = 0x4000;
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active())args.vertexCount=R_NativeMeshVertexCount(data->codeMeshPtr,0x4000u);
+#endif
     args.triCount = 0;
     drawSurfKey = drawSurf.packed & 0xFFFFFFFFF00F0000uLL;
     R_TrackPrims(&context.state->prim, GFX_PRIM_STATS_FX);
@@ -454,6 +484,9 @@ unsigned int __cdecl R_TessGlassMeshList(const GfxDrawSurfListArgs *listArgs, Gf
     R_SetMeshStream(context.state, data->codeMeshPtr);
     args.baseIndex = 0;
     args.vertexCount = 0x4000;
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active())args.vertexCount=R_NativeMeshVertexCount(data->codeMeshPtr,0x4000u);
+#endif
     args.triCount = 0;
     drawSurfKey = drawSurf.packed & 0xFFFFFFFFF00F0000uLL;
     R_TrackPrims(&context.state->prim, GFX_PRIM_STATS_FX);
@@ -592,6 +625,10 @@ unsigned int __cdecl R_TessMarkMeshList(const GfxDrawSurfListArgs *listArgs, Gfx
     indices = 0;
     args.baseIndex = 0;
     args.vertexCount = 6144;
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    // Bullet marks publish only the current frame's used vertex prefix.
+    if(bo1::vulkan::shader_assets::Active())args.vertexCount=R_NativeMeshVertexCount(meshData,6144u);
+#endif
     args.triCount = 0;
     drawSurfSubMask.packed = -65536;
     if (baseTechType != 10)
@@ -850,9 +887,18 @@ unsigned int __cdecl R_TessParticleCloudList(const GfxDrawSurfListArgs *listArgs
     }
     if (data->clouds[LOWORD(drawSurf.packed)].gaussian)
         offset += 1024;
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()) {
+        R_ChangeIndicesFromOwner(&context.state->prim,&gfxBuf.particleCloudIndexBuffer);
+        R_SetStreamSourceFromOwner(&context.state->prim,&gfxBuf.particleCloudVertexBuffer,0,8u);
+    } else {
+#endif
     if (context.state->prim.indexBuffer != gfxBuf.particleCloudIndexBuffer)
         R_ChangeIndices(&context.state->prim, gfxBuf.particleCloudIndexBuffer);
     R_SetStreamSource(&context.state->prim, gfxBuf.particleCloudVertexBuffer, 0, 8u);
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    }
+#endif
     if ((const GfxParticleCloud *)commonSource->objectPlacement != cloud)
     {
         commonSource->objectPlacement = &cloud->placement;
@@ -1137,6 +1183,12 @@ void __cdecl R_DrawXModelSkinnedCached(GfxCmdBufContext context, const GfxModelS
     args.vertexCount = xsurf->vertCount;
     args.triCount = xsurf->triCount;
     context.state->prim.frameStats.geoIndexCount += 3 * args.triCount;
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()) {
+        R_ChangeIndicesFromOwner(&context.state->prim,&xsurf->indexBuffer);
+        R_SetStreamSourceFromOwner(&context.state->prim,&context.source->input.data->skinnedCacheVb->buffer,modelSurf->skinnedCachedOffset,32);
+    } else {
+#endif
     ib = xsurf->indexBuffer;
     if ( !ib && !Assert_MyHandler("C:\\projects_pc\\cod\\codsrc\\src\\gfx_d3d\\rb_tess.cpp", 1415, 0, "%s", "ib") )
         __debugbreak();
@@ -1144,6 +1196,9 @@ void __cdecl R_DrawXModelSkinnedCached(GfxCmdBufContext context, const GfxModelS
     if ( context.state->prim.indexBuffer != ib )
         R_ChangeIndices(&context.state->prim, ib);
     R_SetStreamSource(&context.state->prim, data->skinnedCacheVb->buffer, modelSurf->skinnedCachedOffset, 0x20u);
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    }
+#endif
     R_DrawIndexedPrimitive(&context.state->prim, &args);
     if ( context.state->prim.primStats )
     {
@@ -1178,9 +1233,17 @@ void __cdecl R_DrawXModelSkinnedUncached(GfxCmdBufContext context, XSurface *xsu
     args.baseIndex = R_SetIndexData(&context.state->prim, (unsigned __int8 *)xsurf->triIndices, args.triCount);
     R_CheckVertexDataOverflow(32 * args.vertexCount);
     vertexOffset = R_SetVertexData(context.state, skinnedVert, args.vertexCount, 32);
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active())
+        R_SetStreamSourceFromOwner(&context.state->prim,&gfxBuf.dynamicVertexBuffer->buffer,vertexOffset,32);
+    else {
+#endif
     vb = gfxBuf.dynamicVertexBuffer->buffer;
     iassert(vb);
     R_SetStreamSource(&context.state->prim, vb, vertexOffset, 0x20u);
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    }
+#endif
     R_DrawIndexedPrimitive(&context.state->prim, &args);
 
     iassert(context.state->prim.primStats);
@@ -2328,9 +2391,19 @@ unsigned int __cdecl R_TessTrianglesPreTessList(const GfxDrawSurfListArgs *listA
     if (depthRangeType != context.state->depthRangeType)
         R_ChangeDepthRange(context.state, depthRangeType);
     data = commonSource->input.data;
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()) {
+        if(!data->preTessIb){Com_Error(ERR_FATAL,"Native pre-tess draw has no index-buffer owner");return 0;}
+        R_ChangeIndicesFromOwner(&context.state->prim,&data->preTessIb->buffer);
+    } else {
+#endif
     ib = data->preTessIb->buffer;
     if (context.state->prim.indexBuffer != ib)
         R_ChangeIndices(&context.state->prim, ib);
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    }
+#endif
+
     primDrawSurfPos = &data->primDrawSurfsBuf[(unsigned __int16)*(_DWORD *)&info->drawSurfs[listArgs->firstDrawSurfIndex].fields];
     R_TrackPrims(&context.state->prim, GFX_PRIM_STATS_WORLD);
     if (baseTechType == 10)

@@ -1,3 +1,6 @@
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+#include "gfx_vulkan/engine_query_adapters.h"
+#endif
 #include "rb_corona.h"
 #if defined(__ANDROID__)
 #include <platform/win32_compat/win32_time.h>
@@ -486,13 +489,25 @@ void __cdecl RB_DrawCoronaQuerySprite(Corona *corona)
         {
             __debugbreak();
         }
-        if ( corona->query[queryIndex] && corona->queryMax[queryIndex] )
+        if (
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+bo1::vulkan::engine_queries::Active()?(RB_HW_HasOcclusionQueryFromOwner(&corona->query[queryIndex])&&RB_HW_HasOcclusionQueryFromOwner(&corona->queryMax[queryIndex])):
+#endif
+corona->query[queryIndex] && corona->queryMax[queryIndex] )
         {
             error = 0;
             if ( corona->queryIssued[queryIndex] )
             {
-                numVisible = RB_HW_ReadOcclusionQuery(corona->query[queryIndex]);
-                totalPixels = RB_HW_ReadOcclusionQuery(corona->queryMax[queryIndex]);
+                numVisible =
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+bo1::vulkan::engine_queries::Active()?bo1::vulkan::engine_queries::Read(&corona->query[queryIndex]):
+#endif
+RB_HW_ReadOcclusionQuery(corona->query[queryIndex]);
+                totalPixels =
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+bo1::vulkan::engine_queries::Active()?bo1::vulkan::engine_queries::Read(&corona->queryMax[queryIndex]):
+#endif
+RB_HW_ReadOcclusionQuery(corona->queryMax[queryIndex]);
                 if ( numVisible == -1 || totalPixels == -1 )
                     error = 1;
                 if ( numVisible > totalPixels )
@@ -522,15 +537,27 @@ void __cdecl RB_DrawCoronaQuerySprite(Corona *corona)
             }
             if ( !error )
                 corona->targetVisibility = targetVisibility;
-            RB_HW_BeginOcclusionQuery(corona->query[queryIndex]);
+            #if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+if(bo1::vulkan::engine_queries::Active())bo1::vulkan::engine_queries::Issue(&corona->query[queryIndex],D3DISSUE_BEGIN);else
+#endif
+RB_HW_BeginOcclusionQuery(corona->query[queryIndex]);
             RB_DrawCoronaSprite(corona, rgp.additiveMaterial, (GfxColor)-16777216, 10.0, 1);
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+            if(bo1::vulkan::engine_queries::Active())bo1::vulkan::engine_queries::Issue(&corona->query[queryIndex],1u);else
+#endif
             corona->query[queryIndex]->Issue(1u);
-            RB_HW_BeginOcclusionQuery(corona->queryMax[queryIndex]);
+            #if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+if(bo1::vulkan::engine_queries::Active())bo1::vulkan::engine_queries::Issue(&corona->queryMax[queryIndex],D3DISSUE_BEGIN);else
+#endif
+RB_HW_BeginOcclusionQuery(corona->queryMax[queryIndex]);
             RB_DrawCoronaSprite(corona, rgp.additiveMaterialNoDepth, (GfxColor)-16777216, 10.0, 1);
             //((void (__thiscall *)(IDirect3DQuery9 *, IDirect3DQuery9 *, int))corona->queryMax[queryIndex]->Issue)(
             //    corona->queryMax[queryIndex],
             //    corona->queryMax[queryIndex],
             //    1);
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+            if(bo1::vulkan::engine_queries::Active())bo1::vulkan::engine_queries::Issue(&corona->queryMax[queryIndex],1);else
+#endif
             corona->queryMax[queryIndex]->Issue(1);
             corona->queryIssued[queryIndex] = 1;
         }
@@ -612,7 +639,13 @@ void __cdecl RB_AllocCoronaSpriteQuery(Corona *corona)
 
     for ( queryIndex = 0; queryIndex < 5; ++queryIndex )
     {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+        if(bo1::vulkan::engine_queries::Active())RB_HW_AllocOcclusionQueryFromOwner(&corona->query[queryIndex]);else
+#endif
         corona->query[queryIndex] = RB_HW_AllocOcclusionQuery();
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+        if(bo1::vulkan::engine_queries::Active())RB_HW_AllocOcclusionQueryFromOwner(&corona->queryMax[queryIndex]);else
+#endif
         corona->queryMax[queryIndex] = RB_HW_AllocOcclusionQuery();
     }
 }
@@ -642,6 +675,9 @@ void __cdecl RB_FreeCoronaSpriteQuery(Corona *corona)
 
     for ( queryIndex = 0; queryIndex < 5; ++queryIndex )
     {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+        if(bo1::vulkan::engine_queries::Active()) {RB_HW_ReleaseOcclusionQueryFromOwner(&corona->queryMax[queryIndex]);RB_HW_ReleaseOcclusionQueryFromOwner(&corona->query[queryIndex]);continue;}
+#endif
         if ( corona->queryMax[queryIndex] )
         {
             do

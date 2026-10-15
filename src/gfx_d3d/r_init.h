@@ -867,6 +867,11 @@ void R_InitGamma();
 void __cdecl R_FinishAttachingToWindow(const GfxWindowParms *wndParms);
 char __cdecl R_CreateForInitOrReset();
 IDirect3DQuery9 *__cdecl RB_HW_AllocOcclusionQuery();
+void RB_HW_AllocOcclusionQueryFromOwner(IDirect3DQuery9**);
+bool RB_HW_HasOcclusionQueryFromOwner(IDirect3DQuery9* const*);
+HRESULT RB_HW_IssueOcclusionQueryFromOwner(IDirect3DQuery9* const*,unsigned);
+HRESULT RB_HW_ReadOcclusionQueryFromOwner(IDirect3DQuery9* const*,unsigned*,unsigned);
+void RB_HW_ReleaseOcclusionQueryFromOwner(IDirect3DQuery9**);
 char __cdecl R_CreateWindow(GfxWindowParms *wndParms);
 char __cdecl R_ReduceWindowSettings();
 // borderless: BO1Zombies's own full-screen borderless window (r_fullscreen 0 + r_borderless 1), see r_init.cpp
@@ -911,3 +916,6 @@ extern GfxAssets gfxAssets;
 extern int g_disableRendering;
 
 extern bool g_allocateMinimalResources;
+
+namespace bo1::vulkan {struct HardwareInfo;}
+void R_StoreNativeDeviceCaps(const bo1::vulkan::HardwareInfo&);

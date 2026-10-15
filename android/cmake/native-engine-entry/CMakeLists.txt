@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.22.1)
 project(BlackOpsNativeEngineEntry LANGUAGES C CXX)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+option(BO1_NATIVE_PERFORMANCE_BUILD "Separate optimized engine measurement profile; assertions retained" OFF)
 option(BO1_NATIVE_FULL_DATABASE "Link the original full registry and database startup" OFF)
 option(BO1_NATIVE_SDL_APP "Build the real SDLActivity engine shared library" OFF)
 option(BO1_NATIVE_OPTIMIZE_REVERB "Optimize the measured rendered audio reverb TU with checks retained" ON)
@@ -1091,6 +1092,80 @@ if(BO1_NATIVE_FULL_DATABASE)
             COMPILE_OPTIONS -O2)
     endif()
     if(BO1_NATIVE_SDL_APP)
+        target_sources(bo1_native_database PRIVATE "${BO1_ROOT}/src/gfx_vulkan/shader_assets.cpp"
+            "${BO1_ROOT}/src/gfx_vulkan/vertex_assets.cpp"
+            "${BO1_ROOT}/src/gfx_vulkan/image_assets.cpp"
+        "${BO1_ROOT}/src/gfx_vulkan/image_uploads.cpp"
+            "${BO1_ROOT}/src/gfx_vulkan/block_compression.cpp"
+            "${BO1_ROOT}/src/gfx_vulkan/texture_bindings.cpp"
+            "${BO1_ROOT}/src/gfx_vulkan/sampler.cpp"
+            "${BO1_ROOT}/src/gfx_vulkan/attachment_pass.cpp"
+            "${BO1_ROOT}/src/gfx_vulkan/render_targets.cpp"
+            "${BO1_ROOT}/src/gfx_vulkan/material_state.cpp"
+            "${BO1_ROOT}/src/gfx_vulkan/buffer_assets.cpp"
+            "${BO1_ROOT}/src/gfx_vulkan/geometry_bindings.cpp"
+            "${BO1_ROOT}/src/gfx_vulkan/constant_state.cpp"
+            "${BO1_ROOT}/src/gfx_vulkan/material_bindings.cpp"
+            "${BO1_ROOT}/src/gfx_vulkan/material_dispatch.cpp"
+            "${BO1_ROOT}/src/gfx_vulkan/pass_recording.cpp"
+            "${BO1_ROOT}/src/gfx_vulkan/engine_frames.cpp"
+            "${BO1_ROOT}/src/gfx_vulkan/target_bindings.cpp"
+            "${BO1_ROOT}/src/gfx_vulkan/hardware_info.cpp"
+            "${BO1_ROOT}/src/gfx_vulkan/shader_translate.cpp"
+            "${BO1_ROOT}/src/gfx_vulkan/shader_dump.cpp"
+            "${BO1_ROOT}/src/gfx_vulkan/native_fullscreen.cpp")
+        # Native full-screen effect shaders: GLSL compiled to SPIR-V word lists.
+        find_program(BO1_GLSLC glslc HINTS "${ANDROID_NDK}/shader-tools/windows-x86_64"
+            "${ANDROID_NDK}/shader-tools/linux-x86_64" "${ANDROID_NDK}/shader-tools/darwin-x86_64" REQUIRED NO_DEFAULT_PATH)
+        set(BO1_NATIVE_POST_OUT "${CMAKE_CURRENT_BINARY_DIR}/native_post")
+        file(MAKE_DIRECTORY "${BO1_NATIVE_POST_OUT}")
+        set(BO1_NATIVE_POST_SPIRV)
+        foreach(native_post_stage fullscreen.vert dof_downsample.frag post_compose.frag)
+            set(native_post_source "${BO1_ROOT}/src/gfx_vulkan/native_post/${native_post_stage}")
+            set(native_post_output "${BO1_NATIVE_POST_OUT}/${native_post_stage}.spv.inc")
+            add_custom_command(OUTPUT "${native_post_output}"
+                COMMAND "${BO1_GLSLC}" --target-env=vulkan1.1 -O -mfmt=num -o "${native_post_output}" "${native_post_source}"
+                DEPENDS "${native_post_source}" VERBATIM)
+            list(APPEND BO1_NATIVE_POST_SPIRV "${native_post_output}")
+        endforeach()
+        set_property(SOURCE "${BO1_ROOT}/src/gfx_vulkan/native_fullscreen.cpp" TARGET_DIRECTORY bo1_native_database
+            APPEND PROPERTY OBJECT_DEPENDS ${BO1_NATIVE_POST_SPIRV})
+        target_sources(bo1_native_database PRIVATE ${BO1_NATIVE_POST_SPIRV})
+        target_include_directories(bo1_native_database PRIVATE "${BO1_NATIVE_POST_OUT}")
+        set_property(SOURCE "${BO1_ROOT}/src/gfx_d3d/r_texturemem.cpp"
+            "${BO1_ROOT}/src/gfx_d3d/r_cinematic.cpp"
+            "${BO1_ROOT}/src/gfx_d3d/r_model_lighting.cpp"
+            "${BO1_ROOT}/src/gfx_d3d/rb_resource.cpp"
+            "${BO1_ROOT}/src/gfx_d3d/r_stream.cpp"
+            "${BO1_ROOT}/src/database/db_registry.cpp"
+            "${BO1_ROOT}/src/gfx_d3d/r_material.cpp"
+            "${BO1_ROOT}/src/gfx_d3d/r_image.cpp" "${BO1_ROOT}/src/gfx_d3d/r_image_load_common.cpp"
+            "${BO1_ROOT}/src/gfx_d3d/r_state.cpp" "${BO1_ROOT}/src/gfx_d3d/r_rendertarget.cpp"
+            "${BO1_ROOT}/src/gfx_d3d/r_state_utils.cpp" "${BO1_ROOT}/src/gfx_d3d/rb_draw3d.cpp"
+            "${BO1_ROOT}/src/gfx_d3d/r_scene.cpp" "${BO1_ROOT}/src/gfx_d3d/rb_depthprepass.cpp"
+            "${BO1_ROOT}/src/gfx_d3d/r_draw_bsp.cpp"
+            "${BO1_ROOT}/src/gfx_d3d/r_draw_xmodel.cpp"
+            "${BO1_ROOT}/src/gfx_d3d/r_buffers.cpp" "${BO1_ROOT}/src/gfx_d3d/r_xsurface_optimize.cpp"
+            "${BO1_ROOT}/src/gfx_d3d/r_draw_model_util.cpp" "${BO1_ROOT}/src/gfx_d3d/r_shade.cpp" "${BO1_ROOT}/src/gfx_d3d/r_init.cpp"
+            "${BO1_ROOT}/src/gfx_d3d/rb_shade.cpp" "${BO1_ROOT}/src/gfx_d3d/rb_tess.cpp" "${BO1_ROOT}/src/gfx_d3d/r_draw_staticmodel.cpp"
+            "${BO1_ROOT}/src/gfx_d3d/r_water_sim.cpp"
+            "${BO1_ROOT}/src/gfx_d3d/r_meshdata.cpp" "${BO1_ROOT}/src/gfx_d3d/r_rendercmds.cpp" "${BO1_ROOT}/src/gfx_d3d/rb_backend.cpp"
+            "${BO1_ROOT}/src/gfx_d3d/r_staticmodelcache.cpp"
+            "${BO1_ROOT}/src/gfx_d3d/r_bsp.cpp" "${BO1_ROOT}/src/gfx_d3d/r_vertexstream2.cpp"
+            "${BO1_ROOT}/src/gfx_d3d/rb_sky.cpp"
+            "${BO1_ROOT}/src/gfx_d3d/rb_corona.cpp"
+            "${BO1_ROOT}/src/gfx_d3d/rb_superflare.cpp"
+            "${BO1_ROOT}/src/gfx_d3d/rb_pixelcost.cpp"
+            "${BO1_ROOT}/src/client/cl_compositing.cpp"
+            "${BO1_ROOT}/src/gfx_d3d/r_setstate_d3d.cpp"
+            "${BO1_ROOT}/src/gfx_d3d/rb_state.cpp"
+            "${BO1_ROOT}/src/gfx_d3d/rb_postfx.cpp"
+            "${BO1_ROOT}/src/gfx_d3d/r_dvars.cpp"
+            "${BO1_ROOT}/src/gfx_d3d/r_sunshadow.cpp"
+            "${BO1_ROOT}/src/gfx_d3d/r_draw_sunshadow.cpp"
+            "${BO1_ROOT}/src/gfx_d3d/r_dpvs.cpp"
+            TARGET_DIRECTORY bo1_native_database APPEND PROPERTY
+            COMPILE_DEFINITIONS BO1_NATIVE_VULKAN_RESOURCES=1)
         target_sources(bo1_native_database PRIVATE "${BO1_ROOT}/src/platform/android/post_fusion_trial.cpp")
         target_sources(bo1_native_database PRIVATE "${BO1_ROOT}/src/platform/android/fullscreen_triangle.cpp")
         if(BO1_NATIVE_FULLSCREEN_TRIANGLE)
@@ -1380,6 +1455,22 @@ if(BO1_NATIVE_SDL_APP)
     # Adoption is a real SDK publication, so the CLI's headless policy is retained.
     target_compile_definitions(bo1_native_entry_state PRIVATE BO1_NATIVE_SDL_RENDERED_ENTRY=1)
     add_library(blackopsarm_engine SHARED
+        "${BO1_ROOT}/src/platform/android/native_vulkan_entry.cpp"
+        "${BO1_ROOT}/src/platform/android/native_vulkan_device.cpp"
+        "${BO1_ROOT}/src/platform/android/native_vulkan_memory.cpp"
+        "${BO1_ROOT}/src/platform/android/native_vulkan_display.cpp"
+        "${BO1_ROOT}/src/platform/android/native_vulkan_material_preview.cpp"
+        "${BO1_ROOT}/src/gfx_vulkan/resources.cpp"
+    "${BO1_ROOT}/src/gfx_vulkan/draw_storage.cpp"
+        "${BO1_ROOT}/src/gfx_vulkan/image_usage.cpp"
+        "${BO1_ROOT}/src/gfx_vulkan/occlusion_queries.cpp"
+        "${BO1_ROOT}/src/gfx_vulkan/query_assets.cpp"
+        "${BO1_ROOT}/src/gfx_vulkan/event_fences.cpp"
+        "${BO1_ROOT}/src/gfx_vulkan/graphics_program.cpp"
+    "${BO1_ROOT}/src/gfx_vulkan/depth_bias.cpp"
+        "${BO1_ROOT}/src/gfx_vulkan/pipeline_key.cpp"
+        "${BO1_ROOT}/src/gfx_vulkan/program_cache.cpp"
+        "${BO1_ROOT}/src/gfx_vulkan/presentation.cpp"
         "${BO1_ROOT}/src/platform/android/native_sdl_engine_entry.cpp"
         "${BO1_ROOT}/src/platform/android/sdl_activity_bootstrap.cpp"
         "${BO1_ROOT}/tools/port/engine/native_engine_trace.cpp"
@@ -1395,8 +1486,39 @@ if(BO1_NATIVE_SDL_APP)
         -fsanitize=undefined)
     set_property(TARGET blackopsarm_engine APPEND PROPERTY LINK_DEPENDS
         "${BO1_ROOT}/src/platform/android/native_engine_exports.map")
-    target_link_libraries(blackopsarm_engine PRIVATE bo1_native_engine_runtime bo1_native_ubsan)
+    target_include_directories(blackopsarm_engine PRIVATE "${BO1_ROOT}/src")
+    target_link_libraries(blackopsarm_engine PRIVATE bo1_native_engine_runtime bo1_native_ubsan bo1_native_shader_compiler vulkan log)
 endif()
+
+# The native backend is a rendering library, like the optimized D3D9 provider.
+# Optimize this boundary while retaining Debug engine code, symbols, assertions,
+# and UBSan/no-recovery. This does not enable fast-math or change shader behavior.
+option(BO1_NATIVE_VULKAN_OPTIMIZE "Optimize the native Vulkan library with debug validation retained" ON)
+if(BO1_NATIVE_VULKAN_OPTIMIZE)
+    foreach(native_render_target bo1_native_database blackopsarm_engine)
+        if(TARGET ${native_render_target})
+            get_target_property(native_render_sources ${native_render_target} SOURCES)
+            foreach(native_render_source IN LISTS native_render_sources)
+                if(native_render_source MATCHES "/(gfx_vulkan/|platform/android/native_vulkan_)")
+                    set_property(SOURCE "${native_render_source}" TARGET_DIRECTORY ${native_render_target}
+                        APPEND PROPERTY COMPILE_OPTIONS -O2)
+                    # Preserve function tracing, but let optimized STL helpers
+                    # inline before inserting hooks in this native library.
+                    if(native_render_target STREQUAL "bo1_native_database" AND NOT BO1_NATIVE_PERFORMANCE_BUILD)
+                        set_property(SOURCE "${native_render_source}" TARGET_DIRECTORY ${native_render_target}
+                            APPEND PROPERTY COMPILE_OPTIONS -finstrument-functions-after-inlining)
+                    endif()
+                endif()
+            endforeach()
+        endif()
+    endforeach()
+endif()
+
+# This hook runs at every instrumented function entry, including STL helpers.
+# Keep all breadcrumbs and their atomic gate; compile the gate efficiently so
+# disabled tracing does not spend several calls on a single relaxed load.
+set_property(SOURCE "${BO1_ROOT}/tools/port/engine/native_engine_trace.cpp"
+    APPEND PROPERTY COMPILE_OPTIONS -O2)
 
 add_executable(bo1_native_database_services_tests
     "${BO1_ROOT}/tools/port/tests/native_database_services_tests.cpp")
@@ -1405,3 +1527,25 @@ target_compile_options(bo1_native_database_services_tests PRIVATE -fms-extension
     -include "${BO1_ROOT}/src/platform/win32_compat/msvc_compat.h")
 target_link_options(bo1_native_database_services_tests PRIVATE -Wl,--gc-sections -fsanitize=undefined)
 target_link_libraries(bo1_native_database_services_tests PRIVATE bo1_native_entry_state bo1_native_startup_services)
+
+# Opt-in profile for a separate build directory. The default correctness build
+# keeps its existing optimizer, UBSan and function tracing settings unchanged.
+# Keep _DEBUG and all assertions, symbols, strict floating point and ABI flags.
+if(BO1_NATIVE_PERFORMANCE_BUILD)
+    if(NOT BO1_NATIVE_SDL_APP OR NOT BO1_NATIVE_FULL_DATABASE)
+        message(FATAL_ERROR "Performance profile requires the complete SDL engine")
+    endif()
+    foreach(perf_target IN ITEMS bo1_native_database bo1_native_entry_state
+            bo1_native_startup_services bo1_native_fast_critical_section
+            bo1_native_engine_runtime bo1_native_performance_overlay
+            bo1_native_database_inflate bo1_native_jpeg_codec blackopsarm_engine)
+        get_target_property(perf_options ${perf_target} COMPILE_OPTIONS)
+        list(REMOVE_ITEM perf_options -finstrument-functions -finstrument-functions-after-inlining)
+        set_property(TARGET ${perf_target} PROPERTY COMPILE_OPTIONS "${perf_options}")
+        # -mno-outline-atomics: the SM6225 (ARMv8.0, no LSE) always takes the LL/SC
+        # path; inline it instead of calling the runtime-dispatch helper per atomic.
+        target_compile_options(${perf_target} PRIVATE -O2 -g -fno-sanitize=all
+            -fno-fast-math -ffp-contract=off -fno-strict-aliasing -mno-outline-atomics)
+    endforeach()
+    message(STATUS "Native PERFORMANCE profile: O2, assertions, strict FP; engine UBSan/tracing off")
+endif()

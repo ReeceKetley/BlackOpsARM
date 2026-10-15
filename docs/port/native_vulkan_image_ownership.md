@@ -1,0 +1,19 @@
+# Native Vulkan image ownership — stage 7
+
+2026-10-14. Full native backend goal remains incomplete. SDK491/stage60 installed engine BuildId991e59f4d09ba95d46247da362bf982117905516.
+
+Canonical Image_Create2DTexture_PC, Image_Create3DTexture_PC, Image_CreateCubeTexture_PC and Image_UploadData now dispatch to native image owners when the native selector is active. Image_Release removes native ownership while preserving card/loaded-byte accounting. Original COM slots remain null; image layouts and retail formats are unchanged. Native selection remains false in the default D3D9 game launch.
+
+image_assets owns actual Vulkan texture allocations keyed by GfxImage. Upload publication copies decoded source bytes into immutable snapshots, preserving temporary decode-buffer lifetime. Shared texture owners survive registry removal for borrowed frames. Device attachment/detachment and backend deselection refuse while owners/borrowers survive. Renderer callers must retain GPU owners and staging until submitted readers retire; no device/queue submissions occur in the database upload hook.
+
+The sampled texture owner now validates format/image capabilities and supports 2D, cube and 3D descriptions, mip chains and component swizzles. UploadSubresource records barriers/copies for one mip/layer, with caller-provided submitted previous layout; recording alone does not publish readiness. Sampled images use device-local optimal tiling and remain stored for later sampling. No transient/discard policy is applied to these images. Samplers currently use linear filtering/mips and clamp; engine sampler-state integration is still pending.
+
+Format adapters cover BGRA/RGBA8, luminance/alpha byte formats with view swizzles, RGB565, RG16, RGBA16 normalized/float and R32F, subject to device format support. BC1/2/3 and other formats fail explicitly pending native support or decoded fallback. Attachment roles fail explicitly pending their provider. GPU device capabilities can reject a mapped format; no dummy success is reported.
+
+Verification: ARM64 full engine target links with existing assertions/UBSan/debug settings. First build exposed an incomplete GfxImage unique_ptr cleanup in the preview inline constructor; moving that constructor to its definition repaired it. Failed build log retained. Guard removal restores both canonical image sources exactly to checkpoint4247b269 after line-ending normalization. This is a legacy-source preservation check, not a Windows runtime build.
+
+SDK491 actual preview calls canonical 2D creation, BGRA8 upload and Image_Release; shared GPU allocation then renders with actual T5 shaders/vertex routing. Screenshot visually inspected: upright room capture with expected colors. Canonical upload/release log passes, 1892 diagnostic submissions, BACK exit status0 and resources_released status0. USB stay-awake restored0. This is a captured material preview with Com_Init_called=0, not a live native engine scene or gameplay FPS benchmark. Cube/3D/mip paths compile but were not separately sampled on this tablet. No game assets were recopied.
+
+Next: BC runtime capability/decode path, FastFile Load_Texture and streamed mip producers, native texture binding/sampler state, depth/render-target provider and actual live scene integration. Native hardware initialization, material render state and command execution still need replacement before native Com_Init/Com_Frame gameplay proof. Background recovery for this image-owner path remains unverified.
+
+Evidence: build-android-audit/native-image-stage7-build.log (failed), native-image-stage7-build2.log (passed), native-image-stage7-device.log; native-image-stage7-legacy-proof.json; native_registry_closure/sdk-native-vulkan491-screen.png and sdk-native-vulkan491-exit.log; apk-native-stage60/native-manifest.json. Seven packaged libraries verified against staged hashes by the launch helper.

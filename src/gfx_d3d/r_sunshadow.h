@@ -1,6 +1,16 @@
 #pragma once
 #include "r_rendercmds.h"
 
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+// Native sun-shadow far-partition cache (r_nativeSunShadowCache). The far
+// partition is locked to a world grid so the static casters' depth can be kept
+// across frames; only dynamic casters are redrawn. Frontend: whether the frame
+// being set up uses it. Backend: the cache key of a frame (0 = draw normally).
+bool R_SunShadowCacheActive();
+unsigned long long R_SunShadowCacheKey(const GfxBackEndData *data);
+void R_RegisterSunShadowCacheDvar();
+#endif
+
 void __cdecl R_SunShadowMapBoundingPoly(
                 const GfxSunShadowBoundingPoly *boundingPoly,
                 float sampleSize,

@@ -12,6 +12,7 @@ int g_bo1SceneBrushTotal, g_bo1SceneBrushDrawn;
 #include "r_init.h"
 #include "r_model_lighting.h"
 #include "r_dvars.h"
+#include "r_sunshadow.h"
 #include <universal/profile.h> // mod (L43): g_modRendWarn
 #include "r_shader_constant_set.h"
 #include "r_drawsurf.h"
@@ -3829,7 +3830,13 @@ void __cdecl R_AddWorldSurfacesFrustumOnly(unsigned int viewIndex)
     {
         __debugbreak();
     }
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    // Strict culling keeps casters of currently visible cells only; a cached
+    // far partition must not depend on the camera's visible cells.
+    if (sm_strictCull->current.enabled && !(viewIndex == 2 && R_SunShadowCacheActive()))
+#else
     if (sm_strictCull->current.enabled)
+#endif
     {
         cellBitsCount = (cellCount + 31) >> 5;
         memset((unsigned __int8 *)cellDrawBits, 0, 4 * cellBitsCount);
@@ -5905,6 +5912,15 @@ void __cdecl R_SetupShadowSurfacesDpvs(
         __debugbreak();
     }
     R_FrustumClipPlanes(&viewParms->viewProjectionMatrix, sidePlanes, sidePlaneCount, dpvsView->frustumPlanes);
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    // A cached far partition keeps the casters of its whole world-locked region,
+    // independent of the camera: no camera-relative planes.
+    if ( partitionIndex == 1 && R_SunShadowCacheActive() )
+    {
+        dpvsView->frustumPlaneCount = sidePlaneCount;
+        return;
+    }
+#endif
     if ( (float)((float)((float)(viewParms->axis[0][0] * scene.shadowNearPlane[partitionIndex].coeffs[0])
                                          + (float)(viewParms->axis[0][1] * scene.shadowNearPlane[partitionIndex].coeffs[1]))
                          + (float)(viewParms->axis[0][2] * scene.shadowNearPlane[partitionIndex].coeffs[2])) < 0.0 )

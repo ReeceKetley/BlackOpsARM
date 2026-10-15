@@ -1180,7 +1180,7 @@ void __cdecl CG_TransitionToAds(
                 float *transShift)
 {
     double v5; // xmm0_8
-    long double v6; // [esp+8h] [ebp-Ch]
+    double v6; // [esp+8h] [ebp-Ch]
     float f; // [esp+10h] [ebp-4h]
     float fa; // [esp+10h] [ebp-4h]
     float fb; // [esp+10h] [ebp-4h]
@@ -1441,7 +1441,7 @@ void __cdecl CG_CalcReticleSpread(
                 float *spread)
 {
     double v5; // xmm0_8
-    long double v6; // [esp+0h] [ebp-14h]
+    double v6; // [esp+0h] [ebp-14h]
     float maxSpread; // [esp+8h] [ebp-Ch] BYREF
     float f; // [esp+Ch] [ebp-8h] BYREF
     float scale; // [esp+10h] [ebp-4h]

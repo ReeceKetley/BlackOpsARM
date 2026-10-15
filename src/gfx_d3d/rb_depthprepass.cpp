@@ -61,7 +61,11 @@ void __cdecl R_DepthPrepassCallback(const void *userData, GfxCmdBufContext conte
         }
         else
         {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+            if (!R_HaveNativeFloatZ(viewInfo->isMissileCamera)
+#else
             if (!gfxRenderTargets[viewInfo->isMissileCamera ? R_RENDERTARGET_FLOAT_Z_MISSILE_CAM : R_RENDERTARGET_FLOAT_Z].surface.color
+#endif
                 && !Assert_MyHandler(
                     "C:\\projects_pc\\cod\\codsrc\\src\\gfx_d3d\\rb_depthprepass.cpp",
                     213,

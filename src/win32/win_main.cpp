@@ -1954,8 +1954,8 @@ void __cdecl Sys_Init()
     else
         Com_Printf(16, "%i physical CPU%s detected\n", sys_info.physicalCpuCount, "s");
 #if defined(__ANDROID__)
-    Com_Printf(16, "Maximum CPU frequency reported by OS is %.2Lf GHz\n", sys_info.cpuGHz);
-    Com_Printf(16, "Reference CPU configuration estimate is %.2Lf GHz\n", sys_info.configureGHz);
+    Com_Printf(16, "Maximum CPU frequency reported by OS is %.2f GHz\n", sys_info.cpuGHz);
+    Com_Printf(16, "Reference CPU configuration estimate is %.2f GHz\n", sys_info.configureGHz);
 #else
     Com_Printf(16, "Measured CPU speed is %.2lf GHz\n", sys_info.cpuGHz);
     Com_Printf(16, "Total CPU performance is estimated as %.2lf GHz\n", sys_info.configureGHz);

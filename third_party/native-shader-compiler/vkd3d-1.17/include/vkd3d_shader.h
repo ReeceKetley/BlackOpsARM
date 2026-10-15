@@ -371,6 +371,15 @@ enum vkd3d_shader_compile_option_name
      */
     VKD3D_SHADER_COMPILE_OPTION_INCLUDE_EMPTY_BUFFERS_IN_EFFECTS = 0x0000000d,
 
+    /* Project-local SM3 pixel sampler mask. Original D3DBC is immutable.
+     * Marked 2D texld/texldp samples compare coordinate.z against depth. */
+    VKD3D_SHADER_COMPILE_OPTION_NATIVE_D3DBC_DEPTH_SAMPLERS = 0x424f0001,
+    /* VS3 inputs fetched as UNORM reconstruct the original unsigned byte float values. */
+    VKD3D_SHADER_COMPILE_OPTION_NATIVE_D3DBC_UBYTE_INPUTS = 0x424f0002,
+    /* Project-local: a nonzero value emits SPIR-V RelaxedPrecision for float
+     * results of SM1-3 instructions carrying the _pp partial-precision hint. */
+    VKD3D_SHADER_COMPILE_OPTION_NATIVE_D3DBC_RELAXED_PRECISION = 0x424f0003,
+
     VKD3D_FORCE_32_BIT_ENUM(VKD3D_SHADER_COMPILE_OPTION_NAME),
 };
 

@@ -1,3 +1,12 @@
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+#include "gfx_vulkan/texture_bindings.h"
+#include "gfx_vulkan/geometry_bindings.h"
+#include "gfx_vulkan/constant_state.h"
+#include "gfx_vulkan/material_bindings.h"
+#include "gfx_vulkan/shader_assets.h"
+#include "gfx_vulkan/target_bindings.h"
+#include "gfx_vulkan/pass_recording.h"
+#endif
 #include "rb_draw3d.h"
 #include "r_dvars.h"
 #include "r_state.h"
@@ -37,7 +46,7 @@ const float (*__cdecl R_GetCloudArea())[4]
 
 void __cdecl R_CalcGameTimeVec(float gameTime, float *out)
 {
-    long double v2; // st7
+    double v2; // st7
     float v3; // [esp+8h] [ebp-1Ch]
     float cosOfFracPartOfGameTime; // [esp+18h] [ebp-Ch]
     float sinOfFracPartOfGameTime; // [esp+1Ch] [ebp-8h]
@@ -121,6 +130,13 @@ void __cdecl R_DrawEmissiveCallback(const void *userData, GfxCmdBufContext conte
 
 void __cdecl R_HW_DisableScissor(IDirect3DDevice9 *device)
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()) {
+        std::string error;auto scope=bo1::vulkan::pass_recording::Current();
+        if(!scope||!scope->Scissor(false,0,0,0,0,error))Com_Error(ERR_FATAL,"Native driver scissor: %s",error.c_str());
+        return;
+    }
+#endif
     const char *v1; // eax
     int hr; // [esp+4h] [ebp-4h]
 
@@ -186,6 +202,16 @@ void __cdecl R_DrawReflectedCallback(const void *userData, GfxCmdBufContext cont
 
 void __cdecl R_InitLocalCmdBufState(GfxCmdBufState *state)
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if (bo1::vulkan::shader_assets::Active())
+        {
+        bo1::vulkan::target_bindings::Clone(&gfxCmdBufState,state);
+        bo1::vulkan::texture_bindings::Clone(&gfxCmdBufState,state);
+        bo1::vulkan::constant_state::Clone(&gfxCmdBufState,state);
+        bo1::vulkan::material_bindings::Clone(&gfxCmdBufState,state);
+        bo1::vulkan::geometry_bindings::Clone(&gfxCmdBufState.prim,&state->prim);
+    }
+#endif
     memcpy(state->refSamplerState, gfxCmdBufState.refSamplerState, sizeof(GfxCmdBufState));
     memset(state->vertexShaderConstState, 0, sizeof(state->vertexShaderConstState));
     memset(state->pixelShaderConstState, 0, sizeof(state->pixelShaderConstState));
@@ -376,6 +402,13 @@ void __cdecl R_HW_EnableScissor(
                 unsigned int w,
                 unsigned int h)
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()) {
+        std::string error;auto scope=bo1::vulkan::pass_recording::Current();
+        if(!scope||!scope->Scissor(true,x,y,w,h,error))Com_Error(ERR_FATAL,"Native driver scissor: %s",error.c_str());
+        return;
+    }
+#endif
     const char *v5; // eax
     const char *v6; // eax
     int v8; // [esp+4h] [ebp-1Ch]
@@ -763,7 +796,11 @@ void __cdecl RB_StandardDrawCommands(GfxViewInfo *viewInfo)
   whichToClearForScene = 7;
   R_InitContext(data, &cmdBuf);
   if ( viewInfo->needsFloatZ
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    && !R_HaveNativeFloatZ(viewInfo->isMissileCamera)
+#else
     && !gfxRenderTargets[viewInfo->isMissileCamera ? R_RENDERTARGET_FLOAT_Z_MISSILE_CAM : R_RENDERTARGET_FLOAT_Z].surface.color
+#endif
     && !Assert_MyHandler(
           "C:\\projects_pc\\cod\\codsrc\\src\\gfx_d3d\\rb_draw3d.cpp",
           7133,

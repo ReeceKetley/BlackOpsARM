@@ -530,6 +530,10 @@ enum vkd3d_shader_opcode
     VSIR_OP_SAMPLE_B,
     VSIR_OP_SAMPLE_B_CL_S,
     VSIR_OP_SAMPLE_C,
+    /* Native SM3 depth comparisons retain their original mip selection. */
+    VSIR_OP_SAMPLE_C_B,
+    VSIR_OP_SAMPLE_C_GRAD,
+    VSIR_OP_SAMPLE_C_LOD,
     VSIR_OP_SAMPLE_C_CL_S,
     VSIR_OP_SAMPLE_C_LZ,
     VSIR_OP_SAMPLE_C_LZ_S,
@@ -1132,6 +1136,7 @@ enum vkd3d_shader_input_sysval_semantic
     VKD3D_SIV_LINE_DENSITY_TESS_FACTOR     = 22,
 };
 
+#define SM1_MISC_REGISTER_OFFSET 32 /* Keep SM3 vPos/vFace separate from v0..v9. */
 #define SM1_COLOR_REGISTER_OFFSET 8
 #define SM1_RASTOUT_REGISTER_OFFSET 10
 

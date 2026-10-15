@@ -1,3 +1,7 @@
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+#include "gfx_vulkan/buffer_assets.h"
+#include "gfx_vulkan/shader_assets.h"
+#endif
 #include "r_water_sim.h"
 #if defined(__ANDROID__)
 #include <platform/android/water_mutex.h>
@@ -892,8 +896,8 @@ void R_WaterSimulationRender(const float *eyePos, int time, unsigned int viewInd
 void __cdecl R_WaterSimulationTrackView(const float *eyePos)
 {
     double v1; // xmm0_8
-    long double v2; // [esp+0h] [ebp-54h]
-    long double v3; // [esp+8h] [ebp-4Ch]
+    double v2; // [esp+0h] [ebp-54h]
+    double v3; // [esp+8h] [ebp-4Ch]
     tile_t *tile; // [esp+20h] [ebp-34h]
     int newY; // [esp+24h] [ebp-30h]
     int newX; // [esp+2Ch] [ebp-28h]
@@ -2229,7 +2233,7 @@ void __cdecl R_InitWaterSimulationVertexBuffers()
                 *lockedindex++ = vstride * (y + 1) + x + 1;
             }
         }
-        R_FinishStaticIndexBuffer(data.indexBuffer[0]);
+        R_FinishStaticIndexBufferFromOwner(&data.indexBuffer[0]);
         lockedindex = (unsigned __int16 *)Water_AllocIndexBuffer(&data.indexBuffer[1], indexbuffersize);
         numTris = 0;
         for ( i = 0; i < 0x10; i += 2 )
@@ -2262,7 +2266,7 @@ void __cdecl R_InitWaterSimulationVertexBuffers()
             }
         }
         data.tileTriCount[1] = numTris;
-        R_FinishStaticIndexBuffer(data.indexBuffer[1]);
+        R_FinishStaticIndexBufferFromOwner(&data.indexBuffer[1]);
         vertexBuffersAllocated = 1;
     }
 }
@@ -2284,6 +2288,13 @@ unsigned int __cdecl FillIndexBuffer(unsigned __int16 *lockedindex, unsigned int
 
 void __cdecl R_FreeWaterSimulationVertexBuffers()
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()) {
+        bo1::vulkan::buffer_assets::Release(&data.vertexBuffer);
+        for(auto& ib:data.indexBuffer)bo1::vulkan::buffer_assets::Release(&ib);
+        data.lockedData=nullptr;vertexBuffersAllocated=0;return;
+    }
+#endif
     int n; // [esp+0h] [ebp-4h]
 
     if ( vertexBuffersAllocated )

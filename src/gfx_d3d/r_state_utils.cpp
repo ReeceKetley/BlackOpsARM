@@ -1,3 +1,11 @@
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+#include "gfx_vulkan/texture_bindings.h"
+#include "gfx_vulkan/geometry_bindings.h"
+#include "gfx_vulkan/constant_state.h"
+#include "gfx_vulkan/material_bindings.h"
+#include "gfx_vulkan/shader_assets.h"
+#include "gfx_vulkan/target_bindings.h"
+#endif
 #include "r_state_utils.h"
 #include "rb_state.h"
 #include <universal/assertive.h>
@@ -58,6 +66,23 @@ void __cdecl R_InitCmdBufSourceState(GfxCmdBufSourceState *source, const GfxCmdB
 
 void __cdecl R_InitCmdBufState(GfxCmdBufState *state)
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if (bo1::vulkan::shader_assets::Active()) {
+        if (!state || state->prim.device) {Com_Error(ERR_FATAL,"Invalid native command-state initialization");return;}
+        bo1::vulkan::target_bindings::Release(state);
+        bo1::vulkan::texture_bindings::Release(state);
+        bo1::vulkan::constant_state::Release(state);
+        bo1::vulkan::material_bindings::Release(state);
+        bo1::vulkan::geometry_bindings::Release(&state->prim);
+        *state=GfxCmdBufState{};
+        state->depthRangeType=GFX_DEPTH_RANGE_FULL;state->depthRangeFar=1.0f;
+        R_SetDefaultStateBits(state->activeStateBits);R_SetDefaultStateBits(state->refStateBits);
+        const unsigned sampler=R_DecodeSamplerState(1);
+        if (!(sampler&0xff00)) {Com_Error(ERR_FATAL,"Native global sampler table not initialized");return;}
+        for (unsigned slot=0;slot<16;++slot) {state->refSamplerState[slot]=1;state->samplerState[slot]=sampler;}
+        state->prim.viewStats=state->prim.frameStats.viewStats;return;
+    }
+#endif
     unsigned int samplerIndex; // [esp+14h] [ebp-Ch]
     IDirect3DDevice9 *device; // [esp+18h] [ebp-8h]
     unsigned int forceSamplerState; // [esp+1Ch] [ebp-4h]
@@ -298,6 +323,38 @@ void __cdecl R_SetDefaultStateBits(unsigned int *stateBits)
 
 void __cdecl R_InitCmdBufSamplerState(GfxCmdBufState *state)
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if (bo1::vulkan::shader_assets::Active())
+    {
+        if (!state || state->prim.device)
+        {
+            Com_Error(ERR_FATAL, "Invalid native sampler reset command owner");
+            return;
+        }
+        const unsigned decoded = R_DecodeSamplerState(1);
+        if (!(decoded & 0xff00))
+        {
+            Com_Error(ERR_FATAL, "Native sampler reset requires initialized filter table");
+            return;
+        }
+        const auto snapshot = bo1::vulkan::texture_bindings::Acquire(state);
+        for (unsigned slot = 0; slot < 16; ++slot)
+        {
+            if (snapshot && snapshot->slots[slot].image)
+            {
+                std::string error;
+                if (!bo1::vulkan::texture_bindings::Update(state, slot, decoded, snapshot->slots[slot].bias, error))
+                {
+                    Com_Error(ERR_FATAL, "Native sampler reset: %s", error.c_str());
+                    return;
+                }
+            }
+            state->refSamplerState[slot] = 1;
+            state->samplerState[slot] = decoded;
+        }
+        return;
+    }
+#endif
     unsigned int samplerIndex; // [esp+8h] [ebp-Ch]
     unsigned int forceSamplerState; // [esp+10h] [ebp-4h]
 

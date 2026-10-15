@@ -1,3 +1,14 @@
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+#include "gfx_vulkan/texture_bindings.h"
+#include "gfx_vulkan/material_state.h"
+#include "gfx_vulkan/geometry_bindings.h"
+#include "gfx_vulkan/material_dispatch.h"
+#include "gfx_vulkan/pass_recording.h"
+#include "gfx_vulkan/target_bindings.h"
+#include "platform/android/native_vulkan_device.h"
+#include "gfx_vulkan/shader_assets.h"
+#include <cstring>
+#endif
 #include "r_state.h"
 #include <universal/profile.h>
 #include "r_bsp.h"
@@ -14,6 +25,12 @@
 #include "r_reflection_probe.h"
 
 
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+static float BO1_NativeSamplerMipBias() {
+    float value;static_assert(sizeof(value)==sizeof(dx.mipBias));
+    std::memcpy(&value,&dx.mipBias,sizeof(value));return value;
+}
+#endif
 const GfxViewportBehavior s_viewportBehaviorForRenderTarget[44] =
 {
   GFX_USE_VIEWPORT_FULL,
@@ -272,6 +289,17 @@ void __cdecl R_SetTexFilter()
 
 void __cdecl R_SetInitialContextState(IDirect3DDevice9 *device)
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()) {
+        // Separate alpha blend and front/back stencil are already actual
+        // GraphicsProgram pipeline fields; initial depth-off comes from the
+        // canonical default words consumed at each draw, not D3D device state.
+        unsigned words[2];R_SetDefaultStateBits(words);bo1::vulkan::ProgramDescription defaults;std::string error;
+        if(device||!bo1::android::native_device::Renderer()||!bo1::vulkan::ApplyMaterialState(words[0],words[1],defaults,error)||defaults.depthTest)
+            Com_Error(ERR_FATAL,"Native initial pipeline context: %s",error.c_str());
+        return;
+    }
+#endif
     const char *v1; // eax
     const char *v2; // eax
     const char *v3; // eax
@@ -851,6 +879,14 @@ void __cdecl R_ChangeDepthRange(GfxCmdBufState *state, GfxDepthRangeType depthRa
     else
         v2 = 1.0f;
     state->depthRangeFar = v2;
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()) {
+        std::string error;auto scope=bo1::vulkan::pass_recording::Current();
+        if(!(scope?scope->Viewport(state,state->viewport,error):bo1::vulkan::target_bindings::Viewport(state,state->viewport,error)))
+            Com_Error(ERR_FATAL,"Native depth range: %s",error.c_str());
+        return;
+    }
+#endif
     device = state->prim.device;
     if ( !device && !Assert_MyHandler("C:\\projects_pc\\cod\\codsrc\\src\\gfx_d3d\\r_state.cpp", 1516, 0, "%s", "device") )
         __debugbreak();
@@ -1010,6 +1046,21 @@ void __cdecl R_ChangeStreamSource(
 
 void __cdecl R_ClearAllStreamSources(GfxCmdBufPrimState *state)
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if (bo1::vulkan::shader_assets::Active())
+    {
+        std::string error;
+        if (!state || state->device || !bo1::vulkan::geometry_bindings::ClearVertices(state,error))
+        {
+            Com_Error(ERR_FATAL,"Native vertex-stream reset: %s",error.c_str());
+            return;
+        }
+        // COM handles remain null even for native bound buffers. Clear the
+        // real sidecar independently of the legacy offset/stride metadata.
+        for (auto& stream:state->streams) stream={};
+        return;
+    }
+#endif
     if ( state->streams[0].vb || state->streams[0].offset || state->streams[0].stride )
         R_ChangeStreamSource(state, 0, 0, 0, 0);
     if ( state->streams[1].vb || state->streams[1].offset || state->streams[1].stride )
@@ -1020,6 +1071,24 @@ void __cdecl R_ClearAllStreamSources(GfxCmdBufPrimState *state)
 
 void __cdecl R_DrawIndexedPrimitive(GfxCmdBufPrimState *state, const GfxDrawPrimArgs *args)
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if (bo1::vulkan::shader_assets::Active()) {
+        if (!state || !args || !r_drawPrimFloor || !r_drawPrimCap || !r_skipDrawTris) {Com_Error(ERR_FATAL,"Native draw state/controls not initialized");return;}
+        int triangles=args->triCount;
+        if (triangles>=r_drawPrimFloor->current.integer && (!r_drawPrimCap->current.integer || triangles<=r_drawPrimCap->current.integer)) {
+            if(r_skipDrawTris->current.enabled)triangles=1;
+            std::string error;
+            const bool submitted=bo1::vulkan::pass_recording::Current()
+                ?bo1::vulkan::pass_recording::Current()->Draw(state,args->baseIndex,args->vertexCount,triangles,error)
+                :bo1::vulkan::material_dispatch::HasScope()
+                ?bo1::vulkan::material_dispatch::DrawIndexed(state,args->baseIndex,args->vertexCount,triangles,error)
+                :bo1::vulkan::geometry_bindings::DrawIndexed(state,args->baseIndex,args->vertexCount,triangles,error);
+            if(!submitted) {Com_Error(ERR_FATAL,"Native indexed draw: %s",error.c_str());return;}
+            RB_TrackDrawPrimCall(state,triangles);
+        }
+        return;
+    }
+#endif
     const char *v2; // eax
     int hr; // [esp+4h] [ebp-Ch]
     int triCount; // [esp+8h] [ebp-8h]
@@ -1091,6 +1160,20 @@ void __cdecl R_SetAlphaAntiAliasingState(IDirect3DDevice9 *device, __int16 state
 
 void __cdecl R_ChangeState_0(GfxCmdBufState *state, unsigned int stateBits0)
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if (bo1::vulkan::shader_assets::Active()) {
+        if (!state || state->stateOverride) {Com_Error(ERR_FATAL,"Native material state override requires its provider");return;}
+        const unsigned word0=stateBits0;
+        const unsigned word1=state->activeStateBits[1];
+        bo1::vulkan::ProgramDescription pipeline;std::string error;
+        if (!bo1::vulkan::ApplyMaterialState(word0,word1,pipeline,error)) {
+            Com_Error(ERR_FATAL,"Native Vulkan material state: %s",error.c_str());return;
+        }
+        state->activeStateBits[0]=stateBits0;
+        if (!(word0&0x800))state->alphaRef=static_cast<unsigned char>(pipeline.alphaTest.reference*255.0f+0.5f);
+        return;
+    }
+#endif
     bool blendOpRgbWasEnabled; // [esp+43h] [ebp-Dh]
     int changedBits; // [esp+44h] [ebp-Ch]
     IDirect3DDevice9 *device; // [esp+4Ch] [ebp-4h]
@@ -1567,6 +1650,20 @@ void __cdecl R_SetAlphaTestFunction(GfxCmdBufState *state, __int16 stateBits0)
 
 void __cdecl R_ChangeState_1(GfxCmdBufState *state, unsigned int stateBits1)
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if (bo1::vulkan::shader_assets::Active()) {
+        if (!state || state->stateOverride) {Com_Error(ERR_FATAL,"Native material state override requires its provider");return;}
+        const unsigned word0=state->activeStateBits[0];
+        const unsigned word1=stateBits1;
+        bo1::vulkan::ProgramDescription pipeline;std::string error;
+        if (!bo1::vulkan::ApplyMaterialState(word0,word1,pipeline,error)) {
+            Com_Error(ERR_FATAL,"Native Vulkan material state: %s",error.c_str());return;
+        }
+        state->activeStateBits[1]=stateBits1;
+        if (!(word0&0x800))state->alphaRef=static_cast<unsigned char>(pipeline.alphaTest.reference*255.0f+0.5f);
+        return;
+    }
+#endif
     int changedBits; // [esp+44h] [ebp-Ch]
     IDirect3DDevice9 *device; // [esp+4Ch] [ebp-4h]
 
@@ -2216,6 +2313,22 @@ void __cdecl R_SetSampler(
                 unsigned __int8 samplerState,
                 const GfxImage *image)
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if (bo1::vulkan::shader_assets::Active()) {
+        if (!context.state || samplerIndex>=16 || !image || !(samplerState&0x1f)) {
+            Com_Error(ERR_FATAL,"Invalid native texture binding");return;
+        }
+        const unsigned decoded=R_DecodeSamplerState(samplerState);std::string error;
+        if (!bo1::vulkan::texture_bindings::Set(context.state,samplerIndex,image,decoded,BO1_NativeSamplerMipBias(),error)) {
+            Com_Error(ERR_FATAL,"Native Vulkan texture binding: %s material=%s technique=%s slot=%u target=%u frame=%u",error.c_str(),
+                context.state->material?context.state->material->info.name:"<none>",context.state->technique?context.state->technique->name:"<none>",
+                samplerIndex,unsigned(context.state->renderTargetId),context.source&&context.source->input.data?context.source->input.data->frameCount:0);return;
+        }
+        context.state->samplerTexture[samplerIndex]=&image->texture;
+        context.state->refSamplerState[samplerIndex]=samplerState;
+        context.state->samplerState[samplerIndex]=decoded;return;
+    }
+#endif
     const char *v4; // eax
     unsigned int decodedSamplerState; // [esp+10h] [ebp-8h]
 
@@ -2285,6 +2398,22 @@ void __cdecl R_HW_SetSamplerTexture(IDirect3DDevice9 *device, unsigned int sampl
 
 void __cdecl R_SetSamplerState(GfxCmdBufState *state, unsigned int samplerIndex, unsigned __int8 samplerState)
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if (bo1::vulkan::shader_assets::Active()) {
+        if (!state || samplerIndex>=16 || !(samplerState&0x1f)) {
+            Com_Error(ERR_FATAL,"Invalid native sampler state");return;
+        }
+        const unsigned decoded=R_DecodeSamplerState(samplerState);std::string error;
+        if (!bo1::vulkan::texture_bindings::Update(state,samplerIndex,decoded,BO1_NativeSamplerMipBias(),error)) {
+            Com_Error(ERR_FATAL,"Native Vulkan sampler update: %s",error.c_str());return;
+        }
+        // Match the canonical texture-cache invalidation. BSP custom samplers
+        // must rebind an actual image after selecting independent sampler state.
+        state->samplerTexture[samplerIndex]=nullptr;
+        state->refSamplerState[samplerIndex]=samplerState;
+        state->samplerState[samplerIndex]=decoded;return;
+    }
+#endif
     unsigned int decodedSamplerState; // [esp+8h] [ebp-4h]
 
     state->samplerTexture[samplerIndex] = 0;
@@ -2447,6 +2576,13 @@ void __cdecl R_GetViewport(GfxCmdBufSourceState *source, GfxViewport *outViewpor
 
 void __cdecl R_SetViewport(GfxCmdBufState *state, const GfxViewport *viewport)
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()) {
+        std::string error;auto scope=bo1::vulkan::pass_recording::Current();
+        if(!state||!viewport||!(scope?scope->Viewport(state,*viewport,error):bo1::vulkan::target_bindings::Viewport(state,*viewport,error)))Com_Error(ERR_FATAL,"Native viewport: %s",error.c_str());
+        return;
+    }
+#endif
     const char *v2; // eax
 
     if ( r_logFile->current.integer )
@@ -2708,6 +2844,13 @@ void R_UpdateViewport(GfxCmdBufSourceState *source, GfxViewport *viewport)
 
 void __cdecl R_DisableSampler(GfxCmdBufState *state, unsigned int samplerIndex)
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if (bo1::vulkan::shader_assets::Active()) {
+        if (!state || samplerIndex>=16) {Com_Error(ERR_FATAL,"Invalid native sampler disable");return;}
+        bo1::vulkan::texture_bindings::Disable(state,samplerIndex);
+        state->samplerTexture[samplerIndex]=nullptr;return;
+    }
+#endif
     state->samplerTexture[samplerIndex] = 0;
     R_HW_DisableSampler(state->prim.device, samplerIndex);
 }
@@ -2881,6 +3024,19 @@ GfxViewportBehavior __cdecl R_ViewportBehaviorForRenderTarget(GfxRenderTargetId 
 
 void R_SetRenderTarget(GfxCmdBufContext context, GfxRenderTargetId newTargetId)
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()) {
+        if(pixelCostMode>GFX_PIXEL_COST_MODE_MEASURE_MSEC)newTargetId=RB_PixelCost_OverrideRenderTarget(newTargetId);
+        if(!context.state||!context.source||static_cast<unsigned>(newTargetId)>=44||context.source->renderTargetWidth<=0
+            ||context.source->renderTargetHeight!=gfxRenderTargets[newTargetId].height) {Com_Error(ERR_FATAL,"Invalid native target context/size");return;}
+        if(newTargetId!=context.state->renderTargetId) {
+            R_UpdateStatsTarget(context);
+            if(gfxRenderTargets[newTargetId].image)R_UnbindImage(context.state,gfxRenderTargets[newTargetId].image);
+        }
+        R_HW_SetRenderTarget(context.state,newTargetId);context.state->renderTargetId=newTargetId;
+        context.source->viewMode=VIEW_MODE_NONE;context.source->viewportIsDirty=1;return;
+    }
+#endif
     if (pixelCostMode > GFX_PIXEL_COST_MODE_MEASURE_MSEC)
         newTargetId = RB_PixelCost_OverrideRenderTarget(newTargetId);
 
@@ -2910,6 +3066,14 @@ void R_SetRenderTarget(GfxCmdBufContext context, GfxRenderTargetId newTargetId)
 
 void R_HW_SetRenderTarget(GfxCmdBufState *state, GfxRenderTargetId newTargetId)
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()) {
+        std::string error;auto scope=bo1::vulkan::pass_recording::Current();
+        if(static_cast<unsigned>(newTargetId)>=44||!(scope?scope->Bind(state,&gfxRenderTargets[newTargetId],error):bo1::vulkan::target_bindings::Select(state,&gfxRenderTargets[newTargetId],error)))
+            Com_Error(ERR_FATAL,"Native target pass: %s",error.c_str());
+        return;
+    }
+#endif
     const char *v3; // eax
     const char *v4; // eax
     int v6; // [esp+4h] [ebp-10h]
@@ -2993,6 +3157,26 @@ void R_ClearRenderTargetForMultiGpu(GfxCmdBufContext context, GfxRenderTargetId 
     const char *v3; // eax
     int hr; // [esp+Ch] [ebp-4h]
 
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if (bo1::vulkan::shader_assets::Active())
+    {
+        // Multi-GPU (SLI/CrossFire) systems clear this freshly selected target
+        // to black once per frame because its previous contents are not needed.
+        // On a tiled GPU that same clear is a free CLEAR load op that replaces
+        // loading the stale contents.
+        if (!gfxRenderTargets[targetId].cleared)
+        {
+            static const float black[4]{};
+            std::string error;
+            auto scope = bo1::vulkan::pass_recording::Current();
+            if (!scope || !scope->Clear(1u, black, 1.0f, 0u, nullptr, error))
+                Com_Error(ERR_FATAL, "Native multi-GPU target clear: %s", scope ? error.c_str() : "no recording scope");
+            gfxRenderTargets[targetId].cleared = 1;
+        }
+        return;
+    }
+#endif
+
     if (dx.gpuCount >= 2 && !gfxRenderTargets[targetId].cleared)
     {
         if (r_logFile && r_logFile->current.integer)
@@ -3030,6 +3214,13 @@ void __cdecl R_ClearScreenInternal(
                 unsigned __int8 stencil,
                 const GfxViewport *viewport)
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()) {
+        std::string error;auto scope=bo1::vulkan::pass_recording::Current();
+        if(!scope||!scope->Clear(whichToClear,color,depth,stencil,viewport,error))Com_Error(ERR_FATAL,"Native attachment clear: %s",error.c_str());
+        return;
+    }
+#endif
     const char *v6; // eax
     const char *v7; // eax
     const char *v8; // eax
@@ -3194,6 +3385,11 @@ void __cdecl R_ClearScreen(
 
 void __cdecl R_SetMeshStream(GfxCmdBufState *state, GfxMeshData *mesh)
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()) {
+        R_SetStreamSourceFromOwner(&state->prim,&mesh->vb.buffer,0,mesh->vertSize);return;
+    }
+#endif
     R_SetStreamSource(&state->prim, mesh->vb.buffer, 0, mesh->vertSize);
 }
 
@@ -3304,4 +3500,29 @@ void R_DrawCall(
         callback(userData, context, prepassContext);
     }
     memcpy(gfxCmdBufState.refSamplerState, cmdBuf.refSamplerState, sizeof(gfxCmdBufState));
+}
+void R_ChangeIndicesFromOwner(GfxCmdBufPrimState* state,IDirect3DIndexBuffer9* const* owner) {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()) {
+        std::string error;
+        if(!owner || *owner || !bo1::vulkan::geometry_bindings::SetIndex(state,owner,error))
+            Com_Error(ERR_FATAL,"Native index binding: %s",error.c_str());
+        return;
+    }
+#endif
+    if(state->indexBuffer!=*owner)R_ChangeIndices(state,*owner);
+}
+
+void R_SetStreamSourceFromOwner(GfxCmdBufPrimState* state,IDirect3DVertexBuffer9* const* owner,unsigned offset,unsigned stride) {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()) {
+        std::string error;
+        if(!state||!owner||*owner||!bo1::vulkan::geometry_bindings::SetVertex(state,owner,offset,stride,error)) {
+            Com_Error(ERR_FATAL,"Native vertex stream binding: %s",error.c_str());return;
+        }
+        state->streams[0].vb=nullptr;state->streams[0].offset=offset;state->streams[0].stride=stride;
+        state->streams[1]={};state->streams[2]={};return;
+    }
+#endif
+    R_SetStreamSource(state,*owner,offset,stride);
 }

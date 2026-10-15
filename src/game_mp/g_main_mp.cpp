@@ -3164,11 +3164,30 @@ void __cdecl G_UpdateClientLinkInfo(gentity_s *ent)
                                                      + (float)(entParent->s.lerp.apos.trDelta[1] * entParent->s.lerp.apos.trDelta[1]))
                                      + (float)(entParent->s.lerp.apos.trDelta[2] * entParent->s.lerp.apos.trDelta[2])) != 0.0 )
                 {
+#if defined(__ANDROID__)
+                    // This is an optimization advisory, not a bad entity. Keep
+                    // one developer-console notice per entity and level.
+                    static int reportedLevelStart = -1;
+                    static bool reported[MAX_GENTITIES_SV]{};
+                    if (reportedLevelStart != level.startTime)
+                    {
+                        memset(reported, 0, sizeof(reported));
+                        reportedLevelStart = level.startTime;
+                    }
+                    const unsigned int entityNum = ent->s.number;
+                    if (entityNum >= MAX_GENTITIES_SV || !reported[entityNum])
+                    {
+                        if (entityNum < MAX_GENTITIES_SV) reported[entityNum] = true;
+                        Com_DPrintf(15, "Ent #%i of type %i is SVF_NOCLIENT, but has moving children; server link propagation remains active.\n",
+                            ent->s.number, ent->s.eType);
+                    }
+#else
                     Com_PrintWarning(
                         15,
                         "Ent #%i of type %i is SVF_NOCLIENT, but has children and seems to be moving.    There is a potential optimization here.\n",
                         ent->s.number,
                         ent->s.eType);
+#endif
                 }
                 ent->s.clientLinkInfo.parentEnt = 0;
             }

@@ -1,3 +1,9 @@
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+#include "platform/android/native_vulkan_memory.h"
+#include "gfx_vulkan/shader_assets.h"
+#include <limits>
+#include <algorithm>
+#endif
 #include "r_texturemem.h"
 #include <win32/win_main.h>
 #include <universal/assertive.h>
@@ -33,6 +39,17 @@ DDraw::DDraw()
 
 unsigned int __cdecl R_AvailableTextureMemory()
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()) {
+        bo1::android::native_memory::Snapshot memory;std::string error;
+        if(!bo1::android::native_memory::Read(memory,error)) {Com_Error(ERR_FATAL,"Native texture-memory query: %s",error.c_str());std::abort();}
+        Com_Printf(8,"Native Vulkan texture allowance estimate=%lluMiB source=%s localCapacity=%lluMiB OSavailable=%lluMiB OSknown=%u UMA=%u\n",
+            (unsigned long long)(memory.textureAllowance>>20),memory.driverBudget?"VK_EXT_memory_budget":"heapCapacity/OSavailability",
+            (unsigned long long)(memory.localCapacity>>20),(unsigned long long)(memory.osAvailable>>20),unsigned(memory.osKnown),unsigned(memory.uma));
+        return static_cast<unsigned>(std::min<VkDeviceSize>(memory.textureAllowance>>20,std::numeric_limits<unsigned>::max()));
+    }
+#endif
+
     unsigned int texMemInMegs; // [esp+0h] [ebp-Ch]
     unsigned int vidMemInMegs; // [esp+8h] [ebp-4h]
 

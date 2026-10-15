@@ -1,3 +1,8 @@
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+#include "gfx_vulkan/render_targets.h"
+#include "gfx_vulkan/pass_recording.h"
+#include "gfx_vulkan/shader_assets.h"
+#endif
 #include "r_rendertarget.h"
 #include "r_dvars.h"
 #include "r_init.h"
@@ -243,6 +248,14 @@ void R_InitRenderTargets_PC()
 
 void __cdecl R_ShareRenderTarget(GfxRenderTargetId idFrom, GfxRenderTargetId idTo)
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()) {
+        if(static_cast<unsigned>(idFrom)>=44||static_cast<unsigned>(idTo)>=44) {Com_Error(ERR_FATAL,"Invalid native shared target index");return;}
+        AssertUninitializedRenderTarget(&gfxRenderTargets[idTo]);std::string error;
+        if(!bo1::vulkan::render_targets::Share(&gfxRenderTargets[idFrom],&gfxRenderTargets[idTo],error)) {Com_Error(ERR_FATAL,"Native target share: %s",error.c_str());return;}
+        gfxRenderTargets[idTo]=gfxRenderTargets[idFrom];return;
+    }
+#endif
     AssertUninitializedRenderTarget(&gfxRenderTargets[idTo]);
 
     gfxRenderTargets[idTo] = gfxRenderTargets[idFrom];
@@ -256,6 +269,11 @@ void __cdecl R_ShareRenderTarget(GfxRenderTargetId idFrom, GfxRenderTargetId idT
 
 void __cdecl AssertUninitializedRenderTarget(const GfxRenderTarget *renderTarget)
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()&&bo1::vulkan::render_targets::Acquire(renderTarget)) {
+        Com_Error(ERR_FATAL,"Native render target already has attachments");return;
+    }
+#endif
     if ( !renderTarget
         && !Assert_MyHandler("C:\\projects_pc\\cod\\codsrc\\src\\gfx_d3d\\r_rendertarget.cpp", 783, 0, "%s", "renderTarget") )
     {
@@ -349,7 +367,18 @@ void __cdecl R_InitFullscreenRenderTargetImage(
     }
     else if ( usage == RENDERTARGET_USAGE_RENDER )
     {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+        if(bo1::vulkan::shader_assets::Active()) {
+            std::string error;
+            if(!bo1::vulkan::render_targets::AttachDepth(renderTarget,renderTarget->width,renderTarget->height,error)) {
+                Com_Error(ERR_FATAL,"Native fullscreen depth: %s",error.c_str());return;
+            }
+        } else {
+#endif
         renderTarget->surface.depthStencil = R_AssignSingleSampleDepthStencilSurface();
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+        }
+#endif
     }
     Image_TrackFullscreenTexture(renderTarget->image, fullscreenWidth, fullscreenHeight, picmip, format);
 }
@@ -511,11 +540,31 @@ void __cdecl R_InitRenderTargetImage(
 
 void __cdecl R_AssignImageToRenderTargetDepthStencil(GfxRenderTarget *renderTarget, GfxImage *image)
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if (bo1::vulkan::shader_assets::Active()) {
+        std::string error;
+        if (!renderTarget || renderTarget->surface.color || renderTarget->surface.depthStencil
+            || !bo1::vulkan::render_targets::Assign(renderTarget,image,true,error)) {
+            Com_Error(ERR_FATAL,"Native Vulkan render-target assignment: %s",error.c_str());return;
+        }
+        return;
+    }
+#endif
     renderTarget->surface.depthStencil = Image_GetSurface(image);
 }
 
 void __cdecl R_AssignImageToRenderTargetColor(GfxRenderTarget *renderTarget, GfxImage *image)
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if (bo1::vulkan::shader_assets::Active()) {
+        std::string error;
+        if (!renderTarget || renderTarget->surface.color || renderTarget->surface.depthStencil
+            || !bo1::vulkan::render_targets::Assign(renderTarget,image,false,error)) {
+            Com_Error(ERR_FATAL,"Native Vulkan render-target assignment: %s",error.c_str());return;
+        }
+        return;
+    }
+#endif
     renderTarget->surface.color = Image_GetSurface(image);
 }
 
@@ -580,6 +629,21 @@ void __cdecl R_InitShadowmapRenderTarget(
         gfxMetrics.shadowmapFormatPrimary,
         usage,
         renderTarget);
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()) {
+        std::string error;
+        if(!usage) {
+            if(!bo1::vulkan::image_assets::EnableDepthComparison(renderTarget->image,error)) {
+                Com_Error(ERR_FATAL,"Native shadow depth sampling role: %s",error.c_str());return;
+            }
+        }
+        // NULL is a D3D dummy color surface; Vulkan has genuine depth-only passes.
+        if(!usage&&static_cast<unsigned>(gfxMetrics.shadowmapFormatSecondary)==1280070990u)return;
+        if(!bo1::vulkan::render_targets::AttachAuxiliary(renderTarget,totalWidth,totalHeight,gfxMetrics.shadowmapFormatSecondary,usage!=0,error))
+            Com_Error(ERR_FATAL,"Native shadow secondary attachment: %s",error.c_str());
+        return;
+    }
+#endif
     if ( usage )
     {
         if ( r_logFile && r_logFile->current.integer )
@@ -662,6 +726,26 @@ void __cdecl R_InitAndTrackRenderTargetImage(
 
 _D3DFORMAT __cdecl R_InitFrameBufferRenderTarget()
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()) {
+        if(r_reflectionProbeGenerate&&r_reflectionProbeGenerate->current.enabled) {
+            Com_Error(ERR_FATAL,"Native reflection-probe framebuffer capture is not integrated");return D3DFMT_UNKNOWN;
+        }
+        // Real offscreen scene storage. The presentation owner must explicitly
+        // submit/resolve this image to its acquired window image at frame end.
+        R_InitFullscreenRenderTargetImage(13,FULLSCREEN_DISPLAY,0,D3DFMT_A8R8G8B8,RENDERTARGET_USAGE_RENDER,
+            &gfxRenderTargets[R_RENDERTARGET_FRAME_BUFFER]);
+        R_ShareRenderTarget(R_RENDERTARGET_FRAME_BUFFER,R_RENDERTARGET_SCENE);
+        if(!g_allocateMinimalResources)
+            R_InitFullscreenRenderTargetImage(9,FULLSCREEN_SCENE,0,D3DFMT_A8R8G8B8,RENDERTARGET_USAGE_RENDER,
+                &gfxRenderTargets[R_RENDERTARGET_RESOLVED_SCENE]);
+        auto frame=bo1::vulkan::render_targets::Acquire(&gfxRenderTargets[R_RENDERTARGET_FRAME_BUFFER]);
+        if(!frame||!frame->color||frame->color->description.format!=VK_FORMAT_B8G8R8A8_UNORM) {
+            Com_Error(ERR_FATAL,"Native framebuffer storage did not match its selected format");return D3DFMT_UNKNOWN;
+        }
+        return D3DFMT_A8R8G8B8;
+    }
+#endif
     const char *v0; // eax
     const char *v1; // eax
     const char *v2; // eax
@@ -878,6 +962,15 @@ void __cdecl R_InitFrameBufferRenderTarget_Win32(GfxRenderTarget *renderTarget)
 
 void R_InitSceneNullRenderTarget_PC()
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()) {
+        // Keep clear, depth prepass and lighting on the same scene attachments.
+        // The canonical non-NULL-target path retains all depth draws and their
+        // material colour masks, without a depth store/reload between passes.
+        dx.supportsSceneNullRenderTarget=0;
+        return;
+    }
+#endif
     IDirect3DSurface9 *nullTextureSurface; // [esp+4h] [ebp-Ch] BYREF
     HRESULT hr; // [esp+8h] [ebp-8h]
     _D3DFORMAT adapterFormat; // [esp+Ch] [ebp-4h]
@@ -1009,6 +1102,25 @@ void R_ShareRenderTarget_ReplaceColor(
 
 void R_InitIntZRenderTarget_PC()
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()) {
+        dx.supportsIntZ=false;
+        if(!r_allow_intz->current.enabled)return;
+        // Use genuine sampled hardware depth plus native ordered depth copies.
+        // The engine's existing INTZ material variants reconstruct this depth.
+        R_InitFullscreenRenderTargetImage(2,FULLSCREEN_SCENE,0,D3DFMT_D24S8,RENDERTARGET_USAGE_DEPTH,
+            &gfxRenderTargets[R_RENDERTARGET_FLOAT_Z]);
+        const auto scene=bo1::vulkan::render_targets::Acquire(&gfxRenderTargets[R_RENDERTARGET_SCENE]);
+        const auto depth=bo1::vulkan::render_targets::Acquire(&gfxRenderTargets[R_RENDERTARGET_FLOAT_Z]);
+        if(!scene||!scene->depth||!depth||!depth->depth||scene->depth->description.format!=depth->depth->description.format
+            ||scene->depth->description.extent.width!=depth->depth->description.extent.width
+            ||scene->depth->description.extent.height!=depth->depth->description.extent.height) {
+            Com_Error(ERR_FATAL,"Native sampled scene depth source/destination mismatch");return;
+        }
+        dx.supportsIntZ=true;
+        Com_Printf(8,"Native sampled scene depth enabled: real D24S8 image and ordered copies\n");return;
+    }
+#endif
     GfxImage *image; // [esp+0h] [ebp-518h]
     NV_DISPLAY_DRIVER_VERSION driverVersion; // [esp+8h] [ebp-510h] BYREF
     unsigned __int8 stereoEnabled; // [esp+9Bh] [ebp-47Dh] BYREF
@@ -1111,6 +1223,10 @@ LABEL_22:
 
 void __cdecl R_ShutdownRenderTargets()
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    bo1::vulkan::render_targets::Clear();
+    bo1::vulkan::pass_recording::ReleaseSunShadowCache();
+#endif
     int renderTargetId; // [esp+0h] [ebp-4h]
 
     for ( renderTargetId = 0; renderTargetId < 44; ++renderTargetId )
@@ -1120,6 +1236,9 @@ void __cdecl R_ShutdownRenderTargets()
 
 void __cdecl R_ShutDownSingleRenderTarget(GfxRenderTarget *rt)
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active())bo1::vulkan::render_targets::Release(rt);
+#endif
     if ( Sys_IsRenderThread() )
     {
         if ( rt->surface.color )
@@ -1134,8 +1253,14 @@ void __cdecl R_ShutDownSingleRenderTarget(GfxRenderTarget *rt)
         if ( rt->surface.depthStencil )
             RB_Resource_Release(rt->surface.depthStencil);
     }
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(!bo1::vulkan::shader_assets::Active()||!bo1::vulkan::render_targets::References(rt->image)) {
+#endif
     if ( rt->image )
         Image_Release(rt->image);
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    }
+#endif
     rt->image = 0;
     rt->surface.color = 0;
     rt->surface.depthStencil = 0;
@@ -1163,7 +1288,17 @@ void __cdecl R_InitExtraCamRenderTargets(unsigned int width, unsigned int height
     g_extraCamSettings.width = width;
     g_extraCamSettings.height = height;
     g_extraCamSettings.location = location;
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()) {
+        auto frame=bo1::vulkan::render_targets::Acquire(&gfxRenderTargets[R_RENDERTARGET_FRAME_BUFFER]);
+        if(!frame||!frame->color) {Com_Error(ERR_FATAL,"Native extra camera needs a framebuffer color image");return;}
+        surfaceDesc.Format=static_cast<_D3DFORMAT>(frame->color->sourceFormat);
+    } else {
+#endif
     gfxRenderTargets[R_RENDERTARGET_FRAME_BUFFER].surface.color->GetDesc(&surfaceDesc);
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    }
+#endif
     backBufferFormat = surfaceDesc.Format;
     R_InitSizedRenderTargetImage(
         20,
@@ -1199,6 +1334,19 @@ void R_InitSizedRenderTargetImage(
     else
         v9 = 1;
     R_InitRenderTargetImage(imageProgType, v10, v9, format, usage, renderTarget);
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()) {
+        if(usage==RENDERTARGET_USAGE_RENDER_SHARE_SCENE) {
+            Com_Error(ERR_FATAL,"Native sized target scene color replacement is not integrated");return;
+        }
+        if(usage==RENDERTARGET_USAGE_RENDER) {
+            std::string error;
+            if(!bo1::vulkan::render_targets::AttachDepth(renderTarget,renderTarget->width,renderTarget->height,error))
+                Com_Error(ERR_FATAL,"Native sized target depth: %s",error.c_str());
+        }
+        return;
+    }
+#endif
     if (usage == RENDERTARGET_USAGE_RENDER_SHARE_SCENE)
     {
         if (!gfxRenderTargets[R_RENDERTARGET_SCENE].surface.depthStencil
@@ -1295,3 +1443,31 @@ void __cdecl R_ShutdownUI3DRenderTarget(bool freePingPongBuffer)
         R_ShutDownSingleRenderTarget(&gfxRenderTargets[R_RENDERTARGET_UI3D_PING_PONG]);
     R_ShutDownSingleRenderTarget(&gfxRenderTargets[R_RENDERTARGET_UI3D]);
 }
+
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+bool R_HaveNativeFloatZ(bool isMissileCamera) {
+    const auto& target=gfxRenderTargets[isMissileCamera?R_RENDERTARGET_FLOAT_Z_MISSILE_CAM:R_RENDERTARGET_FLOAT_Z];
+    if(!bo1::vulkan::shader_assets::Active())return target.surface.color!=nullptr;
+    const auto actual=bo1::vulkan::render_targets::Acquire(&target);
+    const auto image=bo1::vulkan::image_assets::Acquire(target.image);
+    const auto attachment=actual?(dx.supportsIntZ&&!isMissileCamera?actual->depth:actual->color):nullptr;
+    if(!attachment||!image||attachment->texture!=image->texture) {
+        Com_Printf(8,"Native floatZ owner unavailable: missile=%u enabled=%u minimal=%u target=%ux%u image=%p target_record=%u color_record=%u image_record=%u same_texture=%u\n",
+            isMissileCamera?1:0,r_floatz&&r_floatz->current.enabled?1:0,g_allocateMinimalResources?1:0,
+            unsigned(target.width),unsigned(target.height),target.image,actual?1:0,actual&&actual->color?1:0,image?1:0,
+            actual&&actual->color&&image&&actual->color->texture==image->texture?1:0);
+        return false;
+    }
+    const auto& texture=attachment->texture;
+    const auto& description=texture->Description();
+    const bool hardwareDepth=dx.supportsIntZ&&!isMissileCamera;
+    const auto usage=(hardwareDepth?VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT:VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)|VK_IMAGE_USAGE_SAMPLED_BIT;
+    const bool ready=texture->Handle()&&texture->AttachmentView()&&texture->View()
+        &&description.format==(hardwareDepth?VK_FORMAT_D24_UNORM_S8_UINT:VK_FORMAT_R32_SFLOAT)&&(description.usage&usage)==usage
+        &&description.extent.width==target.width&&description.extent.height==target.height;
+    if(!ready)Com_Printf(8,"Native floatZ resource mismatch: format=%u usage=%u target=%ux%u image=%ux%u handle=%u attachment=%u view=%u\n",
+        unsigned(description.format),unsigned(description.usage),unsigned(target.width),unsigned(target.height),
+        description.extent.width,description.extent.height,texture->Handle()?1:0,texture->AttachmentView()?1:0,texture->View()?1:0);
+    return ready;
+}
+#endif

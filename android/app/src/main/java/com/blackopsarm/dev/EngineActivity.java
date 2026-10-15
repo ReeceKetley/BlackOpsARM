@@ -68,7 +68,9 @@ public final class EngineActivity extends SDLActivity {
                             : unavailable("Engine RSS", v[9]);
                     String frameCpu = "CPU main " + measured(v[3], v[7])
                             + " / Com_Frame | render " + measured(v[2], v[6]) + " / submission";
-                    performanceView.setText(render + "\n" + cpu + "\n" + frameCpu + "\n"
+                    String presentationLabel = getIntent().getBooleanExtra("nativeVulkanPresentation", false)
+                            ? "Native presentation check (no game frame)\n" : "";
+                    performanceView.setText(presentationLabel + render + "\n" + cpu + "\n" + frameCpu + "\n"
                             + ram + " | " + gpu(v[10], (int)v[11], v[12]) + "\nSubmission rate; Vol+ toggles");
                 }
             } catch (LinkageError | RuntimeException failure) {
@@ -400,6 +402,11 @@ public final class EngineActivity extends SDLActivity {
     }
 
     @Override public boolean dispatchKeyEvent(KeyEvent event) {
+        if (adopted && getIntent().getBooleanExtra("nativeVulkanPresentation", false)
+                && (event.getKeyCode() == KeyEvent.KEYCODE_BACK || event.getKeyCode() == KeyEvent.KEYCODE_ESCAPE)) {
+            if (event.getAction() == KeyEvent.ACTION_UP && !event.isCanceled()) SDLActivity.nativeSendQuit();
+            return true;
+        }
         if (adopted && event.getKeyCode() == KeyEvent.KEYCODE_VOLUME_UP) {
             if (event.getAction() == KeyEvent.ACTION_UP && !event.isCanceled()) {
                 performanceVisible = !performanceVisible;
@@ -422,7 +429,14 @@ public final class EngineActivity extends SDLActivity {
             throw new IllegalStateException("Native launch requires committed, app-accessible game files");
         }
         // The matching SDL SDK prepends its library argument: SDL_main receives argc=4.
-        return new String[] {gameRoot, userRoot, "--rendered"};
+        if (getIntent().getBooleanExtra("nativeVulkanBackend", false)
+                && !getIntent().getBooleanExtra("nativeVulkanPresentation", false)) {
+            return new String[] {gameRoot, userRoot, "--native-vulkan",
+                    Integer.toString(getIntent().getIntExtra("nativeVulkanHeight", 0))};
+        }
+        return new String[] {gameRoot, userRoot,
+                getIntent().getBooleanExtra("nativeVulkanPresentation", false) ? "--vulkan-presentation"
+                : getIntent().getBooleanExtra("nativeVulkanBackend", false) ? "--native-vulkan" : "--rendered"};
     }
 
     @Override protected void onCreate(Bundle state) {
@@ -462,7 +476,7 @@ public final class EngineActivity extends SDLActivity {
             finish();
         } else {
             createPerformanceOverlay();
-            createTouchControls();
+            if (!getIntent().getBooleanExtra("nativeVulkanPresentation", false)) createTouchControls();
         }
     }
 

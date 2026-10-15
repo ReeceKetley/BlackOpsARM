@@ -85,7 +85,33 @@ int desired(int role,const Slot &slot,cpu_set_t *affinity,int *nice) {
     *nice=slot.startNice-boost;if(*nice<-20)*nice=-20;
     return CPU_COUNT(affinity)?0:EINVAL;
 }
-int affinityValue(pid_t tid,cpu_set_t *value){if(sched_getaffinity(tid,sizeof(*value),value))return errno;return 0;}
+// sched_getaffinity reports the requested mask ANDed with currently active
+// CPUs. Qualcomm core_ctl pauses big cores under light load (e.g. during
+// loading), so that value is transient. Observe the thread's actual requested
+// mask instead; restoring or narrowing from a transient value would exclude
+// paused cores permanently.
+int affinityValue(pid_t tid,cpu_set_t *value) {
+    char path[64];std::snprintf(path,sizeof(path),"/proc/self/task/%d/status",int(tid));
+    const int fd=open(path,O_RDONLY|O_CLOEXEC);if(fd<0)return errno;
+    char text[4096];std::size_t used=0;ssize_t count;
+    while(used<sizeof(text)-1 && (count=read(fd,text+used,sizeof(text)-1-used))>0)used+=std::size_t(count);
+    const int error=count<0?errno:0;close(fd);if(error)return error;text[used]=0;
+    const char *line=std::strstr(text,"\nCpus_allowed_list:");if(!line)return ENODATA;
+    const char *cursor=line+std::strlen("\nCpus_allowed_list:");
+    cpu_set_t result;CPU_ZERO(&result);
+    while(*cursor==' ' || *cursor=='\t')++cursor;
+    for(;;) {
+        char *end;errno=0;const unsigned long first=std::strtoul(cursor,&end,10);
+        if(errno || end==cursor || first>=CPU_SETSIZE)return EINVAL;
+        unsigned long last=first;cursor=end;
+        if(*cursor=='-') {++cursor;errno=0;last=std::strtoul(cursor,&end,10);if(errno || end==cursor || last<first || last>=CPU_SETSIZE)return EINVAL;cursor=end;}
+        for(unsigned long cpu=first;cpu<=last;++cpu)CPU_SET(cpu,&result);
+        if(*cursor!=',')break;++cursor;
+    }
+    if(*cursor!='\n' && *cursor!=0)return EINVAL;
+    if(!CPU_COUNT(&result))return EINVAL;
+    *value=result;return 0;
+}
 int applyAffinity(pid_t tid,const cpu_set_t &wanted) {
     cpu_set_t before{},after{};int error=affinityValue(tid,&before);if(error)return error;
     if(equal(before,wanted))return 0;

@@ -1,3 +1,7 @@
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+#include "gfx_vulkan/event_fences.h"
+#include "gfx_vulkan/shader_assets.h"
+#endif
 #include "r_setstate_d3d.h"
 #include "r_init.h"
 #if defined(__ANDROID__)
@@ -8,6 +12,11 @@
 
 void __cdecl R_FinishGpuFence()
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()) {
+        std::string error;if(!bo1::vulkan::event_fences::WaitQueue(error)) {Com_Error(ERR_FATAL,"Native GPU finish: %s",error.c_str());std::abort();}return;
+    }
+#endif
 #if defined(__ANDROID__)
     if (!dx.device || !dx.flushGpuQuery) { Com_Error(ERR_FATAL,"GPU fence wait requires the actual device/query"); std::abort(); }
     for (;;) {

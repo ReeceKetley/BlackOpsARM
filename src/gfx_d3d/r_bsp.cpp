@@ -1,3 +1,7 @@
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+#include "gfx_vulkan/buffer_assets.h"
+#include "gfx_vulkan/shader_assets.h"
+#endif
 #include "r_bsp.h"
 #include <universal/com_memory.h>
 #include "r_bsp_load_obj.h"
@@ -308,6 +312,18 @@ void __cdecl R_ReleaseWorld()
         R_ResetModelLighting();
         R_FlushStaticModelCache();
     }
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()) {
+        if(s_world.draw.vd.worldVb || s_world.draw.vld.layerVb) {
+            Com_Error(ERR_FATAL,"Native world release received legacy COM buffers");return;
+        }
+        // Disk/CPU counts do not prove a GPU allocation occurred. Error cleanup
+        // can release a partial load or revisit an already retired owner. Drop
+        // actual native owners if present; immutable draw borrowers keep them.
+        bo1::vulkan::buffer_assets::Release(&s_world.draw.vd.worldVb);
+        bo1::vulkan::buffer_assets::Release(&s_world.draw.vld.layerVb);
+    } else {
+#endif
     if ( s_world.draw.vertexCount )
     {
         if ( !s_world.draw.vd.worldVb
@@ -358,6 +374,9 @@ void __cdecl R_ReleaseWorld()
     {
         __debugbreak();
     }
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    }
+#endif
     R_VertexStream2_Shutdown();
 }
 
