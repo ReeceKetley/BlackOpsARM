@@ -19,22 +19,29 @@ int input=-1;
 std::thread::id owner;
 std::array<char,1024> line;
 unsigned length;
-bool discard,afterCR;
+bool discard,afterCR,slashRequired;
 [[noreturn]] void fail(const char *what){std::fprintf(stderr,"Native console input: %s (%d)\n",what,errno);std::abort();}
 void requireOwner(){if(owner!=std::this_thread::get_id())fail("input polling requires installed owner");}
 void emit(){
     if(!discard && length){
-        auto *payload=Z_Malloc(length+1,"native console input",11);
-        memcpy(payload,line.data(),length);reinterpret_cast<char *>(payload)[length]=0;
-        Sys_QueEvent(0,SE_CONSOLE,0,0,length+1,payload);
+        const unsigned start=slashRequired?1:0;
+        if(slashRequired && (line[0]!='/' || length==1)) {
+            std::fputs("Native console discarded line without slash command\n",stderr);
+        } else {
+            const unsigned size=length-start;
+            auto *payload=Z_Malloc(size+1,"native console input",11);
+            memcpy(payload,line.data()+start,size);reinterpret_cast<char *>(payload)[size]=0;
+            Sys_QueEvent(0,SE_CONSOLE,0,0,size+1,payload);
+            if(slashRequired)std::fprintf(stderr,"Native console queued SE_CONSOLE: %.*s\n",static_cast<int>(size),line.data()+start);
+        }
     }
     length=0;discard=false;
 }
 }
-void InstallConsoleInput(int descriptor){
+void InstallConsoleInput(int descriptor, bool requireSlash){
     if(owner!=std::thread::id{} || descriptor<0)fail("invalid console installation");
     input=fcntl(descriptor,F_DUPFD_CLOEXEC,3);if(input<0)fail("cannot own console descriptor");
-    owner=std::this_thread::get_id();length=0;discard=afterCR=false;
+    owner=std::this_thread::get_id();length=0;discard=afterCR=false;slashRequired=requireSlash;
 }
 void PollConsoleInput(){
     requireOwner();if(input<0)return; // Actual EOF: no more input on this stream.
@@ -60,7 +67,7 @@ void PollConsoleInput(){
     }
 }
 bool ConsoleInputOwnedByCaller(){return owner==std::this_thread::get_id();}
-void RetireConsoleInput(){requireOwner();if(input>=0)close(input);input=-1;owner={};length=0;discard=afterCR=false;}
+void RetireConsoleInput(){requireOwner();if(input>=0)close(input);input=-1;owner={};length=0;discard=afterCR=slashRequired=false;}
 }
 #if defined(BO1_NATIVE_RENDER_OWNER_DISPATCH)
 #include "renderer_window.h"
@@ -73,6 +80,7 @@ void Platform_InputFrame(){
     bo1::android::PumpRendererOwnerRequestsIfOwner();
 #endif
     if(Sys_IsHeadless()){bo1::android::PollConsoleInput();return;}
+    if(bo1::android::ConsoleInputOwnedByCaller())bo1::android::PollConsoleInput();
 #if defined(BO1_NATIVE_SYSTEM_CORE)
     bo1::android::PumpAndroidConsoleCommandsIfOwner();
 #endif

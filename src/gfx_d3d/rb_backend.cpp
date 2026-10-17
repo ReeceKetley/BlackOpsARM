@@ -6,7 +6,23 @@
 #include "gfx_vulkan/render_targets.h"
 #include "gfx_vulkan/target_bindings.h"
 #include "gfx_vulkan/pass_recording.h"
+#include "gfx_vulkan/material_dispatch.h"
+#include "gfx_vulkan/image_usage.h"
+#include "gfx_vulkan/query_assets.h"
+#include "gfx_vulkan/forward_opaque.h"
+#include "gfx_vulkan/texture_bindings.h"
+#include "gfx_vulkan/constant_state.h"
+#include "gfx_vulkan/material_bindings.h"
+#include "gfx_vulkan/geometry_bindings.h"
+#include <android/log.h>
 #include <qcommon/common.h>
+#include <condition_variable>
+#include <functional>
+#include <mutex>
+#include <pthread.h>
+#include <sched.h>
+#include <unistd.h>
+#include <cerrno>
 #endif
 #include <universal/narrow32.h>
 #if defined(__ANDROID__) && defined(BO1_NATIVE_FULLSCREEN_TRIANGLE) && BO1_NATIVE_FULLSCREEN_TRIANGLE
@@ -1619,6 +1635,452 @@ void __cdecl RB_SetEyeOffsetConstant(GfxCmdBufSourceState *source, const float *
     R_UpdateCodeConstantFromVec4(source, CONST_SRC_CODE_EYEOFFSET, eyeOffset);
 }
 
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+void Com_MarkParallelRenderWorker();
+int g_nativeParallelRecordWorkers;
+namespace
+{
+thread_local bool s_parallelDrawAllowed;
+thread_local bool s_parallelRecordWorker;
+constexpr unsigned kParallelLanes = bo1::vulkan::pass_recording::MaxParallelLanes;
+constexpr unsigned kParallelMaxWorkers = kParallelLanes - 1;
+constexpr unsigned kParallelMinSurfs = 48;
+
+// Scene recording threads run on the fastest cluster (big cores) when the
+// kernel reports per-core maximum frequencies; otherwise the scheduler decides.
+void RB_PreferFastCores()
+{
+    unsigned long best = 0;
+    unsigned long frequency[CPU_SETSIZE] = {};
+    const long cores = sysconf(_SC_NPROCESSORS_CONF);
+    for (long cpu = 0; cpu < cores && cpu < CPU_SETSIZE; ++cpu)
+    {
+        char path[96];
+        std::snprintf(path, sizeof(path), "/sys/devices/system/cpu/cpu%ld/cpufreq/cpuinfo_max_freq", cpu);
+        if (FILE *file = std::fopen(path, "r"))
+        {
+            if (std::fscanf(file, "%lu", &frequency[cpu]) != 1)
+                frequency[cpu] = 0;
+            std::fclose(file);
+        }
+        best = std::max(best, frequency[cpu]);
+    }
+    if (!best)
+        return;
+    cpu_set_t set;
+    CPU_ZERO(&set);
+    for (long cpu = 0; cpu < cores && cpu < CPU_SETSIZE; ++cpu)
+        if (frequency[cpu] == best)
+            CPU_SET(cpu, &set);
+    if (sched_setaffinity(0, sizeof(set), &set) != 0)
+        __android_log_print(ANDROID_LOG_WARN, "BO1NativeVulkan", "native_parallel_record affinity unavailable errno=%d", errno);
+}
+
+// Persistent scene recording threads. Start hands job(worker) to workers
+// [0,count) and returns; Wait returns when every one of them has finished.
+// Process lifetime: never destroyed (threads are detached).
+class ParallelRecordWorkers
+{
+public:
+    void Start(unsigned count, const std::function<void(unsigned)> *job)
+    {
+        while (started_ < count)
+        {
+            const unsigned index = started_++;
+            std::thread([this, index] { Loop(index); }).detach();
+        }
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            job_ = job;
+            active_ = count;
+            pending_ = count;
+            ++generation_;
+        }
+        wake_.notify_all();
+    }
+    void Wait()
+    {
+        std::unique_lock<std::mutex> lock(mutex_);
+        done_.wait(lock, [this] { return pending_ == 0; });
+        job_ = nullptr;
+    }
+
+private:
+    void Loop(unsigned index)
+    {
+        Com_MarkParallelRenderWorker();
+        s_parallelRecordWorker = true;
+        RB_PreferFastCores();
+        char name[16];
+        std::snprintf(name, sizeof(name), "BO1Record%u", index);
+        pthread_setname_np(pthread_self(), name);
+        unsigned long long seen = 0;
+        for (;;)
+        {
+            const std::function<void(unsigned)> *job = nullptr;
+            {
+                std::unique_lock<std::mutex> lock(mutex_);
+                wake_.wait(lock, [&] { return generation_ != seen; });
+                seen = generation_;
+                if (index >= active_)
+                    continue;
+                job = job_;
+            }
+            (*job)(index);
+            std::lock_guard<std::mutex> lock(mutex_);
+            if (--pending_ == 0)
+                done_.notify_one();
+        }
+    }
+    std::mutex mutex_;
+    std::condition_variable wake_, done_;
+    const std::function<void(unsigned)> *job_ = nullptr;
+    unsigned started_ = 0, active_ = 0, pending_ = 0;
+    unsigned long long generation_ = 0;
+};
+ParallelRecordWorkers &RB_ParallelWorkers()
+{
+    static ParallelRecordWorkers *workers = new ParallelRecordWorkers;
+    return *workers;
+}
+
+struct ParallelChunk
+{
+    unsigned first, count;
+    bool safe;     // only worker-safe surface types (no shared tess/dynamic/skin/cache buffers)
+    int owner;     // worker index, or -1 for the render thread
+    bool real;     // recorded on the caller's own state (the list's final chunk)
+    VkCommandBuffer command;
+    unsigned drawMat;
+    std::string error;
+};
+struct ParallelFork
+{
+    const bo1::vulkan::pass_recording::RecordingScope *passes;
+    const bo1::vulkan::image_usage::RecordingScope *images;
+    const GfxDrawSurfListInfo *info;
+    int viewIndex, primIndex, backupIndex;
+};
+// Fork snapshot and per-lane chunk states (render thread owns the snapshot;
+// lane i's state is used only by the thread recording lane i).
+GfxCmdBufState s_forkState;
+GfxCmdBufSourceState s_forkSource;
+GfxCmdBufState s_laneStates[kParallelLanes];
+GfxCmdBufSourceState s_laneSources[kParallelLanes];
+GfxFrameStats s_laneStats[kParallelLanes];
+bo1::vulkan::material_dispatch::Profile s_laneProfiles[kParallelLanes];
+double s_laneMs[kParallelLanes];
+
+// Surface types whose draws use only per-state engine data and immutable or
+// lock-protected buffers: world (BSP), static model rigid, brush model and
+// xmodel rigid. Everything else stays on the render thread.
+bool RB_ParallelSafeSurface(const GfxDrawSurf &drawSurf)
+{
+    const unsigned type = unsigned((drawSurf.packed >> 51) & 0xF);
+    return type == 0 || type == 2 || type == 6 || type == 7;
+}
+
+template <typename T>
+const T *RB_RebaseInto(const T *pointer, const void *from, void *to, std::size_t bytes)
+{
+    const auto *begin = static_cast<const unsigned char *>(from);
+    const auto *at = reinterpret_cast<const unsigned char *>(pointer);
+    if (at < begin || at >= begin + bytes)
+        return pointer;
+    return reinterpret_cast<const T *>(static_cast<unsigned char *>(to) + (at - begin));
+}
+
+// A chunk starts from the fork snapshot: engine state, its native bindings,
+// a private source copy and private statistics.
+void RB_InitChunkState(const ParallelFork &fork, GfxCmdBufState *state, GfxCmdBufSourceState *source)
+{
+    std::memcpy(state, &s_forkState, sizeof(*state));
+    bo1::vulkan::target_bindings::Clone(&s_forkState, state);
+    bo1::vulkan::texture_bindings::Clone(&s_forkState, state);
+    bo1::vulkan::constant_state::Clone(&s_forkState, state);
+    bo1::vulkan::material_bindings::Clone(&s_forkState, state);
+    bo1::vulkan::geometry_bindings::Clone(&s_forkState.prim, &state->prim);
+    std::memset(&state->prim.frameStats, 0, sizeof(state->prim.frameStats));
+    state->prim.viewStats = &state->prim.frameStats.viewStats[fork.viewIndex];
+    state->prim.primStats = fork.primIndex >= 0 ? &state->prim.viewStats->primStats[fork.primIndex] : nullptr;
+    state->prim.backupPrimStats = fork.backupIndex >= 0 ? &state->prim.viewStats->primStats[fork.backupIndex] : nullptr;
+    std::memcpy(source, &s_forkSource, sizeof(*source));
+    source->viewParms3D = RB_RebaseInto(s_forkSource.viewParms3D, &s_forkSource, source, sizeof(*source));
+    source->objectPlacement = RB_RebaseInto(s_forkSource.objectPlacement, &s_forkSource, source, sizeof(*source));
+}
+
+void RB_AddFrameStats(GfxFrameStats &total, const GfxFrameStats &add)
+{
+    static_assert(sizeof(GfxFrameStats) % sizeof(int) == 0, "frame stats are int counters");
+    int *to = reinterpret_cast<int *>(&total);
+    const int *from = reinterpret_cast<const int *>(&add);
+    for (std::size_t i = 0; i < sizeof(GfxFrameStats) / sizeof(int); ++i)
+        to[i] += from[i];
+}
+
+// Records one chunk into a new secondary command buffer of `lane`.
+void RB_RecordParallelChunk(const ParallelFork &fork, ParallelChunk &chunk, unsigned lane,
+    GfxCmdBufState *state, GfxCmdBufSourceState *source)
+{
+    bo1::vulkan::image_usage::BorrowScope images(fork.images);
+    bo1::vulkan::pass_recording::RecordingScope scope(*fork.passes, *fork.passes->Lane(lane));
+    if (!scope.BeginChunk(state, chunk.error))
+        return;
+    GfxDrawSurfListInfo info = *fork.info;
+    info.drawSurfs += chunk.first;
+    info.drawSurfCount = chunk.count;
+    GfxDrawSurfListArgs args;
+    args.context.source = source;
+    args.context.state = state;
+    args.firstDrawSurfIndex = 0;
+    args.info = &info;
+    GfxCmdBufContext prepass;
+    prepass.source = nullptr;
+    prepass.state = nullptr;
+    // Each dynamic index upload is atomic on its own. Only the cached static
+    // model fallback (r_nativeSModelGather 0) needs consecutive uploads to stay
+    // contiguous: keep worker uploads out for that whole chunk.
+    std::unique_lock<std::recursive_mutex> dynamicIndex(R_NativeDynamicIndexMutex(), std::defer_lock);
+    if (!chunk.safe && !bo1::vulkan::material_dispatch::CachedGatherEnabled())
+        dynamicIndex.lock();
+    while (args.firstDrawSurfIndex != chunk.count)
+    {
+        args.firstDrawSurfIndex += R_RenderDrawSurfListMaterial(&args, prepass);
+        ++chunk.drawMat;
+    }
+    if (dynamicIndex.owns_lock())
+        dynamicIndex.unlock();
+    if (!scope.Finish(chunk.error))
+        return;
+    chunk.command = scope.ChunkCommand();
+    if (!chunk.command)
+        chunk.error = "Native parallel chunk recorded no command buffer";
+}
+
+double RB_ParallelNowMs()
+{
+    return std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now().time_since_epoch()).count();
+}
+
+// Records `info` split into chunks across the render thread and workers.
+// Returns false, having recorded nothing, when the list is not eligible.
+bool RB_DrawSurfsParallel(GfxCmdBufContext context, const GfxDrawSurfListInfo *info, unsigned int &drawMatCount)
+{
+    const unsigned workers = g_nativeParallelRecordWorkers > 0
+        ? std::min<unsigned>(unsigned(g_nativeParallelRecordWorkers), kParallelMaxWorkers) : 0u;
+    if (!workers || !s_parallelDrawAllowed || s_parallelRecordWorker || info->drawSurfCount < kParallelMinSurfs
+        || !bo1::vulkan::pass_recording::ParallelRecordEnabled() || bo1::vulkan::forward_opaque::Enabled()
+        || pixelCostMode != GFX_PIXEL_COST_MODE_OFF || (r_logFile && r_logFile->current.integer)
+        || bo1::vulkan::query_assets::OcclusionOpen())
+        return false;
+    auto *passes = bo1::vulkan::pass_recording::Current();
+    if (!passes || passes->ParallelLaneCount() < workers + 1 || !bo1::vulkan::image_usage::CurrentScope())
+        return false;
+
+    // Material runs, then contiguous chunks: unsafe runs group together; safe
+    // runs are cut into several small chunks per recording thread, which the
+    // threads then take in order as each finishes (draw cost per surface
+    // varies too much for a static equal split).
+    static std::vector<ParallelChunk> chunks;
+    chunks.clear();
+    const unsigned total = info->drawSurfCount;
+    const unsigned share = std::max(8u, total / ((workers + 1) * 4));
+    for (unsigned first = 0; first < total;)
+    {
+        unsigned count = R_SkipDrawSurfListMaterial(&info->drawSurfs[first], total - first);
+        if (!count)
+            count = 1;
+        const bool safe = RB_ParallelSafeSurface(info->drawSurfs[first]);
+        if (chunks.empty() || chunks.back().safe != safe || (safe && chunks.back().count >= share))
+            chunks.push_back({ first, count, safe, -1, false, VK_NULL_HANDLE, 0, {} });
+        else
+            chunks.back().count += count;
+        first += count;
+    }
+    chunks.back().real = true;
+    // Safe chunks other than the final one are shared work (render thread too).
+    static std::vector<unsigned> shared;
+    shared.clear();
+    for (std::size_t i = 0; i + 1 < chunks.size(); ++i)
+        if (chunks[i].safe)
+            shared.push_back(unsigned(i));
+    if (shared.empty())
+        return false;
+    const unsigned activeWorkers = std::min<unsigned>(workers, unsigned(shared.size()));
+    std::atomic<unsigned> nextShared{ 0 };
+
+    std::string error;
+    bool ready = false;
+    if (!passes->BeginParallel(context.state, ready, error))
+    {
+        Com_Error(ERR_FATAL, "Native parallel scene recording: %s", error.c_str());
+        return false;
+    }
+    if (!ready)
+        return false;
+
+    const double startMs = RB_ParallelNowMs();
+    // Fork snapshot of the caller's state after the list prologue.
+    std::memcpy(&s_forkState, context.state, sizeof(s_forkState));
+    bo1::vulkan::target_bindings::Clone(context.state, &s_forkState);
+    bo1::vulkan::texture_bindings::Clone(context.state, &s_forkState);
+    bo1::vulkan::constant_state::Clone(context.state, &s_forkState);
+    bo1::vulkan::material_bindings::Clone(context.state, &s_forkState);
+    bo1::vulkan::geometry_bindings::Clone(&context.state->prim, &s_forkState.prim);
+    std::memcpy(&s_forkSource, context.source, sizeof(s_forkSource));
+    s_forkSource.viewParms3D = RB_RebaseInto(context.source->viewParms3D, context.source, &s_forkSource, sizeof(s_forkSource));
+    s_forkSource.objectPlacement = RB_RebaseInto(context.source->objectPlacement, context.source, &s_forkSource, sizeof(s_forkSource));
+    ParallelFork fork;
+    fork.passes = passes;
+    fork.images = bo1::vulkan::image_usage::CurrentScope();
+    fork.info = info;
+    GfxCmdBufPrimState &prim = context.state->prim;
+    fork.viewIndex = prim.viewStats == &prim.frameStats.viewStats[1] || prim.viewStats == &g_frameStatsCur.viewStats[1] ? 1 : 0;
+    auto statIndex = [&](const GfxPrimStats *stats) {
+        if (!stats || !prim.viewStats || stats < prim.viewStats->primStats || stats >= prim.viewStats->primStats + 10)
+            return -1;
+        return int(stats - prim.viewStats->primStats);
+    };
+    fork.primIndex = statIndex(prim.primStats);
+    fork.backupIndex = statIndex(prim.backupPrimStats);
+    for (unsigned lane = 0; lane < kParallelLanes; ++lane)
+    {
+        std::memset(&s_laneStats[lane], 0, sizeof(s_laneStats[lane]));
+        s_laneMs[lane] = 0;
+    }
+
+    const bool timed = bo1::vulkan::material_dispatch::ProfileTimed();
+    // Takes shared chunks in list order until none remain (any thread).
+    std::atomic<bool> failed{ false };
+    auto takeShared = [&](unsigned lane, int owner) {
+        for (;;)
+        {
+            const unsigned index = nextShared.fetch_add(1, std::memory_order_relaxed);
+            if (index >= shared.size() || failed.load(std::memory_order_relaxed))
+                return;
+            auto &chunk = chunks[shared[index]];
+            chunk.owner = owner;
+            RB_InitChunkState(fork, &s_laneStates[lane], &s_laneSources[lane]);
+            RB_RecordParallelChunk(fork, chunk, lane, &s_laneStates[lane], &s_laneSources[lane]);
+            RB_AddFrameStats(s_laneStats[lane], s_laneStates[lane].prim.frameStats);
+            if (!chunk.error.empty())
+                failed.store(true, std::memory_order_relaxed);
+        }
+    };
+    const std::function<void(unsigned)> job = [&](unsigned worker) {
+        const double begin = RB_ParallelNowMs();
+        const unsigned lane = worker + 1;
+        bo1::vulkan::material_dispatch::ResetProfile(timed);
+        takeShared(lane, int(worker));
+        s_laneProfiles[lane] = bo1::vulkan::material_dispatch::ReadProfile();
+        s_laneMs[lane] = RB_ParallelNowMs() - begin;
+    };
+    RB_ParallelWorkers().Start(activeWorkers, &job);
+
+    // Render thread: its own chunks (unsafe ones on copies, the final one on
+    // the caller's state), then shared chunks.
+    const double mainBegin = RB_ParallelNowMs();
+    for (auto &chunk : chunks)
+    {
+        if (chunk.safe && !chunk.real)
+            continue;
+        if (chunk.real)
+        {
+            RB_RecordParallelChunk(fork, chunk, 0, context.state, context.source);
+        }
+        else
+        {
+            RB_InitChunkState(fork, &s_laneStates[0], &s_laneSources[0]);
+            RB_RecordParallelChunk(fork, chunk, 0, &s_laneStates[0], &s_laneSources[0]);
+            RB_AddFrameStats(s_laneStats[0], s_laneStates[0].prim.frameStats);
+        }
+        if (!chunk.error.empty())
+        {
+            failed.store(true, std::memory_order_relaxed);
+            break;
+        }
+    }
+    const double ownMs = RB_ParallelNowMs() - mainBegin;
+    takeShared(0, -1);
+    const double mainMs = RB_ParallelNowMs() - mainBegin;
+    RB_ParallelWorkers().Wait();
+    const double waitMs = RB_ParallelNowMs() - mainBegin - mainMs;
+
+    std::vector<VkCommandBuffer> ordered;
+    ordered.reserve(chunks.size());
+    drawMatCount = 0;
+    for (auto &chunk : chunks)
+    {
+        if (!chunk.error.empty())
+        {
+            Com_Error(ERR_FATAL, "Native parallel scene chunk (first %u count %u owner %d): %s",
+                chunk.first, chunk.count, chunk.owner, chunk.error.c_str());
+            return true;
+        }
+        ordered.push_back(chunk.command);
+        drawMatCount += chunk.drawMat;
+    }
+    if (!passes->EndParallel(ordered, error))
+    {
+        Com_Error(ERR_FATAL, "Native parallel scene recording: %s", error.c_str());
+        return true;
+    }
+    // Statistics and profiles recorded on chunk copies join the caller's.
+    GfxFrameStats joined;
+    std::memset(&joined, 0, sizeof(joined));
+    for (unsigned lane = 0; lane < kParallelLanes; ++lane)
+        RB_AddFrameStats(joined, s_laneStats[lane]);
+    if (prim.viewStats)
+    {
+        int *to = reinterpret_cast<int *>(prim.viewStats);
+        const int *from = reinterpret_cast<const int *>(&joined.viewStats[fork.viewIndex]);
+        for (std::size_t i = 0; i < sizeof(GfxViewStats) / sizeof(int); ++i)
+            to[i] += from[i];
+    }
+    prim.frameStats.gfxEntCount += joined.gfxEntCount;
+    prim.frameStats.geoIndexCount += joined.geoIndexCount;
+    prim.frameStats.fxIndexCount += joined.fxIndexCount;
+    for (unsigned worker = 0; worker < activeWorkers; ++worker)
+        bo1::vulkan::material_dispatch::MergeProfile(s_laneProfiles[worker + 1]);
+
+    static unsigned frames, calls;
+    static double sumTotal, sumMain, sumOwn, sumWait, sumWorker[kParallelLanes];
+    static unsigned long long sumChunks;
+    ++calls;
+    sumTotal += RB_ParallelNowMs() - startMs;
+    sumMain += mainMs;
+    sumOwn += ownMs;
+    sumWait += waitMs;
+    sumChunks += chunks.size();
+    for (unsigned worker = 0; worker < activeWorkers; ++worker)
+        sumWorker[worker] += s_laneMs[worker + 1];
+    if (++frames == 300)
+    {
+        __android_log_print(ANDROID_LOG_INFO, "BO1NativeVulkan",
+            "native_parallel_record calls=%u workers=%u chunks=%.1f total_ms=%.3f main_ms=%.3f main_own_ms=%.3f wait_ms=%.3f worker_ms=%.3f/%.3f/%.3f",
+            calls, activeWorkers, double(sumChunks) / calls, sumTotal / calls, sumMain / calls, sumOwn / calls, sumWait / calls,
+            sumWorker[0] / calls, sumWorker[1] / calls, sumWorker[2] / calls);
+        frames = calls = 0;
+        sumTotal = sumMain = sumOwn = sumWait = 0;
+        sumChunks = 0;
+        for (double &value : sumWorker)
+            value = 0;
+    }
+    return true;
+}
+}
+
+RB_ParallelDrawScope::RB_ParallelDrawScope() : previous(s_parallelDrawAllowed)
+{
+    s_parallelDrawAllowed = true;
+}
+
+RB_ParallelDrawScope::~RB_ParallelDrawScope()
+{
+    s_parallelDrawAllowed = previous;
+}
+#endif
+
 void __cdecl R_DrawSurfs(GfxCmdBufContext context, GfxCmdBufState *prepassState, const GfxDrawSurfListInfo *info)
 {
     PROF_SCOPED("R_DrawSurfs");
@@ -1703,6 +2165,9 @@ void __cdecl R_DrawSurfs(GfxCmdBufContext context, GfxCmdBufState *prepassState,
     listArgs.info = info;
 
     drawMatCount = 0;
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if (prepassContext.state || !bo1::vulkan::shader_assets::Active() || !RB_DrawSurfsParallel(context, info, drawMatCount))
+#endif
     while (listArgs.firstDrawSurfIndex != drawSurfCount)
     {
         processedDrawSurfCount = R_RenderDrawSurfListMaterial(&listArgs, prepassContext);
@@ -1723,6 +2188,45 @@ void __cdecl R_DrawSurfs(GfxCmdBufContext context, GfxCmdBufState *prepassState,
     R_TessEnd(context, prepassContext);
     context.state->origMaterial = 0;
 }
+
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+// Diagnostic: native draws per surface (tess) type, averaged over 300 frames.
+static void RB_NoteTessDraws(unsigned type, unsigned draws, unsigned surfaces, unsigned techType)
+{
+    static const char *const names[16] = { "bsp", "bsp_pretess", "smodel_rigid", "smodel_pretess", "smodel_cached",
+        "smodel_skinned", "bmodel", "xmodel_rigid", "xmodel_rigid_skinned", "xmodel_skinned", "xmodel_water",
+        "codemesh", "markmesh", "particlecloud", "ropemesh", "glassmesh" };
+    static unsigned long long drawCounts[16], surfaceCounts[16], bspByTech[256];
+    static int frame = -1, frames;
+    drawCounts[type & 15] += draws;
+    if ((type & 15) <= 1)
+        bspByTech[techType & 255] += draws;
+    surfaceCounts[type & 15] += surfaces;
+    if (frame != rg.frontEndFrameCount)
+    {
+        frame = rg.frontEndFrameCount;
+        if (++frames == 300)
+        {
+            char line[1024];
+            int length = snprintf(line, sizeof(line), "native_tess_draws frames=300");
+            for (int i = 0; i < 16; ++i)
+                if (drawCounts[i])
+                    length += snprintf(line + length, sizeof(line) - length, " %s=%llu/%llu", names[i],
+                        drawCounts[i] / 300, surfaceCounts[i] / 300);
+            __android_log_print(ANDROID_LOG_INFO, "BO1NativeVulkan", "%s", line);
+            length = snprintf(line, sizeof(line), "native_bsp_draws_by_tech frames=300");
+            for (int i = 0; i < 256; ++i)
+                if (bspByTech[i] >= 300)
+                    length += snprintf(line + length, sizeof(line) - length, " tech%d=%llu", i, bspByTech[i] / 300);
+            __android_log_print(ANDROID_LOG_INFO, "BO1NativeVulkan", "%s", line);
+            memset(bspByTech, 0, sizeof(bspByTech));
+            memset(drawCounts, 0, sizeof(drawCounts));
+            memset(surfaceCounts, 0, sizeof(surfaceCounts));
+            frames = 0;
+        }
+    }
+}
+#endif
 
 unsigned int __cdecl R_RenderDrawSurfListMaterial(const GfxDrawSurfListArgs *listArgs, GfxCmdBufContext prepassContext)
 {
@@ -1788,7 +2292,15 @@ unsigned int __cdecl R_RenderDrawSurfListMaterial(const GfxDrawSurfListArgs *lis
             GfxCmdBufContext passPrepass;
             passPrepass.source = passPrepassContext;
             passPrepass.state = passPrepassContext_4;
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+            const unsigned tessType = unsigned((drawSurf.packed >> 51) & 0xF);
+            const unsigned drawsBefore = bo1::vulkan::material_dispatch::ReadProfile().draws;
+#endif
             subListCount = rb_tessTable[(drawSurf.packed >> 51) & 0xF](listArgs, passPrepass);
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+            if (!s_parallelRecordWorker) // diagnostic totals are render-thread only
+                RB_NoteTessDraws(tessType, bo1::vulkan::material_dispatch::ReadProfile().draws - drawsBefore, subListCount, listArgs->info->baseTechType);
+#endif
         }
 
         if ( isPixelCostEnabled )
@@ -4673,6 +5185,14 @@ void __cdecl RB_ResetStatTracking(int viewIndex)
         rg.stats = 0;
 }
 
+#if defined(__ANDROID__)
+// Diagnostic (native_backend_spike): last frame's cache/lighting patch cost
+// and its slowest render command.
+double g_backendPatchMs[2];
+unsigned g_backendPatchCounts[2];
+double g_backendSlowCommandMs;
+unsigned g_backendSlowCommand;
+#endif
 void __cdecl RB_BeginFrame(GfxBackEndData *data)
 {
 #if defined(__ANDROID__)
@@ -4696,8 +5216,21 @@ void __cdecl RB_BeginFrame(GfxBackEndData *data)
             gfxRenderTargets[rt].cleared = 0;
         R_Cinematic_UpdateFrame(0);
         RB_UpdateBackEndDvarOptions();
+#if defined(__ANDROID__)
+        const auto patchNow = [] { return std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now().time_since_epoch()).count(); };
+        const double patchStart = patchNow();
+#endif
         RB_PatchStaticModelCache();
+#if defined(__ANDROID__)
+        const double patchCache = patchNow();
+        g_backendPatchCounts[0] = backEndData->smcPatchCount;
+        g_backendPatchCounts[1] = backEndData->modelLightingPatchCount;
+#endif
         RB_PatchModelLighting(backEndData->modelLightingPatchList, backEndData->modelLightingPatchCount);
+#if defined(__ANDROID__)
+        g_backendPatchMs[0] = patchCache - patchStart;
+        g_backendPatchMs[1] = patchNow() - patchCache;
+#endif
         
 #if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
         if (bo1::android::native_device::Requested())
@@ -4780,7 +5313,10 @@ const GfxBackEndData *RB_PatchStaticModelCache()
                 if(firstPatchVert>8192||vertCount>8192-firstPatchVert) {Com_Error(ERR_FATAL,"Native static cache patch exceeds staged vertices");return backEndData;}
                 std::string error;
                 if(!bo1::vulkan::buffer_assets::UpdateRange(&gfxBuf.smodelCacheVb,static_cast<std::size_t>(cachedSurf->cachedSurf.baseVertIndex)*32,
-                    &backEndData->smcPatchVerts[firstPatchVert],static_cast<std::size_t>(vertCount)*32,error)) {
+                    &backEndData->smcPatchVerts[firstPatchVert],static_cast<std::size_t>(vertCount)*32,error,
+                    // Same contract as the D3D lock below (0x1000 = D3DLOCK_NOOVERWRITE): the
+                    // cache reuses a slot only after 4 unused frames, more than are in flight.
+                    true)) {
                     Com_Error(ERR_FATAL,"Native static cache patch: %s",error.c_str());return backEndData;
                 }
             } else {
@@ -5947,7 +6483,20 @@ void __cdecl RB_ExecuteRenderCommandsLoop(const void *cmds, int *ui3dTextureWind
 
             {
                 PROF_SCOPED_RUNTIME_NAME(gfxRenderCommandNames[header->id]);
+#if defined(__ANDROID__)
+                const auto commandStart = std::chrono::steady_clock::now();
+                const unsigned commandId = header->id;
+#endif
                 RB_RenderCommandTable[header->id](&execState);
+#if defined(__ANDROID__)
+                // Diagnostic (native_backend_spike): slowest render command this frame.
+                const double commandMs = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - commandStart).count();
+                if (commandMs > g_backendSlowCommandMs)
+                {
+                    g_backendSlowCommandMs = commandMs;
+                    g_backendSlowCommand = commandId;
+                }
+#endif
             }
             
         }
@@ -6442,13 +6991,28 @@ void __cdecl RB_RenderCommandFrame(const GfxBackEndData *data)
     }
     Name = va("exec cmds c=%d v=%d", clientNum, viewInfoIdx);
 
+#if defined(__ANDROID__)
+    // Diagnostic: phases of each slow backend frame (native_backend_spike).
+    const auto phaseNow = [] { return std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now().time_since_epoch()).count(); };
+    double phase[6]{};
+    phase[0] = phaseNow();
+#endif
     {
         PROF_SCOPED_RUNTIME_NAME(Name);
         RB_BeginFrame((GfxBackEndData *)data);
+#if defined(__ANDROID__)
+        phase[1] = phaseNow();
+#endif
         RB_DrawComposites();
         RB_Draw3D();
+#if defined(__ANDROID__)
+        phase[2] = phaseNow();
+#endif
         drawType = backEndData->drawType;
         RB_CallExecuteRenderCommands();
+#if defined(__ANDROID__)
+        phase[3] = phaseNow();
+#endif
         rb_execCmdsMS = Sys_Milliseconds() - renderStartMS;
         backEndData = 0;
     }
@@ -6462,6 +7026,16 @@ void __cdecl RB_RenderCommandFrame(const GfxBackEndData *data)
         PROF_SCOPED("end frame");
         RB_EndFrame(drawType);
     }
+#if defined(__ANDROID__)
+    phase[4] = phaseNow();
+    if (phase[4] - phase[0] > 40.0)
+        __android_log_print(ANDROID_LOG_INFO, "BO1NativeVulkan",
+            "native_backend_spike total_ms=%.1f begin_frame_ms=%.1f smc_patch_ms=%.1f(%u) lighting_patch_ms=%.1f(%u) draw3d_ms=%.1f exec_cmds_ms=%.1f end_frame_ms=%.1f slowest_cmd=%s(%.1fms)",
+            phase[4] - phase[0], phase[1] - phase[0], g_backendPatchMs[0], g_backendPatchCounts[0], g_backendPatchMs[1], g_backendPatchCounts[1],
+            phase[2] - phase[1], phase[3] - phase[2], phase[4] - phase[3],
+            g_backendSlowCommand < sizeof(gfxRenderCommandNames) / sizeof(*gfxRenderCommandNames) && gfxRenderCommandNames[g_backendSlowCommand] ? gfxRenderCommandNames[g_backendSlowCommand] : "?", g_backendSlowCommandMs);
+    g_backendSlowCommandMs = 0;
+#endif
     
     rb_swapMS = Sys_Milliseconds() - renderStartMS - rb_execCmdsMS;
 }

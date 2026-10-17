@@ -1106,6 +1106,7 @@ if(BO1_NATIVE_FULL_DATABASE)
             "${BO1_ROOT}/src/gfx_vulkan/geometry_bindings.cpp"
             "${BO1_ROOT}/src/gfx_vulkan/constant_state.cpp"
             "${BO1_ROOT}/src/gfx_vulkan/material_bindings.cpp"
+            "${BO1_ROOT}/src/gfx_vulkan/material_upload.cpp"
             "${BO1_ROOT}/src/gfx_vulkan/material_dispatch.cpp"
             "${BO1_ROOT}/src/gfx_vulkan/pass_recording.cpp"
             "${BO1_ROOT}/src/gfx_vulkan/engine_frames.cpp"
@@ -1120,7 +1121,8 @@ if(BO1_NATIVE_FULL_DATABASE)
         set(BO1_NATIVE_POST_OUT "${CMAKE_CURRENT_BINARY_DIR}/native_post")
         file(MAKE_DIRECTORY "${BO1_NATIVE_POST_OUT}")
         set(BO1_NATIVE_POST_SPIRV)
-        foreach(native_post_stage fullscreen.vert dof_downsample.frag post_compose.frag)
+        foreach(native_post_stage fullscreen.vert dof_downsample.frag post_compose.frag
+            bloom_prefilter.frag bloom_remap.frag bloom_blur.frag sgsr_present.vert sgsr_present.frag)
             set(native_post_source "${BO1_ROOT}/src/gfx_vulkan/native_post/${native_post_stage}")
             set(native_post_output "${BO1_NATIVE_POST_OUT}/${native_post_stage}.spv.inc")
             add_custom_command(OUTPUT "${native_post_output}"
@@ -1128,7 +1130,7 @@ if(BO1_NATIVE_FULL_DATABASE)
                 DEPENDS "${native_post_source}" VERBATIM)
             list(APPEND BO1_NATIVE_POST_SPIRV "${native_post_output}")
         endforeach()
-        set_property(SOURCE "${BO1_ROOT}/src/gfx_vulkan/native_fullscreen.cpp" TARGET_DIRECTORY bo1_native_database
+        set_property(SOURCE "${BO1_ROOT}/src/gfx_vulkan/native_fullscreen.cpp" "${BO1_ROOT}/src/gfx_vulkan/engine_frames.cpp" TARGET_DIRECTORY bo1_native_database
             APPEND PROPERTY OBJECT_DEPENDS ${BO1_NATIVE_POST_SPIRV})
         target_sources(bo1_native_database PRIVATE ${BO1_NATIVE_POST_SPIRV})
         target_include_directories(bo1_native_database PRIVATE "${BO1_NATIVE_POST_OUT}")
@@ -1143,6 +1145,7 @@ if(BO1_NATIVE_FULL_DATABASE)
             "${BO1_ROOT}/src/gfx_d3d/r_state.cpp" "${BO1_ROOT}/src/gfx_d3d/r_rendertarget.cpp"
             "${BO1_ROOT}/src/gfx_d3d/r_state_utils.cpp" "${BO1_ROOT}/src/gfx_d3d/rb_draw3d.cpp"
             "${BO1_ROOT}/src/gfx_d3d/r_scene.cpp" "${BO1_ROOT}/src/gfx_d3d/rb_depthprepass.cpp"
+            "${BO1_ROOT}/src/gfx_d3d/r_draw_material.cpp" "${BO1_ROOT}/src/gfx_d3d/r_draw_lit.cpp"
             "${BO1_ROOT}/src/gfx_d3d/r_draw_bsp.cpp"
             "${BO1_ROOT}/src/gfx_d3d/r_draw_xmodel.cpp"
             "${BO1_ROOT}/src/gfx_d3d/r_buffers.cpp" "${BO1_ROOT}/src/gfx_d3d/r_xsurface_optimize.cpp"
@@ -1548,4 +1551,38 @@ if(BO1_NATIVE_PERFORMANCE_BUILD)
             -fno-fast-math -ffp-contract=off -fno-strict-aliasing -mno-outline-atomics)
     endforeach()
     message(STATUS "Native PERFORMANCE profile: O2, assertions, strict FP; engine UBSan/tracing off")
+endif()
+
+# Diagnostic-only, deliberately AFTER the performance profile's sanitizer reset.
+# Use a separate build tree; never enable this in a timing/performance build tree.
+option(BO1_NATIVE_ASAN "Instrument a separate full engine diagnostic build with AddressSanitizer" OFF)
+if(BO1_NATIVE_ASAN)
+    if(NOT ANDROID OR NOT BO1_NATIVE_SDL_APP OR NOT BO1_NATIVE_FULL_DATABASE)
+        message(FATAL_ERROR "ASan requires the complete Android SDL engine")
+    endif()
+    if(NOT ANDROID_STL STREQUAL "c++_shared")
+        message(FATAL_ERROR "ASan requires -DANDROID_STL=c++_shared for exception-safe Android wrapping")
+    endif()
+    # Include canonical archives, codecs and the shader compiler. Instrumenting
+    # only the final shared library would leave most possible writers unchecked.
+    function(bo1_enable_asan_directory directory)
+        get_property(local_targets DIRECTORY "${directory}" PROPERTY BUILDSYSTEM_TARGETS)
+        foreach(asan_target IN LISTS local_targets)
+            get_target_property(imported ${asan_target} IMPORTED)
+            get_target_property(kind ${asan_target} TYPE)
+            if(NOT imported AND kind MATCHES "^(STATIC_LIBRARY|OBJECT_LIBRARY|SHARED_LIBRARY|MODULE_LIBRARY|EXECUTABLE)$")
+                target_compile_options(${asan_target} PRIVATE -fsanitize=address
+                    -fno-omit-frame-pointer -fno-optimize-sibling-calls -g)
+                if(kind MATCHES "^(SHARED_LIBRARY|MODULE_LIBRARY|EXECUTABLE)$")
+                    target_link_options(${asan_target} PRIVATE -fsanitize=address)
+                endif()
+            endif()
+        endforeach()
+        get_property(children DIRECTORY "${directory}" PROPERTY SUBDIRECTORIES)
+        foreach(child IN LISTS children)
+            bo1_enable_asan_directory("${child}")
+        endforeach()
+    endfunction()
+    bo1_enable_asan_directory("${CMAKE_CURRENT_SOURCE_DIR}")
+    message(STATUS "Native ASan diagnostic: all local targets instrumented; shared STL and packaged wrap.sh required")
 endif()

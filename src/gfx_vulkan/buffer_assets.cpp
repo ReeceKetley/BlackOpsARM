@@ -26,6 +26,10 @@ std::unordered_map<const void*,std::vector<std::shared_ptr<Buffer>>,bo1::vulkan:
 // with up to six frames in flight; small backings keep enough spares to cover
 // that. Large caches (e.g. the 8MB static-model cache) keep two.
 constexpr std::size_t MaxSmallSpares=16,MaxLargeSpares=2;constexpr VkDeviceSize SmallSpareBytes=2u<<20;
+// Current shared chunk for LoadPacked. Records own their chunk; a chunk whose
+// records were all released expires and the next pack starts a new one.
+constexpr VkDeviceSize PackedChunkBytes=16u<<20,PackedLimit=1u<<20,PackedAlign=64;
+std::weak_ptr<Buffer> packedChunk;VkDeviceSize packedCursor{};
 std::shared_ptr<Buffer> Replacement(const void* owner,const std::shared_ptr<Buffer>& retired,Kind kind,std::string& error) {
     const auto capacity=retired->Size();auto& list=spares[owner];std::shared_ptr<Buffer> result;
     for(auto it=list.begin();it!=list.end();++it)if(it->use_count()==1&&(*it)->Size()==capacity){result=std::move(*it);list.erase(it);break;}
@@ -81,6 +85,30 @@ bool Load(const void* owner,const void* data,std::size_t payload,std::size_t all
         if(!record->gpu->Write(payload,padding.data(),padding.size(),error))return false;
     }
     record->serial=++serial;Track(record->gpu);buffers.emplace(owner,std::move(record));return true;
+}
+bool LoadPacked(const void* owner,const void* data,std::size_t payload,std::size_t allocation,Kind kind,std::string& error) {
+    if(allocation>PackedLimit)return Load(owner,data,payload,allocation,kind,error);
+    if(!owner||!data||!payload||allocation<payload||(kind==Kind::Index16&&(payload&1))) {error="Invalid native buffer source/range";return false;}
+    std::lock_guard<std::mutex> lock(mutex);
+    if(!shader_assets::Active()||!device||buffers.count(owner)||pending.count(owner)) {error="Native buffer context unavailable or owner already loaded";return false;}
+    auto chunk=packedChunk.lock();
+    VkDeviceSize offset=(packedCursor+PackedAlign-1)&~(PackedAlign-1);
+    if(!chunk||offset>chunk->Size()||allocation>chunk->Size()-offset) {
+        chunk=std::make_shared<Buffer>(physical,device);
+        if(!chunk->Create(PackedChunkBytes,VK_BUFFER_USAGE_VERTEX_BUFFER_BIT|VK_BUFFER_USAGE_INDEX_BUFFER_BIT,VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
+            VK_MEMORY_PROPERTY_HOST_COHERENT_BIT|VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,error))return false;
+        Track(chunk);packedChunk=chunk;offset=0;
+    }
+    // Other ranges of the chunk may be in use by submitted draws; this range
+    // is new, so writing it never touches bytes a reader can see.
+    if(!chunk->Write(offset,data,payload,error))return false;
+    if(allocation>payload) {
+        std::vector<unsigned char> padding(allocation-payload,0);
+        if(!chunk->Write(offset+payload,padding.data(),padding.size(),error))return false;
+    }
+    packedCursor=offset+allocation;
+    auto record=std::make_shared<Record>();record->kind=kind;record->payloadBytes=payload;record->gpu=std::move(chunk);record->offset=offset;
+    record->serial=++serial;buffers.emplace(owner,std::move(record));return true;
 }
 void* Begin(const void* owner,std::size_t allocation,Kind kind,std::string& error) {
     if(!owner||!allocation||(kind==Kind::Index16&&(allocation&1))) {error="Invalid native initialization buffer capacity";return nullptr;}
@@ -149,14 +177,14 @@ bool Write(const void* owner,std::size_t offset,const void* data,std::size_t pay
     if(!record->gpu->Write(offset,data,payload,error))return false;
     record->payloadBytes=offset+payload;record->serial=++serial;it->second=std::move(record);return true;
 }
-bool UpdateRange(const void* owner,std::size_t offset,const void* data,std::size_t payload,std::string& error) {
+bool UpdateRange(const void* owner,std::size_t offset,const void* data,std::size_t payload,std::string& error,bool noOverwrite) {
     if(!owner||!data||!payload) {error="Invalid native buffer patch";return false;}
     std::lock_guard<std::mutex> lock(mutex);auto it=buffers.find(owner);
     if(!shader_assets::Active()||it==buffers.end()||!it->second->dynamic||pending.count(owner)) {error="Native patch requires an unlocked dynamic owner";return false;}
     const auto& previous=it->second;const auto capacity=previous->gpu->Size();
     if(offset>capacity||payload>capacity-offset||(previous->kind==Kind::Index16&&((offset|payload)&1))) {error="Native patch exceeds capacity/alignment";return false;}
     auto record=std::make_shared<Record>();record->kind=previous->kind;record->dynamic=true;
-    if(offset<previous->payloadBytes&&(previous.use_count()>1||previous->gpu.use_count()>1)) {
+    if(!noOverwrite&&offset<previous->payloadBytes&&(previous.use_count()>1||previous->gpu.use_count()>1)) {
         record->gpu=Replacement(owner,previous->gpu,record->kind,error);if(!record->gpu)return false;
         // Dynamic backings are coherent and CPU-owned for writes. Preserve the
         // already published prefix when replacing a retained cache generation.

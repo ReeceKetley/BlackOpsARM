@@ -1,5 +1,8 @@
 #if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
 #include "gfx_vulkan/geometry_bindings.h"
+#include "gfx_vulkan/buffer_assets.h"
+#include <vector>
+#include <string>
 #include "gfx_vulkan/shader_assets.h"
 #include "gfx_vulkan/target_bindings.h"
 #include "r_reflection_probe.h"
@@ -170,6 +173,79 @@ static void R_BindNativeBspImage(GfxCmdBufPrimState *prim,unsigned slot,const Gf
 }
 #endif
 
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+// r_nativeBspMerge: lit BSP runs that share a material, lightmap, reflection
+// probe and vertex base but are not contiguous in the world index buffer are
+// drawn together: their index ranges are copied back to back into the dynamic
+// index buffer (render thread only).
+bool g_nativeBspMerge = true;
+namespace {
+struct BspRun { int baseIndex, triCount, vertexCount; };
+thread_local std::vector<BspRun> s_bspRuns; // per recording thread
+thread_local int s_bspRunTris;
+void R_DrawBspRuns(GfxCmdBufPrimState *state, const srfTriangles_t *last, int lastTris)
+{
+    if (s_bspRuns.empty())
+    {
+        R_DrawBspTris(state, last, lastTris);
+        return;
+    }
+    s_bspRuns.push_back({ last->baseIndex, lastTris, last->vertexCount });
+    s_bspRunTris += lastTris;
+    auto *ib = gfxBuf.dynamicIndexBuffer;
+    if (!ib || 3 * s_bspRunTris > ib->total)
+    {
+        for (const auto &run : s_bspRuns)
+        {
+            srfTriangles_t tris = *last;
+            tris.baseIndex = run.baseIndex;
+            tris.vertexCount = run.vertexCount;
+            R_DrawBspTris(state, &tris, run.triCount);
+        }
+    }
+    else
+    {
+        std::unique_lock<std::recursive_mutex> dynamicIndexLock(R_NativeDynamicIndexMutex());
+        const int baseIndex = R_ReserveIndexData(state, s_bspRunTris);
+        ib = gfxBuf.dynamicIndexBuffer;
+        int written = 0, vertexCount = 0;
+        std::string error;
+        for (const auto &run : s_bspRuns)
+        {
+            if (!bo1::vulkan::buffer_assets::Write(&ib->buffer, std::size_t(baseIndex + written) * 2,
+                    &g_worldDraw->indices[run.baseIndex], std::size_t(run.triCount) * 6, error))
+            {
+                Com_Error(ERR_FATAL, "Native merged BSP index upload: %s", error.c_str());
+                return;
+            }
+            written += 3 * run.triCount;
+            vertexCount = vertexCount > run.vertexCount ? vertexCount : run.vertexCount;
+        }
+        R_ChangeIndicesFromOwner(state, &ib->buffer);
+        ib->used = baseIndex + written;
+        dynamicIndexLock.unlock();
+        GfxDrawPrimArgs args;
+        args.vertexCount = vertexCount;
+        args.triCount = s_bspRunTris;
+        args.baseIndex = baseIndex;
+        R_DrawIndexedPrimitive(state, &args);
+    }
+    s_bspRuns.clear();
+    s_bspRunTris = 0;
+}
+}
+#define BO1_BSP_FLUSH(state, tris, count) R_DrawBspRuns(state, tris, count)
+#else
+#define BO1_BSP_FLUSH(state, tris, count) R_DrawBspTris(state, tris, count)
+#endif
+
+#if defined(__ANDROID__)
+#include <android/log.h>
+#include <chrono>
+// Diagnostic: why R_DrawTrianglesLit ends a draw (per recording thread).
+thread_local struct { unsigned calls, lighting, vertex, index, tail, surfaces; double us; } g_bspLitSplits;
+#endif
+
 void __cdecl R_DrawTrianglesLit(
                 GfxTrianglesDrawStream *drawStream,
                 GfxCmdBufPrimState *primState,
@@ -206,6 +282,9 @@ void __cdecl R_DrawTrianglesLit(
     int hasSunDirChanged; // [esp+A4h] [ebp-8h]
     bool override; // [esp+ABh] [ebp-1h]
 
+#if defined(__ANDROID__)
+    const auto bspLitStart = std::chrono::steady_clock::now();
+#endif
     reflectionProbeIndex = 255;
     lightmapIndex = 31;
     prevTris = 0;
@@ -253,6 +332,7 @@ void __cdecl R_DrawTrianglesLit(
             }
             bspSurf = &rgp.world->dpvs.surfaces[surfIndex];
 #if defined(__ANDROID__)
+            ++g_bspLitSplits.surfaces;
             __builtin_prefetch(&rgp.world->dpvs.surfaces[list[index + 1]].lightmapIndex, 0, 1);
 #else
             _mm_prefetch((const char *)&rgp.world->dpvs.surfaces[list[index + 1]].lightmapIndex, 1);
@@ -262,7 +342,12 @@ void __cdecl R_DrawTrianglesLit(
                  | (lightmapIndex - bspSurf->lightmapIndex) )
             {
                 if ( prevTris )
-                    R_DrawBspTris(primState, prevTris, triCount);
+                {
+                    BO1_BSP_FLUSH(primState, prevTris, triCount);
+#if defined(__ANDROID__)
+                    ++g_bspLitSplits.lighting;
+#endif
+                }
                 prevTris = &bspSurf->tris;
                 triCount = 0;
                 baseIndex = bspSurf->tris.baseIndex;
@@ -408,7 +493,20 @@ void __cdecl R_DrawTrianglesLit(
             else if ( baseVertex != bspSurf->tris.firstVertex || baseIndex + 3 * triCount != bspSurf->tris.baseIndex )
             {
                 if ( prevTris )
-                    R_DrawBspTris(primState, prevTris, triCount);
+                {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+                    if ( g_nativeBspMerge && baseVertex == bspSurf->tris.firstVertex && bo1::vulkan::shader_assets::Active() )
+                    {
+                        s_bspRuns.push_back({ prevTris->baseIndex, triCount, prevTris->vertexCount });
+                        s_bspRunTris += triCount;
+                    }
+                    else
+#endif
+                    BO1_BSP_FLUSH(primState, prevTris, triCount);
+#if defined(__ANDROID__)
+                    ++(baseVertex != bspSurf->tris.firstVertex ? g_bspLitSplits.vertex : g_bspLitSplits.index);
+#endif
+                }
                 prevTris = &bspSurf->tris;
                 triCount = 0;
                 baseIndex = bspSurf->tris.baseIndex;
@@ -432,12 +530,66 @@ void __cdecl R_DrawTrianglesLit(
         }
     }
     if ( prevTris )
-        R_DrawBspTris(primState, prevTris, triCount);
+        BO1_BSP_FLUSH(primState, prevTris, triCount);
+#if defined(__ANDROID__)
+    if ( prevTris )
+        ++g_bspLitSplits.tail;
+    g_bspLitSplits.us += std::chrono::duration<double, std::micro>(std::chrono::steady_clock::now() - bspLitStart).count();
+    if ( ++g_bspLitSplits.calls == 6000 )
+    {
+        __android_log_print(ANDROID_LOG_INFO, "BO1NativeVulkan", "bsp_lit_splits calls=%u draws=%u lighting=%u vertex=%u index=%u surfaces=%u us_per_call=%.1f us_per_draw=%.1f",
+            g_bspLitSplits.calls, g_bspLitSplits.lighting + g_bspLitSplits.vertex + g_bspLitSplits.index + g_bspLitSplits.tail,
+            g_bspLitSplits.lighting, g_bspLitSplits.vertex, g_bspLitSplits.index, g_bspLitSplits.surfaces,
+            g_bspLitSplits.us / g_bspLitSplits.calls,
+            g_bspLitSplits.us / double(g_bspLitSplits.lighting + g_bspLitSplits.vertex + g_bspLitSplits.index + g_bspLitSplits.tail + 1));
+        g_bspLitSplits = {};
+    }
+#endif
     drawStream->reflectionProbeTexture = reflectionProbeTexture;
     drawStream->lightmapPrimaryTexture = lightmapPrimaryTexture;
     drawStream->lightmapSecondaryTexture = lightmapSecondaryTexture;
     drawStream->lightmapSecondaryTextureB = lightmapSecondaryTextureB;
 }
+
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+// Native static world index buffer (r_nativeStaticWorldIndices). The world's
+// indices are written only at level load, so they are uploaded once and BSP
+// draws index them in place instead of copying each range into the dynamic
+// index buffer. The slot's address is the buffer_assets owner; it stays null.
+bool g_nativeStaticWorldIndices = true;
+namespace {
+IDirect3DIndexBuffer9 *s_nativeWorldIndexOwner;
+const unsigned short *s_nativeWorldIndices;
+int s_nativeWorldIndexCount;
+bool s_nativeWorldIndexFailed;
+// Render thread. Returns the owner slot for the current world's indices, or
+// null to keep the canonical dynamic copy.
+IDirect3DIndexBuffer9 *const *R_NativeWorldIndexOwner()
+{
+    if (!g_nativeStaticWorldIndices || !g_worldDraw || !g_worldDraw->indices || g_worldDraw->indexCount <= 0)
+        return nullptr;
+    if (s_nativeWorldIndices == g_worldDraw->indices && s_nativeWorldIndexCount == g_worldDraw->indexCount)
+        return s_nativeWorldIndexFailed ? nullptr : &s_nativeWorldIndexOwner;
+    bo1::vulkan::buffer_assets::Release(&s_nativeWorldIndexOwner);
+    s_nativeWorldIndices = g_worldDraw->indices;
+    s_nativeWorldIndexCount = g_worldDraw->indexCount;
+    const std::size_t bytes = std::size_t(g_worldDraw->indexCount) * sizeof(unsigned short);
+    std::string error;
+    s_nativeWorldIndexFailed = !bo1::vulkan::buffer_assets::Load(&s_nativeWorldIndexOwner, g_worldDraw->indices, bytes, bytes,
+        bo1::vulkan::buffer_assets::Kind::Index16, error);
+    if (s_nativeWorldIndexFailed)
+        Com_Printf(8, "^3Native static world indices unavailable (%s); using dynamic copies\n", error.c_str());
+    return s_nativeWorldIndexFailed ? nullptr : &s_nativeWorldIndexOwner;
+}
+}
+void R_ReleaseNativeWorldIndices()
+{
+    bo1::vulkan::buffer_assets::Release(&s_nativeWorldIndexOwner);
+    s_nativeWorldIndices = nullptr;
+    s_nativeWorldIndexCount = 0;
+    s_nativeWorldIndexFailed = false;
+}
+#endif
 
 void __cdecl R_DrawBspTris(GfxCmdBufPrimState *state, const srfTriangles_t *tris, unsigned int triCount)
 {
@@ -445,6 +597,21 @@ void __cdecl R_DrawBspTris(GfxCmdBufPrimState *state, const srfTriangles_t *tris
 
     args.vertexCount = tris->vertexCount;
     args.triCount = triCount;
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if (bo1::vulkan::shader_assets::Active())
+    {
+        IDirect3DIndexBuffer9 *const *owner = R_NativeWorldIndexOwner();
+        if (owner && std::uint64_t(tris->baseIndex) + 3ull * triCount <= std::uint64_t(g_worldDraw->indexCount))
+        {
+            R_ChangeIndicesFromOwner(state, owner);
+            args.baseIndex = tris->baseIndex;
+            R_DrawIndexedPrimitive(state, &args);
+            if ( state->primStats )
+                state->frameStats.geoIndexCount += 3 * triCount;
+            return;
+        }
+    }
+#endif
     args.baseIndex = R_SetIndexData(state, (unsigned __int8 *)&g_worldDraw->indices[tris->baseIndex], triCount);
     R_DrawIndexedPrimitive(state, &args);
     if ( state->primStats )

@@ -32,6 +32,11 @@
 
 #endif
 
+#if defined(__ANDROID__)
+#include <string>
+#include <vector>
+#endif
+
 int dvar_modifiedFlags;
 FastCriticalSection g_dvarCritSect;
 bool areDvarsSorted;
@@ -107,13 +112,45 @@ void __cdecl Dvar_ForEach(void (__cdecl *callback)(const dvar_s *, void *), void
         callback(sortedDvars[dvarIter], userData);
 }
 
+#if defined(__ANDROID__) && BO1_NATIVE_FAST_CRIT_SECT
+static void Dvar_ForEachNameSnapshot(void (__cdecl *callback)(const char *), bool restricted)
+{
+    // RegisterNew publishes count/slot before initializing the name while it
+    // owns this lock. Copy under the matching read lock, then release before
+    // callbacks: autocomplete callbacks can perform dvar lookups/registration.
+    std::vector<std::string> names;
+    bo1::fcs::AddRead(&g_dvarCritSect);
+    while (bo1::fcs::LoadWrite(&g_dvarCritSect))
+        bo1::fcs::YieldThread();
+    names.reserve(dvarCount);
+    for (int i = 0; i < dvarCount; ++i)
+    {
+        const dvar_s *dvar = sortedDvars[i];
+        if (!restricted || (dvar->flags & 0x10000) != 0)
+            names.emplace_back(dvar->name);
+    }
+    Sys_UnlockRead(&g_dvarCritSect);
+    // The registry may be unsorted or change after capture. Sort the owned
+    // snapshot, not shared pointers; each callback name lives until return.
+    std::sort(names.begin(), names.end(), [](const std::string &a, const std::string &b) {
+        return I_stricmp(a.c_str(), b.c_str()) < 0;
+    });
+    for (const auto &name : names)
+        callback(name.c_str());
+}
+#endif
+
 void __cdecl Dvar_ForEachName(void (__cdecl *callback)(const char *))
 {
+#if defined(__ANDROID__) && BO1_NATIVE_FAST_CRIT_SECT
+    Dvar_ForEachNameSnapshot(callback, false);
+#else
     int dvarIter; // [esp+0h] [ebp-4h]
 
     Dvar_Sort();
     for ( dvarIter = 0; dvarIter < dvarCount; ++dvarIter )
         callback(sortedDvars[dvarIter]->name);
+#endif
 }
 
 void __cdecl Dvar_SetInAutoExec(bool inAutoExec)
@@ -3391,6 +3428,9 @@ void __cdecl Dvar_ResetDvars(unsigned int filter, DvarSetSource setSource)
 
 void __cdecl Dvar_ForEachConsoleAccessName(void (__cdecl *callback)(const char *))
 {
+#if defined(__ANDROID__) && BO1_NATIVE_FAST_CRIT_SECT
+    Dvar_ForEachNameSnapshot(callback, Dvar_GetBool("con_restricted_access"));
+#else
     int dvarIter; // [esp+0h] [ebp-4h]
 
     if ( Dvar_GetBool("con_restricted_access") )
@@ -3406,6 +3446,7 @@ void __cdecl Dvar_ForEachConsoleAccessName(void (__cdecl *callback)(const char *
     {
         Dvar_ForEachName(callback);
     }
+#endif
 }
 
 void __cdecl Dvar_ResetConAccessDvars()
@@ -3599,4 +3640,3 @@ void __cdecl Sys_UnlockRead(FastCriticalSection *critSect)
     _InterlockedExchangeAdd(&critSect->readCount, 0xFFFFFFFF);
 #endif
 }
-

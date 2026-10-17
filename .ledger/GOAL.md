@@ -20,7 +20,7 @@ Previous headless/import/rendering milestones and evidence remain preserved. Do 
 
 ## Current milestone
 
-The requested native Vulkan menu performance milestone is achieved at720p: SDK62616.1356FPS sustained over179.107seconds, reported in docs/port/native_vulkan_15fps.md. Remaining work is1080p GPU efficiency and gameplay/lifecycle verification. The milestones below are historical prerequisites.
+Current: sustained minimum25FPS at Kino slow spawn on Adreno610/Vulkan1.1, reduced spikes, incremental native render submission. Not achieved: SDK669 valid capture remains~19.7FPS at540p; see STATE/report for confounds and current work. Older menu/initialization milestones below retain historical evidence.
 
 Actual headless initialization, Kino frames, same-process map_restart and mapped
 shutdown pass. Same430 comparison reduces mean server work78.365ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢35.619ms at

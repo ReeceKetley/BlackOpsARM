@@ -1,5 +1,8 @@
 #include "hardware_info.h"
 #include <limits>
+#if defined(__ANDROID__)
+#include <android/log.h>
+#endif
 namespace bo1::vulkan {
 bool QueryHardware(VkPhysicalDevice physical,HardwareInfo& output,std::string& error) {
     if(!physical){error="Native physical device unavailable";return false;}
@@ -27,6 +30,17 @@ bool QueryHardware(VkPhysicalDevice physical,HardwareInfo& output,std::string& e
             VK_IMAGE_TILING_OPTIMAL,shadowUsage,0,&shadow)==VK_SUCCESS
         &&(shadow.sampleCounts&VK_SAMPLE_COUNT_1_BIT)&&shadow.maxMipLevels&&shadow.maxArrayLayers;
     info.depthShadowLinear=info.depthShadowComparison&&(depth.optimalTilingFeatures&VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT);
+    VkFormatProperties depth16{};vkGetPhysicalDeviceFormatProperties(physical,VK_FORMAT_D16_UNORM,&depth16);
+    VkImageFormatProperties shadow16{};
+    info.depthShadow16=(depth16.optimalTilingFeatures&depthFeatures)==depthFeatures
+        &&vkGetPhysicalDeviceImageFormatProperties(physical,VK_FORMAT_D16_UNORM,VK_IMAGE_TYPE_2D,
+            VK_IMAGE_TILING_OPTIMAL,shadowUsage,0,&shadow16)==VK_SUCCESS
+        &&(shadow16.sampleCounts&VK_SAMPLE_COUNT_1_BIT)&&shadow16.maxMipLevels&&shadow16.maxArrayLayers;
+    info.depthShadow16Linear=info.depthShadow16&&(depth16.optimalTilingFeatures&VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT);
+#if defined(__ANDROID__)
+    __android_log_print(ANDROID_LOG_INFO,"BO1NativeVulkan","native_memory_limits max_allocations=%u buffer_image_granularity=%llu device_local_mb=%llu",
+        limits.maxMemoryAllocationCount,(unsigned long long)limits.bufferImageGranularity,(unsigned long long)(info.deviceLocalHeapBytes>>20));
+#endif
     output=info;return true;
 }
 }

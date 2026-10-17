@@ -45,7 +45,13 @@ static unsigned int R_NativeMeshVertexCount(const GfxMeshData* mesh, unsigned in
 }
 #endif
 
+#if defined(__ANDROID__)
+// Per recording thread (native parallel scene recording points each thread's
+// source at its own placement).
+thread_local GfxScaledPlacement s_manualObjectPlacement;
+#else
 GfxScaledPlacement s_manualObjectPlacement;
+#endif
 
 void __cdecl RB_ShowTess(GfxCmdBufContext context, const float *center, const char *tessName, const float *color)
 {

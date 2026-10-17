@@ -1,3 +1,13 @@
+#if defined(__ANDROID__) && defined(__aarch64__)
+#include <android/log.h>
+#include <atomic>
+#include <mutex>
+#include <vector>
+#include <algorithm>
+#include <cmath>
+#include <cstring>
+#include <chrono>
+#endif
 #include "r_model_skin.h"
 #if defined(BO1_PORT_X64) || defined(_M_X64) || defined(_WIN64) || (defined(__ANDROID__) && defined(__aarch64__))
 #  define BO1_MMX_EMPTY() ((void)0)
@@ -470,6 +480,57 @@ void __cdecl R_SkinXSurfaceRigid(
     }
 }
 
+#if defined(__ANDROID__) && defined(__aarch64__)
+// Port check: the first 64 surfaces skinned by NEON are also skinned by the
+// scalar path; the largest differences are logged once.
+static void R_CheckNeonSkin(const XSurface *xsurf, const DObjSkelMat *boneMatrix, const GfxPackedVertex *neon)
+{
+    static std::atomic<int> checked{0};
+    static float maxPosition, maxSign;
+    static int maxNormalByte, extraMismatch;
+    static std::mutex lock;
+    const int index = checked.fetch_add(1);
+    if (index >= 64 || !xsurf->vertCount)
+        return;
+    std::vector<GfxPackedVertex> scalar(xsurf->vertCount);
+    R_SkinXSurfaceSkinned(xsurf, boneMatrix, scalar.data());
+    std::lock_guard<std::mutex> guard(lock);
+    for (int i = 0; i < xsurf->vertCount; ++i)
+    {
+        for (int c = 0; c < 3; ++c)
+            maxPosition = fmaxf(maxPosition, fabsf(neon[i].xyz[c] - scalar[i].xyz[c]));
+        maxSign = fmaxf(maxSign, fabsf(neon[i].binormalSign - scalar[i].binormalSign));
+        const unsigned char *a = (const unsigned char *)&neon[i], *b = (const unsigned char *)&scalar[i];
+        if (memcmp(a + 16, b + 16, 8))
+            ++extraMismatch;
+        for (int k = 24; k < 32; ++k)
+            maxNormalByte = std::max(maxNormalByte, abs(int(a[k]) - int(b[k])));
+    }
+    if (index == 63)
+        __android_log_print(ANDROID_LOG_INFO, "BO1NativeVulkan",
+            "native_neon_skin_check surfaces=64 max_position=%g max_binormal_sign=%g max_normal_byte=%d color_texcoord_mismatches=%d",
+            maxPosition, maxSign, maxNormalByte, extraMismatch);
+}
+#endif
+
+#if defined(__ANDROID__) && defined(__aarch64__)
+// Port measurement: skinning cost per vertex for the NEON and scalar paths
+// (independent of how many models are on screen). Logged every 2M vertices.
+static void R_NoteSkinTiming(bool neon, int vertices, std::chrono::steady_clock::time_point start)
+{
+    static std::atomic<std::uint64_t> ns[2], verts[2];
+    const auto elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - start).count();
+    ns[neon] += std::uint64_t(elapsed);
+    const auto total = verts[neon].fetch_add(std::uint64_t(vertices)) + std::uint64_t(vertices);
+    if (total < 2000000)
+        return;
+    const auto spent = ns[neon].exchange(0);
+    verts[neon] = 0;
+    __android_log_print(ANDROID_LOG_INFO, "BO1NativeVulkan", "native_skin_timing path=%s vertices=%llu ns_per_vertex=%.1f",
+        neon ? "neon" : "scalar", (unsigned long long)total, double(spent) / double(total));
+}
+#endif
+
 void R_SkinXModelCmd(SkinXModelCmd *data)
 {
     GfxPackedVertexNormal *normalOut; // [esp-28D0h] [ebp-28DCh]
@@ -498,7 +559,10 @@ void R_SkinXModelCmd(SkinXModelCmd *data)
     PROF_SCOPED("R_SkinXModelCmd");
 
     useSSE = sys_SSE->current.enabled && r_sse_skinning->current.enabled;
-#if defined(BO1_PORT_X64) || defined(_M_X64) || defined(_WIN64) || (defined(__ANDROID__) && defined(__aarch64__))
+#if defined(__ANDROID__) && defined(__aarch64__)
+    // NEON port of the SSE skinner (r_model_skin_sse.cpp); r_sse_skinning 0 = scalar.
+    useSSE = r_sse_skinning->current.enabled;
+#elif defined(BO1_PORT_X64) || defined(_M_X64) || defined(_WIN64)
     // MMX skin path is x86-only; force scalar skinning on x64.
     useSSE = 0;
 #endif
@@ -596,11 +660,25 @@ void R_SkinXModelCmd(SkinXModelCmd *data)
                 if (skinnedSurf->oldSkinnedCachedOffset >= 0)
                     normalIn = &gfxBuf.oldSkinnedCacheNormalsAddr[skinnedSurf->oldSkinnedCachedOffset >> 5];
             }
+#if defined(__ANDROID__) && defined(__aarch64__)
+            const auto skinStart = std::chrono::steady_clock::now();
+#endif
             R_SkinXSurfaceSkinnedSse(xsurf, &boneSkelMats[boneIndex], normalIn, normalOut, skinVerticesOut);
+#if defined(__ANDROID__) && defined(__aarch64__)
+            R_NoteSkinTiming(true, xsurf->vertCount, skinStart);
+            if (!normalIn)
+                R_CheckNeonSkin(xsurf, &boneSkelMats[boneIndex], skinVerticesOut);
+#endif
         }
         else
         {
+#if defined(__ANDROID__) && defined(__aarch64__)
+            const auto skinStart = std::chrono::steady_clock::now();
+#endif
             R_SkinXSurfaceSkinned(xsurf, &boneSkelMats[boneIndex], skinVerticesOut);
+#if defined(__ANDROID__) && defined(__aarch64__)
+            R_NoteSkinTiming(false, xsurf->vertCount, skinStart);
+#endif
         }
     }
 

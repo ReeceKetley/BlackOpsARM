@@ -380,6 +380,20 @@ void __cdecl RB_SetEyeOffsetConstant(GfxCmdBufSourceState *source, const float *
 void __cdecl R_DrawSurfs(GfxCmdBufContext context, GfxCmdBufState *prepassState, const GfxDrawSurfListInfo *info);
 unsigned int __cdecl R_RenderDrawSurfListMaterial(const GfxDrawSurfListArgs *listArgs, GfxCmdBufContext prepassContext);
 unsigned int __cdecl R_SkipDrawSurfListMaterial(const GfxDrawSurf *drawSurfList, unsigned int drawSurfCount);
+#if defined(__ANDROID__)
+// Native parallel scene recording (r_nativeParallelRecord): worker threads
+// recording parts of an eligible draw list; 0 records serially.
+extern int g_nativeParallelRecordWorkers;
+// Marks the R_DrawSurfs calls made in its lifetime (render thread) as eligible.
+struct RB_ParallelDrawScope
+{
+    RB_ParallelDrawScope();
+    ~RB_ParallelDrawScope();
+    RB_ParallelDrawScope(const RB_ParallelDrawScope &) = delete;
+    RB_ParallelDrawScope &operator=(const RB_ParallelDrawScope &) = delete;
+    bool previous;
+};
+#endif
 void __cdecl R_TessEnd(GfxCmdBufContext context, GfxCmdBufContext prepassContext);
 void __cdecl RB_ClearScreenCmd(GfxRenderCommandExecState *execState);
 void __cdecl RB_SetGammaRamp(const GfxGammaRamp *gammaTable);

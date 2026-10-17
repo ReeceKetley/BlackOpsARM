@@ -9,6 +9,27 @@
 namespace bo1::vulkan {
 namespace {
 std::atomic<bool> compatibleDescriptorReuse{true};
+std::atomic<bool> depthOnlyPipelines{false};
+// True when the fragment SPIR-V can change depth results: it discards
+// (kill/terminate/demote) or writes the FragDepth built-in.
+bool FragmentAffectsDepth(const std::vector<std::uint32_t>& spirv) {
+    if(spirv.size()<5)return true;
+    for(std::size_t i=5;i<spirv.size();) {
+        const unsigned count=spirv[i]>>16,opcode=spirv[i]&0xffffu;
+        if(!count||i+count>spirv.size())return true;
+        if(opcode==252||opcode==4416||opcode==5380)return true; // OpKill, OpTerminateInvocation, OpDemoteToHelperInvocation
+        if(opcode==71&&count>=4&&spirv[i+2]==11&&spirv[i+3]==22)return true; // OpDecorate BuiltIn FragDepth
+        i+=count;
+    }
+    return false;
+}
+std::atomic<bool> descriptorContentReuse{true};
+std::atomic<bool> lazyDescriptorWrites{false};
+thread_local DescriptorWriteStats descriptorWriteStats;
+BindCache::DescriptorContents Contents(const ProgramResource& resource) {
+    if(resource.kind==ResourceKind::Constants)return {resource.buffer.buffer,resource.buffer.range};
+    return {VK_NULL_HANDLE,0,resource.image.imageView,resource.image.sampler,resource.image.imageLayout};
+}
 VkDescriptorType Type(ResourceKind kind) {
     // Constants are dynamic: one descriptor serves every draw's offset.
     return kind==ResourceKind::Constants?VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC:
@@ -19,8 +40,15 @@ bool Result(VkResult value,const char* action,std::string& error) {
     error=std::string(action)+": VkResult="+std::to_string(int(value));return false;
 }
 }
+void SetLazyDescriptorWrites(bool value){lazyDescriptorWrites.store(value,std::memory_order_relaxed);}
+bool LazyDescriptorWrites(){return lazyDescriptorWrites.load(std::memory_order_relaxed);}
+DescriptorWriteStats ReadDescriptorWriteStats(){return descriptorWriteStats;}
+void SetDepthOnlyPipelines(bool enabled){depthOnlyPipelines.store(enabled,std::memory_order_relaxed);}
+bool DepthOnlyPipelines(){return depthOnlyPipelines.load(std::memory_order_relaxed);}
 void SetCompatibleDescriptorReuse(bool enabled){compatibleDescriptorReuse.store(enabled,std::memory_order_relaxed);}
 bool CompatibleDescriptorReuse(){return compatibleDescriptorReuse.load(std::memory_order_relaxed);}
+void SetDescriptorContentReuse(bool enabled){descriptorContentReuse.store(enabled,std::memory_order_relaxed);}
+bool DescriptorContentReuse(){return descriptorContentReuse.load(std::memory_order_relaxed);}
 GraphicsProgram::~GraphicsProgram() {
     if(pipeline_)vkDestroyPipeline(device_,pipeline_,nullptr);
     if(layout_)vkDestroyPipelineLayout(device_,layout_,nullptr);
@@ -52,6 +80,8 @@ bool GraphicsProgram::Create(const ProgramDescription& d,VkPipelineCache cache,s
             }
             layoutBindings_[stage]|=std::uint64_t(1)<<b.binding;
             if(b.kind==ResourceKind::Constants){++dynamicCount_;++stageDynamic_[stage];}
+            if(b.kind==ResourceKind::Constants&&b.registerIndex==0)
+                floatConstantRows_[stage]=shaders_[stage].constantRows;
         }
         std::sort(bindings.begin(),bindings.end(),[](const auto& a,const auto& b){return a.binding<b.binding;});
         VkDescriptorSetLayoutCreateInfo info{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO};
@@ -90,7 +120,8 @@ bool GraphicsProgram::Create(const ProgramDescription& d,VkPipelineCache cache,s
     const VkDynamicState states[]={VK_DYNAMIC_STATE_VIEWPORT,VK_DYNAMIC_STATE_SCISSOR};
     VkPipelineDynamicStateCreateInfo dynamic{VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO};dynamic.dynamicStateCount=2;dynamic.pDynamicStates=states;
     VkGraphicsPipelineCreateInfo info{VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO};
-    info.stageCount=2;info.pStages=stages;info.pVertexInputState=&input;info.pInputAssemblyState=&assembly;
+    const bool depthOnly=d.depthOnly&&!d.colorAttachment&&!FragmentAffectsDepth(shaders_[1].spirv);
+    info.stageCount=depthOnly?1:2;info.pStages=stages;info.pVertexInputState=&input;info.pInputAssemblyState=&assembly;
     info.pViewportState=&viewport;info.pRasterizationState=&raster;info.pMultisampleState=&samples;info.pDepthStencilState=&depth;
     info.pColorBlendState=&blend;info.pDynamicState=&dynamic;info.layout=layout_;info.renderPass=d.renderPass;info.subpass=d.subpass;
     const auto driverStart=std::chrono::steady_clock::now();
@@ -99,10 +130,12 @@ bool GraphicsProgram::Create(const ProgramDescription& d,VkPipelineCache cache,s
     const auto driverEnd=std::chrono::steady_clock::now();
     const auto ms=[](auto a,auto b){return std::chrono::duration<double,std::milli>(b-a).count();};
     __android_log_print(ANDROID_LOG_INFO,"BO1NativeVulkan",
-        "native_pipeline_compile translate_ms=%.3f layout_module_ms=%.3f driver_ms=%.3f total_ms=%.3f result=%d",
-        ms(createStart,translated),ms(translated,driverStart),ms(driverStart,driverEnd),ms(createStart,driverEnd),int(status));
+        "native_pipeline_compile translate_ms=%.3f layout_module_ms=%.3f driver_ms=%.3f total_ms=%.3f result=%d depth_only=%d",
+        ms(createStart,translated),ms(translated,driverStart),ms(driverStart,driverEnd),ms(createStart,driverEnd),int(status),depthOnly?1:0);
 #endif
     for(auto module:modules)vkDestroyShaderModule(device_,module,nullptr);
+    // The pipeline owns the compiled code; only the reflection is used now.
+    for(auto& shader:shaders_)std::vector<std::uint32_t>().swap(shader.spirv);
     return Result(status,"graphics pipeline",error);
 }
 bool GraphicsProgram::BindResources(VkDescriptorPool pool,const std::vector<ProgramResource>& vertex,
@@ -145,53 +178,101 @@ bool GraphicsProgram::Record(VkCommandBuffer command,VkDescriptorPool pool,const
     std::array<VkDescriptorSet,2> sets{};std::array<std::uint32_t,2> offsets{};unsigned offsetCount=0;
     thread_local std::vector<VkWriteDescriptorSet> writes;thread_local std::vector<VkDescriptorBufferInfo> buffers;
     thread_local std::vector<VkDescriptorImageInfo> images;thread_local DescriptorSetKey key;
+    thread_local std::vector<const ProgramResource*> selectedResources;
+    const bool reuseContents=DescriptorContentReuse();
+    const bool lazyWrites=LazyDescriptorWrites();
     for(unsigned stage=0;stage<2;++stage) {
         const auto& resources=stage?pixel:vertex;
-        writes.clear();buffers.clear();images.clear();key.layout=cache.compatibleSets?VK_NULL_HANDLE:setLayouts_[stage];key.words.clear();
-        // All layouts above have flags=0, descriptorCount=1, no immutable
-        // samplers. Together with stage visibility and the binding/type words
-        // below this fully describes compatibility; shader identity and layout
-        // handle do not affect the descriptor contents.
-        key.words.push_back(stage?VK_SHADER_STAGE_FRAGMENT_BIT:VK_SHADER_STAGE_VERTEX_BIT);
-        buffers.reserve(shaders_[stage].bindings.size());images.reserve(shaders_[stage].bindings.size());
+        auto& recent=cache.recentDescriptorStages[stage];
+        bool same=reuseContents&&recent.identity==descriptorIdentity_&&recent.set
+            &&recent.contents.size()==shaders_[stage].bindings.size();
+        selectedResources.clear();selectedResources.reserve(shaders_[stage].bindings.size());
+        // Index this stage's resources by (kind, register) once instead of
+        // scanning them for every binding; duplicates are still rejected when a
+        // binding selects them, as before.
+        const ProgramResource* table[3][64]{};unsigned char duplicate[3][64]{};bool overflow=false;
+        for(const auto& r:resources) {
+            const unsigned kind=unsigned(r.kind);
+            if(kind>=3||r.registerIndex>=64){overflow=true;continue;}
+            if(table[kind][r.registerIndex])duplicate[kind][r.registerIndex]=1;else table[kind][r.registerIndex]=&r;
+        }
+        // Validation remains mandatory even on a contents hit. In particular,
+        // changed dynamic offsets, duplicate slots and invalid layouts cannot
+        // hide behind a previously valid descriptor set.
         for(const auto& binding:shaders_[stage].bindings) {
             const ProgramResource* selected{};
-            for(const auto& r:resources)if(r.kind==binding.kind&&r.registerIndex==binding.registerIndex) {
-                if(selected) { error="Duplicate material resource";return false; }selected=&r;
+            const unsigned kind=unsigned(binding.kind);
+            if(kind<3&&binding.registerIndex<64&&!overflow) {
+                if(duplicate[kind][binding.registerIndex]) { error="Duplicate material resource";return false; }
+                selected=table[kind][binding.registerIndex];
+            } else {
+                for(const auto& r:resources)if(r.kind==binding.kind&&r.registerIndex==binding.registerIndex) {
+                    if(selected) { error="Duplicate material resource";return false; }selected=&r;
+                }
             }
             if(!selected) { error="Missing material resource at stage"+std::to_string(stage)+" binding"+std::to_string(binding.binding);return false; }
             if((binding.kind==ResourceKind::Constants&&(!selected->buffer.buffer||!selected->buffer.range||selected->buffer.offset>0xffffffffull))
                 ||(binding.kind==ResourceKind::Texture&&(!selected->image.imageView
                     ||(selected->image.imageLayout!=VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL&&selected->image.imageLayout!=VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL&&selected->image.imageLayout!=VK_IMAGE_LAYOUT_GENERAL)))
                 ||(binding.kind==ResourceKind::Sampler&&!selected->image.sampler)) { error="Invalid material resource";return false; }
-            VkWriteDescriptorSet write{VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET};write.dstBinding=binding.binding;
-            write.descriptorCount=1;write.descriptorType=Type(binding.kind);
+            if(same&&!(recent.contents[selectedResources.size()]==Contents(*selected)))same=false;
+            selectedResources.push_back(selected);
+            if(binding.kind==ResourceKind::Constants)offsets[offsetCount++]=std::uint32_t(selected->buffer.offset);
+        }
+        if(same){sets[stage]=recent.set;++cache.setHits;++cache.descriptorContentHits;continue;}
+        if(reuseContents)++cache.descriptorContentMisses;
+        auto buildWrites=[&] {
+            writes.clear();buffers.clear();images.clear();
+            buffers.reserve(shaders_[stage].bindings.size());images.reserve(shaders_[stage].bindings.size());
+            unsigned selectedIndex=0;
+            for(const auto& binding:shaders_[stage].bindings) {
+                const auto* selected=selectedResources[selectedIndex++];
+                VkWriteDescriptorSet write{VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET};write.dstBinding=binding.binding;
+                write.descriptorCount=1;write.descriptorType=Type(binding.kind);
+                if(binding.kind==ResourceKind::Constants)buffers.push_back({selected->buffer.buffer,0,selected->buffer.range});
+                else images.push_back(selected->image);
+                writes.push_back(write);
+            }
+            ++descriptorWriteStats.writeBuilds;
+        };
+        if(!lazyWrites)buildWrites();
+        key.layout=cache.compatibleSets?VK_NULL_HANDLE:setLayouts_[stage];key.words.clear();
+        // Layout flags/counts/stage visibility and these binding/type words
+        // fully describe the existing structural descriptor-cache identity.
+        key.words.push_back(stage?VK_SHADER_STAGE_FRAGMENT_BIT:VK_SHADER_STAGE_VERTEX_BIT);
+        unsigned selectedIndex=0;
+        for(const auto& binding:shaders_[stage].bindings) {
+            const auto* selected=selectedResources[selectedIndex++];
             key.words.push_back((std::uint64_t(binding.binding)<<8)|unsigned(binding.kind));
             if(binding.kind==ResourceKind::Constants) {
-                buffers.push_back({selected->buffer.buffer,0,selected->buffer.range});
                 key.words.push_back(std::uint64_t(reinterpret_cast<std::uintptr_t>(selected->buffer.buffer)));key.words.push_back(selected->buffer.range);
-                offsets[offsetCount++]=std::uint32_t(selected->buffer.offset);
             } else {
-                images.push_back(selected->image);
                 key.words.push_back(std::uint64_t(reinterpret_cast<std::uintptr_t>(selected->image.imageView)));
                 key.words.push_back(std::uint64_t(reinterpret_cast<std::uintptr_t>(selected->image.sampler)));
                 key.words.push_back(unsigned(selected->image.imageLayout));
             }
-            writes.push_back(write);
         }
         auto found=cache.written.find(key);
-        if(found!=cache.written.end()) {sets[stage]=found->second;++cache.setHits;continue;}
-        VkDescriptorSetAllocateInfo allocation{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO};
-        allocation.descriptorPool=pool;allocation.descriptorSetCount=1;allocation.pSetLayouts=&setLayouts_[stage];
-        if(!Result(vkAllocateDescriptorSets(device_,&allocation,&sets[stage]),"frame descriptors",error))return false;
-        // Point each write at stable storage only after both vectors are final.
-        std::size_t b=0,i=0;
-        for(auto& write:writes) {
-            write.dstSet=sets[stage];
-            if(write.descriptorType==VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC)write.pBufferInfo=&buffers[b++];else write.pImageInfo=&images[i++];
+        if(found!=cache.written.end()) {sets[stage]=found->second;++cache.setHits;if(lazyWrites)++descriptorWriteStats.lazySkips;}
+        else {
+            if(lazyWrites)buildWrites();
+            VkDescriptorSetAllocateInfo allocation{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO};
+            allocation.descriptorPool=pool;allocation.descriptorSetCount=1;allocation.pSetLayouts=&setLayouts_[stage];
+            if(!Result(vkAllocateDescriptorSets(device_,&allocation,&sets[stage]),"frame descriptors",error))return false;
+            // Point each write at stable storage only after both vectors are final.
+            std::size_t b=0,i=0;
+            for(auto& write:writes) {
+                write.dstSet=sets[stage];
+                if(write.descriptorType==VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC)write.pBufferInfo=&buffers[b++];else write.pImageInfo=&images[i++];
+            }
+            if(!writes.empty())vkUpdateDescriptorSets(device_,unsigned(writes.size()),writes.data(),0,nullptr);
+            cache.written.emplace(key,sets[stage]);++cache.setMisses;
         }
-        if(!writes.empty())vkUpdateDescriptorSets(device_,unsigned(writes.size()),writes.data(),0,nullptr);
-        cache.written.emplace(key,sets[stage]);++cache.setMisses;
+        if(reuseContents) {
+            recent.identity=descriptorIdentity_;recent.set=sets[stage];recent.contents.clear();
+            recent.contents.reserve(selectedResources.size());
+            for(const auto* selected:selectedResources)recent.contents.push_back(Contents(*selected));
+        }
     }
     if(offsetCount!=dynamicCount_) { error="Dynamic constant offsets do not match program layout";return false; }
     if(cache.pipeline!=pipeline_) {vkCmdBindPipeline(command,VK_PIPELINE_BIND_POINT_GRAPHICS,pipeline_);cache.pipeline=pipeline_;++cache.pipelineBinds;}

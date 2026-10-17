@@ -7,6 +7,8 @@ namespace bo1::vulkan::query_assets {
 bool Attach(VkDevice,bool precise,std::string&);bool Empty();
 bool Allocate(const void* owner,std::string&);bool Has(const void*);void Release(const void*);
 bool Begin(const void*,std::string&);bool End(const void*,std::string&);
+// An occlusion query is open in this frame (it must begin and end in one command buffer).
+bool OcclusionOpen();
 QueryRead Read(const void*,unsigned& samples,bool flush,std::string&);
 struct Arena {std::vector<std::shared_ptr<OcclusionQueries>> pools;void Retire(){pools.clear();}};
 struct Entry;

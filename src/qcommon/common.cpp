@@ -823,6 +823,18 @@ void __cdecl    Com_ErrorAbort()
 
 #endif // shared fatal abort
 #if !defined(BO1_STARTUP_SERVICES) || defined(BO1_NATIVE_COMMON_ASSET_LIFECYCLE)
+#if defined(__ANDROID__)
+#include <android/log.h>
+#include <cstdlib>
+// Native parallel scene recording threads have no engine error frame to
+// unwind to: an engine error there terminates explicitly instead.
+static thread_local bool com_parallelRenderWorker;
+void Com_MarkParallelRenderWorker()
+{
+    com_parallelRenderWorker = true;
+}
+#endif
+
 void Com_Error(errorParm_t code, const char *fmt, ...)
 {
 #if !defined(__ANDROID__)
@@ -838,6 +850,11 @@ void Com_Error(errorParm_t code, const char *fmt, ...)
         I_strncpyz(formatted, "Engine error message formatting failed", sizeof(formatted));
     formatted[sizeof(formatted) - 1] = 0;
     va_end(va);
+    if (com_parallelRenderWorker)
+    {
+        __android_log_print(ANDROID_LOG_FATAL, "BlackOpsARM", "Com_ERROR on parallel render worker (code %d): %s", int(code), formatted);
+        std::abort();
+    }
 #endif
     if ( (code == ERR_DROP || code == ERR_SCRIPT_DROP) && G_ExitAfterToolComplete() )
     {
@@ -2849,6 +2866,10 @@ unsigned int Com_Frame_Try_Block_Function()
     const nft::Sample mainTimingStart = nft::data.enabled ? nft::Now() : nft::Sample{};
     const unsigned timingWakesStart = nft::data.wakes;
     nft::Scope mainTiming(nft::MainFrame);
+    // Diagnostic: phases of each slow main-thread frame (native_main_spike).
+    const auto spikeNow = [] { timespec t{}; clock_gettime(CLOCK_MONOTONIC, &t); return double(t.tv_sec) * 1e3 + double(t.tv_nsec) / 1e6; };
+    double spikeMarks[7]{};
+    spikeMarks[0] = spikeNow();
 #endif
 
     PROF_SCOPED("Com_Frame");
@@ -2941,6 +2962,9 @@ unsigned int Com_Frame_Try_Block_Function()
             msec = 1;
     }
 
+#if defined(__ANDROID__)
+    spikeMarks[1] = spikeNow();
+#endif
     G_SP_FramePerfMark(FRAMEPERF_BEGIN); // p1: bo1_frameperf whole-frame timing (measurement only)
     for ( localControllerIndex = 0; localControllerIndex < 1; ++localControllerIndex )
         TaskManager2_ProcessTasks(localControllerIndex);
@@ -2962,6 +2986,9 @@ unsigned int Com_Frame_Try_Block_Function()
         SV_Frame(Com_LocalClient_GetControllerIndex(0), mseca);
     }
     G_SP_FramePerfMark(FRAMEPERF_SV);
+#if defined(__ANDROID__)
+    spikeMarks[2] = spikeNow();
+#endif
 
     Monkey_Frame();
 
@@ -2992,6 +3019,9 @@ unsigned int Com_Frame_Try_Block_Function()
 
         RMsg_SendMessages();
         G_SP_FramePerfMark(FRAMEPERF_PRE);
+#if defined(__ANDROID__)
+        spikeMarks[3] = spikeNow();
+#endif
 
         {
             PROF_SCOPED("CL_Frame");
@@ -3002,6 +3032,9 @@ unsigned int Com_Frame_Try_Block_Function()
             CG_SP_PlayTraceClientFrame(0); // j1: bo1_playtrace recorder (tool, off by default)
         }
         G_SP_FramePerfMark(FRAMEPERF_CL);
+#if defined(__ANDROID__)
+        spikeMarks[4] = spikeNow();
+#endif
 
         dvar_modifiedFlags &= ~2u;
         Com_UpdateMenu();
@@ -3010,6 +3043,9 @@ unsigned int Com_Frame_Try_Block_Function()
         //BG_EvalVehicleName(0);
         SCR_UpdateScreen();
         G_SP_FramePerfMark(FRAMEPERF_SCR);
+#if defined(__ANDROID__)
+        spikeMarks[5] = spikeNow();
+#endif
         gjk_collision_epilog(0);
         //BG_EvalVehicleName(v8);
         for (int localClientNumb = 0; localClientNumb < 1; ++localClientNumb)
@@ -3017,6 +3053,15 @@ unsigned int Com_Frame_Try_Block_Function()
         Com_Statmon();
         R_WaitEndTime();
         G_SP_FramePerfMark(FRAMEPERF_END);
+#if defined(__ANDROID__)
+        spikeMarks[6] = spikeNow();
+        if (spikeMarks[6] - spikeMarks[0] > 45.0)
+            __android_log_print(ANDROID_LOG_INFO, "BO1NativeVulkan",
+                "native_main_spike frame_ms=%.1f pacing_ms=%.1f sv_ms=%.1f pre_ms=%.1f cl_ms=%.1f scr_ms=%.1f end_wait_ms=%.1f",
+                spikeMarks[6] - spikeMarks[0], spikeMarks[1] - spikeMarks[0], spikeMarks[2] - spikeMarks[1],
+                spikeMarks[3] - spikeMarks[2], spikeMarks[4] - spikeMarks[3], spikeMarks[5] - spikeMarks[4],
+                spikeMarks[6] - spikeMarks[5]);
+#endif
     }
 
 #if defined(__ANDROID__)

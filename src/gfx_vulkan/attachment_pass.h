@@ -9,6 +9,7 @@ namespace bo1::vulkan {
 // share one handle; identities live until a drained Clear, never handle recycling.
 struct SharedAttachmentRenderPass {
     VkDevice device{};VkRenderPass handle{};
+    std::array<unsigned,8> key{}; // AttachmentPassCache definition key
     // Earlier canonical compatible definition, never self-owned. Retain it even
     // when a pass outlives the cache so pipeline creation cannot see a dead handle.
     std::shared_ptr<SharedAttachmentRenderPass> pipelinePass;
@@ -25,6 +26,9 @@ class AttachmentPassCache {
 public:
     explicit AttachmentPassCache(VkDevice device):device_(device){}
     std::shared_ptr<SharedAttachmentRenderPass> Acquire(VkDevice,const std::array<unsigned,8>&,const VkRenderPassCreateInfo&,std::string&);
+    // Defines the pass AttachmentPass::Create would make for this key (used to
+    // rebuild recorded programs before their pass is first used).
+    std::shared_ptr<SharedAttachmentRenderPass> AcquireFromKey(VkDevice,const std::array<unsigned,8>&,std::string&);
     void Clear(){entries_.clear();framebuffers_.clear();} // Caller clears program keys at a drained boundary.
     std::size_t Size()const{return entries_.size();}
     // Framebuffers are reused per (render pass, attachment textures). Entries hold
@@ -45,14 +49,19 @@ public:
     explicit AttachmentPass(VkDevice device,AttachmentPassCache* cache=nullptr):device_(device),cache_(cache){}
     ~AttachmentPass();AttachmentPass(const AttachmentPass&)=delete;AttachmentPass& operator=(const AttachmentPass&)=delete;
     bool Create(std::shared_ptr<Texture2D> color,std::shared_ptr<Texture2D> depth,bool preserveDepth,std::string&,bool loadExisting=false,int depthLoad=-1);
-    bool BeginTracked(VkCommandBuffer,const VkClearColorValue&,std::string&,float depth=1,unsigned stencil=0)const;
+    // contents: SECONDARY_COMMAND_BUFFERS when the pass body is recorded into
+    // secondary command buffers (parallel scene recording).
+    bool BeginTracked(VkCommandBuffer,const VkClearColorValue&,std::string&,float depth=1,unsigned stencil=0,
+        VkSubpassContents contents=VK_SUBPASS_CONTENTS_INLINE)const;
     bool EndTracked(VkCommandBuffer,std::string&)const;
-    void Begin(VkCommandBuffer,const VkClearColorValue&,float depth=1,unsigned stencil=0)const;
+    void Begin(VkCommandBuffer,const VkClearColorValue&,float depth=1,unsigned stencil=0,VkSubpassContents contents=VK_SUBPASS_CONTENTS_INLINE)const;
     void End(VkCommandBuffer command)const{vkCmdEndRenderPass(command);}
     VkRenderPass RenderPass()const{return pass_;}
+    VkFramebuffer Framebuffer()const{return framebuffer_;}
     // Pipeline compilation/cache only; Begin/End and framebuffer retain the
     // actual definition, including its clear/load/store/layout semantics.
     VkRenderPass PipelineRenderPass()const{return sharedPass_?sharedPass_->PipelineHandle():pass_;}
+    bool PassKey(std::array<unsigned,8>& key)const{if(!sharedPass_)return false;key=sharedPass_->key;return true;}
     bool HasDepth()const{return bool(depth_);}
     bool SharedRenderPass()const{return bool(sharedPass_);}
 private:

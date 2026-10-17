@@ -396,7 +396,8 @@ unsigned __int16 __cdecl SMC_Allocate(unsigned int smcIndex, unsigned int bitCou
         tree->usedlist.next->prev = &tree->usedlist;
     }
     leafs = s_cache.leafs[treeIndex];
-    index = ((char *)block - (char *)leafs) / 8;
+    // The free-list union grows with native pointers; its disk-era size is not the runtime stride.
+    index = ((char *)block - (char *)leafs) / sizeof(*leafs);
     if ( index >= 0x20
         && !Assert_MyHandler(
                     "C:\\projects_pc\\cod\\codsrc\\src\\gfx_d3d\\r_staticmodelcache.cpp",
@@ -539,7 +540,8 @@ char __cdecl SMC_GetFreeBlockOfSize(unsigned int smcIndex, unsigned int listInde
         tree->usedlist.next->prev = &tree->usedlist;
     }
     leafs = s_cache.leafs[treeIndex];
-    index = ((char *)block - (char *)leafs) / 8;
+    // The free-list union grows with native pointers; its disk-era size is not the runtime stride.
+    index = ((char *)block - (char *)leafs) / sizeof(*leafs);
     if ( index >= 0x20
         && !Assert_MyHandler(
                     "C:\\projects_pc\\cod\\codsrc\\src\\gfx_d3d\\r_staticmodelcache.cpp",

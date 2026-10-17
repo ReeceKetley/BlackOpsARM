@@ -16,6 +16,7 @@ if(NOT TARGET bo1_native_shader_compiler)
 endif()
 add_library(bo1_vulkan_shader STATIC "${BO1_ROOT}/src/gfx_vulkan/shader_translate.cpp"
     "${BO1_ROOT}/src/gfx_vulkan/graphics_program.cpp"
+    "${BO1_ROOT}/src/gfx_vulkan/material_state.cpp"
     "${BO1_ROOT}/src/gfx_vulkan/depth_bias.cpp"
     "${BO1_ROOT}/src/gfx_vulkan/pipeline_key.cpp"
     "${BO1_ROOT}/src/gfx_vulkan/program_cache.cpp"
@@ -35,10 +36,17 @@ option(BO1_VULKAN_SHADER_SMOKE "Build focused actual-SM3 translator/device harne
 if(BO1_VULKAN_SHADER_SMOKE)
     add_executable(bo1_vulkan_shader_smoke "${BO1_ROOT}/tools/port/tests/native_vulkan_shader_smoke.cpp"
         "${BO1_ROOT}/tools/port/tests/native_vulkan_lrp_draw.cpp"
+        "${BO1_ROOT}/src/gfx_vulkan/geometry_bindings.cpp"
+        "${BO1_ROOT}/src/gfx_vulkan/material_upload.cpp"
+        "${BO1_ROOT}/tools/port/tests/native_vulkan_geometry_retention.cpp"
+        "${BO1_ROOT}/tools/port/tests/native_model_lighting_regions.cpp"
+        "${BO1_ROOT}/tools/port/tests/native_vulkan_model_lighting_regions.cpp"
         "${BO1_ROOT}/tools/port/tests/native_vulkan_depth_compare.cpp"
         "${BO1_ROOT}/tools/port/tests/native_vulkan_ubyte_input.cpp"
         "${BO1_ROOT}/tools/port/tests/native_vulkan_image_copy.cpp"
         "${BO1_ROOT}/tools/port/tests/native_vulkan_depth_copy.cpp"
+        "${BO1_ROOT}/src/gfx_vulkan/texture_bindings.cpp"
+        "${BO1_ROOT}/tools/port/tests/native_vulkan_sampling_validation.cpp"
         "${BO1_ROOT}/tools/port/tests/native_vulkan_upload_flights.cpp"
         "${BO1_ROOT}/tools/port/tests/native_vulkan_draw_storage.cpp")
     target_sources(bo1_vulkan_shader_smoke PRIVATE "${BO1_ROOT}/tools/port/tests/native_vulkan_constant_upload.cpp")

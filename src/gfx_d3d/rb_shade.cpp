@@ -254,7 +254,13 @@ void __cdecl R_SetPixPrimarySortKey(GfxCmdBufState *state, unsigned int primaryS
     {
         R_EndPixMaterialInternal(state);
         state->pixPrimarySortKey = primarySortKey;
+#if !defined(__ANDROID__)
+        // Only a PIX marker label (no PIX on Android; parallel scene recording
+        // threads have no engine va() storage).
         v2 = va("key: %d", state->pixPrimarySortKey);
+#else
+        (void)v2;
+#endif
         //PIXSetMarker(-1, v2);
     }
 }

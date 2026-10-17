@@ -7,6 +7,9 @@
 #include "r_adszscale.h"
 #include "rb_fog.h"
 #include "r_dvars.h"
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+#include "gfx_vulkan/forward_opaque.h"
+#endif
 
 void    R_SetDrawLitConstants(
                 GfxCmdBufSourceState *source,
@@ -238,7 +241,14 @@ void __cdecl R_DrawLitCallback(const void *userData, GfxCmdBufContext context, G
             viewInfo->cullViewInfo.scissorViewport.y,
             viewInfo->cullViewInfo.scissorViewport.width,
             viewInfo->cullViewInfo.scissorViewport.height);
-    R_DrawSurfs(context, prepassContext.state, viewInfo->drawList);
+    {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+        bo1::vulkan::forward_opaque::MainLitScope forwardScope(context.state,
+            !prepassContext.state&&bo1::vulkan::forward_opaque::ViewEligible(viewInfo));
+        RB_ParallelDrawScope parallelScope; // r_nativeParallelRecord: main lit list only
+#endif
+        R_DrawSurfs(context, prepassContext.state, viewInfo->drawList);
+    }
     if ((viewInfo->sceneComposition.renderingMode & 7) == 0)
         R_HW_DisableScissor(context.state->prim.device);
 }
@@ -257,7 +267,12 @@ void __cdecl R_DrawLitPostResolveCallback(const void *userData, GfxCmdBufContext
             viewInfo->cullViewInfo.scissorViewport.y,
             viewInfo->cullViewInfo.scissorViewport.width,
             viewInfo->cullViewInfo.scissorViewport.height);
-    R_DrawSurfs(context, prepassContext.state, &viewInfo->drawList[1]);
+    {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+        RB_ParallelDrawScope parallelScope; // r_nativeParallelRecord: post-resolve lit list
+#endif
+        R_DrawSurfs(context, prepassContext.state, &viewInfo->drawList[1]);
+    }
     if ((viewInfo->sceneComposition.renderingMode & 7) == 0)
         R_HW_DisableScissor(context.state->prim.device);
 }
@@ -313,7 +328,12 @@ void __cdecl R_DrawDecalCallback(const void *userData, GfxCmdBufContext context,
             viewInfo->cullViewInfo.scissorViewport.y,
             viewInfo->cullViewInfo.scissorViewport.width,
             viewInfo->cullViewInfo.scissorViewport.height);
-    R_DrawSurfs(context, prepassContext.state, &viewInfo->drawList[3]);
+    {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+        RB_ParallelDrawScope parallelScope; // r_nativeParallelRecord: decal list (order kept)
+#endif
+        R_DrawSurfs(context, prepassContext.state, &viewInfo->drawList[3]);
+    }
     if ((viewInfo->sceneComposition.renderingMode & 7) == 0)
         R_HW_DisableScissor(context.state->prim.device);
 }

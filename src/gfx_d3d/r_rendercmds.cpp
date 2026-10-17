@@ -1,3 +1,7 @@
+#if defined(__ANDROID__)
+#include <android/log.h>
+#include <time.h>
+#endif
 #if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
 #include "gfx_vulkan/buffer_assets.h"
 #include "gfx_vulkan/shader_assets.h"
@@ -626,10 +630,18 @@ void __cdecl R_ToggleSmpFrameCmd(char type)
         __debugbreak();
     }
     //BLOPS_NULLSUB();
+#if defined(__ANDROID__)
+    // Diagnostic: long hand-off waits (native_handoff_wait, android/log.h).
+    const auto handoffNow = [] { timespec t{}; clock_gettime(CLOCK_MONOTONIC, &t); return double(t.tv_sec) * 1e3 + double(t.tv_nsec) / 1e6; };
+    const double handoffStart = handoffNow();
+#endif
     {
         PROF_SCOPED("wait renderer");
         Sys_WaitRenderer();
     }
+#if defined(__ANDROID__)
+    const double handoffRenderer = handoffNow();
+#endif
     
     RB_CopyBackendStats();
     if ((type & 2) != 0)
@@ -642,6 +654,14 @@ void __cdecl R_ToggleSmpFrameCmd(char type)
         while (!R_FinishedFrontendWorkerCmds())
             NET_Sleep(1u);
     }
+#if defined(__ANDROID__)
+    {
+        const double handoffWorkers = handoffNow();
+        if (handoffWorkers - handoffStart > 8.0)
+            __android_log_print(ANDROID_LOG_INFO, "BO1NativeVulkan", "native_handoff_wait renderer_ms=%.1f worker_cmds_ms=%.1f",
+                handoffRenderer - handoffStart, handoffWorkers - handoffRenderer);
+    }
+#endif
 
     R_UpdateSkinCacheUsage();
     //BLOPS_NULLSUB();

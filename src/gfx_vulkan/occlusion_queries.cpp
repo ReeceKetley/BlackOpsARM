@@ -18,12 +18,12 @@ bool OcclusionQueries::Reset(VkCommandBuffer command,std::string& error) {
     command_=command;fence_=VK_NULL_HANDLE;phase_=Phase::Recording;++generation_;return true;
 }
 bool OcclusionQueries::Begin(VkCommandBuffer command,unsigned query,std::string& error) {
-    if(phase_!=Phase::Recording||command!=command_||query>=results_.size()||active_!=~0u||results_[query].ended){error="Invalid or repeated native query begin";return false;}
-    vkCmdBeginQuery(command,pool_,query,precise_?VK_QUERY_CONTROL_PRECISE_BIT:0);active_=query;return true;
+    if(phase_!=Phase::Recording||!command||query>=results_.size()||active_!=~0u||results_[query].ended){error="Invalid or repeated native query begin";return false;}
+    vkCmdBeginQuery(command,pool_,query,precise_?VK_QUERY_CONTROL_PRECISE_BIT:0);active_=query;activeCommand_=command;return true;
 }
 bool OcclusionQueries::End(VkCommandBuffer command,unsigned query,std::string& error) {
-    if(phase_!=Phase::Recording||command!=command_||query!=active_||query>=results_.size()){error="Native query end has no matching begin";return false;}
-    vkCmdEndQuery(command,pool_,query);results_[query].ended=true;active_=~0u;return true;
+    if(phase_!=Phase::Recording||command!=activeCommand_||query!=active_||query>=results_.size()){error="Native query end has no matching begin";return false;}
+    vkCmdEndQuery(command,pool_,query);results_[query].ended=true;active_=~0u;activeCommand_=VK_NULL_HANDLE;return true;
 }
 bool OcclusionQueries::Submitted(VkFence fence,std::string& error) {
     if(phase_!=Phase::Recording||!fence||active_!=~0u){error="Invalid native query submission publication";return false;}

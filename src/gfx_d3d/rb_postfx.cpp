@@ -13,8 +13,11 @@
 #endif
 #if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
 #include "rb_imagefilter.h"
+#include "r_draw_bsp.h"
 #include "gfx_vulkan/pass_recording.h"
+#include "gfx_vulkan/material_dispatch.h"
 #include "gfx_vulkan/shader_assets.h"
+#include "gfx_vulkan/image_assets.h"
 #include "gfx_vulkan/shader_translate.h"
 #include <cstring>
 #include <string>
@@ -1350,10 +1353,34 @@ void    RB_SetVisionSetColorCorrection(const GfxViewInfo *viewInfo)
 // original path. r_nativePostFx 0 restores the original passes.
 namespace {
 const dvar_s *r_nativePostFx;
+const dvar_s *r_nativeBloom;
+const dvar_s *r_nativeStaticWorldIndices;
+const dvar_s *r_nativeSgsr;
+const dvar_s *r_nativeBspMerge;
+const dvar_s *r_nativeParallelRecord;
 const dvar_s *r_nativeHalfPrecision;
 const dvar_s *r_nativeDepthResolveOnce;
+const dvar_s *r_nativeLazyResolve;
+const dvar_s *r_nativeDepthOnlyShadows;
 const dvar_s *r_nativeDescriptorReuse;
 const dvar_s *r_nativeConstantReuse;
+const dvar_s *r_nativeSModelGather;
+const dvar_s *r_nativeConstantSnapshotReuse;
+const dvar_s *r_nativePreparedDrawReuse;
+const dvar_s *r_nativeDescriptorContentReuse;
+const dvar_s *r_nativeSunBModelCache;
+const dvar_s *r_nativeNearShadowCache;
+const dvar_s *r_nativeNearShadowDeclDedup;
+const dvar_s *r_nativeIndexBindingReuse;
+const dvar_s *r_nativeSamplingValidationReuse;
+const dvar_s *r_nativeGeometryRetentionReuse;
+const dvar_s *r_nativeGeometryPacketReuse;
+const dvar_s *r_nativeResourceScratchReuse;
+const dvar_s *r_nativeLazyDescriptorWrites;
+const dvar_s *r_nativeFarBrushShadows;
+const dvar_s *r_nativeForwardOpaque;
+const dvar_s *r_nativeModelLightingRegions;
+const dvar_s *r_nativeModelLightingBoxes;
 bool g_nativeDofComposed;
 struct NativeDofDownsampleParams { float eqScene[4], eqViewModel[4], sceneTexel[4]; };
 struct NativeComposeParams { float texel[4], eqScene[4], eqViewModel[4], lerpScale[4], lerpBias[4], film[3][4], grade[11][4]; };
@@ -1368,8 +1395,32 @@ bool RB_NativePostWanted(const GfxViewInfo *viewInfo)
     // for the next level load.
     bo1::vulkan::SetRelaxedPrecision(r_nativeHalfPrecision && r_nativeHalfPrecision->current.enabled);
     bo1::vulkan::pass_recording::SetSingleDepthResolve(r_nativeDepthResolveOnce && r_nativeDepthResolveOnce->current.enabled);
+    bo1::vulkan::pass_recording::SetLazyColorResolve(r_nativeLazyResolve && r_nativeLazyResolve->current.enabled);
+    bo1::vulkan::SetDepthOnlyPipelines(r_nativeDepthOnlyShadows && r_nativeDepthOnlyShadows->current.enabled);
+    g_nativeStaticWorldIndices = !r_nativeStaticWorldIndices || r_nativeStaticWorldIndices->current.enabled;
+    bo1::vulkan::native_fullscreen::SetSgsrUpscale(!r_nativeSgsr || r_nativeSgsr->current.enabled);
+    g_nativeBspMerge = !r_nativeBspMerge || r_nativeBspMerge->current.enabled;
+    g_nativeParallelRecordWorkers = r_nativeParallelRecord ? r_nativeParallelRecord->current.integer : 0;
+    bo1::vulkan::pass_recording::SetParallelRecord(g_nativeParallelRecordWorkers > 0);
     bo1::vulkan::SetCompatibleDescriptorReuse(r_nativeDescriptorReuse && r_nativeDescriptorReuse->current.enabled);
     bo1::vulkan::pass_recording::SetConstantUploadReuse(r_nativeConstantReuse && r_nativeConstantReuse->current.enabled);
+    bo1::vulkan::material_dispatch::SetCachedGather(r_nativeSModelGather && r_nativeSModelGather->current.enabled);
+    bo1::vulkan::material_dispatch::SetConstantSnapshotReuse(r_nativeConstantSnapshotReuse && r_nativeConstantSnapshotReuse->current.enabled);
+    bo1::vulkan::material_dispatch::SetPreparedDrawReuse(r_nativePreparedDrawReuse && r_nativePreparedDrawReuse->current.enabled);
+    bo1::vulkan::SetDescriptorContentReuse(r_nativeDescriptorContentReuse && r_nativeDescriptorContentReuse->current.enabled);
+    bo1::vulkan::image_assets::SetModelLightingRegions(r_nativeModelLightingRegions && r_nativeModelLightingRegions->current.enabled);
+    bo1::vulkan::image_assets::SetModelLightingBoxes(r_nativeModelLightingBoxes && r_nativeModelLightingBoxes->current.enabled);
+    bo1::vulkan::pass_recording::SetForwardOpaque(r_nativeForwardOpaque && r_nativeForwardOpaque->current.enabled);
+    bo1::vulkan::pass_recording::SetSunBModelCache(r_nativeSunBModelCache && r_nativeSunBModelCache->current.enabled);
+    bo1::vulkan::pass_recording::SetNearShadowCache(r_nativeNearShadowCache && r_nativeNearShadowCache->current.enabled);
+    bo1::vulkan::pass_recording::SetNearShadowDeclDedup(r_nativeNearShadowDeclDedup && r_nativeNearShadowDeclDedup->current.enabled);
+    bo1::vulkan::geometry_bindings::SetIndexBindingReuse(r_nativeIndexBindingReuse && r_nativeIndexBindingReuse->current.enabled);
+    bo1::vulkan::texture_bindings::SetSamplingValidationReuse(r_nativeSamplingValidationReuse && r_nativeSamplingValidationReuse->current.enabled);
+    bo1::vulkan::material_dispatch::SetGeometryRetentionReuse(r_nativeGeometryRetentionReuse && r_nativeGeometryRetentionReuse->current.enabled);
+    bo1::vulkan::material_dispatch::SetGeometryPacketReuse(r_nativeGeometryPacketReuse && r_nativeGeometryPacketReuse->current.enabled);
+    bo1::vulkan::material_dispatch::SetResourceScratchReuse(r_nativeResourceScratchReuse && r_nativeResourceScratchReuse->current.enabled);
+    bo1::vulkan::SetLazyDescriptorWrites(r_nativeLazyDescriptorWrites && r_nativeLazyDescriptorWrites->current.enabled);
+    bo1::vulkan::pass_recording::SetFarBrushShadows(r_nativeFarBrushShadows && r_nativeFarBrushShadows->current.enabled);
     return r_nativePostFx && r_nativePostFx->current.enabled && bo1::vulkan::shader_assets::Active()
         && dx.supportsIntZ && !viewInfo->isMissileCamera
         && !RB_UsingFlameFX(viewInfo) && !RB_UsingReviveFX(viewInfo) && !RB_UsingElectrifiedFX(viewInfo)
@@ -1445,23 +1496,155 @@ bool RB_NativePostCompose(const GfxViewInfo *viewInfo, GfxRenderTargetId bloomRt
     g_nativeDofComposed = dof;
     return true;
 }
+struct NativeBloomTexelParams { float texel[4]; };
+struct NativeBloomRemapParams { float texel[4], control[9][4]; };
+struct NativeBloomBlurParams { float offsets[2][4], weights[2][4], axis[4]; };
+// One RB_SetBlurConstants axis as native taps: offsets/weights come from the
+// canonical constants (postFxControl0/1 offsets, 2/3 weights). Taps below
+// 1/1000 (outermost first) are dropped and the rest renormalised.
+void RB_NativeBloomBlur(const GfxViewInfo *viewInfo, float textureScaler, bool vertical, GfxRenderTargetId src, GfxRenderTargetId dst)
+{
+    using namespace bo1::vulkan::native_fullscreen;
+    RB_SetBlurConstants(viewInfo->bloom.bloomBlurRadius, textureScaler);
+    float rows[4][4];
+    CopyConstant(rows[0], CONST_SRC_CODE_POSTFX_CONTROL0, 4);
+    const float offsets[6] = { rows[0][0], rows[0][1], rows[0][2], rows[1][0], rows[1][1], rows[1][2] };
+    const float weights[6] = { rows[2][0], rows[2][1], rows[2][2], rows[2][3], rows[3][0], rows[3][1] };
+    unsigned count = 6;
+    while (count > 1 && weights[count - 1] < 0.001f)
+        --count;
+    float total = 0.0f;
+    for (unsigned i = 0; i < count; ++i)
+        total += 2.0f * weights[i];
+    NativeBloomBlurParams blur{};
+    for (unsigned i = 0; i < count; ++i)
+    {
+        blur.offsets[i / 3][i % 3] = offsets[i];
+        blur.weights[i / 3][i % 3] = total > 0.0f ? weights[i] / total : 0.0f;
+    }
+    blur.axis[0] = vertical ? 0.0f : 1.0f;
+    blur.axis[1] = vertical ? 1.0f : 0.0f;
+    blur.axis[2] = float(count);
+    R_SetRenderTargetSize(&gfxCmdBufSourceState, dst);
+    R_SetRenderTarget(gfxCmdBufContext, dst);
+    const Input input = { gfxRenderTargets[src].image, false };
+    RB_NativeFullscreen(Program::BloomBlur, &input, 1, &blur, sizeof(blur));
+}
+// Called at the start of RB_BloomLDR. Produces the blurred, remapped bloom in
+// bloom_mip3_ping with three fewer passes than the canonical chain
+// (downsample_ldr + resample_final fused; convolution + remap fused; blur taps
+// pruned). Returns false to run the canonical passes.
+bool RB_NativeBloomChain(const GfxViewInfo *viewInfo)
+{
+    using namespace bo1::vulkan::native_fullscreen;
+    if (!r_nativeBloom || !r_nativeBloom->current.enabled || !RB_NativePostWanted(viewInfo))
+        return false;
+    NativeBloomTexelParams prefilter{};
+    prefilter.texel[0] = 1.0f / float(gfxRenderTargets[R_RENDERTARGET_RESOLVED_SCENE].width);
+    prefilter.texel[1] = 1.0f / float(gfxRenderTargets[R_RENDERTARGET_RESOLVED_SCENE].height);
+    R_SetRenderTargetSize(&gfxCmdBufSourceState, R_RENDERTARGET_BLOOM_MIP2);
+    R_SetRenderTarget(gfxCmdBufContext, R_RENDERTARGET_BLOOM_MIP2);
+    const Input scene = { gfxRenderTargets[R_RENDERTARGET_RESOLVED_SCENE].image, false };
+    RB_NativeFullscreen(Program::BloomPrefilter, &scene, 1, &prefilter, sizeof(prefilter));
+
+    NativeBloomRemapParams remap{};
+    remap.texel[0] = 1.0f / float(gfxRenderTargets[R_RENDERTARGET_BLOOM_MIP3].width);
+    remap.texel[1] = 1.0f / float(gfxRenderTargets[R_RENDERTARGET_BLOOM_MIP3].height);
+    RB_SetBloomConstants(viewInfo);
+    CopyConstant(remap.control[0], CONST_SRC_CODE_POSTFX_CONTROL0, 9);
+    R_SetRenderTargetSize(&gfxCmdBufSourceState, R_RENDERTARGET_BLOOM_MIP3);
+    R_SetRenderTarget(gfxCmdBufContext, R_RENDERTARGET_BLOOM_MIP3);
+    const Input mip2 = { gfxRenderTargets[R_RENDERTARGET_BLOOM_MIP2].image, false };
+    RB_NativeFullscreen(Program::BloomRemap, &mip2, 1, &remap, sizeof(remap));
+
+    RB_NativeBloomBlur(viewInfo, 1.0f / float(gfxRenderTargets[R_RENDERTARGET_BLOOM_MIP3].width), false,
+        R_RENDERTARGET_BLOOM_MIP3, R_RENDERTARGET_BLOOM_MIP3_PONG);
+    RB_NativeBloomBlur(viewInfo, 1.0f / float(gfxRenderTargets[R_RENDERTARGET_BLOOM_MIP3].height), true,
+        R_RENDERTARGET_BLOOM_MIP3_PONG, R_RENDERTARGET_BLOOM_MIP3_PING);
+    return true;
+}
 }
 void R_RegisterNativePostDvars()
 {
     r_nativePostFx = _Dvar_RegisterBool("r_nativePostFx", 1, 0,
         "Native fused bloom/colour/depth-of-field post processing (0 = original passes)");
+    r_nativeParallelRecord = _Dvar_RegisterInt("r_nativeParallelRecord", 2, 0, 3, 0,
+        "Worker threads recording parts of the main lit draw list into secondary command buffers (0 = render thread only)");
+    r_nativeBspMerge = _Dvar_RegisterBool("r_nativeBspMerge", 1, 0,
+        "Draw lit world surfaces that share material, lighting and vertex base as one draw (0 = one draw per contiguous index run)");
+    r_nativeSgsr = _Dvar_RegisterBool("r_nativeSgsr", 1, 0,
+        "Upscale the scene to the screen with Snapdragon Game Super Resolution v1 when rendering below the output size (0 = bilinear)");
+    r_nativeStaticWorldIndices = _Dvar_RegisterBool("r_nativeStaticWorldIndices", 1, 0,
+        "Upload the world's index buffer once and draw BSP surfaces from it (0 = copy each range into the dynamic index buffer)");
+    r_nativeBloom = _Dvar_RegisterBool("r_nativeBloom", 1, 0,
+        "Native bloom chain: fused downsample/remap passes and pruned blur taps (0 = original bloom passes)");
     // Read once at renderer start: shader programs are translated lazily and cached.
     r_nativeHalfPrecision = _Dvar_RegisterBool("r_nativeHalfPrecision", 1, 0,
         "Translate the original shaders' _pp partial-precision hints to Vulkan RelaxedPrecision (shaders translated after the change)");
     bo1::vulkan::SetRelaxedPrecision(r_nativeHalfPrecision && r_nativeHalfPrecision->current.enabled);
-    r_nativeDepthResolveOnce = _Dvar_RegisterBool("r_nativeDepthResolveOnce", 0, 0,
+    r_nativeDepthResolveOnce = _Dvar_RegisterBool("r_nativeDepthResolveOnce", 1, 0,
         "Reuse the frame's first float Z depth copy instead of copying again (saves a copy and a scene pass split)");
+    r_nativePreparedDrawReuse = _Dvar_RegisterBool("r_nativePreparedDrawReuse", 1, 0,
+        "Reuse prepared native draw programs when only object resources change");
+    r_nativeDescriptorContentReuse = _Dvar_RegisterBool("r_nativeDescriptorContentReuse", 1, 0,
+        "Reuse validated descriptor contents with fresh dynamic constant offsets");
+    r_nativeModelLightingBoxes = _Dvar_RegisterBool("r_nativeModelLightingBoxes", 0, 0,
+        "Coalesce changed model lighting tiles into one bounded upload box");
+    r_nativeModelLightingRegions = _Dvar_RegisterBool("r_nativeModelLightingRegions", 0, 0,
+        "Upload changed model lighting tiles and skip unchanged patch batches");
+    r_nativeForwardOpaque = _Dvar_RegisterBool("r_nativeForwardOpaque", 0, 0,
+        "Write depth in proven opaque main lit draws and omit their redundant depth prepass");
+    r_nativeFarBrushShadows = _Dvar_RegisterBool("r_nativeFarBrushShadows", 1, 0,
+        "Render brush model shadows in the far sun cascade (near shadows remain enabled)");
+    r_nativeLazyDescriptorWrites = _Dvar_RegisterBool("r_nativeLazyDescriptorWrites", 0, 0,
+        "Build Vulkan descriptor writes only on actual descriptor-set cache misses");
+    r_nativeResourceScratchReuse = _Dvar_RegisterBool("r_nativeResourceScratchReuse", 0, 0,
+        "Reuse CPU resource-list capacity within native recording scopes");
+    r_nativeGeometryPacketReuse = _Dvar_RegisterBool("r_nativeGeometryPacketReuse", 0, 0,
+        "Reuse prepared material packets when only retained vertex offsets change");
+    r_nativeGeometryRetentionReuse = _Dvar_RegisterBool("r_nativeGeometryRetentionReuse", 0, 0,
+        "Reuse frame packet geometry ownership without duplicate per-draw retention");
+    r_nativeNearShadowDeclDedup = _Dvar_RegisterBool("r_nativeNearShadowDeclDedup", 0, 0,
+        "Deduplicate exact vertex declaration definitions in near shadow cache keys");
+    r_nativeSamplingValidationReuse = _Dvar_RegisterBool("r_nativeSamplingValidationReuse", 0, 0,
+        "Reuse generated-image sampling validation within each native resource packet");
+    r_nativeIndexBindingReuse = _Dvar_RegisterBool("r_nativeIndexBindingReuse", 0, 0,
+        "Skip native index snapshot publication for an unchanged exact index record");
+    r_nativeNearShadowCache = _Dvar_RegisterBool("r_nativeNearShadowCache", 1, 0,
+        "Cache stable static near sun shadow casters with exact invalidation");
+    r_nativeSunBModelCache = _Dvar_RegisterBool("r_nativeSunBModelCache", 1, 0,
+        "Cache stable far brush model shadow casters with exact invalidation");
+    r_nativeConstantSnapshotReuse = _Dvar_RegisterBool("r_nativeConstantSnapshotReuse", 1, 0,
+        "Reuse uploaded constant comparisons without retaining redundant CPU snapshots");
+    r_nativeSModelGather = _Dvar_RegisterBool("r_nativeSModelGather", 1, 0,
+        "Gather cached static model groups into one native index upload");
     r_nativeConstantReuse = _Dvar_RegisterBool("r_nativeConstantReuse", 1, 0,
         "Reuse unchanged per-stage constant uploads within the native frame (0 = upload every draw)");
     r_nativeDescriptorReuse = _Dvar_RegisterBool("r_nativeDescriptorReuse", 1, 0,
         "Reuse frame descriptor sets across identically defined pipeline layouts (0 = exact layout handles)");
     bo1::vulkan::SetCompatibleDescriptorReuse(r_nativeDescriptorReuse && r_nativeDescriptorReuse->current.enabled);
     bo1::vulkan::pass_recording::SetConstantUploadReuse(r_nativeConstantReuse && r_nativeConstantReuse->current.enabled);
+    bo1::vulkan::material_dispatch::SetCachedGather(r_nativeSModelGather && r_nativeSModelGather->current.enabled);
+    bo1::vulkan::material_dispatch::SetConstantSnapshotReuse(r_nativeConstantSnapshotReuse && r_nativeConstantSnapshotReuse->current.enabled);
+    bo1::vulkan::material_dispatch::SetPreparedDrawReuse(r_nativePreparedDrawReuse && r_nativePreparedDrawReuse->current.enabled);
+    bo1::vulkan::SetDescriptorContentReuse(r_nativeDescriptorContentReuse && r_nativeDescriptorContentReuse->current.enabled);
+    bo1::vulkan::image_assets::SetModelLightingRegions(r_nativeModelLightingRegions && r_nativeModelLightingRegions->current.enabled);
+    bo1::vulkan::image_assets::SetModelLightingBoxes(r_nativeModelLightingBoxes && r_nativeModelLightingBoxes->current.enabled);
+    bo1::vulkan::pass_recording::SetForwardOpaque(r_nativeForwardOpaque && r_nativeForwardOpaque->current.enabled);
+    bo1::vulkan::pass_recording::SetSunBModelCache(r_nativeSunBModelCache && r_nativeSunBModelCache->current.enabled);
+    bo1::vulkan::pass_recording::SetNearShadowCache(r_nativeNearShadowCache && r_nativeNearShadowCache->current.enabled);
+    bo1::vulkan::pass_recording::SetNearShadowDeclDedup(r_nativeNearShadowDeclDedup && r_nativeNearShadowDeclDedup->current.enabled);
+    bo1::vulkan::geometry_bindings::SetIndexBindingReuse(r_nativeIndexBindingReuse && r_nativeIndexBindingReuse->current.enabled);
+    bo1::vulkan::texture_bindings::SetSamplingValidationReuse(r_nativeSamplingValidationReuse && r_nativeSamplingValidationReuse->current.enabled);
+    bo1::vulkan::material_dispatch::SetGeometryRetentionReuse(r_nativeGeometryRetentionReuse && r_nativeGeometryRetentionReuse->current.enabled);
+    bo1::vulkan::material_dispatch::SetGeometryPacketReuse(r_nativeGeometryPacketReuse && r_nativeGeometryPacketReuse->current.enabled);
+    bo1::vulkan::material_dispatch::SetResourceScratchReuse(r_nativeResourceScratchReuse && r_nativeResourceScratchReuse->current.enabled);
+    bo1::vulkan::SetLazyDescriptorWrites(r_nativeLazyDescriptorWrites && r_nativeLazyDescriptorWrites->current.enabled);
+    bo1::vulkan::pass_recording::SetFarBrushShadows(r_nativeFarBrushShadows && r_nativeFarBrushShadows->current.enabled);
+    r_nativeLazyResolve = _Dvar_RegisterBool("r_nativeLazyResolve", 1, 0,
+        "Skip scene colour resolves nobody has read since the previous one (saves copies and scene pass splits)");
+    r_nativeDepthOnlyShadows = _Dvar_RegisterBool("r_nativeDepthOnlyShadows", 0, 0,
+        "Build colourless shadow-map pipelines without a fragment stage when the pixel shader cannot discard or write depth");
     R_RegisterSunShadowCacheDvar();
 }
 #endif
@@ -1486,6 +1669,10 @@ void __cdecl RB_BloomLDR(const GfxViewInfo *viewInfo)
 
     PROF_SCOPED("LDR Bloom");
 
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if (!RB_NativeBloomChain(viewInfo))
+    {
+#endif
     R_SetRenderTargetSize(&gfxCmdBufSourceState, R_RENDERTARGET_BLOOM_MIP1);
     R_SetRenderTarget(gfxCmdBufContext, R_RENDERTARGET_BLOOM_MIP1);
     R_ClearRenderTargetForMultiGpu(gfxCmdBufContext, R_RENDERTARGET_BLOOM_MIP1);
@@ -1536,6 +1723,9 @@ void __cdecl RB_BloomLDR(const GfxViewInfo *viewInfo)
     R_ClearRenderTargetForMultiGpu(gfxCmdBufContext, R_RENDERTARGET_BLOOM_MIP3_PING);
     R_SetCodeImageTexture(&gfxCmdBufSourceState, 0x22u, gfxRenderTargets[R_RENDERTARGET_BLOOM_MIP3_PONG].image);
     RB_Filter(rgp.bloomBlurY, viewInfo);
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    }
+#endif
     srcRt = R_RENDERTARGET_BLOOM_MIP3_PING;
     dstRt = R_RENDERTARGET_BLOOM_MIP3_PONG;
     RB_BloomStreak(viewInfo, &srcRt, &dstRt);

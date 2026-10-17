@@ -6,15 +6,26 @@
 #include "platform/android/post_fusion_trial_bytecode.h"
 #include <vulkan/vulkan.h>
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <vector>
 #include <string>
+// Fixtures create their own non-watched shader records; production registry
+// diagnostics must never be silently emulated for a watched asset.
+namespace bo1::vulkan::shader_assets {
+void TraceIntegrity(const std::shared_ptr<const Record>& record,const char*) {
+    if(record&&record->integrityWatched){std::fputs("FAIL watched shader requires production integrity diagnostics\n",stderr);std::abort();}
+}
+}
 bool NativeVulkanDrawStorage(VkPhysicalDevice,VkDevice,unsigned);
 bool NativeVulkanConstantUpload(VkPhysicalDevice,VkDevice,unsigned);
 bool NativeVulkanImageCopy(VkPhysicalDevice,VkDevice,unsigned);
 bool NativeVulkanUploadFlights(VkPhysicalDevice,VkDevice,unsigned);
+bool NativeVulkanSamplingValidation(VkPhysicalDevice,VkDevice,unsigned);
 bool NativeVulkanDepthCopy(VkPhysicalDevice,VkDevice,unsigned);
 bool NativeVulkanUbyteDraw(VkPhysicalDevice,VkDevice,unsigned,const char*);
+bool NativeVulkanGeometryRetention(VkPhysicalDevice,VkDevice,unsigned);
+bool NativeVulkanModelLightingRegions(VkPhysicalDevice,VkDevice,unsigned);
 bool NativeVulkanDepthBiasDraw(VkPhysicalDevice,VkDevice,unsigned);
 bool NativeVulkanDepthCompareDraw(VkPhysicalDevice,VkDevice,unsigned,const char*);
 bool NativeVulkanLrpDraw(VkPhysicalDevice,VkDevice,unsigned);
@@ -116,6 +127,12 @@ int main(int argc,char** argv) {
         ok=ok&&weak.expired();auto recreated=Sampler::Acquire(device,decoded,4,0,error);ok=ok&&bool(recreated);
         std::printf("native_sampler_cache=%s reuse=1 distinct_mips_bias_compare=1 invalid_rejected=3 eviction_retains_users=300 weak_lifetime=1\n",ok?"PASS":"FAIL");
     }
+    const bool samplingOnly=argc>1&&!std::strcmp(argv[1],"--sampling-only");
+    if(ok&&samplingOnly)ok=NativeVulkanSamplingValidation(physical,device,family);
+    const bool geometryOnly=argc>1&&!std::strcmp(argv[1],"--geometry-only");
+    if(ok&&geometryOnly)ok=NativeVulkanGeometryRetention(physical,device,family);
+    const bool regionsOnly=argc>1&&!std::strcmp(argv[1],"--regions-only");
+    if(ok&&regionsOnly)ok=NativeVulkanModelLightingRegions(physical,device,family);
     const bool arenaOnly=argc>1&&!std::strcmp(argv[1],"--arena-only");
     if(ok&&arenaOnly)ok=NativeVulkanDrawStorage(physical,device,family);
     if(ok&&arenaOnly)ok=NativeVulkanConstantUpload(physical,device,family);
@@ -131,7 +148,7 @@ int main(int argc,char** argv) {
     if(ok&&biasOnly)ok=NativeVulkanDepthBiasDraw(physical,device,family);
     const bool depthOnly=argc>1&&!std::strcmp(argv[1],"--depth-only");
     if(ok&&depthOnly)ok=NativeVulkanDepthCompareDraw(physical,device,family,argc>2?argv[2]:nullptr);
-    if(ok&&!keysOnly&&!samplersOnly&&!flightsOnly&&!depthCopyOnly&&!depthOnly&&!biasOnly&&!ubyteOnly&&!copyOnly&&!arenaOnly) {
+    if(ok&&!samplingOnly&&!geometryOnly&&!regionsOnly&&!keysOnly&&!samplersOnly&&!flightsOnly&&!depthCopyOnly&&!depthOnly&&!biasOnly&&!ubyteOnly&&!copyOnly&&!arenaOnly) {
         using namespace bo1::android::post_fusion_trial::bytecode;
         const char* directory=argc>1?argv[1]:nullptr;
         ok=Program(device,"t5-fullscreen-vs",SharedVS,sizeof(SharedVS),directory)

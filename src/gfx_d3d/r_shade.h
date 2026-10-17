@@ -53,6 +53,12 @@ void __cdecl R_SetPassShaderStableArguments(
 void __cdecl R_SetVertexShaderConstantFromLiteral(GfxCmdBufState *state, unsigned int dest, const float *literal);
 int __cdecl R_ReserveIndexData(GfxCmdBufPrimState *state, int triCount);
 int __cdecl R_SetIndexData(GfxCmdBufPrimState *state, unsigned __int8 *indices, int triCount);
+#if defined(__ANDROID__)
+#include <mutex>
+// Native parallel scene recording: serializes the shared dynamic index buffer
+// (reservation, copy and use count). Hold it across any multi-step use.
+std::recursive_mutex &R_NativeDynamicIndexMutex();
+#endif
 void __cdecl R_SetPixelShader(GfxCmdBufState *state, const MaterialPixelShader *pixelShader);
 void __cdecl R_UpdateVertexDecl(GfxCmdBufState *state);
 void __cdecl R_SetVertexShader(GfxCmdBufState *state, const MaterialVertexShader *vertexShader);
