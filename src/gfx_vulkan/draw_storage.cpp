@@ -5,9 +5,21 @@ DrawStorage::DrawStorage(VkPhysicalDevice physical,VkDevice device,VkDeviceSize 
  :physical_(physical),device_(device),pageBytes_(bytes),drawsPerPage_(draws),maxPages_(maximum){}
 DrawStorage::~DrawStorage(){for(auto& p:pages_)if(p.descriptors)vkDestroyDescriptorPool(device_,p.descriptors,nullptr);}
 unsigned DrawStorage::Draws()const {unsigned n=0;for(const auto& p:pages_)n+=p.draws;return n;}
+VkDeviceSize DrawStorage::Bytes()const {VkDeviceSize n=0;for(const auto& p:pages_)n+=p.cursor;return n;}
 bool DrawStorage::Reset(std::string& error) {
  if(recording_&&dirty_){error="Native draw storage cannot reset recorded readers";return false;}
  if(fence_&&vkGetFenceStatus(device_,fence_)!=VK_SUCCESS){error="Native draw storage submission fence has not retired";return false;}
+ // The fence has retired every reader of these pages: pages unused for the
+ // last 600 frames of this slot can be released (keeping two spare).
+ if(dirty_&&page_+1>usedPeak_)usedPeak_=page_+1;
+ if(++resets_>=600) {
+  const std::size_t keep=std::size_t(usedPeak_)+2;
+  while(pages_.size()>keep) {
+   if(pages_.back().descriptors)vkDestroyDescriptorPool(device_,pages_.back().descriptors,nullptr);
+   pages_.pop_back();
+  }
+  resets_=0;usedPeak_=0;
+ }
  for(auto& p:pages_) {
   if(vkResetDescriptorPool(device_,p.descriptors,0)!=VK_SUCCESS){error="Native draw descriptor page reset failed";return false;}
   p.cursor=0;p.draws=0;

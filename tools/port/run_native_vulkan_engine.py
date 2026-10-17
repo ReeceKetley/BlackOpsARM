@@ -18,6 +18,7 @@ p = argparse.ArgumentParser()
 p.add_argument('--sdk', type=int, required=True)
 p.add_argument('--build', default='build-android-audit/native_engine_entry1')
 p.add_argument('--stage', type=int, required=True)
+p.add_argument('--asan', action='store_true', help='Build/stage/package the explicitly configured separate ASan diagnostic tree')
 p.add_argument('--height', type=int, choices=(0,540,720,1080), default=0)
 p.add_argument('--seconds', type=int, default=180)
 a = p.parse_args()
@@ -30,6 +31,11 @@ apk = root / 'android/app/build/outputs/apk/debug/app-debug.apk'
 adb = ['D:/Android/Sdk/platform-tools/adb.exe', '-s', 'AKWJ9X5116G04618']
 assert not stage.exists(), 'Preserve previous stage evidence; select a fresh number'
 assert not (out / f'sdk-engine-shared-build{a.sdk}.log').exists()
+if a.asan:
+    cache = (build / 'CMakeCache.txt').read_text(encoding='utf-8')
+    if not re.search(r'^BO1_NATIVE_ASAN:[^=]+=ON$', cache, re.M) or not re.search(r'^ANDROID_STL:[^=]+=c\+\+_shared$', cache, re.M):
+        p.error('--asan requires a separate ASan/shared-STL configured build directory')
+
 
 def logged(command, name, cwd=root, env=None):
     path = out / name
@@ -50,11 +56,11 @@ logged(['D:/Android/Sdk/cmake/3.22.1/bin/cmake.exe', '--build',
         'blackopsarm_engine', '--parallel', '4'], f'sdk-engine-shared-build{a.sdk}.log')
 logged([sys.executable, str(root / 'tools/port/stage_native_engine_apk.py'),
         '--build', str(build),
-        '--output', str(stage)], f'sdk-stage{a.stage}.log')
+        '--output', str(stage)] + (['--asan'] if a.asan else []), f'sdk-stage{a.stage}.log')
 env = os.environ.copy()
 env['JAVA_HOME'] = 'C:/Users/recox/scoop/apps/temurin21-jdk/current'
 logged(['cmd.exe', '/c', 'gradlew.bat', ':app:assembleDebug',
-        '-Pbo1NativePrebuiltDir=' + str(stage)], f'sdk-apk-build{a.stage}.log',
+        '-Pbo1NativePrebuiltDir=' + str(stage)] + (['-Pbo1NativeAsanWrapDir=' + str(stage / 'asan-resources')] if a.asan else []), f'sdk-apk-build{a.stage}.log',
        cwd=root / 'android', env=env)
 rows = json.loads((stage / 'native-manifest.json').read_text())
 checks = []
@@ -65,7 +71,17 @@ with zipfile.ZipFile(apk) as z:
         assert digest == row['sha256']
         checks.append({'library': row['library'], 'sha256': digest,
                        'bytes': len(data), 'build_id': row['build_id']})
-verification = {'apk_sha256': hashlib.sha256(apk.read_bytes()).hexdigest(), 'libraries': checks}
+wrap_verification = None
+with zipfile.ZipFile(apk) as z:
+    wrap_path = 'lib/arm64-v8a/wrap.sh'
+    if a.asan:
+        wrap_verification = json.loads((stage / 'asan-wrap-manifest.json').read_text())
+        wrapper = z.read(wrap_path)
+        assert hashlib.sha256(wrapper).hexdigest() == wrap_verification['sha256']
+        assert len(wrapper) == wrap_verification['bytes']
+    else:
+        assert wrap_path not in z.namelist(), 'Ordinary APK unexpectedly contains diagnostic wrapping'
+verification = {'apk_sha256': hashlib.sha256(apk.read_bytes()).hexdigest(), 'libraries': checks, 'asan_wrap': wrap_verification}
 (out / f'sdk-package-verification{a.stage}.json').write_text(
     json.dumps(verification, indent=2) + '\n', encoding='utf-8')
 print('PASS: all packaged providers match; engine BuildId', checks[0]['build_id'], flush=True)

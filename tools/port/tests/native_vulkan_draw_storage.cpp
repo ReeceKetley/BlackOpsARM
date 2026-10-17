@@ -21,6 +21,8 @@ struct Owner {
 }
 bool NativeVulkanDrawStorage(VkPhysicalDevice physical,VkDevice device,unsigned family) {
  using namespace bo1::vulkan;
+ struct RestoreContents {bool enabled=DescriptorContentReuse();~RestoreContents(){SetDescriptorContentReuse(enabled);}} restoreContents;
+ SetDescriptorContentReuse(true);
  try {
   Owner owner{device};std::string error;VkPhysicalDeviceProperties properties{};vkGetPhysicalDeviceProperties(physical,&properties);
   const auto alignment=properties.limits.minUniformBufferOffsetAlignment;
@@ -104,6 +106,35 @@ bool NativeVulkanDrawStorage(VkPhysicalDevice physical,VkDevice device,unsigned 
    Check(reused->Record(command,previousPools[0],{}, {resumedResource},cache,error),error);
    const VkViewport resumedViewport{0,1,1,-1,0,1};const VkRect2D resumedScissor{{0,0},{1,1}};
    vkCmdSetViewport(command,0,1,&resumedViewport);vkCmdSetScissor(command,0,1,&resumedScissor);vkCmdDraw(command,3,1,0,0);
+   const auto contentHits=cache.descriptorContentHits,unchangedBinds=cache.descriptorBinds;
+   Check(reused->Record(command,previousPools[0],{}, {resumedResource},cache,error),error);
+   Check(cache.descriptorContentHits==contentHits+2&&cache.descriptorBinds==unchangedBinds,"Recent identical descriptor contents missed or rebound");
+   // Same program, changed buffers select existing written sets; a subsequent
+   // offset-only update must hit recent contents and still reach the GPU.
+   for(unsigned i=1;i<4;++i) {
+    ProgramResource changed=resumedResource;changed.buffer.buffer=previous[i];
+    Check(reused->Record(command,previousPools[i],{}, {changed},cache,error),error);
+    const VkViewport viewport{float(i),1,1,-1,0,1};const VkRect2D scissor{{int(i),0},{1,1}};
+    vkCmdSetViewport(command,0,1,&viewport);vkCmdSetScissor(command,0,1,&scissor);vkCmdDraw(command,3,1,0,0); // red=-1 poison
+    changed.buffer.offset=2048;
+    const auto hits=cache.descriptorContentHits,binds=cache.descriptorBinds;
+    Check(reused->Record(command,previousPools[i],{}, {changed},cache,error),error);vkCmdDraw(command,3,1,0,0);
+    Check(cache.descriptorContentHits==hits+2&&cache.descriptorBinds==binds+1,"Recent descriptor hit lost changed dynamic offset");
+    resumedResource=changed;resumedResource.buffer.offset=0;
+   }
+   ProgramResource valid=resumedResource;valid.buffer.offset=2048;
+   const auto validationBinds=cache.descriptorBinds;
+   Check(!reused->Record(command,previousPools[3],{}, {valid,valid},cache,error),"Recent descriptor hit accepted duplicate resource");
+   Check(!reused->Record(command,previousPools[3],{}, {},cache,error),"Recent descriptor hit accepted missing resource");
+   auto invalid=valid;invalid.buffer.offset=0x100000000ull;
+   Check(!reused->Record(command,previousPools[3],{}, {invalid},cache,error),"Recent descriptor hit truncated dynamic offset");
+   invalid=valid;invalid.buffer.range=0;
+   Check(!reused->Record(command,previousPools[3],{}, {invalid},cache,error),"Recent descriptor hit accepted zero range");
+   Check(cache.descriptorBinds==validationBinds,"Invalid resources changed descriptor bindings");
+   const auto disabledHits=cache.descriptorContentHits;SetDescriptorContentReuse(false);
+   Check(reused->Record(command,previousPools[3],{}, {valid},cache,error),error);
+   Check(cache.descriptorContentHits==disabledHits,"Disabled contents shortcut remained active");SetDescriptorContentReuse(true);
+   std::printf("native_descriptor_contents=PASS compatible=%u identical=1 changed_buffers=3 changed_offsets=3 duplicate_missing_invalid_rejected=1 disabled=1\n",unsigned(cache.compatibleSets));
    // A third pipeline uses alpha NEVER and deliberately wrong colour data.
    // It must discard, preserving the pixels written through the cached pair.
    for(unsigned i=0;i<4;++i) {

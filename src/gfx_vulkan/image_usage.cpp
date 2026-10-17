@@ -1,6 +1,7 @@
 #include "image_usage.h"
 namespace bo1::vulkan::image_usage {
 namespace {thread_local RecordingScope* current{};
+thread_local std::uint64_t samplingLookups{};
 bool Transfer(VkCommandBuffer,const std::shared_ptr<Texture2D>&,const std::shared_ptr<Texture2D>&,const VkImageCopy*,unsigned,std::string&);
 VkImageLayout Final(const Texture2D& image) {
  const auto& d=image.Description();
@@ -9,6 +10,9 @@ VkImageLayout Final(const Texture2D& image) {
 }}
 RecordingScope::RecordingScope(Tracker& t,VkCommandBuffer c):tracker(t),command(c),previous_(current){current=this;}
 RecordingScope::~RecordingScope(){current=previous_;}
+const RecordingScope* CurrentScope(){return current;}
+BorrowScope::BorrowScope(const RecordingScope* owner):previous_(current){current=const_cast<RecordingScope*>(owner);}
+BorrowScope::~BorrowScope(){current=previous_;}
 State RecordingScope::Lookup(const std::shared_ptr<Texture2D>& image)const {
  // The caller holds `image`, so a live entry at its address is this image; an
  // entry for a destroyed image at a reused address has expired.
@@ -35,7 +39,7 @@ bool End(VkCommandBuffer command,const std::shared_ptr<Texture2D>& color,const s
  for(const auto& image:{color,depth})if(image){auto state=current->Lookup(image);state.active=false;state.layout=Final(*image);state.contents=image==color||preserveDepth;current->pending[image.get()]=state;}return true;
 }
 bool CanLoad(const std::shared_ptr<Texture2D>& image){if(!current||!image)return false;auto s=current->Lookup(image);return !s.active&&s.contents&&s.layout==Final(*image);}
-bool Known(const std::shared_ptr<Texture2D>& image){return current&&image&&(current->Lookup(image).active||current->Lookup(image).layout!=VK_IMAGE_LAYOUT_UNDEFINED);}
+bool Known(const std::shared_ptr<Texture2D>& image){if(!current||!image)return false;++samplingLookups;const auto state=current->Lookup(image);return state.active||state.layout!=VK_IMAGE_LAYOUT_UNDEFINED;}
 bool Copy(VkCommandBuffer command,const std::shared_ptr<Texture2D>& source,const std::shared_ptr<Texture2D>& destination,std::string& error,VkImageAspectFlags copyAspects) {
  if(!current||current->command!=command||!source||!destination||source->Handle()==destination->Handle()
      ||!source->Handle()||!destination->Handle()||!source->Device()||source->Device()!=destination->Device()) {error="Native image copy needs distinct images and its recording scope";return false;}
@@ -96,13 +100,17 @@ bool Transfer(VkCommandBuffer command,const std::shared_ptr<Texture2D>& source,c
  current->pending[source.get()]=src;current->pending[destination.get()]=dst;return true;
 }
 }
-bool Sample(const std::shared_ptr<Texture2D>& image,VkImageLayout& layout,std::string& error) {
+std::uint64_t SamplingLookupCount(){return samplingLookups;}
+bool ResolveSampling(const std::shared_ptr<Texture2D>& image,bool requireTracked,VkImageLayout& layout,bool& known,std::string& error) {
+ known=false;State state;
+ if(current&&image){++samplingLookups;state=current->Lookup(image);known=state.active||state.layout!=VK_IMAGE_LAYOUT_UNDEFINED;}
+ if(!known&&!requireTracked){layout=VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;return true;}
  if(!current||!image){error="Native generated image sampling needs a recording scope";return false;}
- auto state=current->Lookup(image);
  if(state.active||!state.contents||!(image->Description().usage&VK_IMAGE_USAGE_SAMPLED_BIT)||state.layout!=Final(*image)) {
   error="Native sampled image has no preserved ordered contents or is an active attachment active="+std::to_string(state.active)
    +" contents="+std::to_string(state.contents)+" layout="+std::to_string(unsigned(state.layout))+" expected="+std::to_string(unsigned(Final(*image)))
    +" sampled="+std::to_string(bool(image->Description().usage&VK_IMAGE_USAGE_SAMPLED_BIT));return false;}
- layout=state.layout;return true;
+ layout=state.layout;image->NoteRead();return true;
 }
+bool Sample(const std::shared_ptr<Texture2D>& image,VkImageLayout& layout,std::string& error){bool known;return ResolveSampling(image,true,layout,known,error);}
 }

@@ -7,6 +7,9 @@
 #include "rb_backend.h"
 #include "r_foliage.h"
 #include "r_wind.h"
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+#include "gfx_vulkan/forward_opaque.h"
+#endif
 
 void    R_DepthPrepass(
                 GfxRenderTargetId renderTargetId,
@@ -102,6 +105,10 @@ void __cdecl R_DepthPrepassCallback(const void *userData, GfxCmdBufContext conte
 
     {
         PROF_SCOPED("zprepass litInfo");
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+        bo1::vulkan::forward_opaque::PrepassScope forwardScope(&viewInfo->drawList[DRAWLIST_LIT],
+            !viewInfo->renderingFloatZ&&bo1::vulkan::forward_opaque::ViewEligible(viewInfo));
+#endif
         R_DrawSurfs(context, 0, &info);
     }
     

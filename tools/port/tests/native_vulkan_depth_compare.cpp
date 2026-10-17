@@ -5,6 +5,8 @@
 #include "attachment_pass.h"
 #include "image_usage.h"
 #include "texture_bindings.h"
+#include "material_state.h"
+#include "forward_opaque.h"
 #include <cstdio>
 #include <cmath>
 #include <memory>
@@ -188,17 +190,17 @@ bool NativeVulkanDepthBiasDraw(VkPhysicalDevice physical,VkDevice device,unsigne
             d.format=VK_FORMAT_R32G32B32A32_SFLOAT;d.aspects=VK_IMAGE_ASPECT_COLOR_BIT;
             d.usage=VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT|VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
             owner.color=std::make_shared<Texture2D>(physical,device);Check(owner.color->Create(d,error),error);
-            owner.depthPass=std::make_unique<AttachmentPass>(device);Check(owner.depthPass->Create(nullptr,owner.depth,true,error),error);
+            owner.depthPass=std::make_unique<AttachmentPass>(device);Check(owner.depthPass->Create(owner.color,owner.depth,true,error),error);
             owner.colorPass=std::make_unique<AttachmentPass>(device);Check(owner.colorPass->Create(owner.color,nullptr,false,error),error);
-            constexpr unsigned cases=5;constexpr VkDeviceSize vertexBytes=sizeof(Vertex)*3;
+            constexpr unsigned cases=7;constexpr VkDeviceSize vertexBytes=sizeof(Vertex)*3;
             owner.vertices=std::make_unique<Buffer>(physical,device);
-            Check(owner.vertices->Create(vertexBytes*cases*2,VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,error),error);
+            Check(owner.vertices->Create(vertexBytes*cases*4,VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,error),error);
             owner.readback=std::make_unique<Buffer>(physical,device);
-            Check(owner.readback->Create(cases*256,VK_BUFFER_USAGE_TRANSFER_DST_BIT,VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,error),error);
+            Check(owner.readback->Create((cases+1)*256,VK_BUFFER_USAGE_TRANSFER_DST_BIT,VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,error),error);
             owner.raw=std::make_unique<texture_bindings::Sampler>(device);
             Check(owner.raw->Create((3u<<20)|(3u<<22)|(3u<<24)|(1u<<8)|(1u<<12),1,0,error),error);
             const VkDescriptorPoolSize sizes[]={{VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,cases},{VK_DESCRIPTOR_TYPE_SAMPLER,cases}};
-            VkDescriptorPoolCreateInfo pool{VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO};pool.maxSets=cases*4;pool.poolSizeCount=2;pool.pPoolSizes=sizes;
+            VkDescriptorPoolCreateInfo pool{VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO};pool.maxSets=cases*4+4;pool.poolSizeCount=2;pool.pPoolSizes=sizes;
             Vk(vkCreateDescriptorPool(device,&pool,nullptr,&owner.descriptors),"bias descriptors");
             VkCommandPoolCreateInfo ci{VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO};ci.queueFamilyIndex=family;
             Vk(vkCreateCommandPool(device,&ci,nullptr,&owner.commands),"bias command pool");
@@ -218,9 +220,9 @@ bool NativeVulkanDepthBiasDraw(VkPhysicalDevice physical,VkDevice device,unsigne
             Check(!ResolveDepthBias(unresolved,VK_FORMAT_D32_SFLOAT,1,0,error),"Floating constant bias needs explicit policy");
             const VkBuffer vb=owner.vertices->Handle();VkClearColorValue clear{{0,0,0,0}};
             for(unsigned test=0;test<cases;++test) {
-                description.renderPass=owner.depthPass->RenderPass();description.colorAttachment=false;description.depthTest=description.depthWrite=true;
+                description.renderPass=owner.depthPass->RenderPass();description.colorAttachment=true;description.depthTest=description.depthWrite=true;
                 description.pixelBytecode=depthPixel;description.pixelBytes=sizeof(depthPixel);description.depthCompare=VK_COMPARE_OP_ALWAYS;
-                description.depthBias={test!=0,test==0,0,0};
+                description.depthBias={test>0&&test<5,test==0||test>=5,0,0};
                 const float normalized=test==1?1.0f/1024:test==2?-1.0f/1024:0;
                 const float slope=test==3?1.0f:test==4?-1.0f:0;
                 Check(ResolveDepthBias(description,format,normalized,slope,error),error);
@@ -229,19 +231,83 @@ bool NativeVulkanDepthBiasDraw(VkPhysicalDevice physical,VkDevice device,unsigne
                 Check(PipelineKey::Create(other,changed,error)&&key!=changed,"Bias factors missing from pipeline identity");
                 other=description;other.depthBias.enabled=true;other.depthBias.slopeFactor+=1;
                 Check(PipelineKey::Create(other,changed,error)&&key!=changed,"Slope missing from pipeline identity");
+                const unsigned opaquePixel[]={0xffff0300,0x05000051,0xa00f0000,0x3e800000,0,0,0x3f800000,
+                    0x02000001,0x800f0800,0xa0e40000,0x0000ffff};
+                unsigned forwardWords[2]={0x18004800u,8u}; // opaque, EQUAL, no depth write
+                if(test>=5) {
+                    if(test==6)Check(forward_opaque::ConvertWords(forwardWords),"Opaque forward state rejected");
+                    Check(ApplyMaterialState(forwardWords[0],forwardWords[1],description,error),error);
+                    description.pixelBytecode=opaquePixel;description.pixelBytes=sizeof(opaquePixel);
+                    Check(description.depthCompare==(test==6?VK_COMPARE_OP_LESS_OR_EQUAL:VK_COMPARE_OP_EQUAL)
+                        &&description.depthWrite==(test==6),"Forward effective state not reflected in pipeline");
+                    if(test==6) {
+                        auto canonical=description;Check(ApplyMaterialState(forwardWords[0],8u,canonical,error),error);
+                        PipelineKey forwardKey,canonicalKey;
+                        Check(PipelineKey::Create(description,forwardKey,error)&&PipelineKey::Create(canonical,canonicalKey,error)
+                            &&forwardKey!=canonicalKey,"Forward depth state aliased canonical pipeline key");
+                        // Existing LEQUAL writers and LEQUAL readers converge on
+                        // exactly the EQUAL-derived pipeline drawn below. In
+                        // particular, accepting an existing writer is an identity
+                        // conversion, not a reason to omit its actual draw.
+                        for(const unsigned sourceDepth:{12u,13u}) {
+                            unsigned equivalentWords[2]={forwardWords[0],sourceDepth};
+                            Check(forward_opaque::ConvertWords(equivalentWords),"LEQUAL forward state rejected");
+                            Check(equivalentWords[0]==forwardWords[0]&&equivalentWords[1]==forwardWords[1],
+                                "Forward depth policies did not converge on identical words");
+                            auto equivalent=description;
+                            Check(ApplyMaterialState(equivalentWords[0],equivalentWords[1],equivalent,error),error);
+                            Check(equivalent.depthTest==description.depthTest&&equivalent.depthWrite==description.depthWrite
+                                &&equivalent.depthCompare==description.depthCompare&&equivalent.depthWrite
+                                &&equivalent.depthCompare==VK_COMPARE_OP_LESS_OR_EQUAL,
+                                "LEQUAL forward descriptor differs from drawn EQUAL-derived descriptor");
+                            PipelineKey equivalentKey;
+                            Check(PipelineKey::Create(equivalent,equivalentKey,error)&&equivalentKey==forwardKey,
+                                "LEQUAL forward state did not reuse the drawn pipeline identity");
+                        }
+                    }
+                }
                 auto depthProgram=make(description);std::array<VkDescriptorSet,2> sets{};Check(depthProgram->BindResources(owner.descriptors,{}, {},sets,error),error);
-                Vertex vertices[3];Fill(vertices,0.5f,0,1);
-                if(test>=3){vertices[0].position[2]=0.25f;vertices[1].position[2]=0.25f;vertices[2].position[2]=0.75f;}
-                VkDeviceSize offset=test*2*vertexBytes;Check(owner.vertices->Write(offset,vertices,sizeof(vertices),error),error);
+                Vertex vertices[3];Fill(vertices,test>=5?0.25f:0.5f,0,1);
+                if(test==3||test==4){vertices[0].position[2]=0.25f;vertices[1].position[2]=0.25f;vertices[2].position[2]=0.75f;}
+                VkDeviceSize offset=test*4*vertexBytes;Check(owner.vertices->Write(offset,vertices,sizeof(vertices),error),error);
                 Check(owner.depthPass->BeginTracked(command,clear,error),error);depthProgram->Bind(command,sets);
                 const VkViewport viewport{0,4,4,-4,0,1};const VkRect2D scissor{{0,0},{4,4}};
                 vkCmdSetViewport(command,0,1,&viewport);vkCmdSetScissor(command,0,1,&scissor);vkCmdBindVertexBuffers(command,0,1,&vb,&offset);vkCmdDraw(command,3,1,0,0);
-                Check(owner.depthPass->EndTracked(command,error),error);VkImageLayout layout{};Check(image_usage::Sample(owner.depth,layout,error),error);
+                if(test==6) {
+                    // Farther opaque draw must fail LEQUAL after the near base
+                    // has written real depth; additive EQUAL only shades it.
+                    Fill(vertices,0.75f,0,1);VkDeviceSize farOffset=offset+vertexBytes;
+                    Check(owner.vertices->Write(farOffset,vertices,sizeof(vertices),error),error);
+                    vkCmdBindVertexBuffers(command,0,1,&vb,&farOffset);vkCmdDraw(command,3,1,0,0);
+                    const unsigned additivePixel[]={0xffff0300,0x05000051,0xa00f0000,0,0x3f000000,0,0,
+                        0x02000001,0x800f0800,0xa0e40000,0x0000ffff};
+                    auto additive=description;additive.pixelBytecode=additivePixel;additive.pixelBytes=sizeof(additivePixel);
+                    unsigned blendWords[2]={0x18004922u,8u}; // ONE + ONE, EQUAL, no write
+                    Check(ApplyMaterialState(blendWords[0],blendWords[1],additive,error),error);
+                    auto addition=make(additive);std::array<VkDescriptorSet,2> addSets{};
+                    Check(addition->BindResources(owner.descriptors,{}, {},addSets,error),error);addition->Bind(command,addSets);
+                    vkCmdBindVertexBuffers(command,0,1,&vb,&offset);vkCmdDraw(command,3,1,0,0);
+                    vkCmdBindVertexBuffers(command,0,1,&vb,&farOffset);vkCmdDraw(command,3,1,0,0);
+                }
+                Check(owner.depthPass->EndTracked(command,error),error);
+                if(test==6) {
+                    VkImageMemoryBarrier b{VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER};b.image=owner.color->Handle();
+                    b.srcQueueFamilyIndex=b.dstQueueFamilyIndex=VK_QUEUE_FAMILY_IGNORED;b.subresourceRange={VK_IMAGE_ASPECT_COLOR_BIT,0,1,0,1};
+                    b.oldLayout=VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;b.newLayout=VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+                    b.srcAccessMask=VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;b.dstAccessMask=VK_ACCESS_TRANSFER_READ_BIT;
+                    vkCmdPipelineBarrier(command,VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,VK_PIPELINE_STAGE_TRANSFER_BIT,0,0,nullptr,0,nullptr,1,&b);
+                    VkBufferImageCopy copy{};copy.bufferOffset=cases*256;copy.imageSubresource={VK_IMAGE_ASPECT_COLOR_BIT,0,0,1};copy.imageExtent={4,4,1};
+                    vkCmdCopyImageToBuffer(command,owner.color->Handle(),VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,owner.readback->Handle(),1,&copy);
+                    b.oldLayout=VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;b.newLayout=VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+                    b.srcAccessMask=VK_ACCESS_TRANSFER_READ_BIT;b.dstAccessMask=VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+                    vkCmdPipelineBarrier(command,VK_PIPELINE_STAGE_TRANSFER_BIT,VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,0,0,nullptr,0,nullptr,1,&b);
+                }
+                VkImageLayout layout{};Check(image_usage::Sample(owner.depth,layout,error),error);
                 description.renderPass=owner.colorPass->RenderPass();description.colorAttachment=true;description.depthTest=description.depthWrite=false;description.depthBias={};description.pixelBytecode=pixel;description.pixelBytes=sizeof(pixel);
                 auto colorProgram=make(description);ProgramResource texture{};texture.kind=ResourceKind::Texture;texture.registerIndex=3;texture.image={VK_NULL_HANDLE,owner.depth->View(),layout};
                 ProgramResource sampler{};sampler.kind=ResourceKind::Sampler;sampler.registerIndex=3;sampler.image={owner.raw->Handle(),VK_NULL_HANDLE,VK_IMAGE_LAYOUT_UNDEFINED};
                 Check(colorProgram->BindResources(owner.descriptors,{}, {texture,sampler},sets,error),error);
-                Fill(vertices,0,0,1);offset+=vertexBytes;Check(owner.vertices->Write(offset,vertices,sizeof(vertices),error),error);
+                Fill(vertices,0,0,1);offset+=3*vertexBytes;Check(owner.vertices->Write(offset,vertices,sizeof(vertices),error),error);
                 Check(owner.colorPass->BeginTracked(command,clear,error),error);colorProgram->Bind(command,sets);vkCmdSetViewport(command,0,1,&viewport);vkCmdSetScissor(command,0,1,&scissor);vkCmdBindVertexBuffers(command,0,1,&vb,&offset);vkCmdDraw(command,3,1,0,0);Check(owner.colorPass->EndTracked(command,error),error);
                 VkImageMemoryBarrier barrier{VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER};barrier.image=owner.color->Handle();barrier.srcQueueFamilyIndex=barrier.dstQueueFamilyIndex=VK_QUEUE_FAMILY_IGNORED;barrier.subresourceRange={VK_IMAGE_ASPECT_COLOR_BIT,0,1,0,1};barrier.oldLayout=VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;barrier.newLayout=VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;barrier.srcAccessMask=VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;barrier.dstAccessMask=VK_ACCESS_TRANSFER_READ_BIT;
                 vkCmdPipelineBarrier(command,VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,VK_PIPELINE_STAGE_TRANSFER_BIT,0,0,nullptr,0,nullptr,1,&barrier);
@@ -253,15 +319,21 @@ bool NativeVulkanDepthBiasDraw(VkPhysicalDevice physical,VkDevice device,unsigne
             vkCmdPipelineBarrier(command,VK_PIPELINE_STAGE_TRANSFER_BIT,VK_PIPELINE_STAGE_HOST_BIT,0,1,&host,0,nullptr,0,nullptr);Check(tracking.Validate(error),error);Vk(vkEndCommandBuffer(command),"bias end");
             VkFenceCreateInfo fi{VK_STRUCTURE_TYPE_FENCE_CREATE_INFO};Vk(vkCreateFence(device,&fi,nullptr,&owner.fence),"bias fence");VkQueue queue{};vkGetDeviceQueue(device,family,0,&queue);VkSubmitInfo submit{VK_STRUCTURE_TYPE_SUBMIT_INFO};submit.commandBufferCount=1;submit.pCommandBuffers=&command;
             Vk(vkQueueSubmit(queue,1,&submit,owner.fence),"bias submit");owner.submitted=true;tracking.Commit();Vk(vkWaitForFences(device,1,&owner.fence,VK_TRUE,10000000000ull),"bias real GPU fence");owner.submitted=false;
-            float pixels[cases*64]{};Check(owner.readback->Read(0,pixels,sizeof(pixels),error),error);
+            float pixels[(cases+1)*64]{};Check(owner.readback->Read(0,pixels,sizeof(pixels),error),error);
             for(unsigned test=0;test<cases;++test) {
                 for(unsigned i=0;i<64;++i) {
-                    const float value=pixels[test*64+i];const auto x=(i/4)%4;const float base=test>=3?0.25f+0.0625f*(x+0.5f):0.5f;
+                    const float value=pixels[test*64+i];const auto x=(i/4)%4;const float base=test==5?1.0f:test==6?0.25f:test>=3?0.25f+0.0625f*(x+0.5f):0.5f;
                     if(test==1||test==2){const float delta=(value-base)*(test==1?1:-1);Check(std::isfinite(value)&&delta>=1.0f/1024-0.00005f&&delta<=2.0f/1024+0.00005f,"Fixed depth constant bias outside Vulkan bounds");}
                     else {const float expected=base+(test==3?0.0625f:test==4?-0.0625f:0);Check(std::isfinite(value)&&std::fabs(value-expected)<0.00005f,"Actual slope/disabled bias pixel mismatch");}
                 }
                 std::printf("native_depth_bias=PASS format=%u case=%u first=%.9g last=%.9g fence_completed=1\n",unsigned(format),test,pixels[test*64],pixels[test*64+12]);
             }
+            for(unsigned i=0;i<64;++i) {
+                const float expected[4]={0.25f,0.5f,0,1};
+                Check(std::isfinite(pixels[cases*64+i])&&std::fabs(pixels[cases*64+i]-expected[i%4])<0.00001f,
+                    "Forward opaque / EQUAL additive visibility mismatch");
+            }
+            std::printf("native_forward_depth=PASS format=%u canonical_equal_rejected=1 forward_depth_write=1 lequal_reader_equivalent=1 existing_writer_identity=1 near_far_occlusion=1 additive_equal=1 real_depth_sample=1 fence_completed=1\n",unsigned(format));
         }
         return true;
     }catch(const std::exception& e){std::fprintf(stderr,"native_depth_bias=FAIL %s\n",e.what());return false;}

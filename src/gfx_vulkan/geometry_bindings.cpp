@@ -1,12 +1,16 @@
 #include "geometry_bindings.h"
-#include "pointer_hash.h"
+#include "sharded_states.h"
 #include <mutex>
+#include <atomic>
 #include <unordered_map>
 #include <limits>
 namespace bo1::vulkan::geometry_bindings {
 namespace {
-std::mutex mutex;std::unordered_map<const GfxCmdBufPrimState*,std::shared_ptr<const Snapshot>,bo1::vulkan::PointerHash> states;
+ShardedStates<const GfxCmdBufPrimState*,std::shared_ptr<const Snapshot>> registry;
 thread_local RecordingScope* current{};
+thread_local RecordingProfile profile;
+std::atomic<bool> indexBindingReuse{false};
+thread_local IndexBindingProfile indexProfile;
 }
 bool SetStreams(const GfxCmdBufPrimState* state,const std::array<StreamSource,3>& sources,std::string& error) {
     if(!state||!sources[0].owner){error="Native vertex stream set requires its command and primary owner";return false;}
@@ -26,7 +30,7 @@ bool SetStreams(const GfxCmdBufPrimState* state,const std::array<StreamSource,3>
         }
         streams[i]={std::move(buffer),source.offset,source.stride};
     }
-    std::lock_guard<std::mutex> lock(mutex);auto it=states.find(state);
+    auto& shard=registry.For(state);std::lock_guard<std::mutex> lock(shard.mutex);auto& states=shard.map;auto it=states.find(state);
     if(it!=states.end()) {
         bool same=true;for(unsigned i=0;i<streams.size();++i) {
             const auto& old=it->second->streams[i];const auto& next=streams[i];
@@ -40,42 +44,50 @@ bool SetStreams(const GfxCmdBufPrimState* state,const std::array<StreamSource,3>
 bool SetVertex(const GfxCmdBufPrimState* state,const void* owner,unsigned offset,unsigned stride,std::string& error) {
     return SetStreams(state,{{{owner,offset,stride},{},{}}},error);
 }
+void SetIndexBindingReuse(bool value){indexBindingReuse.store(value,std::memory_order_relaxed);}
+bool IndexBindingReuseEnabled(){return indexBindingReuse.load(std::memory_order_relaxed);}
+IndexBindingProfile ReadIndexBindingProfile(){return indexProfile;}
 bool SetIndex(const GfxCmdBufPrimState* state,const void* owner,std::string& error) {
+    ++indexProfile.attempts;
     auto buffer=buffer_assets::Acquire(owner);
     if(!state||!buffer||buffer->kind!=buffer_assets::Kind::Index16) {error="Invalid native index owner/kind";return false;}
-    std::lock_guard<std::mutex> lock(mutex);auto it=states.find(state);
+    auto& shard=registry.For(state);std::lock_guard<std::mutex> lock(shard.mutex);auto& states=shard.map;auto it=states.find(state);
+    if(IndexBindingReuseEnabled()&&it!=states.end()&&it->second->indices==buffer){++indexProfile.hits;return true;}
     auto next=it==states.end()?std::make_shared<Snapshot>():std::make_shared<Snapshot>(*it->second);
     next->indices=std::move(buffer);states[state]=std::move(next);return true;
 }
 bool ClearVertices(const GfxCmdBufPrimState* state,std::string& error) {
     if(!state){error="Invalid native stream-clear command owner";return false;}
-    std::lock_guard<std::mutex> lock(mutex);auto it=states.find(state);
+    auto& shard=registry.For(state);std::lock_guard<std::mutex> lock(shard.mutex);auto& states=shard.map;auto it=states.find(state);
     if(it==states.end())return true;
     auto next=std::make_shared<Snapshot>(*it->second);
     next->streams={};it->second=std::move(next);return true;
 }
 void Clone(const GfxCmdBufPrimState* source,const GfxCmdBufPrimState* destination) {
-    std::lock_guard<std::mutex> lock(mutex);if(source==destination)return;auto it=states.find(source);
-    if(it==states.end())states.erase(destination);else states[destination]=it->second;
+    if(source==destination)return;
+    std::shared_ptr<const Snapshot> shared;
+    {auto& shard=registry.For(source);std::lock_guard<std::mutex> lock(shard.mutex);auto it=shard.map.find(source);if(it!=shard.map.end())shared=it->second;}
+    auto& shard=registry.For(destination);std::lock_guard<std::mutex> lock(shard.mutex);
+    if(!shared)shard.map.erase(destination);else shard.map[destination]=std::move(shared);
 }
-void Release(const GfxCmdBufPrimState* state){std::lock_guard<std::mutex> lock(mutex);states.erase(state);}
-std::shared_ptr<const Snapshot> Acquire(const GfxCmdBufPrimState* state) {std::lock_guard<std::mutex> lock(mutex);auto it=states.find(state);return it==states.end()?nullptr:it->second;}
+void Release(const GfxCmdBufPrimState* state){auto& shard=registry.For(state);std::lock_guard<std::mutex> lock(shard.mutex);auto& states=shard.map;states.erase(state);}
+std::shared_ptr<const Snapshot> Acquire(const GfxCmdBufPrimState* state) {auto& shard=registry.For(state);std::lock_guard<std::mutex> lock(shard.mutex);auto& states=shard.map;auto it=states.find(state);return it==states.end()?nullptr:it->second;}
 RecordingScope::RecordingScope(const GfxCmdBufPrimState* s,VkCommandBuffer c,std::vector<std::shared_ptr<const Snapshot>>& a,std::shared_ptr<const Snapshot> snapshot,BindCache* bindCache):captured(std::move(snapshot)),state(s),command(c),arena(a),binds(bindCache),previous_(current){current=this;}
 RecordingScope::~RecordingScope(){current=previous_;}
 bool SameBindings(const Snapshot& a,const Snapshot& b) {
-    if(!a.indices||!b.indices||a.indices->gpu!=b.indices->gpu)return false;
+    if(!a.indices||!b.indices||a.indices->gpu!=b.indices->gpu||a.indices->offset!=b.indices->offset)return false;
     for(unsigned i=0;i<a.streams.size();++i) {
         const auto& x=a.streams[i];const auto& y=b.streams[i];
         if(bool(x.buffer)!=bool(y.buffer))return false;
-        if(x.buffer&&(x.buffer->gpu!=y.buffer->gpu||x.offset!=y.offset||x.stride!=y.stride))return false;
+        if(x.buffer&&(x.buffer->gpu!=y.buffer->gpu||x.buffer->offset+x.offset!=y.buffer->offset+y.offset||x.stride!=y.stride))return false;
     }
     return true;
 }
-bool DrawIndexed(const GfxCmdBufPrimState* state,int baseIndex,int vertexCount,int triCount,std::string& error,bool mergeable) {
-    if(!current||current->state!=state||!current->command) {error="Native indexed draw has no matching recording scope";return false;}
+static bool RecordCaptured(VkCommandBuffer command,const std::shared_ptr<const Snapshot>& snapshot,
+    std::vector<std::shared_ptr<const Snapshot>>* arena,BindCache* binds,int baseIndex,int vertexCount,int triCount,std::string& error,bool mergeable) {
+    if(!command){error="Native indexed draw has no command buffer";return false;}
     if(baseIndex<0||vertexCount<=0||triCount<0||std::uint64_t(triCount)*3>std::numeric_limits<unsigned>::max()) {error="Invalid native indexed draw arguments";return false;}
     if(!triCount)return true;
-    auto snapshot=current->captured?current->captured:Acquire(state);
     if(!snapshot||!snapshot->indices||!snapshot->streams[0].buffer) {error="Native indexed draw missing buffer bindings";return false;}
     const std::uint64_t start=std::uint64_t(baseIndex)*2,count=std::uint64_t(triCount)*3;
     const auto payload=snapshot->indices->payloadBytes;
@@ -87,25 +99,47 @@ bool DrawIndexed(const GfxCmdBufPrimState* state,int baseIndex,int vertexCount,i
     }
     // Preserve ownership before recording; byte ranges are validated before
     // any command. Index values follow the canonical producer's vertex bounds.
-    current->arena.push_back(snapshot);
-    auto* binds=current->binds;
+    if(arena) {
+        const bool grows=arena->size()==arena->capacity();arena->push_back(snapshot);
+        ++profile.arenaRetentions;if(grows)++profile.arenaGrowths;
+    } else ++profile.retainedDraws;
     for(unsigned i=0;i<snapshot->streams.size();++i)if(snapshot->streams[i].buffer) {
         const auto& stream=snapshot->streams[i];const VkBuffer buffer=stream.buffer->gpu->Handle();
-        if(binds&&binds->vertexBuffers[i]==buffer&&binds->vertexOffsets[i]==stream.offset)continue;
+        const VkDeviceSize offset=stream.buffer->offset+stream.offset; // packed records start inside a shared buffer
+        if(binds&&binds->vertexBuffers[i]==buffer&&binds->vertexOffsets[i]==offset)continue;
         if(binds)FlushPending(*binds); // the pending draw uses the old binding
-        vkCmdBindVertexBuffers(current->command,i,1,&buffer,&stream.offset);
-        if(binds){binds->vertexBuffers[i]=buffer;binds->vertexOffsets[i]=stream.offset;}
+        vkCmdBindVertexBuffers(command,i,1,&buffer,&offset);
+        if(binds){binds->vertexBuffers[i]=buffer;binds->vertexOffsets[i]=offset;}
     }
     const VkBuffer indices=snapshot->indices->gpu->Handle();
     if(!binds||binds->indexBuffer!=indices) {
         if(binds)FlushPending(*binds);
-        vkCmdBindIndexBuffer(current->command,indices,0,VK_INDEX_TYPE_UINT16);
+        vkCmdBindIndexBuffer(command,indices,0,VK_INDEX_TYPE_UINT16);
         if(binds)binds->indexBuffer=indices;
     }
-    if(!binds){vkCmdDrawIndexed(current->command,unsigned(count),1,unsigned(baseIndex),0,0);return true;}
+    // A packed index record starts inside its shared buffer: index from there.
+    const std::uint64_t firstIndex=std::uint64_t(baseIndex)+snapshot->indices->offset/2;
+    if(firstIndex>std::numeric_limits<std::uint32_t>::max()-count) {error="Native draw index range overflow";return false;}
+    baseIndex=int(firstIndex);
+    if(!binds){vkCmdDrawIndexed(command,unsigned(count),1,unsigned(baseIndex),0,0);return true;}
     auto& pending=binds->pending;
-    if(mergeable&&pending.active&&pending.command==current->command&&unsigned(baseIndex)==pending.first+pending.count
+    if(mergeable&&pending.active&&pending.command==command&&unsigned(baseIndex)==pending.first+pending.count
         &&count<=std::uint64_t(std::numeric_limits<std::uint32_t>::max()-pending.count)) {pending.count+=unsigned(count);++binds->mergedRanges;return true;}
-    FlushPending(*binds);pending={true,current->command,unsigned(baseIndex),unsigned(count)};return true;
+    FlushPending(*binds);pending={true,command,unsigned(baseIndex),unsigned(count)};return true;
 }
+void ResetRecordingProfile(){profile={};}
+RecordingProfile ReadRecordingProfile(){return profile;}
+bool DrawIndexed(const GfxCmdBufPrimState* state,int baseIndex,int vertexCount,int triCount,std::string& error,bool mergeable) {
+    if(!current||current->state!=state||!current->command) {error="Native indexed draw has no matching recording scope";return false;}
+    const auto snapshot=triCount>0?(current->captured?current->captured:Acquire(state)):nullptr;
+    return RecordCaptured(current->command,snapshot,&current->arena,current->binds,baseIndex,vertexCount,triCount,error,mergeable);
+}
+bool DrawIndexedRetained(VkCommandBuffer command,const std::shared_ptr<const Snapshot>& captured,
+    const std::shared_ptr<const Snapshot>& retained,BindCache* binds,int baseIndex,int vertexCount,int triCount,std::string& error,bool mergeable) {
+    if(triCount&&(!captured||!retained||!SameBindings(*captured,*retained))) {
+        error="Native indexed draw lacks matching frame-retained geometry";return false;
+    }
+    return RecordCaptured(command,captured,nullptr,binds,baseIndex,vertexCount,triCount,error,mergeable);
+}
+
 }

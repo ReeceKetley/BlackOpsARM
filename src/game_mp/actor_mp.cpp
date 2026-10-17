@@ -1699,6 +1699,90 @@ void __cdecl Actor_Think(gentity_s *self)
     }
 }
 
+#ifdef __ANDROID__
+#include <android/log.h>
+#include <game/actor_animapi.h>
+// Port diagnostic (FACT-0561): an actor with an enemy that stops moving for
+// over 1.5 s logs its AI and anim-script state, to explain zombie freezes.
+static float g_stuckOrigin[MAX_GENTITIES][3];
+static int g_stuckSince[MAX_GENTITIES];
+static int g_stuckLogged[MAX_GENTITIES];
+
+static const char *Actor_StuckScriptName(actor_s *self)
+{
+    static const char *const names[] = {
+        "combat", "concealment_crouch", "concealment_prone", "concealment_stand", "cover_arrival",
+        "cover_crouch", "cover_left", "cover_prone", "cover_right", "cover_stand", "cover_wide_left",
+        "cover_wide_right", "death", "grenade_return_throw", "init", "pain", "react", "move", "scripted",
+        "stop", "grenade_cower", "flashed", "jump", "turn" };
+    if ( !self->pAnimScriptFunc )
+        return "none";
+    const AnimScriptList *lists[2] = { g_animScriptTable[self->species], Actor_SP_GetAnimScriptStorage(self->species) };
+    for ( const AnimScriptList *list : lists )
+    {
+        if ( !list )
+            continue;
+        const scr_animscript_t *base = &list->combat;
+        const scr_animscript_t *end = reinterpret_cast<const scr_animscript_t *>(list + 1);
+        if ( self->pAnimScriptFunc < base || self->pAnimScriptFunc >= end )
+            continue;
+        const ptrdiff_t index = self->pAnimScriptFunc - base;
+        return index < (ptrdiff_t)(sizeof(names) / sizeof(names[0])) ? names[index] : "weapon";
+    }
+    return "unknown";
+}
+
+static void Actor_StuckDiagnostic(actor_s *self)
+{
+    const int num = self->ent->s.number;
+    const float *origin = self->ent->r.currentOrigin;
+    sentient_s *enemy = Actor_GetTargetSentient(self);
+    const float dx = origin[0] - g_stuckOrigin[num][0];
+    const float dy = origin[1] - g_stuckOrigin[num][1];
+    if ( !enemy || dx * dx + dy * dy > 4.0f || !g_stuckSince[num] )
+    {
+        if ( g_stuckLogged[num] )
+            __android_log_print(ANDROID_LOG_INFO, "BlackOpsARM", "native_ai_stuck_end entity=%d stuck_ms=%d",
+                num, level.time - g_stuckSince[num]);
+        g_stuckOrigin[num][0] = origin[0];
+        g_stuckOrigin[num][1] = origin[1];
+        g_stuckOrigin[num][2] = origin[2];
+        g_stuckSince[num] = level.time ? level.time : 1;
+        g_stuckLogged[num] = 0;
+        return;
+    }
+    const int stuckMs = level.time - g_stuckSince[num];
+    if ( stuckMs < 1500 || level.time - g_stuckLogged[num] < 1000 )
+        return;
+    g_stuckLogged[num] = level.time;
+    const float *enemyOrigin = enemy->ent->r.currentOrigin;
+    const float ex = enemyOrigin[0] - origin[0], ey = enemyOrigin[1] - origin[1], ez = enemyOrigin[2] - origin[2];
+    __android_log_print(
+        ANDROID_LOG_INFO,
+        "BlackOpsARM",
+        "native_ai_stuck entity=%d stuck_ms=%d species=%d level=%d state=%d substate=%d debug=%s script=%s alive=%d "
+        "safe=%d has_path=%d path_wait_ms=%d melee_spot=%d enemy_goal=%d enemy_dist=%.1f origin=%.1f,%.1f,%.1f",
+        num,
+        stuckMs,
+        (int)self->species,
+        self->stateLevel,
+        (int)self->eState[self->stateLevel],
+        (int)self->eSubState[self->stateLevel],
+        self->pszDebugInfo ? self->pszDebugInfo : "",
+        Actor_StuckScriptName(self),
+        Actor_IsAnimScriptAlive(self) ? 1 : 0,
+        self->safeToChangeScript ? 1 : 0,
+        Actor_HasPath(self) ? 1 : 0,
+        self->pathWaitTime - level.time,
+        self->useMeleeAttackSpot ? 1 : 0,
+        self->useEnemyGoal ? 1 : 0,
+        sqrtf(ex * ex + ey * ey + ez * ez),
+        origin[0],
+        origin[1],
+        origin[2]);
+}
+#endif
+
 actor_think_result_t __fastcall Actor_CallThink(actor_s *self)
 {
     const char *v1; // eax
@@ -1769,6 +1853,9 @@ actor_think_result_t __fastcall Actor_CallThink(actor_s *self)
 #endif
     gjkcc_epilog(&gjkcc_in, self->Physics.vOrigin);
     self->Physics.m_gjkcc_input = 0;
+#ifdef __ANDROID__
+    Actor_StuckDiagnostic(self);
+#endif
     if ( (unsigned int)eThinkResult > ACTOR_THINK_MOVE_TO_BODY_QUEUE
         && !Assert_MyHandler(
                     "C:\\projects_pc\\cod\\codsrc\\src\\game_mp\\actor_mp.cpp",
@@ -3996,12 +4083,28 @@ gentity_s *__fastcall Actor_IsKnownEnemyInRegion(
     return 0;
 }
 
+#ifdef __ANDROID__
+#include <android/log.h>
+// Port diagnostic (FACT-0561): records why an actor's path search failed and
+// how long it stays without a path, to correlate with in-game zombie freezes.
+static const char *g_pathFailStage = "search";
+static int g_pathStallStart[MAX_GENTITIES];
+static int g_pathStallFails[MAX_GENTITIES];
+static int g_pathStallLast[MAX_GENTITIES];
+#define BO1_PATH_FAIL_STAGE(name) (g_pathFailStage = (name))
+#else
+#define BO1_PATH_FAIL_STAGE(name) ((void)0)
+#endif
+
 void __fastcall Actor_FindPathToGoalDirect(actor_s *self)
 {
     bool validPath; // [esp+7h] [ebp-1h]
 
     if ( Actor_HasPath(self) || level.time >= self->pathWaitTime )
     {
+#ifdef __ANDROID__
+        g_pathFailStage = "search";
+#endif
         validPath = Actor_FindPathToGoalDirectInternal(self);
         if ( !Actor_HasPath(self) )
         {
@@ -4009,6 +4112,24 @@ void __fastcall Actor_FindPathToGoalDirect(actor_s *self)
             if ( !validPath )
                 Actor_HandleInvalidPath(self);
         }
+#ifdef __ANDROID__
+        else
+        {
+            const int num = self->ent->s.number;
+            // Retries are 500 ms apart; a longer gap means the slot was reused.
+            if ( g_pathStallFails[num] && level.time - g_pathStallLast[num] <= 2000 )
+            {
+                __android_log_print(
+                    ANDROID_LOG_INFO,
+                    "BlackOpsARM",
+                    "native_ai_path_recovered entity=%d stalled_ms=%d failures=%d",
+                    num,
+                    level.time - g_pathStallStart[num],
+                    g_pathStallFails[num]);
+            }
+            g_pathStallFails[num] = 0;
+        }
+#endif
     }
     else
     {
@@ -4059,10 +4180,16 @@ bool __fastcall Actor_FindPathToGoalDirectInternal(actor_s *self)
     Sentient_InvalidateNearestNode(self->sentient);
     pNearestNode = Sentient_NearestNode(self->sentient);
     if ( !pNearestNode )
+    {
+        BO1_PATH_FAIL_STAGE("no_start_node");
         return 0;
+    }
     pNodeTo = Path_NearestNode(self->codeGoal.pos, nodes, -2, 192.0, &nodeCount, 64, NEAREST_NODE_DO_HEIGHT_CHECK);
     if ( !pNodeTo )
+    {
+        BO1_PATH_FAIL_STAGE("no_goal_node");
         return 0;
+    }
     perp[0] = self->Path.lookaheadDir[1];
     perp[1] = -self->Path.lookaheadDir[0];
     if (self->sideMove < 0.0)
@@ -4142,6 +4269,35 @@ void __fastcall Actor_HandleInvalidPath(actor_s *self)
     if ( !self->useMeleeAttackSpot )
     {
         Actor_TeamMoveBlocked(self);
+#ifdef __ANDROID__
+        {
+            const int num = self->ent->s.number;
+            if ( !g_pathStallFails[num] || level.time - g_pathStallLast[num] > 2000 )
+            {
+                g_pathStallStart[num] = level.time;
+                g_pathStallFails[num] = 0;
+            }
+            g_pathStallLast[num] = level.time;
+            ++g_pathStallFails[num];
+            __android_log_print(
+                ANDROID_LOG_INFO,
+                "BlackOpsARM",
+                "native_ai_path_fail entity=%d stage=%s stalled_ms=%d failures=%d origin=%.1f,%.1f,%.1f goal=%.1f,%.1f,%.1f radius=%.1f side=%.1f",
+                num,
+                g_pathFailStage,
+                level.time - g_pathStallStart[num],
+                g_pathStallFails[num],
+                self->ent->r.currentOrigin[0],
+                self->ent->r.currentOrigin[1],
+                self->ent->r.currentOrigin[2],
+                self->codeGoal.pos[0],
+                self->codeGoal.pos[1],
+                self->codeGoal.pos[2],
+                self->codeGoal.radius,
+                self->sideMove);
+            g_pathFailStage = "search";
+        }
+#endif
         Com_Printf(
             18,
             "%sAI (entity %d, origin %.1f %.1f %.1f) couldn't find path to goal.\n",
@@ -4195,7 +4351,10 @@ bool __fastcall Actor_FindPath(
     Sentient_InvalidateNearestNode(self->sentient);
     pNearestNode = Sentient_NearestNode(self->sentient);
     if ( !pNearestNode )
+    {
+        BO1_PATH_FAIL_STAGE("no_start_node");
         return 0;
+    }
     if ( self->badPlaceAwareness == 0.0 )
         Path_FindPathFrom(
             &self->Path,

@@ -1,7 +1,10 @@
 #pragma once
 #include <vulkan/vulkan.h>
 #include <cstddef>
+#include <cstdint>
+#include <atomic>
 #include <string>
+#include <vector>
 namespace bo1::vulkan {
 // GPU users must be retired before releasing these owners. Buffers may be
 // persistently mapped; higher-level frame/ring ownership prevents overwrite.
@@ -30,6 +33,9 @@ struct TextureDescription {
     VkImageAspectFlags aspects=VK_IMAGE_ASPECT_COLOR_BIT;
     bool linearSampling=true;
 };
+// Live device-memory allocations made by Buffer/Texture2D (diagnostic).
+struct DeviceMemoryStats {std::uint64_t bufferBytes,bufferCount,imageBytes,imageCount,bufferRequested,smallBuffers,bufferCreates,bufferCreateBytes,largeBuffers,largeBufferBytes;};
+DeviceMemoryStats ReadDeviceMemoryStats();
 class Texture2D {
 public:
     Texture2D(VkPhysicalDevice physical,VkDevice device):physical_(physical),device_(device){}
@@ -42,18 +48,25 @@ public:
     // updates. Recording alone does not publish a new layout or ready texture.
     bool UploadSubresource(VkCommandBuffer,VkBuffer,VkDeviceSize,unsigned mip,unsigned layer,
         VkImageLayout previousLayout,std::string&)const;
+    bool UploadRegions(VkCommandBuffer,VkBuffer,VkDeviceSize stagingBytes,
+        const std::vector<VkBufferImageCopy>&,std::string&)const;
     VkDevice Device()const{return device_;}
     VkImage Handle()const{return image_;}
     VkImageView AttachmentView()const{return attachmentView_;}
     const TextureDescription& Description()const{return description_;}
     // Render-thread record of whether stencil contents ever left their initial
     // cleared-to-zero state (stencil-enabled draw or non-zero stencil clear).
-    void MarkStencilTouched()const{stencilTouched_=true;}
-    bool StencilTouched()const{return stencilTouched_;}
+    // Parallel scene recording threads may mark/count concurrently (relaxed:
+    // readers only use them between recordings).
+    void MarkStencilTouched()const{stencilTouched_.store(true,std::memory_order_relaxed);}
+    bool StencilTouched()const{return stencilTouched_.load(std::memory_order_relaxed);}
+    // Count of recorded shader reads (descriptor/effect uses).
+    void NoteRead()const{reads_.fetch_add(1,std::memory_order_relaxed);}
+    std::uint64_t Reads()const{return reads_.load(std::memory_order_relaxed);}
     VkImageView View()const{return view_;}VkSampler Sampler()const{return sampler_;}
 private:
     VkPhysicalDevice physical_{};VkDevice device_{};VkImage image_{};VkDeviceMemory memory_{};
-    VkImageView view_{},attachmentView_{};VkSampler sampler_{};TextureDescription description_{};
-    mutable bool stencilTouched_{};
+    VkImageView view_{},attachmentView_{};VkSampler sampler_{};TextureDescription description_{};VkDeviceSize allocationSize_{};
+    mutable std::atomic<bool> stencilTouched_{};mutable std::atomic<std::uint64_t> reads_{};
 };
 }

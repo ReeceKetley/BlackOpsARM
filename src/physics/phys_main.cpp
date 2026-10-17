@@ -3652,7 +3652,13 @@ void __thiscall cdl_proftimer::reset()
         do
         {
             swap = 0;
-            for (i = 0; i < 5; ++i)
+            // mx has 5 entries: compare pairs (0,1)..(3,4). The decompiled
+            // bound (i < 5) read and swapped mx[5], one element past the
+            // struct - for proftimer_physics_frame_advance that is
+            // gImpulseCacheNum, which then made Phys_AddCacheImpulses process
+            // a garbage impulse with id 0 (fatal Phys_GetUserData assert when
+            // explosions start ragdoll capture).
+            for (i = 0; i < 4; ++i)
             {
                 if (this->mx[i] > this->mx[i + 1])
                 {

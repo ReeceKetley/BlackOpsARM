@@ -11,6 +11,150 @@
 #include "rb_draw3d.h"
 #include <universal/profile.h>
 #include <qcommon/cm_mapkit.h>
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+#include "gfx_vulkan/forward_opaque.h"
+#include "gfx_vulkan/shader_assets.h"
+#include <android/log.h>
+#include <atomic>
+#include <unordered_map>
+namespace bo1::vulkan::forward_opaque {
+namespace {
+std::atomic<bool> enabled{};
+std::atomic<unsigned> diagnosticEpoch{};
+thread_local const GfxCmdBufState* mainState{};
+thread_local const GfxDrawSurfListInfo* prepassMain{};
+thread_local bool mainSurfaceEligible{};
+thread_local std::uint64_t omittedGroups{};
+thread_local std::unordered_map<std::uint64_t,bool> fragmentProofs;
+bool SurfaceEligible(GfxDrawSurf surf) {
+    // Keep skinned actors, viewmodels, effects, water and special prepasses.
+    return surf.fields.surfType<=SF_BMODEL&&surf.fields.surfType!=SF_STATICMODEL_SKINNED
+        &&!R_GfxDrawSurf_GetFade(&surf)&&!TechLit_NeedsCharredTech(&surf)
+        &&((surf.packed>>55)&3)==0;
+}
+bool MaterialEligible(const Material* material,unsigned type) {
+    const MaterialTechnique* observedTechnique=nullptr;
+    unsigned observedWords[2]{};
+    auto result=[&](bool eligible,const char* reason) {
+        struct Seen {const Material* material;unsigned type;};
+        static thread_local Seen seen[16]{};
+        static thread_local unsigned seenCount{};
+        static thread_local unsigned seenEpoch{};
+        const unsigned epoch=diagnosticEpoch.load(std::memory_order_relaxed);
+        if(seenEpoch!=epoch){seenEpoch=epoch;seenCount=0;}
+        if(Enabled()&&seenCount<16) {
+            bool duplicate=false;
+            for(unsigned i=0;i<seenCount;++i)if(seen[i].material==material&&seen[i].type==type)duplicate=true;
+            if(!duplicate) {
+                seen[seenCount++]={material,type};
+                // Gather diagnostic metadata even when an earlier conservative gate rejected it.
+                if(material&&type<115) {
+                    observedTechnique=Material_GetTechnique(material,type);
+                    const unsigned entry=material->stateBitsEntry[type];
+                    if(material->stateBitsTable&&entry<material->stateBitsCount) {
+                        observedWords[0]=material->stateBitsTable[entry].loadBits[0];
+                        observedWords[1]=material->stateBitsTable[entry].loadBits[1];
+                    }
+                }
+                __android_log_print(ANDROID_LOG_INFO,"BO1NativeVulkan",
+                    "forward_material material=%s type=%u words=%08x/%08x stateflag=%u techflag=%u passes=%u custom_sampler_flags=%u eligible=%d reason=%s",
+                    material&&material->info.name?material->info.name:"<null>",type,observedWords[0],observedWords[1],
+                    material?unsigned(material->stateFlags):0,observedTechnique?unsigned(observedTechnique->flags):0,
+                    observedTechnique?unsigned(observedTechnique->passCount):0,
+                    observedTechnique&&observedTechnique->passCount?unsigned(observedTechnique->passArray[0].customSamplerFlags):0,int(eligible),reason);
+            }
+        }
+        return eligible;
+    };
+    if(!material||!((type>=10&&type<=37)||(type>=73&&type<=114))
+        ||!(material->stateFlags&1)||!material->stateBitsTable)return result(false,"material_type_or_opaque_flag");
+    const auto* technique=Material_GetTechnique(material,type);
+    observedTechnique=technique;
+    if(!technique||technique->passCount!=1||(technique->flags&0x73u))return result(false,"technique_pass_or_flags");
+    const unsigned entry=material->stateBitsEntry[type];
+    if(entry>=material->stateBitsCount)return result(false,"state_entry");
+    const auto& bits=material->stateBitsTable[entry];
+    observedWords[0]=bits.loadBits[0];observedWords[1]=bits.loadBits[1];
+    if(!EligibleWords(bits.loadBits[0],bits.loadBits[1]))return result(false,"state_words");
+    const auto& pass=technique->passArray[0];
+    if(!SafeCustomSamplers(pass.customSamplerFlags))return result(false,"custom_sampler");
+    const unsigned count=pass.perPrimArgCount+pass.perObjArgCount+pass.stableArgCount;
+    if(count&&!pass.args)return result(false,"missing_args");
+    for(unsigned i=0;i<count;++i)if(pass.args[i].type==4) {
+        const auto source=pass.args[i].u.codeSampler;
+        // Only immutable lighting inputs; no scene/FloatZ/post/feedback reads.
+        if(!(source<=TEXTURE_SRC_CODE_SHADOWMAP_SPOT
+            ||(source>=TEXTURE_SRC_CODE_LIGHT_ATTENUATION&&source<=TEXTURE_SRC_CODE_OUTDOOR)
+            ||source==TEXTURE_SRC_CODE_REFLECTION_PROBE||source==TEXTURE_SRC_CODE_LIGHTMAP_SECONDARYB))return result(false,"code_sampler");
+    }
+    const auto pixel=shader_assets::Acquire(pass.pixelShader);
+    if(!pixel||pixel->translation.stage!=ShaderStage::Fragment)return result(false,"pixel_asset");
+    auto proof=fragmentProofs.find(pixel->serial);
+    if(proof==fragmentProofs.end()) {
+        if(fragmentProofs.size()>=4096)fragmentProofs.clear();
+        // Registered records keep reflection only: translate the original
+        // bytecode again for this one-time proof.
+        bo1::vulkan::ShaderTranslation translated;
+        const bool translatedOk=bo1::vulkan::TranslateShader(pixel->bytecode.data(),pixel->bytecode.size()*4,translated)
+            &&translated.stage==ShaderStage::Fragment;
+        proof=fragmentProofs.emplace(pixel->serial,translatedOk&&SafeFragment(translated.spirv.data(),translated.spirv.size())).first;
+    }
+    return result(proof->second,proof->second?"accepted":"fragment_side_effect");
+}
+}
+void SetEnabled(bool value){
+    if(enabled.exchange(value,std::memory_order_relaxed)!=value)
+        diagnosticEpoch.fetch_add(1,std::memory_order_relaxed);
+}
+bool Enabled(){return enabled.load(std::memory_order_relaxed);}
+bool ViewEligible(const GfxViewInfo* view) {
+    const bool eligible=Enabled()&&shader_assets::Active()&&view&&!view->isMissileCamera&&!view->renderingFloatZ
+        &&dx.supportsIntZ&&r_depthPrepass&&r_depthPrepass->current.enabled
+        &&!r_reflectionProbeGenerate->current.enabled&&!view->drawList[6].drawSurfCount
+        &&view->drawList[DRAWLIST_LIT].baseTechType==10&&!(view->sceneComposition.renderingMode&7)
+        &&pixelCostMode==GFX_PIXEL_COST_MODE_OFF&&!r_showPenetration->current.integer;
+    static thread_local unsigned checks{};
+    static thread_local unsigned checksEpoch{};
+    const unsigned epoch=diagnosticEpoch.load(std::memory_order_relaxed);
+    if(checksEpoch!=epoch){checksEpoch=epoch;checks=0;}
+    if(Enabled()&&(++checks==1||checks%500==0))
+        __android_log_print(ANDROID_LOG_INFO,"BO1NativeVulkan",
+            "forward_view checks=%u eligible=%d active=%d view=%d intz=%d floatz=%d missile=%d depthprepass=%d reflection=%d cloak_count=%u base_tech=%u composition=%u pixelcost=%d penetration=%d",
+            checks,int(eligible),int(shader_assets::Active()),int(view!=nullptr),int(dx.supportsIntZ),
+            view?int(view->renderingFloatZ):-1,view?int(view->isMissileCamera):-1,
+            r_depthPrepass?int(r_depthPrepass->current.enabled):-1,
+            r_reflectionProbeGenerate?int(r_reflectionProbeGenerate->current.enabled):-1,
+            view?unsigned(view->drawList[6].drawSurfCount):0,view?unsigned(view->drawList[DRAWLIST_LIT].baseTechType):0,
+            view?unsigned(view->sceneComposition.renderingMode):0,int(pixelCostMode),
+            r_showPenetration?r_showPenetration->current.integer:-1);
+    return eligible;
+}
+MainLitScope::MainLitScope(const GfxCmdBufState* state,bool active):previous_(mainState){mainState=active?state:nullptr;mainSurfaceEligible=false;}
+MainLitScope::~MainLitScope(){mainState=previous_;mainSurfaceEligible=false;}
+PrepassScope::PrepassScope(const GfxDrawSurfListInfo* list,bool active):previous_(prepassMain){prepassMain=active?list:nullptr;}
+PrepassScope::~PrepassScope(){prepassMain=previous_;}
+std::uint64_t OmittedGroups(){return omittedGroups;}
+bool Apply(const GfxCmdBufState* state,unsigned words[2]) {
+    if(!mainState||!mainSurfaceEligible||!state||state->renderTargetId!=mainState->renderTargetId
+        ||state->depthRangeType!=GFX_DEPTH_RANGE_SCENE||state->passIndex!=0
+        ||!MaterialEligible(state->material,state->techType))return false;
+    return ConvertWords(words);
+}
+bool OmitPrepass(GfxCmdBufContext context,GfxDrawSurf surf) {
+    if(!prepassMain||!SurfaceEligible(surf))return false;
+    const auto* material=rgp.sortedMaterials[surf.fields.materialSortedIndex];
+    if(!material||(surf.fields.surfType==SF_TRIANGLES&&(material->info.gameFlags&8)))return false;
+    const auto type=R_GetTechType(context,prepassMain,prepassMain->baseTechType,surf);
+    unsigned char candidates[4]{};R_GetPossibleTechniqueTypes(type,surf,candidates);
+    for(unsigned i=0;i<4&&candidates[i]!=255;++i)if(Material_GetTechnique(material,candidates[i])) {
+        if(!MaterialEligible(material,candidates[i]))return false;
+        ++omittedGroups;return true;
+    }
+    return false;
+}
+void MainSurface(GfxDrawSurf surf){if(mainState)mainSurfaceEligible=SurfaceEligible(surf);}
+}
+#endif
 
 unsigned __int8 gNvFloatZTech_Intz[70] =
 {
@@ -290,6 +434,10 @@ int __cdecl R_SetTechnique(
                 GfxDrawSurf drawSurf)
 {
     PROF_SCOPED("R_SetTechnique");
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    bo1::vulkan::forward_opaque::MainSurface(drawSurf);
+    if(info->baseTechType==0&&bo1::vulkan::forward_opaque::OmitPrepass(context,drawSurf))return 0;
+#endif
 
     unsigned __int64 v5; // rax
     GfxDrawSurf overrideDrawSurf; // [esp+8h] [ebp-10h]

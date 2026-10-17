@@ -3,6 +3,7 @@
 #include "pass_recording.h"
 #include "query_assets.h"
 #include "event_fences.h"
+#include "frame_cadence.h"
 namespace bo1::vulkan {
 // Engine-owned recording storage. Bounded allocations fail explicitly; each
 // slot keeps descriptors, resources and programs until its actual GPU fence.
@@ -33,16 +34,29 @@ private:
         std::shared_ptr<GraphicsProgram> windowProgram;
         std::shared_ptr<const image_assets::Record> windowImage;
         pass_recording::Arena passes;query_assets::Arena queries;event_fences::Arena events;
+        // Parallel scene recording lanes (index 0 = render thread).
+        std::array<pass_recording::ParallelLane,pass_recording::MaxParallelLanes> lanes;
     };
+    // deferWorkers: lanes 1.. are only marked; their recording thread retires them.
+    bool RetireLanes(Slot&,std::string&,bool deferWorkers=false);
     bool RetireProfile(Slot&,std::string&);
+    // Snapdragon GSR v1 window upscale (native_post/sgsr_present.*), built for
+    // the current window render pass.
+    struct Sgsr {VkShaderModule vertex{},fragment{};VkDescriptorSetLayout set{};VkPipelineLayout layout{};VkPipeline pipeline{};VkRenderPass pass{};} sgsr_;
+    bool SgsrPipeline(std::string&);
+    // Recorded programs are rebuilt after each program-cache clear (map
+    // transitions) and again when new shaders register (map load completes).
+    bool prewarmPending_=true;std::uint64_t prewarmShaderGeneration_{};unsigned prewarmFrame_{},prewarmClearFrame_{};
+    void Prewarm();
     std::array<Slot,Presentation::FrameSlots> slots_;FrameContext context_{};VkDeviceSize alignment_{};
     std::unique_ptr<pass_recording::RecordingScope> passes_;
     std::unique_ptr<query_assets::RecordingScope> queries_;
     std::unique_ptr<event_fences::RecordingScope> events_;
     std::string submitError_;unsigned windowGeneration_{};
     std::array<std::unique_ptr<texture_bindings::Sampler>,2> outputSamplers_;
+    FrameCadence cadence_;
     double timestampPeriod_{};unsigned timestampBits_{},profileFrame_{};
-    std::uint64_t recordStart_{},keyStart_{},createStart_{};
+    std::uint64_t recordStart_{},keyStart_{},createStart_{},lastSubmit_{};
     unsigned hitStart_{},missStart_{},evictStart_{},savedMisses_{},quietFrames_{},lastMisses_{};double uploadMs_{},beginMs_{},slotWaitMs_{},retireMs_{},resetMs_{},prepareMs_{};
 };
 }

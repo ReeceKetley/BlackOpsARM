@@ -876,8 +876,19 @@ void __cdecl R_SetVertexShaderConstantFromLiteral(GfxCmdBufState *state, unsigne
     }
 }
 
+#if defined(__ANDROID__)
+std::recursive_mutex &R_NativeDynamicIndexMutex()
+{
+    static std::recursive_mutex mutex;
+    return mutex;
+}
+#endif
+
 int __cdecl R_ReserveIndexData(GfxCmdBufPrimState *state, int triCount)
 {
+#if defined(__ANDROID__)
+    std::lock_guard<std::recursive_mutex> dynamicIndexLock(R_NativeDynamicIndexMutex());
+#endif
     unsigned int v2; // ecx
     int indexCount; // [esp+8h] [ebp-4h]
 
@@ -909,6 +920,7 @@ int __cdecl R_SetIndexData(GfxCmdBufPrimState *state, unsigned __int8 *indices, 
 {
 #if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
     if(bo1::vulkan::shader_assets::Active()) {
+        std::lock_guard<std::recursive_mutex> dynamicIndexLock(R_NativeDynamicIndexMutex());
         auto* ib=gfxBuf.dynamicIndexBuffer;
         if(!state||!ib||triCount<=0||triCount>ib->total/3||!indices) {Com_Error(ERR_FATAL,"Invalid native dynamic index upload");return 0;}
         const int baseIndex=R_ReserveIndexData(state,triCount);

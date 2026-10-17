@@ -126,6 +126,39 @@ bool CaptureRenderedOutput(const char *userRoot) {
     return false;
 #endif
 }
+bool InstallAutomaticKinoConsole(const char *userRoot) {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_FULL_DATABASE)
+    char *resolved=realpath(userRoot,nullptr);
+    if(!resolved) { RejectSDLLaunch("cannot resolve automatic Kino console root",errno);return false; }
+    int opened;
+    do { opened=open(resolved,O_RDONLY|O_DIRECTORY|O_CLOEXEC|O_NOFOLLOW); } while(opened<0 && errno==EINTR);
+    std::free(resolved);
+    CaptureDescriptor directory{MoveCaptureDescriptorAboveStdio(opened)};
+    if(directory.value<0) { RejectSDLLaunch("cannot open automatic Kino console root",errno);return false; }
+    struct stat info{};
+    if(fstat(directory.value,&info) || !S_ISDIR(info.st_mode) || info.st_uid!=geteuid() || (info.st_mode&022)) {
+        RejectSDLLaunch("automatic Kino console root must be app-owned and not writable by others");return false;
+    }
+    int created;
+    do { created=mkfifoat(directory.value,"native-console.fifo",0600); } while(created<0 && errno==EINTR);
+    if(created<0 && errno!=EEXIST) { RejectSDLLaunch("cannot create automatic Kino console FIFO",errno);return false; }
+    // RDWR keeps the reader alive between independent test writers. NONBLOCK
+    // plus the parser's 4096-byte frame budget prevents input from stalling play.
+    do { opened=openat(directory.value,"native-console.fifo",O_RDWR|O_NONBLOCK|O_CLOEXEC|O_NOFOLLOW); } while(opened<0 && errno==EINTR);
+    CaptureDescriptor fifo{MoveCaptureDescriptorAboveStdio(opened)};
+    if(fifo.value<0) { RejectSDLLaunch("cannot open automatic Kino console FIFO",errno);return false; }
+    if(fstat(fifo.value,&info) || !S_ISFIFO(info.st_mode) || info.st_uid!=geteuid() || info.st_nlink!=1 || (info.st_mode&0777)!=0600) {
+        RejectSDLLaunch("automatic Kino console must be a private 0600 FIFO owned by this app");return false;
+    }
+    bo1::android::InstallConsoleInput(fifo.value,true);
+    std::fprintf(stderr,"ENGINE ENTRY auto Kino: slash-command FIFO ready at %s/native-console.fifo\n",userRoot);
+    return true;
+#else
+    (void)userRoot;
+    RejectSDLLaunch("automatic Kino console requires the full native SDL engine");
+    return false;
+#endif
+}
 bool ValidateSDLRoot(const char *directory, bool writable) {
     if(!directory || directory[0]!='/' || strnlen(directory,PATH_MAX+1)>PATH_MAX)return false;
     char *resolved=realpath(directory,nullptr);
@@ -234,6 +267,10 @@ int bo1::android::RunNativeEngine(NativeEngineEntry entry, int argc, char **argv
         std::_Exit(1);
     }
     if(!rendered)bo1::android::InstallConsoleInput(STDIN_FILENO);
+    // The private slash-command FIFO is also offered to manual launches (test
+    // tooling sets dvars without the on-screen console); only automatic Kino
+    // launches require it.
+    else if(!InstallAutomaticKinoConsole(Sys_EngineUserRoot()) && autoStartKino)std::_Exit(1);
     // For SDL, canonical IN_Init inside Com_Init owns InitializeRenderedInput,
     // its real event consumer and Android console producer, then GPad_InitAll.
     // Pre-installing that service here would violate its running-owner checks.

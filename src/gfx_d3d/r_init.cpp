@@ -2883,11 +2883,16 @@ void R_StoreNativeDeviceCaps(const bo1::vulkan::HardwareInfo& hardware) {
     }
     // Actual depth-only target, comparison VkSampler and SM3 Dref lowering.
     // Optional linear filtering follows this physical format's capabilities.
-    gfxMetrics.shadowmapFormatPrimary=D3DFMT_D24S8;
+    // Shadow maps never use stencil: prefer 16-bit depth (half the bandwidth;
+    // the world-unit polygon offset bias is far above a 16-bit step) when the
+    // device supports it with the same usage and filtering.
+    const bool depth16=hardware.depthShadow16&&(hardware.depthShadow16Linear||!hardware.depthShadowLinear);
+    const bool linear=depth16?hardware.depthShadow16Linear:hardware.depthShadowLinear;
+    gfxMetrics.shadowmapFormatPrimary=depth16?D3DFMT_D16:D3DFMT_D24S8;
     gfxMetrics.shadowmapFormatSecondary=static_cast<D3DFORMAT>(1280070990u);
     gfxMetrics.shadowmapBuildTechType=2;gfxMetrics.hasHardwareShadowmap=true;
-    gfxMetrics.shadowmapSamplerState=hardware.depthShadowLinear?98:97;
-    Com_Printf(8,"Native depth shadow path: format=D24S8 linear=%u technique=2 comparison=1\n",hardware.depthShadowLinear?1:0);
+    gfxMetrics.shadowmapSamplerState=linear?98:97;
+    Com_Printf(8,"Native depth shadow path: format=%s linear=%u technique=2 comparison=1\n",depth16?"D16":"D24S8",linear?1:0);
     // No optional-feature, vendor shadow-path or engine initialization claims.
 }
 #endif

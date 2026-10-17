@@ -1,7 +1,9 @@
 #include "native_fullscreen.h"
+#include <atomic>
 #include <cstdint>
 namespace bo1::vulkan::native_fullscreen {
 namespace {
+std::atomic<bool> sgsrUpscale{true};
 const std::uint32_t FullscreenVertex[]={
 #include "fullscreen.vert.spv.inc"
 };
@@ -11,6 +13,15 @@ const std::uint32_t DofDownsampleFragment[]={
 const std::uint32_t PostComposeFragment[]={
 #include "post_compose.frag.spv.inc"
 };
+const std::uint32_t BloomPrefilterFragment[]={
+#include "bloom_prefilter.frag.spv.inc"
+};
+const std::uint32_t BloomRemapFragment[]={
+#include "bloom_remap.frag.spv.inc"
+};
+const std::uint32_t BloomBlurFragment[]={
+#include "bloom_blur.frag.spv.inc"
+};
 bool Check(VkResult result,const char* action,std::string& error) {
     if(result==VK_SUCCESS)return true;error=std::string("Native fullscreen ")+action+": "+std::to_string(int(result));return false;
 }
@@ -19,7 +30,9 @@ bool Module(VkDevice device,const std::uint32_t* code,std::size_t bytes,VkShader
     return Check(vkCreateShaderModule(device,&info,nullptr,&module),"shader module",error);
 }
 }
-unsigned ImageCount(Program program){return program==Program::DofDownsample?2:5;}
+void SetSgsrUpscale(bool enabled){sgsrUpscale.store(enabled,std::memory_order_relaxed);}
+bool SgsrUpscale(){return sgsrUpscale.load(std::memory_order_relaxed);}
+unsigned ImageCount(Program program){return program==Program::DofDownsample?2:program==Program::PostCompose?5:1;}
 Library::~Library() {
     for(auto& entry:programs_) {
         for(auto& pipeline:entry.pipelines)vkDestroyPipeline(device_,pipeline.second,nullptr);
@@ -34,8 +47,10 @@ Library::~Library() {
 bool Library::Initialize(std::string& error) {
     if(!device_||vertex_) {error="Invalid native fullscreen library initialization";return false;}
     if(!Module(device_,FullscreenVertex,sizeof(FullscreenVertex),vertex_,error))return false;
-    const std::uint32_t* fragments[]={DofDownsampleFragment,PostComposeFragment};
-    const std::size_t sizes[]={sizeof(DofDownsampleFragment),sizeof(PostComposeFragment)};
+    const std::uint32_t* fragments[]={DofDownsampleFragment,PostComposeFragment,BloomPrefilterFragment,BloomRemapFragment,BloomBlurFragment};
+    const std::size_t sizes[]={sizeof(DofDownsampleFragment),sizeof(PostComposeFragment),sizeof(BloomPrefilterFragment),
+        sizeof(BloomRemapFragment),sizeof(BloomBlurFragment)};
+    static_assert(sizeof(fragments)/sizeof(fragments[0])==unsigned(Program::Count),"one fragment shader per program");
     for(unsigned i=0;i<unsigned(Program::Count);++i) {
         auto& entry=programs_[i];
         if(!Module(device_,fragments[i],sizes[i],entry.fragment,error))return false;

@@ -1,8 +1,13 @@
 #include "resources.h"
 #include <cstring>
 #include <limits>
+#include <atomic>
+#if defined(__ANDROID__)
+#include <android/log.h>
+#endif
 namespace bo1::vulkan {
 namespace {
+std::atomic<std::uint64_t> g_bufferBytes{},g_bufferCount{},g_imageBytes{},g_imageCount{},g_bufferRequested{},g_smallBuffers{},g_bufferCreates{},g_bufferCreateBytes{},g_largeBuffers{},g_largeBufferBytes{};
 bool Check(VkResult r,const char* action,std::string& e) {if(r==VK_SUCCESS)return true;e=std::string(action)+": "+std::to_string(int(r));return false;}
 bool Memory(VkPhysicalDevice p,unsigned bits,VkMemoryPropertyFlags required,VkMemoryPropertyFlags preferred,unsigned& type,bool& coherent) {
     VkPhysicalDeviceMemoryProperties properties{};vkGetPhysicalDeviceMemoryProperties(p,&properties);
@@ -14,7 +19,13 @@ bool Memory(VkPhysicalDevice p,unsigned bits,VkMemoryPropertyFlags required,VkMe
     if(best<0)return false;type=unsigned(best);coherent=properties.memoryTypes[type].propertyFlags&VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;return true;
 }
 }
-Buffer::~Buffer() {if(mapped_)vkUnmapMemory(device_,memory_);if(buffer_)vkDestroyBuffer(device_,buffer_,nullptr);if(memory_)vkFreeMemory(device_,memory_,nullptr);}
+DeviceMemoryStats ReadDeviceMemoryStats(){return {g_bufferBytes.load(std::memory_order_relaxed),g_bufferCount.load(std::memory_order_relaxed),
+    g_imageBytes.load(std::memory_order_relaxed),g_imageCount.load(std::memory_order_relaxed),
+    g_bufferRequested.load(std::memory_order_relaxed),g_smallBuffers.load(std::memory_order_relaxed),
+    g_bufferCreates.load(std::memory_order_relaxed),g_bufferCreateBytes.load(std::memory_order_relaxed),
+    g_largeBuffers.load(std::memory_order_relaxed),g_largeBufferBytes.load(std::memory_order_relaxed)};}
+Buffer::~Buffer() {if(mapped_)vkUnmapMemory(device_,memory_);if(buffer_)vkDestroyBuffer(device_,buffer_,nullptr);
+    if(memory_){vkFreeMemory(device_,memory_,nullptr);g_bufferBytes-=allocationSize_;--g_bufferCount;g_bufferRequested-=size_;if(size_<65536)--g_smallBuffers;if(size_>=1048576){--g_largeBuffers;g_largeBufferBytes-=allocationSize_;}}}
 bool Buffer::Create(VkDeviceSize bytes,VkBufferUsageFlags usage,VkMemoryPropertyFlags required,VkMemoryPropertyFlags preferred,std::string& error) {
     if(buffer_||!bytes||bytes>std::numeric_limits<std::size_t>::max()) {error="Invalid buffer creation";return false;}
     VkBufferCreateInfo create{VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO};create.size=bytes;create.usage=usage;
@@ -22,8 +33,13 @@ bool Buffer::Create(VkDeviceSize bytes,VkBufferUsageFlags usage,VkMemoryProperty
     VkMemoryRequirements requirements{};vkGetBufferMemoryRequirements(device_,buffer_,&requirements);
     unsigned type{};if(!Memory(physical_,requirements.memoryTypeBits,required,preferred,type,coherent_)) {error="No compatible buffer memory";return false;}
     VkMemoryAllocateInfo allocate{VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO};allocate.allocationSize=requirements.size;allocate.memoryTypeIndex=type;
-    if(!Check(vkAllocateMemory(device_,&allocate,nullptr,&memory_),"buffer allocation",error)
-        ||!Check(vkBindBufferMemory(device_,buffer_,memory_,0),"buffer binding",error))return false;
+    if(!Check(vkAllocateMemory(device_,&allocate,nullptr,&memory_),"buffer allocation",error))return false;
+    allocationSize_=requirements.size;size_=bytes;g_bufferBytes+=allocationSize_;++g_bufferCount;g_bufferRequested+=bytes;if(bytes<65536)++g_smallBuffers;++g_bufferCreates;g_bufferCreateBytes+=allocationSize_;if(bytes>=1048576){++g_largeBuffers;g_largeBufferBytes+=allocationSize_;
+#if defined(__ANDROID__)
+        __android_log_print(ANDROID_LOG_INFO,"BO1NativeVulkan","native_large_buffer bytes=%llu usage=0x%x caller=%p",(unsigned long long)bytes,unsigned(usage),__builtin_return_address(0));
+#endif
+    }
+    if(!Check(vkBindBufferMemory(device_,buffer_,memory_,0),"buffer binding",error))return false;
     if(required&VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
         if(!Check(vkMapMemory(device_,memory_,0,VK_WHOLE_SIZE,0,&mapped_),"buffer mapping",error))return false;
     VkPhysicalDeviceProperties properties{};vkGetPhysicalDeviceProperties(physical_,&properties);atomSize_=properties.limits.nonCoherentAtomSize;
@@ -47,7 +63,7 @@ bool Buffer::Read(VkDeviceSize offset,void* destination,VkDeviceSize bytes,std::
     }
     std::memcpy(destination,static_cast<char*>(mapped_)+std::size_t(offset),std::size_t(bytes));return true;
 }
-Texture2D::~Texture2D() {if(sampler_)vkDestroySampler(device_,sampler_,nullptr);if(attachmentView_)vkDestroyImageView(device_,attachmentView_,nullptr);if(view_)vkDestroyImageView(device_,view_,nullptr);if(image_)vkDestroyImage(device_,image_,nullptr);if(memory_)vkFreeMemory(device_,memory_,nullptr);}
+Texture2D::~Texture2D() {if(sampler_)vkDestroySampler(device_,sampler_,nullptr);if(attachmentView_)vkDestroyImageView(device_,attachmentView_,nullptr);if(view_)vkDestroyImageView(device_,view_,nullptr);if(image_)vkDestroyImage(device_,image_,nullptr);if(memory_){vkFreeMemory(device_,memory_,nullptr);g_imageBytes-=allocationSize_;--g_imageCount;}}
 bool Texture2D::CreateRGBA8(unsigned width,unsigned height,std::string& error) {
     TextureDescription description;description.extent={width,height,1};
     if(!Create(description,error))return false;
@@ -98,7 +114,9 @@ bool Texture2D::Create(const TextureDescription& description,std::string& error)
     VkMemoryRequirements requirements{};vkGetImageMemoryRequirements(device_,image_,&requirements);unsigned type{};bool coherent{};
     if(!Memory(physical_,requirements.memoryTypeBits,VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,(usage&VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT)?VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT:0,type,coherent)) {error="No texture memory";return false;}
     VkMemoryAllocateInfo allocate{VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO};allocate.allocationSize=requirements.size;allocate.memoryTypeIndex=type;
-    if(!Check(vkAllocateMemory(device_,&allocate,nullptr,&memory_),"texture allocation",error)||!Check(vkBindImageMemory(device_,image_,memory_,0),"texture binding",error))return false;
+    if(!Check(vkAllocateMemory(device_,&allocate,nullptr,&memory_),"texture allocation",error))return false;
+    allocationSize_=requirements.size;g_imageBytes+=allocationSize_;++g_imageCount;
+    if(!Check(vkBindImageMemory(device_,image_,memory_,0),"texture binding",error))return false;
     VkImageViewCreateInfo view{VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO};view.image=image_;view.viewType=description.viewType;view.format=create.format;
     view.components=description.components;view.subresourceRange={(description.aspects&VK_IMAGE_ASPECT_DEPTH_BIT)?VK_IMAGE_ASPECT_DEPTH_BIT:description.aspects,0,description.mipLevels,0,description.arrayLayers};
     if(!Check(vkCreateImageView(device_,&view,nullptr,&view_),"texture view",error))return false;
@@ -135,4 +153,37 @@ bool Texture2D::UploadSubresource(VkCommandBuffer command,VkBuffer staging,VkDev
     barrier.srcAccessMask=VK_ACCESS_TRANSFER_WRITE_BIT;barrier.dstAccessMask=VK_ACCESS_SHADER_READ_BIT;
     vkCmdPipelineBarrier(command,VK_PIPELINE_STAGE_TRANSFER_BIT,shaderStages,0,0,nullptr,0,nullptr,1,&barrier);return true;
 }
+bool Texture2D::UploadRegions(VkCommandBuffer command,VkBuffer staging,VkDeviceSize stagingBytes,
+    const std::vector<VkBufferImageCopy>& copies,std::string& error)const {
+    const auto& d=description_;
+    if(!image_||!command||!staging||copies.empty()||d.format!=VK_FORMAT_B8G8R8A8_UNORM
+        ||d.type!=VK_IMAGE_TYPE_3D||d.mipLevels!=1||d.arrayLayers!=1||d.aspects!=VK_IMAGE_ASPECT_COLOR_BIT
+        ||!(d.usage&VK_IMAGE_USAGE_TRANSFER_DST_BIT)) {error="Invalid native atlas region upload";return false;}
+    for(const auto& c:copies) {
+        const auto& e=c.imageExtent;const auto& o=c.imageOffset;
+        if(c.bufferRowLength||c.bufferImageHeight||c.bufferOffset%4||c.imageSubresource.aspectMask!=VK_IMAGE_ASPECT_COLOR_BIT
+            ||c.imageSubresource.mipLevel||c.imageSubresource.baseArrayLayer||c.imageSubresource.layerCount!=1
+            ||o.x<0||o.y<0||o.z<0||!e.width||!e.height||!e.depth
+            ||unsigned(o.x)>d.extent.width||e.width>d.extent.width-unsigned(o.x)
+            ||unsigned(o.y)>d.extent.height||e.height>d.extent.height-unsigned(o.y)
+            ||unsigned(o.z)>d.extent.depth||e.depth>d.extent.depth-unsigned(o.z)
+            ||c.bufferOffset>stagingBytes||VkDeviceSize(e.width)*e.height*e.depth*4>stagingBytes-c.bufferOffset) {
+            error="Native atlas region exceeds image/staging";return false;
+        }
+    }
+    // Caller proves an earlier full upload is queue-ordered. Preserve all
+    // untouched texels; UNDEFINED is never a valid partial-update starting point.
+    VkImageMemoryBarrier b{VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER};b.image=image_;
+    b.srcQueueFamilyIndex=b.dstQueueFamilyIndex=VK_QUEUE_FAMILY_IGNORED;
+    b.subresourceRange={VK_IMAGE_ASPECT_COLOR_BIT,0,1,0,1};
+    b.oldLayout=VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;b.newLayout=VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+    b.srcAccessMask=VK_ACCESS_SHADER_READ_BIT;b.dstAccessMask=VK_ACCESS_TRANSFER_WRITE_BIT;
+    const VkPipelineStageFlags stages=VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT|VK_PIPELINE_STAGE_VERTEX_SHADER_BIT;
+    vkCmdPipelineBarrier(command,stages,VK_PIPELINE_STAGE_TRANSFER_BIT,0,0,nullptr,0,nullptr,1,&b);
+    vkCmdCopyBufferToImage(command,staging,image_,VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,unsigned(copies.size()),copies.data());
+    b.oldLayout=VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;b.newLayout=VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    b.srcAccessMask=VK_ACCESS_TRANSFER_WRITE_BIT;b.dstAccessMask=VK_ACCESS_SHADER_READ_BIT;
+    vkCmdPipelineBarrier(command,VK_PIPELINE_STAGE_TRANSFER_BIT,stages,0,0,nullptr,0,nullptr,1,&b);return true;
+}
+
 }

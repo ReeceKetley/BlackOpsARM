@@ -30,7 +30,7 @@ std::shared_ptr<SharedAttachmentRenderPass> AttachmentPassCache::Acquire(VkDevic
     for(const auto& entry:entries_)if(entry.key==key)return entry.pass;
     // No live identity eviction: ProgramCache keys refer to these handles.
     if(entries_.size()>=128) {error="Attachment render-pass definition budget exceeded";return {};}
-    auto pass=std::make_shared<SharedAttachmentRenderPass>();pass->device=device_;
+    auto pass=std::make_shared<SharedAttachmentRenderPass>();pass->device=device_;pass->key=key;
     if(!Check(vkCreateRenderPass(device_,&info,nullptr,&pass->handle),"cached attachment render pass",error))return {};
     std::vector<std::uint32_t> compatibility;
     if(RenderPassCompatibility(info,compatibility)) {
@@ -39,6 +39,39 @@ std::shared_ptr<SharedAttachmentRenderPass> AttachmentPassCache::Acquire(VkDevic
         }
     }
     entries_.push_back({key,pass,std::move(compatibility)});return pass;
+}
+std::shared_ptr<SharedAttachmentRenderPass> AttachmentPassCache::AcquireFromKey(VkDevice device,const std::array<unsigned,8>& key,std::string& error) {
+    // key: color format, depth format, color sampled, depth sampled, load
+    // existing, load depth, preserve depth, depth aspects (AttachmentPass::Create).
+    const bool color=key[0]!=0,depth=key[1]!=0,loadExisting=key[4]!=0,loadDepth=key[5]!=0,preserveDepth=key[6]!=0;
+    if(!color&&!depth){error="Recorded render pass has no attachments";return {};}
+    VkAttachmentDescription attachments[2]{};unsigned count=0;VkAttachmentReference colorRef{},depthRef{};
+    if(color) {
+        auto& a=attachments[count];a.format=VkFormat(key[0]);a.samples=VK_SAMPLE_COUNT_1_BIT;
+        a.loadOp=loadExisting?VK_ATTACHMENT_LOAD_OP_LOAD:VK_ATTACHMENT_LOAD_OP_CLEAR;a.storeOp=VK_ATTACHMENT_STORE_OP_STORE;
+        a.stencilLoadOp=VK_ATTACHMENT_LOAD_OP_DONT_CARE;a.stencilStoreOp=VK_ATTACHMENT_STORE_OP_DONT_CARE;
+        a.finalLayout=key[2]?VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+        a.initialLayout=loadExisting?a.finalLayout:VK_IMAGE_LAYOUT_UNDEFINED;colorRef={count++,VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL};
+    }
+    if(depth) {
+        auto& a=attachments[count];a.format=VkFormat(key[1]);a.samples=VK_SAMPLE_COUNT_1_BIT;
+        a.loadOp=loadDepth?VK_ATTACHMENT_LOAD_OP_LOAD:VK_ATTACHMENT_LOAD_OP_CLEAR;a.storeOp=preserveDepth?VK_ATTACHMENT_STORE_OP_STORE:VK_ATTACHMENT_STORE_OP_DONT_CARE;
+        a.stencilLoadOp=a.loadOp;a.stencilStoreOp=a.storeOp;
+        a.finalLayout=key[3]?VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL:VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+        a.initialLayout=loadDepth?a.finalLayout:VK_IMAGE_LAYOUT_UNDEFINED;depthRef={count++,VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL};
+    }
+    VkSubpassDescription sub{};sub.pipelineBindPoint=VK_PIPELINE_BIND_POINT_GRAPHICS;
+    if(color){sub.colorAttachmentCount=1;sub.pColorAttachments=&colorRef;}if(depth)sub.pDepthStencilAttachment=&depthRef;
+    const VkPipelineStageFlags attachmentStages=VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT|VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT|VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+    const VkPipelineStageFlags shaderStages=VK_PIPELINE_STAGE_VERTEX_SHADER_BIT|VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+    const VkAccessFlags attachmentAccess=VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT|VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+    VkSubpassDependency dependencies[2]{};dependencies[0]={VK_SUBPASS_EXTERNAL,0,shaderStages|attachmentStages|VK_PIPELINE_STAGE_TRANSFER_BIT,attachmentStages,
+        VK_ACCESS_SHADER_READ_BIT|attachmentAccess|VK_ACCESS_TRANSFER_READ_BIT|VK_ACCESS_TRANSFER_WRITE_BIT,attachmentAccess|VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT,VK_DEPENDENCY_BY_REGION_BIT};
+    dependencies[1]={0,VK_SUBPASS_EXTERNAL,attachmentStages,shaderStages|VK_PIPELINE_STAGE_TRANSFER_BIT,
+        attachmentAccess,VK_ACCESS_SHADER_READ_BIT|VK_ACCESS_TRANSFER_READ_BIT,VK_DEPENDENCY_BY_REGION_BIT};
+    VkRenderPassCreateInfo create{VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO};create.attachmentCount=count;create.pAttachments=attachments;
+    create.subpassCount=1;create.pSubpasses=&sub;create.dependencyCount=2;create.pDependencies=dependencies;
+    return Acquire(device,key,create,error);
 }
 AttachmentPass::~AttachmentPass(){if(framebuffer_&&!sharedFramebuffer_)vkDestroyFramebuffer(device_,framebuffer_,nullptr);if(pass_&&!sharedPass_)vkDestroyRenderPass(device_,pass_,nullptr);}
 bool AttachmentPass::Create(std::shared_ptr<Texture2D> color,std::shared_ptr<Texture2D> depth,bool preserveDepth,std::string& error,bool loadExisting,int depthLoad) {
@@ -99,17 +132,17 @@ bool AttachmentPass::Create(std::shared_ptr<Texture2D> color,std::shared_ptr<Tex
     loadExisting_=loadExisting;loadDepth_=loadDepth;preserveDepth_=preserveDepth;
     color_=std::move(color);depth_=std::move(depth);return true;
 }
-bool AttachmentPass::BeginTracked(VkCommandBuffer command,const VkClearColorValue& color,std::string& error,float depth,unsigned stencil)const {
+bool AttachmentPass::BeginTracked(VkCommandBuffer command,const VkClearColorValue& color,std::string& error,float depth,unsigned stencil,VkSubpassContents contents)const {
     if(!pass_||!image_usage::Begin(command,color_,depth_,loadExisting_,loadDepth_,error))return false;
-    Begin(command,color,depth,stencil);return true;
+    Begin(command,color,depth,stencil,contents);return true;
 }
 bool AttachmentPass::EndTracked(VkCommandBuffer command,std::string& error)const {
     if(!image_usage::End(command,color_,depth_,preserveDepth_,error))return false;
     End(command);return true;
 }
-void AttachmentPass::Begin(VkCommandBuffer command,const VkClearColorValue& color,float depth,unsigned stencil)const {
+void AttachmentPass::Begin(VkCommandBuffer command,const VkClearColorValue& color,float depth,unsigned stencil,VkSubpassContents contents)const {
     VkClearValue values[2]{};unsigned count=0;if(color_)values[count++].color=color;if(depth_)values[count++].depthStencil={depth,stencil};
     VkRenderPassBeginInfo begin{VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO};begin.renderPass=pass_;begin.framebuffer=framebuffer_;begin.renderArea={{0,0},extent_};begin.clearValueCount=count;begin.pClearValues=values;
-    vkCmdBeginRenderPass(command,&begin,VK_SUBPASS_CONTENTS_INLINE);
+    vkCmdBeginRenderPass(command,&begin,contents);
 }
 }

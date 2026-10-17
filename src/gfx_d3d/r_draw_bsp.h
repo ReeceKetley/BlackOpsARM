@@ -36,6 +36,11 @@ void __cdecl R_DrawTrianglesLit(
                 GfxCmdBufPrimState *primState,
                 GfxCmdBufPrimState *prepassPrimState);
 void __cdecl R_DrawBspTris(GfxCmdBufPrimState *state, const srfTriangles_t *tris, unsigned int triCount);
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+extern bool g_nativeStaticWorldIndices;
+extern bool g_nativeBspMerge;
+void R_ReleaseNativeWorldIndices();
+#endif
 int __cdecl R_ReadBspDrawSurfs(
                 const unsigned int **primDrawSurfPos,
                 const unsigned __int16 **list,

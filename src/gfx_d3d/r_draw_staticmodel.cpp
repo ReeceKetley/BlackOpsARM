@@ -1,5 +1,7 @@
 #if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
 #include "gfx_vulkan/shader_assets.h"
+#include "gfx_vulkan/index_gather.h"
+#include "gfx_vulkan/material_dispatch.h"
 #endif
 #include <universal/narrow32.h>
 #include "r_draw_staticmodel.h"
@@ -13,6 +15,75 @@
 #include "r_xsurface.h"
 #include "r_staticmodelcache.h"
 #include <xanim/xmodel_utils.h>
+
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+namespace {
+// Cached indices are already rebased into their 65536-vertex cache bank.
+// D3D9's full-bank NumVertices hint is not a claim that every vertex in that
+// bank has been published to Vulkan. Keep the real referenced upper bound.
+bool R_NativeCachedVertexRange(const unsigned __int16* indices,unsigned available,unsigned first,
+    unsigned long long count,unsigned& vertexCount)
+{
+    if(!indices||!count||first>available||count>available-first)return false;
+    unsigned maximum=0;
+    for(unsigned long long i=0;i<count;++i)if(indices[first+i]>maximum)maximum=indices[first+i];
+    const unsigned required=maximum+1;
+    if(required>vertexCount)vertexCount=required;
+    return true;
+}
+bool R_NativeCachedPreTessRange(const GfxBackEndData* data,unsigned first,GfxDrawPrimArgs& args)
+{
+    const auto* ib=data?data->preTessIb:nullptr;
+    unsigned vertexCount=0;
+    if(!ib||ib->used<0||ib->total<ib->used||args.triCount<=0
+        ||!R_NativeCachedVertexRange(ib->indices,unsigned(ib->used),first,
+            static_cast<unsigned long long>(args.triCount)*3,vertexCount)) {
+        Com_Error(ERR_FATAL,"Native cached pre-tess draw exceeds published CPU indices");return false;
+    }
+    args.vertexCount=vertexCount;return true;
+}
+bool R_NativeCachedGroup(GfxCmdBufPrimState* state,const XSurface* surface,
+    const unsigned __int16* list,unsigned count,GfxDrawPrimArgs& args)
+{
+    const auto* ib=gfxBuf.dynamicIndexBuffer;
+    if(!state||!surface||!list||!count||!surface->triCount||!ib||ib->total<=0||!gfxBuf.smodelCache.indices) {
+        Com_Error(ERR_FATAL,"Native cached index gather has incomplete owners");return false;
+    }
+    const unsigned long long perSurface=static_cast<unsigned long long>(surface->triCount)*3;
+    const unsigned long long total=perSurface*count;
+    if(total>static_cast<unsigned>(ib->total)) {
+        Com_Error(ERR_FATAL,"Native cached index gather exceeds dynamic buffer capacity");return false;
+    }
+    thread_local std::vector<bo1::vulkan::IndexSpan> spans;
+    thread_local std::vector<std::uint16_t> gathered;
+    spans.clear();spans.reserve(count);
+    const unsigned bank=(unsigned(list[0])-1)&0xFFFFF000u;
+    for(unsigned i=0;i<count;++i) {
+        if(!list[i]||list[i]>0x4000||((unsigned(list[i])-1)&0xFFFFF000u)!=bank) {
+            Com_Error(ERR_FATAL,"Native cached index gather crosses vertex cache banks");return false;
+        }
+        const auto* cached=R_GetCachedSModelSurf(list[i]);
+        const unsigned long long first=static_cast<unsigned long long>(surface->baseTriIndex)*3
+            +static_cast<unsigned long long>(cached->cachedSurf.baseVertIndex)*4;
+        if(first>0x100000||perSurface>0x100000-first) {
+            Com_Error(ERR_FATAL,"Native cached index gather exceeds CPU cache indices");return false;
+        }
+        spans.push_back({gfxBuf.smodelCache.indices+first,std::size_t(perSurface)});
+    }
+    unsigned vertexCount=0;
+    if(!bo1::vulkan::GatherIndices(spans.data(),spans.size(),std::size_t(ib->total),gathered,vertexCount)) {
+        Com_Error(ERR_FATAL,"Native cached index gather validation failed");return false;
+    }
+    // One canonical upload reserves the entire group, handles wrap/discard,
+    // publishes one immutable buffer record and binds its native owner once.
+    // All source validation completes before the buffer or index cursor changes.
+    args.triCount=unsigned(total/3);args.vertexCount=vertexCount;
+    args.baseIndex=R_SetIndexData(state,reinterpret_cast<unsigned char*>(gathered.data()),args.triCount);
+    bo1::vulkan::material_dispatch::RecordCachedGroup(count,unsigned(total),1);
+    return true;
+}
+}
+#endif
 
 void __cdecl R_DrawStaticModelSurfLit(
                 const unsigned int *primDrawSurfPos,
@@ -586,9 +657,18 @@ void __cdecl R_DrawStaticModelsCachedDrawSurfLighting(GfxStaticModelDrawStream *
     R_SetStaticModelCachedBuffer(context.state, *list);
     R_SetupPassPerPrimArgs(context);
     R_SetReflectionProbe(context, reflectionProbeIndex);
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()&&bo1::vulkan::material_dispatch::CachedGatherEnabled()) {
+        if(R_NativeCachedGroup(&context.state->prim,xsurf,list,smodelCount,args))R_DrawIndexedPrimitive(&context.state->prim,&args);
+        return;
+    }
+#endif
     surfBaseIndex = 3 * xsurf->baseTriIndex;
     args.triCount = smodelCount * xsurf->triCount;
     args.baseIndex = R_ReserveIndexData(&context.state->prim, args.triCount);
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    unsigned nativeVertexCount=0;
+#endif
     index = 0;
     do
     {
@@ -613,6 +693,12 @@ void __cdecl R_DrawStaticModelsCachedDrawSurfLighting(GfxStaticModelDrawStream *
         {
             __debugbreak();
         }
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+        if(bo1::vulkan::shader_assets::Active()&&!R_NativeCachedVertexRange(gfxBuf.smodelCache.indices,0x100000,baseIndex,
+            static_cast<unsigned long long>(xsurf->triCount)*3,nativeVertexCount)) {
+            Com_Error(ERR_FATAL,"Native cached model draw exceeds CPU cache indices");return;
+        }
+#endif
         copyBaseIndex = R_SetIndexData(
                                             &context.state->prim,
                                             (unsigned __int8 *)&gfxBuf.smodelCache.indices[baseIndex],
@@ -631,6 +717,12 @@ void __cdecl R_DrawStaticModelsCachedDrawSurfLighting(GfxStaticModelDrawStream *
         ++index;
     }
     while ( index < smodelCount );
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()) {
+        args.vertexCount=nativeVertexCount;
+        bo1::vulkan::material_dispatch::RecordCachedGroup(smodelCount,args.triCount*3,smodelCount);
+    }
+#endif
     R_DrawIndexedPrimitive(&context.state->prim, &args);
 }
 
@@ -713,9 +805,18 @@ void __cdecl R_DrawStaticModelsCachedDrawSurf(GfxStaticModelDrawStream *drawStre
     R_SetStaticModelCachedPrimArgs(xsurf, &args);
     R_SetStaticModelCachedBuffer(context.state, *list);
     R_SetupPassPerPrimArgs(context);
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()&&bo1::vulkan::material_dispatch::CachedGatherEnabled()) {
+        if(R_NativeCachedGroup(&context.state->prim,xsurf,list,smodelCount,args))R_DrawIndexedPrimitive(&context.state->prim,&args);
+        return;
+    }
+#endif
     surfBaseIndex = 3 * xsurf->baseTriIndex;
     args.triCount = smodelCount * xsurf->triCount;
     args.baseIndex = R_ReserveIndexData(&context.state->prim, args.triCount);
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    unsigned nativeVertexCount=0;
+#endif
     index = 0;
     do
     {
@@ -740,6 +841,12 @@ void __cdecl R_DrawStaticModelsCachedDrawSurf(GfxStaticModelDrawStream *drawStre
         {
             __debugbreak();
         }
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+        if(bo1::vulkan::shader_assets::Active()&&!R_NativeCachedVertexRange(gfxBuf.smodelCache.indices,0x100000,baseIndex,
+            static_cast<unsigned long long>(xsurf->triCount)*3,nativeVertexCount)) {
+            Com_Error(ERR_FATAL,"Native cached model draw exceeds CPU cache indices");return;
+        }
+#endif
         copyBaseIndex = R_SetIndexData(
                                             &context.state->prim,
                                             (unsigned __int8 *)&gfxBuf.smodelCache.indices[baseIndex],
@@ -758,6 +865,12 @@ void __cdecl R_DrawStaticModelsCachedDrawSurf(GfxStaticModelDrawStream *drawStre
         ++index;
     }
     while ( index < smodelCount );
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()) {
+        args.vertexCount=nativeVertexCount;
+        bo1::vulkan::material_dispatch::RecordCachedGroup(smodelCount,args.triCount*3,smodelCount);
+    }
+#endif
     R_DrawIndexedPrimitive(&context.state->prim, &args);
 }
 
@@ -825,9 +938,18 @@ void __cdecl R_DrawStaticModelsPreTessDrawSurfLighting(
                                          0);
     R_SetupPassPerPrimArgs(context);
     R_SetReflectionProbe(context, smodelDrawInst->reflectionProbeIndex);
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()) {
+        if(!R_NativeCachedPreTessRange(context.source->input.data,firstIndex,args))return;
+        R_ChangeIndicesFromOwner(&context.state->prim,&context.source->input.data->preTessIb->buffer);
+    } else {
+#endif
     ib = context.source->input.data->preTessIb->buffer;
     if ( context.state->prim.indexBuffer != ib )
         R_ChangeIndices(&context.state->prim, ib);
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    }
+#endif
     args.baseIndex = firstIndex;
     R_DrawIndexedPrimitive(&context.state->prim, &args);
 }
@@ -918,9 +1040,18 @@ void __cdecl R_DrawStaticModelsPreTessDrawSurf(
         &args,
         0);
     R_SetupPassPerPrimArgs(context);
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if(bo1::vulkan::shader_assets::Active()) {
+        if(!R_NativeCachedPreTessRange(context.source->input.data,firstIndex,args))return;
+        R_ChangeIndicesFromOwner(&context.state->prim,&context.source->input.data->preTessIb->buffer);
+    } else {
+#endif
     ib = context.source->input.data->preTessIb->buffer;
     if ( context.state->prim.indexBuffer != ib )
         R_ChangeIndices(&context.state->prim, ib);
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    }
+#endif
     args.baseIndex = firstIndex;
     R_DrawIndexedPrimitive(&context.state->prim, &args);
 }

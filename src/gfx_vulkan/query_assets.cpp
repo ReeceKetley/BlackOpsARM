@@ -76,21 +76,27 @@ bool RecordingScope::Submitted(VkFence fence,std::string& error) {
  // Every prepared owner shares the frame pool: publish it once.
  if(!prepared.empty()&&!prepared.begin()->second.pool->Submitted(fence,error))return false;return true;
 }
+// Inside a pass whose body is recorded into secondary command buffers the
+// query brackets its draws in the recording thread's current secondary.
+static VkCommandBuffer QueryCommand(VkCommandBuffer frame) {
+ const auto* passes=pass_recording::Current();return passes&&passes->Command()?passes->Command():frame;
+}
 bool Begin(const void* owner,std::string& error) {
  std::lock_guard<std::mutex> lock(mutex);
  if(!current||current->active){error="Native query begin needs a frame scope without nested occlusion";return false;}
  auto found=current->prepared.find(owner);auto registered=owners.find(owner);
  if(found==current->prepared.end()||registered==owners.end()||registered->second!=found->second.entry){error="Native query owner was not prepared for this frame";return false;}
  auto& entry=*found->second.entry;
- if(auto* passes=pass_recording::Current())passes->FlushPendingDraw(); // queries bracket the actual draws
- if(entry.generation==std::numeric_limits<std::uint64_t>::max()||!found->second.pool->Begin(current->command,found->second.index,error))return false;
+ if(auto* passes=pass_recording::Current()){passes->FlushPendingDraw();if(!passes->OpenForQuery(error))return false;} // queries bracket the actual draws
+ if(entry.generation==std::numeric_limits<std::uint64_t>::max()||!found->second.pool->Begin(QueryCommand(current->command),found->second.index,error))return false;
  entry.latest=found->second.pool;entry.latestIndex=found->second.index;entry.issued=true;entry.cached=false;++entry.generation;current->active=owner;return true;
 }
+bool OcclusionOpen(){std::lock_guard<std::mutex> lock(mutex);return current&&current->active;}
 bool End(const void* owner,std::string& error) {
  std::lock_guard<std::mutex> lock(mutex);
  if(!current||current->active!=owner){error="Native query end has no matching owner";return false;}
  if(auto* passes=pass_recording::Current())passes->FlushPendingDraw();
- auto found=current->prepared.find(owner);if(found==current->prepared.end()||!found->second.pool->End(current->command,found->second.index,error))return false;
+ auto found=current->prepared.find(owner);if(found==current->prepared.end()||!found->second.pool->End(QueryCommand(current->command),found->second.index,error))return false;
  current->active=nullptr;return true;
 }
 QueryRead Read(const void* owner,unsigned& samples,bool flush,std::string& error) {

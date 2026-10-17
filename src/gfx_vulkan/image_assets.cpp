@@ -1,5 +1,8 @@
+#include <unordered_set>
 #include "image_assets.h"
 #include "pointer_hash.h"
+#include "model_lighting_regions.h"
+#include <chrono>
 #include "image_uploads.h"
 #include "block_compression.h"
 #include "buffer_assets.h"
@@ -16,7 +19,8 @@ namespace bo1::vulkan::image_assets {
 namespace {
 std::mutex mutex;
 VkPhysicalDevice physical{};VkDevice device{};std::uint64_t serial{};
-std::atomic<bool> nativeBlocks{};
+std::atomic<bool> nativeBlocks{},modelRegions{},modelBoxes{},modelTiming{};
+ModelLightingProfile modelProfile;
 std::unordered_map<const GfxImage*,std::shared_ptr<const Record>,bo1::vulkan::PointerHash> images;
 std::vector<std::weak_ptr<Texture2D>> liveTextures;
 bool Drained() {
@@ -162,10 +166,54 @@ bool QueueUpload(const GfxImage* owner,unsigned sourceFormat,unsigned face,unsig
         pixels=UploadBytes::Decoded(std::move(decoded));
     } else {pixels=UploadBytes::Copy(source,std::size_t(bytes),error);if(!pixels)return false;}
     auto next=std::make_shared<Record>(previous);++next->revision;
+    next->modelLightingRegions=false;next->changedTiles.clear();
     auto upload=std::find_if(next->uploads.begin(),next->uploads.end(),[&](const auto& u){return u.mip==mip&&u.layer==layer;});
     if(upload==next->uploads.end())next->uploads.push_back({mip,layer,std::move(pixels)});
     else upload->bytes=std::move(pixels);
     it->second=std::move(next);image_uploads::Queue(it->second);return true;
+}
+void SetModelLightingBoxes(bool enabled){modelBoxes.store(enabled,std::memory_order_relaxed);}
+bool ModelLightingBoxesEnabled(){return modelBoxes.load(std::memory_order_relaxed);}
+void SetModelLightingRegions(bool enabled){modelRegions.store(enabled,std::memory_order_relaxed);}
+bool ModelLightingRegionsEnabled(){return modelRegions.load(std::memory_order_relaxed);}
+void SetModelLightingProfileTiming(bool enabled){modelTiming.store(enabled,std::memory_order_relaxed);}
+ModelLightingProfile ReadModelLightingProfile(){std::lock_guard<std::mutex> lock(mutex);return modelProfile;}
+std::vector<std::pair<std::shared_ptr<const Record>,std::shared_ptr<const Record>>> ReleaseUploadedBytes(
+    const std::vector<std::shared_ptr<const Record>>& uploaded) {
+    std::vector<std::pair<std::shared_ptr<const Record>,std::shared_ptr<const Record>>> replaced;
+    if(uploaded.empty()||ModelLightingRegionsEnabled())return replaced; // region updates diff against prior bytes
+    std::unordered_set<const Record*> set;for(const auto& record:uploaded)set.insert(record.get());
+    std::lock_guard<std::mutex> lock(mutex);
+    for(auto& entry:images) {
+        const auto& current=entry.second;
+        if(!current||!set.count(current.get())||current->modelLightingRegions)continue;
+        auto next=std::make_shared<Record>(*current);
+        for(auto& upload:next->uploads)upload.bytes.reset();
+        next->uploadsReleased=true;
+        replaced.emplace_back(current,next);entry.second=std::move(next);
+    }
+    return replaced;
+}
+bool QueueModelLighting(const GfxImage* owner,const void* source,const std::vector<unsigned>& tiles,std::string& error) {
+    bool released=false;
+    {std::lock_guard<std::mutex> lock(mutex);const auto it=images.find(owner);released=it!=images.end()&&it->second&&it->second->uploadsReleased;}
+    if(tiles.empty()||!ModelLightingRegionsEnabled()||released)return QueueUpload(owner,D3DFMT_A8R8G8B8,0,0,source,error);
+    const bool timed=modelTiming.load(std::memory_order_relaxed);
+    const auto start=timed?std::chrono::steady_clock::now():std::chrono::steady_clock::time_point{};
+    std::lock_guard<std::mutex> lock(mutex);const auto it=images.find(owner);
+    if(it==images.end()||!source||!model_lighting_regions::Valid(*it->second)) {error="Invalid native model-lighting region owner/snapshot";return false;}
+    const auto& previous=*it->second;std::vector<unsigned> changed;std::size_t uniqueCount{};
+    if(!model_lighting_regions::Changed(previous,source,tiles,changed,uniqueCount,error))return false;
+    ++modelProfile.batches;modelProfile.changedTiles+=changed.size();modelProfile.unchangedTiles+=uniqueCount-changed.size();
+    if(!changed.empty()) {
+        auto bytes=UploadBytes::Copy(source,previous.uploads[0].bytes->size(),error);if(!bytes)return false;
+        auto next=std::make_shared<Record>(previous);++next->revision;
+        next->uploads[0].bytes=std::move(bytes);next->modelLightingRegions=true;
+        next->regionBaseRevision=previous.revision;next->changedTiles=std::move(changed);
+        modelProfile.snapshotBytes+=next->uploads[0].bytes->size();it->second=std::move(next);image_uploads::Queue(it->second);
+    }
+    if(timed)modelProfile.cpuNs+=std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now()-start).count();
+    return true;
 }
 bool QueueL8Plane(const GfxImage* owner,const void* source,std::size_t pitch,unsigned width,unsigned height,unsigned char clearValue,std::string& error) {
     std::lock_guard<std::mutex> lock(mutex);const auto it=images.find(owner);
@@ -178,6 +226,7 @@ bool QueueL8Plane(const GfxImage* owner,const void* source,std::size_t pitch,uns
     }
     auto pixels=UploadBytes::Rows(source,width,height,pitch,clearValue,error);if(!pixels)return false;
     auto next=std::make_shared<Record>(previous);++next->revision;
+    next->modelLightingRegions=false;next->changedTiles.clear();
     next->uploads={{0,0,std::move(pixels)}};
     it->second=std::move(next);image_uploads::Queue(it->second);return true;
 }

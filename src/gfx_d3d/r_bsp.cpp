@@ -3,6 +3,7 @@
 #include "gfx_vulkan/shader_assets.h"
 #endif
 #include "r_bsp.h"
+#include "r_draw_bsp.h"
 #include <universal/com_memory.h>
 #include "r_bsp_load_obj.h"
 #include "r_dvars.h"
@@ -322,6 +323,7 @@ void __cdecl R_ReleaseWorld()
         // actual native owners if present; immutable draw borrowers keep them.
         bo1::vulkan::buffer_assets::Release(&s_world.draw.vd.worldVb);
         bo1::vulkan::buffer_assets::Release(&s_world.draw.vld.layerVb);
+        R_ReleaseNativeWorldIndices();
     } else {
 #endif
     if ( s_world.draw.vertexCount )

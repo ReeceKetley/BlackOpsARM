@@ -732,6 +732,15 @@ static unsigned int DB_TraceW32(unsigned int idx)
 #endif
 }
 
+void DB_ReleaseStreamAliasStorage()
+{
+    for (unsigned int i = 0; i < 7; ++i)
+    {
+        std::vector<AliasSlot>().swap(g_aliasSlots[i]);
+        g_aliasSorted[i] = 0;
+    }
+}
+
 void __cdecl DB_InitStreams(XBlock *blocks)
 {
     int i; // [esp+0h] [ebp-4h]

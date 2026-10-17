@@ -28,6 +28,9 @@ private:
     struct Result {bool ended{},cached{};std::uint64_t value{};};
     VkDevice device_{};VkQueryPool pool_{};bool precise_{};VkCommandBuffer command_{};VkFence fence_{};
     enum class Phase {Idle,Recording,Submitted};Phase phase_=Phase::Idle;
+    // A query may be recorded in a secondary command buffer of the frame
+    // (parallel-hosting pass); it must end in the one it began in.
+    VkCommandBuffer activeCommand_{};
     unsigned active_=~0u;std::uint64_t generation_{};std::vector<Result> results_;
 };
 }

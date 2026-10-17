@@ -73,7 +73,7 @@ void __cdecl XSurfaceOptimize(XModel *model, XSurface *surf)
         if (!surf || surf->indexBuffer || !surf->triIndices || !surf->triCount) {Com_Error(ERR_FATAL,"Invalid native index surface");return;}
         if (!bo1::vulkan::buffer_assets::Acquire(&surf->indexBuffer)) {
             const std::size_t bytes=std::size_t(surf->triCount)*6,padded=(bytes+31)&~std::size_t(31);std::string error;
-            if (padded>0x200000 || !bo1::vulkan::buffer_assets::Load(&surf->indexBuffer,surf->triIndices,bytes,padded,bo1::vulkan::buffer_assets::Kind::Index16,error)) {
+            if (padded>0x200000 || !bo1::vulkan::buffer_assets::LoadPacked(&surf->indexBuffer,surf->triIndices,bytes,padded,bo1::vulkan::buffer_assets::Kind::Index16,error)) {
                 Com_Error(ERR_FATAL,"Native index surface load: %s",error.c_str());return;
             }
         }
@@ -127,7 +127,7 @@ void __cdecl XSurfaceOptimizeRigid(XModel *model, XSurface *surface)
         if (!surface || (surface->flags&0x80) || surface->vb0 || !surface->verts0 || !surface->vertCount) {Com_Error(ERR_FATAL,"Invalid native rigid surface");return;}
         if (!bo1::vulkan::buffer_assets::Acquire(&surface->vb0)) {
             const std::size_t bytes=std::size_t(surface->vertCount)*32;std::string error;
-            if (!bo1::vulkan::buffer_assets::Load(&surface->vb0,surface->verts0,bytes,bytes,bo1::vulkan::buffer_assets::Kind::Vertex,error))
+            if (!bo1::vulkan::buffer_assets::LoadPacked(&surface->vb0,surface->verts0,bytes,bytes,bo1::vulkan::buffer_assets::Kind::Vertex,error))
                 Com_Error(ERR_FATAL,"Native rigid surface load: %s",error.c_str());
         }
         return;

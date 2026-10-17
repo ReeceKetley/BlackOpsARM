@@ -25,6 +25,12 @@ struct ProgramDescription {
     DepthBiasState depthBias;
     bool stencilTest{};VkStencilOpState frontStencil{},backStencil{};
     bool colorAttachment=true;
+    // Without a colour attachment, omit the fragment stage when the pixel
+    // shader can neither discard nor write depth (depth-only shadow casters).
+    bool depthOnly{};
+    // Render-pass definition key, when known: lets the program be recorded and
+    // rebuilt at a later map load (program_cache recipes). Not part of the key.
+    std::array<unsigned,8> passKey{};bool passKeyed{};
     bool depthTest{},depthWrite{};VkCompareOp depthCompare=VK_COMPARE_OP_LESS_OR_EQUAL;
     VkPipelineColorBlendAttachmentState color{VK_FALSE,VK_BLEND_FACTOR_ONE,VK_BLEND_FACTOR_ZERO,VK_BLEND_OP_ADD,
         VK_BLEND_FACTOR_ONE,VK_BLEND_FACTOR_ZERO,VK_BLEND_OP_ADD,15};
@@ -33,7 +39,16 @@ struct ProgramDescription {
 bool ResolveDepthBias(ProgramDescription&,VkFormat,float normalizedBias,float slope,std::string&);
 bool ValidateDepthBias(const DepthBiasState&,std::string&);
 void SetCompatibleDescriptorReuse(bool enabled);
+void SetDepthOnlyPipelines(bool enabled);
+bool DepthOnlyPipelines();
 bool CompatibleDescriptorReuse();
+void SetDescriptorContentReuse(bool enabled);
+bool DescriptorContentReuse();
+void SetLazyDescriptorWrites(bool enabled);
+bool LazyDescriptorWrites();
+struct DescriptorWriteStats {std::uint64_t lazySkips{},writeBuilds{};};
+// Cumulative counters for the calling recording thread.
+DescriptorWriteStats ReadDescriptorWriteStats();
 struct ProgramResource {
     ResourceKind kind{};unsigned registerIndex{};
     VkDescriptorBufferInfo buffer{};VkDescriptorImageInfo image{};
@@ -58,16 +73,20 @@ public:
     // unchanged pipeline/set bindings are not re-recorded.
     bool Record(VkCommandBuffer,VkDescriptorPool,const std::vector<ProgramResource>& vertex,
         const std::vector<ProgramResource>& pixel,BindCache&,std::string& error) const;
-    unsigned ConstantRows(unsigned stage)const{return shaders_[stage].constantRows;}
+    // Translation's conservative row default does not imply a float bank
+    // exists. Integer/boolean dynamic bindings also do not read float rows.
+    unsigned ConstantRows(unsigned stage)const{return floatConstantRows_[stage];}
     // True when either stage samples a texture (descriptor content depends on it).
     bool SamplesTextures()const{
         for(const auto& stage:shaders_)for(const auto& b:stage.bindings)if(b.kind!=ResourceKind::Constants)return true;
         return false;}
 private:
+    const std::shared_ptr<const void> descriptorIdentity_=std::make_shared<const char>(0);
     VkDevice device_{};VkPipeline pipeline_{};VkPipelineLayout layout_{};unsigned dynamicCount_{};
     std::array<VkDescriptorSetLayout,2> setLayouts_{};
     std::array<std::uint64_t,2> layoutBindings_{};
     std::array<unsigned,2> stageDynamic_{};
+    std::array<unsigned,2> floatConstantRows_{};
     std::array<ShaderTranslation,2> shaders_;
 };
 }

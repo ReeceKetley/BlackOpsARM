@@ -14,6 +14,9 @@ struct StreamPosInfo // sizeof=0x8
 };
 
 void __cdecl DB_InitStreams(XBlock *blocks);
+// Frees the finished zone's alias-slot table (DB_InitStreams only clears it,
+// keeping the capacity of the largest zone for the whole session).
+void DB_ReleaseStreamAliasStorage();
 void __cdecl DB_PushStreamPos(unsigned int index);
 void __cdecl DB_SetStreamIndex(unsigned int index);
 void __cdecl DB_PopStreamPos();

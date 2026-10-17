@@ -1183,9 +1183,21 @@ void __cdecl R_AddAllStaticModelSurfacesRangeSunShadow(
             continue;
         }
 
+#if defined(__ANDROID__)
+        // Port: the loop below reuses `scale` for each model's placement scale,
+        // so later models were tested with the previous model's size rather than
+        // the LOD ramp (early pop-in). Use the ramp every iteration, and cull on
+        // the FOV-corrected distance so r_lodScaleRigid picks cheaper LODs
+        // without shortening the map's static model draw distance.
+        const float rampDist = Vec3Distance(inst->placement.origin, origin);
+        originDist = rampDist * g_lodParms->ramp[0].scale + g_lodParms->ramp[0].bias;
+        const float cullTestDist = rampDist * g_lodParms->ramp[0].appliedInvScale + g_lodParms->ramp[0].bias;
+        if (cullTestDist >= inst->cullDist)
+#else
         originDist = Vec3Distance(inst->placement.origin, origin) * scale + bias;
 
         if (originDist >= inst->cullDist)
+#endif
         {
             visdata[i] = 0;
             continue;
@@ -1208,7 +1220,13 @@ void __cdecl R_AddAllStaticModelSurfacesRangeSunShadow(
         else
             scale = 1.0f;
 
+#if defined(__ANDROID__)
+        // Beyond the last LOD at the scaled distance, fall back to the LOD for
+        // the unscaled distance (XModelGetLodForDist's base-distance retry).
+        baseDist = I_fres(scale) * cullTestDist;
+#else
         baseDist = I_fres(scale) * originDist;
+#endif
         adjustedDist = I_fres(scale) * originDist;
         lod = XModelGetLodForDist(nextModel, adjustedDist, baseDist, 0);
 

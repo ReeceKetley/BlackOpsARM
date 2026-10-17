@@ -883,7 +883,12 @@ void __cdecl RB_PatchModelLighting(const GfxModelLightingPatch *patchList, unsig
 #if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
         if(bo1::vulkan::shader_assets::Active()) {
             std::string error;
-            if(!bo1::vulkan::image_assets::QueueUpload(modelLightGlob.image,D3DFMT_A8R8G8B8,0,0,nativeModelLighting.pixels.data(),error)) {
+            std::vector<unsigned> tiles;
+            if(bo1::vulkan::image_assets::ModelLightingRegionsEnabled()) {
+                tiles.reserve(patchCount);
+                for(unsigned i=0;i<patchCount;++i)tiles.push_back(patchList[i].modelLightingIndex);
+            }
+            if(!bo1::vulkan::image_assets::QueueModelLighting(modelLightGlob.image,nativeModelLighting.pixels.data(),tiles,error)) {
                 modelLightGlob.lockedBox.pBits=nullptr;
                 Com_Error(ERR_FATAL,"Native model lighting upload: %s",error.c_str());return;
             }

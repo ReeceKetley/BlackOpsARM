@@ -77,6 +77,7 @@ private:
     bool stencilTest_{};
     Stencil frontStencil_{}, backStencil_{};
     bool colorAttachment_{};
+    bool depthOnly_{};
     bool depthTest_{}, depthWrite_{};
     VkCompareOp depthCompare_{};
     Blend color_{};

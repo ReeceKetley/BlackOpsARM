@@ -575,6 +575,10 @@ void __cdecl DB_LoadXFileInternal()
     Com_Printf(10, "Loaded fastfile '%s' in %ims (%dms waiting)\n", g_load.filename, Sys_Milliseconds() - g_load.startTime, v1);
     if ( (g_load.flags & 1) != 0 )
         g_minimumFastFileLoaded = 1;
+#if BO1_NATIVE_64BIT
+    // Alias offsets only resolve while this zone streams in.
+    DB_ReleaseStreamAliasStorage();
+#endif
     DB_CancelLoadXFile();
 }
 

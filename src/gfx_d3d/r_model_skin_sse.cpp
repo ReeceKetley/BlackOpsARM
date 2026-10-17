@@ -1,6 +1,237 @@
 #include "r_model_skin.h"
 
-#if defined(BO1_PORT_X64) || defined(_M_X64) || defined(_WIN64) || (defined(__ANDROID__) && defined(__aarch64__))
+#if defined(__ANDROID__) && defined(__aarch64__)
+// ---------------------------------------------------------------------------
+// NEON port of the SSE/MMX skinner below (same maths and output layout).
+//
+// A GfxPackedVertex is two 16-byte lanes:
+//   [0] = xyz + binormalSign          (position, w = binormal sign)
+//   [1] = color | texCoord | normal | tangent   (the last two are PackedUnitVec)
+// A bone (DObjSkelMat) is four 16-byte rows: axis[0..2] (rotation) + origin.
+// vertexBlend holds, per vertex: bone0, then (bone_i, weight_i) pairs (byte
+// offsets into the bone array and uint16 weights), so the stride for N
+// weights is 2*N + 1.
+//
+// Packing matches cvt_ps2pi + two packuswb passes: round to nearest even and
+// clamp to [0, 255] (vcvtnq_s32_f32, vqmovun_s32, vqmovn_u16).
+// ---------------------------------------------------------------------------
+#include <universal/q_shared.h>
+#include "r_model_skin.h"
+#include <xanim/xanim.h>
+#include <universal/profile.h>
+#include <arm_neon.h>
+#include <cstdint>
+#include <cstring>
+
+namespace {
+const float32x4_t kEncodeShift = {127.0f, 127.0f, 127.0f, -192.0f};
+const float32x4_t kEncodeScale = {127.0f, 127.0f, 127.0f, 255.0f};
+
+inline const DObjSkelMat *BoneAt(const DObjSkelMat *boneMatrix, unsigned byteOffset)
+{
+    return (const DObjSkelMat *)((const char *)boneMatrix + byteOffset);
+}
+
+// [Black Ops] position (x, y, z, +/-1): keep only the sign bit of w, OR in 1.0
+inline float32x4_t LoadSkinPosition(float32x4_t p)
+{
+    const uint32_t sign = vgetq_lane_u32(vreinterpretq_u32_f32(p), 3) & 0x80000000u;
+    return vreinterpretq_f32_u32(vsetq_lane_u32(sign | 0x3F800000u, vreinterpretq_u32_f32(p), 3));
+}
+
+// affine transform (rotation + translation), summed as the SSE version
+inline float32x4_t TransformPoint(const DObjSkelMat *m, float32x4_t p)
+{
+    const float32x4_t a = vaddq_f32(vmulq_laneq_f32(vld1q_f32(m->axis[0]), p, 0), vmulq_laneq_f32(vld1q_f32(m->axis[1]), p, 1));
+    const float32x4_t b = vaddq_f32(vmulq_laneq_f32(vld1q_f32(m->axis[2]), p, 2), vld1q_f32(m->origin));
+    return vaddq_f32(a, b);
+}
+
+// linear transform (rotation only)
+inline float32x4_t TransformDir(const DObjSkelMat *m, float32x4_t d)
+{
+    const float32x4_t a = vaddq_f32(vmulq_laneq_f32(vld1q_f32(m->axis[0]), d, 0), vmulq_laneq_f32(vld1q_f32(m->axis[1]), d, 1));
+    return vaddq_f32(a, vmulq_laneq_f32(vld1q_f32(m->axis[2]), d, 2));
+}
+
+// transformed xyz with w taken from wSource
+inline float32x4_t PackXyzW(float32x4_t xyz, float32x4_t wSource)
+{
+    return vcopyq_laneq_f32(xyz, 3, wSource, 3);
+}
+
+// byte-packed unit vector -> direction scaled by its packed length
+inline float32x4_t DecodeUnitVec(uint32_t packed)
+{
+    const uint16x4_t bytes = vget_low_u16(vmovl_u8(vcreate_u8(packed)));
+    const float32x4_t d = vdivq_f32(vsubq_f32(vcvtq_f32_u32(vmovl_u16(bytes)), kEncodeShift), kEncodeScale);
+    return vmulq_laneq_f32(d, d, 3);
+}
+
+// transform a packed unit vector by a bone's rotation and re-encode it
+inline float32x4_t SkinUnitVec(const DObjSkelMat *m, uint32_t packed)
+{
+    const float32x4_t transformed = PackXyzW(TransformDir(m, DecodeUnitVec(packed)), vld1q_f32(m->origin));
+    return vaddq_f32(vmulq_f32(transformed, kEncodeScale), kEncodeShift);
+}
+
+// weight (uint16) -> [0, 1)
+inline float32x4_t DecodeWeight(uint16_t weight)
+{
+    return vdupq_n_f32(float(weight) * (1.0f / 65536.0f));
+}
+
+// encoded normal & tangent (float4 each) -> 8 bytes
+inline uint64_t PackNormalTangent(float32x4_t encNormal, float32x4_t encTangent)
+{
+    const uint16x8_t words = vcombine_u16(vqmovun_s32(vcvtnq_s32_f32(encNormal)), vqmovun_s32(vcvtnq_s32_f32(encTangent)));
+    return vget_lane_u64(vreinterpret_u64_u8(vqmovn_u16(words)), 0);
+}
+
+inline uint32_t Word(const GfxPackedVertex *v, unsigned index)
+{
+    uint32_t w;
+    std::memcpy(&w, (const char *)v + 4 * index, 4);
+    return w;
+}
+
+inline void StoreVertex(GfxPackedVertex *dst, float32x4_t position, const GfxPackedVertex *src, uint64_t normalTangent)
+{
+    vst1q_f32((float *)dst, position);
+    std::memcpy((char *)dst + 16, (const char *)src + 16, 8); // color + texCoord
+    std::memcpy((char *)dst + 24, &normalTangent, 8);
+}
+
+template <int numWeights>
+inline float32x4_t BlendPosition(const GfxPackedVertex *src, const uint16_t *blend, const DObjSkelMat *boneMatrix,
+    const DObjSkelMat **bone0Out)
+{
+    const float32x4_t position = LoadSkinPosition(vld1q_f32((const float *)src));
+    const DObjSkelMat *bone0 = BoneAt(boneMatrix, blend[0]);
+    const float32x4_t pos0 = PackXyzW(TransformPoint(bone0, position), position);
+    float32x4_t outPos = pos0;
+    for (int w = 1; w <= numWeights; ++w)
+    {
+        const DObjSkelMat *bone = BoneAt(boneMatrix, blend[2 * w - 1]);
+        const float32x4_t bonePos = PackXyzW(TransformPoint(bone, position), position);
+        outPos = vaddq_f32(outPos, vmulq_f32(DecodeWeight(blend[2 * w]), vsubq_f32(bonePos, pos0)));
+    }
+    *bone0Out = bone0;
+    return outPos;
+}
+
+template <int numWeights>
+void SkinWeightBlock(const GfxPackedVertex *srcVerts, const uint16_t *vertexBlend, int vertCount,
+    const DObjSkelMat *boneMatrix, GfxPackedVertex *dstVerts, GfxPackedVertexNormal *dstVertNormals, int *pVertexIndex)
+{
+    int vertIndex = *pVertexIndex;
+    for (int i = 0; i < vertCount; ++i)
+    {
+        const GfxPackedVertex *src = &srcVerts[vertIndex];
+        const DObjSkelMat *bone0;
+        const float32x4_t outPos = BlendPosition<numWeights>(src, vertexBlend, boneMatrix, &bone0);
+        const uint64_t normalTangent = PackNormalTangent(SkinUnitVec(bone0, Word(src, 6)), SkinUnitVec(bone0, Word(src, 7)));
+        StoreVertex(&dstVerts[vertIndex], outPos, src, normalTangent);
+        if (dstVertNormals)
+            std::memcpy(&dstVertNormals[vertIndex], &normalTangent, 8);
+        vertexBlend += 2 * numWeights + 1;
+        ++vertIndex;
+    }
+    *pVertexIndex = vertIndex;
+}
+
+template <int numWeights>
+void SkinWeightBlockInOut(const GfxPackedVertex *srcVerts, const uint16_t *vertexBlend, int vertCount,
+    const DObjSkelMat *boneMatrix, const GfxPackedVertexNormal *srcVertNormals,
+    GfxPackedVertexNormal *dstVertNormals, GfxPackedVertex *dstVerts, int *pVertexIndex)
+{
+    int vertIndex = *pVertexIndex;
+    for (int i = 0; i < vertCount; ++i)
+    {
+        const GfxPackedVertex *src = &srcVerts[vertIndex];
+        const DObjSkelMat *bone0;
+        const float32x4_t outPos = BlendPosition<numWeights>(src, vertexBlend, boneMatrix, &bone0);
+        uint64_t normalTangent;
+        std::memcpy(&normalTangent, &srcVertNormals[vertIndex], 8);
+        StoreVertex(&dstVerts[vertIndex], outPos, src, normalTangent);
+        std::memcpy(&dstVertNormals[vertIndex], &normalTangent, 8);
+        vertexBlend += 2 * numWeights + 1;
+        ++vertIndex;
+    }
+    *pVertexIndex = vertIndex;
+}
+
+void SkinWeight(const GfxPackedVertex *inVerts, const XSurfaceVertexInfo *vertexInfo, const DObjSkelMat *boneMatrix,
+    GfxPackedVertex *outVerts, const GfxPackedVertexNormal *inNormals, GfxPackedVertexNormal *outNormals)
+{
+    PROF_SCOPED("SkinXSurfaceWeight");
+
+    int vertIndex = 0;
+    const uint16_t *blend = vertexInfo->vertsBlend;
+    for (int weights = 0; weights < 4; ++weights)
+    {
+        const int count = vertexInfo->vertCount[weights];
+        if (!count)
+            continue;
+        switch (weights)
+        {
+        case 0: inNormals ? SkinWeightBlockInOut<0>(inVerts, blend, count, boneMatrix, inNormals, outNormals, outVerts, &vertIndex)
+                          : SkinWeightBlock<0>(inVerts, blend, count, boneMatrix, outVerts, outNormals, &vertIndex); break;
+        case 1: inNormals ? SkinWeightBlockInOut<1>(inVerts, blend, count, boneMatrix, inNormals, outNormals, outVerts, &vertIndex)
+                          : SkinWeightBlock<1>(inVerts, blend, count, boneMatrix, outVerts, outNormals, &vertIndex); break;
+        case 2: inNormals ? SkinWeightBlockInOut<2>(inVerts, blend, count, boneMatrix, inNormals, outNormals, outVerts, &vertIndex)
+                          : SkinWeightBlock<2>(inVerts, blend, count, boneMatrix, outVerts, outNormals, &vertIndex); break;
+        default: inNormals ? SkinWeightBlockInOut<3>(inVerts, blend, count, boneMatrix, inNormals, outNormals, outVerts, &vertIndex)
+                           : SkinWeightBlock<3>(inVerts, blend, count, boneMatrix, outVerts, outNormals, &vertIndex); break;
+        }
+        blend += (2 * weights + 1) * count;
+    }
+}
+
+// Rigid: one bone per vertex list, no blend; raw binormal sign (as retail).
+void SkinRigid(const XSurface *surf, const DObjSkelMat *boneMatrix, GfxPackedVertex *dstVerts,
+    const GfxPackedVertexNormal *inNormals, GfxPackedVertexNormal *outNormals)
+{
+    PROF_SCOPED("SkinXSurfaceRigid");
+
+    const GfxPackedVertex *src = (const GfxPackedVertex *)surf->verts0;
+    GfxPackedVertex *dst = dstVerts;
+    for (unsigned list = 0; list < surf->vertListCount; ++list)
+    {
+        const XRigidVertList *vertList = &surf->vertList[list];
+        const DObjSkelMat *bone = BoneAt(boneMatrix, vertList->boneOffset);
+        for (int i = 0; i < vertList->vertCount; ++i)
+        {
+            __builtin_prefetch(&src[4]);
+            const float32x4_t srcPos = vld1q_f32((const float *)src);
+            const float32x4_t outPos = PackXyzW(TransformPoint(bone, srcPos), srcPos);
+            uint64_t normalTangent;
+            if (inNormals)
+                std::memcpy(&normalTangent, inNormals++, 8);
+            else
+                normalTangent = PackNormalTangent(SkinUnitVec(bone, Word(src, 6)), SkinUnitVec(bone, Word(src, 7)));
+            StoreVertex(dst, outPos, src, normalTangent);
+            if (outNormals)
+                std::memcpy(outNormals++, &normalTangent, 8);
+            ++src;
+            ++dst;
+        }
+    }
+    iassert(dst - dstVerts == surf->vertCount);
+}
+}
+
+void __cdecl R_SkinXSurfaceSkinnedSse(const XSurface *xsurf, const DObjSkelMat *boneMatrix,
+    GfxPackedVertexNormal *skinVertNormalIn, GfxPackedVertexNormal *skinVertNormalOut,
+    GfxPackedVertex *skinVerticesOut)
+{
+    iassert(skinVertNormalOut || !skinVertNormalIn);
+    if ((xsurf->flags & 0x80) != 0)
+        SkinWeight(xsurf->verts0, &xsurf->vertInfo, boneMatrix, skinVerticesOut, skinVertNormalOut ? skinVertNormalIn : nullptr, skinVertNormalOut);
+    else
+        SkinRigid(xsurf, boneMatrix, skinVerticesOut, skinVertNormalOut ? skinVertNormalIn : nullptr, skinVertNormalOut);
+}
+#elif defined(BO1_PORT_X64) || defined(_M_X64) || defined(_WIN64)
 // BO1_PORT_X64_SSE_STUB: MMX skinning is x86-only; fall back to scalar.
 void __cdecl R_SkinXSurfaceSkinnedSse(
     const XSurface *xsurf,

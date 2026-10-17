@@ -107,6 +107,7 @@ bool PipelineKey::Create(const ProgramDescription& d, PipelineKey& out, std::str
         *keyStencils[i] = {s.failOp, s.passOp, s.depthFailOp, s.compareOp, s.compareMask, s.writeMask, s.reference};
     }
     k.colorAttachment_ = d.colorAttachment;
+    k.depthOnly_ = d.depthOnly && !d.colorAttachment;
     k.depthTest_ = d.depthTest;
     k.depthWrite_ = d.depthWrite;
     k.depthCompare_ = d.depthCompare;
@@ -139,7 +140,7 @@ void PipelineKey::ComputeHash() {
         h.U64(static_cast<std::uint64_t>(s->depthFailOp)); h.U64(static_cast<std::uint64_t>(s->compareOp));
         h.U64(s->compareMask); h.U64(s->writeMask); h.U64(s->reference);
     }
-    h.U64(colorAttachment_ ? 1u : 0u); h.U64(depthTest_ ? 1u : 0u); h.U64(depthWrite_ ? 1u : 0u);
+    h.U64(colorAttachment_ ? 1u : 0u); h.U64(depthOnly_ ? 1u : 0u); h.U64(depthTest_ ? 1u : 0u); h.U64(depthWrite_ ? 1u : 0u);
     h.U64(static_cast<std::uint64_t>(depthCompare_));
     h.U64(color_.blendEnable);
     h.U64(static_cast<std::uint64_t>(color_.srcColorBlendFactor)); h.U64(static_cast<std::uint64_t>(color_.dstColorBlendFactor));
@@ -170,7 +171,7 @@ bool PipelineKey::operator==(const PipelineKey& o) const {
     if(depthBiasEnabled_!=o.depthBiasEnabled_||depthBiasConstantBits_!=o.depthBiasConstantBits_||depthBiasSlopeBits_!=o.depthBiasSlopeBits_)return false;
     if (alphaComparison_ != o.alphaComparison_ || alphaReferenceBits_ != o.alphaReferenceBits_) return false;
     if (stencilTest_ != o.stencilTest_ || !SameStencil(frontStencil_, o.frontStencil_) || !SameStencil(backStencil_, o.backStencil_)) return false;
-    if (colorAttachment_ != o.colorAttachment_ || depthTest_ != o.depthTest_ || depthWrite_ != o.depthWrite_ || depthCompare_ != o.depthCompare_) return false;
+    if (colorAttachment_ != o.colorAttachment_ || depthOnly_ != o.depthOnly_ || depthTest_ != o.depthTest_ || depthWrite_ != o.depthWrite_ || depthCompare_ != o.depthCompare_) return false;
     if (!SameBlend(color_, o.color_)) return false;
     if (vertexBindings_.size() != o.vertexBindings_.size() || vertexAttributes_.size() != o.vertexAttributes_.size()) return false;
     for (std::size_t i = 0; i < vertexBindings_.size(); ++i) {
