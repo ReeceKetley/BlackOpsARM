@@ -24,7 +24,7 @@ std::string CodecError(const char *operation, int code) {
     return std::string(operation)+": "+message;
 }
 }
-bool DecodeCanonicalWma(const WmaAssetView &asset, DecodedWma &output, std::string &error) {
+static bool DecodeWma(const WmaAssetView &asset, bool tolerant, DecodedWma &output, std::string &error) {
     output={};error.clear();
     auto Fail=[&](const char *message) { error=message;return false; };
     if((asset.channels!=1 && asset.channels!=2) || !asset.frameCount ||
@@ -60,7 +60,7 @@ bool DecodeCanonicalWma(const WmaAssetView &asset, DecodedWma &output, std::stri
     codec->extradata=static_cast<std::uint8_t *>(av_mallocz(6+AV_INPUT_BUFFER_PADDING_SIZE));
     if(!codec->extradata) return Fail("WMAv2 codec flag allocation failed");
     codec->extradata[4]=31;
-    codec->err_recognition=AV_EF_CAREFUL|AV_EF_EXPLODE;
+    codec->err_recognition=tolerant?0:(AV_EF_CAREFUL|AV_EF_EXPLODE);
 
     int result=avcodec_open2(codec.get(),decoder,nullptr);
     if(result<0) { error=CodecError("open actual WMAv2 decoder",result);return false; }
@@ -68,12 +68,28 @@ bool DecodeCanonicalWma(const WmaAssetView &asset, DecodedWma &output, std::stri
     try { decoded.samples.reserve(static_cast<std::size_t>(sampleCount)); }
     catch(const std::bad_alloc &) { return Fail("WMAv2 decoded sample allocation failed"); }
     std::uint64_t actualFrames=0;
+    std::size_t packetsSent=0;
+    auto Where=[&]()->std::string {
+        return " [packets sent "+std::to_string(packetsSent)+"/"+std::to_string(asset.decodedPacketBytes.size())
+            +", decoded frames "+std::to_string(actualFrames)+"/"+std::to_string(asset.frameCount)
+            +", "+std::to_string(asset.channels)+"ch "+std::to_string(asset.sampleRate)+"Hz]";
+    };
+    // Tolerant mode only: the codec rejects the final transform block of some xWMA sounds. The
+    // original XAudio2 path plays what it can decode, so accept a failure that leaves less than
+    // two transform blocks (4096 frames) missing, zero-fill the tail to the canonical length and
+    // report exactly how much was filled. Anything larger still fails.
+    auto AcceptTail=[&]()->bool {
+        if(!tolerant || !actualFrames || actualFrames>=asset.frameCount || asset.frameCount-actualFrames>4096) return false;
+        decoded.samples.resize(static_cast<std::size_t>(sampleCount),0.0f);
+        decoded.zeroFilledFrames=static_cast<unsigned>(asset.frameCount-actualFrames);
+        error.clear();output=std::move(decoded);return true;
+    };
     auto Drain=[&](bool final)->bool {
         for(;;) {
             const int status=avcodec_receive_frame(codec.get(),frame.get());
             if(status==AVERROR(EAGAIN)) { if(final)error="WMAv2 final drain unexpectedly requires another packet";return !final; }
             if(status==AVERROR_EOF) return true;
-            if(status<0) { error=CodecError("decode actual WMAv2 frame",status);return false; }
+            if(status<0) { error=CodecError("decode actual WMAv2 frame",status)+Where();return false; }
             if(frame->format!=AV_SAMPLE_FMT_FLTP || frame->ch_layout.nb_channels!=static_cast<int>(asset.channels) ||
                 frame->sample_rate!=static_cast<int>(asset.sampleRate) || frame->nb_samples<0 || !frame->extended_data)
                 { error="WMAv2 decoder returned incompatible sample layout";return false; }
@@ -98,14 +114,21 @@ bool DecodeCanonicalWma(const WmaAssetView &asset, DecodedWma &output, std::stri
             if(result<0) { error=CodecError("allocate padded WMAv2 packet",result);return false; }
             std::memcpy(packet->data,asset.packets.data()+index*asset.packetBytes,asset.packetBytes);
             result=avcodec_send_packet(codec.get(),packet.get());av_packet_unref(packet.get());
-            if(result<0) { error=CodecError("submit actual WMAv2 packet",result);return false; }
-            if(!Drain(false)) return false;
+            if(result<0) { error=CodecError("submit actual WMAv2 packet",result)+Where();return false; }
+            ++packetsSent;
+            if(!Drain(false)) return AcceptTail();
         }
         result=avcodec_send_packet(codec.get(),nullptr);
         if(result<0 && result!=AVERROR_EOF) { error=CodecError("drain actual WMAv2 decoder",result);return false; }
-        if(!Drain(true)) return false;
+        if(!Drain(true)) return AcceptTail();
     } catch(const std::bad_alloc &) { return Fail("WMAv2 decoded sample allocation failed"); }
     if(decoded.samples.size()!=sampleCount) { error="WMAv2 decoder produced fewer frames than canonical endpoint: actual="+std::to_string(actualFrames)+" expected="+std::to_string(asset.frameCount);return false; }
     output=std::move(decoded);return true;
+}
+bool DecodeCanonicalWma(const WmaAssetView &asset, DecodedWma &output, std::string &error) {
+    return DecodeWma(asset,false,output,error);
+}
+bool DecodeCanonicalWmaTolerant(const WmaAssetView &asset, DecodedWma &output, std::string &error) {
+    return DecodeWma(asset,true,output,error);
 }
 }

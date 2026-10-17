@@ -436,7 +436,18 @@ int __cdecl iSND_CreateVoice(int voiceIndex, const snd_asset *snd, int isLooping
             {reinterpret_cast<const std::uint8_t *>(snd->data), snd->data_size}};
         std::string error;
         if (!bo1::android::DecodeCanonicalWma(asset, *decodedWma, error))
-        { Com_PrintError(9, "Actual native WMAv2 decode failed: %s\n", error.c_str()); return 0; }
+        {
+            // The strict decode stops at the first bitstream irregularity; retry the
+            // same data tolerantly (still validated against the canonical sample
+            // count) and say so, rather than dropping the sound.
+            const std::string strictError = error;
+            if (!bo1::android::DecodeCanonicalWmaTolerant(asset, *decodedWma, error))
+            { Com_PrintError(9, "Actual native WMAv2 decode failed: %s (tolerant retry: %s)\n", strictError.c_str(), error.c_str()); return 0; }
+            static int reported;
+            if (reported++ < 4)
+                Com_Printf(9, "WMAv2 sound decoded with tolerant error handling, %u trailing frames zero-filled (strict decode: %s)\n",
+                    decodedWma->zeroFilledFrames, strictError.c_str());
+        }
         if (decodedWma->samples.size() > UINT32_MAX / sizeof(float))
         { Com_PrintError(9, "WMAv2 SDK float buffer size overflow\n"); return 0; }
     }

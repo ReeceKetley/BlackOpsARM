@@ -3,6 +3,8 @@
 #include "gfx_vulkan/buffer_assets.h"
 #include <vector>
 #include <string>
+#include <atomic>
+#include <mutex>
 #include "gfx_vulkan/shader_assets.h"
 #include "gfx_vulkan/target_bindings.h"
 #include "r_reflection_probe.h"
@@ -562,14 +564,24 @@ IDirect3DIndexBuffer9 *s_nativeWorldIndexOwner;
 const unsigned short *s_nativeWorldIndices;
 int s_nativeWorldIndexCount;
 bool s_nativeWorldIndexFailed;
-// Render thread. Returns the owner slot for the current world's indices, or
-// null to keep the canonical dynamic copy.
+// Published (release) only after the buffer is fully loaded: parallel scene
+// recording threads may all ask for the owner at the first BSP draw.
+std::atomic<bool> s_nativeWorldIndexReady{false};
+std::mutex s_nativeWorldIndexMutex;
+// Any recording thread. Returns the owner slot for the current world's indices,
+// or null to keep the canonical dynamic copy.
 IDirect3DIndexBuffer9 *const *R_NativeWorldIndexOwner()
 {
     if (!g_nativeStaticWorldIndices || !g_worldDraw || !g_worldDraw->indices || g_worldDraw->indexCount <= 0)
         return nullptr;
-    if (s_nativeWorldIndices == g_worldDraw->indices && s_nativeWorldIndexCount == g_worldDraw->indexCount)
+    if (s_nativeWorldIndexReady.load(std::memory_order_acquire)
+        && s_nativeWorldIndices == g_worldDraw->indices && s_nativeWorldIndexCount == g_worldDraw->indexCount)
         return s_nativeWorldIndexFailed ? nullptr : &s_nativeWorldIndexOwner;
+    std::lock_guard<std::mutex> lock(s_nativeWorldIndexMutex);
+    if (s_nativeWorldIndexReady.load(std::memory_order_relaxed)
+        && s_nativeWorldIndices == g_worldDraw->indices && s_nativeWorldIndexCount == g_worldDraw->indexCount)
+        return s_nativeWorldIndexFailed ? nullptr : &s_nativeWorldIndexOwner;
+    s_nativeWorldIndexReady.store(false, std::memory_order_relaxed);
     bo1::vulkan::buffer_assets::Release(&s_nativeWorldIndexOwner);
     s_nativeWorldIndices = g_worldDraw->indices;
     s_nativeWorldIndexCount = g_worldDraw->indexCount;
@@ -579,11 +591,14 @@ IDirect3DIndexBuffer9 *const *R_NativeWorldIndexOwner()
         bo1::vulkan::buffer_assets::Kind::Index16, error);
     if (s_nativeWorldIndexFailed)
         Com_Printf(8, "^3Native static world indices unavailable (%s); using dynamic copies\n", error.c_str());
+    s_nativeWorldIndexReady.store(true, std::memory_order_release);
     return s_nativeWorldIndexFailed ? nullptr : &s_nativeWorldIndexOwner;
 }
 }
 void R_ReleaseNativeWorldIndices()
 {
+    std::lock_guard<std::mutex> lock(s_nativeWorldIndexMutex);
+    s_nativeWorldIndexReady.store(false, std::memory_order_relaxed);
     bo1::vulkan::buffer_assets::Release(&s_nativeWorldIndexOwner);
     s_nativeWorldIndices = nullptr;
     s_nativeWorldIndexCount = 0;
