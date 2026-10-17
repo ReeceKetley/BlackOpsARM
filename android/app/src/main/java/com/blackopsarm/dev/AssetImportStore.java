@@ -120,6 +120,19 @@ final class AssetImportStore {
 
     UseLock acquire() throws IOException { return new UseLock(); }
 
+    /** Waits (off the UI thread only) for another holder, e.g. an engine process that is still shutting down. */
+    UseLock acquireWithin(long milliseconds) throws IOException {
+        final long deadline = System.nanoTime() + milliseconds * 1_000_000L;
+        for (;;) {
+            try { return new UseLock(); }
+            catch (IOException busy) {
+                if (System.nanoTime() >= deadline) throw busy;
+                try { Thread.sleep(50); }
+                catch (InterruptedException interrupted) { Thread.currentThread().interrupt(); throw busy; }
+            }
+        }
+    }
+
     /** Receipt + current file facts; never an assertion that native initialization or rendering passes. */
     void requireCommitted(File root) throws IOException {
         JSONObject record = readReceipt();

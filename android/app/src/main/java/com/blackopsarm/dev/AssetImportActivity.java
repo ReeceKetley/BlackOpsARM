@@ -61,9 +61,9 @@ public final class AssetImportActivity extends Activity {
         progress = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
         layout.addView(progress);
         autoKino = new CheckBox(this);
-        autoKino.setText("Start Kino automatically");
+        autoKino.setText("Skip the menu and start Kino automatically (testing)");
         autoKino.setChecked(getIntent().getBooleanExtra("nativeAutoKino",
-                getPreferences(MODE_PRIVATE).getBoolean("autoKino", true)));
+                getPreferences(MODE_PRIVATE).getBoolean("autoKino", false)));
         autoKino.setOnCheckedChangeListener((button, checked) ->
                 getPreferences(MODE_PRIVATE).edit().putBoolean("autoKino", checked).apply());
         layout.addView(autoKino);
@@ -175,7 +175,7 @@ public final class AssetImportActivity extends Activity {
             String user = null;
             try {
                 AssetImportStore store = new AssetImportStore(application);
-                try (AssetImportStore.UseLock ignored = store.acquire()) {
+                try (AssetImportStore.UseLock ignored = store.acquireWithin(4000)) {
                     java.io.File gameDir = store.gameRoot();
                     store.requireCommitted(gameDir);
                     game = gameDir.getPath();
@@ -197,7 +197,10 @@ public final class AssetImportActivity extends Activity {
                     activity.status.setText(job != null && job.success ? job.message
                             : "Imported English startup and Kino files are available.\n"
                             + "Game storage: " + gamePath);
-                    if (launchAfter) {
+                    if (launchAfter && !activity.autoKino.isChecked()) {
+                        // Normal start: the launcher menu runs inside the engine activity.
+                        activity.startActivity(new Intent(activity, LauncherActivity.class));
+                    } else if (launchAfter) {
                         Intent engine = new Intent(activity, EngineActivity.class);
                         engine.putExtra("nativeVulkanPresentation",
                                 activity.getIntent().getBooleanExtra("nativeVulkanPresentation", false));

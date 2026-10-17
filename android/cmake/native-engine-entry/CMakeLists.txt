@@ -1476,6 +1476,7 @@ if(BO1_NATIVE_SDL_APP)
         "${BO1_ROOT}/src/gfx_vulkan/presentation.cpp"
         "${BO1_ROOT}/src/platform/android/native_sdl_engine_entry.cpp"
         "${BO1_ROOT}/src/platform/android/sdl_activity_bootstrap.cpp"
+        "${BO1_ROOT}/src/platform/android/launcher_session.cpp"
         "${BO1_ROOT}/tools/port/engine/native_engine_trace.cpp"
         "${BO1_ROOT}/tools/port/engine/unavailable_services.cpp")
     target_compile_definitions(blackopsarm_engine PRIVATE _DEBUG=1

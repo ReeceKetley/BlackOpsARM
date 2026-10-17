@@ -8,6 +8,10 @@
         Java_com_blackopsarm_dev_EngineActivity_nativeReadTouchState;
         Java_com_blackopsarm_dev_EngineActivity_nativeTouchButton;
         Java_com_blackopsarm_dev_EngineActivity_nativeTouchMotion;
+        Java_com_blackopsarm_dev_EngineActivity_nativeReadSessionState;
+        Java_com_blackopsarm_dev_EngineActivity_nativeRequestMapStart;
+        Java_com_blackopsarm_dev_EngineActivity_nativeReadLoadProgress;
+        Java_com_blackopsarm_dev_EngineActivity_nativeSetLoadZones;
     local:
         *;
 };
