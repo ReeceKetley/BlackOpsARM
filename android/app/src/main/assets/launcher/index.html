@@ -651,6 +651,8 @@ const A={ctx:null,ok:false,duckV:1,
   this.music.gain.setTargetAtTime((s.music/100)*(s.menuAmb?1:0)*this.duckV,t,tc);
   this.sfx.gain.setTargetAtTime(s.sfx/100,t,tc);this.voice.gain.setTargetAtTime(s.voice/100,t,tc);},
  duck(on){this.duckV=on?.22:1;this.applyVol();},
+ stopAll(){this.musicOn=false;this.duckV=0;if(this.ctx){try{this.ctx.suspend();}catch(e){}}},
+ wake(){this.duckV=1;if(this.ctx){try{this.ctx.resume();this.applyVol();}catch(e){}}},
  osc(type,f,t,dur,vol,o={}){const c=this.ctx,os=c.createOscillator(),g=c.createGain();os.type=type;os.frequency.setValueAtTime(f,t);if(o.f2)os.frequency.exponentialRampToValueAtTime(o.f2,t+dur);if(o.det)os.detune.value=o.det;
   const at=o.a||.003;g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(vol,t+at);g.gain.exponentialRampToValueAtTime(.0001,t+dur);
   let last=g;if(o.lp){const f2=c.createBiquadFilter();f2.type='lowpass';f2.frequency.value=o.lp;g.connect(f2);last=f2;}
@@ -1075,7 +1077,7 @@ function launch(cfg){R.hist=[];go('loading',{push:false,cfg});
  if(!NATIVE){toast('Starting maps needs the Android app','err');return;}
  const m=mapOf(cfg.map),s=P.settings;
  setTimeout(()=>{const err=NATIVE.launch(JSON.stringify({map:m.internal,height:[480,540,720][s.res],config:buildConfig(),touchOpacity:s.touchOp/100,touchScale:s.touchSize/100}));
-  if(err){toast(err,'err');LD=null;A.duck(false);R.hist=[];go('maps',{push:false});}},900);}
+  if(err){toast(err,'err');LD=null;A.duck(false);R.hist=[];go('maps',{push:false});}else setTimeout(freeze,300);},900);}
 function enterLoading(o){const cfg=o.cfg;const m=mapOf(cfg.map);LD={cfg,t:0,dur:cfg.state?2800:4400,ready:false,done:false,rt:0};
  GL.setMap(MAPI[cfg.map]);A.duck(true);A.boom();
  $('#ldTop').textContent='STARTING ENGINE · SOLO';$('#ldClock').textContent=new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
@@ -1150,8 +1152,14 @@ function pollPad(now){if(!navigator.getGamepads)return null;let gp=null;try{for(
  return gp;}
 
 /* ---------------- loop + boot ---------------- */
-let last=performance.now(),fpsN=0,fpsT=0;
-function loop(now){const dt=Math.min(64,now-last);last=now;const gp=pollPad(now);GL.frame(now,dt);
+let last=performance.now(),fpsN=0,fpsT=0,FROZEN=false,FROZEN_AT=0;
+function freeze(){if(FROZEN)return;FROZEN=true;FROZEN_AT=performance.now();A.stopAll();
+ const m=LD&&mapOf(LD.cfg.map);const g=$('#gl');if(g)g.style.display='none';if(m&&m.img)$('#app').style.background='#000 url('+m.img+') center/cover';
+ FROZEN_MAP=m?m.internal:'map';$('#ldFill').style.width='0';$('#ldPct').textContent='0%';$('#ldFile').textContent='Starting '+FROZEN_MAP+'…';LD=null;}
+let FROZEN_MAP='';
+window.onNativeProgress=function(p){if(!FROZEN)return;const e=Math.min(99,p/10);$('#ldFill').style.width=e+'%';$('#ldPct').textContent=Math.floor(e)+'%';$('#ldFile').textContent=(e<1?'Starting ':'Loading ')+FROZEN_MAP+'…';};
+function unfreeze(){if(!FROZEN)return;FROZEN=false;const g=$('#gl');if(g)g.style.display='';$('#app').style.background='';A.wake();last=performance.now();requestAnimationFrame(loop);}
+function loop(now){if(FROZEN)return;const dt=Math.min(64,now-last);last=now;const gp=pollPad(now);GL.frame(now,dt);
  if(INS&&R.screen==='import')tickInstall(dt);if(R.screen==='loading')tickLoading(dt);
  if(R.screen==='settings'){if(R.setTab==='controller')livePad(gp);else if(R.setTab==='audio')drawSpec();}
  fpsN++;fpsT+=dt;if(fpsT>500){if(false)$('#st-fps').textContent=Math.round(fpsN*1000/fpsT)+' FPS';fpsN=0;fpsT=0;}
@@ -1160,6 +1168,13 @@ function clock(){$('#st-clock').textContent=new Date().toLocaleTimeString('en-GB
 refreshNative();applyAll();updateStatus();renderGlyphs();renderPrompts();clock();setInterval(clock,15000);
 GL.cfg(SCR.title.gl);
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{paintRounds(document);});
+window.onNativeSession=function(st){if(FROZEN&&st===1&&performance.now()-FROZEN_AT>4000){unfreeze();R.hist=[];go('maps',{push:false,silent:true});toast('The map did not start','err');}};
+window.onNativeFreeze=function(){freeze();};
+window.onNativeBack=function(){if(R.screen==='loading')return;if(R.modal||R.screen!=='title')press('B');else ACT.quit();};
+(function(){const h=location.hash||'';
+ if(h==='#maps'){start();R.hist=['main'];go('maps',{push:false,silent:true});}
+ else if(h.indexOf('#loading=')===0){const st=h.slice(9),m=MAPS.find(x=>x.internal===st);
+  if(m){R.hist=[];go('loading',{push:false,cfg:{map:m.id,round:1}});setTimeout(freeze,200);}}})();
 requestAnimationFrame(loop);
 })();
 </script>

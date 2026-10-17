@@ -21,6 +21,8 @@
 #if defined(__ANDROID__)
 #include <platform/android/file_services.h>
 #include <platform/atomic32.h>
+// Counts one compressed 256 KB read toward the in-process launcher's load progress (launcher_session.cpp).
+void Android_NoteLoadChunk(const char *zone);
 #endif
 
 #if defined(__ANDROID__)
@@ -155,6 +157,7 @@ signed __int32 DB_WaitXFileStage()
     g_totalWait += Sys_Milliseconds() - waitStart;
 #if defined(__ANDROID__)
     result = g_loadedSize.fetch_add(1u);
+    Android_NoteLoadChunk(g_load.filename);
 #else
     result = _InterlockedExchangeAdd(&g_loadedSize, 1u);
 #endif

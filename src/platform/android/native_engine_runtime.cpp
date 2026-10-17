@@ -28,6 +28,7 @@
 #include <platform/android/quit_services.h>
 #include <platform/android/process_guard.h>
 #include <platform/android/shutdown_services.h>
+#include "launcher_session.h"
 #include <platform/android/headless_diagnostics.h>
 void Sys_InitializeNativeDiagnostics(const char *commandLine);
 extern "C" bool Bo1_ConfigureInitializationTrace(bool rendered);
@@ -160,6 +161,17 @@ bool InstallAutomaticKinoConsole(const char *userRoot) {
     RejectSDLLaunch("automatic Kino console requires the full native SDL engine");
     return false;
 #endif
+}
+// The launcher's saved settings (console lines, <user root>/launcher.cfg). Empty when absent.
+void ReadLauncherSettings(std::string& text) {
+    text.clear();
+    const std::string path=std::string(Sys_EngineUserRoot())+"/launcher.cfg";
+    if(FILE* file=std::fopen(path.c_str(),"rb")) {
+        char buffer[4096];std::size_t read;
+        while((read=std::fread(buffer,1,sizeof(buffer),file))>0&&text.size()<65536)text.append(buffer,read);
+        std::fclose(file);
+        std::fprintf(stderr,"ENGINE ENTRY launcher settings read (%zu bytes)\n",text.size());
+    } else std::fputs("ENGINE ENTRY launcher settings file absent; using saved settings\n",stderr);
 }
 bool ValidateSDLRoot(const char *directory, bool writable) {
     if(!directory || directory[0]!='/' || strnlen(directory,PATH_MAX+1)>PATH_MAX)return false;
@@ -307,8 +319,33 @@ int bo1::android::RunNativeEngine(NativeEngineEntry entry, int argc, char **argv
                 Cbuf_AddText(0,"map zombie_theater\n");
             } else std::fputs("ENGINE ENTRY auto Kino: gameplay already active, no map reload\n",stderr);
         }
-        if(rendered)IN_Frame_Native();
-        else
+        if(rendered) {
+            // In-process launcher: publish what the engine is doing so the menu overlay
+            // can follow it, start requested maps from the frontend, and idle the engine
+            // while the menu is the only thing being looked at.
+            namespace session=bo1::android::launcher_session;
+            const bool active=CL_GetLocalClientConnectionState(0)==CA_ACTIVE;
+            const bool frontend=active&&Com_IsSPFrontEndRunning();
+            static bool menuSeen;
+            if(frontend)menuSeen=true;
+            const session::State published=frontend?session::Menu:active?session::Match:menuSeen?session::Loading:session::Booting;
+            static int lastPublished=-1;
+            if(lastPublished!=int(published)){lastPublished=int(published);std::fprintf(stderr,"ENGINE ENTRY launcher session state %d\n",lastPublished);}
+            session::Publish(published);
+            if(frontend) {
+                std::string requested;
+                if(session::TakeRequestedMap(requested)) {
+                    std::string commands;
+                    ReadLauncherSettings(commands);
+                    commands+="\nmap ";commands+=requested;commands+="\n";
+                    std::fprintf(stderr,"ENGINE ENTRY launcher menu start: queueing map %s\n",requested.c_str());
+                    // The map command runs inside this frame and blocks for the whole load.
+                    session::Publish(session::Loading);
+                    Cbuf_AddText(0,commands.c_str());
+                } else std::this_thread::sleep_for(std::chrono::milliseconds(100)); // menu idle: about 10 frames/s
+            }
+            IN_Frame_Native();
+        } else
 #endif
         Platform_InputFrame();
         Com_Frame();
@@ -330,14 +367,7 @@ bool Android_TakeLauncherStart(std::string& commands)
 {
     static std::atomic<bool> taken{false};
     if(!bo1::android::autoStartMap[0]||taken.exchange(true))return false;
-    commands.clear();
-    const std::string path=std::string(Sys_EngineUserRoot())+"/launcher.cfg";
-    if(FILE* file=std::fopen(path.c_str(),"rb")) {
-        char buffer[4096];std::size_t read;
-        while((read=std::fread(buffer,1,sizeof(buffer),file))>0&&commands.size()<65536)commands.append(buffer,read);
-        std::fclose(file);
-        std::fprintf(stderr,"ENGINE ENTRY launcher settings read (%zu bytes)\n",commands.size());
-    } else std::fputs("ENGINE ENTRY launcher settings file absent; using saved settings\n",stderr);
+    ReadLauncherSettings(commands);
     commands+="\nmap ";commands+=bo1::android::autoStartMap;commands+="\n";
     std::fprintf(stderr,"ENGINE ENTRY launcher start: queueing map %s in place of the frontend\n",bo1::android::autoStartMap);
     return true;
