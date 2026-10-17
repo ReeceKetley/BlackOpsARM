@@ -2,6 +2,20 @@
 #include <demo/demo_version.h>
 #include <server_mp/sv_main_mp.h>
 #include "msg.h"
+#if defined(__ANDROID__)
+#include <cstdint>
+#include <unordered_set>
+// The retail engine prints this field-change hint on every snapshot. It is a
+// diagnostic only (the field is sent normally); on screen it floods the mini
+// console, so report each field once per process on Android.
+static bool SV_ReportNetFieldHint(const NetField *field, bool archived)
+{
+    static std::unordered_set<std::uintptr_t> reported;
+    return reported.insert(reinterpret_cast<std::uintptr_t>(field) * 2 + (archived ? 1 : 0)).second;
+}
+#else
+static bool SV_ReportNetFieldHint(const NetField *, bool) { return true; }
+#endif
 #include <server_mp/sv_snapshot_profile_mp.h>
 #include <server_mp/sv_init_mp.h>
 #include <cgame/cg_draw_debug.h>
@@ -2225,7 +2239,8 @@ char __cdecl MSG_WriteDeltaField(
             else
                 v14 = "unarchived";
             EntityTypeString = SV_GetEntityTypeString(snapInfo->packetEntityType);
-            Com_PrintError(
+            if ( SV_ReportNetFieldHint(field, snapInfo->packetEntityTypeArchived != 0) )
+                Com_PrintError(
                 15,
                 "Field %s changed for %s eType %s when we thought it never would\n",
                 field->name,
@@ -2288,7 +2303,8 @@ char __cdecl MSG_WriteDeltaField(
             else
                 v14 = "unarchived";
             EntityTypeString = SV_GetEntityTypeString(snapInfo->packetEntityType);
-            Com_PrintError(
+            if ( SV_ReportNetFieldHint(field, snapInfo->packetEntityTypeArchived != 0) )
+                Com_PrintError(
                 15,
                 "Field %s changed for %s eType %s when we thought it never would\n",
                 field->name,

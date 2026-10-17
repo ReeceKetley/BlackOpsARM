@@ -5855,6 +5855,13 @@ void __cdecl R_LinkDynEnt(unsigned int dynEntId, DynEntityDrawType drawType, flo
 
 void __cdecl R_UnlinkDynEnt(unsigned int dynEntId, DynEntityDrawType drawType)
 {
+#if defined(__ANDROID__)
+    // Leaving a match tears the renderer's world down before the client's dynents are unlinked
+    // (CL_Disconnect runs again from CL_MapLoading). With no world there are no cell or light
+    // bits left to clear.
+    if (!rgp.world)
+        return;
+#endif
     R_UnfilterDynEntFromCells(dynEntId, drawType);
     R_UnlinkDynEntFromPrimaryLights(dynEntId, drawType);
 }

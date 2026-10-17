@@ -1,5 +1,8 @@
 package com.blackopsarm.dev;
 
+import android.annotation.SuppressLint;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -14,6 +17,10 @@ import android.widget.TextView;
 import java.util.Locale;
 import android.util.Log;
 import android.widget.Toast;
+import android.webkit.WebResourceRequest;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import java.io.File;
 import java.io.IOException;
 import org.libsdl.app.SDLActivity;
@@ -22,6 +29,10 @@ import org.libsdl.app.SDLActivity;
 public final class EngineActivity extends SDLActivity {
     public static final String EXTRA_GAME_ROOT = "com.blackopsarm.dev.GAME_ROOT";
     public static final String EXTRA_USER_ROOT = "com.blackopsarm.dev.USER_ROOT";
+    // Launcher start: map zone stem, and on-screen control opacity (0.2..1) / size (0.7..1.4).
+    public static final String EXTRA_LAUNCHER_MAP = "com.blackopsarm.dev.LAUNCHER_MAP";
+    public static final String EXTRA_TOUCH_OPACITY = "com.blackopsarm.dev.TOUCH_OPACITY";
+    public static final String EXTRA_TOUCH_SCALE = "com.blackopsarm.dev.TOUCH_SCALE";
     private boolean adopted;
     private String gameRoot;
     private String userRoot;
@@ -133,7 +144,7 @@ public final class EngineActivity extends SDLActivity {
     }
     private void updatePerformanceOverlay() {
         performanceHandler.removeCallbacks(performanceRefresh);
-        boolean enabled = adopted && performanceVisible && performanceResumed && performanceSurfaceReady
+        boolean enabled = adopted && !overlayShown && performanceVisible && performanceResumed && performanceSurfaceReady
                 && mSurface != null && mSurface.mIsSurfaceReady && mSurface.getHolder().getSurface().isValid()
                 && performanceNativeAvailable;
         if (performanceView != null) performanceView.setVisibility(enabled ? View.VISIBLE : View.GONE);
@@ -176,10 +187,148 @@ public final class EngineActivity extends SDLActivity {
             performanceHandler.postDelayed(this, 100);
         }
     };
+    // ---- in-process launcher menu --------------------------------------------------
+    private native int nativeReadSessionState();
+    private native boolean nativeRequestMapStart(String map);
+    private native int nativeReadLoadProgress();
+    private native void nativeSetLoadZones(String csv);
+    private int lastProgress = -1, progressMax;
+    private volatile long expectedLoadBytes;
+    private WebView menu;
+    private boolean overlayShown, menuMode, matchSeen;
+    private int sessionState = -1, runningHeight = 540;
+    private float touchOpacity = 1f, touchScale = 1f;
+    private LauncherBridge launcherBridge;
+    private final Runnable sessionPoll = new Runnable() {
+        @Override public void run() {
+            try {
+                int state = nativeReadSessionState();
+                if (state != sessionState) { sessionState = state; onSessionState(state); }
+                if (menu != null && state != 3) pushProgress();
+            } catch (LinkageError failure) { Log.e("BlackOpsARM", "Session state unavailable", failure); return; }
+            performanceHandler.postDelayed(this, 250);
+        }
+    };
+    private final LauncherBridge.Host menuHost = new LauncherBridge.Host() {
+        @Override public File gameRoot() { return new File(EngineActivity.this.gameRoot); }
+        @Override public File userRoot() { return new File(EngineActivity.this.userRoot); }
+        @Override public int runningHeight() { return runningHeight; }
+        @Override public boolean needsFreshEngine() { return matchSeen; }
+        @Override public boolean requestMap(String map) { prepareProgress(map); return nativeRequestMapStart(map); }
+        @Override public void applyTouch(float opacity, float scale) {
+            runOnUiThread(() -> {
+                touchOpacity = opacity; touchScale = scale;
+                getSharedPreferences("launcher", MODE_PRIVATE).edit().putFloat("touchOpacity", opacity).putFloat("touchScale", scale).apply();
+                if (touchControls != null) touchControls.applyLook();
+            });
+        }
+        @Override public void rememberHeight(int height) {
+            getSharedPreferences("launcher", MODE_PRIVATE).edit().putInt("height", height).apply();
+        }
+        @Override public void restartWithMap(String map, int height) {
+            // The render size is fixed for the life of an engine process: start a fresh one.
+            runOnUiThread(() -> relaunch(new Intent(EngineActivity.this, LauncherActivity.class)
+                    .putExtra("launchMap", map).putExtra("launchHeight", height)));
+        }
+        @Override public void openImporter() {
+            runOnUiThread(() -> relaunch(new Intent(EngineActivity.this, AssetImportActivity.class)));
+        }
+        @Override public void quit() {
+            runOnUiThread(() -> { finishAndRemoveTask(); killEngineSoon(); });
+        }
+    };
+    /** Starts another activity in a clean task, then ends this engine process (its state cannot be reset). */
+    private void relaunch(Intent next) {
+        next.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(next);
+        killEngineSoon();
+    }
+    private void killEngineSoon() {
+        performanceHandler.postDelayed(() -> android.os.Process.killProcess(android.os.Process.myPid()), 300);
+    }
+    @SuppressLint("SetJavaScriptEnabled")
+    private void showMenu(String hash) {
+        if (menu != null || isFinishing() || mLayout == null) return;
+        WebView view = new WebView(this);
+        view.setBackgroundColor(Color.BLACK);
+        WebSettings settings = view.getSettings();
+        settings.setJavaScriptEnabled(true);
+        settings.setDomStorageEnabled(true); // the page keeps its settings in localStorage
+        settings.setMediaPlaybackRequiresUserGesture(false);
+        settings.setAllowContentAccess(false);
+        settings.setAllowFileAccessFromFileURLs(true);
+        view.setWebViewClient(new WebViewClient() {
+            @Override public boolean shouldOverrideUrlLoading(WebView v, WebResourceRequest request) {
+                return !request.getUrl().toString().startsWith("file:///android_asset/launcher/");
+            }
+        });
+        view.addJavascriptInterface(launcherBridge, "BlackOpsARM");
+        mLayout.addView(view, new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        menu = view;
+        overlayShown = true;
+        view.loadUrl("file:///android_asset/launcher/index.html" + hash);
+        updatePerformanceOverlay();
+        updateTouchAvailability();
+    }
+    /** Frees the page, its audio and its renderer completely: nothing of the menu runs during play. */
+    private void hideMenu() {
+        if (menu == null) return;
+        WebView view = menu;
+        menu = null;
+        overlayShown = false;
+        view.evaluateJavascript("window.onNativeFreeze&&window.onNativeFreeze()", null);
+        view.removeJavascriptInterface("BlackOpsARM");
+        view.loadUrl("about:blank");
+        if (mLayout != null) mLayout.removeView(view);
+        view.destroy();
+        updatePerformanceOverlay();
+        updateTouchAvailability();
+    }
+    /** Tells the engine which zones this map loads, so their real read progress can be shown. */
+    private void prepareProgress(String map) {
+        final File root = new File(gameRoot, "zone");
+        new Thread(() -> {
+            String[] names = {"common_zombie_patch", "en_common_zombie", "common_zombie", map + "_patch", "en_" + map, map};
+            long total = 0;
+            for (String name : names) {
+                for (String dir : new String[] {"common", "English", "english"}) {
+                    File zone = new File(root, dir + "/" + name + ".ff");
+                    if (zone.isFile()) { total += zone.length(); break; }
+                }
+            }
+            try { nativeSetLoadZones(String.join(",", names)); } catch (LinkageError failure) { return; }
+            expectedLoadBytes = total;
+        }, "load-progress-zones").start();
+    }
+    /** Pushes the engine's real fastfile loading fraction to the page (never moving backwards: each zone restarts it). */
+    private void pushProgress() {
+        long expected = expectedLoadBytes;
+        if (expected <= 0) return;
+        // Compressed 256 KB reads of this map's zones, against those zones' file sizes.
+        long loaded = (long) nativeReadLoadProgress() * 262144L;
+        int progress = Math.max(progressMax, (int) Math.min(990L, loaded * 1000L / expected));
+        progressMax = progress;
+        if (progress != lastProgress && menu != null) {
+            lastProgress = progress;
+            menu.evaluateJavascript("window.onNativeProgress&&window.onNativeProgress(" + progress + ")", null);
+        }
+    }
+    private void onSessionState(int state) {
+        Log.i("BlackOpsARM", "LAUNCHER session state " + state + " menu=" + (menu != null));
+        if (state == 3) { matchSeen = true; hideMenu(); return; }
+        if (menu == null && matchSeen && !isFinishing()) showMenu("#maps"); // back from a match
+        if (menu != null) menu.evaluateJavascript("window.onNativeSession&&window.onNativeSession(" + state + ")", null);
+    }
+    @Override public void onBackPressed() {
+        if (menu != null) { menu.evaluateJavascript("window.onNativeBack&&window.onNativeBack()", null); return; }
+        super.onBackPressed();
+    }
+
     private void createTouchControls() {
         touchVisible = getPreferences(MODE_PRIVATE).getBoolean("touchControls", true);
         touchWindowFocused = hasWindowFocus();
         touchControls = new TouchControls();
+        touchControls.setAlpha(Math.max(0.2f, Math.min(1f, touchOpacity)));
         mLayout.addView(touchControls, new RelativeLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         // Metrics stay readable above the transparent control layer.
@@ -188,7 +337,7 @@ public final class EngineActivity extends SDLActivity {
     }
     private void updateTouchAvailability() {
         performanceHandler.removeCallbacks(touchRefresh);
-        boolean enabled = adopted && touchVisible && performanceResumed && touchWindowFocused
+        boolean enabled = adopted && !overlayShown && touchVisible && performanceResumed && touchWindowFocused
                 && performanceSurfaceReady && mSurface != null && mSurface.mIsSurfaceReady
                 && mSurface.getHolder().getSurface().isValid() && touchNativeAvailable;
         if (touchAdmission != enabled) {
@@ -240,6 +389,12 @@ public final class EngineActivity extends SDLActivity {
             setContentDescription("Tablet controls. Left pad moves, drag open space to look, right buttons act. Touch button hides controls.");
             for (int i = 0; i < actionBounds.length; i++) actionBounds[i] = new android.graphics.RectF();
         }
+        /** Re-applies the opacity/size chosen in the launcher menu. */
+        void applyLook() {
+            setAlpha(Math.max(0.2f, Math.min(1f, touchOpacity)));
+            onSizeChanged(getWidth(), getHeight(), 0, 0);
+            invalidate();
+        }
         void clearPointers() {
             pointers.clear();
             java.util.Arrays.fill(refs, 0);
@@ -258,7 +413,8 @@ public final class EngineActivity extends SDLActivity {
         @Override protected void onSizeChanged(int w, int h, int oldw, int oldh) {
             super.onSizeChanged(w, h, oldw, oldh);
             unit = Math.min(getResources().getDisplayMetrics().density,
-                    Math.min(w / 640f, h / 360f));
+                    Math.min(w / 640f, h / 360f))
+                    * Math.max(0.7f, Math.min(1.4f, touchScale));
             moveRadius = 68 * unit;
             moveX = 90 * unit; moveY = h - 94 * unit;
             toggle.set(w - 102 * unit, 12 * unit, w - 12 * unit, 46 * unit);
@@ -434,9 +590,11 @@ public final class EngineActivity extends SDLActivity {
         // The matching SDL SDK prepends its library argument: SDL_main receives argc=4.
         if (getIntent().getBooleanExtra("nativeVulkanBackend", false)
                 && !getIntent().getBooleanExtra("nativeVulkanPresentation", false)) {
+            String launcherMap = getIntent().getStringExtra(EXTRA_LAUNCHER_MAP);
             return new String[] {gameRoot, userRoot, "--native-vulkan",
                     Integer.toString(getIntent().getIntExtra("nativeVulkanHeight", 0)),
-                    getIntent().getBooleanExtra("nativeAutoKino", true) ? "--kino" : "--menu"};
+                    launcherMap != null ? "--map=" + launcherMap
+                            : getIntent().getBooleanExtra("nativeAutoKino", true) ? "--kino" : "--menu"};
         }
         if (getIntent().getBooleanExtra("nativeVulkanPresentation", false)) {
             return new String[] {gameRoot, userRoot, "--vulkan-presentation"};
@@ -449,7 +607,8 @@ public final class EngineActivity extends SDLActivity {
         super.onCreate(state);
         try {
             AssetImportStore store = new AssetImportStore(this);
-            assetUse = store.acquire();
+            // A previous engine process may still be shutting down: wait for its lock.
+            assetUse = store.acquireWithin(3000);
             File game = store.gameRoot();
             File user = store.userRoot();
             String requestedGame = getIntent().getStringExtra(EXTRA_GAME_ROOT);
@@ -481,19 +640,34 @@ public final class EngineActivity extends SDLActivity {
             Toast.makeText(this, "The native engine could not start. See the development log.", Toast.LENGTH_LONG).show();
             finish();
         } else {
+            SharedPreferences launcherPrefs = getSharedPreferences("launcher", MODE_PRIVATE);
+            runningHeight = getIntent().getIntExtra("nativeVulkanHeight", 540);
+            touchOpacity = launcherPrefs.getFloat("touchOpacity", 1f);
+            touchScale = launcherPrefs.getFloat("touchScale", 1f);
+            launcherBridge = new LauncherBridge(menuHost);
             createPerformanceOverlay();
             if (!getIntent().getBooleanExtra("nativeVulkanPresentation", false)) createTouchControls();
+            // Normal start (the menu): the page covers the engine while it boots to its hidden
+            // frontend. A restart for a chosen map shows the page's loading screen instead; the
+            // testing shortcut (nativeAutoKino) starts without it.
+            menuMode = !getIntent().getBooleanExtra("nativeAutoKino", true);
+            String launchMap = getIntent().getStringExtra(EXTRA_LAUNCHER_MAP);
+            if (launchMap != null) { prepareProgress(launchMap); showMenu("#loading=" + launchMap); }
+            else if (menuMode) showMenu("");
+            performanceHandler.post(sessionPoll);
         }
     }
 
     @Override protected void onResume() {
         super.onResume();
+        if (menu != null) { menu.onResume(); menu.resumeTimers(); }
         performanceResumed = true;
         updatePerformanceOverlay();
         updateTouchAvailability();
     }
 
     @Override protected void onPause() {
+        if (menu != null) { menu.onPause(); menu.pauseTimers(); }
         performanceResumed = false;
         updatePerformanceOverlay();
         updateTouchAvailability();
@@ -507,6 +681,8 @@ public final class EngineActivity extends SDLActivity {
     }
 
     @Override protected void onDestroy() {
+        performanceHandler.removeCallbacks(sessionPoll);
+        hideMenu();
         performanceResumed = false;
         updatePerformanceOverlay();
         updateTouchAvailability();

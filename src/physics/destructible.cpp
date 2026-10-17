@@ -63,7 +63,8 @@ DestructiblePose s_cgDestructiblePoses[2];
 destructible_event_t g_destructible_events[64];
 int g_destructible_events_count;
 
-unsigned __int8 g_cgPieceArrayBuffer[73728];
+// Hunk_UserCreateFromBuffer requires pointer alignment on 64-bit targets.
+alignas(16) unsigned __int8 g_cgPieceArrayBuffer[73728];
 int s_num_destructible_gamestates[1];
 destructible_gamestate s_destructible_gamestates[1][32];
 
@@ -83,7 +84,7 @@ HunkUser *g_cgPieceArrayHunk;
 int cg_updateTime[1];
 unsigned int cg_numDestructibles[1];
 
-unsigned __int8 g_pieceArrayBuffer[73728];
+alignas(16) unsigned __int8 g_pieceArrayBuffer[73728];
 
 bool __cdecl hasLabel(DestructibleDef *ddef, unsigned __int16 label)
 {

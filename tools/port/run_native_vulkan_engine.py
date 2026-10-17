@@ -93,7 +93,7 @@ try:
     device('shell', 'svc', 'power', 'stayon', 'usb')
     device('shell', 'input', 'keyevent', 'KEYCODE_WAKEUP')
     device('shell', 'wm', 'dismiss-keyguard')
-    device('shell', 'am', 'start', '-W', '-n', 'com.blackopsarm.dev/.AssetImportActivity', '--ez', 'nativeVulkanBackend', 'true', '--ei', 'nativeVulkanHeight', str(a.height))
+    device('shell', 'am', 'start', '-W', '-n', 'com.blackopsarm.dev/.AssetImportActivity', '--ez', 'nativeVulkanBackend', 'true', '--ez', 'nativeAutoKino', 'true', '--ei', 'nativeVulkanHeight', str(a.height))
     remote = f'/data/local/tmp/blackopsarm-ui{a.sdk}.xml'
     device('shell', 'uiautomator', 'dump', remote)
     local = out / f'sdk-importer-ui{a.sdk}.xml'
