@@ -22,6 +22,10 @@ import org.libsdl.app.SDLActivity;
 public final class EngineActivity extends SDLActivity {
     public static final String EXTRA_GAME_ROOT = "com.blackopsarm.dev.GAME_ROOT";
     public static final String EXTRA_USER_ROOT = "com.blackopsarm.dev.USER_ROOT";
+    // Launcher start: map zone stem, and on-screen control opacity (0.2..1) / size (0.7..1.4).
+    public static final String EXTRA_LAUNCHER_MAP = "com.blackopsarm.dev.LAUNCHER_MAP";
+    public static final String EXTRA_TOUCH_OPACITY = "com.blackopsarm.dev.TOUCH_OPACITY";
+    public static final String EXTRA_TOUCH_SCALE = "com.blackopsarm.dev.TOUCH_SCALE";
     private boolean adopted;
     private String gameRoot;
     private String userRoot;
@@ -180,6 +184,7 @@ public final class EngineActivity extends SDLActivity {
         touchVisible = getPreferences(MODE_PRIVATE).getBoolean("touchControls", true);
         touchWindowFocused = hasWindowFocus();
         touchControls = new TouchControls();
+        touchControls.setAlpha(Math.max(0.2f, Math.min(1f, getIntent().getFloatExtra(EXTRA_TOUCH_OPACITY, 1f))));
         mLayout.addView(touchControls, new RelativeLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         // Metrics stay readable above the transparent control layer.
@@ -258,7 +263,8 @@ public final class EngineActivity extends SDLActivity {
         @Override protected void onSizeChanged(int w, int h, int oldw, int oldh) {
             super.onSizeChanged(w, h, oldw, oldh);
             unit = Math.min(getResources().getDisplayMetrics().density,
-                    Math.min(w / 640f, h / 360f));
+                    Math.min(w / 640f, h / 360f))
+                    * Math.max(0.7f, Math.min(1.4f, getIntent().getFloatExtra(EXTRA_TOUCH_SCALE, 1f)));
             moveRadius = 68 * unit;
             moveX = 90 * unit; moveY = h - 94 * unit;
             toggle.set(w - 102 * unit, 12 * unit, w - 12 * unit, 46 * unit);
@@ -434,9 +440,11 @@ public final class EngineActivity extends SDLActivity {
         // The matching SDL SDK prepends its library argument: SDL_main receives argc=4.
         if (getIntent().getBooleanExtra("nativeVulkanBackend", false)
                 && !getIntent().getBooleanExtra("nativeVulkanPresentation", false)) {
+            String launcherMap = getIntent().getStringExtra(EXTRA_LAUNCHER_MAP);
             return new String[] {gameRoot, userRoot, "--native-vulkan",
                     Integer.toString(getIntent().getIntExtra("nativeVulkanHeight", 0)),
-                    getIntent().getBooleanExtra("nativeAutoKino", true) ? "--kino" : "--menu"};
+                    launcherMap != null ? "--map=" + launcherMap
+                            : getIntent().getBooleanExtra("nativeAutoKino", true) ? "--kino" : "--menu"};
         }
         if (getIntent().getBooleanExtra("nativeVulkanPresentation", false)) {
             return new String[] {gameRoot, userRoot, "--vulkan-presentation"};
@@ -449,7 +457,15 @@ public final class EngineActivity extends SDLActivity {
         super.onCreate(state);
         try {
             AssetImportStore store = new AssetImportStore(this);
-            assetUse = store.acquire();
+            // The launcher holds this lock only briefly (install checks, writing
+            // its settings); wait out that window instead of failing the start.
+            for (int attempt = 0; ; attempt++) {
+                try { assetUse = store.acquire(); break; }
+                catch (IOException busy) {
+                    if (attempt >= 30) throw busy;
+                    try { Thread.sleep(100); } catch (InterruptedException interrupted) { throw busy; }
+                }
+            }
             File game = store.gameRoot();
             File user = store.userRoot();
             String requestedGame = getIntent().getStringExtra(EXTRA_GAME_ROOT);

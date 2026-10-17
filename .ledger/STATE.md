@@ -7,7 +7,7 @@ Updated 2026-10-17. User goal ACTIVE: stable ~25-30 FPS on mobile (540p + SGSR, 
 - Look-away stutter fixed SDK721: static model cache patch now uses buffer_assets::UpdateRange noOverwrite (D3DLOCK_NOOVERWRITE contract) instead of copying the whole retained VB (was 30-37ms/frame). ProgramCache capacity 1024.
 - Diagnostics kept (cheap, log only slow frames): native_frame_spike, native_main_spike, native_handoff_wait, native_backend_spike (phases, smc/lighting patch, slowest render command), native_parallel_record.
 - WATCH: intermittent heap corruption class (FACT-0568). Zombie path-freeze deferred (FACT-0561/0563).
-- Next: heavy views are GPU-bound (~31ms): look at GPU-side costs (sun shadow cascades/resolution, scene pass, post) and remaining serial render-thread work (emissive/codemesh, dynamic buffer upload, texture upload in Begin).
+- Optimisation PAUSED by user decision (2026-10-17): heaviest Kino view is fragment-bound (main scene pass ~21ms of ~28ms GPU); depth prepass gives no GPU gain; forcing half precision on all pixel math broke lighting and was reverted. Accept as device limit until the user proposes a new idea. Repo: private https://github.com/ReeceKetley/BlackOpsARM (remote arm, main = android-arm64).
 
 ## Earlier detail (2026-10-16 and before)
 

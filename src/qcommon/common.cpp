@@ -2630,6 +2630,10 @@ void Com_LoadCommonFastFile()
         DB_LoadXAssets(zoneInfo, zoneCount, 0);
 }
 
+#if defined(__ANDROID__)
+#include <string>
+bool Android_TakeLauncherStart(std::string &commands); // platform/android/native_engine_runtime.cpp
+#endif
 // zombies: SP's Com_LoadFrontEnd (SP 0x00449E80, called at the end of SP Com_Init 0x004069C0 when no map runs,
 // and on the way back from a level: 0x005A6BF0, 0x00678F80) goes on after the MP part: unless the front end
 // level already runs (sv_running and a "menu_*" / "frontend" map) it resets the game mode dvars, sets
@@ -2661,6 +2665,18 @@ static void Com_LoadFrontEnd_SP()
         primary = 0;
     if ( !Com_LocalClient_IsBeingUsed(0) )
         Com_LocalClient_SetBeingUsed(primary, 1);
+#if defined(__ANDROID__)
+    {
+        // Launcher start: its settings and map replace the frontend level once.
+        std::string launcherCommands;
+        if ( Android_TakeLauncherStart(launcherCommands) )
+        {
+            Com_Printf(16, "Com_LoadFrontEnd: launcher start, queueing its settings and map\n");
+            Cbuf_AddText(primary, launcherCommands.c_str());
+            return;
+        }
+    }
+#endif
     Com_Printf(16, "Com_LoadFrontEnd: queueing \"map frontend\" (SP 0x00449E80)\n");
     Cbuf_AddText(primary, "map frontend\n");
 }

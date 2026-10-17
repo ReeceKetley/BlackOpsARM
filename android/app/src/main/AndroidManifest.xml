@@ -7,13 +7,19 @@
         android:label="BlackOpsARM Dev"
         android:theme="@android:style/Theme.Material.NoActionBar">
         <activity
-            android:name=".AssetImportActivity"
-            android:exported="true">
+            android:name=".LauncherActivity"
+            android:exported="true"
+            android:screenOrientation="sensorLandscape"
+            android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout|uiMode">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <!-- Game data import; also started directly by the development tooling. -->
+        <activity
+            android:name=".AssetImportActivity"
+            android:exported="true" />
         <activity android:name=".DevelopmentActivity" android:exported="false" />
         <activity
             android:name=".EngineActivity"

@@ -11,16 +11,26 @@ extern "C" SDLMAIN_DECLSPEC int SDL_main(int argc, char **argv) {
     if(argc>=5&&argv&&argv[argc-1]) {
         if(!std::strcmp(argv[argc-1],"--kino")){bo1::android::autoStartKino=true;--argc;}
         else if(!std::strcmp(argv[argc-1],"--menu")){bo1::android::autoStartKino=false;--argc;}
+        else if(!std::strncmp(argv[argc-1],"--map=",6)) {
+            // Launcher: map names are plain identifiers (zone file stems).
+            const char* map=argv[argc-1]+6;const std::size_t length=std::strlen(map);
+            if(!length||length>=sizeof(bo1::android::autoStartMap)
+                ||std::strspn(map,"abcdefghijklmnopqrstuvwxyz0123456789_")!=length) {
+                std::fputs("Invalid launcher map name\n",stderr);return 1;
+            }
+            std::memcpy(bo1::android::autoStartMap,map,length+1);--argc;
+        }
     }
     if(argc==4&&argv&&argv[2]&&argv[3]&&!std::strcmp(argv[3],"--vulkan-presentation"))
         return bo1::android::RunNativeVulkanPresentation(argv[2]);
     if((argc==4||argc==5)&&argv&&argv[3]&&!std::strcmp(argv[3],"--native-vulkan")) {
         if(argc==5) {
             if(!argv[4])return 1;
-            if(!std::strcmp(argv[4],"540"))bo1::android::native_render_size::requestedHeight=540;
+            if(!std::strcmp(argv[4],"480"))bo1::android::native_render_size::requestedHeight=480;
+            else if(!std::strcmp(argv[4],"540"))bo1::android::native_render_size::requestedHeight=540;
             else if(!std::strcmp(argv[4],"720"))bo1::android::native_render_size::requestedHeight=720;
             else if(!std::strcmp(argv[4],"1080"))bo1::android::native_render_size::requestedHeight=1080;
-            else if(std::strcmp(argv[4],"0")) {std::fputs("Invalid native render height: use 0, 540, 720 or 1080\n",stderr);return 1;}
+            else if(std::strcmp(argv[4],"0")) {std::fputs("Invalid native render height: use 0, 480, 540, 720 or 1080\n",stderr);return 1;}
             argc=4;
         }
         std::string error;

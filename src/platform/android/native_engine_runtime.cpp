@@ -8,6 +8,8 @@
 #include <win32/win_localize.h>
 #include <universal/timing.h>
 #include <chrono>
+#include <cstdio>
+#include <string>
 #include <thread>
 #include <unistd.h>
 #include <sys/stat.h>
@@ -316,4 +318,27 @@ int bo1::android::RunNativeEngine(NativeEngineEntry entry, int argc, char **argv
             std::abort(); // The real quit owner must be terminal.
         }
     }
+}
+
+
+// One-shot launcher start for Com_LoadFrontEnd: the launcher's settings file
+// (applied after the startup configs so it overrides config.cfg) followed by
+// the map command, in place of the frontend level. Returns false when no
+// launcher map was requested or it was already taken (returning to the menus
+// later loads the normal frontend).
+bool Android_TakeLauncherStart(std::string& commands)
+{
+    static std::atomic<bool> taken{false};
+    if(!bo1::android::autoStartMap[0]||taken.exchange(true))return false;
+    commands.clear();
+    const std::string path=std::string(Sys_EngineUserRoot())+"/launcher.cfg";
+    if(FILE* file=std::fopen(path.c_str(),"rb")) {
+        char buffer[4096];std::size_t read;
+        while((read=std::fread(buffer,1,sizeof(buffer),file))>0&&commands.size()<65536)commands.append(buffer,read);
+        std::fclose(file);
+        std::fprintf(stderr,"ENGINE ENTRY launcher settings read (%zu bytes)\n",commands.size());
+    } else std::fputs("ENGINE ENTRY launcher settings file absent; using saved settings\n",stderr);
+    commands+="\nmap ";commands+=bo1::android::autoStartMap;commands+="\n";
+    std::fprintf(stderr,"ENGINE ENTRY launcher start: queueing map %s in place of the frontend\n",bo1::android::autoStartMap);
+    return true;
 }

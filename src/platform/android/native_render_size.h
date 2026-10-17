@@ -8,6 +8,7 @@ inline unsigned requestedHeight{};
 struct Extent { unsigned width,height; };
 struct Rect { unsigned x,y,width,height; };
 inline Extent Select(unsigned width,unsigned height) {
+    if(requestedHeight==480)return {854,480};
     if(requestedHeight==540)return {960,540};
     if(requestedHeight==720)return {1280,720};
     if(requestedHeight==1080)return {1920,1080};
