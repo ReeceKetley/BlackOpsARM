@@ -1,3 +1,0 @@
-Initial staged source whitespace check: tools/port/check_script_headers.ps1:38: new blank line at EOF.
-Correction: removed the extra trailing blank line only; no command or behavior changed.
-Archived diagnostics are checked by byte hashes, not normalized as source.
