@@ -7,6 +7,12 @@ This is a private research port. **No game data is included.** The engine
 loads the original retail FastFiles, shaders and assets from a legally owned copy of
 the game, which must be supplied separately.
 
+## A note on AI assistance
+
+This port was not written wholesale by AI agents. The porting work, architecture
+and engineering decisions are human-led. AI agents were used as tools to help
+with debugging and to build the new launcher.
+
 ![Kino der Toten on the tablet, 34.7 FPS](images/android/kino-overlay-34fps.jpg)
 
 ## How it got here
