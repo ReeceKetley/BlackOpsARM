@@ -552,16 +552,18 @@ const TABS=[
   {k:'scan',label:'Menu CRT effect',type:'slider',min:0,max:100,step:5,def:70,desc:'Scanlines and flicker on menus only. Gameplay is not affected.'},
  ]},
  {id:'controller',n:'Controller',o:[
-  {k:'padLayout',label:'Button layout',type:'list',opts:['Default','Tactical','Lefty','Bumper Jumper'],def:0,soon:true,desc:'Controllers use the game\'s own bindings for now. Layout presets are coming.'},
-  {k:'lookSens',label:'Look sensitivity',type:'slider',min:1,max:10,step:1,def:4,soon:true,desc:'Coming soon.'},
-  {k:'invertY',label:'Invert look',type:'list',opts:OFFON,def:0,soon:true,desc:'Coming soon.'},
+  {k:'padLayout',label:'Button layout',type:'list',opts:['Default','Tactical','Lefty','Nomad','Charlie'],def:0,desc:'The game\'s own button layouts. Applies when a map starts.'},
+  {k:'padSticks',label:'Stick layout',type:'list',opts:['Default','Legacy'],def:0,desc:'The game\'s own stick layouts. Applies when a map starts.'},
+  {k:'padSensH',label:'Horizontal sensitivity',type:'slider',min:1,max:10,step:1,def:5,desc:'How fast the right stick turns left and right. 5 is the game\'s normal speed.'},
+  {k:'padSensV',label:'Vertical sensitivity',type:'slider',min:1,max:10,step:1,def:4,desc:'How fast the right stick looks up and down. 5 is the game\'s normal speed.'},
+  {k:'invertY',label:'Invert look',type:'list',opts:OFFON,def:0,desc:'Pushing the right stick up looks down.'},
   {k:'vibration',label:'Vibration',type:'list',opts:OFFON,def:1,soon:true,desc:'Coming soon.'},
  ]},
  {id:'touch',n:'Touch',o:[
   {k:'touchOp',label:'Button opacity',type:'slider',min:20,max:100,step:5,unit:'%',def:100,desc:'How visible the on-screen buttons are in game.'},
   {k:'touchSize',label:'Button size',type:'slider',min:70,max:140,step:5,unit:'%',def:100,desc:'Scales every on-screen button in game.'},
   {k:'gyro',label:'Gyro aim',type:'list',opts:['Off','Aim only','Always'],def:0,soon:true,desc:'Aiming with the tablet\'s gyroscope is coming.'},
-  {k:'touchLook',label:'Touch look speed',type:'slider',min:1,max:10,step:1,def:5,soon:true,desc:'Coming soon.'},
+  {k:'touchLook',label:'Touch look speed',type:'slider',min:1,max:10,step:1,def:5,desc:'How fast dragging the screen turns the camera. 5 is the default speed.'},
   {k:'resetLayout',label:'Reset button layout',type:'action',desc:'Puts every button in the preview back where it started. Custom in-game positions are coming.'},
  ]},
  {id:'audio',n:'Audio',o:[
@@ -624,7 +626,10 @@ function buildConfig(){const s=P.settings,pic=[2,1,0][s.textures],lod=[1,1.5,2][
   'seta fx_marks '+s.marks,'seta fx_marks_smodels '+s.marks,'seta fx_marks_ents '+s.marks,
   'seta bo1_mod_fov '+s.fov,'seta r_gamma '+(0.6+0.8*s.brightness/100).toFixed(2),'set r_nativeParallelRecord '+[0,2,3][s.workers],
   'seta snd_menu_master '+v(s.master),'seta snd_menu_music '+v(s.music),'seta snd_menu_sfx '+v(s.sfx),'seta snd_menu_voice '+v(s.voice),
-  'seta cg_subtitles '+s.subs,'set bo1_testclient_god '+s.god].join('\n');}
+  'seta cg_subtitles '+s.subs,'set bo1_testclient_god '+s.god,
+  'seta gpad_buttonsConfig '+PAD_BUTTONS[s.padLayout],'seta gpad_sticksConfig '+PAD_STICKS[s.padSticks],'exec '+PAD_BUTTONS[s.padLayout],'exec '+PAD_STICKS[s.padSticks],
+  'seta bo1_pad_yaw_scale '+(s.padSensH/5).toFixed(2),'seta bo1_pad_pitch_scale '+(s.padSensV/5).toFixed(2),'seta input_invertPitch '+s.invertY].join('\n');}
+const PAD_BUTTONS=['buttons_default','buttons_experimental','buttons_lefty','buttons_nomad','buttons_charlie'],PAD_STICKS=['thumbstick_default','thumbstick_legacy'];
 
 const R={screen:'title',hist:[],focus:null,mem:{},mode:(window.matchMedia&&matchMedia('(pointer: coarse)').matches)?'touch':'kbd',mapFilter:'all',mapSel:'kino',slot:null,setTab:'graphics',imp:{step:'source'},startRound:0,modal:null};
 
@@ -1049,8 +1054,8 @@ const PAD_SVG='<svg class="pad" viewBox="0 0 400 250" role="img" aria-label="Con
  +'<circle id="c-Y" class="c" cx="284" cy="82" r="11"/><circle id="c-X" class="c" cx="262" cy="104" r="11"/><circle id="c-B" class="c" cx="306" cy="104" r="11"/><circle id="c-A" class="c" cx="284" cy="126" r="11"/>'
  +'<text class="tY" x="284" y="82">Y</text><text class="tX" x="262" y="104">X</text><text class="tB" x="306" y="104">B</text><text class="tA" x="284" y="126">A</text>'
  +'<text x="131" y="20">LT</text><text x="269" y="20">RT</text><text x="124" y="104">L</text><text x="242" y="148">R</text></svg>';
-function renderPadTable(){const t=$('#maptab');if(!t)return;const m=PAD_PRESETS[P.settings.padLayout];
- t.innerHTML=['LT','RT','LB','RB','A','B','X','Y','LS','RS','DPAD','MENU'].map(k=>'<tr data-c="'+k+'"><td>'+glyph(k,'pad')+'</td><td>'+esc(m[k])+'</td></tr>').join('');
+function renderPadTable(){const t=$('#maptab');if(!t)return;const names=['Default','Tactical','Lefty','Nomad','Charlie'];
+ t.innerHTML='<tr><td colspan="2">Uses the game\'s own '+names[P.settings.padLayout]+' button layout. Change it here before you start a map.</td></tr>';
  t.onpointerover=e=>{const tr=e.target.closest('tr');$$('.pad .c').forEach(c=>c.classList.remove('hl'));if(tr){const c=$('#c-'+tr.dataset.c);if(c)c.classList.add('hl');}};
  t.onpointerleave=()=>$$('.pad .c').forEach(c=>c.classList.remove('hl'));}
 function livePad(gp){const ps=$('#padstat');if(!ps)return;$$('.pad .c').forEach(c=>c.classList.remove('on'));
@@ -1076,7 +1081,7 @@ let LD=null;
 function launch(cfg){R.hist=[];go('loading',{push:false,cfg});
  if(!NATIVE){toast('Starting maps needs the Android app','err');return;}
  const m=mapOf(cfg.map),s=P.settings;
- setTimeout(()=>{const err=NATIVE.launch(JSON.stringify({map:m.internal,height:[480,540,720][s.res],config:buildConfig(),touchOpacity:s.touchOp/100,touchScale:s.touchSize/100}));
+ setTimeout(()=>{const err=NATIVE.launch(JSON.stringify({map:m.internal,height:[480,540,720][s.res],config:buildConfig(),touchOpacity:s.touchOp/100,touchScale:s.touchSize/100,touchLook:s.touchLook/5}));
   if(err){toast(err,'err');LD=null;A.duck(false);R.hist=[];go('maps',{push:false});}else setTimeout(freeze,300);},900);}
 function enterLoading(o){const cfg=o.cfg;const m=mapOf(cfg.map);LD={cfg,t:0,dur:cfg.state?2800:4400,ready:false,done:false,rt:0};
  GL.setMap(MAPI[cfg.map]);A.duck(true);A.boom();

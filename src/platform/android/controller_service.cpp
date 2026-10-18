@@ -5,6 +5,11 @@
 #include <limits>
 #include <atomic>
 #include <mutex>
+#include <algorithm>
+#include <cstdlib>
+#include <cstdio>
+#include <functional>
+#include <string>
 
 namespace bo1::android {
 namespace {
@@ -174,7 +179,14 @@ bool RefreshControllers() {
     const int count=SDL_NumJoysticks();
     if(count<0) return false;
     for(int device=0; device<count; ++device) {
-        if(!SDL_IsGameController(device)) continue;
+        if(!SDL_IsGameController(device)) {
+            // A joystick SDL has no controller mapping for: its buttons cannot reach the engine.
+            static std::uint64_t reportedUnmapped;
+            char guid[64]{};SDL_JoystickGetGUIDString(SDL_JoystickGetDeviceGUID(device),guid,sizeof guid);
+            const std::uint64_t key=std::hash<std::string>{}(std::string(guid)+std::to_string(SDL_JoystickGetDeviceInstanceID(device)));
+            if(key!=reportedUnmapped){reportedUnmapped=key;std::fprintf(stderr,"CONTROLLER unmapped joystick '%s' guid=%s buttons/axes unavailable\n",SDL_JoystickNameForIndex(device)?SDL_JoystickNameForIndex(device):"?",guid);}
+            continue;
+        }
         const SDL_JoystickID identity=SDL_JoystickGetDeviceInstanceID(device);
         if(identity<0) return false;
         bool known=false;
@@ -186,6 +198,12 @@ bool RefreshControllers() {
         SDL_GameController *controller=SDL_GameControllerOpen(device);
         if(!controller) return false;
         empty->controller=controller; empty->identity=identity; ++empty->generation;
+        {
+            char guid[64]{};SDL_JoystickGetGUIDString(SDL_JoystickGetDeviceGUID(device),guid,sizeof guid);
+            char *mapping=SDL_GameControllerMapping(controller);
+            std::fprintf(stderr,"CONTROLLER opened slot '%s' guid=%s mapping=%s\n",SDL_GameControllerName(controller)?SDL_GameControllerName(controller):"?",guid,mapping?mapping:"none");
+            if(mapping)SDL_free(mapping);
+        }
     }
     return true;
 }
@@ -194,6 +212,23 @@ int ReadController(int slot, ControllerSample *sample) {
     if(!sample) { SDL_SetError("null controller output sample"); return -1; }
     auto *controller=slots[slot].controller;
     if(!controller || !SDL_GameControllerGetAttached(controller)) return 0;
+    // Raw input trace (first 600 changes): which physical button/axis indexes this pad sends and
+    // what SDL's mapping made of them. Used to diagnose controllers with unexpected layouts.
+    {
+        static int traced; static Uint8 lastButtons[SDL_CONTROLLER_BUTTON_MAX+32]; static Sint16 lastAxes[16]; static Uint8 lastHats[4];
+        if(traced<600) {
+            SDL_Joystick *joystick=SDL_GameControllerGetJoystick(controller);
+            const int buttons=std::min(SDL_JoystickNumButtons(joystick),int(sizeof lastButtons));
+            for(int i=0;i<buttons;++i) { const Uint8 now=SDL_JoystickGetButton(joystick,i);
+                if(now!=lastButtons[i]) { lastButtons[i]=now; ++traced; std::fprintf(stderr,"CONTROLLER raw button %d %s\n",i,now?"down":"up"); } }
+            const int axes=std::min(SDL_JoystickNumAxes(joystick),16);
+            for(int i=0;i<axes;++i) { const Sint16 now=SDL_JoystickGetAxis(joystick,i);
+                if(std::abs(int(now)-int(lastAxes[i]))>12000) { lastAxes[i]=now; ++traced; std::fprintf(stderr,"CONTROLLER raw axis %d = %d\n",i,int(now)); } }
+            const int hats=std::min(SDL_JoystickNumHats(joystick),4);
+            for(int i=0;i<hats;++i) { const Uint8 now=SDL_JoystickGetHat(joystick,i);
+                if(now!=lastHats[i]) { lastHats[i]=now; ++traced; std::fprintf(stderr,"CONTROLLER raw hat %d = %d\n",i,int(now)); } }
+        }
+    }
     ControllerSample out{};
     struct Mapping { SDL_GameControllerButton button; std::uint16_t mask; };
     static constexpr Mapping maps[] = {

@@ -1013,6 +1013,18 @@ void __cdecl CL_GamepadMove(int localClientNum, usercmd_s *cmd)
                         aimInput.button_bits.array[j] = cmd->button_bits.array[j];
                     aimInput.localClientNum = localClientNum;
                     AimAssist_UpdateGamePadInput(&aimInput, &aimOutput);
+#if defined(__ANDROID__)
+                    {
+                        // Launcher look-speed settings for the pad (1.0 = the game's own speed). The scale is applied
+                        // to the resulting turn: the aim code requires stick axes of at most 1.0.
+                        float pitchDelta = aimOutput.pitch - aimInput.pitch;
+                        float yawDelta = aimOutput.yaw - aimInput.yaw;
+                        if (yawDelta > 180.0f) yawDelta -= 360.0f; else if (yawDelta < -180.0f) yawDelta += 360.0f;
+                        if (pitchDelta > 180.0f) pitchDelta -= 360.0f; else if (pitchDelta < -180.0f) pitchDelta += 360.0f;
+                        aimOutput.pitch = aimInput.pitch + pitchDelta * Dvar_GetFloat("bo1_pad_pitch_scale");
+                        aimOutput.yaw = aimInput.yaw + yawDelta * Dvar_GetFloat("bo1_pad_yaw_scale");
+                    }
+#endif
                     LocalClientGlobals->viewangles[0] = aimOutput.pitch;
                     LocalClientGlobals->viewangles[1] = aimOutput.yaw;
                     cmd->meleeChargeYaw = aimOutput.meleeChargeYaw;

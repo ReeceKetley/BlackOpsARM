@@ -526,6 +526,14 @@ double __cdecl CL_GamepadAxisValue(int localClientNum, unsigned int virtualAxis)
                                          * axisDeflection;
         }
     }
+#if defined(__ANDROID__)
+    // SDL reports a square-gated stick: a full diagonal is (1, 1), so the squared response (magnitude * axis)
+    // reaches 1.41. The retail XInput driver kept sticks inside the unit circle; keep the result in range.
+    if ( axisDeflection > 1.0f )
+        axisDeflection = 1.0f;
+    else if ( axisDeflection < -1.0f )
+        axisDeflection = -1.0f;
+#endif
     if ( fabs(axisDeflection) < 0.0
         && !Assert_MyHandler(
                     "C:\\projects_pc\\cod\\codsrc\\src\\client\\cl_gamepad.cpp",
@@ -638,6 +646,11 @@ void __cdecl CL_GamepadButtonEvent(
             v12 = keys[15].down && keys[14].down;
             devguiToggle = v12;
         }
+#if defined(__ANDROID__)
+        // Both stick clicks together (sprint + melee) opened the developer menu in the middle of play and
+        // took the pad's input; the "devgui" console command still opens it deliberately.
+        devguiToggle = false;
+#endif
         if ( devguiToggle )
         {
             if ( DevGui_IsActive() )

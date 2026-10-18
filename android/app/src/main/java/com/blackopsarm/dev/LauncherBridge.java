@@ -24,7 +24,7 @@ final class LauncherBridge {
         boolean needsFreshEngine();
         /** Queue a map for the running engine. */
         boolean requestMap(String map);
-        void applyTouch(float opacity, float scale);
+        void applyTouch(float opacity, float scale, float look);
         void rememberHeight(int height);
         /** The engine's render size is fixed per process: start a new engine for this map. */
         void restartWithMap(String map, int height);
@@ -83,7 +83,8 @@ final class LauncherBridge {
                 out.getFD().sync();
             }
             if (!temporary.renameTo(new File(user, "launcher.cfg"))) throw new IOException("Could not save launcher settings");
-            host.applyTouch(opacity, scale);
+            float look = (float) Math.max(0.2, Math.min(2.0, request.optDouble("touchLook", 1.0)));
+            host.applyTouch(opacity, scale, look);
             host.rememberHeight(height);
             if (height != host.runningHeight() || host.needsFreshEngine()) { host.restartWithMap(map, height); return ""; }
             return host.requestMap(map) ? "" : "Could not start that map";

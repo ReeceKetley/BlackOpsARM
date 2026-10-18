@@ -3,6 +3,7 @@
 #else
 #include <platform/android/controller_service.h>
 #include <qcommon/common.h>
+#include <qcommon/cmd.h>
 #include <SDL.h>
 #include <cstdlib>
 #endif
@@ -292,6 +293,22 @@ void __cdecl GPad_Check(int portIndex)
     }
     gPad->enabled = present == 1;
     gPad->keyboardEnabled = false;
+#if defined(__ANDROID__)
+    // Gameplay (move, look, fire) only reads the pad while gpad_enabled is set, and the retail default is off
+    // (an options-menu choice). A phone/tablet has no such menu step, so an attached pad enables it and
+    // removing the pad hands control back to touch.
+    if (portIndex == 0 && gpad_enabled && gpad_enabled->current.enabled != gPad->enabled)
+    {
+        Dvar_SetBool((dvar_s *)gpad_enabled, gPad->enabled);
+        if (gPad->enabled)
+        {
+            // The stick axes and button binds come from the pad's config files, which the profile only
+            // executes when it loads with gpad_enabled already on. Load them now.
+            Cbuf_AddText(0, va("exec %s\n", gpad_buttonsConfig && *gpad_buttonsConfig->current.string ? gpad_buttonsConfig->current.string : "buttons_default"));
+            Cbuf_AddText(0, va("exec %s\n", gpad_sticksConfig && *gpad_sticksConfig->current.string ? gpad_sticksConfig->current.string : "thumbstick_default"));
+        }
+    }
+#endif
     nativeGeneration[portIndex] = generation;
     if (!wasEnabled && gPad->enabled && s_insertedCB) s_insertedCB(portIndex);
 #else

@@ -197,7 +197,7 @@ public final class EngineActivity extends SDLActivity {
     private WebView menu;
     private boolean overlayShown, menuMode, matchSeen;
     private int sessionState = -1, runningHeight = 540;
-    private float touchOpacity = 1f, touchScale = 1f;
+    private float touchOpacity = 1f, touchScale = 1f, touchLook = 1f;
     private LauncherBridge launcherBridge;
     private final Runnable sessionPoll = new Runnable() {
         @Override public void run() {
@@ -215,10 +215,10 @@ public final class EngineActivity extends SDLActivity {
         @Override public int runningHeight() { return runningHeight; }
         @Override public boolean needsFreshEngine() { return matchSeen; }
         @Override public boolean requestMap(String map) { prepareProgress(map); return nativeRequestMapStart(map); }
-        @Override public void applyTouch(float opacity, float scale) {
+        @Override public void applyTouch(float opacity, float scale, float look) {
             runOnUiThread(() -> {
-                touchOpacity = opacity; touchScale = scale;
-                getSharedPreferences("launcher", MODE_PRIVATE).edit().putFloat("touchOpacity", opacity).putFloat("touchScale", scale).apply();
+                touchOpacity = opacity; touchScale = scale; touchLook = look;
+                getSharedPreferences("launcher", MODE_PRIVATE).edit().putFloat("touchOpacity", opacity).putFloat("touchScale", scale).putFloat("touchLook", look).apply();
                 if (touchControls != null) touchControls.applyLook();
             });
         }
@@ -320,6 +320,7 @@ public final class EngineActivity extends SDLActivity {
         if (menu != null) menu.evaluateJavascript("window.onNativeSession&&window.onNativeSession(" + state + ")", null);
     }
     @Override public void onBackPressed() {
+        Log.i("BlackOpsARM", "INPUT onBackPressed menu=" + (menu != null));
         if (menu != null) { menu.evaluateJavascript("window.onNativeBack&&window.onNativeBack()", null); return; }
         super.onBackPressed();
     }
@@ -504,8 +505,8 @@ public final class EngineActivity extends SDLActivity {
                 return changeMask(pointer, mask);
             }
             if (pointer.role == -3) return nativeTouchMotion(epoch, true,
-                    Math.max(-1, Math.min(1, dx / Math.max(1, getWidth()))),
-                    Math.max(-1, Math.min(1, dy / Math.max(1, getHeight()))));
+                    Math.max(-1, Math.min(1, touchLook * dx / Math.max(1, getWidth()))),
+                    Math.max(-1, Math.min(1, touchLook * dy / Math.max(1, getHeight()))));
             if (pointer.role == 15) return nativeTouchMotion(epoch, false, nx(x), ny(y));
             return true;
         }
@@ -561,6 +562,7 @@ public final class EngineActivity extends SDLActivity {
     }
 
     @Override public boolean dispatchKeyEvent(KeyEvent event) {
+        Log.i("BlackOpsARM", "INPUT key code=" + event.getKeyCode() + " action=" + event.getAction() + " source=0x" + Integer.toHexString(event.getSource()) + " device=" + event.getDeviceId());
         if (adopted && getIntent().getBooleanExtra("nativeVulkanPresentation", false)
                 && (event.getKeyCode() == KeyEvent.KEYCODE_BACK || event.getKeyCode() == KeyEvent.KEYCODE_ESCAPE)) {
             if (event.getAction() == KeyEvent.ACTION_UP && !event.isCanceled()) SDLActivity.nativeSendQuit();
@@ -644,6 +646,7 @@ public final class EngineActivity extends SDLActivity {
             runningHeight = getIntent().getIntExtra("nativeVulkanHeight", 540);
             touchOpacity = launcherPrefs.getFloat("touchOpacity", 1f);
             touchScale = launcherPrefs.getFloat("touchScale", 1f);
+            touchLook = launcherPrefs.getFloat("touchLook", 1f);
             launcherBridge = new LauncherBridge(menuHost);
             createPerformanceOverlay();
             if (!getIntent().getBooleanExtra("nativeVulkanPresentation", false)) createTouchControls();
@@ -667,6 +670,7 @@ public final class EngineActivity extends SDLActivity {
     }
 
     @Override protected void onPause() {
+        Log.i("BlackOpsARM", "LIFECYCLE onPause");
         if (menu != null) { menu.onPause(); menu.pauseTimers(); }
         performanceResumed = false;
         updatePerformanceOverlay();
@@ -681,6 +685,7 @@ public final class EngineActivity extends SDLActivity {
     }
 
     @Override protected void onDestroy() {
+        Log.i("BlackOpsARM", "LIFECYCLE onDestroy");
         performanceHandler.removeCallbacks(sessionPoll);
         hideMenu();
         performanceResumed = false;

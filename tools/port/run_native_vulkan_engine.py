@@ -28,7 +28,7 @@ assert build.is_relative_to(root), 'Build must stay inside BlackOpsARM'
 out = root / 'build-android-audit/native_registry_closure'
 stage = root / f'build-android-audit/apk-native-stage{a.stage}'
 apk = root / 'android/app/build/outputs/apk/debug/app-debug.apk'
-adb = ['D:/Android/Sdk/platform-tools/adb.exe', '-s', 'AKWJ9X5116G04618']
+adb = ['D:/Android/Sdk/platform-tools/adb.exe', '-s', __import__('os').environ.get('BO1_ADB_SERIAL', 'AKWJ9X5116G04618')]
 assert not stage.exists(), 'Preserve previous stage evidence; select a fresh number'
 assert not (out / f'sdk-engine-shared-build{a.sdk}.log').exists()
 if a.asan:

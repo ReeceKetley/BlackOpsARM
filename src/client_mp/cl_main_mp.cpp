@@ -4290,6 +4290,10 @@ void __cdecl CL_InitOnceForAllClients()
                                                      "Saves current server time to a file for live streaming");
     input_invertPitch = _Dvar_RegisterBool("input_invertPitch", 0, 1u, "Invert gamepad pitch");
     input_viewSensitivity = _Dvar_RegisterFloat("input_viewSensitivity", 1.0, 0.000099999997, 5.0, 1u, "View Sensitivity");
+#if defined(__ANDROID__)
+    _Dvar_RegisterFloat("bo1_pad_yaw_scale", 1.0f, 0.1f, 4.0f, 1u, "Game pad horizontal look speed (1 = normal)");
+    _Dvar_RegisterFloat("bo1_pad_pitch_scale", 1.0f, 0.1f, 4.0f, 1u, "Game pad vertical look speed (1 = normal)");
+#endif
     team_indicator = _Dvar_RegisterInt(
                                          "team_indicator",
                                          0,

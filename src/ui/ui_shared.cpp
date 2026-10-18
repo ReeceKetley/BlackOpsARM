@@ -6393,9 +6393,10 @@ void __cdecl Scroll_ListBox_ThumbFunc(int localClientNum, UiContext *dc, scrollI
     }
 }
 
-void __cdecl Scroll_Slider_ThumbFunc(int localClientNum, UiContext *dc, itemDef_s **p)
+void __cdecl Scroll_Slider_ThumbFunc(int localClientNum, UiContext *dc, scrollInfo_s *p)
 {
-    Scroll_Slider_SetThumbPos(dc, p[6]);
+    // The capture data is a scrollInfo_s; p[6] only matched its item field with 4-byte pointers.
+    Scroll_Slider_SetThumbPos(dc, p->item);
 }
 
 void __cdecl Scroll_Slider_SetThumbPos(UiContext *dc, itemDef_s *item)
