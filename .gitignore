@@ -496,3 +496,10 @@ x64_diag.log
 !/docs/port/evidence/arm64_rawfile_payload/*.log
 
 !/docs/port/evidence/arm64_techset/*.log
+
+# Agent memory / handoff notes (local only)
+/.ledger/
+/archive/
+/AGENTS.md
+/docs/port/*handoff*.md
+/docs/port/evidence/**/ledger*
