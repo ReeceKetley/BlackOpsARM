@@ -503,3 +503,7 @@ x64_diag.log
 /AGENTS.md
 /docs/port/*handoff*.md
 /docs/port/evidence/**/ledger*
+/docs/port/android_dxvk_notes.md
+*ledger*.log
+*ledger*.json
+/docs/port/evidence/**/*handoff*
