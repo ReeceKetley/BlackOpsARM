@@ -25,10 +25,10 @@ Android's folder picker grants access, and the installer copies/checks files in
 app storage without modifying your originals. Existing completed files can be
 reused after cancellation. No retail game files are supplied or downloaded.
 
-The installer uses the same offline launcher as the menu. Fonts and map artwork
+Game assets are installed via the menu from your own legally obtained copy including DLC. Fonts and map artwork
 are bundled; menu typography does not depend on an internet connection. Controller
 settings include Classic / Linear / Dynamic response, right-stick deadzone and
-ADS sensitivity. Hardware info is available from the main menu.
+ADS sensitivity this is still being worked on and as i am trying to port modern CoD gamepad "feel" . Hardware info is available from the main menu.
 
 ## Solo save and resume
 
@@ -50,6 +50,15 @@ coverage, and partial failed-load cleanup still needs hardening. Use explicit
 **Save & leave**; backgrounding or Android killing the app does not create a save.
 The multi-slot save library shown as “soon” is not implemented. Uninstalling the
 app removes its imported files, settings and saves.
+
+This is still very much expirmental and may not work super reliably.
+
+## Future work
+
+**Stabilty & Performance**: There's still a lot to do but it's playable some maps have issues such as call of the dead which im working on but the core maps and some DLC play fine on low spec hardware i have only tested this on my cheap android tablet the Honor Pad x8a which has 2GB of ram and a Snapdragon 680 and runs at a capped 30fps (There may be some dips while shaders compile briefly)
+**Multiplayer & Mods**: While this is aimed at singleplayer "pick up and go" i possibly would add in multiplayer at some point.
+**Better touch screen controls**: This project was mainly aimed at being used with a controller such as a bluetooth or wired xbox style controller however i would like to improve the touch screen experience a currently its very much setup for debugging. 
+
 
 ## Screenshots and gameplay
 
