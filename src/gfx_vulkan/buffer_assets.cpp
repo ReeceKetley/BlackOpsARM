@@ -6,6 +6,7 @@
 #include <vector>
 #include <algorithm>
 #include <cstring>
+#include <cstdio>
 namespace bo1::vulkan::buffer_assets {
 namespace {
 std::mutex mutex;VkPhysicalDevice physical{};VkDevice device{};std::uint64_t serial{};
@@ -62,7 +63,18 @@ bool CloneOwners(std::initializer_list<OwnerCopy> copies,std::string& error) {
     }
     return true;
 }
-bool Empty(){std::lock_guard<std::mutex> lock(mutex);return Drained();}
+bool Empty(){
+    std::lock_guard<std::mutex> lock(mutex);const bool empty=Drained();
+    if(!empty) {
+        std::fprintf(stderr,"Native buffer retirement: owners=%zu pending=%zu live=%zu spareOwners=%zu\n",buffers.size(),pending.size(),live.size(),spares.size());
+        unsigned shown=0;
+        for(const auto& entry:buffers) {
+            if(shown++==8)break;
+            std::fprintf(stderr,"Native buffer owner: slot=%p bytes=%zu dynamic=%i refs=%ld\n",entry.first,entry.second->payloadBytes,entry.second->dynamic,long(entry.second.use_count()));
+        }
+    }
+    return empty;
+}
 bool Attach(VkPhysicalDevice p,VkDevice d,std::string& error) {
     std::lock_guard<std::mutex> lock(mutex);
     if((!p)!=(!d)) {error="Incomplete native buffer context";return false;}

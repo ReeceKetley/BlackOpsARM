@@ -15,6 +15,11 @@ public final class DevelopmentActivity extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        if (!BuildConfig.DEBUG || !getIntent().getBooleanExtra("developerMenu", false)) {
+            startActivity(new android.content.Intent(this, LauncherActivity.class));
+            finish();
+            return;
+        }
         TextView status = new TextView(this);
         status.setText("BlackOpsARM development environment\n\n"
                 + nativeEnvironment()

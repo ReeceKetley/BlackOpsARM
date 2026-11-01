@@ -1,4 +1,6 @@
 #include <game_sp/g_sp_measure.h>
+#include <game_sp/g_sp_savegame.h>
+#include <cgame/cg_weapons.h>
 #include <qcommon/actor_model_state.h>
 #include <cgame_mp/cg_anim_commands.h>
 #include "cl_cgame_mp.h"
@@ -42,6 +44,7 @@
 #include <cgame_mp/cg_snapshot_mp.h>
 #include <cgame_mp/cg_servercmds_mp.h>
 #include <EffectsCore/fx_system.h>
+#include <EffectsCore/fx_load_obj.h>
 #include <cgame/cg_drawtools.h>
 
 const float g_color_table[17][4] =
@@ -1249,6 +1252,27 @@ void __cdecl CL_RestartCGame(int localClientNum)
         CG_ShutdownEntity(localClientNum, cent, 1);
     }
     CG_ShutdownEntity(localClientNum, &cgameGlob->predictedPlayerEntity, 1);
+    if (G_SP_IsSavedClientHandshakePending())
+    {
+        // The complete fresh gamestate has replaced the abandoned client's
+        // string table. Perform deferred weapon validation now, and resolve
+        // the saved model/effect slots through the canonical asset registries.
+        CG_SetupWeaponDef();
+        int models = 0, effects = 0;
+        for (int i = 0; i < ARRAY_COUNT(cgs->gameModels); ++i)
+        {
+            const char *name = CL_GetConfigString(1568 + i);
+            cgs->gameModels[i] = *name ? R_RegisterModel((char *)name) : nullptr;
+            models += cgs->gameModels[i] != nullptr;
+        }
+        for (int i = 0; i < ARRAY_COUNT(cgs->fxs); ++i)
+        {
+            const char *name = CL_GetConfigString(2080 + i);
+            cgs->fxs[i] = *name ? FX_Register(name) : nullptr;
+            effects += cgs->fxs[i] != nullptr;
+        }
+        Com_Printf(15, "loadgame client: fresh weapon config validated, %i model and %i effect slots rebound\n", models, effects);
+    }
     CG_SetConfigValues(localClientNum);
     CG_ParseServerInfo(localClientNum);
     CG_ParseCodInfo(localClientNum);

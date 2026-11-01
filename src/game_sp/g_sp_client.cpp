@@ -674,6 +674,12 @@ bool G_SP_HeadlessFightCommand(client_t *client, usercmd_s *cmd)
             || !actor->sentient || actor->sentient->eTeam == player->sentient->eTeam)
             continue;
         gentity_s *ent = actor->ent;
+        if (G_SP_TestPlanSpareDirector(ent->s.number))
+        {
+            if (level.time % 10000 == 0)
+                Com_Printf(16, "bo1_plan_policy: time %d spare director actor %d\n", level.time, ent->s.number);
+            continue;
+        }
         if (g_headlessSpareCrawlers && g_headlessSpareCrawlers->current.enabled && G_SP_TestPlanActorLegless(ent->s.number))
             continue;
         float point[3];
@@ -771,7 +777,13 @@ bool G_SP_HeadlessFightCommand(client_t *client, usercmd_s *cmd)
             return true;
         // w1 c6: a thrown fight weapon's cycle (frag, monkey, claymore) throws / places instead of firing.
         if (G_SP_HeadlessThrowCommand(player, client, cmd, target, sqrtf(nearest), g_fightWeaponsCurrent))
+        {
+            // The throw supplies combat inputs; the plan must still observe
+            // real missile/script events, enforce deadlines and reach quit.
+            // Previously an active throw cycle starved all those checks.
+            G_SP_TestPlanCommand(player, client, cmd, target, sqrtf(nearest), false);
             return true;
+        }
         // A target inside the melee reach is knifed, as a player would: the melee button is an
         // edge (PM_Weapon's !oldcmd test), so press it only on a released frame. Pmove, the melee
         // trace, the knife's damage and the damage scripts decide whether anything is hit.
@@ -1065,6 +1077,22 @@ void G_SP_HeadlessClientBegin(unsigned int clientNum)
 {
     if (Sys_IsHeadless() && g_headlessTestClient && g_headlessTestClient->current.enabled)
         Com_Printf(16, "bo1_testclient: begin notify client %u time %d\n", clientNum, level.time);
+}
+
+void G_SP_HeadlessAdoptSavedClient()
+{
+    if (!Sys_IsHeadless() || !G_SP_TestHarness() || !g_headlessTestClient
+        || !g_headlessTestClient->current.enabled || !svs.clients[0].bIsTestClient
+        || svs.clients[0].header.netchan.remoteAddress.type != NA_BOT
+        || svs.clients[0].header.state != CS_CLIENTLOADING
+        || svs.clients[0].gentity != &g_entities[0]
+        || !g_entities[0].r.inuse || g_entities[0].client != &level.clients[0])
+        Com_Error(ERR_DROP, "Saved frame probe: missing restored headless test player");
+    g_testClientAttempted = true;
+    g_testClientNum = 0;
+    g_testClientFrames = 0;
+    g_testClientActiveFrames = 0;
+    Com_Printf(16, "loadgame probe: headless harness adopted saved client 0, no new admission\n");
 }
 
 void G_SP_HeadlessTestClientFrame(bool afterFrame)

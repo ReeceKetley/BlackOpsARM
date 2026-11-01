@@ -26,9 +26,7 @@ static void Scr_CheckSaveStackBounds(const VariableStackBuffer *stack)
 // DERIVED from KB Scr_InitVariables / GetVariableValueAddress: both instances have 0x7FFE parent
 // slots and 0xFFFC-byte save maps, unlike SP's 0x5FFE server / 0x4000 client slots. Access the KB
 // fields by name; SP VariableValueInternal is 0x10 bytes and KB's is 0x1C.
-// mod: follows bo1_mod_scriptvars (server instance; saves are server-script only)
-#define SAVE_OBJECT_LIMIT VARIABLELIST_PARENT_SIZE(SCRIPTINSTANCE_SERVER)
-#define SAVE_CHILD_BEGIN VARIABLELIST_CHILD_BEGIN(SCRIPTINSTANCE_SERVER)
+// Each VM owns its table sizes; server capacity may grow independently of client.
 #if !defined(BO1_PORT_X64)
 static_assert(sizeof(VariableValueInternal) == 0x1C, "review save traversal for changed VM layout");
 #endif
@@ -45,7 +43,7 @@ static void Scr_SaveId(scriptInstance_t inst, unsigned int id)
     if (!id)
         return;
     scrVarPub_t *pub = &gScrVarPub[inst];
-    iassert(id < SAVE_OBJECT_LIMIT);
+    iassert(id < VARIABLELIST_PARENT_SIZE(inst));
 #if defined(__ANDROID__)
     if (id > 0xFFFFu)
         Com_Error(ERR_DROP, "Script save object ID exceeds the fixed16 save map");
@@ -56,7 +54,7 @@ static void Scr_SaveId(scriptInstance_t inst, unsigned int id)
     if (pub->savecount >= 0xFFFFu)
         Com_Error(ERR_DROP, "Script save object count exceeds the fixed16 save format");
 #endif
-    iassert(pub->savecount + 1 < SAVE_OBJECT_LIMIT);
+    iassert(pub->savecount + 1 < VARIABLELIST_PARENT_SIZE(inst));
     pub->saveIdMap[id] = pub->savecount + 1;
     pub->saveIdMapRev[pub->savecount + 1] = (unsigned short)id;
     ++pub->savecount;
@@ -99,11 +97,11 @@ static void Scr_AddSaveObjectChildren(scriptInstance_t inst, unsigned int id)
     const unsigned int type = parent->w.type & VAR_MASK;
     for (unsigned int child = FindFirstSibling(inst, id); child; child = FindNextSibling(inst, child))
     {
-        const VariableValueInternal *value = &list[SAVE_CHILD_BEGIN + child];
+        const VariableValueInternal *value = &list[VARIABLELIST_CHILD_BEGIN(inst) + child];
         if (type == VAR_ARRAY)
         {
             const unsigned int name = value->w.name >> VAR_NAME_BITS;
-            if (name >= 0x10000 && name < 0x10000 + SAVE_OBJECT_LIMIT)
+            if (name >= 0x10000 && name < 0x10000 + VARIABLELIST_PARENT_SIZE(inst))
                 Scr_SaveId(inst, name - 0x10000);
         }
         Scr_AddSaveValue(inst, value->w.type & VAR_MASK, value->u.u);
@@ -163,8 +161,8 @@ void Scr_SavePre(scriptInstance_t inst)
 {
     // zombies: SP 0x00642F70. Its second argument (1 at G_SaveState) is not read by the exe.
     scrVarPub_t *pub = &gScrVarPub[inst];
-    memset(pub->saveIdMap, 0, SAVE_OBJECT_LIMIT * sizeof(*pub->saveIdMap));
-    memset(pub->saveIdMapRev, 0, SAVE_OBJECT_LIMIT * sizeof(*pub->saveIdMapRev));
+    memset(pub->saveIdMap, 0, VARIABLELIST_PARENT_SIZE(inst) * sizeof(*pub->saveIdMap));
+    memset(pub->saveIdMapRev, 0, VARIABLELIST_PARENT_SIZE(inst) * sizeof(*pub->saveIdMapRev));
     pub->savecount = 0;
     Scr_AddSaveObject(inst, pub->levelId);
     Scr_AddSaveObject(inst, pub->animId);
@@ -176,7 +174,7 @@ void Scr_SavePre(scriptInstance_t inst)
         Scr_AddSaveObject(inst, gScrClassMap[inst][i].id);
         Scr_AddSaveObject(inst, gScrClassMap[inst][i].entArrayId);
     }
-    const VariableValueInternal *game = &gScrVarGlob[inst].variableList[SAVE_CHILD_BEGIN + pub->gameId];
+    const VariableValueInternal *game = &gScrVarGlob[inst].variableList[VARIABLELIST_CHILD_BEGIN(inst) + pub->gameId];
     if ((game->w.type & VAR_MASK) == VAR_POINTER)
         Scr_AddSaveObject(inst, game->u.u.pointerValue);
     else if ((game->w.type & VAR_MASK) == VAR_STACK)
@@ -190,7 +188,7 @@ void Scr_CheckSaveObjects(scriptInstance_t inst)
     bool valid = !pub->saveIdMap[0] && !pub->saveIdMapRev[0];
     unsigned int objects = 0;
     unsigned int threads = 0;
-    for (unsigned int id = 1; id < SAVE_OBJECT_LIMIT; ++id)
+    for (unsigned int id = 1; id < VARIABLELIST_PARENT_SIZE(inst); ++id)
     {
         const unsigned int savedId = pub->saveIdMap[id];
         if (!savedId)
@@ -202,7 +200,7 @@ void Scr_CheckSaveObjects(scriptInstance_t inst)
     }
     const unsigned int roots[] = { pub->levelId, pub->animId, pub->timeArrayId, pub->pauseArrayId, pub->freeEntList };
     for (unsigned int id : roots)
-        valid = valid && (!id || (id < SAVE_OBJECT_LIMIT && pub->saveIdMap[id]));
+        valid = valid && (!id || (id < VARIABLELIST_PARENT_SIZE(inst) && pub->saveIdMap[id]));
     valid = valid && objects == pub->savecount;
     Com_Printf(15, "SaveGame check: script save IDs %s (%u objects, %u threads)\n",
         valid ? "valid" : "DIFFERENT", objects, threads);
@@ -233,7 +231,7 @@ static void Scr_SaveObjectReference(ScrSaveContext *ctx, unsigned int id, unsign
 {
     // zombies: SP 0x00610BC0, history search 0x006829E0. Odd tokens mean previous ID + 1;
     // even tokens mean previous ID. Token 32 cannot fit in five bits and uses the literal form.
-    iassert(id < SAVE_OBJECT_LIMIT);
+    iassert(id < VARIABLELIST_PARENT_SIZE(ctx->inst));
     const unsigned short savedId = gScrVarPub[ctx->inst].saveIdMap[id];
     iassert(!id || savedId);
     unsigned int token = 0;
@@ -367,7 +365,7 @@ static void Scr_SaveEntry(ScrSaveContext *ctx, const VariableValueInternal *valu
         Scr_SaveString(ctx, name);
         return;
     }
-    if (name < 0x10000 + SAVE_OBJECT_LIMIT)
+    if (name < 0x10000 + VARIABLELIST_PARENT_SIZE(ctx->inst))
     {
         Scr_SaveObjectReference(ctx, name - 0x10000, 5);
         return;
@@ -438,10 +436,10 @@ static void Scr_SaveObject(ScrSaveContext *ctx, unsigned int id)
     Scr_SaveShort(ctx, (unsigned short)count);
     unsigned int written = 0;
     for (unsigned int index = FindLastSibling(ctx->inst, id); index;
-        index = list[SAVE_CHILD_BEGIN + index].hash.u.prevSibling)
+        index = list[VARIABLELIST_CHILD_BEGIN(ctx->inst) + index].hash.u.prevSibling)
     {
-        const unsigned int child = list[SAVE_CHILD_BEGIN + index].hash.id;
-        Scr_SaveEntry(ctx, &list[SAVE_CHILD_BEGIN + child], type == VAR_ARRAY);
+        const unsigned int child = list[VARIABLELIST_CHILD_BEGIN(ctx->inst) + index].hash.id;
+        Scr_SaveEntry(ctx, &list[VARIABLELIST_CHILD_BEGIN(ctx->inst) + child], type == VAR_ARRAY);
         ++written;
     }
     iassert(written == count);
@@ -458,7 +456,7 @@ void Scr_Save(scriptInstance_t inst, MemoryFile *memFile)
     Scr_SaveShort(&ctx, pub->savecount);
     for (unsigned int i = 1; i <= pub->savecount; ++i)
         Scr_SaveObject(&ctx, pub->saveIdMapRev[i]);
-    const VariableValueInternal *game = &gScrVarGlob[inst].variableList[SAVE_CHILD_BEGIN + pub->gameId];
+    const VariableValueInternal *game = &gScrVarGlob[inst].variableList[VARIABLELIST_CHILD_BEGIN(inst) + pub->gameId];
     Scr_SaveValue(&ctx, game->w.type & VAR_MASK, game->u.u);
     Scr_SaveObjectReference(&ctx, pub->levelId, 0);
     Scr_SaveObjectReference(&ctx, pub->animId, 0);
@@ -694,8 +692,8 @@ static void Scr_LoadObject(ScrSaveContext *ctx, unsigned int id)
             const VariableValue key = Scr_GetArrayIndexValue(ctx->inst, name);
             RemoveRefToValue(ctx->inst, key.type, key.u);
         }
-        list[SAVE_CHILD_BEGIN + child].w.type |= value.type;
-        list[SAVE_CHILD_BEGIN + child].u.u = value.u;
+        list[VARIABLELIST_CHILD_BEGIN(ctx->inst) + child].w.type |= value.type;
+        list[VARIABLELIST_CHILD_BEGIN(ctx->inst) + child].u.u = value.u;
     }
 }
 
@@ -710,9 +708,9 @@ void Scr_Load(scriptInstance_t inst, MemoryFile *memFile)
     pub->varUsagePos = "<script load variable>"; // KB allocation/debug bookkeeping.
     pub->time = Scr_LoadInt(&ctx);
     pub->savecount = Scr_LoadShort(&ctx);
-    iassert(pub->savecount < SAVE_OBJECT_LIMIT);
-    memset(pub->saveIdMap, 0, SAVE_OBJECT_LIMIT * sizeof(unsigned short));
-    memset(pub->saveIdMapRev, 0, SAVE_OBJECT_LIMIT * sizeof(unsigned short));
+    iassert(pub->savecount < VARIABLELIST_PARENT_SIZE(inst));
+    memset(pub->saveIdMap, 0, VARIABLELIST_PARENT_SIZE(inst) * sizeof(unsigned short));
+    memset(pub->saveIdMapRev, 0, VARIABLELIST_PARENT_SIZE(inst) * sizeof(unsigned short));
     for (unsigned int i = 1; i <= pub->savecount; ++i)
     {
         const unsigned int id = AllocObject(inst);
@@ -728,7 +726,7 @@ void Scr_Load(scriptInstance_t inst, MemoryFile *memFile)
     // SP 0x00533830 uses AllocValue, not Scr_AllocGameVariable's new empty array.
     pub->gameId = AllocValue(inst);
     const VariableValue game = Scr_LoadValue(&ctx);
-    VariableValueInternal *entry = &gScrVarGlob[inst].variableList[SAVE_CHILD_BEGIN + pub->gameId];
+    VariableValueInternal *entry = &gScrVarGlob[inst].variableList[VARIABLELIST_CHILD_BEGIN(inst) + pub->gameId];
     entry->w.type |= game.type;
     entry->u.u = game.u;
     pub->levelId = Scr_LoadObjectReference(&ctx, Scr_LoadByte(&ctx));

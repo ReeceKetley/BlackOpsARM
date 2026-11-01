@@ -1,5 +1,0 @@
-{
-  "initial_error": "FileNotFoundError: stringtable_cells_pass2/preservation-final.json",
-  "actual_build": "stringtable_cells_pass1 plus cells-final-build.log",
-  "correction": "Only ignored checkpoint script source path corrected; no stage or commit occurred, nothing deleted."
-}

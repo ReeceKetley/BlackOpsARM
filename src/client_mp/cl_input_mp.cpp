@@ -978,7 +978,13 @@ void __cdecl CL_GamepadMove(int localClientNum, usercmd_s *cmd)
                     cmd->button_bits.setBit(0xBu);
                 if ( !kb[3].active )
                 {
-                    if ( kb[30].active || kb[30].wasPressed )
+                    // CL_KeyMove already consumed wasPressed. Keep its sprint
+                    // bit when a click was pressed and released between frames.
+                    if ( kb[30].active || kb[30].wasPressed
+#if defined(__ANDROID__)
+                        || cmd->button_bits.testBit(1u)
+#endif
+                    )
                     {
                         cmd->button_bits.setBit(1u);
                         kb[30].wasPressed = 0;

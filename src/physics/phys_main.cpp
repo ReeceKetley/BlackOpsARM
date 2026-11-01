@@ -4392,3 +4392,7 @@ PhysGlob::PhysGlob()
         i->m_alloc_count = 0;
     }
 }
+
+#include "phys_checkpoint.inl"
+#include "phys_object_checkpoint.inl"
+#include "phys_constraint_checkpoint.inl"

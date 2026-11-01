@@ -1325,7 +1325,7 @@ unsigned int __cdecl FX_SpawnEffect(
         // Absolute dynamic entity case
 
         bolt.absDynEntId = boneIndex & 0x1FFFFF;
-        bolt._type = 1; // matches 0x40000000
+        bolt._type = 2; // FX_BOLT_TYPE_DYNENT, bits 29..30 = 0x40000000
 
         iassert(bolt.absDynEntId == static_cast<uint32_t>(boneIndex));
     }
@@ -1733,13 +1733,13 @@ unsigned int __cdecl FX_PlayBoltedEffect_DynEnt(
 
     if ( !fx_enable->current.enabled )
         return 0;
+    // Runtime dynamic IDs are unsigned shorts. Reject before pose lookup,
+    // rather than truncating an out-of-range owner to a different object.
+    if (absDynEntId < 0 || absDynEntId >= 0xFFFF || !DynEnt_Valid((unsigned short)absDynEntId))
+        return 0;
+    const bool needsBolt = FX_NeedsBoltUpdate(def) != 0;
     boneIndex = absDynEntId;
-    if ( FX_NeedsBoltUpdate(def) )
-    {
-        if ( absDynEntId > 0x200000 )
-            return 0;
-    }
-    else
+    if (!needsBolt)
     {
         boneIndex = 511;
     }
@@ -1764,6 +1764,13 @@ unsigned int __cdecl FX_PlayBoltedEffect_DynEnt(
     effectPtr = UniqueHandleToEffect(system, effect);
     if ( effectPtr )
     {
+        // The generic spawn API treats boneIndex511 as unbound. Here the
+        // caller explicitly supplied a dynamic owner, including owner511.
+        if (needsBolt)
+        {
+            effectPtr->effect.boltAndSortOrder.absDynEntId = absDynEntId;
+            effectPtr->effect.boltAndSortOrder._type = 2;
+        }
         FX_DelRefToEffect(system, effectPtr, 0);
         p_status = &effectPtr->atomics.status;
         do
@@ -3273,7 +3280,7 @@ bool __cdecl FX_SpawnModelPhysics(
     Sys_EnterCriticalSection(CRITSECT_PHYSICS);
     v11.anonymous = FX_GetElemVisuals(elemDef, randomSeed).anonymous;
     visuals.anonymous = v11.anonymous;
-    if (!*((_DWORD *)v11.anonymous + 59)
+    if ((!visuals.model || !visuals.model->physPreset)
         && !Assert_MyHandler(
             "C:\\projects_pc\\cod\\codsrc\\src\\EffectsCore\\fx_system.cpp",
             2591,
@@ -3311,7 +3318,7 @@ bool __cdecl FX_SpawnModelPhysics(
         worldOrigin,
         quat,
         velocity,
-        *((const PhysPreset **)visuals.anonymous + 59),
+        visuals.model->physPreset,
         &gjk_geom_list,
         1,
         id));

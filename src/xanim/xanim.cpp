@@ -5142,6 +5142,22 @@ void __cdecl DObjSyncServerTree(const XAnimTree_s *serverTree, DObj *obj, float 
     }
 }
 
+int XAnimGetFreeInfoCount()
+{
+    Sys_EnterCriticalSection(CRITSECT_XANIM_ALLOC);
+    int count = 0, node = g_xAnimInfo[0].next;
+    bool invalid = false;
+    while (node)
+    {
+        if (node < 0 || node >= g_xAnimInfoCount || ++count >= g_xAnimInfoCount)
+        { invalid = true; break; }
+        node = g_xAnimInfo[node].next;
+    }
+    Sys_LeaveCriticalSection(CRITSECT_XANIM_ALLOC);
+    if (invalid) Com_Error(ERR_DROP, "Animation pool has an invalid free chain");
+    return count;
+}
+
 XAnimInfo *__cdecl GetAnimInfo(int infoIndex)
 {
     if ( (infoIndex <= 0 || infoIndex >= g_xAnimInfoCount)

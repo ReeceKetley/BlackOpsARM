@@ -1,4 +1,5 @@
 #include "controller_service.h"
+#include "pad_trigger_startup.h"
 #include <SDL.h>
 #include "window_lifecycle.h"
 #include <thread>
@@ -13,7 +14,9 @@
 
 namespace bo1::android {
 namespace {
-struct Slot { SDL_GameController *controller{}; SDL_JoystickID identity{-1}; std::uint64_t generation{}; };
+struct Slot { SDL_GameController *controller{}; SDL_JoystickID identity{-1}; std::uint64_t generation{};
+    bool triggerStartupQuirk{}; TriggerStartup triggers[2]{};
+};
 Slot slots[ControllerSlots];
 std::thread::id owner;
 #if defined(__ANDROID__)
@@ -198,6 +201,15 @@ bool RefreshControllers() {
         SDL_GameController *controller=SDL_GameControllerOpen(device);
         if(!controller) return false;
         empty->controller=controller; empty->identity=identity; ++empty->generation;
+        empty->triggers[0]={}; empty->triggers[1]={};
+        // Scope the workaround to the observed Android device and standard
+        // signed-axis mapping. Other controllers/mappings retain SDL behavior.
+        const auto lt=SDL_GameControllerGetBindForAxis(controller,SDL_CONTROLLER_AXIS_TRIGGERLEFT);
+        const auto rt=SDL_GameControllerGetBindForAxis(controller,SDL_CONTROLLER_AXIS_TRIGGERRIGHT);
+        empty->triggerStartupQuirk=SDL_GameControllerGetVendor(controller)==0x24c6
+            && SDL_GameControllerGetProduct(controller)==0x581a
+            && lt.bindType==SDL_CONTROLLER_BINDTYPE_AXIS && lt.value.axis==4
+            && rt.bindType==SDL_CONTROLLER_BINDTYPE_AXIS && rt.value.axis==5;
         {
             char guid[64]{};SDL_JoystickGetGUIDString(SDL_JoystickGetDeviceGUID(device),guid,sizeof guid);
             char *mapping=SDL_GameControllerMapping(controller);
@@ -212,23 +224,6 @@ int ReadController(int slot, ControllerSample *sample) {
     if(!sample) { SDL_SetError("null controller output sample"); return -1; }
     auto *controller=slots[slot].controller;
     if(!controller || !SDL_GameControllerGetAttached(controller)) return 0;
-    // Raw input trace (first 600 changes): which physical button/axis indexes this pad sends and
-    // what SDL's mapping made of them. Used to diagnose controllers with unexpected layouts.
-    {
-        static int traced; static Uint8 lastButtons[SDL_CONTROLLER_BUTTON_MAX+32]; static Sint16 lastAxes[16]; static Uint8 lastHats[4];
-        if(traced<600) {
-            SDL_Joystick *joystick=SDL_GameControllerGetJoystick(controller);
-            const int buttons=std::min(SDL_JoystickNumButtons(joystick),int(sizeof lastButtons));
-            for(int i=0;i<buttons;++i) { const Uint8 now=SDL_JoystickGetButton(joystick,i);
-                if(now!=lastButtons[i]) { lastButtons[i]=now; ++traced; std::fprintf(stderr,"CONTROLLER raw button %d %s\n",i,now?"down":"up"); } }
-            const int axes=std::min(SDL_JoystickNumAxes(joystick),16);
-            for(int i=0;i<axes;++i) { const Sint16 now=SDL_JoystickGetAxis(joystick,i);
-                if(std::abs(int(now)-int(lastAxes[i]))>12000) { lastAxes[i]=now; ++traced; std::fprintf(stderr,"CONTROLLER raw axis %d = %d\n",i,int(now)); } }
-            const int hats=std::min(SDL_JoystickNumHats(joystick),4);
-            for(int i=0;i<hats;++i) { const Uint8 now=SDL_JoystickGetHat(joystick,i);
-                if(now!=lastHats[i]) { lastHats[i]=now; ++traced; std::fprintf(stderr,"CONTROLLER raw hat %d = %d\n",i,int(now)); } }
-        }
-    }
     ControllerSample out{};
     struct Mapping { SDL_GameControllerButton button; std::uint16_t mask; };
     static constexpr Mapping maps[] = {
@@ -245,8 +240,15 @@ int ReadController(int slot, ControllerSample *sample) {
     out.sThumbLY=InvertY(SDL_GameControllerGetAxis(controller,SDL_CONTROLLER_AXIS_LEFTY));
     out.sThumbRX=SDL_GameControllerGetAxis(controller,SDL_CONTROLLER_AXIS_RIGHTX);
     out.sThumbRY=InvertY(SDL_GameControllerGetAxis(controller,SDL_CONTROLLER_AXIS_RIGHTY));
-    out.bLeftTrigger=Trigger(SDL_GameControllerGetAxis(controller,SDL_CONTROLLER_AXIS_TRIGGERLEFT));
-    out.bRightTrigger=Trigger(SDL_GameControllerGetAxis(controller,SDL_CONTROLLER_AXIS_TRIGGERRIGHT));
+    Sint16 left=SDL_GameControllerGetAxis(controller,SDL_CONTROLLER_AXIS_TRIGGERLEFT);
+    Sint16 right=SDL_GameControllerGetAxis(controller,SDL_CONTROLLER_AXIS_TRIGGERRIGHT);
+    if(slots[slot].triggerStartupQuirk) {
+        auto *joystick=SDL_GameControllerGetJoystick(controller);
+        left=slots[slot].triggers[0].Filter(SDL_JoystickGetAxis(joystick,4),left);
+        right=slots[slot].triggers[1].Filter(SDL_JoystickGetAxis(joystick,5),right);
+    }
+    out.bLeftTrigger=Trigger(left);
+    out.bRightTrigger=Trigger(right);
     *sample=out;
     return 1;
 }

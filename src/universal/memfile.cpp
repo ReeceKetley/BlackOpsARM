@@ -463,7 +463,9 @@ char *__cdecl MemFile_ReadCString(MemoryFile *memFile)
             return (char *)"";
         if ( !*string )
             break;
-        if ( ++string >= (char *)&g_mem )
+        // This is the CString buffer's bound, not the linker position of an
+        // unrelated global (which differs between the executable and APK SO).
+        if ( ++string >= buffer + sizeof(buffer) )
             Com_Error(ERR_DROP, "Trying to read corrupted file");
     }
     return buffer;

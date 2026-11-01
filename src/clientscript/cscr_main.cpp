@@ -1,4 +1,5 @@
 #include <game_sp/g_sp_measure.h>
+#include <game_sp/g_sp_levelstart.h>
 #include <game_sp/g_sp_headless_labs.h>
 #include "cscr_main.h"
 #include "cscr_variable.h"
@@ -538,6 +539,7 @@ void __cdecl Scr_EndLoadScripts(scriptInstance_t inst)
 {
     Scr_SP_BuildCodePosMap(inst);
     G_SP_MeasureFields(inst);
+    G_SP_ScriptLevelDefaultFields(inst);
     { void GScr_ModScriptPerfFields(scriptInstance_t); GScr_ModScriptPerfFields(inst); } // mod (L43) bo1_mod_scriptperf
     G_SP_HeadlessRoundFields(inst); // f2 test switch bo1_testclient_round (headless only)
     if (scrShowVarUseage->current.enabled)

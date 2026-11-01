@@ -9,6 +9,8 @@
 #include <clientscript/cscr_main.h>
 #include <clientscript/cscr_stringlist.h>
 #include <clientscript/cscr_vm.h>
+#include <clientscript/cscr_compiler.h>
+#include <clientscript/cscr_variable.h>
 #include <game/g_load_utils.h>
 #include <game_mp/actor_mp.h>
 #include <game_sp/actor_sp_ext.h>
@@ -25,6 +27,49 @@
 
 scr_data_sp_t g_scr_data_sp;
 static XAnim_s *g_actorAnimsSP; // SP .data 0x01C79B60
+static unsigned int s_earlyLevelField, s_levelScriptField;
+
+void G_SP_ScriptLevelDefaultFields(scriptInstance_t inst)
+{
+    if (inst != SCRIPTINSTANCE_SERVER) return;
+    const unsigned int early = SL_FindString("early_level", inst);
+    const unsigned int script = SL_FindString("script", inst);
+    s_earlyLevelField = early ? gScrCompilePub[inst].canonicalStrings[early] : 0;
+    s_levelScriptField = script ? gScrCompilePub[inst].canonicalStrings[script] : 0;
+}
+
+void G_SP_InitializeScriptLevelDefaults()
+{
+    if (!G_SP_IsZombieMode() || !s_earlyLevelField || !s_levelScriptField) return;
+    const scriptInstance_t inst = SCRIPTINSTANCE_SERVER;
+    const unsigned int levelId = gScrVarPub[inst].levelId;
+    if (!levelId) return;
+    const unsigned int early = FindVariable(inst, levelId, s_earlyLevelField);
+    const unsigned int script = FindVariable(inst, levelId, s_levelScriptField);
+    if (!early || !script || GetValueType(inst, early) != VAR_POINTER
+        || (GetValueType(inst, script) != VAR_STRING && GetValueType(inst, script) != VAR_ISTRING)) return;
+    const unsigned int array = GetVariableValueAddress(inst, early)->u.pointerValue;
+    if (GetObjectType(inst, array) != VAR_ARRAY) return;
+    const unsigned int map = GetVariableValueAddress(inst, script)->u.stringValue;
+    unsigned int entry = FindVariable(inst, array, map); // array keys are SL IDs, not canonical field IDs
+    if (entry && GetValueType(inst, entry) != VAR_UNDEFINED) return;
+    // _load_common::map_is_early_in_the_game initializes an absent entry to
+    // false, but that initializer is inside /# #/. Zombies' low-health overlay
+    // also calls it with developer_script=0. Complete the intended data default
+    // without changing the assets, existing map values, or VM bool semantics.
+    // Native VM allocations need real debugger provenance, just like
+    // Scr_AllocGameVariable / Scr_AllocArray. Restore the caller's context.
+    const char *const previousUsage = gScrVarPub[inst].varUsagePos;
+    if (!previousUsage) gScrVarPub[inst].varUsagePos = "<zombie early-level default>";
+    if (!entry) entry = GetVariable(inst, array, map);
+    VariableValue value{};
+    value.type = VAR_INTEGER;
+    value.u.intValue = 0;
+    SetVariableFieldValue(inst, entry, &value);
+    gScrVarPub[inst].varUsagePos = previousUsage;
+    Com_Printf(16, "bo1_level_default: early_level[%s] = false (missing retail map default)\n",
+        SL_ConvertToString(map, inst));
+}
 
 bool G_SP_IsZombieMode()
 {

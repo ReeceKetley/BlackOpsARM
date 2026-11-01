@@ -1,7 +1,0 @@
-warning: in the working copy of '.gitignore', LF will be replaced by CRLF the next time Git touches it
-warning: in the working copy of '.ledger/ledger.jsonl', LF will be replaced by CRLF the next time Git touches it
-warning: in the working copy of 'android/cmake/arm64-audit/CMakeLists.txt', LF will be replaced by CRLF the next time Git touches it
-warning: in the working copy of 'src/platform/android/virtual_memory.cpp', LF will be replaced by CRLF the next time Git touches it
-warning: in the working copy of 'src/platform/android/zone_memory.cpp', LF will be replaced by CRLF the next time Git touches it
-warning: in the working copy of 'src/platform/android/zone_memory.h', LF will be replaced by CRLF the next time Git touches it
-warning: in the working copy of 'tools/port/tests/hunk_test_support.cpp', LF will be replaced by CRLF the next time Git touches it

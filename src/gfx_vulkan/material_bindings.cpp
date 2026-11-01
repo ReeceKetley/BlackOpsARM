@@ -74,4 +74,5 @@ bool Upload(const Draw& draw,Buffer& buffer,VkDeviceSize& cursor,VkDeviceSize al
 }
 
 
+std::size_t RetireAll(){return registry.RetireAll();}
 }

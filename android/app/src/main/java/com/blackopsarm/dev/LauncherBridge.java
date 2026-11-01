@@ -16,6 +16,8 @@ import java.nio.charset.StandardCharsets;
 final class LauncherBridge {
     /** Engine-activity services the menu can use. Called on WebView binder threads. */
     interface Host {
+        String hardwareInfo();
+        String resumeStatus();
         File gameRoot();
         File userRoot();
         /** Height the running engine renders at (480, 540 or 720). */
@@ -24,10 +26,11 @@ final class LauncherBridge {
         boolean needsFreshEngine();
         /** Queue a map for the running engine. */
         boolean requestMap(String map);
+        boolean requestResume();
         void applyTouch(float opacity, float scale, float look);
         void rememberHeight(int height);
         /** The engine's render size is fixed per process: start a new engine for this map. */
-        void restartWithMap(String map, int height);
+        void restartWithMap(String map, int height, boolean resume);
         void openImporter();
         void quit();
     }
@@ -53,6 +56,7 @@ final class LauncherBridge {
             JSONArray maps = new JSONArray();
             File game = host.gameRoot();
             for (String map : MAPS) if (new File(game, "zone/common/" + map + ".ff").isFile()) maps.put(map);
+            result.put("version", BuildConfig.VERSION_NAME);
             result.put("installed", true); // the engine only runs on a committed install
             result.put("maps", maps);
             result.put("height", host.runningHeight());
@@ -86,7 +90,9 @@ final class LauncherBridge {
             float look = (float) Math.max(0.2, Math.min(2.0, request.optDouble("touchLook", 1.0)));
             host.applyTouch(opacity, scale, look);
             host.rememberHeight(height);
-            if (height != host.runningHeight() || host.needsFreshEngine()) { host.restartWithMap(map, height); return ""; }
+            boolean resume = request.optBoolean("resume", false);
+            if (height != host.runningHeight() || host.needsFreshEngine()) { host.restartWithMap(map, height, resume); return ""; }
+            if (resume) return host.requestResume() ? "" : "The saved session is not ready to resume";
             return host.requestMap(map) ? "" : "Could not start that map";
         } catch (IOException | RuntimeException | JSONException failure) {
             Log.e("BlackOpsARM", "Launcher start failed", failure);
@@ -95,6 +101,8 @@ final class LauncherBridge {
     }
 
     @JavascriptInterface public void openImport() { host.openImporter(); }
+    @JavascriptInterface public String hardwareInfo() { return host.hardwareInfo(); }
+    @JavascriptInterface public String resumeStatus() { return host.resumeStatus(); }
 
     @JavascriptInterface public void quit() { host.quit(); }
 }

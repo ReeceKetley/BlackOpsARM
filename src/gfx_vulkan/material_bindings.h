@@ -22,6 +22,8 @@ std::shared_ptr<const Selection> Acquire(const GfxCmdBufState*);
 bool Capture(const GfxCmdBufState*,Draw&,std::string&);
 std::shared_ptr<const Draw> Capture(const GfxCmdBufState*,std::string&);
 void Release(const GfxCmdBufState*);void Clone(const GfxCmdBufState*,const GfxCmdBufState*);
+// Caller has stopped recording and drained all submitted frames.
+std::size_t RetireAll();
 // Fresh ranges for each draw; reset cursor only after the arena's fence retires.
 // The caller owns/reserves the buffer and descriptor pool for submitted readers.
 bool Upload(const Draw&,Buffer&,VkDeviceSize& cursor,VkDeviceSize alignment,

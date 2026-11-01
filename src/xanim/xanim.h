@@ -695,6 +695,7 @@ void __cdecl XAnimCloneAnimTree_r(
                 unsigned int fromInfoIndex,
                 unsigned int toInfoParentIndex);
 XAnimInfo *__cdecl GetAnimInfo(int infoIndex);
+int XAnimGetFreeInfoCount();
 char __cdecl XAnimGetParamValue(const XAnim_s *anims, unsigned int animIndex, const char *paramName, float *outValue);
 bool __cdecl XAnimGetParamValue(XAnimTree_s *tree, unsigned int animIndex, const char *paramName, float *outValue);
 bool __cdecl XAnimGetParamValueTree(

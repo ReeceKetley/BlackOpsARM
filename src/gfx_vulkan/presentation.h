@@ -5,6 +5,9 @@
 #include <vector>
 #include <string>
 struct SDL_Window;
+#if defined(__ANDROID__)
+struct ANativeWindow;
+#endif
 namespace bo1::vulkan {
 enum class FrameResult { Presented, Deferred, Failed, Recording };
 struct FrameContext { VkCommandBuffer command;VkExtent2D extent;unsigned slot,image,generation; };
@@ -44,6 +47,11 @@ public:
     void PreRotateProjection(std::array<float,16>&)const;
 private:
     bool Rebuild(std::string&);void ReleaseSwapchain();
+    // False with an empty error is a temporary Android surface absence.
+    bool CreateSurface(std::string&);void ReleaseSurface();
+#if defined(__ANDROID__)
+    ANativeWindow* nativeWindow_{};
+#endif
     bool Owner(std::string&)const;
     FrameResult Begin(bool present,FrameContext&,std::string&);
     // Each slot owns its pool: resetting the whole pool once its fence retires

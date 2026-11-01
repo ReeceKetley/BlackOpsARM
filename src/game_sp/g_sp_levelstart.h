@@ -36,6 +36,10 @@ bool G_SP_IsSPLevel();
 void G_SP_RegisterLevelDvars();
 // SP 0x00640590: g_player_maxhealth 100 and the g_gameskill health / invulnerability dvars.
 void G_SP_UpdateSkillDvars();
+// Restore the retail script's missing-map early_level default in Zombies even
+// when developer-only script comments are disabled. Existing entries are kept.
+void G_SP_ScriptLevelDefaultFields(scriptInstance_t inst);
+void G_SP_InitializeScriptLevelDefaults();
 
 // GScr_LoadScripts, SP 0x00580370, from GScr_LoadConsts on (the codescripts/delete and
 // codescripts/struct handles are loaded by the caller exactly as in MP).

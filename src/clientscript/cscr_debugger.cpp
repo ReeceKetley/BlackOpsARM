@@ -959,7 +959,7 @@ void __thiscall Scr_ScriptList::Init(scriptInstance_t inst)
         &scriptWindowsNames[1],
         this->numLines - 1, sizeof(*(&scriptWindowsNames[1])),
         (int (__cdecl *)(const void *, const void *))ConDrawInput_CompareStrings);
-    this->scriptWindows = (Scr_ScriptWindow **)Scr_AllocDebugMem(inst, 4 * this->numLines, "Scr_ScriptList::Init2");
+    this->scriptWindows = (Scr_ScriptWindow **)Scr_AllocDebugMem(inst, sizeof(*this->scriptWindows) * this->numLines, "Scr_ScriptList::Init2");
     memset(&info, 0, sizeof(info));
     Hunk_CheckTempMemoryHighClear();
     Scr_AddSourceBuffer(inst, 0, (char*)"scriptdebugger/help.txt", 0, 0);
@@ -977,6 +977,10 @@ void __thiscall Scr_ScriptList::Init(scriptInstance_t inst)
                                                                                         info.maxNumCols + 1,
                                                                                         4,
                                                                                         "Scr_ScriptList::Init3");
+#if defined(__ANDROID__)
+    Com_Printf(16, "bo1_debug_list: init inst %d lines %d arena %p columns %p windows %p\n",
+        inst, this->numLines, g_DebugHunkUser, gScrDebuggerGlob[inst].colBuf, this->scriptWindows);
+#endif
 }
 
 unsigned int *__cdecl Scr_AllocDebugMem(scriptInstance_t inst, int size, const char *name)
@@ -998,6 +1002,10 @@ void __thiscall Scr_ScriptList::Shutdown(scriptInstance_t inst)
     {
         __debugbreak();
     }
+#if defined(__ANDROID__)
+    Com_Printf(16, "bo1_debug_list: shutdown inst %d lines %d arena %p columns %p windows %p\n",
+        inst, this->numLines, g_DebugHunkUser, gScrDebuggerGlob[inst].colBuf, this->scriptWindows);
+#endif
     Hunk_UserFree(g_DebugHunkUser, gScrDebuggerGlob[inst].colBuf);
     for (i = 0; i < this->numLines; ++i)
     {

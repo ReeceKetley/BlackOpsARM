@@ -54,6 +54,8 @@ void __cdecl G_MoverTeam(gentity_s *ent, mover_info_t *mi);
 void __cdecl G_MoverPush(gentity_s *pusher, mover_info_t *mi);
 void __cdecl G_CalcEntityPhysicsPositions(gentity_s *ent);
 void __cdecl G_CreatePhysicsObject(gentity_s *ent);
+// Saved graphs publish their constraints after every replacement body exists.
+void G_CreateCheckpointPhysicsObject(gentity_s *ent);
 void __cdecl G_UpdatePhysicsPose(gentity_s *ent);
 void __cdecl G_MoverTeam_New(gentity_s *ent);
 

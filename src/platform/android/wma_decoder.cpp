@@ -131,4 +131,85 @@ bool DecodeCanonicalWma(const WmaAssetView &asset, DecodedWma &output, std::stri
 bool DecodeCanonicalWmaTolerant(const WmaAssetView &asset, DecodedWma &output, std::string &error) {
     return DecodeWma(asset,true,output,error);
 }
+bool DecodeCanonicalMsAdpcm(const MsAdpcmAssetView &asset, DecodedMsAdpcm &output, std::string &error) {
+    output={};error.clear();
+    auto Fail=[&](const char *message) { error=message;return false; };
+    if((asset.channels!=1 && asset.channels!=2) || !asset.frameCount ||
+        asset.sampleRate<1000 || asset.sampleRate>100000)
+        return Fail("invalid canonical MSADPCM metadata");
+    const unsigned blockBytes=262*asset.channels;
+    const std::uint64_t sampleCount=static_cast<std::uint64_t>(asset.frameCount)*asset.channels;
+    if(asset.blocks.empty() || asset.blocks.size()%blockBytes ||
+        asset.blocks.size()/blockBytes*512ull!=asset.frameCount ||
+        sampleCount>std::numeric_limits<std::uint32_t>::max()/sizeof(std::int16_t))
+        return Fail("incomplete or padded canonical MSADPCM extent");
+    // FAudio 25.02 uses signed 16-bit adaptive deltas; FFmpeg uses int.
+    // Refuse an asset whose delta would wrap in FAudio rather than changing its
+    // audible waveform during a checkpoint. All retained samples must agree.
+    static constexpr unsigned adaptation[16]={230,230,230,230,307,409,512,614,768,614,512,409,307,230,230,230};
+    for(std::size_t offset=0;offset<asset.blocks.size();offset+=blockBytes) {
+        const auto *block=asset.blocks.data()+offset;
+        unsigned delta[2]{};
+        for(unsigned channel=0;channel<asset.channels;++channel) {
+            delta[channel]=block[asset.channels+channel*2] | (block[asset.channels+channel*2+1]<<8);
+            if(block[channel]>=7 || delta[channel]<16 || delta[channel]>32767)
+                return Fail("MSADPCM predictor/delta differs from pinned SDK bounds");
+        }
+        for(unsigned byte=7*asset.channels;byte<blockBytes;++byte) {
+            for(unsigned half=0;half<2;++half) {
+                const auto channel=asset.channels==1?0:half;
+                const auto nibble=half?block[byte]&15:block[byte]>>4;
+                delta[channel]=delta[channel]*adaptation[nibble]/256;
+                if(delta[channel]>32767) return Fail("MSADPCM adaptive delta wraps in pinned SDK");
+                if(delta[channel]<16) delta[channel]=16;
+            }
+        }
+    }
+    if(avcodec_version()!=LIBAVCODEC_VERSION_INT) return Fail("MSADPCM library differs from pinned decoder ABI");
+    const auto *decoder=avcodec_find_decoder(AV_CODEC_ID_ADPCM_MS);
+    if(!decoder) return Fail("actual MSADPCM decoder is unavailable");
+    std::unique_ptr<AVCodecContext,CodecDeleter> codec(avcodec_alloc_context3(decoder));
+    std::unique_ptr<AVFrame,FrameDeleter> frame(av_frame_alloc());
+    std::unique_ptr<AVPacket,PacketDeleter> packet(av_packet_alloc());
+    if(!codec || !frame || !packet) return Fail("MSADPCM decoder allocation failed");
+    codec->sample_rate=asset.sampleRate;codec->block_align=blockBytes;codec->bits_per_coded_sample=4;
+    av_channel_layout_default(&codec->ch_layout,asset.channels);
+    codec->err_recognition=AV_EF_CAREFUL|AV_EF_EXPLODE;
+    int result=avcodec_open2(codec.get(),decoder,nullptr);
+    if(result<0) { error=CodecError("open actual MSADPCM decoder",result);return false; }
+    DecodedMsAdpcm decoded;
+    try {
+        decoded.samples.reserve(static_cast<std::size_t>(sampleCount));
+        for(std::size_t offset=0;offset<asset.blocks.size();offset+=blockBytes) {
+            result=av_new_packet(packet.get(),blockBytes);
+            if(result<0) { error=CodecError("allocate padded MSADPCM packet",result);return false; }
+            std::memcpy(packet->data,asset.blocks.data()+offset,blockBytes);
+            result=avcodec_send_packet(codec.get(),packet.get());av_packet_unref(packet.get());
+            if(result<0) { error=CodecError("submit actual MSADPCM packet",result);return false; }
+            result=avcodec_receive_frame(codec.get(),frame.get());
+            if(result<0) { error=CodecError("decode actual MSADPCM block",result);return false; }
+            if((frame->format!=AV_SAMPLE_FMT_S16 && frame->format!=AV_SAMPLE_FMT_S16P) ||
+                frame->ch_layout.nb_channels!=static_cast<int>(asset.channels) || frame->nb_samples!=512 ||
+                frame->sample_rate!=static_cast<int>(asset.sampleRate) || !frame->extended_data)
+                return Fail("MSADPCM decoder returned incompatible frame layout");
+            for(unsigned channel=0;channel<(frame->format==AV_SAMPLE_FMT_S16P?asset.channels:1);++channel)
+                if(!frame->extended_data[channel]) return Fail("MSADPCM decoder returned null sample plane");
+            for(unsigned sample=0;sample<512;++sample)
+                for(unsigned channel=0;channel<asset.channels;++channel) {
+                    const auto plane=frame->format==AV_SAMPLE_FMT_S16P?channel:0;
+                    const auto index=frame->format==AV_SAMPLE_FMT_S16P?sample:sample*asset.channels+channel;
+                    std::int16_t value;std::memcpy(&value,frame->extended_data[plane]+index*sizeof(value),sizeof(value));
+                    decoded.samples.push_back(value);
+                }
+            av_frame_unref(frame.get());
+            result=avcodec_receive_frame(codec.get(),frame.get());
+            if(result!=AVERROR(EAGAIN)) return Fail("MSADPCM block produced unexpected extra output");
+        }
+        result=avcodec_send_packet(codec.get(),nullptr);
+        if(result<0 || avcodec_receive_frame(codec.get(),frame.get())!=AVERROR_EOF)
+            return Fail("MSADPCM final drain differs from complete block extent");
+    } catch(const std::bad_alloc &) { return Fail("MSADPCM decoded sample allocation failed"); }
+    if(decoded.samples.size()!=sampleCount) return Fail("MSADPCM decoded sample count differs from canonical extent");
+    output=std::move(decoded);return true;
+}
 }

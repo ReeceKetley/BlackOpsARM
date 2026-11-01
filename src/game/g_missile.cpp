@@ -540,8 +540,9 @@ void    G_ExplodeMissile(gentity_s *ent)
         origin[2] = (float)(int)origin[2];
         // KB measurement (not SP): w1 grenade fuse / explosion position (bo1_measure, zombiemode).
         if (zombiemode && zombiemode->current.enabled && G_SP_MeasureEnabled())
-            Com_Printf(16, "bo1_grenade: time %d explode ent %d weapon %s pos %.0f %.0f %.0f age %d\n", level.time,
-                ent->s.number, BG_WeaponName(ent->s.weapon), origin[0], origin[1], origin[2], level.time - ent->item[0].index);
+            Com_Printf(16, "bo1_grenade: time %d explode ent %d weapon %s pos %.0f %.0f %.0f age %d origin_valid %d map_center %.0f %.0f %.0f\n", level.time,
+                ent->s.number, BG_WeaponName(ent->s.weapon), origin[0], origin[1], origin[2], level.time - ent->item[0].index,
+                BG_ValidateOrigin(origin, 16, 17, svs.mapCenter) ? 1 : 0, svs.mapCenter[0], svs.mapCenter[1], svs.mapCenter[2]);
         // w1: a cone weapon (claymore 60) lists the actors in its radius with their angle off the missile's forward.
         if (zombiemode && zombiemode->current.enabled && G_SP_MeasureEnabled() && weapDef->damageConeAngle < 180.0f)
         {

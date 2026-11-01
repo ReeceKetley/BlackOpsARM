@@ -411,3 +411,8 @@ extern cg_s *cgArray;
 extern cgs_t *cgsArray;
 
 extern float (*cg_entityOriginArray[1])[3];
+// Shared canonical callbacks for ordinary init and durable client restoration.
+void CG_InitAnimationServices(int localClientNum);
+
+// Retire logical native/VM owners while retaining initialized map services.
+void CG_RetireCheckpointOwners(int localClientNum);

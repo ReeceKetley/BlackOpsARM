@@ -115,4 +115,5 @@ bool AppendResourcesWithScratch(const Snapshot& snapshot,const ShaderTranslation
     }
     resources.insert(resources.end(),added.begin(),added.end());return true;
 }
+std::size_t RetireAll(){return registry.RetireAll();}
 }

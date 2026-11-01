@@ -1,4 +1,8 @@
 #include "win_input.h"
+#if defined(__ANDROID__)
+#include <platform/android/pad_menu.h>
+#include <client/cl_keys.h>
+#endif
 #include "win_gamepad.h"
 
 #if !defined(__ANDROID__)
@@ -275,7 +279,13 @@ void IN_GamepadsMove()
                 {
                     CL_GamepadButtonEventForPort(controllerIndex, buttonList[2 * butIndex + 1], 1, time, buttonList[2 * butIndex]);
                 }
-                else if (GPad_ButtonRequiresUpdates(controllerIndex, buttonList[2 * butIndex]))
+                else if (GPad_ButtonRequiresUpdates(controllerIndex, buttonList[2 * butIndex])
+#if defined(__ANDROID__)
+                    || (Key_IsCatcherActive(0, 0x50)
+                        && bo1::android::pad::IsMenuDirection(buttonList[2 * butIndex + 1])
+                        && GPad_GetButton(controllerIndex, buttonList[2 * butIndex]) > 0.0)
+#endif
+                )
                 {
                     CL_GamepadButtonEventForPort(controllerIndex, buttonList[2 * butIndex + 1], 2, time, buttonList[2 * butIndex]);
                 }

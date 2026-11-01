@@ -1,9 +1,0 @@
-# Native dynamic entity spawn callback contract
-
-Full423 genuine Kino initialization reaches Scr_SP_StartLevelMain -> Scr_ExecThread -> VM_Execute_0 -> G_f_codespawn -> G_CallSpawnEntity808. Matching ELF BuildIdeda2bab6ff43d51316b7884ffdd68ae0b91fc57b resolves the actual callback target SP_script_origin(gentity_s*,SpawnVar*)264. G_CallSpawnEntity had cast G_FindSpawnFunc's exact two-argument pointer down to a one-argument function, then invoked it as void(gentity_s*,unsigned int). UBSan correctly rejected that incompatible call, despite the legacy zero physically representing a null context.
-
-Android now keeps the exact void(gentity_s*,SpawnVar*) declaration and G_FindSpawnFunc result, and calls it with ent and nullptr. The actual table lookup, callbacks, item branch, inuse assertion, return behavior and unavailable-class warning remain. No fake SpawnVar, independent spawner, callback erasure, TLS/global capture or sanitizer suppression. Windows retains its original three statements in else branches.
-
-Native whole TU compile passes with the actual full compile command: build-android-audit/native_dynamic_spawn_calls1/{command.txt,compile.log}. Normal Windows x86/x64 whole TU passes once in takeover_dynamic_spawn_calls_windows1. The selected Windows G_CallSpawnEntity body matches read-only BlackOps64 ignoring whitespace: native_dynamic_spawn_calls1/windows-oracle-body.json. SourceSHA A7A5656AD44D732623B45DAEBAA47D6B30793AF11EE1A59F146477DFC7FF5D0B.
-
-No synthetic spawn provider/fixture is added for these three typed callsite changes. Root full424 actual retail level-main codespawn is the integration proof; no completed spawn, map initialization or game-frame claim follows from compile/source checks alone. Separate server trace vector copies are included in the next build with preserved actual callbacks and geometry.

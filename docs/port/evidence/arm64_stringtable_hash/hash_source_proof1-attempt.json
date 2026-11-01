@@ -1,6 +1,0 @@
-{
-  "exit": 1,
-  "error": "Captured baseline differs from Git source: cmake_files.cmake",
-  "cause": "Verifier assumed CRLF baseline for LF CMake inventory; corrected to verify exact LF/CRLF variants of Git",
-  "production_source_changed_by_verifier": false
-}

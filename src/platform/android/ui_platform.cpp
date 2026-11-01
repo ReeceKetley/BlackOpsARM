@@ -94,7 +94,7 @@ bool RegisterConsole(JNIEnv *env,jclass helper) {
     };
     jint result=env->RegisterNatives(helper,methods,3);bool failed=Exception(env);return result==JNI_OK&&!failed;
 }
-enum class Action { URL, Confirm, Console, Clipboard };
+enum class Action { URL, Confirm, Console, Clipboard, RetireStartupOverlay };
 bool Invoke(Action action,const char *first,const char *second,char **clipboard=nullptr,bool *delivered=nullptr) {
     if(delivered)*delivered=false;
     if(!bo1::android::SDLJavaSetupComplete())return false; // Guard SDL's real JNI pthread key.
@@ -109,9 +109,9 @@ bool Invoke(Action action,const char *first,const char *second,char **clipboard=
         env->GetByteArrayRegion(bytes,0,length,reinterpret_cast<jbyte*>(copy));if(Exception(env)){std::free(copy);return false;}
         copy[length]=0;*clipboard=copy;return true;
     }
-    if(action==Action::Console) {
-        if(!RegisterConsole(env,helper))return false;
-        auto method=env->GetStaticMethodID(helper,"showConsole","(Landroid/app/Activity;)Z");if(Exception(env)||!method)return false;
+    if(action==Action::Console || action==Action::RetireStartupOverlay) {
+        if(action==Action::Console && !RegisterConsole(env,helper))return false;
+        auto method=env->GetStaticMethodID(helper,action==Action::Console?"showConsole":"retireStartupOverlay","(Landroid/app/Activity;)Z");if(Exception(env)||!method)return false;
         auto result=env->CallStaticBooleanMethod(helper,method,activity);return !Exception(env)&&result==JNI_TRUE;
     }
     auto method=env->GetStaticMethodID(helper,action==Action::URL?"launchUrl":"confirm",action==Action::URL?
@@ -150,6 +150,10 @@ bool WarpOnOwner(void *opaque) {
 }
 }
 namespace bo1::android {
+bool RetireAndroidStartupOverlay() {
+    if(Sys_IsHeadless())return false;
+    return Invoke(Action::RetireStartupOverlay,nullptr,nullptr);
+}
 bool ConfirmConfigurationChange(const char *title,const char *message) {
     if(Sys_IsHeadless()||!title||!message)return false;
     bool delivered{};bool answer=Invoke(Action::Confirm,title,message,nullptr,&delivered);

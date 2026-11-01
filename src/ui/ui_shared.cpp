@@ -1,6 +1,7 @@
 #include "ui_shared.h"
 #if defined(__ANDROID__)
 #include <platform/android/legacy_crt.h>
+#include <platform/android/pad_menu.h>
 #include <cstdlib>
 #endif
 #include "ui_shared_obj.h"
@@ -4747,6 +4748,10 @@ void    Menu_HandleKey(int localClientNum, UiContext *dc, menuDef_t *menu, int k
         inHandler = 0;
         return;
     }
+#if defined(__ANDROID__)
+    // Bind capture above keeps the actual pad key; PC menu navigation uses arrows.
+    key = bo1::android::pad::MenuKey(key);
+#endif
     if (!g_editingField || !down)
         goto LABEL_15;
     if (!Item_TextField_HandleKey(localClientNum, dc, g_editItem, key))

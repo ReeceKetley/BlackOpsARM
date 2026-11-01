@@ -1,5 +1,0 @@
-{
-  "initial_error": "PowerShell parse error in inline ignored checkpoint-script generation",
-  "correction": "Saved explicit Python generator; no source/index mutation, stage or commit occurred before correction",
-  "classification": "Created/modified durable paths classified against parent Git tree, including delegated files created before live-baseline capture"
-}

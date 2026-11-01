@@ -1,6 +1,0 @@
-Generated 50 explicitly unavailable test endpoints: D:\Desktop\Black Ops 2 Android\BlackOpsARM\build-android-audit\host-debugger-20261011-180837755\evaluator_test_services.cpp
-PASS actual debugger/evaluator: node0..4, prepend, aligned buffers/strings, both instance cleanup/canonical/literal paths, 8000 zeroed owned heap allocations, four-byte handles
-PASS actual first-fit/debug HunkUser: 400 odd payloads, native headers, alignments 1..4096, coalescing/exhaustion, 8000 shared-pool operations, thread identity/ownership
-PASS actual debugger/evaluator: node0..4, prepend, aligned buffers/strings, both instance cleanup/canonical/literal paths, 8000 zeroed owned heap allocations, four-byte handles
-PASS actual first-fit/debug HunkUser: 400 odd payloads, native headers, alignments 1..4096, coalescing/exhaustion, 8000 shared-pool operations, thread identity/ownership
-Host debugger/first-fit evidence: D:\Desktop\Black Ops 2 Android\BlackOpsARM\build-android-audit\host-debugger-20261011-180837755

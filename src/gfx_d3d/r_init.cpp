@@ -267,6 +267,19 @@ void __cdecl R_ReleaseForShutdownOrReset()
 
     for (windowIndex = 0; windowIndex < dx.windowCount; ++windowIndex)
     {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+        if (bo1::android::native_device::Requested())
+        {
+            // The native presentation owner holds the VkSwapchainKHR. This
+            // engine window has no COM swapchain; retain it until Close drains
+            // the actual device and detaches the matching SDL window below.
+            iassert(dx.windowCount == 1 && windowIndex == 0);
+            iassert(dx.windows[windowIndex].hwnd && !dx.windows[windowIndex].swapChain);
+            iassert(!dx.device && !dx.d3d9);
+            iassert(bo1::android::native_device::WindowAttached());
+            continue;
+        }
+#endif
         do
         {
             if (r_logFile)
@@ -290,14 +303,29 @@ void __cdecl R_ReleaseForShutdownOrReset()
         } while (alwaysfails);
     }
 
+#if defined(__ANDROID__)
+    std::fprintf(stderr, "Native shutdown: releasing targets\n");
+#endif
     R_ShutdownRenderTargets();
+#if defined(__ANDROID__)
+    std::fprintf(stderr, "Native shutdown: releasing model lighting\n");
+#endif
     R_ShutdownModelLightingImage();
+#if defined(__ANDROID__)
+    std::fprintf(stderr, "Native shutdown: releasing static/dynamic buffers\n");
+#endif
     R_ShutdownStaticModelCache();
     R_DestroyDynamicBuffers();
     R_DestroyParticleCloudBuffer();
 
+#if defined(__ANDROID__)
+    std::fprintf(stderr, "Native shutdown: releasing render buffers\n");
+#endif
     if (!g_allocateMinimalResources)
         R_ShutdownRenderBuffers();
+#if defined(__ANDROID__)
+    std::fprintf(stderr, "Native shutdown: releasing queries\n");
+#endif
 
     iassert(!gfxBuf.smodelCacheVb);
 
@@ -2448,6 +2476,29 @@ void R_ShutdownDirect3DInternal()
     if (useFastFile->current.enabled) R_UnloadGraphicsAssets();
     R_Cinematic_Shutdown();
     R_ReleaseForShutdownOrReset();
+#if defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if (bo1::android::native_device::Requested())
+    {
+        // Close validates that every asset/borrower is retired, drains frame
+        // resources, releases Vulkan presentation and detaches dx.windows.
+        // Preserve the actual SDL handle across that detachment.
+        iassert(dx.windowCount == 1 && !dx.windows[0].swapChain);
+        SDL_Window *window = reinterpret_cast<SDL_Window *>(dx.windows[0].hwnd);
+        std::string error;
+        std::fprintf(stderr, "Native shutdown: closing Vulkan owner\n");
+        // The Vulkan device was created here on the render thread. The SDL
+        // event owner only creates/destroys its window, and is a different
+        // thread in the real engine (the standalone preview uses one thread).
+        if (!bo1::android::native_device::Close(error))
+        {
+            std::fprintf(stderr, "Native shutdown: Vulkan close rejected: %s\n", error.c_str());
+            Com_Error(ERR_FATAL, "Native renderer device retirement: %s", error.c_str());
+        }
+        iassert(!dx.windowCount && !bo1::android::native_device::Renderer());
+        if (!bo1::android::DestroyRendererWindow(window)) R_SDLWindowFailure("native window destruction");
+        Com_Printf(8, "Native shutdown: Vulkan device and actual SDL window retired\n");
+    }
+#endif
     if (dx.device) { R_SDLOwner([&] { return dx.device->Release(); }); dx.device = nullptr; }
     dx.nvStereoHandle = nullptr; dx.nvStereoActivated = false; dx.nvInitialized = false;
     if (dx.d3d9) { R_SDLOwner([&] { return dx.d3d9->Release(); }); dx.d3d9 = nullptr; }
@@ -2457,6 +2508,7 @@ void R_ShutdownDirect3DInternal()
         window.hwnd = nullptr; --dx.windowCount;
     }
     if (!bo1::android::RetireRendererVideo()) R_SDLWindowFailure("video retirement");
+    std::fprintf(stderr, "Native shutdown: renderer video reference retired\n");
 #else
 
     R_FreeWaterSimulationBuffers();

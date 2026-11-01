@@ -3,12 +3,14 @@
 #include "g_sp_savegame.h"
 #include "g_sp_levelstart.h"
 #include <game_mp/g_main_mp.h>
+#include <game_mp/g_utils_mp.h>
 #include <server_mp/sv_main_mp.h>
 #include <server/sv_game.h>
 #include <universal/dvar.h>
 #include <universal/q_shared.h>
 #include <win32/win_shared.h>
 #include <cstring>
+#include <string>
 #include "g_sp_loadgame.h"
 #include <clientscript/cscr_variable.h>
 #include <clientscript/cscr_compiler.h>
@@ -38,6 +40,9 @@
 #include "g_scr_sp_ai.h"
 #include <game/g_bsp.h>
 #include <qcommon/cm_load.h>
+#include <qcommon/cm_world.h>
+#include <qcommon/dobj_management.h>
+#include <server/sv_world.h>
 #include "g_anim_commands_sp.h"
 #include "g_sp_ext.h"
 #include "actor_sp_ext.h"
@@ -47,8 +52,87 @@
 #include <clientscript/cscr_stringlist.h>
 #include <clientscript/cscr_animtree.h>
 #include <clientscript/cscr_memorytree.h>
+#if defined(__ANDROID__)
+#include <platform/android/engine_paths.h>
+#include <platform/android/zombie_save_store.h>
+#include <universal/com_files.h>
+#endif
 
 extern game_hudelem_s g_hudelems[1024];  // cgame/cg_hudelem.cpp (SP 0x01A565A8)
+
+static bool s_continuousZombieResume;
+static bool s_savedClientPublicationReady;
+#if defined(__ANDROID__)
+static int s_unrecordedServerPhysicsEntity = -1;
+#include "g_sp_saved_dvar_checkpoint.inl"
+#endif
+static bool s_publicZombieCapture;
+static bool s_publicZombieCaptureSucceeded;
+static bool s_publicZombieCaptureErrorProbe;
+static bool s_publicZombieRecoveryMenu;
+static unsigned long long s_publicZombieGeneration;
+static bool s_publicResumeWaitingForMap;
+static unsigned s_publicZombieResult;
+static bool s_publicZombieSuccess;
+static std::string s_publicZombieMessage;
+
+bool G_SP_IsContinuousZombieResume() { return s_continuousZombieResume; }
+bool G_SP_ShouldDeferSavedClientCallbacks()
+{
+    return s_continuousZombieResume && G_SP_IsSavedWorldFrozen() && !s_savedClientPublicationReady;
+}
+#if defined(__ANDROID__)
+bool G_SP_IsZombieSessionRecoveryMenu() { return s_publicZombieRecoveryMenu; }
+#endif
+bool G_SP_CheckpointOption(const char *name)
+{
+    // The normal resume operation requires the full verified logical loader.
+    // It does not change any developer dvars or enable a diagnostic quit.
+    if (s_publicZombieCapture && !strcmp(name, "bo1_client_checkpoint")) return true;
+    if (s_continuousZombieResume)
+    {
+        static const char *required[] = {"bo1_restore_partial", "bo1_restore_live_tables",
+            "bo1_restore_animation", "bo1_restore_input", "bo1_restore_handshake",
+            "bo1_restore_saved_client", "bo1_restore_freeze_world", "bo1_client_checkpoint",
+            "bo1_client_fx_publish", "bo1_client_audio_publish"};
+        for (const char *option : required) if (!strcmp(name, option)) return true;
+    }
+    return Dvar_GetBool(name);
+}
+void G_SP_CompleteContinuousZombieResume()
+{
+    if (!s_continuousZombieResume || G_SP_IsSavedClientHandshakePending() || G_SP_IsSavedWorldFrozen())
+        Com_Error(ERR_DROP, "Continuous Zombies resume completed without its live handoff");
+#if defined(__ANDROID__)
+    if (!Dvar_GetInt("cl_paused"))
+        Com_Error(ERR_DROP, "Restored solo session completed without its real pause boundary");
+    Com_Printf(15, "Zombies resume: restored session paused before saved gameplay advances; waiting for player\n");
+#endif
+    s_continuousZombieResume = false;
+#if defined(__ANDROID__)
+    SP_ClearPublicSavedDvars();
+#endif
+    ++s_publicZombieResult; s_publicZombieSuccess = true; s_publicZombieMessage = "Saved session resumed";
+    Com_Printf(15, "Zombies resume: CONTINUOUS gameplay entered; no diagnostic deadline or automatic quit\n");
+}
+void G_SP_AbortContinuousZombieResume()
+{
+#if defined(__ANDROID__)
+    SP_ClearPublicSavedDvars();
+#endif
+    if (s_continuousZombieResume || s_publicZombieCapture || s_publicResumeWaitingForMap)
+    {
+        s_publicZombieRecoveryMenu = true;
+        Com_Printf(15, "Zombies session recovery: returning to launcher; next session requires a fresh engine\n");
+        ++s_publicZombieResult; s_publicZombieSuccess = false;
+        s_publicZombieMessage = s_publicZombieCapture ? "This session could not be saved" : "The saved session could not be restored";
+    }
+    s_continuousZombieResume = s_publicZombieCapture = s_publicZombieCaptureSucceeded = false;
+    s_savedClientPublicationReady = false;
+    s_publicZombieCaptureErrorProbe = false;
+    s_publicResumeWaitingForMap = false;
+    G_SP_ClearSavedClientHandshake();
+}
 extern vehicle_node_t s_nodes[2000];   // game/g_vehicle_path.cpp (DERIVED KB vehicle node table)
 extern __int16 s_numNodes;
 
@@ -615,6 +699,19 @@ static void G_LoadPathNodes(MemoryFile *memFile)
         g_path.actualNodeCount, owners, reordered);
 }
 
+#if defined(__ANDROID__)
+#include "g_sp_server_physics_checkpoint.inl"
+#include "g_sp_glass_checkpoint.inl"
+#include "g_sp_dynent_checkpoint.inl"
+void G_SP_PublishSavedServerBodies()
+{
+    if (!Sys_IsMainThread() || !s_continuousZombieResume || !G_SP_IsSavedWorldFrozen() || G_SP_IsSavedClientHandshakePending())
+        Com_Error(ERR_DROP, "Server physics publication lost its saved-world boundary");
+    Com_SyncThreads();
+    if (!s_savedDynEntsPresent || s_savedDynSchema < 0x364E5944) SP_PublishServerBodies();
+    SP_PublishDynEntClient();
+}
+#endif
 #include "g_sp_save_entity.inl"
 #include "g_sp_save_badplace.inl"
 #include "g_sp_save_client.inl"
@@ -630,6 +727,8 @@ static void G_GetClientSaveExt(unsigned int clientNum, SPClientSaveExt *ext)
     ext->ext = g_clientSpExt[clientNum];
     ext->x1 = G_SP_PlayerX1State(clientNum);
     ext->builtin = G_SP_PlayerBuiltinState(clientNum);
+    if (s_publicZombieCapture)
+        Com_Printf(15, "Zombies perk capture: client %u builtin %x session %x\n", clientNum, ext->builtin.perks, ext->ext.sessionPerks);
     int hint;
     if (G_SP_GetScriptHintString(&level.clients[clientNum], &hint))
         ext->scriptHintString = hint + 1;
@@ -692,6 +791,9 @@ static void G_LoadEntitiesForCheck(MemoryFile *memFile, MemoryFile *writer)
         int sequence;
         bool hasScripted = G_ReadEntity(&ent, &ext, &scripted, &sequence, memFile);
         iassert(ent.s.number == index);
+#if defined(__ANDROID__)
+        SP_CheckServerBodyEntity(ent);
+#endif
         G_WriteEntity(&ent, &ext, hasScripted ? &scripted : nullptr, sequence, writer);
         ent.s.eventSequence = 0; // SP +0xCC: outer-loop reset, after the image diagnostic.
         if (ent.disconnectedLinks)
@@ -736,13 +838,18 @@ static void G_LoadClientsForCheck(MemoryFile *memFile, MemoryFile *writer)
         MemFile_WriteData(writer, 4, (unsigned char *)&index);
         if (index < 0)
             break;
-        // SP compares index > level.maxclients; KB also bounds the side tables.
-        if (index > level.maxclients || index >= (int)ARRAY_COUNT(g_clients))
+        // The native arrays are indexed [0,maxclients), including unused slots.
+        if (index >= level.maxclients || index >= (int)ARRAY_COUNT(g_clients))
             Com_Error(ERR_DROP, "G_LoadGame: clientnum out of range");
         static gclient_s client;
         SPClientSaveExt ext;
         G_ReadClient(&client, &ext, memFile, nullptr);
-        iassert(client.ps.clientNum == index);
+        Com_Printf(15, "loadgame: client record %i connected %i ps.clientNum %i\n",
+            index, client.sess.connected, client.ps.clientNum);
+        // G_SaveClients writes every slot, including zero-initialized unused
+        // clients whose playerState clientNum is still zero. Only a connected
+        // player has an assigned playerState identity; preserve unused bytes.
+        iassert(client.sess.connected == CON_DISCONNECTED || client.ps.clientNum == index);
         G_WriteClient(&client, &ext, writer);
         SP_ReleaseEntityFields(s_clientFields, ARRAY_COUNT(s_clientFields), &client);
         SP_ReleaseEntityFields(s_clientExtFields, ARRAY_COUNT(s_clientExtFields), &ext);
@@ -751,8 +858,31 @@ static void G_LoadClientsForCheck(MemoryFile *memFile, MemoryFile *writer)
     Com_Printf(15, "loadgame: decoded %i clients\n", count);
 }
 
+#include "g_sp_save_random.inl"
+#include "g_sp_save_configstrings.inl"
+#if defined(__ANDROID__)
+static int SP_NewSaveAnimationMagic()
+{
+    // Ordinary level-start memory saves are server checkpoints. They neither
+    // freeze nor capture a paired CLIENT world, even in a rendered process.
+    // Only an explicit paired capture owns that boundary and requires ANM9.
+    const bool paired = (!dedicated || !dedicated->current.integer)
+        && G_SP_CheckpointOption("bo1_client_checkpoint");
+    return paired ? 0x394D4E41 : 0x384D4E41;
+}
+#endif
+#include "g_sp_save_animation.inl"
+#include "g_sp_save_input.inl"
+#include "g_sp_save_handshake.inl"
+#include "g_sp_save_install.inl"
+
 static void G_SaveState(bool saving, SPSaveGame *save)
 {
+#if defined(__ANDROID__)
+    SP_CaptureServerBodies(SP_NewSaveAnimationMagic() == 0x394D4E41);
+    SP_CaptureGlass();
+    if (SP_NewSaveAnimationMagic() == 0x394D4E41) SP_CaptureDynEnts();
+#endif
     // zombies: SP 0x007ED4A0(1, save) (segment 2). Sections in exe order; see notes/s1-plan.md.
     (void)saving;
     SP_SaveMemory_StartSegment(save, 2, true);
@@ -772,11 +902,15 @@ static void G_SaveState(bool saving, SPSaveGame *save)
     SP_SaveMemory_StartSegment(save, 4, true); // SP 0x007EE0FD
     Scr_Save(SCRIPTINSTANCE_SERVER, &save->memFile[0]); // SP 0x007EE105 -> 0x0050DF00
     SP_SaveMemory_StartSegment(save, 5, true); // SP 0x007EE10F
-    SP_SaveNotPorted("segment 5 (remaining animation/client state)");
+    G_WriteSaveAnimations(&save->memFile[0], false);
+    SP_SaveNotPorted("remaining segment 5 client state");
 }
 
 static void Dvar_LoadDvars(MemoryFile *memFile, unsigned short dvarFlags)
 {
+#if defined(__ANDROID__)
+    if (s_continuousZombieResume) SP_ClearPublicSavedDvars();
+#endif
     // zombies: SP 0x00862F60 (G_LoadGame calls it through 0x00595D40 with flags 0). The reader of
     // Dvar_SaveDvars: every saved value is set; the value it replaces is kept in dvar->saved for
     // Dvar_RestoreDvars (SP 0x00535F70), which runs first.
@@ -802,6 +936,9 @@ static void Dvar_LoadDvars(MemoryFile *memFile, unsigned short dvarFlags)
         {
             if (dvar != Dvar_FindMalleableVar("sv_restoreDvars"))   // SP [0x0261CBD8]
             {
+                // RestoreDvars is policy-gated. A second load must release an
+                // earlier backup even when that policy left the override active.
+                Dvar_DiscardSavedValue(dvar);
                 dvar->loadedFromSaveGame = true;
                 if (dvar->type == DVAR_TYPE_STRING)
                     Dvar_CopyString((char *)dvar->current.string, &dvar->saved);  // SP 0x00542140
@@ -823,8 +960,14 @@ static void Dvar_LoadDvars(MemoryFile *memFile, unsigned short dvarFlags)
             value.string = string;
             Dvar_RegisterVariant(name, DVAR_TYPE_STRING, dvarFlags | 0x4000, value, domain, "");
         }
+#if defined(__ANDROID__)
+        SP_StagePublicSavedDvar(name, string);
+#endif
         MemFile_ReadData(memFile, 4, (unsigned __int8 *)&length);
     }
+#if defined(__ANDROID__)
+    if (s_continuousZombieResume) s_publicSavedDvarsReady = true;
+#endif
 }
 
 static void G_LoadGame_Globals(MemoryFile *memFile)
@@ -846,6 +989,10 @@ static void G_LoadGame_Globals(MemoryFile *memFile)
     int grenadeSuicideDisabled;                                                   // 0x01C08AE8
     MemFile_ReadData(memFile, 4, (unsigned __int8 *)&grenadeSuicideDisabled);
     G_SP_SetGrenadeSuicideDisabled(grenadeSuicideDisabled != 0);
+#if defined(__ANDROID__)
+    if (G_SP_CheckpointOption("bo1_restore_handshake"))
+        G_RebaseSavedTransportClock(svs.clients, com_maxclients->current.integer, svs.time, level.time);
+#endif
     svs.time = level.time;                                  // SP 0x0286D014
     // SP 0x00658ED0: both physics clocks (0x00B79D18 / 0x00B79D1C) to the level time.
     physGlob.timeLastSnapshot = level.time;
@@ -943,11 +1090,75 @@ static void SP_SaveGame_CheckRestoredScript(SPSaveGame *save)
     iassert(same);
 }
 
+void G_SP_TraceRestoreOwnership(const char *stage)
+{
+    if (!G_SP_CheckpointOption("bo1_restore_partial"))
+        return;
+    const auto *strings = gScrStringDebugGlob[SCRIPTINSTANCE_SERVER];
+    Com_Printf(15, "loadgame ownership: %s strings %u objects %u values %u stacks %u externalThreads %i\n", stage,
+        strings ? static_cast<unsigned>(strings->totalRefCount) : 0,
+        gScrVarPub[SCRIPTINSTANCE_SERVER].numScriptObjects,
+        gScrVarPub[SCRIPTINSTANCE_SERVER].numScriptValues,
+        gScrVarPub[SCRIPTINSTANCE_SERVER].numScriptThreads,
+        gScrVarPub[SCRIPTINSTANCE_SERVER].ext_threadcount);
+    static const char *names[] = {"", "tag_origin", "j_mainroot", "begin_firing", "axis", "allies"};
+    if (strings)
+        for (const char *name : names)
+        {
+            const unsigned id = SL_FindString(name, SCRIPTINSTANCE_SERVER);
+            if (id)
+                Com_Printf(15, "loadgame string: %s name '%s' id %u refs %u users %u\n", stage, name, id,
+                    static_cast<unsigned>(strings->refCount[id]), static_cast<unsigned>(GetRefString(SCRIPTINSTANCE_SERVER, id)->user));
+        }
+}
+
+static void SP_ReleaseSavePathHandles()
+{
+    extern EntHandleList g_sentientsHandleList[MAX_SENTIENTS_CAP];
+    for (unsigned int i = 0; i < g_path.actualNodeCount; ++i)
+    {
+        SentientHandle *owner = &gameWorldCurrent->path.nodes[i].dynamic.pOwner;
+        if (owner->number)
+            RemoveEntHandleInfo(&g_sentientsHandleList[owner->number - 1], owner->infoIndex);
+        *owner = {};
+    }
+}
+
+static void SP_ReleaseUninstalledSaveEntities()
+{
+    for (unsigned int i = 1; i <= gScrVarPub[SCRIPTINSTANCE_SERVER].savecount; ++i)
+    {
+        const unsigned int id = gScrVarPub[SCRIPTINSTANCE_SERVER].saveIdMapRev[i];
+        const VariableValueInternal *object = &gScrVarGlob[SCRIPTINSTANCE_SERVER].variableList[id + 1];
+        if ((object->w.type & VAR_MASK) == VAR_ENTITY)
+            Scr_FreeEntityNum(object->u.o.u.entnum, object->w.classnum >> VAR_NAME_BITS, SCRIPTINSTANCE_SERVER);
+    }
+}
+
 bool G_SP_LoadGame(SPSaveGame *save)
 {
+#if defined(__ANDROID__)
+    s_unrecordedServerPhysicsEntity = -1;
+#endif
     // zombies: G_LoadGame, SP 0x007ECB50 (called by the 0x0046BD80 checks). Partial restore:
     // entity/VM teardown, globals, VM, path payload and entity codec diagnostic.
     // Brief said path transient resets; exe does ShutdownRopes / Rope_InitRopes here.
+    const bool install = G_SP_CheckpointOption("bo1_restore_live_tables");
+    if (G_SP_CheckpointOption("bo1_restore_handshake") && !G_SP_CheckpointOption("bo1_restore_input"))
+        Com_Error(ERR_DROP, "Saved client handshake requires input verification");
+    if (G_SP_CheckpointOption("bo1_restore_input") && (!install || !G_SP_CheckpointOption("bo1_restore_animation")))
+        Com_Error(ERR_DROP, "Saved input restore requires live table and animation verification");
+    if (G_SP_CheckpointOption("bo1_restore_animation") && !install)
+        Com_Error(ERR_DROP, "Animation save restore requires live table verification");
+    if (install && !s_continuousZombieResume
+        && (!G_SP_CheckpointOption("bo1_restore_partial") || !Dvar_GetBool("bo1_restore_verify_quit")))
+        Com_Error(ERR_DROP, "Live table save restore requires partial verification and normal diagnostic quit");
+    G_SP_TraceRestoreOwnership("begin");
+#if defined(__ANDROID__)
+    // The canonical teardown clears map handles and then destroys server bodies.
+    // Retire their closed old graph while both native cohorts still exist.
+    if (install && s_savedDynEntsPresent && s_savedDynSchema >= 0x364E5944) SP_RetireDynJointBindings();
+#endif
     ShutdownRopes();           // SP 0x0046A5D0
     Rope_InitRopes();           // SP 0x0067D6F0
     // zombies: SP 0x007ECB6C..0x007ECBA4. Free the map-spawned entities before replacing
@@ -968,6 +1179,7 @@ bool G_SP_LoadGame(SPSaveGame *save)
     // 0x00512670 clears threat group strings and the table before the VM is shut down.
     Actor_FreeThreatBiasGroups();
     Scr_ShutdownSystem(SCRIPTINSTANCE_SERVER, 1, 1); // SP 0x00596D40
+    G_SP_TraceRestoreOwnership("old world freed");
     // zombies: animation command table initialization (SP 0x005579D0), using KB's command pool.
     G_SP_ResetAnimCommands();
     MemoryFile *memFile = &save->memFile[0];    // SP 0x0056BFC0
@@ -988,6 +1200,7 @@ bool G_SP_LoadGame(SPSaveGame *save)
         gScrVarPub[SCRIPTINSTANCE_SERVER].savecount, gScrVarPub[SCRIPTINSTANCE_SERVER].numScriptObjects,
         gScrVarPub[SCRIPTINSTANCE_SERVER].numScriptThreads, gScrVarPub[SCRIPTINSTANCE_SERVER].time);
     SP_SaveGame_CheckRestoredScript(save);
+    G_SP_TraceRestoreOwnership("VM loaded");
     SP_SaveMemory_MoveToSegment(save, 3, true); // SP 0x007ECE52
     G_LoadPathNodes(memFile);                  // SP 0x007ECE58
     // KB diagnostic: compare all of segment 3, now paths plus entities, after the real readers.
@@ -995,15 +1208,28 @@ bool G_SP_LoadGame(SPSaveGame *save)
     static MemoryFile pathWriter;
     MemFile_InitForWriting(&pathWriter, sizeof(pathBuffer), pathBuffer, true, true);
     G_SavePathNodes(&pathWriter);
+    G_SP_TraceRestoreOwnership("before entities checked");
     G_LoadEntitiesForCheck(memFile, &pathWriter);
+    G_SP_TraceRestoreOwnership("after entities checked");
+#if defined(__ANDROID__)
+    SP_CheckServerBodyEntityInventory();
+#endif
     G_LoadBadPlacesForCheck(memFile, &pathWriter); // SP 0x007ECED8 -> 0x007EAA40
     // Not ported here: SP 0x007ECEDD rebuilds the free-entity list from the restored entities;
     // that belongs with the live entity install.
-    G_LoadClientsForCheck(memFile, &pathWriter); // SP 0x007ECF87 -> 0x007EC530
-    G_LoadActorsForCheck(memFile, &pathWriter); // SP 0x007ECFA6 -> 0x007EC760
-    G_LoadSentientsForCheck(memFile, &pathWriter); // SP 0x007ECFD0
+    G_SP_TraceRestoreOwnership("before clients checked");
+    G_LoadClientsForCheck(memFile, &pathWriter);
+    G_SP_TraceRestoreOwnership("after clients checked"); // SP 0x007ECF87 -> 0x007EC530
+    G_SP_TraceRestoreOwnership("before actors checked");
+    G_LoadActorsForCheck(memFile, &pathWriter);
+    G_SP_TraceRestoreOwnership("after actors checked"); // SP 0x007ECFA6 -> 0x007EC760
+    G_SP_TraceRestoreOwnership("before sentients checked");
+    G_LoadSentientsForCheck(memFile, &pathWriter);
+    G_SP_TraceRestoreOwnership("after sentients checked"); // SP 0x007ECFD0
     G_LoadVehiclesForCheck(memFile, &pathWriter); // SP 0x007ED030 -> 0x007EC930
-    G_LoadLevelSystemsForCheck(memFile, &pathWriter); // SP 0x007ED04D..0x007ED278
+    G_SP_TraceRestoreOwnership("before level checked");
+    G_LoadLevelSystemsForCheck(memFile, &pathWriter);
+    G_SP_TraceRestoreOwnership("after level checked"); // SP 0x007ED04D..0x007ED278
     MemFile_StartSegment(&pathWriter, -1);
     const unsigned char *pathOriginal = MemFile_GetSegmentAddess(memFile, 3);
     const int pathBytes = MemFile_GetSegmentAddess(memFile, 4) - pathOriginal;
@@ -1011,33 +1237,66 @@ bool G_SP_LoadGame(SPSaveGame *save)
         && !memcmp(pathOriginal, pathBuffer, pathBytes);
     Com_Printf(15, "loadgame: path/entity reserialization %s (%i saved bytes, %i restored bytes)\n",
         pathsSame ? "identical" : "DIFFERENT", pathBytes, pathWriter.bytesUsed);
+#if defined(__ANDROID__)
+    if (!pathsSame && !pathWriter.memoryOverflow)
+    {
+        // Preserve the actual comparison inputs before the assertion closes
+        // this process. They remain private diagnostic files, never save slots.
+        const int originalWritten = FS_WriteFile(const_cast<char *>("resume-compare-original.bin"),
+            reinterpret_cast<char *>(const_cast<unsigned char *>(pathOriginal)), pathBytes);
+        const int restoredWritten = FS_WriteFile(const_cast<char *>("resume-compare-restored.bin"),
+            reinterpret_cast<char *>(pathBuffer), pathWriter.bytesUsed);
+        Com_Printf(15, "loadgame: comparison diagnostics original success %i (%i bytes), restored success %i (%i bytes)\n",
+            originalWritten, pathBytes, restoredWritten, pathWriter.bytesUsed);
+    }
+#endif
+    // An old archive can contain a native body ID without its logical owner.
+    // Finish the diagnostic readers and release their references/load holds
+    // before reporting this expected unsupported record through ERR_DROP.
+    // No such world reaches live installation or the frame handoff.
+#if defined(__ANDROID__)
+    if (s_unrecordedServerPhysicsEntity >= 0 || s_serverBodyEntityError >= 0)
+    {
+        SP_ReleaseSavePathHandles();
+        SP_ReleaseUninstalledSaveEntities();
+        Scr_LoadPost(SCRIPTINSTANCE_SERVER);
+        G_SP_TraceRestoreOwnership("unsupported native body load holds released");
+        if (s_serverBodyEntityError >= 0)
+            Com_Error(ERR_DROP, "Server physics checkpoint disagrees with durable entity %i", s_serverBodyEntityError);
+        Com_Error(ERR_DROP, "Saved server entity %i has native physics without a durable body record", s_unrecordedServerPhysicsEntity);
+    }
+#endif
     iassert(pathsSame);
     // TEMPORARY: no sentient reader yet. Release the restored path handles by registry index;
     // setSentient(nullptr) would dereference the absent game-side sentient owner during abort.
-    extern EntHandleList g_sentientsHandleList[MAX_SENTIENTS_CAP];
-    for (unsigned int i = 0; i < g_path.actualNodeCount; ++i)
-    {
-        SentientHandle *owner = &gameWorldCurrent->path.nodes[i].dynamic.pOwner;
-        if (owner->number)
-            RemoveEntHandleInfo(&g_sentientsHandleList[owner->number - 1], owner->infoIndex);
-        *owner = {};
-    }
+    SP_ReleaseSavePathHandles();
     // TEMPORARY diagnostic cleanup: no game entities have been restored yet, so ERR_DROP's
     // G_FreeEntities cannot release the saved entity IDs. Do the script half while the loader
     // still holds every object. Remove this when the entity reader populates the game tables.
-    for (unsigned int i = 1; i <= gScrVarPub[SCRIPTINSTANCE_SERVER].savecount; ++i)
+    if (install)
     {
-        const unsigned int id = gScrVarPub[SCRIPTINSTANCE_SERVER].saveIdMapRev[i];
-        const VariableValueInternal *object = &gScrVarGlob[SCRIPTINSTANCE_SERVER].variableList[id + 1];
-        if ((object->w.type & VAR_MASK) == VAR_ENTITY)
-            Scr_FreeEntityNum(object->u.o.u.entnum, object->w.classnum >> VAR_NAME_BITS, SCRIPTINSTANCE_SERVER);
+        // The preflight has released every scratch handle. Re-read into the
+        // permanent tables while the VM loader still holds every object.
+        G_InstallSaveWorld(save);
+    }
+    else
+    {
+        SP_ReleaseUninstalledSaveEntities();
     }
     // TEMPORARY diagnostic: release the loader's object holds now, so ERR_DROP can free the VM.
     // The complete restore calls this after game-side fields acquire references (SP 0x007ED3C2).
     Scr_LoadPost(SCRIPTINSTANCE_SERVER);
-    // Not ported: installing decoded entities into the live tables, then the client,
-    // level, actor and sentient payloads (notes/s1-plan.md section 3).
-    return false; // TEMPORARY: an incomplete payload must never resume a server frame.
+    G_SP_TraceRestoreOwnership("load holds released");
+#if defined(__ANDROID__)
+    if (install) SP_PublishGlass();
+    if (install) SP_PublishDynEntServer();
+    if (install && !s_continuousZombieResume) SP_PublishDynEntClient();
+    if (install && !s_continuousZombieResume && (!s_savedDynEntsPresent || s_savedDynSchema < 0x364E5944)) SP_PublishServerBodies();
+#endif
+    // Ordinary client/mobile resume and remaining native side-state are still
+    // incomplete. A separate headless verify-quit probe may exercise a bounded
+    // number of real worker frames; this does not advertise load completion.
+    return false;
 }
 
 static void SP_SaveGame_CheckGlobals(const SPSaveGame *save)
@@ -1251,6 +1510,198 @@ static bool SP_SaveGame_Serialize(const SPSaveGameRequest *request, int mapCheck
     return true;
 }
 
+#if defined(__ANDROID__)
+static const char *SP_ClientCheckpointDirectory()
+{
+    if (s_publicZombieCapture || s_continuousZombieResume) return "zombies-resume";
+    // Fixed private siblings: never accept a path from a dvar and never use
+    // the trusted server-only archive for resumed-session experiments.
+    return Dvar_GetBool("bo1_client_checkpoint_replay_archive")
+        ? "client-checkpoint-replay" : "client-checkpoint";
+}
+
+static void SP_ArchiveDiagnosticSave(const SPSaveGame *save)
+{
+    if (!Dvar_GetBool("bo1_save_archive"))
+        return;
+    namespace store = bo1::android::save_store;
+    if (save->header.bodySize <= 0 || save->header.bodySize > save->memFile[0].bufferSize
+        || save->header.pad < 0 || save->header.pad > save->memFile[1].bufferSize)
+    {
+        Com_Printf(15, "Save archive: invalid committed payload sizes; not written\n");
+        return;
+    }
+    store::Snapshot snapshot;
+    const auto *metadata = reinterpret_cast<const unsigned char *>(&save->header);
+    snapshot.metadata.assign(metadata, metadata + sizeof(save->header));
+    snapshot.game.assign(save->memFile[0].buffer, save->memFile[0].buffer + save->header.bodySize);
+    if (save->header.pad)
+        snapshot.client.assign(save->memFile[1].buffer, save->memFile[1].buffer + save->header.pad);
+    std::string error;
+    if (!store::Write(Sys_EngineUserRoot(), snapshot, error))
+        Com_Printf(15, "Save archive: disk write failed: %s\n", error.c_str());
+    else
+        Com_Printf(15, "Save archive: diagnostic payload persisted (%i game bytes, %i client bytes); NOT PLAYABLE\n",
+            save->header.bodySize, save->header.pad);
+}
+
+void G_SP_InspectSaveArchive()
+{
+    bo1::android::save_store::Snapshot snapshot;
+    std::string error;
+    if (!bo1::android::save_store::Read(Sys_EngineUserRoot(), snapshot, error))
+    {
+        Com_Printf(15, "Save archive: %s\n", error.c_str());
+        return;
+    }
+    SPMemorySaveHeader header{};
+    if (snapshot.metadata.size() != sizeof(header))
+    {
+        Com_Printf(15, "Save archive: incompatible diagnostic metadata layout\n");
+        return;
+    }
+    memcpy(&header, snapshot.metadata.data(), sizeof(header));
+    if (header.bodySize < 0 || static_cast<std::size_t>(header.bodySize) != snapshot.game.size()
+        || header.pad < 0 || static_cast<std::size_t>(header.pad) != snapshot.client.size()
+        || !memchr(header.mapName, 0, sizeof(header.mapName)))
+    {
+        Com_Printf(15, "Save archive: inconsistent diagnostic metadata\n");
+        return;
+    }
+    Com_Printf(15, "Save archive: generation %llu integrity OK map %s game %i client %i; diagnostic only, NOT PLAYABLE\n",
+        static_cast<unsigned long long>(snapshot.generation), header.mapName, header.bodySize, header.pad);
+}
+
+bool G_SP_ImportSaveArchiveForVerification()
+{
+    // This path is deliberately gated to decoding followed by normal process
+    // shutdown. It is not a disk load entry point for playable saves.
+    if (!G_SP_CheckpointOption("bo1_restore_partial") || (!s_continuousZombieResume && !Dvar_GetBool("bo1_restore_verify_quit"))
+        || !Dvar_GetBool("sv_running") || !G_SP_IsSPLevel() || Dvar_GetInt("g_reloading"))
+    {
+        Com_Printf(15, "Save archive: verification requires an active SP map, bo1_restore_partial and bo1_restore_verify_quit\n");
+        return false;
+    }
+    bo1::android::save_store::Snapshot snapshot;
+    std::string error;
+    const bool pairedClient = G_SP_CheckpointOption("bo1_restore_saved_client");
+    const std::string archiveRoot = pairedClient ? std::string(Sys_EngineUserRoot()) + "/" + SP_ClientCheckpointDirectory() : Sys_EngineUserRoot();
+    if (pairedClient && ((!s_continuousZombieResume && !Dvar_GetInt("bo1_restore_render_frames")) || !G_SP_CheckpointOption("bo1_client_checkpoint")
+        || !G_SP_CheckpointOption("bo1_client_fx_publish") || !G_SP_CheckpointOption("bo1_client_audio_publish")))
+    {
+        Com_Printf(15, "Save archive: paired restore requires bounded rendered and complete client publication gates\n");
+        return false;
+    }
+    if (!bo1::android::save_store::Read(archiveRoot.c_str(), snapshot, error))
+    {
+        Com_Printf(15, "Save archive: verification rejected: %s\n", error.c_str());
+        return false;
+    }
+    if (s_continuousZombieResume && snapshot.flags != bo1::android::save_store::SoloResumePayload)
+    {
+        Com_Printf(15, "Zombies resume: rejected diagnostic archive\n");
+        return false;
+    }
+    if (s_continuousZombieResume) s_publicZombieGeneration = snapshot.generation;
+    SPSaveGame *save = SP_GetSaveBuffer(1);
+    SPMemorySaveHeader header{};
+    if (snapshot.metadata.size() != sizeof(header))
+    {
+        Com_Printf(15, "Save archive: verification rejected incompatible metadata\n");
+        return false;
+    }
+    memcpy(&header, snapshot.metadata.data(), sizeof(header));
+    if (pairedClient && snapshot.client.empty()) return false;
+    if (header.saveVersion != 0x134 || header.bodySize <= 0 || header.pad < 0
+        || static_cast<std::size_t>(header.bodySize) != snapshot.game.size()
+        || static_cast<std::size_t>(header.pad) != snapshot.client.size()
+        // EndSegment(-1) shrinks bufferSize to logical bytes used. The backing
+        // allocation remains the original global buffer; a later mid-round save
+        // can legitimately be larger than the fresh level-start memory save.
+        || static_cast<std::size_t>(header.bodySize) > sizeof(s_saveBufferA0)
+        || static_cast<std::size_t>(header.pad) > sizeof(s_saveBufferA1)
+        || !memchr(header.mapName, 0, sizeof(header.mapName))
+        || !memchr(header.filename, 0, sizeof(header.filename)) || !header.filename[0]
+        || header.mapChecksum != g_spSaveMapChecksum || strcmp(header.mapName, Dvar_GetString("mapname")))
+    {
+        Com_Printf(15, "Save archive: verification rejected payload sizes, version or current map: version %i game %i/%u capacity %i client %i/%u capacity %i checksum %i/%i map '%.256s'/'%s'\n",
+            header.saveVersion, header.bodySize, static_cast<unsigned>(snapshot.game.size()), static_cast<int>(sizeof(s_saveBufferA0)),
+            header.pad, static_cast<unsigned>(snapshot.client.size()), static_cast<int>(sizeof(s_saveBufferA1)),
+            header.mapChecksum, g_spSaveMapChecksum, header.mapName, Dvar_GetString("mapname"));
+        return false;
+    }
+    // Validate all three real script checksum words before replacing any memory
+    // save. Retail build 61 is not sufficient evidence of native ABI compatibility;
+    // diagnostic captures remain trusted developer artifacts, never playable UI.
+    SPSaveGame checksumCandidate{};
+    checksumCandidate.header = header;
+    if (!G_SP_SaveScriptChecksumMatches(&checksumCandidate))
+    {
+        Com_Printf(15, "Save archive: verification rejected current scripts\n");
+        return false;
+    }
+    if (G_SP_CheckpointOption("bo1_restore_animation"))
+    {
+        // Older diagnostic archives have an empty segment 5. Check the bounded
+        // segment directory before asking the native reader for its first word.
+        // Reject before replacing the committed save or tearing down this match.
+        std::size_t offset = 0;
+        int size = 0;
+        for (int segment = 0; segment <= 5; ++segment)
+        {
+            if (snapshot.game.size() - offset < 4)
+            {
+                Com_Printf(15, "Save archive: verification rejected missing animation section\n");
+                return false;
+            }
+            memcpy(&size, snapshot.game.data() + offset, 4);
+            if (size < 4 || static_cast<std::size_t>(size) > snapshot.game.size() - offset)
+            {
+                Com_Printf(15, "Save archive: verification rejected invalid segment bounds\n");
+                return false;
+            }
+            if (segment < 5)
+                offset += size;
+        }
+        if (size <= 8)
+        {
+            Com_Printf(15, "Save archive: verification rejected missing animation section; capture a new diagnostic save\n");
+            return false;
+        }
+        static MemoryFile animationReader;
+        MemFile_InitForReading(&animationReader, static_cast<int>(snapshot.game.size()), snapshot.game.data(), true);
+        MemFile_MoveToSegment(&animationReader, 5);
+        const int animationMagic = G_ReadAnimationInt(&animationReader);
+        s_serverBodies.clear(); s_serverBodiesStaged = false; s_serverBodyEntityError = -1; s_serverBodiesPublished = false;
+        s_savedGlass.clear(); s_savedGlassPresent = false;
+        s_savedDynEnts.clear(); s_savedDynEntsPresent = false; s_savedDynEntsPublished = false;
+        if (animationMagic != 0x364D4E41 && animationMagic != 0x374D4E41 && animationMagic != 0x384D4E41 && animationMagic != 0x394D4E41)
+        {
+            Com_Printf(15, "Save archive: verification rejected animation section version\n");
+            return false;
+        }
+        if (animationMagic >= 0x374D4E41) SP_ReadServerBodies(&animationReader);
+        if (animationMagic >= 0x384D4E41) SP_ReadGlass(&animationReader);
+        if (animationMagic == 0x394D4E41) SP_DynEntCodec(&animationReader, true);
+        if (animationMagic != 0x394D4E41 && s_serverBodiesStaged && s_serverBodySchema == 0x33505053)
+            Com_Error(ERR_DROP, "Unified physics archive missing paired dynamic registry");
+    }
+    G_SP_ClearSaveGameQueue();
+    memcpy(save->memFile[0].buffer, snapshot.game.data(), snapshot.game.size());
+    if (!snapshot.client.empty())
+        memcpy(save->memFile[1].buffer, snapshot.client.data(), snapshot.client.size());
+    save->header = header;
+    save->state = SP_SAVE_STATE_COMMITTED;
+    save->callback = nullptr;
+    save->callbackArg = 0;
+    Com_Printf(15, "Save archive: generation %llu staged for decoder verification, map/script checks matched; NOT PLAYABLE\n",
+        static_cast<unsigned long long>(snapshot.generation));
+    if (pairedClient) Com_Printf(15, "Save archive: paired saved server and CLIENT generation %llu staged from client-checkpoint\n",
+        static_cast<unsigned long long>(snapshot.generation));
+    return true;
+}
+#endif
+
 static void SP_SaveGame_SetCallback(const SPSaveGameRequest *request, SPSaveGame *save)
 {
     // zombies: SP 0x0068BE40. KB's requests never carry a callback (the savegame builtin passes SP's
@@ -1290,6 +1741,9 @@ static int SP_SaveGame_Write(const SPSaveGameRequest *request, int mapChecksum)
         SP_SaveGame_CheckGlobals(SP_GetSaveBuffer(1));
         SP_SaveGame_CheckWeapons(SP_GetSaveBuffer(1));
         SP_SaveGame_CheckScriptHeader(SP_GetSaveBuffer(1));
+#if defined(__ANDROID__)
+        SP_ArchiveDiagnosticSave(SP_GetSaveBuffer(1));
+#endif
     }
     // flags & 4 -> disk write 0x004B5EE0, not ported (zombiemode never sets it).
     return 0;
@@ -1342,3 +1796,8 @@ void G_SP_ProcessSaveQueue()
     if (!s_saveQueueCount)
         s_autoSaveQueuedThisFrame = false;
 }
+
+#if defined(__ANDROID__)
+#include "g_sp_client_checkpoint.inl"
+#include "g_sp_zombie_resume.inl"
+#endif

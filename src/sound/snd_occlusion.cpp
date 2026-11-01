@@ -1,6 +1,9 @@
 #include "snd_occlusion.h"
 #if defined(__ANDROID__)
 #include <platform/android/occlusion_worker.h>
+#include <atomic>
+#include <chrono>
+#include <thread>
 #define InterlockedExchange _InterlockedExchange
 #endif
 #include <universal/profile.h>
@@ -12,6 +15,11 @@
 #include <win32/win_common.h>
 #include <qcommon/threads.h>
 #include <win32/win_net.h>
+
+#if defined(__ANDROID__)
+static std::atomic<bool> s_occlusionCheckpoint;
+static std::atomic<unsigned> s_occlusionWorkerBatches;
+#endif
 
 static int SND_OcclusionRunning()
 {
@@ -544,7 +552,12 @@ void __cdecl SND_LosOcclusionCmd()
     int savedregs; // [esp+10h] [ebp+0h] BYREF
 
     Sys_EnterCriticalSection(CRITSEC_SOUND_OCCLUSION);
-    if ( SND_OcclusionRunning() )
+    if ( SND_OcclusionRunning()
+#if defined(__ANDROID__)
+        && !s_occlusionCheckpoint.load(std::memory_order_acquire)
+        && g_snd.traceSequence != g_snd.lastTraceSequence
+#endif
+        )
     {
         for ( i = 0; i < 0x4A; ++i )
         {
@@ -561,6 +574,9 @@ void __cdecl SND_LosOcclusionCmd()
             g_snd.proximityDistance,
             g_snd.proximityReflectance);
         g_snd.lastTraceSequence = g_snd.traceSequence;
+#if defined(__ANDROID__)
+        s_occlusionWorkerBatches.fetch_add(1, std::memory_order_relaxed);
+#endif
         Sys_LeaveCriticalSection(CRITSEC_SOUND_OCCLUSION);
     }
     else
@@ -571,6 +587,9 @@ void __cdecl SND_LosOcclusionCmd()
 
 void __cdecl SND_LosOcclusionUpdate()
 {
+#if defined(__ANDROID__)
+    if (s_occlusionCheckpoint.load(std::memory_order_acquire)) return;
+#endif
     LONG Target; // [esp+4h] [ebp-34h] BYREF
     float *playback; // [esp+8h] [ebp-30h]
     float *position; // [esp+Ch] [ebp-2Ch]
@@ -581,8 +600,25 @@ void __cdecl SND_LosOcclusionUpdate()
     unsigned int i; // [esp+30h] [ebp-8h]
     unsigned int updated; // [esp+34h] [ebp-4h]
 
+#if defined(__ANDROID__)
+    if (Sys_TryEnterCriticalSection(CRITSEC_SOUND_OCCLUSION))
+#else
     if (g_snd.lastTraceSequence == g_snd.traceSequence && Sys_TryEnterCriticalSection(CRITSEC_SOUND_OCCLUSION))
+#endif
     {
+#if defined(__ANDROID__)
+        if (s_occlusionCheckpoint.load(std::memory_order_acquire))
+        {
+            Sys_LeaveCriticalSection(CRITSEC_SOUND_OCCLUSION);
+            return;
+        }
+        if (g_snd.lastTraceSequence != g_snd.traceSequence)
+        {
+            ++g_snd.framesSinceLastOcclusionUpdate;
+            Sys_LeaveCriticalSection(CRITSEC_SOUND_OCCLUSION);
+            return;
+        }
+#endif
         SND_UpdateProximity();
         updated = 0;
         for (i = 0; i < 0x4A; ++i)
@@ -667,6 +703,9 @@ void __cdecl SND_LosOcclusionInit()
     LONG Target; // [esp+0h] [ebp-8h] BYREF
     unsigned int i; // [esp+4h] [ebp-4h]
 
+#if defined(__ANDROID__)
+    s_occlusionCheckpoint.store(false, std::memory_order_release);
+#endif
     memset((unsigned __int8 *)g_snd.occlusionTraces, 0, sizeof(g_snd.occlusionTraces));
     for (i = 0; i < 0x4A; ++i)
         g_snd.occlusionTraces[i].id = -1;
@@ -681,6 +720,9 @@ void __cdecl SND_LosOcclusionFini()
     LONG Target; // [esp+0h] [ebp-4h] BYREF
 
     SND_SetOcclusionRunning(0);
+#if defined(__ANDROID__)
+    s_occlusionCheckpoint.store(false, std::memory_order_release);
+#endif
     Target = 0;
     InterlockedExchange(&Target, 0);
     Sys_EnterCriticalSection(CRITSEC_SOUND_OCCLUSION);
@@ -692,4 +734,70 @@ void __cdecl SND_LosOcclusionFini()
     g_snd.traceSequence = 0;
     g_snd.lastTraceSequence = 0;
 }
+
+#if defined(__ANDROID__)
+bool SND_OcclusionCheckpointActive()
+{
+    return s_occlusionCheckpoint.load(std::memory_order_acquire);
+}
+
+bool SND_BeginOcclusionCheckpoint()
+{
+    if (!Sys_IsMainThread() || !SND_OcclusionRunning()) return false;
+    // The caller already joined the sound producer. Only the existing worker
+    // may finish its pending batch. Never run collision traces on a substitute
+    // thread or hold the completion lock while waiting for the worker.
+    for (unsigned attempt = 0; attempt < 1000; ++attempt)
+    {
+        Sys_EnterCriticalSection(CRITSEC_SOUND_OCCLUSION);
+        if (SND_OcclusionCheckpointActive())
+        {
+            Sys_LeaveCriticalSection(CRITSEC_SOUND_OCCLUSION);
+            return false;
+        }
+        if (g_snd.traceSequence == g_snd.lastTraceSequence || !snd_losOcclusion->current.enabled)
+        {
+            s_occlusionCheckpoint.store(true, std::memory_order_release);
+            const unsigned sequence = g_snd.traceSequence, completed = g_snd.lastTraceSequence;
+            const unsigned batches = s_occlusionWorkerBatches.load(std::memory_order_relaxed);
+            Sys_LeaveCriticalSection(CRITSEC_SOUND_OCCLUSION);
+            Com_Printf(15, "Occlusion checkpoint: FROZEN sequence %u completed %u real worker batches %u\n", sequence, completed, batches);
+            return true;
+        }
+        Sys_LeaveCriticalSection(CRITSEC_SOUND_OCCLUSION);
+        Sys_SetOcclusion();
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+    return false;
+}
+
+bool SND_EndOcclusionCheckpoint()
+{
+    if (!Sys_IsMainThread()) return false;
+    Sys_EnterCriticalSection(CRITSEC_SOUND_OCCLUSION);
+    const bool held = SND_OcclusionCheckpointActive();
+    if (held)
+    {
+        s_occlusionCheckpoint.store(false, std::memory_order_release);
+        if (g_snd.traceSequence != g_snd.lastTraceSequence) Sys_SetOcclusion();
+    }
+    Sys_LeaveCriticalSection(CRITSEC_SOUND_OCCLUSION);
+    if (held) Com_Printf(15, "Occlusion checkpoint: RELEASED to actual native worker\n");
+    return held;
+}
+
+bool SND_AbortOcclusionCheckpoint()
+{
+    // ERR_DROP uses longjmp, so an RAII destructor cannot release the gate.
+    // Discard derived collision work before releasing it into error teardown.
+    if (!Sys_IsMainThread() || !SND_OcclusionCheckpointActive()) return false;
+    Sys_EnterCriticalSection(CRITSEC_SOUND_OCCLUSION);
+    for (auto &trace : g_snd.occlusionTraces) { trace.id = -1; trace.cache = 0; }
+    g_snd.traceSequence = g_snd.lastTraceSequence = 0;
+    s_occlusionCheckpoint.store(false, std::memory_order_release);
+    Sys_LeaveCriticalSection(CRITSEC_SOUND_OCCLUSION);
+    Com_Printf(15, "Occlusion checkpoint: ABORT RELEASED before error teardown\n");
+    return true;
+}
+#endif
 

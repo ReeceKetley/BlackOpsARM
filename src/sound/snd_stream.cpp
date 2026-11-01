@@ -1642,3 +1642,5 @@ char __cdecl Snd_FileRead(snd_stream_file *file, unsigned int offset, unsigned i
     return 0;
 }
 
+
+#include "snd_stream_checkpoint.inl"

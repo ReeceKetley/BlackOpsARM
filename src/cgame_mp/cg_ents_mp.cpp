@@ -2,6 +2,7 @@
 #if defined(__ANDROID__)
 #include <platform/android/engine_paths.h>
 #include <platform/android/stdio_services.h>
+#include <game_sp/g_sp_savegame.h>
 #include <string>
 #else
 #include <xmmintrin.h>
@@ -4057,6 +4058,18 @@ void __cdecl CG_ProcessEntity(int localClientNum, centity_s *cent)
             break;
     }
     CG_SP_MeasureAnimScripted(localClientNum, cent); // L15 TEST (bo1_measure_animscripted_cl)
+    // Reconnect and canonical native draw/view-weapon setup must run, but
+    // restored SERVER flags cannot execute against the temporary fresh VM.
+    // The saved registry/pending flags replace these before normal callbacks.
+#if defined(__ANDROID__)
+    static bool savedClientDeferralLogged;
+    const bool deferScripts = G_SP_ShouldDeferSavedClientCallbacks();
+    if (deferScripts && !savedClientDeferralLogged)
+        Com_Printf(15, "Saved CLIENT handoff: deferred fresh script callbacks; canonical native draw remains active\n");
+    savedClientDeferralLogged = deferScripts;
+    if (!deferScripts)
+#endif
+    {
     // zombies: a missile's entityspawned thread starts in CG_Missile (SP 0x007770E0), not here.
     if ( !(cent->nextState.eType == ET_MISSILE && zombiemode && zombiemode->current.enabled)
         && CG_EntityNeedsScriptThread(localClientNum, cent) )
@@ -4068,6 +4081,7 @@ void __cdecl CG_ProcessEntity(int localClientNum, centity_s *cent)
     }
     CG_ClientFlagCallback(localClientNum, cent);
     CG_ClientFlagResetAll(cent);
+    }
 }
 
 void __cdecl CG_Item(int localClientNum, centity_s *cent)

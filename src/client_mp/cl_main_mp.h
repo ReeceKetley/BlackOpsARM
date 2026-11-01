@@ -610,6 +610,9 @@ void __cdecl CL_ToggleMenu_f();
 bool __cdecl CL_ShouldAllowInGameMenu(int localClientNum);
 char __cdecl Playlist_ReadFromDisk();
 void __cdecl CL_PauseGame(bool state);
+#if defined(__ANDROID__)
+bool CL_PauseRestoredSoloSession();
+#endif
 void CL_UpdateZombiePresentationDefaults();
 void __cdecl CL_InitOnceForAllClients();
 void __cdecl CL_PlayDemo_f();

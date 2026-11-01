@@ -4,6 +4,9 @@ void G_SP_ResetClientConnects();
 void G_SP_SetClientConnectPending(unsigned int clientNum, bool pending);
 void SV_RunClientConnectCallbacks();
 void G_SP_HeadlessTestClientFrame(bool afterFrame);
+// Bounded save diagnostic: retain the decoded bot/player instead of admitting
+// another test client after G_InitGame reset the harness bookkeeping.
+void G_SP_HeadlessAdoptSavedClient();
 void G_SP_HeadlessClientBegin(unsigned int clientNum);
 bool G_SP_DeferHeadlessTestClientBegin();
 struct client_t;

@@ -1,9 +1,0 @@
-# Native IWD index position width
-
-Frozen owner: `src/universal/com_files.cpp`, already selected. No source/define/header recipe change.
-
-The actual modified archive API `unzGetCurrentFileInfoPosition(unzFile,unsigned long*)` writes native unsigned long from its actual central-directory position. On Android this output is eight bytes. The original FS_LoadZipFile cast addressed the four-byte fileInIwd_s.pos member; native padding happens to absorb its extra bytes, but that violates object type and the fixed position contract. No packing or layout change was made. Native calls the same real API into an unsigned long local, checks UNZ_OK and representability in the actual unsigned32member, then assigns exactly that field. Failure closes the private archive handle and frees the private CRC/index/container allocations before ERR_FATAL+abort, even if a fatal reporter unexpectedly returns. No hash row is published on that failure path.
-
-Audit of this actual FS archive-index boundary found no other unsigned-long output casts. Existing unzSetCurrentFileInfoPosition calls pass fixed32positions by value to the real native API; no output alias exists there. The original Windows branch remains unchanged.
-
-ARM64 whole-TU UBSan compile passes `build-android-audit/native_iwd_index_width/compile1.log`; normal MSVC x86/x64 `/O2` whole-TU builds pass in `windows/{x86,x64}.log`. Frozen hash is `source-sha256.json` in that directory. No independent asset/decompression fixture was added: actual full404 already completed real indexing of51,907IWD entries, and root405's genuine startup rerun validates this narrower assignment through the same actual archive path. The explicit failure cleanup/oversized position branch is compile-checked, not separately runtime exercised. No full init return or synthetic archive functionality is claimed.

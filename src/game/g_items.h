@@ -70,7 +70,7 @@ int __cdecl BG_GetDropMaxAmmo(unsigned int weaponIndex);
 gentity_s *__cdecl Drop_Weapon(gentity_s *ent, int weapIdx, unsigned __int8 weaponModel, unsigned int tag);
 void __cdecl FinishSpawningItem(gentity_s *ent);
 void __cdecl ClearRegisteredItems();
-void __cdecl SaveRegisteredWeapons();
+void __cdecl SaveRegisteredWeapons(bool updateClient = true);
 void __cdecl SaveRegisteredItems();
 void __cdecl G_RegisterWeapon(unsigned int weapIndex);
 int __cdecl IsItemRegistered(unsigned int iItemIndex);

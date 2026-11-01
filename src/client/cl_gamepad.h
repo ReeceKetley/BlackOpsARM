@@ -175,3 +175,6 @@ extern const dvar_t *gpad_menu_scroll_delay_rest;
 extern const dvar_t *gpad_buttonsConfig;
 extern const dvar_t *gpad_sticksConfig;
 extern const dvar_t *gpad_present;
+#if defined(__ANDROID__)
+float CL_GamepadUnshapedAxis(int localClientNum, GamepadVirtualAxis axis);
+#endif

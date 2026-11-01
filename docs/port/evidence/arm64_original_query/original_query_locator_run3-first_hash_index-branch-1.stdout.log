@@ -1,7 +1,0 @@
-
-D:\Games\Call of Duty - Black Ops\BlackOps.exe:	file format coff-i386
-
-Disassembly of section .text:
-
-00401000 <.text>:
-  620814:      	call	0x8604b0 <.text+0x45f4b0>

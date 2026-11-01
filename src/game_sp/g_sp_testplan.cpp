@@ -2,10 +2,13 @@
 #include "g_sp_client.h"
 #include "g_sp_levelstart.h"
 #include "g_sp_player_state.h"
+#include "g_sp_savegame.h"
 
 #include <game_mp/g_main_mp.h>
 #include <game_mp/g_utils_mp.h>
 #include <client_mp/sv_client_mp.h>
+#include <client_mp/cl_main_mp.h>
+#include <client/client.h>
 #include <server_mp/sv_main_mp.h>
 #include <server_mp/sv_bot_mp.h>
 #include <win32/win_main.h>
@@ -13,6 +16,7 @@
 #include <universal/com_math.h>
 #include <qcommon/common.h>
 #include <qcommon/cmd.h>
+#include <qcommon/threads.h>
 #include <game/actor_navigation.h>
 #include <game_mp/g_combat_mp.h>
 #include <bgame/bg_animation.h>
@@ -66,12 +70,18 @@ static bool s_boxViewValid;
 static bool s_boxViewStraight;
 enum StepKind
 {
+    STEP_OBSERVE, // map-independent interval; leave ordinary fighting commands untouched
+    STEP_LANDER_WAIT, // observe a real linked flight ending, without looking for an electric trap
+    STEP_ENTITY_CHECK, // observe real spawned map entities and their registered models
+    STEP_HACK_DOOR, // equip the acquired Hacker, hold use on its real registered trigger
+    STEP_HACK_DIGGER, // choose an actually running excavator; use its original pooled Hacker target
     STEP_DEVGUI_POWERUP, // retail developer command; aim at the floor and collect its ordinary drop
     STEP_BOX_VIEW, // headless screenshot: retreat from the active box and look up at its beam
     STEP_TRAP_VIEW, // headless screenshot: hold the nearest trap in view after activation
     STEP_USE,   // walk to a trigger, press use until the success evidence appears
     STEP_FLOOR, // ride elevators until the player is on floor `count`
     STEP_TOUCH, // walk into a trigger volume (portals)
+    STEP_CONTACT, // walk into a real map volume; pass only on physical player-box contact
     STEP_FIRE,  // fire `count` shots of the current weapon (ammo use, fire-rate / reload measurement)
     STEP_BOX,   // mystery box: pay, wait for the weapon, take it (repeat `count` times or until the teddy)
     STEP_PAP,   // pack-a-punch: pay, wait, take the upgraded weapon
@@ -108,6 +118,10 @@ struct PlanStep
 
 const PlanStep s_steps[] =
 {
+    { "observe_monkey", STEP_OBSERVE, nullptr, nullptr, nullptr, 0, nullptr, nullptr, nullptr, 600000, false, false, 610000 },
+    { "observe600", STEP_OBSERVE, nullptr, nullptr, nullptr, 0, nullptr, nullptr, nullptr, 600000, false, false, 610000 },
+    { "observe110", STEP_OBSERVE, nullptr, nullptr, nullptr, 0, nullptr, nullptr, nullptr, 110000, false, false, 120000 },
+    { "m_cassimir", STEP_ENTITY_CHECK, "sq_cassimir_plates", nullptr, "p_zom_moon_cassimir_plate", 0, nullptr, nullptr, nullptr, 2, false, false, 30000 },
     { "qr", STEP_USE, "zombie_vending", "script_noteworthy", "specialty_quickrevive", 500, nullptr, "specialty_quickrevive", nullptr, 0, false, false, 90000 },
     { "wall_rottweil", STEP_USE, "weapon_upgrade", "zombie_weapon_upgrade", "rottweil72_zm", 1500, nullptr, nullptr, "rottweil72_zm", 0, false, false, 90000 },
     { "wall_m14", STEP_USE, "weapon_upgrade", "zombie_weapon_upgrade", "m14_zm", 1500, nullptr, nullptr, "m14_zm", 0, false, false, 90000 },
@@ -183,8 +197,34 @@ const PlanStep s_steps[] =
     // trigger's trap_done (maps_zombie_coast_flinger.gsc:238; flinger_in_place :84 fires at load, f1 2700); a zipline (free) on the rider's exit_zipline
     // (maps\_zombiemode_player_zipline.gsc:481, an entity notify recorded below).
     { "flinger", STEP_USE, "flinger_activate", nullptr, nullptr, 0, "trap_done", nullptr, nullptr, 0, false, false, 90000 },
+    { "flinger_land", STEP_WAIT, nullptr, nullptr, nullptr, 0, nullptr, nullptr, nullptr, 0, false, false, 60000 },
     { "zipline", STEP_USE, "player_zipline", nullptr, nullptr, 0, "exit_zipline", nullptr, nullptr, 0, false, false, 90000 },
+    { "zip_ship", STEP_USE, "player_zipline", "target", "pf20_auto2197_caf", 0, nullptr, nullptr, nullptr, 0, false, false, 120000 },
+    { "zip_lighthouse", STEP_USE, "player_zipline", "target", "zipline_test1", 0, nullptr, nullptr, nullptr, 0, false, false, 180000 },
+    { "g_defeat", STEP_WAIT, nullptr, nullptr, nullptr, 0, nullptr, nullptr, nullptr, 0, false, false, 900000 },
     { "water_calm", STEP_TOUCH, "waterdamage", "script_noteworthy", "beach_zone", 0, "director_calmed", nullptr, nullptr, 0, false, false, 150000 },
+    // Call of the Dead access purchases, from the unmodified map entity string
+    // and zombie_coast::zone_init. Use the scripts' own flags/prices rather
+    // than zombie_unlock_all, so power, transports and PaP need real access.
+    { "d_plank_b", STEP_USE, "zombie_debris", "script_flag", "plankB_enter", 750, "plankB_enter", nullptr, nullptr, 0, false, false, 90000 },
+    { "d_ship_l2", STEP_USE, "zombie_debris", "script_flag", "shipback_level2_enter", 1250, "shipback_level2_enter", nullptr, nullptr, 0, false, false, 90000 },
+    { "d_ship_house", STEP_USE, "zombie_door", "script_flag", "ship_house3", 750, "ship_house3", nullptr, nullptr, 0, false, false, 90000 },
+    { "d_ship_far", STEP_USE, "zombie_debris", "script_flag", "shipback_far_enter", 1000, "shipback_far_enter", nullptr, nullptr, 0, false, false, 90000 },
+    { "d_side_beach", STEP_USE, "zombie_debris", "script_flag", "side_beach_debris", 750, "side_beach_debris", nullptr, nullptr, 0, false, false, 90000 },
+    { "d_residence", STEP_USE, "zombie_door", "script_flag", "lighthouse_residence_front", 1000, "lighthouse_residence_front", nullptr, nullptr, 0, false, false, 90000 },
+    { "d_lighthouse", STEP_USE, "zombie_door", "script_flag", "lighthouse_enter", 1000, "lighthouse_enter", nullptr, nullptr, 0, false, false, 90000 },
+    { "d_lighthouse2", STEP_USE, "zombie_debris", "script_flag", "lighthouse2_enter", 750, "lighthouse2_enter", nullptr, nullptr, 0, false, false, 90000 },
+    { "d_catwalk", STEP_USE, "zombie_debris", "script_flag", "catwalk_enter", 750, "catwalk_enter", nullptr, nullptr, 0, false, false, 90000 },
+    { "d_front_bottom", STEP_USE, "zombie_debris", "script_flag", "enter_shipfront_bottom", 750, "enter_shipfront_bottom", nullptr, nullptr, 0, false, false, 90000 },
+    { "d_plank_a", STEP_USE, "zombie_debris", "script_flag", "plankA_enter", 1000, "plankA_enter", nullptr, nullptr, 0, false, false, 90000 },
+    { "d_front_far", STEP_USE, "zombie_door", "script_flag", "shipfront_far_enter", 1000, "shipfront_far_enter", nullptr, nullptr, 0, false, false, 90000 },
+    // The storage wing contains Jugg; the old route never bought either
+    // entrance. Remaining lighthouse links complete the actual access graph.
+    { "d_front_store_low", STEP_USE, "zombie_door", "script_flag", "shipfront_bottom_storage", 1000, "shipfront_bottom_storage", nullptr, nullptr, 0, false, false, 90000 },
+    { "d_front_store_top", STEP_USE, "zombie_door", "script_flag", "shipfront_deck_storage", 1000, "shipfront_deck_storage", nullptr, nullptr, 0, false, false, 90000 },
+    { "d_lagoon", STEP_USE, "zombie_door", "script_flag", "lighthouse_lagoon_enter", 1000, "lighthouse_lagoon_enter", nullptr, nullptr, 0, false, false, 90000 },
+    { "d_res_link", STEP_USE, "zombie_door", "script_flag", "res_2_lighthouse1", 1000, "res_2_lighthouse1", nullptr, nullptr, 0, false, false, 90000 },
+    { "d_balcony", STEP_USE, "zombie_door", "script_flag", "balcony_enter", 1000, "balcony_enter", nullptr, nullptr, 0, false, false, 90000 },
     { "trap_view", STEP_TRAP_VIEW, nullptr, nullptr, nullptr, 0, nullptr, nullptr, nullptr, 25000, false, false, 35000 },
     // The labs' doors (script_flag of the zombie_door triggers; flag_set notifies the level).
     { "door_lab1", STEP_USE, "zombie_door", "script_flag", "lab1_level3", 1250, "lab1_level3", nullptr, nullptr, 0, false, false, 90000 },
@@ -259,6 +299,17 @@ const PlanStep s_steps[] =
     { "f_trap_wuen", STEP_USE, "wuen_electric_trap", nullptr, nullptr, 1000, nullptr, nullptr, nullptr, 0, false, false, 60000 },
     { "f_trap_warehouse", STEP_USE, "warehouse_electric_trap", nullptr, nullptr, 1000, nullptr, nullptr, nullptr, 0, false, false, 60000 },
     { "f_trap_bridge", STEP_USE, "bridge_electric_trap", nullptr, nullptr, 1000, nullptr, nullptr, nullptr, 0, false, false, 90000 },
+    // Retail factory main: three real interactions increment meteor_counter;
+    // the third starts a 240s music override, then restores it.
+    // Stock Fly Trap: an upgraded shot, 15s reveal, then the three real damage targets.
+    { "f_flytrap", STEP_FIRE, "trig_ee_flytrap", nullptr, nullptr, 0, "hide_and_seek", nullptr, nullptr, 0, false, false, 180000 },
+    { "f_fly_monkey", STEP_FIRE, "trig_ee_exp_monkey", nullptr, nullptr, 0, "ee_exp_monkey", nullptr, nullptr, 1, false, false, 180000 },
+    { "f_fly_bowie", STEP_FIRE, "trig_ee_bowie_bear", nullptr, nullptr, 0, "ee_bowie_bear", nullptr, nullptr, 2, false, false, 180000 },
+    { "f_fly_perk", STEP_FIRE, "trig_ee_perk_bear", nullptr, nullptr, 0, "ee_perk_bear", nullptr, nullptr, 3, false, false, 180000 },
+    { "f_meteor1", STEP_USE, "meteor_one", nullptr, nullptr, 0, nullptr, nullptr, nullptr, 1, false, false, 90000 },
+    { "f_meteor2", STEP_USE, "meteor_two", nullptr, nullptr, 0, nullptr, nullptr, nullptr, 2, false, false, 90000 },
+    { "f_meteor3", STEP_USE, "meteor_three", nullptr, nullptr, 0, nullptr, nullptr, nullptr, 3, false, false, 90000 },
+    { "f_song_end", STEP_WAIT, nullptr, nullptr, nullptr, 0, nullptr, nullptr, nullptr, 0, false, false, 300000 },
     // Der Riese teleporters (maps\zombie_cod5_factory_teleporter): a pad use starts a 30 s countdown (level.teleport[i]
     // "timer_on", no level notify), the mainframe trigger_teleport_core then links it: flag_set teleporter_pad_link_<n>,
     // n = links so far. The pad step passes on the use press alone; the link step after it is the proof.
@@ -309,6 +360,7 @@ const PlanStep s_steps[] =
     { "s_hut_nw", STEP_USE, "zombie_door", "script_flag", "northwest_building_unlocked", 750, "northwest_building_unlocked", nullptr, nullptr, 0, false, false, 90000 },
     { "s_perk_hut", STEP_USE, "zombie_vending", nullptr, nullptr, 500, nullptr, nullptr, nullptr, 0, false, false, 90000 },
     { "s_trap_elec_nw", STEP_USE, "elec_trap_trig", "target", "north_west_tgt", 1000, nullptr, nullptr, nullptr, 0, false, false, 60000 },
+    { "s_trap_touch_nw", STEP_TOUCH, "north_west_tgt", nullptr, nullptr, 0, nullptr, nullptr, nullptr, 0, false, false, 20000 },
     { "s_door_ne", STEP_USE, "zombie_door", "script_flag", "ne_magic_box", 1000, "ne_magic_box", nullptr, nullptr, 0, false, false, 90000 },
     { "s_zip_lever", STEP_USE, "zip_lever_trigger", nullptr, nullptr, 0, "machine_off", nullptr, nullptr, 0, false, false, 90000 },
     { "s_zip_ride", STEP_USE, "zipline_buy_trigger", "script_noteworthy", "nonstatic", 1500, "machine_off", nullptr, nullptr, 0, false, false, 150000 },
@@ -339,6 +391,10 @@ const PlanStep s_steps[] =
     { "c_door_catwalk", STEP_USE, "zombie_door", "script_flag", "power_catwalk_access", 1250, "power_catwalk_access", nullptr, nullptr, 0, false, false, 90000 },
     { "c_door_base", STEP_USE, "zombie_door", "script_flag", "base_entry_2_power", 1250, "base_entry_2_power", nullptr, nullptr, 0, false, false, 90000 },
     { "c_door_storage", STEP_USE, "zombie_door", "script_flag", "base_entry_2_storage", 1000, "base_entry_2_storage", nullptr, nullptr, 0, false, false, 90000 },
+    { "c_monkey_steal", STEP_WAIT, nullptr, nullptr, nullptr, 0, nullptr, nullptr, nullptr, 0, false, false, 900000 },
+    { "c_monkey_perfect", STEP_WAIT, nullptr, nullptr, nullptr, 0, nullptr, nullptr, nullptr, 0, false, false, 1200000 },
+    { "c_monkey_defend", STEP_WAIT, nullptr, nullptr, nullptr, 0, nullptr, nullptr, nullptr, 0, false, false, 1200000 },
+    { "c_monkey_end", STEP_WAIT, nullptr, nullptr, nullptr, 0, nullptr, nullptr, nullptr, 0, false, false, 600000 },
     { "c_power", STEP_USE, "use_elec_switch", nullptr, nullptr, 0, "power_on", nullptr, nullptr, 0, false, false, 90000 },
     // Lunar lander (maps\zombie_cosmodrome_lander.gsc): a call box brings the lander to its station, zip_buy (250) rides it back to
     // lander_station5. A call passes on lander_takeoff (lander_grounded also notifies on flag_clear at takeoff), a ride on the
@@ -346,7 +402,7 @@ const PlanStep s_steps[] =
     // lander_a/b/c_used -> launch_activated -> trig_launch_rocket (look-at) -> launch_complete opens the Pack-a-Punch room.
     { "c_door_shed", STEP_USE, "zombie_door", "script_flag", "catwalks_2_shed", 1250, "catwalks_2_shed", nullptr, nullptr, 0, false, false, 90000 },
     { "c_door_slander", STEP_USE, "zombie_door", "script_flag", "storage_lander_area", 1250, "storage_lander_area", nullptr, nullptr, 0, false, false, 90000 },
-    { "c_land", STEP_WAIT, nullptr, nullptr, nullptr, 0, nullptr, nullptr, nullptr, 25000, false, false, 40000 },
+    { "c_land", STEP_LANDER_WAIT, nullptr, nullptr, nullptr, 0, nullptr, nullptr, nullptr, 25000, false, false, 40000 },
     { "c_call1", STEP_USE, "zip_call_box", "script_noteworthy", "lander_station1", 0, "lander_takeoff", nullptr, nullptr, 0, false, false, 120000 },
     { "c_ride1", STEP_USE, nullptr, "script_noteworthy", "zip_buy", 250, "lander_a_used", nullptr, nullptr, 0, false, false, 120000 },
     { "c_call3", STEP_USE, "zip_call_box", "script_noteworthy", "lander_station3", 0, "lander_takeoff", nullptr, nullptr, 0, false, false, 120000 },
@@ -358,6 +414,11 @@ const PlanStep s_steps[] =
     // maps_zombie_cosmodrome.gsc:498-499); north_path's door from base_entry_zone2 (155 1863 -124, cost 1250).
     { "c_door_north", STEP_USE, "zombie_door", "script_flag", "base_entry_2_north_path", 1250, "base_entry_2_north_path", nullptr, nullptr, 0, false, false, 90000 },
     { "c_pap", STEP_PAP, "zombie_vending_upgrade", nullptr, nullptr, 5000, nullptr, nullptr, nullptr, 0, false, false, 120000 },
+    // Approach the control room through the real north/rocket zones, rather
+    // than the ledge outside its west wall. Volume contact is measured below.
+    { "c_north_zone", STEP_CONTACT, "north_path_zone", nullptr, nullptr, 0, nullptr, nullptr, nullptr, 0, false, false, 90000 },
+    { "c_rocket_zone", STEP_CONTACT, "under_rocket_zone", nullptr, nullptr, 0, nullptr, nullptr, nullptr, 0, false, false, 90000 },
+    { "c_control_zone", STEP_CONTACT, "control_room_zone", nullptr, nullptr, 0, nullptr, nullptr, nullptr, 0, false, false, 90000 },
     { "c_phd", STEP_USE, "zombie_vending", "script_noteworthy", "specialty_flakjacket", 2000, nullptr, "specialty_flakjacket", nullptr, 0, false, false, 90000 },
     { "c_staminup", STEP_USE, "zombie_vending", "script_noteworthy", "specialty_longersprint", 2000, nullptr, "specialty_longersprint", nullptr, 0, false, false, 90000 },
     // L41: Shangri-La (zombie_temple). Doors / costs / flags from the map's entity string and maps\zombie_temple.gsc:254-288;
@@ -395,6 +456,10 @@ const PlanStep s_steps[] =
     { "t_pap_plate", STEP_TOUCH, "pap_blocker_trigger*", "requiredplayers", "1", 0, "pap_active", nullptr, nullptr, 0, false, false, 90000 },
     // Shrink Ray (run with bo1_testclient_fightweapons shrink_ray_zm): a hit zombie notifies shrink; touching a
     // shrunk zombie kicks it (kicked) or steps on it (stepped_on) (_zombiemode_weap_shrink_ray.gsc:220-221, 539-566).
+    { "t_napalm_damage", STEP_WAIT, nullptr, nullptr, nullptr, 0, nullptr, nullptr, nullptr, 0, false, false, 1500000 },
+    { "t_napalm_shoot", STEP_WAIT, nullptr, nullptr, nullptr, 0, nullptr, nullptr, nullptr, 0, false, false, 1500000 },
+    { "t_napalm", STEP_WAIT, nullptr, nullptr, nullptr, 0, nullptr, nullptr, nullptr, 0, false, false, 1500000 },
+    { "t_sonic", STEP_WAIT, nullptr, nullptr, nullptr, 0, nullptr, nullptr, nullptr, 0, false, false, 1500000 },
     { "t_shrink", STEP_WAIT, nullptr, nullptr, nullptr, 0, "shrink", nullptr, nullptr, 0, false, false, 60000, 2 },
     { "t_kick", STEP_WAIT, nullptr, nullptr, nullptr, 0, "kicked|stepped_on", nullptr, nullptr, 0, false, false, 60000, 2 },
     // L42: Moon (zombie_moon). The Area 51 pad is the info_volume nml_teleporter (14057 -15356 -571): every player inside
@@ -432,6 +497,10 @@ const PlanStep s_steps[] =
     // The Hacker: one of six zombie_equipment_upgrade triggers (key zombie_equipment_upgrade equip_hacker_zm) is kept at
     // random, the others deleted (M utility.gsc:727-771); the pickup is free (C _zombiemode_equipment.gsc:108-137).
     { "m_hacker", STEP_USE, "zombie_equipment_upgrade", "zombie_equipment_upgrade", "equip_hacker_zm", 0, nullptr, nullptr, "equip_hacker_zm", 0, false, false, 150000 },
+    // Retail hackable doors cost200 and require32.7s of uninterrupted use.
+    // This generator-side airlock is not bought by the western power/Hacker route.
+    { "m_hack_east4", STEP_HACK_DOOR, "zombie_airlock_buy", "script_flag", "catacombs_east4", 200, nullptr, nullptr, "equip_hacker_zm", 0, false, false, 180000 },
+    { "m_hacker_stow", STEP_EQUIP, nullptr, nullptr, nullptr, 0, nullptr, nullptr, "m14_zm", 0, false, false, 20000 },
     // Wave Gun (fightweapons alt:microwavegundw_zm): a kill with it raised = wavegun_kill (see the zom_kill hook); microwaved
     // is non-AI objects only (M _zombiemode_weap_microwavegun.gsc:293). Quantum Bomb (fightweapons zombie_quantum_bomb): the thrown grenade's
     // explode picks a result (quantum_bomb.gsc:236-275); quantum_bomb_explode = the harness saw a thrown one explode.
@@ -440,7 +509,12 @@ const PlanStep s_steps[] =
     // Excavators: 20 s after power, one digger starts within two rounds (flag start_<name>_digger, digger.gsc:90-134).
     // L42g r17: the guaranteed digger comes at the 4th between_round_over after power + 20 s (rnd > 2, digger.gsc:107-121);
     // r17 timed out 2.5 s before it at 400 s.
-    { "m_digger", STEP_WAIT, nullptr, nullptr, nullptr, 0, "start_teleporter_digger|start_hangar_digger|start_biodome_digger", nullptr, nullptr, 0, false, false, 600000, 2 },
+    { "m_digger", STEP_WAIT, nullptr, nullptr, nullptr, 0, "start_teleporter_digger|start_hangar_digger|start_biodome_digger", nullptr, nullptr, 0, false, false, 1200000, 2 },
+    { "m_stage_diggers", STEP_CONTACT, "teleporter_digger_switch", nullptr, nullptr, 0, nullptr, nullptr, nullptr, 0, false, false, 180000 },
+    { "m_hack_digger", STEP_HACK_DIGGER, nullptr, nullptr, nullptr, 0, nullptr, nullptr, "equip_hacker_zm", 0, false, false, 300000 },
+    { "m_digger_breach", STEP_WAIT, nullptr, nullptr, nullptr, 0, "digger_arm_smash", nullptr, nullptr, 0, false, false, 600000, 2 },
+    { "m_hack_breached_digger", STEP_HACK_DIGGER, nullptr, nullptr, "breached", 0, nullptr, nullptr, "equip_hacker_zm", 0, false, false, 300000 },
+    { "m_digger_return", STEP_WAIT, nullptr, nullptr, nullptr, 0, nullptr, nullptr, nullptr, 0, false, false, 600000 },
     // Back to Earth: info_volume generator_teleporter; landing in NML notifies enter_nml (teleporter.gsc:66-153, 494-519).
     // Its gate closes on the moon landing and reopens the next round end + 120 s (:715-785), hence the long timeout.
     { "m_to_earth", STEP_TOUCH, "generator_teleporter", nullptr, nullptr, 0, "enter_nml", nullptr, nullptr, 0, false, false, 400000 },
@@ -458,11 +532,12 @@ const char *s_fieldNames[] = { "zombie_weapon_upgrade", "script_flag", "powerup_
     "state", "script_parameters", "script_flag_wait", "chest_accessed", "zombie_powerup_fire_sale_on",
     "zombie_powerup_bonfire_sale_on", "phone_counter", "music_override", "cost", "has_legs", "round_number",
     "devcheater", "zombie_devgui_power", "powerup_drop_count", "flag", "next_thief_round", "_trap_in_use", "in_use",
-    "script_string", "requiredplayers", "zombie_equipment_upgrade" };
+    "script_string", "requiredplayers", "zombie_equipment_upgrade", "penactive", "_hackable_objects", "door", "_trigger", "current_equipment_active", "origin", "radius", "animname", "digger_name", "meteor_counter", "_being_flung", "is_ziplining", "flytrap_counter", "grab_count", "stolen", "num_monkey_zombies", "next_monkey_round", "monkey_health", "perk_theft_vox", "screamattackblur", "soniczombiecount", "nextsonicspawnround", "killed_self", "napalmzombiecount", "nextnapalmspawnround", "napalm_fire_damage", "standing_in_water", "_cf_actor_napalm_zombie_explode", "dmg_taken", "max_damage_taken", "health_state", "defeated" };
 enum { F_WEAPON, F_FLAG, F_POWERUP, F_TRAPPIECE, F_DEFCON, F_COST, F_CHESTMOVES,
     F_ZOMBIEVARS, F_INSTA, F_SCALAR, F_BOARDSTATE, F_PARAMETERS, F_FLAGWAIT, F_CHESTACCESSED, F_FIRESALE,
     F_BONFIRE, F_PHONE, F_MUSIC, F_PAPCOST, F_HASLEGS, F_ROUND,
-    F_DEVCHEATER, F_DEVGUIPOWER, F_DROPCOUNT, F_LEVELFLAG, F_NEXTTHIEF, F_TRAPINUSE, F_INUSE, F_SCRIPTSTRING, F_REQPLAYERS, F_EQUIPUPGRADE, F_COUNT };
+    F_DEVCHEATER, F_DEVGUIPOWER, F_DROPCOUNT, F_LEVELFLAG, F_NEXTTHIEF, F_TRAPINUSE, F_INUSE, F_SCRIPTSTRING, F_REQPLAYERS, F_EQUIPUPGRADE, F_PENACTIVE,
+    F_HACKABLES, F_HACKDOOR, F_HACKTRIGGER, F_EQUIPACTIVE, F_HACKORIGIN, F_HACKRADIUS, F_ANIMNAME, F_DIGGERNAME, F_METEORCOUNT, F_BEINGFLUNG, F_ISZIPLINING, F_FLYTRAPCOUNT, F_GRABCOUNT, F_STOLEN, F_ASCMONKEYCOUNT, F_NEXTMONKEYROUND, F_MONKEYHEALTH, F_PERKTHEFTVOX, F_SCREAMBLUR, F_SONICCOUNT, F_NEXTSONIC, F_KILLEDSELF, F_NAPALMCOUNT, F_NEXTNAPALM, F_NAPALMFIRE, F_STANDINGWATER, F_NAPALMCHARGEFLAG, F_DIRECTORDAMAGE, F_DIRECTORMAX, F_DIRECTORSTATE, F_DEFEATED, F_COUNT };
 unsigned int s_fieldKeys[F_COUNT];
 int s_featureState[4] = { -2, -2, -2, -2 };
 
@@ -496,12 +571,69 @@ int s_waitResupplies;       // q1 c9: times the current wait was restarted behin
 int s_papRequeues;          // L20: times pap went back through portal_pack (at most 2 a run)
 int s_lastTrapUse = -1;     // q1 c9: the last trap switch a route step used (the wait watches its trap)
 int s_lastTrapUseTime = -1; // L20: level time of that use
+int s_hackDoorTime, s_hackSuccessTime, s_hackSuccessPlayer = -1;
+const char *s_diggerNames[] = { "teleporter", "hangar", "biodome" };
+struct DiggerEvents { int reached = -1, hacked = -1, lifted = -1, smashed = -1; };
+DiggerEvents s_diggerEvents[3];
+int s_diggerChoice = -1, s_diggerBody = -1, s_diggerGeneration, s_diggerHackTime = -1;
+int s_diggerStage = -1, s_diggerStageGeneration;
+float s_diggerHackOrigin[3];
+int s_factorySongStart = -1;
+int s_ascMonkeyStart = -1, s_ascMonkeyRound = -1, s_ascPerkStop = -1, s_ascPerkStopPlayer = -1;
+int s_ascDefendDamage = -1, s_ascDefendMachine = -1, s_ascDefendStable = -1, s_ascDefendHealth = -1;
+unsigned int s_ascDefendGeneration = 0;
+bool s_ascDefendFullHealth = false, s_ascDefendVoice = false;
+int s_ascBonusPerks = -1;
+struct SonicEvidence
+{
+    int ent = -1, first = -1, blur = -1, clear = -1, done = -1, death = -1;
+    int player = -1;
+    unsigned int generation = 0;
+    bool playerKill = false;
+} s_sonic;
+struct NapalmEvidence
+{
+    int ent = -1, first = -1, death = -1, callback = -1, selfKill = -1, countZero = -1;
+    unsigned int generation = 0, fireGeneration = 0;
+    int fire = -1, fireStart = -1, fireEnd = -1;
+    int player = -1, killer = -1, scoreBefore = -1, reward = -1, rewardTime = -1;
+    bool rifleKill = false;
+    int charge = -1, godOff = -1, godRestored = -1, damageEvent = -1, damageAmount = -1, down = -1, revived = -1;
+    float origin[3] = {};
+} s_napalm;
+struct GeorgeEvidence
+{
+    int ent = -1, first = -1, maximum = -1, initial = -1, peak = 0, ownHits = 0, ownDamage = 0;
+    int player = -1, exit = -1, achieved = -1, defeated = -1, baselinePerks = -1;
+    unsigned int generation = 0;
+    bool damageOne = false, damageTwo = false, freeDrop = false, specialDrop = false, specialOwned = false;
+} s_george;
+
+// Explicit test aid: restore the pre-charge protection only, never health or
+// last-stand/perk state. Actual revive must already have happened for success.
+void RestoreNapalmTestGod(const char *reason)
+{
+    if (s_napalm.godOff < 0 || s_napalm.godRestored >= 0 || s_napalm.player < 0
+        || s_napalm.player >= level.maxclients || !g_entities[s_napalm.player].client) return;
+    Dvar_SetBoolByName("bo1_testclient_god", true);
+    g_entities[s_napalm.player].flags |= 1;
+    s_napalm.godRestored = level.time;
+    Com_Printf(16, "bo1_napalm_damage: time %d TEST SWITCH restore God after %s health %d laststand %d\n",
+        level.time, reason, g_entities[s_napalm.player].health, g_entities[s_napalm.player].client->lastStand);
+}
+int s_monkeyPauseUntil = -1, s_monkeyCarrier = -1, s_monkeyCarrierGeneration, s_monkeyGrabCount;
+std::vector<unsigned int> s_monkeyCycleModels;
+int s_flingRequest = -1, s_flingStart = -1, s_flingEnd = -1;
+float s_flingOrigin[3], s_flingPeak;
+int s_zipRequest = -1, s_zipStart = -1, s_zipExit = -1, s_zipPlayer = -1;
+float s_zipOrigin[3], s_zipPeak;
 bool s_planParsed;
 int s_index;
 int s_stepStart;
 int s_prevStepStart; // L41: the previous step's s_stepStart (PlanStep::notifyFrom 1)
 int s_ent = -1;
 int s_quantumMissile = -1; // L42: the last thrown zombie_quantum_bomb
+int s_quantumMissileUseCount;
 int s_waitTrap = -1; // r1 c6: the trap volume a STEP_WAIT / STEP_TRAP_VIEW watches (set in its phase 0)
 int s_phase;
 int s_phaseTime;
@@ -560,6 +692,7 @@ struct Seen
 };
 std::vector<Seen> s_levelNotifies;
 int s_triggerNotify[1024];
+int s_flyDamageTime = -1, s_flyDamagePlayer = -1;
 struct Powerup
 {
     int ent;
@@ -568,6 +701,8 @@ struct Powerup
     std::string name;
     bool grabbed;
     float nearest; // the test player's closest approach (xy) while it existed
+    int lastModel = -1;
+    int lastGrabCount = -1;
 };
 std::vector<Powerup> s_powerups;
 int s_powerupsGrabbed;
@@ -577,6 +712,10 @@ int s_effectScore;
 int s_chestAccessed = -1, s_chestMoves = -1;
 int s_boardState[1024]; // 0 unknown, 1 intact, 2 destroyed
 int s_boardCounts[3]; // board chunks now "repaired" / "destroyed" / any other state (mid_tear, mid_repair)
+int s_trapBlade = -1;
+float s_trapBladeAngle;
+bool s_trapBladeMoved;
+int s_trapSwitchTime;
 
 // Carpenter evidence: how many exterior board chunks are destroyed at a powerup pickup and afterwards.
 void LogBoardCounts(const char *why)
@@ -643,6 +782,86 @@ unsigned int EntObject(int entnum)
 bool EntField(int entnum, int field, std::string *text, int *number)
 {
     return ReadField(EntObject(entnum), field, text, number);
+}
+
+// Borrowed, find-only object reads on the server thread. Never allocate or
+// modify a script variable, spawn a trigger, or call the hacking callback.
+unsigned int PointerField(unsigned int object, int field)
+{
+    const unsigned int id = object && s_fieldKeys[field]
+        ? FindVariable(SCRIPTINSTANCE_SERVER, object, s_fieldKeys[field]) : 0;
+    return id && GetValueType(SCRIPTINSTANCE_SERVER, id) == VAR_POINTER
+        ? GetVariableValueAddress(SCRIPTINSTANCE_SERVER, id)->u.pointerValue : 0;
+}
+
+struct DoorHackTarget
+{
+    gentity_s *trigger = nullptr;
+    float point[3] = {};
+    float radius = 0;
+    bool hasPoint = false;
+    int registered = -1, matching = 0;
+};
+
+DoorHackTarget RegisteredDoorHackTarget(int doorEnt, const char *diggerName = nullptr)
+{
+    DoorHackTarget result;
+    const auto inst = SCRIPTINSTANCE_SERVER;
+    const unsigned int array = PointerField(gScrVarPub[inst].levelId, F_HACKABLES);
+    if (!array || GetObjectType(inst, array) != VAR_ARRAY) return result;
+    // Retail appends at .size and array_remove compacts this numeric list.
+    const unsigned int count = GetArraySize(inst, array);
+    result.registered = (int)count;
+    int shown = 0;
+    for (unsigned int i = 0; i < count; ++i)
+    {
+        const unsigned int entry = FindArrayVariable(inst, array, i);
+        if (!entry || GetValueType(inst, entry) != VAR_POINTER) continue;
+        const unsigned int hackable = GetVariableValueAddress(inst, entry)->u.pointerValue;
+        if (diggerName)
+        {
+            std::string name;
+            if (!ReadField(hackable, F_DIGGERNAME, &name, nullptr) || name != diggerName) continue;
+        }
+        else
+        {
+            const unsigned int door = PointerField(hackable, F_HACKDOOR);
+            if (!door || GetObjectType(inst, door) != VAR_ENTITY) continue;
+            const scr_entref_t doorRef = Scr_GetEntityIdRef(inst, door);
+            if (!doorRef.classnum && doorRef.entnum < level.num_entities && level.time % 5000 == 0 && shown++ < 8)
+                Com_Printf(16, "bo1_hack_registry: time %d desired %d object %u door %d target %s desired_target %s\n",
+                    level.time, doorEnt, hackable, doorRef.entnum, Str(g_entities[doorRef.entnum].target),
+                    Str(g_entities[doorEnt].target));
+            if (doorRef.classnum || doorRef.entnum != doorEnt) continue;
+        }
+        ++result.matching;
+        const unsigned int pointVar = s_fieldKeys[F_HACKORIGIN]
+            ? FindVariable(inst, hackable, s_fieldKeys[F_HACKORIGIN]) : 0;
+        if (pointVar && GetValueType(inst, pointVar) == VAR_VECTOR)
+        {
+            const float *point = GetVariableValueAddress(inst, pointVar)->u.vectorValue;
+            if (point) { Vec3Copy(point, result.point); result.hasPoint = true; }
+        }
+        const unsigned int radiusVar = s_fieldKeys[F_HACKRADIUS]
+            ? FindVariable(inst, hackable, s_fieldKeys[F_HACKRADIUS]) : 0;
+        if (radiusVar)
+        {
+            const unsigned int type = GetValueType(inst, radiusVar);
+            const VariableUnion &value = GetVariableValueAddress(inst, radiusVar)->u;
+            if (type == VAR_FLOAT) result.radius = value.floatValue;
+            else if (type == VAR_INTEGER) result.radius = (float)value.intValue;
+        }
+        const unsigned int trigger = PointerField(hackable, F_HACKTRIGGER);
+        if (!trigger || GetObjectType(inst, trigger) != VAR_ENTITY) continue;
+        const scr_entref_t ref = Scr_GetEntityIdRef(inst, trigger);
+        if (!ref.classnum && ref.entnum < level.num_entities && g_entities[ref.entnum].r.inuse
+            && !strcmp(Str(g_entities[ref.entnum].classname), "trigger_radius_use"))
+        {
+            result.trigger = &g_entities[ref.entnum];
+            return result;
+        }
+    }
+    return result;
 }
 
 int LevelInt(int field, int fallback)
@@ -805,7 +1024,8 @@ bool IsTrigger(const gentity_s *ent)
 // L42: a STEP_TOUCH may also target an info_volume (zombie_moon's nml_teleporter is one; scripts poll istouching).
 bool IsPlanTarget(const gentity_s *ent, const PlanStep &step)
 {
-    return IsTrigger(ent) || (step.kind == STEP_TOUCH && !strcmp(Str(ent->classname), "info_volume"));
+    return IsTrigger(ent) || ((step.kind == STEP_TOUCH || step.kind == STEP_CONTACT)
+        && !strcmp(Str(ent->classname), "info_volume"));
 }
 
 bool Matches(const gentity_s *ent, const PlanStep &step)
@@ -1063,8 +1283,32 @@ void StartStep(gentity_s *player)
     s_ent = -1;
     s_phase = 0;
     s_phaseTime = level.time;
+    s_trapBlade = -1;
+    s_trapBladeMoved = false;
+    s_trapSwitchTime = 0;
+    s_hackDoorTime = s_hackSuccessTime = 0;
+    s_hackSuccessPlayer = -1;
     s_startScore = player->client->sess.cs.score.score;
     const PlanStep &step = s_steps[s_plan[s_index]];
+    if (!strcmp(step.name, "flinger"))
+    {
+        s_flingRequest = level.time;
+        s_flingStart = s_flingEnd = -1;
+        s_flingPeak = 0;
+    }
+    if (step.kind == STEP_FIRE && step.targetname)
+    {
+        s_flyDamageTime = s_flyDamagePlayer = -1;
+    }
+    if (step.targetname && !strcmp(step.targetname, "player_zipline"))
+    {
+        s_zipRequest = level.time;
+        s_zipStart = s_zipExit = -1;
+        s_zipPlayer = player->s.number;
+        s_zipPeak = 0;
+    }
+    if (step.kind == STEP_HACK_DIGGER)
+        s_diggerChoice = s_diggerBody = s_diggerHackTime = -1;
     s_startAmmo = TotalAmmo(ps, step.ammo && step.weapon ? BG_FindWeaponIndexForName(step.weapon) : ps->weapon);
     s_spent = 0;
     s_largestDrop = 0;
@@ -1094,6 +1338,8 @@ void StartStep(gentity_s *player)
 
 void EndStep(gentity_s *player, const char *result, const char *why)
 {
+    if (s_index >= 0 && s_index < (int)s_plan.size() && !strcmp(s_steps[s_plan[s_index]].name, "t_napalm_damage")
+        && !strcmp(result, "FAIL")) RestoreNapalmTestGod("failed damage-case step");
     playerState_s *ps = &player->client->ps;
     char detail[512];
     // r1: a step the arm policy inserted reports "recovery PASS/FAIL", apart from the route's own steps.
@@ -1112,6 +1358,11 @@ void EndStep(gentity_s *player, const char *result, const char *why)
     if (!inserted)
         s_floorRequeues = s_waitResupplies = 0;
     const PlanStep &ended = s_steps[s_plan[s_index]];
+    if (!strcmp(result, "PASS") && !strcmp(ended.name, "m_stage_diggers"))
+    {
+        s_diggerStage = s_ent;
+        s_diggerStageGeneration = g_entities[s_ent].useCount;
+    }
     if (s_ent >= 0 && !strcmp(result, "PASS") && ended.kind == STEP_USE && ended.targetname
         && !strncmp(ended.targetname, "trap_", 5))
     {
@@ -1156,7 +1407,11 @@ void GoalOnLevel(gentity_s *player, const gentity_s *ent, const float *center, f
     // trigger's bottom, stand on the nearest floor at the trigger's own level: sampled over its footprint widened by 14
     // (the touch box is +-15), floor z within bottom-70 .. top. Off Five only.
     const float bottom = ent->r.currentOrigin[2] + ent->r.mins[2];
-    if (!s_isFive && ground[2] < bottom - 70.0f)
+    std::string contactFlag;
+    const bool coastContactDoor = !I_stricmp(Dvar_GetString("mapname"), "zombie_coast")
+        && ent->classname == scr_const.trigger_use_touch
+        && EntField(ent->s.number, F_FLAG, &contactFlag, nullptr) && contactFlag == "enter_shipfront_bottom";
+    if ((!s_isFive && ground[2] < bottom - 70.0f) || coastContactDoor)
     {
         const float top = ent->r.currentOrigin[2] + ent->r.maxs[2];
         float best = 1e9f;
@@ -1170,15 +1425,33 @@ void GoalOnLevel(gentity_s *player, const gentity_s *ent, const float *center, f
                 G_TraceCapsule(&floor, from, vec3_origin, vec3_origin, to, player->s.number, player->clipmask, &floorContext);
                 if (floor.startsolid || floor.fraction >= 1.0f || floor.normal.vec.v[2] < 0.7f)
                     continue;
-                const float d = (x - center[0]) * (x - center[0]) + (y - center[1]) * (y - center[1]);
+                const float height = top + floor.fraction * (to[2] - top) + 1.0f;
+                if (coastContactDoor)
+                {
+                    // A touch-volume center can be behind its closed door.
+                    // Navigate to a real free contact position on the player's
+                    // side instead; native use/contact still authorizes the buy.
+                    const float point[3] = { x, y, height };
+                    trace_t hull;
+                    G_TraceCapsule(&hull, point, player->r.mins, player->r.maxs, point,
+                        player->s.number, player->clipmask, &floorContext);
+                    const float mins[3] = { x - 15, y - 15, height };
+                    const float maxs[3] = { x + 15, y + 15, height + 70 };
+                    if (hull.startsolid || hull.allsolid || !SV_EntityContact(mins, maxs, ent)) continue;
+                }
+                const float *sampleReference = coastContactDoor ? player->r.currentOrigin : center;
+                const float d = (x - sampleReference[0]) * (x - sampleReference[0]) + (y - sampleReference[1]) * (y - sampleReference[1]);
                 if (d < best)
                 {
                     best = d;
                     ground[0] = x;
                     ground[1] = y;
-                    ground[2] = top + floor.fraction * (to[2] - top) + 1.0f;
+                    ground[2] = height;
                 }
             }
+        if (coastContactDoor && level.time % 5000 == 0)
+            Com_Printf(16, "bo1_contact_stand: time %d door %d sampled %d goal %.0f %.0f %.0f\n",
+                level.time, ent->s.number, best < 1e9f ? 1 : 0, ground[0], ground[1], ground[2]);
     }
 
     // L28 waypoint: Kino's Pack-a-Punch is reached from the script_origin projroom_teleport_player1 (-46 -435 328,
@@ -1237,7 +1510,22 @@ void GoalOnLevel(gentity_s *player, const gentity_s *ent, const float *center, f
     // (The log lines keep the "bowie" tag.)
     // L35: a perk machine off Five whose flat-40 fallback stood 6 presses without its hint (Der Riese's Double Tap,
     // f2: 152 uses at -404 -1085 199, the sight ray hit the alcove's side wall at x -384) takes the same search.
-    if (strcmp(Str(ent->targetname), "bowie_upgrade") && strcmp(Str(ent->targetname), "treasure_chest_use")
+    // Ascension's PaP center traces onto the machine's pedestal (z -293),
+    // selecting a node behind the west wall from the room's floor (z -344).
+    // Sample an actual free standing point with retail use reach/sight as well.
+    // Kino's explicit arrival-point handling above already returned.
+    // CoTD's two front-door trigger centers sit over a different floor than
+    // their usable interior approach. Use the existing real floor/free-hull/
+    // eye-reach/sight search instead of navigating under the trigger center.
+    std::string coastFlag;
+    const bool coastEntrance = !I_stricmp(Dvar_GetString("mapname"), "zombie_coast")
+        && !strcmp(Str(ent->targetname), "zombie_door")
+        && EntField(ent->s.number, F_FLAG, &coastFlag, nullptr)
+        && (coastFlag == "lighthouse_enter" || coastFlag == "lighthouse_residence_front");
+    const bool factoryMeteor = !I_stricmp(Dvar_GetString("mapname"), "zombie_cod5_factory")
+        && !strncmp(Str(ent->targetname), "meteor_", 7);
+    if (!coastEntrance && !factoryMeteor && strcmp(Str(ent->targetname), "bowie_upgrade") && strcmp(Str(ent->targetname), "treasure_chest_use")
+        && (s_isFive || strcmp(Str(ent->targetname), "zombie_vending_upgrade"))
         && !VendingStandSearch(player, ent))
         return;
     float best = 1.0e9f;
@@ -1405,6 +1693,13 @@ bool NearPortalPad(const float *point, float margin)
             return true;
     }
     return false;
+}
+
+// Test route only: return to Der Riese's mainframe within the retail 30s timer.
+bool TimedTeleporterLink()
+{
+    return s_index >= 0 && s_index < (int)s_plan.size()
+        && !strncmp(s_steps[s_plan[s_index]].name, "f_tp_link", 9);
 }
 
 void Walk(gentity_s *player, const float *goal, int goalId, usercmd_s *cmd, float viewYaw)
@@ -1604,6 +1899,19 @@ void Walk(gentity_s *player, const float *goal, int goalId, usercmd_s *cmd, floa
         Vec3Copy(s_path.pts[s_pathPoint].vOrigPoint, point);
     else
         Vec3Copy(goal, point);
+    if (level.time % 5000 == 0)
+    {
+        Com_Printf(16, "bo1_plan_walk: time %d goal %d found %d points %d next %d origin %.1f %.1f %.1f point %.1f %.1f %.1f\n",
+            level.time, goalId, s_pathFound, (int)s_path.wPathLen, s_pathPoint,
+            origin[0], origin[1], origin[2], point[0], point[1], point[2]);
+        trace_t collision;
+        col_context_t context;
+        G_TraceCapsule(&collision, origin, player->r.mins, player->r.maxs, point,
+            player->s.number, player->clipmask, &context);
+        Com_Printf(16, "bo1_plan_walk_collision: time %d fraction %.3f startsolid %d type %d hit %d normal %.2f %.2f %.2f mask 0x%x\n",
+            level.time, collision.fraction, collision.startsolid ? 1 : 0, (int)collision.hitType,
+            (int)collision.hitId, collision.normal.vec.v[0], collision.normal.vec.v[1], collision.normal.vec.v[2], player->clipmask);
+    }
     float dir[2] = { point[0] - origin[0], point[1] - origin[1] };
     const float length = sqrtf(dir[0] * dir[0] + dir[1] * dir[1]);
     if (length < 1.0f)
@@ -1624,6 +1932,23 @@ void Walk(gentity_s *player, const float *goal, int goalId, usercmd_s *cmd, floa
         s_unstickDir = -s_unstickDir;
         s_progressTime = level.time;
         s_pathGoal = -1;
+    }
+    if (TimedTeleporterLink() && stallFlat > 128.0f && length > 32.0f && level.time >= s_unstickUntil)
+    {
+        // Face the path segment so ordinary sprint input has forward movement.
+        // Release briefly to let the normal stamina rules rearm the button.
+        viewYaw = atan2f(dir[1], dir[0]) * (180.0f / 3.14159265f);
+        cmd->angles[1] = (unsigned short)(int)((viewYaw - player->client->ps.delta_angles[1]) * 182.04445f);
+        if (((level.time - s_stepStart) / 50) % 40) cmd->button_bits.setBit(1);
+        else cmd->button_bits.resetBit(1);
+        if (level.time % 1000 == 0)
+        {
+            const playerState_s &ps = player->client->ps;
+            Com_Printf(16, "bo1_plan: time %d timed link sprint request %d active %d speed %.1f distance %.0f\n",
+                level.time, cmd->button_bits.testBit(1) ? 1 : 0,
+                ps.sprintState.lastSprintStart > ps.sprintState.lastSprintEnd ? 1 : 0,
+                sqrtf(ps.velocity[0] * ps.velocity[0] + ps.velocity[1] * ps.velocity[1]), stallFlat);
+        }
     }
     const float yaw = viewYaw * (3.14159265f / 180.0f);
     float forward = dir[0] * cosf(yaw) + dir[1] * sinf(yaw);
@@ -1671,6 +1996,13 @@ bool GoUse(gentity_s *player, usercmd_s *cmd, gentity_s *ent, gentity_s *target,
     // Player_UpdateCursorHints clears cursorHint every frame but can retain the previous
     // entity index. That stale index does not mean a distant trigger is still usable.
     const bool candidate = ps->cursorHint && ps->cursorHintEntIndex == ent->s.number;
+    if (TimedTeleporterLink())
+    {
+        cmd->button_bits.resetBit(0); // attack
+        cmd->button_bits.resetBit(2); // melee
+        cmd->button_bits.resetBit(4); // an existing reload finishes normally
+        cmd->button_bits.resetBit(11); // ADS
+    }
     bool reach = candidate;
     if (!reach && !strcmp(Str(ent->classname), "trigger_use_touch"))
     {
@@ -1728,11 +2060,13 @@ bool GoUse(gentity_s *player, usercmd_s *cmd, gentity_s *ent, gentity_s *target,
     const bool usingTrap = s_index < (int)s_plan.size() && !strcmp(s_steps[s_plan[s_index]].name, "trap_qr");
     // L20: not with every bullet gun dry. L141 760150: the wait's resupply walked to the m14 wall with the ak74u dry
     // (0 + 0), stood at the chalk (reach 30) knifing a 950-health zombie until downed; the buy is the fight.
-    if (target && targetDistance < (usingBox || usingTrap ? 100.0f : 256.0f) && HasLoadedGun(ps))
+    if (!TimedTeleporterLink() && target && targetDistance < (usingBox || usingTrap ? 100.0f : 256.0f) && HasLoadedGun(ps))
         return true; // fight first
     Face(player, cmd, center, true);
     cmd->button_bits.resetBit(0);
     cmd->button_bits.resetBit(11);
+    if (!HasLoadedGun(ps))
+        cmd->button_bits.resetBit(2); // release melee only once actually in use range
     if (!press)
         return true;
     // Hold use for 3 frames, release for 7: the engine's activate is an edge, door_buy reads
@@ -1900,6 +2234,13 @@ void InsertStep(int stepIndex, unsigned int replace, const char *why)
 // Between steps: decide whether the player must buy before the step. Inserts at most one purchase.
 void ArmCheck(gentity_s *player)
 {
+    if (!strcmp(s_steps[s_plan[s_index]].name, "flinger_land")) return;
+    if (s_steps[s_plan[s_index]].kind == STEP_FIRE && s_steps[s_plan[s_index]].targetname) return;
+    // A held equipment item is not a valid wall-buy weapon. Complete an
+    // explicit stow/selection first; the next step can buy ammunition normally.
+    if (s_steps[s_plan[s_index]].kind == STEP_HACK_DOOR || s_steps[s_plan[s_index]].kind == STEP_HACK_DIGGER
+        || s_steps[s_plan[s_index]].kind == STEP_EQUIP) return;
+    if (TimedTeleporterLink()) return; // complete the countdown before ammo shopping
     const playerState_s *ps = &player->client->ps;
     unsigned int guns[15];
     const int count = PrimaryGuns(ps, guns);
@@ -2123,6 +2464,47 @@ void UpdatePowerups(gentity_s *player)
         }
         if (powerup.name.empty())
             EntField(powerup.ent, F_POWERUP, &powerup.name, nullptr);
+        // Read-only natural monkey pickup/model-cycle evidence, including IDs
+        // beyond255. The generic script field must preserve this16-bit index.
+        if (!strcmp(Dvar_GetString("mapname"), "zombie_temple"))
+        {
+            int grabs = 0, stolen = 0;
+            EntField(powerup.ent, F_GRABCOUNT, nullptr, &grabs);
+            EntField(powerup.ent, F_STOLEN, nullptr, &stolen);
+            const bool cyclePlan = s_index < (int)s_plan.size()
+                && !strcmp(s_steps[s_plan[s_index]].name, "observe_monkey");
+            if (cyclePlan && grabs > 0 && stolen == 1)
+            {
+                if (s_monkeyCarrier < 0)
+                {
+                    s_monkeyCarrier = powerup.ent;
+                    s_monkeyCarrierGeneration = ent->useCount;
+                    s_monkeyGrabCount = grabs;
+                    s_monkeyPauseUntil = level.time + 8000;
+                    Com_Printf(16, "bo1_monkey_cycle: time %d actual pickup ent %d generation %d grab %d; ordinary firing withheld8s\n",
+                        level.time, powerup.ent, ent->useCount, grabs);
+                }
+                if (powerup.ent == s_monkeyCarrier && ent->useCount == s_monkeyCarrierGeneration
+                    && grabs == s_monkeyGrabCount
+                    && std::find(s_monkeyCycleModels.begin(), s_monkeyCycleModels.end(), (unsigned int)ent->model) == s_monkeyCycleModels.end())
+                {
+                    s_monkeyCycleModels.push_back(ent->model);
+                    Com_Printf(16, "bo1_monkey_cycle: time %d actual carried model %u name %s distinct %u\n",
+                        level.time, (unsigned)ent->model, Str(G_ModelName(ent->model)), (unsigned)s_monkeyCycleModels.size());
+                }
+            }
+            if (powerup.lastModel != ent->model || powerup.lastGrabCount != grabs)
+            {
+                std::string current;
+                EntField(powerup.ent, F_POWERUP, &current, nullptr);
+                Com_Printf(16, "bo1_monkey_powerup: time %d ent %d generation %d model %u registered %s powerup %s grab_count %d stolen %d\n",
+                    level.time, powerup.ent, powerup.useCount, (unsigned)ent->model,
+                    Str(G_ModelName(ent->model)), current.c_str(), grabs, stolen);
+                powerup.lastModel = ent->model;
+                powerup.lastGrabCount = grabs;
+            }
+        }
+
         const float dx = ent->r.currentOrigin[0] - player->r.currentOrigin[0];
         const float dy = ent->r.currentOrigin[1] - player->r.currentOrigin[1];
         const float d = sqrtf(dx * dx + dy * dy);
@@ -2255,6 +2637,35 @@ gentity_s *PowerupGoal(gentity_s *player)
 
 bool CheckUseSuccess(gentity_s *player, const PlanStep &step, const char **why)
 {
+    // Retail exit_zipline follows reached_end_node and safe landing. Require
+    // this controlled rider's real active flag, travel and matching destination.
+    if (step.targetname && !strcmp(step.targetname, "player_zipline"))
+    {
+        if (s_ent < 0 || s_zipRequest != s_stepStart || s_zipStart < s_zipRequest
+            || s_zipExit < s_zipStart || s_zipPeak < 512.0f) return false;
+        const bool ship = !strcmp(Str(g_entities[s_ent].target), "pf20_auto2197_caf");
+        const float shipSpots[][3] = { {-2296,880,144}, {-2312,816,144}, {-2248,880,144}, {-2248,816,144} };
+        const float towerSpots[][3] = { {1704,-1728,426.5f}, {1656,-1752,403.6f}, {1672,-1800,416.9f}, {1616,-1824,397.5f} };
+        if (!ship && strcmp(Str(g_entities[s_ent].target), "zipline_test1")) return false;
+        float nearest = FLT_MAX;
+        for (int i = 0; i < 4; ++i)
+            nearest = (std::min)(nearest, Vec3Distance(player->r.currentOrigin, ship ? shipSpots[i] : towerSpots[i]));
+        if (nearest > 192.0f) return false;
+        Com_Printf(16, "bo1_zipline: time %d completed %s travel %.1f landing_error %.1f origin %.1f %.1f %.1f\n",
+            level.time, ship ? "ship" : "lighthouse", s_zipPeak, nearest,
+            player->r.currentOrigin[0], player->r.currentOrigin[1], player->r.currentOrigin[2]);
+        *why = "controlled rider active flag, measured travel, retail exit and matching landing";
+        return true;
+    }
+
+    if (!strncmp(step.name, "f_meteor", 8) && s_ent >= 0 && s_uses
+        && s_triggerNotify[s_ent] >= s_stepStart && LevelInt(F_METEORCOUNT, -1) == step.count)
+    {
+        if (step.count == 3 && LevelInt(F_MUSIC, -1) != 1) return false;
+        if (step.count == 3) s_factorySongStart = level.time;
+        *why = step.count == 3 ? "actual third meteor trigger/counter and music override enabled" : "actual meteor trigger and counter";
+        return true;
+    }
     if (!strncmp(step.name, "phone", 5) && s_uses && LevelInt(F_PHONE, -1) == step.count)
     {
         *why = "phone_counter";
@@ -2374,6 +2785,54 @@ bool CheckUseSuccess(gentity_s *player, const PlanStep &step, const char **why)
     }
     if (kinoTrap || factoryTrap || !strcmp(step.name, "f_tp_go"))
         return false;
+    // Shi No Numa's switches previously passed on payment alone. Observe the
+    // retail scripts' actual activation, and the Flogger's real blade motion.
+    const bool flogger = !strcmp(step.name, "s_trap_flogger");
+    const bool sumpfElectric = !strncmp(step.name, "s_trap_elec_", 12);
+    if (flogger || sumpfElectric)
+    {
+        if (s_ent < 0 || !g_entities[s_ent].r.inuse) return false;
+        const gentity_s *control = &g_entities[s_ent];
+        int inUse = 0, active = 0;
+        gentity_s *damage = nullptr;
+        if (flogger)
+        {
+            const gentity_s *lever = FindByTargetname(Str(control->target), nullptr);
+            damage = lever ? FindByTargetname(Str(lever->target), nullptr) : nullptr;
+            const gentity_s *blade = damage ? FindByTargetname(Str(damage->target), nullptr) : nullptr;
+            if (blade)
+            {
+                if (s_trapBlade != blade->s.number)
+                {
+                    s_trapBlade = blade->s.number;
+                    s_trapBladeAngle = blade->r.currentAngles[0];
+                    s_trapBladeMoved = false;
+                }
+                if (fabsf(blade->r.currentAngles[0] - s_trapBladeAngle) > 1.0f)
+                    s_trapBladeMoved = true;
+            }
+            EntField(s_ent, F_PENACTIVE, nullptr, &active);
+        }
+        else
+        {
+            damage = FindByTargetname(Str(control->target), nullptr);
+            active = 1;
+        }
+        if (s_uses && (spent >= step.cost || s_largestDrop >= step.cost)
+            && EntField(s_ent, F_INUSE, nullptr, &inUse) && inUse == 1 && active == 1
+            && damage && IsTrigger(damage) && TriggerEnabled(damage) && damage->r.linked && damage->r.contents
+            && (!sumpfElectric || (s_trapSwitchTime >= s_stepStart && !TriggerEnabled(control)))
+            && (!flogger || (s_trapBladeMoved && damage->tagInfo)))
+        {
+            char detail[160];
+            Com_sprintf(detail, sizeof(detail), "control %d damage %d linked %d contents 0x%x blade %d moved %d",
+                s_ent, damage->s.number, damage->r.linked, damage->r.contents, s_trapBlade, s_trapBladeMoved);
+            Log("trap_active", detail);
+            *why = flogger ? "rotating blade and active linked damage volume" : "active linked damage volume";
+            return true;
+        }
+        return false;
+    }
     if (!step.notify && !step.perk && !step.weapon && !step.ammo && step.cost && spent >= step.cost)
     {
         *why = "score";
@@ -2422,6 +2881,21 @@ int LevelFlag(const char *name)
     if (!entry || GetValueType(SCRIPTINSTANCE_SERVER, entry) != VAR_INTEGER)
         return -1;
     return GetVariableValueAddress(SCRIPTINSTANCE_SERVER, entry)->u.intValue;
+}
+
+int OwnedVendingPerks(gclient_s *client)
+{
+    int owned = 0;
+    std::vector<unsigned int> names;
+    for (int i = level.maxclients; i < level.num_entities; ++i)
+    {
+        const gentity_s &e = g_entities[i];
+        if (!e.r.inuse || strcmp(Str(e.targetname), "zombie_vending") || !e.script_noteworthy
+            || std::find(names.begin(), names.end(), e.script_noteworthy) != names.end()) continue;
+        names.push_back(e.script_noteworthy);
+        if (G_SP_HasPerk(client, Str(e.script_noteworthy))) ++owned;
+    }
+    return owned;
 }
 
 gentity_s *ThiefActor()
@@ -2674,6 +3148,27 @@ void G_SP_TestPlanRegister()
 
 void G_SP_TestPlanReset()
 {
+    s_ascMonkeyStart = s_ascMonkeyRound = s_ascPerkStop = s_ascPerkStopPlayer = -1;
+    s_ascDefendDamage = s_ascDefendMachine = s_ascDefendStable = s_ascDefendHealth = -1;
+    s_ascDefendGeneration = 0;
+    s_ascDefendFullHealth = s_ascDefendVoice = false;
+    s_ascBonusPerks = -1;
+    s_sonic = SonicEvidence{};
+    s_napalm = NapalmEvidence{};
+    s_george = GeorgeEvidence{};
+    s_monkeyPauseUntil = s_monkeyCarrier = -1;
+    s_monkeyCycleModels.clear();
+    s_flyDamageTime = s_flyDamagePlayer = -1;
+    s_zipRequest = s_zipStart = s_zipExit = s_zipPlayer = -1;
+    s_zipPeak = 0;
+    s_flingRequest = s_flingStart = s_flingEnd = -1;
+    s_flingPeak = 0;
+    s_diggerStage = -1;
+    s_factorySongStart = -1;
+    s_diggerChoice = s_diggerBody = s_diggerHackTime = -1;
+    for (DiggerEvents &event : s_diggerEvents) event = {};
+    s_quantumMissile = -1;
+    s_quantumMissileUseCount = 0;
     s_boxViewValid = false;
     s_boxViewStraight = false;
     s_plan.clear();
@@ -2725,7 +3220,9 @@ void G_SP_TestPlanReset()
 
 void G_SP_TestPlanFields(scriptInstance_t inst)
 {
-    if (inst != SCRIPTINSTANCE_SERVER || (!Sys_IsHeadless() && !G_SP_TestClientRealWindow()))
+    // Cache identifiers for the rendered read-only resume observer too. This
+    // does not enable the test-client plan or retain any script references.
+    if (inst != SCRIPTINSTANCE_SERVER)
         return;
     for (int i = 0; i < F_COUNT; ++i)
     {
@@ -2734,8 +3231,119 @@ void G_SP_TestPlanFields(scriptInstance_t inst)
     }
 }
 
+void G_SP_InspectResumeProgression()
+{
+    if (!Sys_IsMainThread() || Sys_IsHeadless() || !Dvar_GetBool("zombiemode")
+        || !Dvar_GetBool("sv_running") || CL_GetLocalClientConnectionState(0) != CA_ACTIVE) return;
+    Com_SyncThreads();
+    const auto &player = g_entities[0]; const auto *client = player.client;
+    if (!player.r.inuse || !client) return;
+    int alive = 0;
+    for (int i = level.maxclients; i < level.num_entities; ++i)
+        alive += g_entities[i].r.inuse && g_entities[i].actor && g_entities[i].health > 0;
+    Com_Printf(15, "Practical resume: time %i round %i roundKey %u score %i health %i god %u alive %i position %.6f %.6f %.6f weapon %s perks %x\n",
+        level.time, LevelInt(F_ROUND, -1), s_fieldKeys[F_ROUND], client->sess.cs.score.score, player.health, player.flags & 3u,
+        alive, player.r.currentOrigin[0], player.r.currentOrigin[1], player.r.currentOrigin[2], BG_WeaponName(client->ps.weapon), G_SP_PlayerBuiltinState(0).perks);
+    for (int i = 0; i < 15; ++i) if (const auto weapon = client->ps.heldWeapons[i].weapon)
+        Com_Printf(15, "Practical weapon: slot %i name %s clip %i reserve %i\n", i, BG_WeaponName(weapon),
+            BG_GetAmmoInClip(&client->ps, weapon), BG_GetAmmoNotInClip(&client->ps, weapon));
+
+    // Equipment such as Moon's P.E.S. stows immediately after activation.
+    // Observe the existing script-owned state without changing it or enabling
+    // the test-client plan; selected weapon alone cannot prove it is active.
+    const unsigned int equipment = PointerField(EntObject(player.s.number), F_EQUIPACTIVE);
+    for (int i = 0; equipment && i < 15; ++i) if (const auto weapon = client->ps.heldWeapons[i].weapon)
+    {
+        const char *name = BG_WeaponName(weapon);
+        const unsigned int key = SL_FindString(name, SCRIPTINSTANCE_SERVER);
+        const unsigned int entry = key ? FindVariable(SCRIPTINSTANCE_SERVER, equipment, key) : 0;
+        if (entry && GetValueType(SCRIPTINSTANCE_SERVER, entry) == VAR_INTEGER)
+            Com_Printf(15, "Practical equipment: name %s active %i\n", name,
+                GetVariableValueAddress(SCRIPTINSTANCE_SERVER, entry)->u.intValue);
+    }
+    if (Cmd_Argc() == 3 && !strcmp(Cmd_Argv(1), "flag"))
+    {
+        Com_Printf(15, "Practical flag: name %s value %i\n", Cmd_Argv(2), LevelFlag(Cmd_Argv(2))); return;
+    }
+    const bool enemies = Cmd_Argc() == 2 && !strcmp(Cmd_Argv(1), "enemies");
+    for (int i = level.maxclients; i < level.num_entities; ++i)
+    {
+        const auto &ent = g_entities[i]; if (!ent.r.inuse) continue;
+        if (enemies)
+        {
+            if (ent.actor && ent.health > 0)
+                Com_Printf(15, "Practical enemy: entity %i generation %i health %i origin %.6f %.6f %.6f bounds %.6f %.6f\n",
+                    i, ent.useCount, ent.health, ent.r.currentOrigin[0], ent.r.currentOrigin[1], ent.r.currentOrigin[2], ent.r.mins[2], ent.r.maxs[2]);
+            continue;
+        }
+        const char *target = Str(ent.targetname);
+        if (!IsTrigger(&ent) || (strcmp(target, "zombie_door") && strcmp(target, "zombie_debris")
+            && strcmp(target, "zombie_vending") && strcmp(target, "weapon_upgrade")
+            && strcmp(target, "zombie_airlock_buy"))) continue;
+        std::string flag, weapon; int cost = -1;
+        EntField(i, F_FLAG, &flag, nullptr); EntField(i, F_WEAPON, &weapon, nullptr); EntField(i, F_COST, nullptr, &cost);
+        float center[3]; Center(&ent, center);
+        Com_Printf(15, "Practical target: entity %i generation %i name %s noteworthy %s flag %s flagValue %i weapon %s cost %i center %.6f %.6f %.6f ownedPerk %i\n",
+            i, ent.useCount, target, Str(ent.script_noteworthy), flag.c_str(), flag.empty() ? -1 : LevelFlag(flag.c_str()), weapon.c_str(), cost,
+            center[0], center[1], center[2], !strcmp(target, "zombie_vending") ? G_SP_HasPerk(const_cast<gclient_s *>(client), Str(ent.script_noteworthy)) : 0);
+    }
+}
+
 // L41: harness observation of a script effect that has no notify (GScr_SetClientFlag on a script mover: Shangri-La's
 // spear-trap spikes set clientflag 3). Recorded like a level notify.
+void G_SP_TestPlanTagQueryMissing(const gentity_s *ent, unsigned int tag, bool angles)
+{
+    if (!Enabled()) return;
+    Com_Printf(16, "bo1_tag_query: time %d %s ent %d model %s missing %s returns undefined (original SP)\n",
+        level.time, angles ? "angles" : "origin", ent->s.number, Str(G_ModelName(ent->model)), Str(tag));
+}
+
+void G_SP_TestPlanScoreWrite(const gclient_s *client, int before, int after)
+{
+    if (!Enabled() || s_index >= (int)s_plan.size() || strcmp(s_steps[s_plan[s_index]].name, "t_napalm_shoot")
+        || s_napalm.player < 0 || s_napalm.player >= level.maxclients
+        || g_entities[s_napalm.player].client != client || s_napalm.death < 0
+        || level.time < s_napalm.death || level.time - s_napalm.death > 1000
+        || s_napalm.killer != s_napalm.player || !s_napalm.rifleKill || s_napalm.selfKill == 1) return;
+    const int delta = after - before, scalar = ZombieVar(F_SCALAR);
+    Com_Printf(16, "bo1_napalm: time %d actual script score write %d->%d delta %d scalar %d after rifle death %d\n",
+        level.time, before, after, delta, scalar, s_napalm.death);
+    // Require the distinct real bonus write, not a coincidental aggregate.
+    // The ordinary death award can be a separate write in the same frame.
+    if (s_napalm.rewardTime < 0 && scalar > 0 && delta == 300 * scalar)
+    {
+        s_napalm.reward = delta;
+        s_napalm.rewardTime = level.time;
+    }
+}
+
+void G_SP_TestPlanWeaponGiven(gentity_s *player, unsigned int weapon, bool hadWeapon)
+{
+    if (!Enabled() || s_index < 0 || s_index >= (int)s_plan.size() || strcmp(s_steps[s_plan[s_index]].name, "g_defeat")
+        || !player || !player->client || player->s.number != s_george.player
+        || s_george.defeated < s_george.first || s_george.exit < s_george.first
+        || hadWeapon || !BG_PlayerHasWeapon(&player->client->ps, weapon)) return;
+    const char *name = BG_WeaponName(weapon);
+    const char *dropName = !strcmp(name, "minigun_zm") ? "minigun" : (!strcmp(name, "tesla_gun_zm") ? "tesla" : nullptr);
+    if (!dropName) return;
+    // The powerup may be collected/deleted during a single script execution,
+    // before the per-frame sampler resumes. Read its real live field NOW.
+    for (Powerup &powerup : s_powerups)
+    {
+        if (powerup.ent < 0 || powerup.dropTime < s_george.exit) continue;
+        const gentity_s &drop = g_entities[powerup.ent];
+        std::string actual;
+        if (!drop.r.inuse || drop.useCount != powerup.useCount
+            || !EntField(powerup.ent, F_POWERUP, &actual, nullptr) || actual != dropName) continue;
+        powerup.name = actual; // observation cache only; never a script write
+        s_george.specialDrop = true;
+        s_george.specialOwned = true;
+        Com_Printf(16, "bo1_george: time %d actual committed native reward %s client %d had0 now_owned1 live_drop %d generation %d name %s\n",
+            level.time, name, player->s.number, powerup.ent, powerup.useCount, actual.c_str());
+        break;
+    }
+}
+
 void G_SP_TestPlanObserve(const char *name)
 {
     if (!Enabled())
@@ -2753,10 +3361,50 @@ void G_SP_TestPlanNotify(scriptInstance_t inst, unsigned int owner, unsigned int
     if (owner == gScrVarPub[inst].levelId)
     {
         s_levelNotifies.push_back({ notify, level.time });
+        if (!strcmp(notify, "quiet_on_the_set_achieved") && s_george.ent >= 0)
+        {
+            s_george.achieved = level.time;
+            Com_Printf(16, "bo1_george: time %d actual quiet_on_the_set_achieved\n", level.time);
+        }
+        if (!strcmp(notify, "napalm_death") && s_napalm.death >= 0)
+        {
+            s_napalm.callback = level.time;
+            Com_Printf(16, "bo1_napalm: time %d actual level napalm_death after tracked death %d\n", level.time, s_napalm.death);
+            // Explicit test aid at an authentic script boundary, immediately
+            // before the original explosion damage code. No health/damage or
+            // script notifications are manufactured by the observer.
+            if (s_index >= 0 && s_index < (int)s_plan.size() && !strcmp(s_steps[s_plan[s_index]].name, "t_napalm_damage")
+                && s_napalm.charge >= s_napalm.first && s_napalm.selfKill == 1 && s_napalm.godOff < 0
+                && s_napalm.player >= 0 && s_napalm.player < level.maxclients)
+            {
+                gentity_s &player = g_entities[s_napalm.player];
+                if (player.client && player.health > 0 && !player.client->lastStand && (player.flags & 1)
+                    && Dvar_GetBool("bo1_testclient_god") && G_SP_HasPerk(player.client, "specialty_quickrevive"))
+                {
+                    s_napalm.godOff = level.time;
+                    Dvar_SetBoolByName("bo1_testclient_god", false);
+                    player.flags &= ~1u;
+                    Com_Printf(16, "bo1_napalm_damage: time %d TEST SWITCH God1->0 at actual explosion callback after charge %d client %d health %d\n",
+                        level.time, s_napalm.charge, s_napalm.player, player.health);
+                }
+            }
+        }
+        if ((!strcmp(notify, "digger_reached_end") || !strcmp(notify, "digger_hacked")
+            || !strcmp(notify, "digger_arm_lift") || !strcmp(notify, "digger_arm_smash")) && top->type == VAR_STRING)
+            for (int i = 0; i < 3; ++i)
+                if (!strcmp(Str(top->u.stringValue), s_diggerNames[i]))
+                {
+                    DiggerEvents &event = s_diggerEvents[i];
+                    if (!strcmp(notify, "digger_reached_end")) event.reached = level.time;
+                    if (!strcmp(notify, "digger_hacked")) event.hacked = level.time;
+                    if (!strcmp(notify, "digger_arm_lift")) event.lifted = level.time;
+                    if (!strcmp(notify, "digger_arm_smash")) event.smashed = level.time;
+                    Com_Printf(16, "bo1_digger: time %d actual %s branch %s\n", level.time, notify, s_diggerNames[i]);
+                }
         // Harness observation: thief round / power / round transitions (flag_set and flag_clear notify level).
         static const char *const s_loggedLevelNotifies[] = { "thief_round", "last_thief_down", "death_in_pre_game",
             "stop_thief_alarms", "between_round_over", "start_of_round", "end_of_round", "power_on", "power_off",
-            "teleporter_powered", "defcon_reset" };
+            "teleporter_powered", "defcon_reset", "fake_death", "pre_end_game", "end_game" };
         for (const char *logged : s_loggedLevelNotifies)
             if (!strcmp(notify, logged))
                 Com_Printf(16, "bo1_feature: time %d level notify %s round %d next_thief_round %d\n", level.time, notify,
@@ -2780,8 +3428,112 @@ void G_SP_TestPlanNotify(scriptInstance_t inst, unsigned int owner, unsigned int
     scr_entref_t ref = Scr_GetEntityIdRef(inst, owner);
     if (ref.classnum || ref.entnum >= 1024)
         return;
+    if (ref.entnum < level.maxclients && g_entities[ref.entnum].client
+        && (!strcmp(notify, "fake_death") || !strcmp(notify, "player_downed")
+            || !strcmp(notify, "player_revived") || !strcmp(notify, "_zombie_game_over")))
+        Com_Printf(16, "bo1_feature: time %d player notify %s client %d health %d\n",
+            level.time, notify, ref.entnum, g_entities[ref.entnum].health);
+    if ((int)ref.entnum == s_george.ent && g_entities[ref.entnum].useCount == s_george.generation
+        && !strcmp(notify, "director_exit"))
+    {
+        s_george.exit = level.time;
+        Com_Printf(16, "bo1_george: time %d actual director_exit ent %d generation %u\n", level.time, ref.entnum, s_george.generation);
+    }
+    if ((int)ref.entnum == s_napalm.player && s_napalm.godOff >= 0 && g_entities[ref.entnum].client)
+    {
+        if (name == scr_const.damage && top->type == VAR_INTEGER && (top - 1)->type == VAR_POINTER
+            && GetObjectType(inst, (top - 1)->u.pointerValue) == VAR_ENTITY)
+        {
+            const scr_entref_t attacker = Scr_GetEntityIdRef(inst, (top - 1)->u.pointerValue);
+            if (!attacker.classnum && (int)attacker.entnum == s_napalm.ent
+                && g_entities[attacker.entnum].useCount == s_napalm.generation
+                && s_napalm.death >= 0 && s_napalm.selfKill == 1 && level.time >= s_napalm.death
+                && top->u.intValue > 0 && !(g_entities[ref.entnum].flags & 1) && !Dvar_GetBool("bo1_testclient_god"))
+            {
+                s_napalm.damageEvent = level.time;
+                s_napalm.damageAmount = top->u.intValue;
+                Com_Printf(16, "bo1_napalm_damage: time %d actual player damage client %d attacker %d generation %u amount %d health %d laststand %d God0\n",
+                    level.time, ref.entnum, attacker.entnum, s_napalm.generation, top->u.intValue,
+                    g_entities[ref.entnum].health, g_entities[ref.entnum].client->lastStand);
+            }
+        }
+        if (!strcmp(notify, "player_downed"))
+        {
+            s_napalm.down = level.time;
+            Com_Printf(16, "bo1_napalm_damage: time %d actual controlled player downed health %d\n", level.time, g_entities[ref.entnum].health);
+        }
+        if (!strcmp(notify, "player_revived"))
+        {
+            s_napalm.revived = level.time;
+            Com_Printf(16, "bo1_napalm_damage: time %d actual controlled player revived health %d\n", level.time, g_entities[ref.entnum].health);
+            RestoreNapalmTestGod("actual player_revived");
+        }
+    }
+    if ((int)ref.entnum == s_napalm.fire && g_entities[ref.entnum].useCount == s_napalm.fireGeneration
+        && !strcmp(notify, "end_fire_effect"))
+    {
+        s_napalm.fireEnd = level.time;
+        Com_Printf(16, "bo1_napalm: time %d actual end_fire_effect ent %d generation %u\n",
+            level.time, ref.entnum, s_napalm.fireGeneration);
+    }
+    if ((int)ref.entnum == s_sonic.player && !strcmp(notify, "blur_cleared") && s_sonic.blur >= 0)
+    {
+        s_sonic.clear = level.time;
+        Com_Printf(16, "bo1_sonic: time %d actual controlled player %d blur_cleared\n", level.time, ref.entnum);
+    }
+    if ((int)ref.entnum == s_sonic.ent && g_entities[ref.entnum].useCount == s_sonic.generation
+        && !strcmp(notify, "scream_attack_done"))
+    {
+        s_sonic.done = level.time;
+        Com_Printf(16, "bo1_sonic: time %d actual scream_attack_done ent %d generation %u\n",
+            level.time, ref.entnum, s_sonic.generation);
+    }
+    if (!strcmp(notify, "exit_zipline") && (int)ref.entnum == s_zipPlayer
+        && s_zipRequest >= 0 && s_zipStart >= s_zipRequest)
+        s_zipExit = level.time;
+    // Stock trigger_damage damage args: amount, attacker, direction, point, mod.
+    // Read only the actual actor reference; never synthesize a damage/trigger event.
+    if (!strcmp(notify, "damage") && (int)ref.entnum == s_ent && s_index < (int)s_plan.size()
+        && s_steps[s_plan[s_index]].kind == STEP_FIRE && s_steps[s_plan[s_index]].targetname
+        && top->type == VAR_INTEGER && top[-1].type == VAR_POINTER
+        && GetObjectType(inst, top[-1].u.pointerValue) == VAR_ENTITY)
+    {
+        const scr_entref_t attacker = Scr_GetEntityIdRef(inst, top[-1].u.pointerValue);
+        if (!attacker.classnum && attacker.entnum < level.maxclients && g_entities[attacker.entnum].client)
+        {
+            s_flyDamageTime = level.time;
+            s_flyDamagePlayer = attacker.entnum;
+            Com_Printf(16, "bo1_flytrap: time %d actual damage target %d attacker %d amount %d weapon %s\n",
+                level.time, s_ent, attacker.entnum, top->u.intValue,
+                BG_WeaponName(g_entities[attacker.entnum].client->ps.weapon));
+        }
+    }
+    if (!strcmp(notify, "specialty_armorvest_stop") && ref.entnum < level.maxclients
+        && g_entities[ref.entnum].client && LevelFlag("monkey_round") == 1)
+    {
+        s_ascPerkStop = level.time;
+        s_ascPerkStopPlayer = ref.entnum;
+        Com_Printf(16, "bo1_asc_monkey: time %d actual player Juggernog-stop client %d monkey_count %d\n",
+            level.time, ref.entnum, LevelInt(F_ASCMONKEYCOUNT, -1));
+    }
     if (name == scr_const.trigger)
         s_triggerNotify[ref.entnum] = level.time;
+    if (!strcmp(notify, "door_hacked") && (int)ref.entnum == s_ent)
+    {
+        s_hackDoorTime = level.time;
+        Com_Printf(16, "bo1_hack: time %d actual door_hacked ent %d\n", level.time, ref.entnum);
+    }
+    if (!strcmp(notify, "successful_hack") && ref.entnum < level.maxclients)
+    {
+        s_hackSuccessTime = level.time;
+        s_hackSuccessPlayer = ref.entnum;
+        Com_Printf(16, "bo1_hack: time %d actual successful_hack player %d\n", level.time, ref.entnum);
+    }
+    if (!strcmp(notify, "switch_activated") && (int)ref.entnum == s_ent)
+    {
+        s_trapSwitchTime = level.time;
+        Com_Printf(16, "bo1_plan: time %d trap switch_activated ent %d\n", level.time, ref.entnum);
+    }
     // L42: a Wave Gun kill. The gun hurts zombies only through its script sizzle (DoDamage with the player as attacker,
     // _zombiemode_weap_microwavegun.gsc:317-334); "microwaved" is only for non-AI _microwaveable_objects (:293). The
     // spawner's death event notifies the attacker "zom_kill" (_zombiemode_spawner.gsc:3850): with the Wave Gun raised and
@@ -2826,8 +3578,12 @@ void G_SP_TestPlanNotify(scriptInstance_t inst, unsigned int owner, unsigned int
             s_defconUseTime = level.time;
         }
     }
-    if (!strcmp(notify, "explode") && (int)ref.entnum == s_quantumMissile)
+    if (!strcmp(notify, "explode") && (int)ref.entnum == s_quantumMissile
+        && g_entities[ref.entnum].useCount == s_quantumMissileUseCount
+        && !strcmp(BG_WeaponName(g_entities[ref.entnum].s.weapon), "zombie_quantum_bomb"))
     {
+        Com_Printf(16, "bo1_plan: time %d actual quantum grenade explode notify ent %d generation %d\n",
+            level.time, ref.entnum, s_quantumMissileUseCount);
         s_quantumMissile = -1;
         s_levelNotifies.push_back({ "quantum_bomb_explode", level.time });
     }
@@ -2840,7 +3596,10 @@ void G_SP_TestPlanNotify(scriptInstance_t inst, unsigned int owner, unsigned int
             g_entities[grenade.entnum].s.lerp.pos.trType, // L42: 15 = TR_MOON_GRAVITY (G_GetGrenadeTrType, SP 0x007e68a0)
             g_entities[ref.entnum].client ? g_entities[ref.entnum].client->ps.gravity : 0);
         if ((top - 1)->type == VAR_STRING && !strcmp(Str((top - 1)->u.stringValue), "zombie_quantum_bomb"))
+        {
             s_quantumMissile = grenade.entnum;
+            s_quantumMissileUseCount = g_entities[grenade.entnum].useCount;
+        }
     }
     if (name == scr_const.trigger && !strcmp(Str(g_entities[ref.entnum].targetname), "zombie_trap")
         && top->type == VAR_POINTER && GetObjectType(inst, top->u.pointerValue) == VAR_ENTITY)
@@ -2862,6 +3621,39 @@ void G_SP_TestPlanNotify(scriptInstance_t inst, unsigned int owner, unsigned int
         int attacker = -1;
         if (source->type == VAR_POINTER && GetObjectType(inst, source->u.pointerValue) == VAR_ENTITY)
             attacker = Scr_GetEntityIdRef(inst, source->u.pointerValue).entnum;
+        if (name == scr_const.damage && (int)ref.entnum == s_george.ent
+            && g_entities[ref.entnum].useCount == s_george.generation && attacker == s_george.player && top->u.intValue > 0)
+        {
+            ++s_george.ownHits;
+            s_george.ownDamage += top->u.intValue;
+            if (s_george.ownHits % 25 == 0)
+                Com_Printf(16, "bo1_george: time %d actual own damage events %d sum %d last %d held %s\n",
+                    level.time, s_george.ownHits, s_george.ownDamage, top->u.intValue,
+                    BG_WeaponName(g_entities[attacker].client->ps.weapon));
+        }
+        if (name == scr_const.death && (int)ref.entnum == s_napalm.ent
+            && g_entities[ref.entnum].useCount == s_napalm.generation)
+        {
+            s_napalm.death = level.time;
+            s_napalm.killer = attacker;
+            if (s_napalm.player >= 0 && g_entities[s_napalm.player].client)
+                s_napalm.scoreBefore = g_entities[s_napalm.player].client->sess.cs.score.score;
+            s_napalm.rifleKill = (top->type == VAR_POINTER || top->type == VAR_UNDEFINED)
+                && (top - 1)->type == VAR_STRING && !strcmp(Str((top - 1)->u.stringValue), "MOD_RIFLE_BULLET");
+            EntField(ref.entnum, F_KILLEDSELF, nullptr, &s_napalm.selfKill);
+            Vec3Copy(g_entities[ref.entnum].r.currentOrigin, s_napalm.origin);
+            Com_Printf(16, "bo1_napalm: time %d actual death ent %d generation %u self_kill %d attacker %d origin %.1f %.1f %.1f\n",
+                level.time, ref.entnum, s_napalm.generation, s_napalm.selfKill, attacker,
+                s_napalm.origin[0], s_napalm.origin[1], s_napalm.origin[2]);
+        }
+        if (name == scr_const.death && (int)ref.entnum == s_sonic.ent
+            && g_entities[ref.entnum].useCount == s_sonic.generation)
+        {
+            s_sonic.death = level.time;
+            s_sonic.playerKill = attacker == s_sonic.player;
+            Com_Printf(16, "bo1_sonic: time %d actual death ent %d generation %u attacker %d controlled %d\n",
+                level.time, ref.entnum, s_sonic.generation, attacker, s_sonic.player);
+        }
         Com_Printf(16, "bo1_effect: time %d actor %d %s health %d damage %d source %d source_name %s insta %d scalar %d\n",
             level.time, ref.entnum, notify, g_entities[ref.entnum].health,
             name == scr_const.damage && top->type == VAR_INTEGER ? top->u.intValue : 0, attacker,
@@ -2936,8 +3728,14 @@ int G_SP_TestPlanMayRetreat(const gentity_s *player)
     if (s_thiefMode)
         return 0;
     const PlanStep &step = s_steps[s_plan[s_index]];
+    if (!strcmp(step.name, "g_defeat")) return 0; // explicit ordinary movement/fire policy below
     switch (step.kind)
     {
+    case STEP_OBSERVE:
+    case STEP_ENTITY_CHECK:
+        return 2;
+    case STEP_LANDER_WAIT:
+        return 0;
     case STEP_FLOOR:
         if (s_phase >= 2)
             return 0;
@@ -2979,6 +3777,20 @@ bool G_SP_TestPlanActorLegless(int entnum)
     return EntField(entnum, F_HASLEGS, nullptr, &legs) && !legs;
 }
 
+// Retail _zombiemode_ai_director sets self.animname to director_zombie.
+// Access tests should not exhaust every magazine attacking George instead of
+// walking to the next door. The dedicated water test still provokes him using
+// ordinary combat. This only changes the test client's target selection.
+bool G_SP_TestPlanSpareDirector(int entnum)
+{
+    if (!Enabled() || s_complete || s_index < 0 || s_index >= (int)s_plan.size()
+        || strcmp(s_steps[s_plan[s_index]].name, "water_calm") == 0
+        || strcmp(s_steps[s_plan[s_index]].name, "g_defeat") == 0)
+        return false;
+    std::string animname;
+    return EntField(entnum, F_ANIMNAME, &animname, nullptr) && animname == "director_zombie";
+}
+
 bool G_SP_TestPlanHoldingGrenade()
 {
     if (!Enabled() || s_complete || s_index < 0 || s_index >= (int)s_plan.size())
@@ -3011,6 +3823,43 @@ bool G_SP_TestPlanCommand(gentity_s *player, client_t *client, usercmd_s *cmd, g
         ParsePlan(player);
     playerState_s *ps = &player->client->ps;
     UpdateMeasurement(player);
+    if (s_zipRequest >= 0 && player->s.number == s_zipPlayer && s_zipExit < 0)
+    {
+        int active = 0;
+        EntField(player->s.number, F_ISZIPLINING, nullptr, &active);
+        if (active && s_zipStart < 0)
+        {
+            s_zipStart = level.time;
+            Vec3Copy(player->r.currentOrigin, s_zipOrigin);
+            Com_Printf(16, "bo1_zipline: time %d actual rider active origin %.1f %.1f %.1f\n",
+                level.time, s_zipOrigin[0], s_zipOrigin[1], s_zipOrigin[2]);
+        }
+        if (s_zipStart >= 0)
+            s_zipPeak = (std::max)(s_zipPeak, Vec3Distance(s_zipOrigin, player->r.currentOrigin));
+    }
+    if (s_flingRequest >= 0)
+    {
+        int active = 0;
+        EntField(player->s.number, F_BEINGFLUNG, nullptr, &active);
+        if (active && s_flingStart < 0)
+        {
+            s_flingStart = level.time;
+            Vec3Copy(player->r.currentOrigin, s_flingOrigin);
+            Com_Printf(16, "bo1_flinger: time %d actual player fling flag origin %.0f %.0f %.0f\n",
+                level.time, s_flingOrigin[0], s_flingOrigin[1], s_flingOrigin[2]);
+        }
+        if (s_flingStart >= 0 && s_flingEnd < 0)
+        {
+            const float moved = Vec3Distance(s_flingOrigin, player->r.currentOrigin);
+            if (moved > s_flingPeak) s_flingPeak = moved;
+            if (!active)
+            {
+                s_flingEnd = level.time;
+                Com_Printf(16, "bo1_flinger: time %d actual player fling flag cleared travel %.1f origin %.0f %.0f %.0f\n",
+                    level.time, s_flingPeak, player->r.currentOrigin[0], player->r.currentOrigin[1], player->r.currentOrigin[2]);
+            }
+        }
+    }
     UpdatePowerups(player);
     UpdateEffects(player);
     if (level.time % 5000 == 0)
@@ -3106,6 +3955,14 @@ bool G_SP_TestPlanCommand(gentity_s *player, client_t *client, usercmd_s *cmd, g
             target ? targetDistance : -1.0f, player->client->ps.cursorHint, player->client->ps.cursorHintEntIndex,
             player->client->ps.viewangles[1], player->client->ps.viewangles[0]);
 
+    // Publish the finished route before optional post-route resupply. A long
+    // walk to ammunition must not hide completion or prevent quitdone checks.
+    if (!s_complete && s_index >= (int)s_plan.size())
+    {
+        s_complete = true;
+        s_completeTime = level.time;
+        Com_Printf(16, "bo1_plan: time %d complete, powerups grabbed %d\n", level.time, s_powerupsGrabbed);
+    }
     if (!player->client->lastStand && s_index >= (int)s_plan.size()
         && s_resupplyDvar->current.enabled && Resupply(player, cmd))
         return true;
@@ -3114,12 +3971,97 @@ bool G_SP_TestPlanCommand(gentity_s *player, client_t *client, usercmd_s *cmd, g
     const int thiefRound = ThiefRound(player, cmd, target, melee);
     if (thiefRound >= 0)
         return thiefRound != 0;
+    if (s_index < (int)s_plan.size() && s_steps[s_plan[s_index]].kind == STEP_LANDER_WAIT)
+    {
+        if (player->client->lastStand) return false;
+        if (!s_stepStart) StartStep(player);
+        const auto &ride = s_steps[s_plan[s_index]];
+        if (player->tagInfo) s_phase = 1;
+        const int elapsed = level.time - s_stepStart;
+        const bool landed = s_phase && !player->tagInfo && elapsed >= ride.count;
+        if (landed || elapsed > ride.timeoutMs)
+            EndStep(player, landed ? "PASS" : "FAIL", landed
+                ? "observed linked flight, then unlinked landing"
+                : "flight did not link and land within timeout");
+        cmd->forwardmove = cmd->rightmove = 0;
+        cmd->button_bits.resetBit(0);
+        cmd->button_bits.resetBit(2);
+        cmd->button_bits.resetBit(10);
+        return true;
+    }
+    if (s_index < (int)s_plan.size() && s_steps[s_plan[s_index]].kind == STEP_ENTITY_CHECK)
+    {
+        if (player->client->lastStand) return false;
+        if (!s_stepStart) StartStep(player);
+        const auto &check = s_steps[s_plan[s_index]];
+        int count = 0;
+        for (int i = level.maxclients; i < level.num_entities; ++i)
+        {
+            const auto &ent = g_entities[i];
+            if (ent.r.inuse && ent.model && !strcmp(Str(ent.targetname), check.targetname)
+                && !strcmp(Str(G_ModelName(ent.model)), check.value)) ++count;
+        }
+        if (count == check.count || level.time - s_stepStart > check.timeoutMs)
+        {
+            char detail[192];
+            Com_sprintf(detail, sizeof(detail), "spawned %d/%d entities %s with registered model %s",
+                count, check.count, check.targetname, check.value);
+            EndStep(player, count == check.count ? "PASS" : "FAIL", detail);
+        }
+        return false;
+    }
+    if (s_index < (int)s_plan.size() && s_steps[s_plan[s_index]].kind == STEP_OBSERVE)
+    {
+        if (player->client->lastStand) return false;
+        if (!s_stepStart) StartStep(player);
+        const bool monkeyCycle = !strcmp(s_steps[s_plan[s_index]].name, "observe_monkey");
+        if (monkeyCycle && s_monkeyCycleModels.size() >= 3)
+        {
+            EndStep(player, "PASS", "natural monkey pickup and3distinct original carried powerup models");
+            return false;
+        }
+        if (level.time - s_stepStart >= s_steps[s_plan[s_index]].count)
+            EndStep(player, monkeyCycle ? "FAIL" : "PASS", monkeyCycle
+                ? "no natural pickup with3distinct carried models within observation"
+                : "observation interval elapsed; inspect round/actor evidence separately");
+        if (monkeyCycle && level.time < s_monkeyPauseUntil)
+        {
+            cmd->button_bits.resetBit(0);
+            cmd->button_bits.resetBit(11);
+            cmd->button_bits.resetBit(2);
+            return true;
+        }
+        return false;
+    }
     const bool visualView = s_index < (int)s_plan.size()
         && (s_steps[s_plan[s_index]].kind == STEP_BOX_VIEW || s_steps[s_plan[s_index]].kind == STEP_TRAP_VIEW);
-    // L20: a dry player at its wall buy presses use instead of knifing (GoUse; L141 760150).
-    const bool dryWallBuy = melee && s_index < (int)s_plan.size() && s_steps[s_plan[s_index]].kind == STEP_USE
-        && s_steps[s_plan[s_index]].targetname && !strcmp(s_steps[s_plan[s_index]].targetname, "weapon_upgrade")
+    // A dry bot must still walk to and use its planned trigger. Restricting
+    // this to weapon walls pinned CoTD probes in an endless knife fight and
+    // starved door/perk inputs even while their real use hint was visible.
+    const bool dryUse = melee && s_index < (int)s_plan.size() && s_steps[s_plan[s_index]].kind == STEP_USE
         && !HasLoadedGun(ps);
+    const bool hackingDoor = s_index < (int)s_plan.size()
+        && (s_steps[s_plan[s_index]].kind == STEP_HACK_DOOR || s_steps[s_plan[s_index]].kind == STEP_HACK_DIGGER);
+    const bool shootingMapTarget = s_index < (int)s_plan.size()
+        && s_steps[s_plan[s_index]].kind == STEP_FIRE && s_steps[s_plan[s_index]].targetname;
+    const bool selectingEquipment = s_index < (int)s_plan.size() && s_steps[s_plan[s_index]].kind == STEP_EQUIP;
+    // These waits only read script/body state. A close actor must not starve
+    // observations, nor keep a dry equipment holder from requesting its gun.
+    const bool passiveScriptWait = s_index < (int)s_plan.size()
+        && (!strcmp(s_steps[s_plan[s_index]].name, "m_digger_return") || !strcmp(s_steps[s_plan[s_index]].name, "f_song_end")
+            || !strcmp(s_steps[s_plan[s_index]].name, "flinger_land")
+            || !strcmp(s_steps[s_plan[s_index]].name, "c_monkey_steal")
+            || !strcmp(s_steps[s_plan[s_index]].name, "c_monkey_end")
+            || !strcmp(s_steps[s_plan[s_index]].name, "c_monkey_defend")
+            || !strcmp(s_steps[s_plan[s_index]].name, "c_monkey_perfect")
+            || !strcmp(s_steps[s_plan[s_index]].name, "t_sonic")
+            || !strcmp(s_steps[s_plan[s_index]].name, "t_napalm")
+            || !strcmp(s_steps[s_plan[s_index]].name, "t_napalm_shoot")
+            || !strcmp(s_steps[s_plan[s_index]].name, "t_napalm_damage")
+            || !strcmp(s_steps[s_plan[s_index]].name, "g_defeat")
+            || !strcmp(s_steps[s_plan[s_index]].name, "m_stage_diggers")
+            || (s_diggerStage >= 0 && (!strcmp(s_steps[s_plan[s_index]].name, "m_digger")
+                || !strcmp(s_steps[s_plan[s_index]].name, "m_digger_breach"))));
     // L40: water_calm leads an angry George into the water instead of knifing him (w2: melee on George at 32-41
     // units held the player on the sand for the whole step; his damage only resets his engine health).
     const bool leadWater = melee && s_index < (int)s_plan.size() && !strcmp(s_steps[s_plan[s_index]].name, "water_calm")
@@ -3127,22 +4069,30 @@ bool G_SP_TestPlanCommand(gentity_s *player, client_t *client, usercmd_s *cmd, g
     // L42: a running step's timeout and its notify evidence are checked before the fight branch and the powerup
     // chase. In No Man's Land the dogs and the endless horde keep a zombie in knife range: r5 sampled melee 1 in 57 of
     // 60 status lines, and m_nml_dogs (dog_clips notified 35 times) ran 600 s with neither its PASS nor its timeout.
-    // L42g: the thrown QED's explode notify did not reach the notify hook (r15: bo1_grenade explode ent 661 at 14400,
-    // no explode notify for 661 in the log); the missile's exploded flag (eFlags 0x20, set before the notify in
-    // G_ExplodeMissile) or its freeing is the evidence.
+    // A freed missile is not proof of the script's explode notification.
+    // Invalidate stale identities; only the actual notify hook completes QED.
     if (s_quantumMissile >= 0)
     {
         const gentity_s *qed = &g_entities[s_quantumMissile];
-        if (!qed->r.inuse || (qed->s.lerp.eFlags & 0x20))
+        if (!qed->r.inuse || qed->useCount != s_quantumMissileUseCount
+            || qed->classname != scr_const.grenade || !qed->s.weapon
+            || strcmp(BG_WeaponName(qed->s.weapon), "zombie_quantum_bomb"))
         {
+            Com_Printf(16, "bo1_plan: time %d quantum missile retired without observed explode notify ent %d\n",
+                level.time, s_quantumMissile);
             s_quantumMissile = -1;
-            s_levelNotifies.push_back({ "quantum_bomb_explode", level.time });
         }
     }
     if (!player->client->lastStand && s_stepStart && s_index < (int)s_plan.size())
     {
         const PlanStep &running = s_steps[s_plan[s_index]];
-        if (level.time - s_stepStart > running.timeoutMs)
+        // A genuine upgraded hit may arrive near the approach deadline.
+        // Let only that accepted hit's original9+6s reveal finish (20s bound).
+        const bool flyReveal = !strcmp(running.name, "f_flytrap")
+            && s_flyDamageTime >= s_stepStart && s_flyDamagePlayer == player->s.number
+            && s_flyDamageTime - s_stepStart <= running.timeoutMs
+            && level.time - s_flyDamageTime <= 20000;
+        if (level.time - s_stepStart > running.timeoutMs && !flyReveal)
         {
             EndStep(player, "FAIL", "timeout");
             return false;
@@ -3159,17 +4109,10 @@ bool G_SP_TestPlanCommand(gentity_s *player, client_t *client, usercmd_s *cmd, g
     if (!player->client->lastStand && melee && !s_stepStart && s_index < (int)s_plan.size()
         && s_steps[s_plan[s_index]].kind == STEP_WAIT)
         StartStep(player);
-    // L42g r17: the route's last step (m_nml_dogs) ends in the NML horde, where melee never stops: the plan's completion
-    // and the quitdone check run before the fight branch too (r17 never printed complete).
-    if (melee && !s_complete && s_index >= (int)s_plan.size())
-    {
-        s_complete = true;
-        s_completeTime = level.time;
-        Com_Printf(16, "bo1_plan: time %d complete, powerups grabbed %d\n", level.time, s_powerupsGrabbed);
-    }
     if (melee && s_complete)
         G_SP_TestPlanQuitCheck();
-    if (player->client->lastStand || (melee && !visualView && !dryWallBuy && !leadWater))
+    if (player->client->lastStand || (melee && !visualView && !dryUse && !leadWater && !TimedTeleporterLink()
+        && !hackingDoor && !selectingEquipment && !passiveScriptWait && !shootingMapTarget))
         return false;
     const bool riding = s_index < (int)s_plan.size() && s_steps[s_plan[s_index]].kind == STEP_FLOOR && s_phase == 3;
     // Harness: stay for a paid weapon's short pickup window instead of chasing a powerup.
@@ -3180,7 +4123,8 @@ bool G_SP_TestPlanCommand(gentity_s *player, client_t *client, usercmd_s *cmd, g
             || s_steps[s_plan[s_index]].kind == STEP_CRAWLER);
     const bool placing = s_index < (int)s_plan.size() && (s_steps[s_plan[s_index]].kind == STEP_DEPLOY
         || (!strcmp(s_steps[s_plan[s_index]].name, "wall_frag") && s_phase != 0));
-    if (!riding && !taking && !observingTrap && !placing && !visualView)
+    if (!riding && !taking && !observingTrap && !placing && !visualView && !TimedTeleporterLink()
+        && !hackingDoor && !selectingEquipment && !passiveScriptWait && !shootingMapTarget)
     {
         // Powerups the zombies drop: walk over them (the script grabs within 64 units).
         gentity_s *powerup = PowerupGoal(player);
@@ -3198,12 +4142,6 @@ bool G_SP_TestPlanCommand(gentity_s *player, client_t *client, usercmd_s *cmd, g
     }
     if (s_index >= (int)s_plan.size())
     {
-        if (!s_complete)
-        {
-            s_complete = true;
-            s_completeTime = level.time;
-            Com_Printf(16, "bo1_plan: time %d complete, powerups grabbed %d\n", level.time, s_powerupsGrabbed);
-        }
         G_SP_TestPlanQuitCheck();
         return false;
     }
@@ -3274,6 +4212,184 @@ bool G_SP_TestPlanCommand(gentity_s *player, client_t *client, usercmd_s *cmd, g
     const char *why = "";
     switch (step.kind)
     {
+    case STEP_HACK_DIGGER:
+    {
+        if (s_diggerChoice < 0)
+        {
+            for (int i = 0; i < 3; ++i)
+            {
+                const std::string branch = s_diggerNames[i];
+                if (LevelFlag(("start_" + branch + "_digger").c_str()) != 1
+                    || LevelFlag((branch + "_digger_hacked").c_str()) != 0) continue;
+                if (step.value && !strcmp(step.value, "breached")
+                    && (LevelFlag((branch + "_breached").c_str()) != 1 || s_diggerEvents[i].smashed < 0)) continue;
+                const std::string panel = branch + "_digger_switch";
+                for (int ent = level.maxclients; ent < level.num_entities; ++ent)
+                    if (g_entities[ent].r.inuse && !strcmp(Str(g_entities[ent].targetname), panel.c_str()))
+                    {
+                        s_diggerChoice = i;
+                        s_ent = ent;
+                        Com_Printf(16, "bo1_digger: time %d select running %s original panel %d breached %d\n",
+                            level.time, branch.c_str(), ent, LevelFlag((branch + "_breached").c_str()));
+                        break;
+                    }
+                if (s_diggerChoice >= 0) break;
+            }
+            if (s_diggerChoice < 0) return false; // wait for actual flag/registration, never start an excavator
+        }
+        const char *branch = s_diggerNames[s_diggerChoice];
+        const std::string hackedFlag = std::string(branch) + "_digger_hacked";
+        if (LevelFlag(hackedFlag.c_str()) == 1 && s_hackSuccessTime >= s_stepStart
+            && s_hackSuccessPlayer == player->s.number)
+        {
+            int bodies = 0;
+            for (int i = level.maxclients; i < level.num_entities; ++i)
+            {
+                std::string name;
+                if (g_entities[i].r.inuse && EntField(i, F_DIGGERNAME, &name, nullptr) && name == branch)
+                {
+                    s_diggerBody = i;
+                    ++bodies;
+                }
+            }
+            if (bodies != 1)
+            {
+                EndStep(player, "FAIL", "successful hack but excavator body identity is not unique");
+                return false;
+            }
+            s_diggerGeneration = g_entities[s_diggerBody].useCount;
+            s_diggerHackTime = level.time;
+            Vec3Copy(g_entities[s_diggerBody].r.currentOrigin, s_diggerHackOrigin);
+            Com_Printf(16, "bo1_digger: time %d hacked %s body %d generation %d origin %.0f %.0f %.0f before_breach %d\n",
+                level.time, branch, s_diggerBody, s_diggerGeneration, s_diggerHackOrigin[0], s_diggerHackOrigin[1],
+                s_diggerHackOrigin[2], LevelFlag((std::string(branch) + "_digger_hacked_before_breached").c_str()));
+            EndStep(player, "PASS", "actual controlled-player successful_hack and selected excavator hacked flag");
+            return false;
+        }
+        const unsigned int weapon = BG_FindWeaponIndexForName(step.weapon);
+        if (!weapon || !BG_PlayerHasWeapon(ps, weapon))
+        {
+            EndStep(player, "FAIL", "Hacker was not acquired; no equipment granted");
+            return false;
+        }
+        botInfos[client - svs.clients].weapon = weapon;
+        cmd->weapon = weapon;
+        cmd->button_bits.resetBit(0);
+        cmd->button_bits.resetBit(2);
+        cmd->button_bits.resetBit(3);
+        cmd->button_bits.resetBit(4);
+        cmd->button_bits.resetBit(11);
+        if (ps->weapon != weapon) return true;
+        const DoorHackTarget selected = RegisteredDoorHackTarget(-1, branch);
+        float point[3];
+        if (selected.hasPoint) Vec3Copy(selected.point, point);
+        else Center(&g_entities[s_ent], point); // walk to the real panel until its pooled hackable is ready
+        Face(player, cmd, point, true);
+        const float dx = point[0] - ps->origin[0], dy = point[1] - ps->origin[1];
+        const float mins[3] = { ps->origin[0] - 15, ps->origin[1] - 15, ps->origin[2] };
+        const float maxs[3] = { ps->origin[0] + 15, ps->origin[1] + 15, ps->origin[2] + 70 };
+        const bool contact = selected.trigger && SV_EntityContact(mins, maxs, selected.trigger);
+        if (selected.hasPoint && std::isfinite(selected.radius) && selected.radius > 0 && contact
+            && dx * dx + dy * dy <= selected.radius * selected.radius)
+        {
+            cmd->forwardmove = cmd->rightmove = 0;
+            cmd->button_bits.setBit(3);
+            ++s_uses;
+        }
+        else
+        {
+            float ground[3];
+            GoalOnLevel(player, &g_entities[s_ent], point, ground);
+            Walk(player, ground, s_ent, cmd, ViewYaw(player, cmd));
+        }
+        if (level.time % 1000 == 0)
+            Com_Printf(16, "bo1_digger: time %d hacking %s panel %d trigger %d registry %d matching %d point %.0f %.0f %.0f radius %.0f contact %d hold %d\n",
+                level.time, branch, s_ent, selected.trigger ? selected.trigger->s.number : -1, selected.registered,
+                selected.matching, point[0], point[1], point[2], selected.radius, contact ? 1 : 0,
+                cmd->button_bits.testBit(3) ? 1 : 0);
+        return true;
+    }
+    case STEP_HACK_DOOR:
+    {
+        if (s_hackDoorTime >= s_stepStart && s_hackSuccessTime >= s_stepStart && s_hackSuccessPlayer == player->s.number)
+        {
+            EndStep(player, "PASS", "actual door_hacked callback and successful_hack player notify");
+            return false;
+        }
+        const unsigned int weapon = BG_FindWeaponIndexForName(step.weapon);
+        if (!weapon || !BG_PlayerHasWeapon(ps, weapon))
+        {
+            EndStep(player, "FAIL", "Hacker not acquired; no equipment is granted by this step");
+            return false;
+        }
+        if (s_ent < 0)
+        {
+            gentity_s *door = FindTarget(step, player, false);
+            if (!door)
+            {
+                EndStep(player, "FAIL", "no original unopened door trigger");
+                return false;
+            }
+            s_ent = door->s.number;
+            Log("target", "original airlock; waiting for its registered Hacker trigger");
+        }
+        botInfos[client - svs.clients].weapon = weapon;
+        cmd->weapon = weapon;
+        cmd->button_bits.resetBit(0);
+        cmd->button_bits.resetBit(2);
+        cmd->button_bits.resetBit(3);
+        cmd->button_bits.resetBit(4);
+        cmd->button_bits.resetBit(11);
+        // Equipping is an ordinary usercmd; do not simulate the active flag.
+        if (ps->weapon != weapon) return true;
+        const DoorHackTarget selected = RegisteredDoorHackTarget(s_ent);
+        gentity_s *hack = selected.trigger;
+        gentity_s *door = &g_entities[s_ent];
+        if (!door->r.inuse)
+        {
+            EndStep(player, "FAIL", "door disappeared without both hacking success events");
+            return false;
+        }
+        if (!selected.hasPoint || !(selected.radius > 0) || !std::isfinite(selected.radius))
+        {
+            EndStep(player, "FAIL", "registered hackable lacks a numeric radius or vector origin");
+            return false;
+        }
+        Face(player, cmd, selected.point, true);
+        const float dx = selected.point[0] - player->r.currentOrigin[0];
+        const float dy = selected.point[1] - player->r.currentOrigin[1];
+        const float mins[3] = { ps->origin[0] - 15, ps->origin[1] - 15, ps->origin[2] };
+        const float maxs[3] = { ps->origin[0] + 15, ps->origin[1] + 15, ps->origin[2] + 70 };
+        const bool contact = hack && SV_EntityContact(mins, maxs, hack);
+        // The retail script pools this trigger only inside its radius. During
+        // progress its hint is hidden; keep holding on actual range/contact.
+        if (contact && dx * dx + dy * dy <= selected.radius * selected.radius)
+        {
+            cmd->forwardmove = cmd->rightmove = 0;
+            cmd->button_bits.setBit(3); // hold continuously; the script runs its own progress timer
+            ++s_uses;
+        }
+        else
+        {
+            float ground[3];
+            GoalOnLevel(player, door, selected.point, ground);
+            Walk(player, ground, s_ent, cmd, ViewYaw(player, cmd));
+        }
+        if (level.time % 1000 == 0)
+        {
+            int active = -1;
+            const unsigned int array = PointerField(EntObject(player->s.number), F_EQUIPACTIVE);
+            const unsigned int key = SL_FindString(step.weapon, SCRIPTINSTANCE_SERVER);
+            const unsigned int entry = array && key ? FindVariable(SCRIPTINSTANCE_SERVER, array, key) : 0;
+            if (entry && GetValueType(SCRIPTINSTANCE_SERVER, entry) == VAR_INTEGER)
+                active = GetVariableValueAddress(SCRIPTINSTANCE_SERVER, entry)->u.intValue;
+            Com_Printf(16, "bo1_hack: time %d door %d registered_trigger %d hold %d hint %d/%d spent %d active %d objects %d matching %d point %.0f %.0f %.0f radius %.0f distance %.1f contact %d\n",
+                level.time, s_ent, hack ? hack->s.number : -1, cmd->button_bits.testBit(3) ? 1 : 0,
+                ps->cursorHint, ps->cursorHintEntIndex, s_spent, active, selected.registered, selected.matching,
+                selected.point[0], selected.point[1], selected.point[2], selected.radius, sqrtf(dx * dx + dy * dy), contact ? 1 : 0);
+        }
+        return true;
+    }
     case STEP_DEVGUI_POWERUP:
     {
         if (!Dvar_GetBool("developer_script"))
@@ -3525,6 +4641,658 @@ bool G_SP_TestPlanCommand(gentity_s *player, client_t *client, usercmd_s *cmd, g
     case STEP_TRAP_VIEW:
     case STEP_WAIT:
     {
+        if (!strcmp(step.name, "g_defeat"))
+        {
+            if (s_george.baselinePerks < 0) s_george.baselinePerks = OwnedVendingPerks(player->client);
+            if (s_george.ent < 0)
+                for (int i = level.maxclients; i < level.num_entities; ++i)
+                {
+                    const gentity_s &e = g_entities[i];
+                    std::string anim;
+                    if (!e.r.inuse || !e.actor || !e.actor->Physics.bIsAlive
+                        || !EntField(i, F_ANIMNAME, &anim, nullptr) || anim != "director_zombie") continue;
+                    s_george.ent = i;
+                    s_george.generation = e.useCount;
+                    s_george.first = level.time;
+                    s_george.player = player->s.number;
+                    Com_Printf(16, "bo1_george: time %d actual actor ent %d generation %u native_health %d\n", level.time, i, e.useCount, e.health);
+                    break;
+                }
+            if (s_george.ent < 0) return false;
+            gentity_s &boss = g_entities[s_george.ent];
+            if (!boss.r.inuse || boss.useCount != s_george.generation)
+            {
+                EndStep(player, "FAIL", "actual director identity retired before reward proof");
+                return false;
+            }
+            int damage = -1, maximum = -1, defeated = -1;
+            std::string state;
+            EntField(s_george.ent, F_DIRECTORDAMAGE, nullptr, &damage);
+            EntField(s_george.ent, F_DIRECTORMAX, nullptr, &maximum);
+            EntField(s_george.ent, F_DEFEATED, nullptr, &defeated);
+            EntField(s_george.ent, F_DIRECTORSTATE, &state, nullptr);
+            if (damage >= 0 && maximum > 0 && s_george.initial < 0)
+            {
+                s_george.initial = damage;
+                s_george.maximum = maximum;
+                Com_Printf(16, "bo1_george: time %d actual initial script damage %d maximum %d state %s\n", level.time, damage, maximum, state.c_str());
+            }
+            s_george.peak = (std::max)(s_george.peak, damage);
+            if (state == "damage_one") s_george.damageOne = true;
+            if (state == "damage_two") s_george.damageTwo = true;
+            if (defeated == 1 && s_george.defeated < 0)
+            {
+                s_george.defeated = level.time;
+                s_holdWeapon = 0;
+                Com_Printf(16, "bo1_george: time %d actual defeated1 script_damage %d maximum %d own_hits %d own_damage %d\n",
+                    level.time, damage, maximum, s_george.ownHits, s_george.ownDamage);
+            }
+            const int perks = OwnedVendingPerks(player->client);
+            gentity_s *pickup = nullptr;
+            for (const Powerup &powerup : s_powerups)
+            {
+                if (s_george.exit < 0 || powerup.dropTime < s_george.exit) continue;
+                if (powerup.name == "free_perk") s_george.freeDrop = true;
+                if (powerup.name == "minigun" || powerup.name == "tesla") s_george.specialDrop = true;
+                if (powerup.ent < 0 || powerup.grabbed) continue;
+                gentity_s &e = g_entities[powerup.ent];
+                if (!e.r.inuse || e.useCount != powerup.useCount) continue;
+                if ((powerup.name == "free_perk" && perks <= s_george.baselinePerks)
+                    || ((powerup.name == "minigun" || powerup.name == "tesla") && !s_george.specialOwned)) pickup = &e;
+            }
+            if (s_george.specialDrop && (HasWeaponNamed(ps, "minigun_zm") || HasWeaponNamed(ps, "tesla_gun_zm")))
+                s_george.specialOwned = true;
+            if (level.time % 2000 == 0)
+                Com_Printf(16, "bo1_george: time %d script_damage %d peak %d maximum %d state %s defeated %d own_damage %d exit %d achieved %d drops %d/%d perks %d->%d special_owned %d\n",
+                    level.time, damage, s_george.peak, maximum, state.c_str(), defeated, s_george.ownDamage, s_george.exit,
+                    s_george.achieved, s_george.freeDrop, s_george.specialDrop, s_george.baselinePerks, perks, s_george.specialOwned);
+            if (s_george.initial == 0 && s_george.maximum >= 250000 && s_george.peak >= s_george.maximum
+                && s_george.ownDamage >= s_george.maximum && s_george.damageOne && s_george.damageTwo
+                && s_george.defeated >= s_george.first && s_george.exit >= s_george.first
+                && s_george.achieved >= s_george.exit && s_george.freeDrop && s_george.specialDrop
+                && perks > s_george.baselinePerks && s_george.specialOwned)
+            {
+                EndStep(player, "PASS", "full stock director damage/stages/own hits, actual defeat/achievement and both reward effects");
+                return false;
+            }
+            if (s_george.defeated >= 0)
+            {
+                if (pickup)
+                {
+                    if (!target) Face(player, cmd, pickup->r.currentOrigin, false);
+                    Walk(player, pickup->r.currentOrigin, 5000 + pickup->s.number, cmd, ViewYaw(player, cmd));
+                    return true;
+                }
+                return false;
+            }
+            const unsigned int gun = BG_GetWeaponIndexForName("commando_upgraded_zm");
+            if (!gun || !BG_PlayerHasWeapon(ps, gun))
+            {
+                if (level.time - s_stepStart > 30000) EndStep(player, "FAIL", "explicit granted packed Commando unavailable");
+                return false;
+            }
+            cmd->button_bits.resetBit(0);
+            cmd->button_bits.resetBit(2);
+            cmd->forwardmove = cmd->rightmove = 0;
+            if (!HoldWeapon(player, client, cmd, gun)) return true;
+            float point[3];
+            const unsigned int tag = SL_FindString("j_spineupper", SCRIPTINSTANCE_SERVER);
+            if (!tag || !G_DObjGetWorldTagPos(&boss, tag, point)) { Vec3Copy(boss.r.currentOrigin, point); point[2] += 48.0f; }
+            float eye[3]; Vec3Copy(player->r.currentOrigin, eye); eye[2] += ps->viewHeightCurrent;
+            trace_t ray;
+            G_LocationalTrace(&ray, eye, point, player->s.number, 0x280E833, bulletPriorityMap, nullptr);
+            const bool sight = ray.fraction >= 1.0f || (ray.hitType == TRACE_HITTYPE_ENTITY && ray.hitId == boss.s.number);
+            Face(player, cmd, point, true);
+            const float distance = Vec3Distance(eye, point);
+            if (!sight || distance > 700.0f) Walk(player, boss.r.currentOrigin, 6000 + boss.s.number, cmd, ViewYaw(player, cmd));
+            else
+            {
+                if (distance < 192.0f) cmd->forwardmove = -100;
+                if (!ps->weaponTime && !client->lastUsercmd.button_bits.testBit(0)) cmd->button_bits.setBit(0);
+            }
+            if (!BG_GetAmmoInClip(ps, gun)) cmd->button_bits.setBit(5);
+            return true;
+        }
+        if (!strcmp(step.name, "t_napalm") || !strcmp(step.name, "t_napalm_shoot") || !strcmp(step.name, "t_napalm_damage"))
+        {
+            const bool shoot = !strcmp(step.name, "t_napalm_shoot");
+            const bool damageCase = !strcmp(step.name, "t_napalm_damage");
+            if (damageCase && s_napalm.godOff < 0 && !G_SP_HasPerk(player->client, "specialty_quickrevive"))
+            {
+                EndStep(player, "FAIL", "actual Quick Revive required before natural damage case; no perk granted");
+                return false;
+            }
+            if (s_napalm.ent < 0)
+                for (int i = level.maxclients; i < level.num_entities; ++i)
+                {
+                    const gentity_s &e = g_entities[i];
+                    std::string name;
+                    if (!e.r.inuse || !e.actor || !e.actor->Physics.bIsAlive
+                        || !EntField(i, F_ANIMNAME, &name, nullptr) || name != "napalm_zombie") continue;
+                    s_napalm.ent = i;
+                    s_napalm.generation = e.useCount;
+                    s_napalm.first = level.time;
+                    s_napalm.player = player->s.number;
+                    Com_Printf(16, "bo1_napalm: time %d actual natural spawn ent %d generation %u round %d health %d\n",
+                        level.time, i, e.useCount, LevelInt(F_ROUND, -1), e.health);
+                    break;
+                }
+            if (damageCase && s_napalm.ent >= 0 && s_napalm.death < 0 && s_napalm.charge < 0)
+            {
+                const gentity_s &e = g_entities[s_napalm.ent];
+                const int flag = LevelInt(F_NAPALMCHARGEFLAG, -1);
+                if (e.r.inuse && e.useCount == s_napalm.generation && flag >= 0 && flag < 16
+                    && (e.s.lerp.eFlags2 & (1u << flag)))
+                {
+                    if (!Dvar_GetBool("bo1_testclient_god") || !(player->flags & 1))
+                    {
+                        EndStep(player, "FAIL", "expected recorded pre-charge God protection absent");
+                        return false;
+                    }
+                    s_napalm.charge = level.time;
+                    Com_Printf(16, "bo1_napalm_damage: time %d actual charge flag %d ent %d generation %u health %d distance %.1f God1\n",
+                        level.time, flag, s_napalm.ent, s_napalm.generation, player->health, Vec3Distance(player->r.currentOrigin, e.r.currentOrigin));
+                }
+            }
+            if (damageCase && s_napalm.death >= s_stepStart)
+            {
+                if ((level.time - s_napalm.death > 1000 && s_napalm.godOff < 0)
+                    || (level.time - s_napalm.death > 5000 && s_napalm.damageEvent < 0))
+                {
+                    RestoreNapalmTestGod("failed incoming-damage evidence");
+                    EndStep(player, "FAIL", "no actual tracked napalm damage after charge/God removal");
+                    return false;
+                }
+                if (level.time - s_napalm.death > 45000 && s_napalm.revived < 0)
+                {
+                    RestoreNapalmTestGod("failed revive evidence");
+                    EndStep(player, "FAIL", "no actual solo Quick Revive after natural explosion");
+                    return false;
+                }
+            }
+            if (s_napalm.death >= s_stepStart && shoot)
+            {
+                if (s_napalm.selfKill == 1 || s_napalm.killer != s_napalm.player || !s_napalm.rifleKill)
+                {
+                    EndStep(player, "FAIL", "napalm did not die to the controlled player's ordinary rifle shot");
+                    return false;
+                }
+                // G_SP_TestPlanScoreWrite requires the distinct actual300-base
+                // bonus write. A separate ordinary death award is preserved.
+                if (level.time - s_napalm.death > 1000 && s_napalm.rewardTime < 0)
+                {
+                    EndStep(player, "FAIL", "no exact actual300-base-point reward observed; inspect native score writes");
+                    return false;
+                }
+                if (LevelInt(F_NAPALMCOUNT, -1) == 0 && s_napalm.countZero < 0) s_napalm.countZero = level.time;
+                if (s_napalm.rewardTime >= s_napalm.death && s_napalm.callback >= s_napalm.death
+                    && s_napalm.countZero >= s_napalm.death && level.time - s_napalm.death >= 5000)
+                {
+                    EndStep(player, "PASS", "natural napalm own rifle kill, real death callback, native300-base-point reward/count0 after5s");
+                    return false;
+                }
+                // Hold ordinary inputs for one second so another gunshot or a
+                // powerup detour cannot manufacture the expected score delta.
+                if (level.time - s_napalm.death <= 1000)
+                {
+                    cmd->button_bits.resetBit(0);
+                    cmd->button_bits.resetBit(11);
+                    cmd->button_bits.resetBit(2);
+                    cmd->forwardmove = cmd->rightmove = 0;
+                    return true;
+                }
+                return false;
+            }
+            if (s_napalm.death >= s_stepStart)
+            {
+                if (s_napalm.selfKill != 1)
+                {
+                    EndStep(player, "FAIL", "tracked napalm died without stock killed_self proximity path");
+                    return false;
+                }
+                int water = -1;
+                const gentity_s &dead = g_entities[s_napalm.ent];
+                if (dead.r.inuse && dead.useCount == s_napalm.generation)
+                    EntField(s_napalm.ent, F_STANDINGWATER, nullptr, &water);
+                if (water == 1 && level.time - s_napalm.death > 1000)
+                {
+                    EndStep(player, "FAIL", "stock water branch suppresses fire; dry-ground scenario not reached");
+                    return false;
+                }
+                if (level.time - s_napalm.death > 30000 && s_napalm.fire < 0)
+                {
+                    EndStep(player, "FAIL", "no actual dry-ground fire trigger observed within30s after death");
+                    return false;
+                }
+                if (level.time - s_napalm.death > 35000)
+                {
+                    EndStep(player, "FAIL", "actual20s fire end/delete evidence missing after35s");
+                    return false;
+                }
+                if (LevelInt(F_NAPALMCOUNT, -1) == 0 && s_napalm.countZero < 0) s_napalm.countZero = level.time;
+                if (s_napalm.fire < 0 && s_napalm.callback >= s_napalm.death)
+                    for (int i = level.maxclients; i < level.num_entities; ++i)
+                    {
+                        const gentity_s &e = g_entities[i];
+                        int damage = -1;
+                        if (!e.r.inuse || e.classname != scr_const.trigger_radius || !e.r.linked || !e.r.contents
+                            || Vec3Distance(e.r.currentOrigin, s_napalm.origin) > 16.0f
+                            || !EntField(i, F_NAPALMFIRE, nullptr, &damage) || damage != 40) continue;
+                        s_napalm.fire = i;
+                        s_napalm.fireGeneration = e.useCount;
+                        s_napalm.fireStart = level.time;
+                        Com_Printf(16, "bo1_napalm: time %d actual linked fire trigger ent %d generation %u damage %d contents 0x%x\n",
+                            level.time, i, e.useCount, damage, e.r.contents);
+                        break;
+                    }
+                if (s_napalm.fire >= 0 && s_napalm.fireEnd >= s_napalm.death + 20000 && s_napalm.countZero >= s_napalm.death)
+                {
+                    const gentity_s &fire = g_entities[s_napalm.fire];
+                    if ((!fire.r.inuse || fire.useCount != s_napalm.fireGeneration) && level.time >= s_napalm.fireEnd + 1000)
+                    {
+                        if (damageCase && !(s_napalm.damageEvent >= s_napalm.death && s_napalm.damageAmount > 0
+                            && s_napalm.down >= s_napalm.death && s_napalm.revived >= s_napalm.damageEvent
+                            && s_napalm.godRestored >= s_napalm.revived && !player->client->lastStand && player->health > 0
+                            && level.time - s_napalm.revived >= 5000)) return false;
+                        EndStep(player, "PASS", damageCase
+                            ? "actual napalm damage with God0, own down/solo QR revive, restored protection and20s fire cleanup"
+                            : "natural napalm self-explosion, real death callback/count0, linked fire trigger and20s end/delete");
+                        return false;
+                    }
+                }
+            }
+            if (level.time % 2000 == 0)
+                Com_Printf(16, "bo1_napalm: time %d round %d ent %d death %d callback %d self_kill %d count %d next %d fire %d start %d end %d\n",
+                    level.time, LevelInt(F_ROUND, -1), s_napalm.ent, s_napalm.death, s_napalm.callback, s_napalm.selfKill,
+                    LevelInt(F_NAPALMCOUNT, -1), LevelInt(F_NEXTNAPALM, -1), s_napalm.fire, s_napalm.fireStart, s_napalm.fireEnd);
+            if (!shoot && s_napalm.ent >= 0 && s_napalm.death < 0)
+            {
+                const gentity_s &e = g_entities[s_napalm.ent];
+                if (!e.r.inuse || e.useCount != s_napalm.generation || !e.actor || !e.actor->Physics.bIsAlive)
+                {
+                    EndStep(player, "FAIL", "tracked napalm retired without actual death evidence");
+                    return false;
+                }
+                // Let original proximity logic run. No damage, actor, callback,
+                // health or round writes: ordinary movement/fire choices only.
+                cmd->button_bits.resetBit(0);
+                cmd->button_bits.resetBit(11);
+                cmd->button_bits.resetBit(2);
+                cmd->forwardmove = cmd->rightmove = 0;
+                if (Vec3Distance(player->r.currentOrigin, e.r.currentOrigin) > 60.0f)
+                    Walk(player, e.r.currentOrigin, 4000 + e.s.number, cmd, ViewYaw(player, cmd));
+                return true;
+            }
+            return false;
+        }
+        if (!strcmp(step.name, "t_sonic"))
+        {
+            if (s_sonic.ent < 0)
+                for (int i = level.maxclients; i < level.num_entities; ++i)
+                {
+                    const gentity_s &e = g_entities[i];
+                    std::string name;
+                    if (!e.r.inuse || !e.actor || !e.actor->Physics.bIsAlive
+                        || !EntField(i, F_ANIMNAME, &name, nullptr) || name != "sonic_zombie") continue;
+                    s_sonic.ent = i;
+                    s_sonic.generation = e.useCount;
+                    s_sonic.first = level.time;
+                    s_sonic.player = player->s.number;
+                    Com_Printf(16, "bo1_sonic: time %d actual natural spawn ent %d generation %u round %d health %d\n",
+                        level.time, i, e.useCount, LevelInt(F_ROUND, -1), e.health);
+                    break;
+                }
+            int blur = -1;
+            EntField(player->s.number, F_SCREAMBLUR, nullptr, &blur);
+            if (s_sonic.ent >= 0 && blur == 1 && s_sonic.blur < 0)
+            {
+                s_sonic.blur = level.time;
+                Com_Printf(16, "bo1_sonic: time %d actual controlled player %d screamAttackBlur1\n", level.time, player->s.number);
+            }
+            if (s_sonic.death >= s_stepStart)
+            {
+                if (s_sonic.blur < s_sonic.first || s_sonic.clear < s_sonic.blur || s_sonic.done < s_sonic.first || !s_sonic.playerKill)
+                {
+                    EndStep(player, "FAIL", "shrieker died without complete controlled-player scream/clear/kill evidence");
+                    return false;
+                }
+                if (blur == 0 && LevelInt(F_SONICCOUNT, -1) == 0 && level.time - s_sonic.death >= 5000)
+                {
+                    EndStep(player, "PASS", "natural sonic spawn, actual player blur/clear and scream done, own kill and count0 after5s");
+                    return false;
+                }
+            }
+            if (level.time % 2000 == 0)
+                Com_Printf(16, "bo1_sonic: time %d round %d ent %d blur %d seen %d clear %d done %d death %d count %d next %d\n",
+                    level.time, LevelInt(F_ROUND, -1), s_sonic.ent, blur, s_sonic.blur, s_sonic.clear,
+                    s_sonic.done, s_sonic.death, LevelInt(F_SONICCOUNT, -1), LevelInt(F_NEXTSONIC, -1));
+            if (s_sonic.ent >= 0 && s_sonic.death < 0
+                && (s_sonic.blur < 0 || s_sonic.clear < s_sonic.blur || s_sonic.done < s_sonic.first))
+            {
+                const gentity_s &e = g_entities[s_sonic.ent];
+                if (!e.r.inuse || e.useCount != s_sonic.generation || !e.actor || !e.actor->Physics.bIsAlive)
+                {
+                    EndStep(player, "FAIL", "tracked shrieker retired before actual attack evidence");
+                    return false;
+                }
+                // Ordinary input only: let the real enemy enter scream range.
+                cmd->button_bits.resetBit(0);
+                cmd->button_bits.resetBit(11);
+                cmd->button_bits.resetBit(2);
+                cmd->forwardmove = cmd->rightmove = 0;
+                if (Vec3Distance(player->r.currentOrigin, e.r.currentOrigin) > 180.0f)
+                    Walk(player, e.r.currentOrigin, 3000 + e.s.number, cmd, ViewYaw(player, cmd));
+                return true;
+            }
+            return false;
+        }
+        if (!strcmp(step.name, "c_monkey_steal") || !strcmp(step.name, "c_monkey_end") || !strcmp(step.name, "c_monkey_defend") || !strcmp(step.name, "c_monkey_perfect"))
+        {
+            const bool steal = !strcmp(step.name, "c_monkey_steal");
+            const int active = LevelFlag("monkey_round");
+            const int count = LevelInt(F_ASCMONKEYCOUNT, -1), round = LevelInt(F_ROUND, -1);
+            if (active == 1 && s_ascMonkeyStart < 0)
+            {
+                s_ascMonkeyStart = level.time;
+                s_ascMonkeyRound = round;
+                Com_Printf(16, "bo1_asc_monkey: time %d actual natural round %d started count %d next %d\n",
+                    level.time, round, count, LevelInt(F_NEXTMONKEYROUND, -1));
+            }
+            if (!strcmp(step.name, "c_monkey_perfect"))
+            {
+                // Count actual native owned perks against the real vending
+                // list, as stock monkey_zombie_can_drop_free_perk does.
+                int owned = 0;
+                std::vector<unsigned int> perks;
+                for (int i = level.maxclients; i < level.num_entities; ++i)
+                {
+                    const gentity_s &v = g_entities[i];
+                    if (!v.r.inuse || strcmp(Str(v.targetname), "zombie_vending") || !v.script_noteworthy
+                        || std::find(perks.begin(), perks.end(), v.script_noteworthy) != perks.end()) continue;
+                    perks.push_back(v.script_noteworthy);
+                    if (G_SP_HasPerk(player->client, Str(v.script_noteworthy))) ++owned;
+                }
+                if (s_ascBonusPerks < 0) s_ascBonusPerks = owned;
+                if (!G_SP_HasPerk(player->client, "specialty_armorvest"))
+                {
+                    EndStep(player, "FAIL", "Juggernog not retained; no bonus or perk granted");
+                    return false;
+                }
+                if (active == 1 && LevelFlag("monkey_free_perk") != 1)
+                {
+                    EndStep(player, "FAIL", "actual monkey attack invalidated perfect defence");
+                    return false;
+                }
+                const int lastDown = s_ascMonkeyStart < 0 ? -1 : NotifyTime("last_monkey_down", s_ascMonkeyStart);
+                gentity_s *drop = nullptr;
+                bool grabbed = false;
+                int dropEnt = -1;
+                for (const Powerup &powerup : s_powerups)
+                {
+                    if (s_ascMonkeyStart < 0 || powerup.dropTime < s_ascMonkeyStart) continue;
+                    // Stock powerup_grab deletes before its entity notify.
+                    // UpdatePowerups retains name/drop time and proximity-based
+                    // retirement, but clears ent. Retirement alone is NOT a
+                    // reward: also require an actual native owned-perk increase.
+                    if (powerup.ent < 0)
+                    {
+                        if (powerup.name == "free_perk" && powerup.grabbed) grabbed = true;
+                        continue;
+                    }
+                    const gentity_s &body = g_entities[powerup.ent];
+                    std::string name = powerup.name;
+                    if (body.r.inuse && body.useCount == powerup.useCount)
+                        EntField(powerup.ent, F_POWERUP, &name, nullptr);
+                    if (name != "free_perk") continue;
+                    dropEnt = powerup.ent;
+                    grabbed = grabbed || powerup.grabbed;
+                    if (!powerup.grabbed && body.r.inuse && body.useCount == powerup.useCount) drop = &g_entities[powerup.ent];
+                }
+                int living = 0;
+                for (int i = level.maxclients; i < level.num_entities; ++i)
+                {
+                    const gentity_s &monkey = g_entities[i];
+                    std::string name;
+                    if (monkey.r.inuse && monkey.actor && monkey.actor->Physics.bIsAlive
+                        && EntField(i, F_ANIMNAME, &name, nullptr) && name == "monkey_zombie") ++living;
+                }
+                if (level.time % 2000 == 0)
+                    Com_Printf(16, "bo1_asc_bonus: time %d active %d round %d free_flag %d living %d last_down %d drop %d grabbed %d perks %d->%d\n",
+                        level.time, active, round, LevelFlag("monkey_free_perk"), living, lastDown, dropEnt, grabbed, s_ascBonusPerks, owned);
+                if (grabbed && owned > s_ascBonusPerks && lastDown >= s_ascMonkeyStart && s_ascMonkeyStart >= s_stepStart
+                    && active == 0 && living == 0 && round > s_ascMonkeyRound && LevelFlag("monkey_free_perk") == 1)
+                {
+                    EndStep(player, "PASS", "natural perfect defence, native perk increase after real free_perk drop/nearby retirement and next round");
+                    return false;
+                }
+                if (drop)
+                {
+                    if (!target) Face(player, cmd, drop->r.currentOrigin, false);
+                    Walk(player, drop->r.currentOrigin, 2000 + drop->s.number, cmd, ViewYaw(player, cmd));
+                    return true;
+                }
+                return false; // normal gunfire; never force bonus eligibility
+            }
+            if (!strcmp(step.name, "c_monkey_defend"))
+            {
+                const bool owns = G_SP_HasPerk(player->client, "specialty_armorvest");
+                // Follow the same real vending-trigger -> script_model link as
+                // monkey_pack_set_machine. Reads only; no perk/AI/health writes.
+                const gentity_s *vending = FindByTargetname("zombie_vending", "specialty_armorvest");
+                const gentity_s *machine = nullptr;
+                for (int i = level.maxclients; vending && vending->target && i < level.num_entities; ++i)
+                {
+                    const gentity_s &candidate = g_entities[i];
+                    if (candidate.r.inuse && candidate.targetname == vending->target
+                        && !strcmp(Str(candidate.classname), "script_model")) machine = &candidate;
+                }
+                int health = -1, voice = -1;
+                if (machine) EntField(machine->s.number, F_MONKEYHEALTH, nullptr, &health);
+                const unsigned int array = PointerField(gScrVarPub[SCRIPTINSTANCE_SERVER].levelId, F_PERKTHEFTVOX);
+                const unsigned int key = SL_FindString("specialty_armorvest", SCRIPTINSTANCE_SERVER);
+                const unsigned int entry = array && key ? FindVariable(SCRIPTINSTANCE_SERVER, array, key) : 0;
+                if (entry && GetValueType(SCRIPTINSTANCE_SERVER, entry) == VAR_INTEGER)
+                    voice = GetVariableValueAddress(SCRIPTINSTANCE_SERVER, entry)->u.intValue;
+                if (!owns || (s_ascPerkStop >= s_stepStart && s_ascPerkStopPlayer == player->s.number))
+                {
+                    EndStep(player, "FAIL", "Juggernog absent or actually stolen during defence");
+                    return false;
+                }
+                if (machine && health == 100 && s_ascDefendMachine < 0)
+                {
+                    s_ascDefendMachine = machine->s.number;
+                    s_ascDefendGeneration = machine->useCount;
+                    s_ascDefendFullHealth = true;
+                }
+                const bool same = machine && machine->s.number == s_ascDefendMachine
+                    && machine->useCount == s_ascDefendGeneration;
+                if (active == 1 && voice == 1) s_ascDefendVoice = true;
+                if (active == 1 && same && s_ascDefendFullHealth && health > 0 && health < 100 && s_ascDefendDamage < 0)
+                {
+                    s_ascDefendDamage = level.time;
+                    Com_Printf(16, "bo1_asc_defend: time %d machine %d generation %u actual health100->%d voice %d; resume normal gunfire\n",
+                        level.time, machine->s.number, s_ascDefendGeneration, health, voice);
+                }
+                int living = 0;
+                for (int i = level.maxclients; i < level.num_entities; ++i)
+                {
+                    const gentity_s &monkey = g_entities[i];
+                    std::string name;
+                    if (monkey.r.inuse && monkey.actor && monkey.actor->Physics.bIsAlive
+                        && EntField(i, F_ANIMNAME, &name, nullptr) && name == "monkey_zombie") ++living;
+                }
+                const int lastDown = s_ascMonkeyStart < 0 ? -1 : NotifyTime("last_monkey_down", s_ascMonkeyStart);
+                const bool retired = same && s_ascDefendDamage >= s_stepStart && s_ascDefendVoice && voice == 0
+                    && active == 0 && living == 0 && lastDown >= s_ascDefendDamage && round > s_ascMonkeyRound && health > 0;
+                if (retired)
+                {
+                    if (s_ascDefendStable >= 0 && health != s_ascDefendHealth)
+                    {
+                        EndStep(player, "FAIL", "machine health changed after last monkey and voice cleanup");
+                        return false;
+                    }
+                    if (s_ascDefendStable < 0)
+                    {
+                        s_ascDefendStable = level.time;
+                        s_ascDefendHealth = health;
+                    }
+                    if (level.time - s_ascDefendStable >= 10000)
+                    {
+                        EndStep(player, "PASS", "real damaged machine defended; Juggernog retained, voice1->0, last monkey down, next round and10s stable health");
+                        return false;
+                    }
+                }
+                else s_ascDefendStable = -1;
+                if (level.time % 2000 == 0)
+                    Com_Printf(16, "bo1_asc_defend: time %d active %d round %d machine %d health %d voice %d seen %d damaged %d living %d last_down %d stable %d\n",
+                        level.time, active, round, machine ? machine->s.number : -1, health, voice, s_ascDefendVoice,
+                        s_ascDefendDamage, living, lastDown, s_ascDefendStable);
+                if (active == 1 && s_ascDefendDamage < 0)
+                {
+                    cmd->forwardmove = cmd->rightmove = 0;
+                    cmd->button_bits.resetBit(0);
+                    cmd->button_bits.resetBit(11);
+                    cmd->button_bits.resetBit(2);
+                    return true;
+                }
+                return false;
+            }
+            if (steal)
+            {
+                if (s_ascMonkeyStart >= s_stepStart && s_ascPerkStop >= s_ascMonkeyStart
+                    && s_ascPerkStopPlayer == player->s.number && !G_SP_HasPerk(player->client, "specialty_armorvest"))
+                {
+                    EndStep(player, "PASS", "natural monkey round, own Juggernog-stop event and real perk removal");
+                    return false;
+                }
+                if (s_ascMonkeyStart < 0 && !G_SP_HasPerk(player->client, "specialty_armorvest"))
+                {
+                    EndStep(player, "FAIL", "Juggernog was not acquired before waiting; no perk granted");
+                    return false;
+                }
+                if (active == 1)
+                {
+                    // Deliberate ordinary input choice: let real monkeys attack
+                    // the purchased machine. Never alter AI/health/perk state.
+                    cmd->forwardmove = cmd->rightmove = 0;
+                    cmd->button_bits.resetBit(0);
+                    cmd->button_bits.resetBit(11);
+                    cmd->button_bits.resetBit(2);
+                    return true;
+                }
+                return false; // ordinary fighting advances natural rounds
+            }
+            if (s_ascMonkeyStart < 0 || s_ascPerkStopPlayer != player->s.number)
+            {
+                EndStep(player, "FAIL", "no preceding actual natural monkey perk theft");
+                return false;
+            }
+            // Retail num_monkey_zombies is incremented for each successful
+            // spawn and decremented only on spawn failure, not on death. Use
+            // the actual last-pack event and living actor identities instead.
+            int living = 0;
+            for (int i = level.maxclients; i < level.num_entities; ++i)
+            {
+                const gentity_s &monkey = g_entities[i];
+                if (!monkey.r.inuse || !monkey.actor || !monkey.actor->Physics.bIsAlive) continue;
+                std::string animname;
+                if (EntField(i, F_ANIMNAME, &animname, nullptr) && animname == "monkey_zombie") ++living;
+            }
+            const int lastDown = NotifyTime("last_monkey_down", s_ascMonkeyStart);
+            if (level.time % 2000 == 0)
+                Com_Printf(16, "bo1_asc_monkey: time %d waiting end active %d living %d spawn_count %d last_down %d round %d\n",
+                    level.time, active, living, count, lastDown, round);
+            if (active == 0 && living == 0 && lastDown >= s_ascMonkeyStart && round > s_ascMonkeyRound)
+            {
+                Com_Printf(16, "bo1_asc_monkey: time %d natural round %d ended, actual round %d living_monkeys0 last_down %d\n",
+                    level.time, s_ascMonkeyRound, round, lastDown);
+                EndStep(player, "PASS", "actual last-monkey event, no living monkeys, flag cleared and subsequent round advanced");
+                return false;
+            }
+            return false; // normal gun inputs finish surviving monkeys
+        }
+        if (!strcmp(step.name, "flinger_land"))
+        {
+            // Original script_struct player_launch_spot coordinates. Only
+            // assert the destination; never move the player to these points.
+            static const float landings[4][3] = { {-715.893f,858.951f,554.819f}, {-643.531f,859.578f,554.358f},
+                {-635.550f,914.674f,550.116f}, {-714.141f,921.930f,550.013f} };
+            float nearest = 1e9f;
+            for (const auto &landing : landings)
+            {
+                const float d = Vec3Distance(player->r.currentOrigin, landing);
+                if (d < nearest) nearest = d;
+            }
+            trace_t floor;
+            col_context_t context;
+            float from[3], down[3];
+            Vec3Copy(ps->origin, from); Vec3Copy(ps->origin, down);
+            from[2] += 4; down[2] -= 12;
+            G_TraceCapsule(&floor, from, player->r.mins, player->r.maxs, down,
+                player->s.number, player->clipmask, &context);
+            const bool grounded = ps->groundEntityNum != ENTITYNUM_NONE && !floor.startsolid
+                && floor.fraction < 1.0f && floor.normal.vec.v[2] > 0.7f;
+            if (s_flingRequest >= 0 && s_flingStart >= s_flingRequest && s_flingEnd >= s_flingStart
+                && s_flingPeak >= 512.0f && nearest <= 192.0f && grounded)
+            {
+                Com_Printf(16, "bo1_flinger: time %d grounded at expected destination error %.1f travel %.1f\n", level.time, nearest, s_flingPeak);
+                EndStep(player, "PASS", "real fling flag cycle, measured flight and grounded near original landing spot");
+                return false;
+            }
+            cmd->forwardmove = cmd->rightmove = 0;
+            return true;
+        }
+        if (!strcmp(step.name, "f_song_end"))
+        {
+            if (s_factorySongStart < 0)
+            {
+                EndStep(player, "FAIL", "no observed third meteor music activation");
+                return false;
+            }
+            const int elapsed = level.time - s_factorySongStart;
+            if (elapsed >= 239000 && LevelInt(F_MUSIC, -1) == 0)
+            {
+                Com_Printf(16, "bo1_factory_song: time %d actual override ended after %d ms\n", level.time, elapsed);
+                EndStep(player, "PASS", "real music override expired after retail 240s timer");
+                return false;
+            }
+            cmd->forwardmove = cmd->rightmove = 0;
+            return true;
+        }
+        if (!strcmp(step.name, "m_digger_return"))
+        {
+            if (s_diggerChoice < 0 || s_diggerHackTime < 0 || s_diggerBody < 0)
+            {
+                EndStep(player, "FAIL", "no successful excavator hack/body to observe");
+                return false;
+            }
+            const gentity_s &body = g_entities[s_diggerBody];
+            if (!body.r.inuse || body.useCount != s_diggerGeneration)
+            {
+                EndStep(player, "FAIL", "excavator body identity retired before return");
+                return false;
+            }
+            const std::string branch = s_diggerNames[s_diggerChoice];
+            const DiggerEvents &event = s_diggerEvents[s_diggerChoice];
+            const float moved = Vec3Distance(body.r.currentOrigin, s_diggerHackOrigin);
+            const int started = LevelFlag(("start_" + branch + "_digger").c_str());
+            const int hacked = LevelFlag((branch + "_digger_hacked").c_str());
+            const int blocked = s_diggerChoice == 2 ? 0 : LevelFlag((branch + "_blocked").c_str());
+            if (level.time % 2000 == 0)
+                Com_Printf(16, "bo1_digger: time %d return %s body %d distance %.1f reached %d hacked_event %d lifted %d start_flag %d hacked_flag %d\n",
+                    level.time, branch.c_str(), s_diggerBody, moved, event.reached, event.hacked, event.lifted, started, hacked);
+            if (moved >= 64.0f && event.reached >= s_diggerHackTime && event.hacked >= s_diggerHackTime
+                && started == 0 && hacked == 0 && blocked == 0)
+            {
+                Com_Printf(16, "bo1_digger: time %d completed return %s body %d generation %d distance %.1f origin %.0f %.0f %.0f reached %d hacked_event %d blocked %d\n",
+                    level.time, branch.c_str(), s_diggerBody, s_diggerGeneration, moved,
+                    body.r.currentOrigin[0], body.r.currentOrigin[1], body.r.currentOrigin[2], event.reached, event.hacked, blocked);
+                EndStep(player, "PASS", "same excavator moved, actual matching reached_end/digger_hacked, start/hacked flags cleared");
+                return false;
+            }
+            cmd->forwardmove = cmd->rightmove = 0;
+            return true;
+        }
         // L41: a wait with a level notify is a ride (Shangri-La's minecart, level notify minecart_end): no trap volume;
         // hold the ride, PASS on the notify (a rider's minecart_exit) (the step timeout FAILs it).
         if (step.kind == STEP_WAIT && step.notify)
@@ -3533,6 +5301,22 @@ bool G_SP_TestPlanCommand(gentity_s *player, client_t *client, usercmd_s *cmd, g
             {
                 EndStep(player, "PASS", "notify");
                 return false;
+            }
+            if (s_diggerStage >= 0 && (!strcmp(step.name, "m_digger") || !strcmp(step.name, "m_digger_breach")))
+            {
+                const gentity_s &panel = g_entities[s_diggerStage];
+                if (!panel.r.inuse || panel.useCount != s_diggerStageGeneration)
+                {
+                    EndStep(player, "FAIL", "staged excavator panel identity retired");
+                    return false;
+                }
+                float point[3], ground[3];
+                Center(&panel, point);
+                GoalOnLevel(player, &panel, point, ground);
+                const float dx = ground[0] - ps->origin[0], dy = ground[1] - ps->origin[1];
+                if (dx * dx + dy * dy > 64.0f * 64.0f || fabsf(ground[2] - ps->origin[2]) > 80.0f)
+                    Walk(player, ground, panel.s.number, cmd, ViewYaw(player, cmd));
+                else cmd->forwardmove = cmd->rightmove = 0;
             }
             return true;
         }
@@ -4027,6 +5811,107 @@ bool G_SP_TestPlanCommand(gentity_s *player, client_t *client, usercmd_s *cmd, g
     }
     case STEP_FIRE:
     {
+        if (step.targetname)
+        {
+            if (s_ent < 0)
+            {
+                for (int i = level.maxclients; i < level.num_entities; ++i)
+                    if (g_entities[i].r.inuse && Matches(&g_entities[i], step)) { s_ent = i; break; }
+                if (s_ent < 0) { EndStep(player, "FAIL", "original damage trigger missing"); return false; }
+            }
+            const bool fired = s_shots > s_stepShots;
+            const bool effect = LevelFlag(step.notify) == 1
+                && (!step.count || LevelInt(F_FLYTRAPCOUNT, -1) == step.count);
+            const bool event = s_flyDamageTime >= s_stepStart && s_flyDamagePlayer == player->s.number
+                && (!step.count || s_triggerNotify[s_ent] >= s_stepStart);
+            if (fired && effect && event)
+            {
+                Com_Printf(16, "bo1_flytrap: time %d completed %s counter %d shots %d\n", level.time,
+                    step.name, LevelInt(F_FLYTRAPCOUNT, -1), s_shots - s_stepShots);
+                EndStep(player, "PASS", "real shot, original target event and retail quest state");
+                return false;
+            }
+            cmd->button_bits.resetBit(0);
+            cmd->button_bits.resetBit(11);
+            cmd->button_bits.resetBit(2);
+            cmd->forwardmove = cmd->rightmove = 0;
+            // Once the initial real upgraded hit is accepted, let the 9+6s
+            // stock reveal run. No extra rounds, callbacks or quest flags.
+            if (!step.count && event) return true;
+            gentity_s *ent = &g_entities[s_ent];
+            if (!TriggerEnabled(ent)) return true;
+            unsigned int gun = 0;
+            for (int i = 0; i < 15; ++i)
+            {
+                const unsigned int held = ps->heldWeapons[i].weapon;
+                if (held && BG_GetWeaponDef(held)->weapType == WEAPTYPE_BULLET && TotalAmmo(ps, held) > 0
+                    && (step.count || strstr(BG_WeaponName(held), "upgraded")))
+                { gun = held; break; }
+            }
+            if (!gun) { EndStep(player, "FAIL", "no loaded eligible held bullet weapon; no weapon granted"); return false; }
+            if (!HoldWeapon(player, client, cmd, gun)) return true;
+            float aim[3], eye[3];
+            Center(ent, aim);
+            G_GetPlayerViewOrigin(ps, eye);
+            trace_t ray;
+            G_LocationalTrace(&ray, eye, aim, player->s.number, 0x280E833, bulletPriorityMap, nullptr);
+            const bool clear = !ray.startsolid && (ray.fraction >= 1.0f
+                || (1.0f - ray.fraction) * Vec3Distance(eye, aim) < 24.0f);
+            if (!clear && !strcmp(step.name, "f_flytrap"))
+            {
+                // Actual v2 hit came from this playable window position; the
+                // actor nodes beyond the fence cannot be walked by a player.
+                // Fire normally through the cover: only real weapon penetration
+                // and the original target damage/reveal can authorize success.
+                const float window[3] = { 749.0f, 666.4f, 54.0f };
+                const float distance = Vec3Distance(player->r.currentOrigin, window);
+                if (distance > 28.0f)
+                {
+                    Face(player, cmd, window, false);
+                    Walk(player, window, 6100 + s_ent, cmd, ViewYaw(player, cmd));
+                    return true;
+                }
+                Face(player, cmd, aim, true);
+                if (level.time % 500 < 100 && !ps->weaponTime && !client->lastUsercmd.button_bits.testBit(0))
+                    cmd->button_bits.setBit(0);
+                if (!BG_GetAmmoInClip(ps, gun)) cmd->button_bits.setBit(5);
+                return true;
+            }
+            if (!clear)
+            {
+                if (!s_phase)
+                {
+                    float best = FLT_MAX;
+                    bool found = false;
+                    if (gameWorldCurrent)
+                        for (unsigned int i = 0; i < gameWorldCurrent->path.nodeCount; ++i)
+                        {
+                            const float *o = gameWorldCurrent->path.nodes[i].constant.vOrigin;
+                            const float range = Vec3Distance(o, aim);
+                            if (range < 80.0f || range > 2200.0f) continue;
+                            float view[3] = { o[0], o[1], o[2] + ps->viewHeightCurrent };
+                            G_LocationalTrace(&ray, view, aim, player->s.number, 0x280E833, bulletPriorityMap, nullptr);
+                            if (ray.startsolid || (ray.fraction < 1.0f
+                                && (1.0f - ray.fraction) * Vec3Distance(view, aim) >= 24.0f)) continue;
+                            const float cost = Vec3DistanceSq(o, player->r.currentOrigin);
+                            if (cost < best) { best = cost; found = true; Vec3Copy(o, s_stand); }
+                        }
+                    if (!found) { EndStep(player, "FAIL", "no original path node with bullet sight of target"); return false; }
+                    s_phase = 1;
+                    Com_Printf(16, "bo1_flytrap: time %d approach %s stand %.1f %.1f %.1f aim %.1f %.1f %.1f\n",
+                        level.time, step.name, s_stand[0], s_stand[1], s_stand[2], aim[0], aim[1], aim[2]);
+                }
+                Face(player, cmd, s_stand, false);
+                Walk(player, s_stand, 6000 + s_ent, cmd, ViewYaw(player, cmd));
+                return true;
+            }
+            Face(player, cmd, aim, true);
+            // Allow the new view to reach ps before the first firing command.
+            if (level.time % 500 < 100 && !ps->weaponTime && !client->lastUsercmd.button_bits.testBit(0))
+                cmd->button_bits.setBit(0);
+            if (!BG_GetAmmoInClip(ps, gun)) cmd->button_bits.setBit(5);
+            return true;
+        }
         if (s_shots - s_stepShots >= step.count)
         {
             EndStep(player, "PASS", "shots");
@@ -4255,6 +6140,7 @@ bool G_SP_TestPlanCommand(gentity_s *player, client_t *client, usercmd_s *cmd, g
         GoUse(player, cmd, ent, target, targetDistance, true);
         return true;
     }
+    case STEP_CONTACT:
     case STEP_TOUCH:
     {
         if (strstr(step.name, "trap_touch")) // L37: also v_trap_touch_s/_n
@@ -4265,8 +6151,8 @@ bool G_SP_TestPlanCommand(gentity_s *player, client_t *client, usercmd_s *cmd, g
                 return false;
             }
         }
-        else if ((step.notify && StepNotifyTime(step) >= 0)
-            || (!step.notify && s_teleportTime > s_stepStart))
+        else if (step.kind == STEP_TOUCH && ((step.notify && StepNotifyTime(step) >= 0)
+            || (!step.notify && s_teleportTime > s_stepStart)))
         {
             EndStep(player, "PASS", step.notify ? "notify" : "teleported");
             return false;
@@ -4293,6 +6179,17 @@ bool G_SP_TestPlanCommand(gentity_s *player, client_t *client, usercmd_s *cmd, g
         gentity_s *ent = s_ent >= 0 ? &g_entities[s_ent] : FindTarget(step, player, true);
         if (!ent)
             return false;
+        if (step.kind == STEP_CONTACT && ent->r.inuse)
+        {
+            const float mins[3] = { ps->origin[0] - 15.0f, ps->origin[1] - 15.0f, ps->origin[2] };
+            const float maxs[3] = { ps->origin[0] + 15.0f, ps->origin[1] + 15.0f, ps->origin[2] + 70.0f };
+            if (SV_EntityContact(mins, maxs, ent))
+            {
+                s_ent = ent->s.number;
+                EndStep(player, "PASS", "physical player-box contact with map volume");
+                return false;
+            }
+        }
         if (ent->s.number != s_ent)
         {
             s_ent = ent->s.number;

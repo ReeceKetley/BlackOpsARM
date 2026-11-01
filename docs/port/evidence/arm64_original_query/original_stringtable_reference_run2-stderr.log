@@ -1,4 +1,0 @@
-Traceback (most recent call last):
-  File "D:\Desktop\Black Ops 2 Android\BlackOpsARM\tools\port\run_original_stringtable_reference.py", line 277, in main
-    raise RuntimeError('Stored genuine hash differs from exact ASCII Com_HashString recipe')
-RuntimeError: Stored genuine hash differs from exact ASCII Com_HashString recipe

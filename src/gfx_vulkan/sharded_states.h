@@ -18,6 +18,16 @@ public:
         const auto value=std::uint64_t(reinterpret_cast<std::uintptr_t>(key))*0x9e3779b97f4a7c15ull;
         return shards_[std::size_t(value>>59)];
     }
+    // Terminal device retirement only: all command producers and submitted
+    // readers must already be quiescent. Release retained state snapshots.
+    std::size_t RetireAll() {
+        std::size_t count=0;
+        for(auto& shard:shards_) {
+            std::lock_guard<std::mutex> lock(shard.mutex);
+            count+=shard.map.size();shard.map.clear();
+        }
+        return count;
+    }
 private:
     std::array<Shard,32> shards_;
 };

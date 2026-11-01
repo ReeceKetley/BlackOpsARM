@@ -1,7 +1,0 @@
-codec=1.2.3 streamBytes=52 unsignedLongBytes=4
-GENUINE status=Ok file=D:\Desktop\Black Ops 2 Android\BlackOpsARM\build-android-audit\inflate-assets\code_pre_gfx.ff fileBytes=13280 compressedBytes=13245 padding=23 decoded=49593 size=49557 external=0 blocks=36,0,0,0,49092,0,0,
-PASS bounded inflate: independent fixtures, wrapped checksum/end, disk36, exact budgets, corrupt/truncated/dictionary/size/trailing failures, byte/chunk boundaries, atomic output publication
-codec=1.2.3 streamBytes=80 unsignedLongBytes=4
-GENUINE status=Ok file=D:\Desktop\Black Ops 2 Android\BlackOpsARM\build-android-audit\inflate-assets\code_pre_gfx.ff fileBytes=13280 compressedBytes=13245 padding=23 decoded=49593 size=49557 external=0 blocks=36,0,0,0,49092,0,0,
-PASS bounded inflate: independent fixtures, wrapped checksum/end, disk36, exact budgets, corrupt/truncated/dictionary/size/trailing failures, byte/chunk boundaries, atomic output publication
-Host inflate evidence: D:\Desktop\Black Ops 2 Android\BlackOpsARM\build-android-audit\host-inflate-20261011-204825591

@@ -1,4 +1,8 @@
 #include "aim_assist.h"
+#if defined(__ANDROID__)
+#include <client/cl_gamepad.h>
+#include <platform/android/pad_response.h>
+#endif
 
 #include <cstring>
 #include <qcommon/graph.h>
@@ -1193,6 +1197,12 @@ void __cdecl AimAssist_ApplyTurnRates(const AimInput *input, AimOutput *output)
     pitchTurnRate = (float)((float)(slowdownPitchScale * aaGlob->fovTurnRateScale) * sensitivity) * pitchTurnRate;
     yawTurnRate = AimAssist_LerpDvars(aim_turnrate_yaw, aim_turnrate_yaw_ads, aaGlob->adsLerp);
     yawTurnRate = (float)((float)(slowdownYawScale * aaGlob->fovTurnRateScale) * sensitivity) * yawTurnRate;
+#if defined(__ANDROID__)
+    // Scale only the player's turn, before caps and before target assistance.
+    const float adsScale = bo1::android::pad::AdsScale(aaGlob->adsLerp, Dvar_GetFloat("bo1_pad_ads_scale"));
+    pitchTurnRate *= adsScale;
+    yawTurnRate *= adsScale;
+#endif
     if ( input->pitchMax != 0.0 && pitchTurnRate > input->pitchMax )
         pitchTurnRate = input->pitchMax;
     if ( input->yawMax != 0.0 && yawTurnRate > input->yawMax )
@@ -1211,7 +1221,11 @@ void __cdecl AimAssist_ApplyTurnRates(const AimInput *input, AimOutput *output)
     pitchDelta = fabs(adjustedPitchAxis) * pitchTurnRate;
     //yawDelta = fabs(adjustedYawAxis) * yawTurnRate;
     yawDelta = fabs(adjustedYawAxis) * yawTurnRate;
-    if ( !aim_accel_turnrate_enabled->current.enabled || aim_assist_script_disable->current.enabled )
+    if (
+#if defined(__ANDROID__)
+        Dvar_GetInt("bo1_pad_response") != 0 ||
+#endif
+        !aim_accel_turnrate_enabled->current.enabled || aim_assist_script_disable->current.enabled )
     {
         aaGlob->pitchDelta = pitchDelta;
         aaGlob->yawDelta = yawDelta;
@@ -1290,6 +1304,19 @@ void __cdecl AimAssist_CalcAdjustedAxis(const AimInput *input, float *pitchAxis,
     {
         __debugbreak();
     }
+#if defined(__ANDROID__)
+    const int response = Dvar_GetInt("bo1_pad_response");
+    if (response != 0)
+    {
+        // Read the configured look bindings without their squared mapping.
+        // Keep input itself unchanged for slowdown, auto aim, melee and lock-on.
+        *pitchAxis = CL_GamepadUnshapedAxis(input->localClientNum, GPAD_VIRTAXIS_PITCH)
+            * (Dvar_GetBool("input_invertPitch") ? 1.0f : -1.0f);
+        *yawAxis = -CL_GamepadUnshapedAxis(input->localClientNum, GPAD_VIRTAXIS_YAW);
+        bo1::android::pad::ShapeLook(*pitchAxis, *yawAxis, response, aaGlobArray[input->localClientNum].adsLerp);
+        return;
+    }
+#endif
     if ( aim_input_graph_enabled->current.enabled )
     {
         deflection = sqrtf((float)(input->pitchAxis * input->pitchAxis) + (float)(input->yawAxis * input->yawAxis));

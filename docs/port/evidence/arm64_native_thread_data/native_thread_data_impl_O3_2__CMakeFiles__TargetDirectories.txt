@@ -1,4 +1,0 @@
-D:/Desktop/Black Ops 2 Android/BlackOpsARM/build-android-audit/native_thread_data_impl_O3_2/CMakeFiles/bo1_native_thread_data.dir
-D:/Desktop/Black Ops 2 Android/BlackOpsARM/build-android-audit/native_thread_data_impl_O3_2/CMakeFiles/bo1_native_thread_data_tests.dir
-D:/Desktop/Black Ops 2 Android/BlackOpsARM/build-android-audit/native_thread_data_impl_O3_2/CMakeFiles/edit_cache.dir
-D:/Desktop/Black Ops 2 Android/BlackOpsARM/build-android-audit/native_thread_data_impl_O3_2/CMakeFiles/rebuild_cache.dir

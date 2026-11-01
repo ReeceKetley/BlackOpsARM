@@ -24,3 +24,5 @@ void __cdecl CG_UpdateClientFlags(int localClientNum, centity_s *cent, int oldEF
 char __cdecl CG_LocalPlayerRespawned(int localClientNum, snapshot_s *snap);
 void __cdecl CG_ProcessSnapshots(int localClientNum);
 snapshot_s *__cdecl CG_ReadNextSnapshot(int localClientNum);
+
+void CG_AdoptCheckpointSnapshots(int localClientNum, const snapshot_s *current, const snapshot_s *next);

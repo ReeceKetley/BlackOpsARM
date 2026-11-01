@@ -142,4 +142,5 @@ bool DrawIndexedRetained(VkCommandBuffer command,const std::shared_ptr<const Sna
     return RecordCaptured(command,captured,nullptr,binds,baseIndex,vertexCount,triCount,error,mergeable);
 }
 
+std::size_t RetireAll(){return registry.RetireAll();}
 }

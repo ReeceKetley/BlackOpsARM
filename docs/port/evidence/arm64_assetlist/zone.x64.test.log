@@ -1,9 +1,0 @@
-used 0.53 MB memory in DB alloc
-used 0.00 MB memory in DB alloc
-used 0.13 MB memory in DB alloc
-used 0.13 MB memory in DB alloc
-used 2.06 MB memory in DB alloc
-used 1.96 MB memory in DB alloc
-used 60.86 MB memory in DB alloc
-used 43.26 MB memory in DB alloc
-PASS actual zone bootstrap: 7 blocks/all memory types, unchanged 36-byte XFile, native size factors, zero/sparse/Z paths, aligned pointers, real first-fit named lifetime, stream init/cursors/alias reset, explicit invalid ownership failures

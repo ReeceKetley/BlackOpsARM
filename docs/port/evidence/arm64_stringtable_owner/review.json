@@ -1,9 +1,0 @@
-{
-  "reviewer": "envelope_review",
-  "source": "BOMbyte0, fourqualifiedmemcpy representationtransfers, originaltemplates/clone/getters preserved",
-  "fixture": "21 invalidcallerpreconditions,1347nodes,4exhaustions, exact nativepoollayout, exactnormalizationonce afterclone, queriesbefore/afterTEMPoverwrite, freelistrestoredbeforezonefree",
-  "methodology": "checks callerfixturepreconditions beforeuncheckedleaves; no newproductionmalformedfree/clone semantics claimed",
-  "scope": "actual persistent pooledheader/zoneborrowedchildren only; noDB_AddXAsset orfullregistry/concurrentcertification",
-  "next": "TEMPshadow/maps/aliases reuse beforeasset2 thenrealregistryservices",
-  "failed_diagnostics": "FAIL26 BOM/ADL(firsthost+Windows+ARM) corrected; allfirstoutputsretained"
-}

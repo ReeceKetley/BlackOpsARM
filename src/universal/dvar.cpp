@@ -1434,6 +1434,17 @@ double __cdecl Dvar_GetColorAlpha(int dvarHash)
     return expandedColor[3];
 }
 
+void Dvar_DiscardSavedValue(dvar_s *dvar)
+{
+    if (!dvar->loadedFromSaveGame)
+        return;
+    // G_SP's loader takes a CopyString reference for saved, even if interning
+    // returns the same pointer as current/reset/latched. It is a separate owner.
+    if (dvar->type == DVAR_TYPE_STRING)
+        Dvar_FreeString(&dvar->saved);
+    dvar->loadedFromSaveGame = false;
+}
+
 void __cdecl Dvar_Shutdown()
 {
     int dvarIter; // [esp+0h] [ebp-8h]
@@ -1444,6 +1455,7 @@ void __cdecl Dvar_Shutdown()
     for ( dvarIter = 0; dvarIter < dvarCount; ++dvarIter )
     {
         dvar = &dvarPool[dvarIter];
+        Dvar_DiscardSavedValue(dvar);
         if ( dvar->type == DVAR_TYPE_STRING )
         {
             if ( Dvar_ShouldFreeCurrentString(dvar) )

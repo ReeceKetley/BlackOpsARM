@@ -20,6 +20,9 @@
 #include <physics/physics_system.h>
 
 #include <algorithm>
+#if defined(__ANDROID__)
+#include <game_sp/g_sp_savegame.h>
+#endif
 
 void __cdecl Ragdoll_UpdateDObjWait(RagdollBody *body, int __formal);
 bool __cdecl Ragdoll_EnterDobjWait(RagdollBody *body, RagdollBodyState s1, RagdollBodyState s2);
@@ -475,6 +478,9 @@ void __cdecl Ragdoll_Attach(int localClientNum, int ragdollHandle, int attachEnt
             body->storedAttachHitLoc = hitloc;
             body->storedAttachEnt = attachEnt;
             body->storedPhysObjId = 0;
+#if defined(__ANDROID__)
+            G_SP_NotifyRagdollAttachmentBoundary(body->dobj, attachEnt, hitloc);
+#endif
         }
     }
 }
@@ -1942,6 +1948,10 @@ void __cdecl Ragdoll_BodyUpdate(int msec, RagdollBody *body)
 
     iassert(body);
     bcassert(body->state, RAGDOLL_NUM_STATES);
+#if defined(__ANDROID__)
+    const int checkpointEntity = body->dobj;
+    const auto checkpointState = body->state;
+#endif
 
     do
     {
@@ -1951,6 +1961,17 @@ void __cdecl Ragdoll_BodyUpdate(int msec, RagdollBody *body)
             entry->updateFunc(body, msec);
     }
     while ( prevState != body->state );
+#if defined(__ANDROID__)
+    if (checkpointState != body->state
+        && (checkpointState == BS_DOBJ_WAIT || checkpointState == BS_VELOCITY_CAPTURE
+            || Dvar_GetBool("bo1_ragdoll_trace_transitions")))
+    {
+        int nativeBodies = 0;
+        for (const auto &bone : body->bones) nativeBodies += bone.rigidBody != 0;
+        Com_Printf(15, "Ragdoll transition: entity %i state %i -> %i, %i real body owners\n",
+            checkpointEntity, checkpointState, body->state, nativeBodies);
+    }
+#endif
 
     ++body->stateFrames;
     body->stateMsec += msec;
@@ -1967,6 +1988,16 @@ void __cdecl Ragdoll_Update(int msec)
             iassert(Ragdoll_BodyInUse(body));
             Ragdoll_BodyUpdate(msec, body);
         }
+#if defined(__ANDROID__)
+        // An explicitly armed developer probe observes a natural boundary; it
+        // never creates a corpse or substitutes animation/physics state.
+        for (RagdollBody *body : g_ragdoll_body_pool)
+            if (body->state == BS_VELOCITY_CAPTURE)
+            {
+                G_SP_NotifyRagdollVelocityBoundary(body->dobj);
+                break;
+            }
+#endif
     }
 }
 
@@ -2009,3 +2040,5 @@ int __cdecl Ragdoll_GetRBForBone(int entnum, unsigned int boneName)
     return 0;
 }
 
+
+#include "ragdoll_checkpoint.inl"

@@ -80,6 +80,9 @@
 #include <gfx_d3d/r_cinematic.h>
 #if defined(__ANDROID__)
 #include <platform/android/shutdown_services.h>
+#include <game_sp/g_sp_savegame.h>
+static bool s_restoredSoloPausePending;
+static void CL_FinishRestoredSoloPause();
 #endif
 #include <client/cl_console.h>
 #include <EffectsCore/fx_system.h>
@@ -1345,6 +1348,9 @@ void __cdecl CL_UploadStatsForController(int localControllerIndex)
 
 void __cdecl CL_Disconnect(unsigned int localClientNum, bool deactivateClient)
 {
+#if defined(__ANDROID__)
+    if (!localClientNum) s_restoredSoloPausePending = false;
+#endif
     int ControllerIndex; // eax
     int v4; // eax
     int v5; // eax
@@ -3321,6 +3327,9 @@ void __cdecl CL_Frame(int localClientNum, int msec)
         }
         CG_UpdateDestructibles(localClientNum, msec);
     }
+#if defined(__ANDROID__)
+    if (!localClientNum) CL_FinishRestoredSoloPause();
+#endif
 }
 
 void __cdecl CL_CheckTimeout(int localClientNum)
@@ -3959,6 +3968,42 @@ static void __cdecl CL_Pause_f()
 }
 cmd_function_s CL_Pause_f_VAR;
 
+#if defined(__ANDROID__)
+static void CL_FinishRestoredSoloPause()
+{
+    if (!s_restoredSoloPausePending || CL_GetLocalClientConnectionState(0) != CA_ACTIVE) return;
+    // The ordinary pause menu requires a real acknowledged snapshot. Keep
+    // gameplay paused while the normal transport consumes that acknowledgement.
+    CL_PauseGame(true);
+    if (svs.clients[0].header.deltaMessage == -1) return;
+    // Use the ordinary pause command's menu path, but never toggle an already
+    // open pause menu closed while publishing a saved session.
+    if (!(clientUIActives[0].keyCatchers & 0x10) || UI_GetActiveMenu(0) != UIMENU_INGAME)
+        CL_Pause_f();
+    if (!(clientUIActives[0].keyCatchers & 0x10) || UI_GetActiveMenu(0) != UIMENU_INGAME)
+        return;
+    CL_PauseGame(true);
+    s_restoredSoloPausePending = false;
+    Com_Printf(15, "Zombies resume: canonical pause menu opened after actual snapshot acknowledgement %i; server command remains %i\n",
+        svs.clients[0].header.deltaMessage, svs.clients[0].lastUsercmd.serverTime);
+    G_SP_PublishSavedServerBodies();
+    G_SP_ReleaseSavedWorldFreeze();
+    G_SP_CompleteContinuousZombieResume();
+}
+
+bool CL_PauseRestoredSoloSession()
+{
+    if (CL_GetLocalClientConnectionState(0) != CA_ACTIVE || Dvar_GetBool("onlinegame") || Dvar_GetBool("systemlink")
+        || !G_SP_IsContinuousZombieResume() || !G_SP_IsSavedWorldFrozen())
+        return false;
+    CL_PauseGame(true);
+    if (!SV_CheckPaused()) return false;
+    s_restoredSoloPausePending = true;
+    CL_FinishRestoredSoloPause();
+    return Dvar_GetInt("cl_paused") != 0;
+}
+#endif
+
 // zombies: SP "savegame_lastcommit" (bound to F5 by SP default_controls.cfg), registered at SP 0x004FD3C8 as a client
 // command with the empty forwarder (SP 0x00651A30, KB Cbuf_AddServerText_f) plus a server command (SP 0x0040D4F0):
 // if sv_running, write the last committed save to the device (SP 0x005F86A0). That writer returns 0 at once when
@@ -4293,6 +4338,8 @@ void __cdecl CL_InitOnceForAllClients()
 #if defined(__ANDROID__)
     _Dvar_RegisterFloat("bo1_pad_yaw_scale", 1.0f, 0.1f, 4.0f, 1u, "Game pad horizontal look speed (1 = normal)");
     _Dvar_RegisterFloat("bo1_pad_pitch_scale", 1.0f, 0.1f, 4.0f, 1u, "Game pad vertical look speed (1 = normal)");
+    _Dvar_RegisterInt("bo1_pad_response", 0, 0, 2, 1u, "Game pad look response: 0 Classic, 1 Linear, 2 Dynamic");
+    _Dvar_RegisterFloat("bo1_pad_ads_scale", 1.0f, 0.1f, 2.0f, 1u, "Game pad ADS sensitivity multiplier");
 #endif
     team_indicator = _Dvar_RegisterInt(
                                          "team_indicator",

@@ -6,6 +6,7 @@
 #include "system_initialization.h"
 #include "headless_policy.h"
 #include "quit_services.h"
+#include "ui_platform.h"
 #include <universal/q_shared.h>
 #include <atomic>
 #include <cstdio>
@@ -97,6 +98,9 @@ void Sys_SpawnQuitProcess() {
 }
 void Sys_HideSplashWindow() {
     if(Sys_IsHeadless())return; // Native headless entry never creates a splash.
-    fail("rendered splash lifecycle requires an actual Android Activity owner");
+    requireMain();
+    if(!bo1::android::RetireAndroidStartupOverlay())
+        fail("rendered startup overlay retirement was not acknowledged by its actual Activity/UI owner");
+    std::fputs("Native shutdown: startup overlay retired by actual Activity/UI owner; SDL surface retained for renderer teardown\n",stderr);
 }
 void Sys_DestroySplashWindow(){Sys_HideSplashWindow();}

@@ -1,7 +1,0 @@
-# Native viewport state switching
-
-2026-10-15 stage68. SDK587/stage156 passes the real scene resolve and reaches R_DrawEmissiveCallback. R_DrawCall clones a local command state from gfxCmdBufState; R_DrawSurfs calls R_SetViewport before its first Draw binds that local state. The native RecordingScope previously required pointer identity with the last selected state, incorrectly rejecting this canonical transition. Matching SDK587 map/ELF stack is native-resolve-stage67-next-stack.txt.
-
-Viewport now validates the requested rectangle against that command state's actual registered desired target, binds that target through the existing pass switch provider, then applies the requested viewport/depth range. Target changes still finish the prior pass; same-target state switches retain it. All owner/resource/extent/depth checks remain, and no missing target is invented. The request is copied before binding because depth-range callers can alias state->viewport and target selection can reset viewport defaults.
-
-The engine build passes. Actual SDK588/stage157 enginecd3f3a6ec92409574facd5c3285b427aa28ceb74 PID24010 reaches CA_ACTIVE167478ms and passes this viewport transition into R_TessCodeMeshList, then fails the declared vertex-range validation. Matching stack: native-viewport-stage68-next-stack.txt. Process is terminal/absent. This change does not prove a complete native frame, gameplay, lifecycle or performance improvement. Original canonical/Windows bodies are unchanged in this stage.

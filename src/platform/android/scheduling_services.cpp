@@ -127,6 +127,18 @@ int applyNice(pid_t tid,int wanted) {
     if(setpriority(PRIO_PROCESS,tid,wanted))return errno;
     error=niceValue(tid,&observed);return error?error:observed==wanted?0:EAGAIN;
 }
+int restoreRetiringAffinity(pid_t tid,const cpu_set_t &inherited,cpu_set_t *restored) {
+    int error=affinityValue(tid,restored);if(error)return error;
+    if(equal(*restored,inherited))return 0;
+    if(sched_setaffinity(tid,sizeof(inherited),&inherited))return errno;
+    error=affinityValue(tid,restored);if(error)return error;
+    // Android may move the process into a smaller cpuset while its Activity
+    // leaves the foreground. A successful restore request is then restricted
+    // by the kernel. At thread exit retain that confirmed subset; rolling back
+    // to the engine's previous pin cannot restore CPUs the kernel disallows.
+    cpu_set_t outside{};CPU_AND(&outside,restored,&inherited);
+    return CPU_COUNT(restored) && equal(outside,*restored)?0:EAGAIN;
+}
 int refresh(int role) {
     auto &slot=slots[role];if(!slot.tid)return 0;
     cpu_set_t wanted{};int nice;const int invalid=desired(role,slot,&wanted,&nice);
@@ -162,12 +174,15 @@ void bo1::android::RegisterSchedulingThread(ThreadContext_t role) {
 }
 void bo1::android::RetireSchedulingThread(ThreadContext_t role) {
     if(role<=THREAD_CONTEXT_MAIN || role>=THREAD_CONTEXT_COUNT || Sys_GetThreadContext()!=role)fail("retirement requires actual non-main owner");
-    int error=0;
+    int error=0,affinityError=0,niceError=0;cpu_set_t inherited{},restored{};pid_t tid{};
     {std::lock_guard<std::mutex> lock(mutex);auto &slot=slots[role];
         if(slot.tid!=gettid())error=ESRCH;
-        else {error=applyAffinity(slot.tid,slot.baseline);const int niceError=applyNice(slot.tid,slot.startNice);if(!error)error=niceError;slot={};}
+        else {tid=slot.tid;inherited=slot.baseline;affinityError=restoreRetiringAffinity(tid,inherited,&restored);niceError=applyNice(tid,slot.startNice);slot={};}
     }
     if(error)fail("restore/retire actual scheduling owner",error);
+    if(affinityError)fail("restore retiring thread affinity",affinityError);
+    if(niceError)fail("restore retiring thread nice",niceError);
+    if(!equal(inherited,restored))std::fprintf(stderr,"Native scheduling retiring role%d tid%d: kernel restricted inherited affinity %d -> %d CPUs; confirmed subset retained until thread exit\n",role,int(tid),CPU_COUNT(&inherited),CPU_COUNT(&restored));
 }
 bool bo1::android::ReadSchedulingState(ThreadContext_t role,SchedulingState *output) {
     requireMain();if(role<0 || role>=THREAD_CONTEXT_COUNT || !output)fail("invalid scheduling observation");

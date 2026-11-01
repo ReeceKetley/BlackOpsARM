@@ -197,3 +197,6 @@ extern const dvar_t *sv_smp;
 extern const dvar_t *sv_network_fps;
 extern const dvar_t *sv_assistWorkers;
 extern const dvar_t *sv_clientArchive;
+
+// Diagnostic bulk load: same string ownership/case rules, no obsolete client deltas.
+void SV_RestoreConfigstring(int index, char *val);

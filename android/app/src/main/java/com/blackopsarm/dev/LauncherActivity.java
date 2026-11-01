@@ -45,6 +45,11 @@ public final class LauncherActivity extends Activity {
         final WeakReference<LauncherActivity> receiver = new WeakReference<>(this);
         final Context application = getApplicationContext();
         final boolean debuggable = (getApplicationInfo().flags & android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0;
+        if (debuggable && request.getBooleanExtra("developerMenu", false)) {
+            startActivity(new Intent(this, DevelopmentActivity.class).putExtra("developerMenu", true));
+            finish();
+            return;
+        }
         final SharedPreferences prefs = getSharedPreferences("launcher", MODE_PRIVATE);
         String map = request.getStringExtra("launchMap");
         int height = request.getIntExtra("launchHeight", 0);
@@ -61,6 +66,7 @@ public final class LauncherActivity extends Activity {
         final String launchMap = map;
         final int launchHeight = height;
         final String launchConfig = config;
+        final boolean launchResume = request.getBooleanExtra("launchResume", false);
         new Thread(() -> {
             String game = null, user = null;
             try {
@@ -94,6 +100,7 @@ public final class LauncherActivity extends Activity {
                             .putExtra("nativeVulkanBackend", true)
                             .putExtra("nativeVulkanHeight", launchHeight)
                             .putExtra("nativeAutoKino", false)
+                            .putExtra(EngineActivity.EXTRA_RESUME, launchResume)
                             .putExtra(EngineActivity.EXTRA_GAME_ROOT, gamePath)
                             .putExtra(EngineActivity.EXTRA_USER_ROOT, userPath);
                     if (launchMap != null) next.putExtra(EngineActivity.EXTRA_LAUNCHER_MAP, launchMap);

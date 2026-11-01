@@ -30,6 +30,12 @@ SoundState g_sd;
 #if defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST)
 // SDK buffers borrow these samples. Retire each actual voice before its owner.
 static std::array<std::unique_ptr<bo1::android::DecodedWma>, SND_MAX_VOICES> sd_wmaSamples;
+static std::array<std::unique_ptr<bo1::android::DecodedMsAdpcm>, SND_MAX_VOICES> sd_checkpointPcm;
+static std::atomic<std::uint64_t> sd_checkpointSampleBase[SND_MAX_VOICES];
+static_assert(std::atomic<std::uint64_t>::is_always_lock_free);
+static std::atomic<bool> sd_checkpointStreamPcm[SND_MAX_STREAM_VOICES];
+static std::unique_ptr<bo1::android::DecodedMsAdpcm> sd_checkpointStreamWindows[SND_MAX_STREAM_VOICES][2];
+static unsigned int sd_checkpointStreamSkip[SND_MAX_STREAM_VOICES];
 #endif
 char sd_xa2_device_names[16][256];
 #if defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST)
@@ -201,6 +207,8 @@ void __cdecl SD_StopVoice(int voiceIndex)
     }
 #if defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST)
     sd_wmaSamples[voiceIndex].reset(); // DestroyVoice has quiesced all SDK access.
+    sd_checkpointPcm[voiceIndex].reset();
+    sd_checkpointSampleBase[voiceIndex].store(0, std::memory_order_release);
 #endif
     if ( SND_IsStream(voiceIndex) )
     {
@@ -209,6 +217,11 @@ void __cdecl SD_StopVoice(int voiceIndex)
             iSND_ReleaseStreamBuffer(streamVoice, i);
         if ( Snd_StreamStatus(streamVoice) )
             Snd_StreamClose(streamVoice);
+#if defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST)
+        for (auto &owner : sd_checkpointStreamWindows[streamVoice]) owner.reset();
+        sd_checkpointStreamPcm[streamVoice].store(false, std::memory_order_release);
+        sd_checkpointStreamSkip[streamVoice] = 0;
+#endif
     }
 }
 
@@ -235,6 +248,12 @@ void __cdecl iSND_ReleaseStreamBuffer(unsigned int streamVoice, unsigned int buf
 
     if (releaseWindow)
     {
+#if defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST)
+        // For decoded windows this exchange publishes retirement to the audio
+        // producer. Only that producer (or joined StopVoice) frees the PCM owner;
+        // the callback never reads or mutates its unique_ptr.
+        if (sd_checkpointStreamPcm[streamVoice].load(std::memory_order_acquire)) return;
+#endif
         Snd_StreamReleaseWindow(streamVoice, releaseWindow);
     }
 }
@@ -260,8 +279,11 @@ int __cdecl SND_StartAliasStream(SndStartAliasInfo *startAliasInfo, unsigned int
             primeSize = alias->soundFile->u.streamSnd->primeSnd->size;
         }
         Snd_StreamOpen(streamVoice, filename2, (alias->flags & 1) != 0, primeSize, primeData);
-        SND_SetVoiceStartInfo(voiceIndex, startAliasInfo);
+        // StartInfo immediately updates the voice. Publish the pending file
+        // first, so that update cannot cache ResetVoiceInfo's -1 duration in
+        // totalMsec/playback before the stream header becomes available.
         SND_SetSoundFileVoiceInfo(voiceIndex, 0, 0, 0, 0, SFLS_LOADING);
+        SND_SetVoiceStartInfo(voiceIndex, startAliasInfo);
         SD_UpdateVoice(voiceIndex);
         if (g_snd.voice[voiceIndex].alias)
             return startAliasInfo->playbackId;
@@ -347,6 +369,11 @@ LABEL_11:
         g_sd.voices[voiceIndex]->GetState(&voiceState);
         if (voiceState.BuffersQueued >= 2)
             break;
+#if defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST)
+        const bool checkpointPcm = sd_checkpointStreamPcm[streamVoice].load(std::memory_order_acquire);
+        if (checkpointPcm && std::atomic_ref(g_sd.streamVoices[streamVoice].buffers[g_sd.streamVoices[streamVoice].bufferQueuedCount % 2].pAudioData).load(std::memory_order_acquire))
+            return; // SDK queue removal may precede its buffer-end callback.
+#endif
         status = Snd_StreamAcquireWindow(streamVoice, &size, &position, &data);
         switch (status)
         {
@@ -366,6 +393,29 @@ LABEL_11:
             buffer = &sv->buffers[bufferIndex];
             memset(buffer, 0, sizeof(XAUDIO2_BUFFER));
             buffer->AudioBytes = size;
+#if defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST)
+            if (checkpointPcm)
+            {
+                std::unique_ptr<bo1::android::DecodedMsAdpcm> pcm(new(std::nothrow) bo1::android::DecodedMsAdpcm);
+                std::string error;
+                const auto blockBytes = 262 * header->channel_count;
+                const bool decoded = pcm && header->format == SND_ASSET_FORMAT_MSADPCM && blockBytes && size % blockBytes == 0
+                    && bo1::android::DecodeCanonicalMsAdpcm({header->channel_count, header->frame_rate, size / blockBytes * 512,
+                        {reinterpret_cast<const std::uint8_t *>(data), size}}, *pcm, error);
+                Snd_StreamReleaseWindow(streamVoice, data); // compressed borrower retired before decoded source publication
+                if (!decoded || sd_checkpointStreamSkip[streamVoice] >= pcm->samples.size() / header->channel_count)
+                {
+                    Com_PrintError(9, "Checkpoint stream window decode failed: %s\n", error.c_str());
+                    iSND_ChannelError(voiceIndex); return;
+                }
+                buffer->AudioBytes = static_cast<unsigned int>(pcm->samples.size() * sizeof(short));
+                buffer->PlayBegin = sd_checkpointStreamSkip[streamVoice];
+                buffer->PlayLength = static_cast<unsigned int>(pcm->samples.size() / header->channel_count) - buffer->PlayBegin;
+                sd_checkpointStreamSkip[streamVoice] = 0;
+                data = reinterpret_cast<char *>(pcm->samples.data());
+                sd_checkpointStreamWindows[streamVoice][bufferIndex] = std::move(pcm);
+            }
+#endif
             iassert(!buffer->pAudioData);
 #if defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST)
             std::atomic_ref(buffer->pAudioData).store(reinterpret_cast<const std::uint8_t *>(data), std::memory_order_release);
@@ -395,7 +445,14 @@ LABEL_11:
     }
 }
 
+static int SD_CreateVoiceAtSample(int voiceIndex, const snd_asset *snd, int isLooping, int bus, unsigned long long cursor, const short *checkpointPcm = nullptr);
+
 int __cdecl iSND_CreateVoice(int voiceIndex, const snd_asset *snd, int isLooping, int bus)
+{
+    return SD_CreateVoiceAtSample(voiceIndex, snd, isLooping, bus, 0);
+}
+
+static int SD_CreateVoiceAtSample(int voiceIndex, const snd_asset *snd, int isLooping, int bus, unsigned long long cursor, const short *checkpointPcm)
 {
     IXAudio2SubmixVoice *masterBus; // [esp+1Ch] [ebp-ECh]
     snd_asset_format format; // [esp+20h] [ebp-E8h]
@@ -421,7 +478,7 @@ int __cdecl iSND_CreateVoice(int voiceIndex, const snd_asset *snd, int isLooping
     { Com_PrintError(9, "Native sound codec %d unsupported; real decoder required\n", static_cast<int>(snd->format)); return 0; }
 #endif
 #if defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST)
-    if (g_sd.voices[voiceIndex] || sd_wmaSamples[voiceIndex])
+    if (g_sd.voices[voiceIndex] || sd_wmaSamples[voiceIndex] || sd_checkpointPcm[voiceIndex])
     { Com_PrintError(9, "Native sound voice still owns a prior buffer\n"); return 0; }
     std::unique_ptr<bo1::android::DecodedWma> decodedWma;
     if (snd->format == SND_ASSET_FORMAT_WMA)
@@ -456,6 +513,9 @@ int __cdecl iSND_CreateVoice(int voiceIndex, const snd_asset *snd, int isLooping
     streamVoice = isStreaming ? iSND_GetStreamChannel(voiceIndex) : -1;
     isStereo = snd->channel_count != 1;
     isADPCM = snd->format == SND_ASSET_FORMAT_MSADPCM;
+#if defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST)
+    if (checkpointPcm) isADPCM = false;
+#endif
     voiceInfo = &g_sd.voiceInfos[voiceIndex];
 
     memset(&WFXE, 0, sizeof(WFXE));
@@ -479,6 +539,11 @@ int __cdecl iSND_CreateVoice(int voiceIndex, const snd_asset *snd, int isLooping
     WAVEFORMATEX *wfx = isADPCM ? &AWFT.wfx : &WFXE.Format;
     wfx->nChannels = snd->channel_count;
     format = snd->format;
+#if defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST)
+    if (checkpointPcm) format = SND_ASSET_FORMAT_PCMS16;
+#else
+    (void)checkpointPcm;
+#endif
 
     if (format)
     {
@@ -530,7 +595,7 @@ int __cdecl iSND_CreateVoice(int voiceIndex, const snd_asset *snd, int isLooping
         wfx->nSamplesPerSec = snd->frame_rate;
         wfx->nAvgBytesPerSec = wfx->nSamplesPerSec * wfx->nBlockAlign;
         wfx->cbSize = 0;
-        if (!isStreaming && (!snd->data || !snd->data_size ||
+        if (!isStreaming && !checkpointPcm && (!snd->data || !snd->data_size ||
             static_cast<std::uint64_t>(snd->frame_count) * wfx->nBlockAlign > snd->data_size ||
             snd->data_size % wfx->nBlockAlign))
         { Com_PrintError(9, "Invalid native PCM16 sample bounds\n"); return 0; }
@@ -566,16 +631,34 @@ int __cdecl iSND_CreateVoice(int voiceIndex, const snd_asset *snd, int isLooping
     {
         buffer.AudioBytes = snd->data_size;
     }
+#if defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST)
+    if (checkpointPcm) buffer.AudioBytes = snd->frame_count * snd->channel_count * sizeof(short);
+#endif
 
     iassert(!buffer.pAudioData);
 
 #if defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST)
     buffer.pAudioData = decodedWma ? reinterpret_cast<const std::uint8_t *>(decodedWma->samples.data())
         : reinterpret_cast<const std::uint8_t *>(snd->data);
+    if (checkpointPcm) buffer.pAudioData = reinterpret_cast<const std::uint8_t *>(checkpointPcm);
 #else
     buffer.pAudioData = (const unsigned __int8 *)snd->data;
 #endif
     buffer.LoopCount = isLooping != 0 ? 255 : 0;
+#if defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST)
+    if (cursor)
+    {
+        const auto offset = isLooping ? cursor % snd->frame_count : cursor;
+        if (isStreaming || offset >= snd->frame_count ||
+            (isADPCM && offset % AWFT.wSamplesPerBlock))
+        { Com_PrintError(9, "Checkpoint sound cursor requires an exact supported resident sample offset\n"); return 0; }
+        buffer.PlayBegin = static_cast<UINT32>(offset);
+        buffer.PlayLength = snd->frame_count - buffer.PlayBegin;
+        if (isLooping) buffer.LoopLength = snd->frame_count;
+    }
+#else
+    (void)cursor;
+#endif
 
     outputVoices[0].Flags = 0;
 
@@ -1282,7 +1365,13 @@ __int64 SD_BO1SamplesPlayed(int voiceIndex)
     if (g_snd.voice[voiceIndex].soundFileInfo.loadingState == SFLS_LOADING || !g_sd.voices[voiceIndex])
         return -1;
     g_sd.voices[voiceIndex]->GetState(&state);
+#if defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST)
+    // FAudio resets its counter at final EOS. Preserve that normal contract;
+    // only a still-queued resumed source carries a logical cursor base.
+    return static_cast<__int64>(((SND_IsStream(voiceIndex) || state.BuffersQueued) ? sd_checkpointSampleBase[voiceIndex].load(std::memory_order_acquire) : 0) + state.SamplesPlayed);
+#else
     return (__int64)state.SamplesPlayed;
+#endif
 }
 
 void __cdecl SD_UpdateVoice(unsigned int voiceIndex)
@@ -1487,3 +1576,221 @@ int __cdecl SND_StartAliasRam(SndStartAliasInfo *startAliasInfo, int voiceIndex)
 
     return startAliasInfo->playbackId;
 }
+
+#if defined(__ANDROID__)
+bool SD_BeginCheckpoint()
+{
+    if (!g_sd.xa2 || g_sd.xa2->Failure()) return false;
+    g_sd.xa2->StopEngine();
+    return true;
+}
+
+bool SD_EndCheckpoint()
+{
+    return g_sd.xa2 && g_sd.xa2->StartEngine() == S_OK;
+}
+
+bool SD_RefreshCheckpointMix()
+{
+    if (!g_sd.xa2 || g_sd.xa2->Failure() || !g_sd.radverbBus || !g_sd.masterBus || !g_sd.novoiceBus)
+        return false;
+    // FAudio applies queued effect parameters in its mixer, including COMMIT_NOW.
+    // Run that real boundary before restoring sources, so saved cursors cannot
+    // advance during this publication step. Never substitute the queued bytes
+    // for the effect's actual GetParameters result.
+    for (auto *voice : g_sd.voices)
+        if (voice)
+        {
+            XAUDIO2_VOICE_STATE state{};
+            voice->GetState(&state);
+            if (state.BuffersQueued) return false;
+        }
+    SD_PreUpdate();
+    if (g_sd.xa2->StartEngine() != S_OK) return false;
+    bool matched = false;
+    for (int pass = 0; pass < 100; ++pass)
+    {
+        SDL_Delay(5);
+        snd_rv_params reverb{};
+        snd_dsp_master_params master{};
+        snd_dsp_master_no_voice_params compressor{};
+        matched = FAudioVoice_GetEffectParameters(g_sd.radverbBus->NativeVoice(), 0, &reverb, sizeof(reverb)) == 0
+            && FAudioVoice_GetEffectParameters(g_sd.masterBus->NativeVoice(), 0, &master, sizeof(master)) == 0
+            && FAudioVoice_GetEffectParameters(g_sd.novoiceBus->NativeVoice(), 0, &compressor, sizeof(compressor)) == 0
+            && !memcmp(&reverb, &g_sd.radverbParams, sizeof(reverb))
+            && !memcmp(&master, &g_sd.masterParams, sizeof(master))
+            && !memcmp(&compressor, &g_sd.novoiceParams, sizeof(compressor));
+        if (matched || g_sd.xa2->Failure()) break;
+    }
+    g_sd.xa2->StopEngine();
+    return matched && !g_sd.xa2->Failure();
+}
+
+static bool SD_CanRestoreResidentInfo(const snd_voice_t &voice, __int64 cursor)
+{
+    if (cursor < 0) return false;
+    if (!voice.alias || !voice.alias->soundFile || voice.alias->soundFile->type != 1
+        || !voice.alias->soundFile->u.loadSnd || voice.soundFileInfo.loadingState != SFLS_LOADED) return false;
+    const auto &asset = voice.alias->soundFile->u.loadSnd->sound;
+    if (!asset.data || !asset.frame_count || asset.frame_rate < 1000 || asset.frame_rate > 100000
+        || (asset.channel_count != 1 && asset.channel_count != 2)) return false;
+    // The ordinary SDK path loops the submitted buffer, not its header's
+    // logical length. Refuse padded/incomplete resident buffers until their
+    // separate loop extent is checkpointed, rather than shifting loop phase.
+    if (asset.format == SND_ASSET_FORMAT_PCMS16
+        && static_cast<std::uint64_t>(asset.frame_count) * asset.channel_count * 2 != asset.data_size) return false;
+    if (asset.format == SND_ASSET_FORMAT_MSADPCM
+        && (asset.data_size % (262 * asset.channel_count)
+            || static_cast<std::uint64_t>(asset.data_size / (262 * asset.channel_count)) * 512 != asset.frame_count)) return false;
+    const auto offset = voice.alias->flags & 1 ? static_cast<unsigned long long>(cursor) % asset.frame_count : static_cast<unsigned long long>(cursor);
+    if (offset >= asset.frame_count) return false;
+    // ADPCM is decoded into an owned PCM buffer before retiring its old source.
+    // The decoder validates predictor/delta compatibility with the pinned SDK.
+    if (asset.format == SND_ASSET_FORMAT_MSADPCM
+        && static_cast<std::uint64_t>(asset.frame_count) * asset.channel_count * sizeof(short) > UINT32_MAX) return false;
+    return asset.format == SND_ASSET_FORMAT_PCMS16 || asset.format == SND_ASSET_FORMAT_WMA || asset.format == SND_ASSET_FORMAT_MSADPCM;
+}
+
+bool SD_CanRestoreResidentVoice(int index, __int64 cursor)
+{
+    return index >= SND_MAX_STREAM_VOICES && index < SND_MAX_VOICES && !SND_IsVoiceFree(index) && SD_CanRestoreResidentInfo(g_snd.voice[index], cursor);
+}
+
+bool SD_RestoreResidentVoice(int index, __int64 cursor)
+{
+    if (!SD_CanRestoreResidentVoice(index, cursor)) return false;
+    const auto *alias = g_snd.voice[index].alias;
+    const auto &asset = alias->soundFile->u.loadSnd->sound;
+    std::unique_ptr<bo1::android::DecodedMsAdpcm> pcm;
+    if (asset.format == SND_ASSET_FORMAT_MSADPCM)
+    {
+        pcm.reset(new(std::nothrow) bo1::android::DecodedMsAdpcm);
+        if (!pcm) return false;
+        std::string error;
+        if (!bo1::android::DecodeCanonicalMsAdpcm({asset.channel_count, asset.frame_rate, asset.frame_count,
+            {reinterpret_cast<const std::uint8_t *>(asset.data), asset.data_size}}, *pcm, error))
+        { Com_PrintError(9, "Checkpoint MSADPCM decode refused before source retirement: %s\n", error.c_str()); return false; }
+    }
+    SD_StopVoice(index); // actual source/DSP/sample borrower retirement
+    if (!SD_CreateVoiceAtSample(index, &asset, (alias->flags & 1) != 0, (alias->flags & 0x3000) >> 12, cursor, pcm ? pcm->samples.data() : nullptr)) return false;
+    sd_checkpointPcm[index] = std::move(pcm); // actual SDK borrower now has a lifetime owner
+    sd_checkpointSampleBase[index].store(static_cast<std::uint64_t>(cursor), std::memory_order_release);
+    SD_UpdateVoice(index); // publish saved pan/pitch/sends and actual queued source start
+    const bool restored = g_sd.voices[index] && SD_BO1SamplesPlayed(index) == cursor;
+    if (restored && sd_checkpointPcm[index])
+        Com_Printf(15, "Client audio ADPCM: REBOUND voice %i cursor %llu offset %llu, %u owned PCM frames, exact SDK sample position\n",
+            index, static_cast<unsigned long long>(cursor),
+            (alias->flags & 1) ? static_cast<unsigned long long>(cursor) % asset.frame_count : static_cast<unsigned long long>(cursor), asset.frame_count);
+    return restored;
+}
+
+bool SD_CanRestoreStreamVoice(int index, __int64 cursor)
+{
+    if (index < 0 || index >= SND_MAX_STREAM_VOICES || cursor < 0 || SND_IsVoiceFree(index) || !g_sd.voices[index]) return false;
+    const auto &voice = g_snd.voice[index];
+    if (!voice.alias || !voice.alias->soundFile || !voice.alias->soundFile->exists
+        || (voice.alias->soundFile->type != 2 && voice.alias->soundFile->type != 3)
+        || !voice.alias->soundFile->u.streamSnd || voice.soundFileInfo.loadingState != SFLS_LOADED) return false;
+    snd_asset header{}; unsigned int offset, skip;
+    if (!Snd_StreamCheckpointHeader(index, &header)) return false;
+    const bool supported = Snd_StreamCheckpointPlan(header, (voice.alias->flags & 1) != 0, cursor, &offset, &skip);
+    if (!supported)
+        Com_Printf(15, "Client stream checkpoint: retained unsupported voice %i format %i frames %u bytes %u seekCount %u\n",
+            index, static_cast<int>(header.format), header.frame_count, header.data_size, header.seek_table_count);
+    return supported;
+}
+
+static bool SD_CreateCheckpointStream(int index, __int64 cursor, const snd_asset &original)
+{
+    const auto *alias = g_snd.voice[index].alias;
+    unsigned int offset, skip;
+    if (!Snd_StreamCheckpointPlan(original, (alias->flags & 1) != 0, cursor, &offset, &skip)) return false;
+    char filename[260]{}; SND_AliasGetFileName(alias, filename, sizeof(filename));
+    char *prime = nullptr; unsigned int primeSize = 0;
+    if ((alias->flags & 0xC000) >> 14 == 3 && alias->soundFile->u.streamSnd->primeSnd)
+    { prime = alias->soundFile->u.streamSnd->primeSnd->buffer; primeSize = alias->soundFile->u.streamSnd->primeSnd->size; }
+    SD_StopVoice(index); // DestroyVoice joins callbacks; close returns every old file/window borrower.
+    Snd_StreamOpen(index, filename, (alias->flags & 1) != 0, primeSize, prime);
+    snd_asset header{};
+    const auto started = SDL_GetTicks();
+    while (!Snd_StreamCheckpointHeader(index, &header))
+    {
+        if (Snd_StreamStatus(index) == SND_STREAM_ERROR || SDL_GetTicks() - started >= 5000) { SD_StopVoice(index); return false; }
+        SDL_Delay(1); // actual asynchronous file/header prefetch, with mixer stopped and audio worker joined
+    }
+    if (header.version != original.version || header.frame_count != original.frame_count || header.frame_rate != original.frame_rate
+        || header.channel_count != original.channel_count || header.header_size != original.header_size || header.block_size != original.block_size
+        || header.buffer_size != original.buffer_size || header.format != original.format || header.channel_flags != original.channel_flags
+        || header.flags != original.flags || header.data_size != original.data_size || !Snd_StreamCheckpointSeek(index, offset))
+    { SD_StopVoice(index); return false; }
+    const bool decodedPcm = header.format == SND_ASSET_FORMAT_MSADPCM;
+    snd_asset sourceFormat = header;
+    if (decodedPcm) sourceFormat.format = SND_ASSET_FORMAT_PCMS16;
+    if (!iSND_CreateVoice(index, &sourceFormat, (alias->flags & 1) != 0, (alias->flags & 0x3000) >> 12))
+    { SD_StopVoice(index); return false; }
+    sd_checkpointStreamSkip[index] = skip;
+    sd_checkpointStreamPcm[index].store(decodedPcm, std::memory_order_release);
+    XAUDIO2_VOICE_STATE state{};
+    const auto prefetched = SDL_GetTicks();
+    do
+    {
+        SD_UpdateStreamVoice(index);
+        if (!g_sd.voices[index]) return false;
+        g_sd.voices[index]->GetState(&state);
+        if (state.BuffersQueued) break;
+        if (SDL_GetTicks() - prefetched >= 5000) { SD_StopVoice(index); return false; }
+        SDL_Delay(1);
+    } while (true);
+    sd_checkpointSampleBase[index].store(static_cast<std::uint64_t>(cursor), std::memory_order_release);
+    SD_UpdateVoice(index);
+    const bool restored = g_sd.voices[index] && SD_BO1SamplesPlayed(index) == cursor;
+    if (restored)
+        Com_Printf(15, "Client stream checkpoint: REBOUND voice %i cursor %llu byteOffset %u skipFrames %u format %i queued %u; actual file/source/window owners recreated\n",
+            index, static_cast<unsigned long long>(cursor), offset, skip, static_cast<int>(header.format), state.BuffersQueued);
+    return restored;
+}
+bool SD_RestoreStreamVoice(int index, __int64 cursor)
+{
+    if (!SD_CanRestoreStreamVoice(index, cursor)) return false;
+    const auto *alias = g_snd.voice[index].alias;
+    snd_asset original{}; unsigned int offset, skip;
+    if (!Snd_StreamCheckpointHeader(index, &original)
+        || !Snd_StreamCheckpointPlan(original, (alias->flags & 1) != 0, cursor, &offset, &skip)) return false;
+    return SD_CreateCheckpointStream(index, cursor, original);
+}
+
+bool SD_PreflightCheckpointVoice(int index, const snd_voice_t &voice, __int64 cursor)
+{
+    if (index < 0 || index >= SND_MAX_VOICES || cursor < 0 || !voice.alias || !voice.alias->id
+        || !voice.alias->soundFile || !voice.alias->soundFile->exists || voice.soundFileInfo.loadingState != SFLS_LOADED
+        || voice.lengthNotifyInfo.count || !g_snd.global_constants || voice.group < 0
+        || static_cast<unsigned>(voice.group) >= g_snd.global_constants->groupCount
+        || voice.pan.input_channel_count < 1 || voice.pan.input_channel_count > 2
+        || voice.pan.output_channel_count < 1 || voice.pan.output_channel_count > 8
+        || voice.startDelay < 0 || !std::isfinite(voice.pitchModSeed) || !std::isfinite(voice.script_pitch.value)
+        || !std::isfinite(voice.dryLevel) || !std::isfinite(voice.wetLevel) || !std::isfinite(voice.futzBlend)) return false;
+    for (int i = 0; i < voice.pan.input_channel_count * voice.pan.output_channel_count; ++i)
+        if (!std::isfinite(voice.pan.volumes[i])) return false;
+    if (index >= SND_MAX_STREAM_VOICES) return SD_CanRestoreResidentInfo(voice, cursor);
+    if ((voice.alias->soundFile->type != 2 && voice.alias->soundFile->type != 3) || !voice.alias->soundFile->u.streamSnd) return false;
+    char filename[260]{}; SND_AliasGetFileName(voice.alias, filename, sizeof(filename));
+    snd_asset header{}; unsigned int offset, skip;
+    return Snd_StreamCheckpointReadHeader(filename, (voice.alias->flags & 1) != 0, &header)
+        && Snd_StreamCheckpointPlan(header, (voice.alias->flags & 1) != 0, cursor, &offset, &skip)
+        && voice.soundFileInfo.srcChannelCount == static_cast<int>(header.channel_count)
+        && voice.soundFileInfo.baserate == static_cast<int>(header.frame_rate);
+}
+
+bool SD_RestoreCheckpointVoice(int index, __int64 cursor)
+{
+    if (index < 0 || index >= SND_MAX_VOICES || g_sd.voices[index]
+        || !SD_PreflightCheckpointVoice(index, g_snd.voice[index], cursor)) return false;
+    if (index >= SND_MAX_STREAM_VOICES) return SD_RestoreResidentVoice(index, cursor);
+    char filename[260]{}; const auto *alias = g_snd.voice[index].alias;
+    SND_AliasGetFileName(alias, filename, sizeof(filename));
+    snd_asset header{};
+    return Snd_StreamCheckpointReadHeader(filename, (alias->flags & 1) != 0, &header)
+        && SD_CreateCheckpointStream(index, cursor, header);
+}
+
+#endif

@@ -15,6 +15,7 @@
 #include "cscr_stringlist.h"
 #include "cscr_instance.h"
 #include "cscr_vm.h"
+#include <game_sp/g_sp_levelstart.h>
 #if defined(__ANDROID__)
 #include <cctype>
 #include <cstdio>
@@ -1174,6 +1175,96 @@ static int Scr_ModMatchLoose(const char *src, int len, int start, const char *pa
     return s;
 }
 
+// The retail round loop can still be animating its chalk HUD when end_game
+// destroys that HUD (Ascension: death at 10s, destruction at 11.15s, animation
+// resumes at 12s). Give that loop its missing lifetime boundary. Rewrite only
+// the exact stock header/comment block in the private decompressed source;
+// preserve its byte size/newline count and all FastFiles/VM validity checks.
+static void Scr_ZombieRoundLifetimeSource(scriptInstance_t inst, const char *extFilename, char *src, int len)
+{
+    if (inst != SCRIPTINSTANCE_SERVER || !Com_IsSPLevel() || !G_SP_IsZombieMode()
+        || !src || len <= 0 || I_stricmp(extFilename, "maps/_zombiemode.gsc"))
+        return;
+    const char *pattern = "round_think(){for(;;){//////////////////////////////////////////"
+        "//designed by prod DT#36173";
+    const char *replacement = "round_think(){level endon(\"end_game\");for(;;){";
+    int start = -1, end = -1, matches = 0;
+    for (int i = 0; i < len; ++i)
+    {
+        if (src[i] != 'r' || (i && Scr_ModIsIdent(src[i - 1]))) continue;
+        const int match = Scr_ModMatchLoose(src, len, i, pattern);
+        if (match < 0) continue;
+        start = i;
+        end = match;
+        ++matches;
+    }
+    int newlines = 0;
+    for (int i = start; i >= 0 && i < end; ++i) newlines += src[i] == '\n';
+    const int size = (int)strlen(replacement);
+    if (matches != 1 || size + newlines > end - start)
+    {
+        Com_Printf(23, "bo1_zombie_lifetime: %s stock round header not unique/compatible; unchanged\n", extFilename);
+        return;
+    }
+    memcpy(src + start, replacement, size);
+    memset(src + start + size, ' ', end - start - size - newlines);
+    memset(src + end - newlines, '\n', newlines);
+    Com_Printf(23, "bo1_zombie_lifetime: %s round loop ends on actual end_game\n", extFilename);
+}
+
+// A level-owned theft voice worker can outlive its monkey/pack target.
+// Let its existing exit/voice-lock cleanup run before calling the mutating
+// machine-damage helper after that lifetime boundary. Stock worker only;
+// preserve private source size/lines, retail assets and strict VM checks.
+static void Scr_AscMonkeyVoxLifetimeSource(scriptInstance_t inst, const char *extFilename, char *src, int len)
+{
+    if (inst != SCRIPTINSTANCE_SERVER || !Com_IsSPLevel() || !G_SP_IsZombieMode()
+        || !src || len <= 0 || I_stricmp(extFilename, "maps/_zombiemode_ai_monkey.gsc")
+        || I_stricmp(Dvar_GetString("mapname"), "zombie_cosmodrome"))
+        return;
+    const char *pattern =
+        "play_player_perk_theft_vox(perk,monkey){force_quit=0;if(!IsDefined(level.perk_theft_vox))level.perk_theft_vox="
+        "[];if(!IsDefined(level.perk_theft_vox[perk]))level.perk_theft_vox[perk]=false;if(level.perk_theft_vox[perk])re"
+        "turn;level.perk_theft_vox[perk]=true;while(1){player=getplayers();rand=RandomIntRange(0,player.size);if(monkey"
+        "monkey_zombie_perk_damage(monkey.machine_damage)){level.perk_theft_vox[perk]=false;return;}if((IsAlive(player["
+        "rand]))&&(!player[rand]maps\\_laststand::player_is_in_laststand())&&(player[rand]HasPerk(perk))){player[rand]ma"
+        "ps\\_zombiemode_audio::create_and_play_dialog(\"perk\",\"steal_\"+perk);break;}elseif(force_quit>=6){break;}force_q"
+        "uit++;wait(.05);}while(!monkeymonkey_zombie_perk_damage(monkey.machine_damage)){wait(1);}level.perk_theft_vox["
+        "perk]=false;}";
+    const char *replacement =
+        "play_player_perk_theft_vox(perk,monkey){force_quit=0;if(!IsDefined(level.perk_theft_vox))level.perk_theft_vox="
+        "[];if(!IsDefined(level.perk_theft_vox[perk]))level.perk_theft_vox[perk]=false;if(level.perk_theft_vox[perk])re"
+        "turn;level.perk_theft_vox[perk]=true;while(1){player=getplayers();rand=RandomIntRange(0,player.size);if(!isdef"
+        "ined(monkey)||!isalive(monkey)||!isdefined(monkey.pack)||!isdefined(monkey.pack.perk)||monkey.pack.perk.script"
+        "_noteworthy!=perk||!isdefined(monkey.pack.machine)||(monkey monkey_zombie_perk_damage(monkey.machine_damage)))"
+        "{level.perk_theft_vox[perk]=false;return;}if(IsAlive(player[rand])&&(!player[rand]maps\\_laststand::player_is_i"
+        "n_laststand())&&(player[rand]HasPerk(perk))){player[rand]maps\\_zombiemode_audio::create_and_play_dialog(\"perk\""
+        ",\"steal_\"+perk);break;}else if(force_quit>=6){break;}force_quit++;wait(.05);}while(!(!isdefined(monkey)||!isal"
+        "ive(monkey)||!isdefined(monkey.pack)||!isdefined(monkey.pack.perk)||monkey.pack.perk.script_noteworthy!=perk||"
+        "!isdefined(monkey.pack.machine)||(monkey monkey_zombie_perk_damage(monkey.machine_damage)))){wait(1);}level.pe"
+        "rk_theft_vox[perk]=false;}";
+    int start = -1, end = -1, matches = 0;
+    for (int i = 0; i < len; ++i)
+    {
+        if (src[i] != 'p' || (i && Scr_ModIsIdent(src[i - 1]))) continue;
+        const int match = Scr_ModMatchLoose(src, len, i, pattern);
+        if (match < 0) continue;
+        start = i; end = match; ++matches;
+    }
+    int newlines = 0;
+    for (int i = start; i >= 0 && i < end; ++i) newlines += src[i] == '\n';
+    const int size = (int)strlen(replacement);
+    if (matches != 1 || size + newlines > end - start)
+    {
+        Com_Printf(23, "bo1_monkey_lifetime: %s stock worker not unique/compatible; unchanged\n", extFilename);
+        return;
+    }
+    memcpy(src + start, replacement, size);
+    memset(src + start + size, ' ', end - start - size - newlines);
+    memset(src + end - newlines, '\n', newlines);
+    Com_Printf(23, "bo1_monkey_lifetime: %s theft voice worker stops before stale target damage\n", extFilename);
+}
+
 static void Scr_ModPatchSource(scriptInstance_t inst, const char *extFilename, char *src, int len)
 {
     static const dvar_s *scriptPerf;
@@ -1238,6 +1329,8 @@ char *__cdecl Scr_ReadFile_LoadObj(
         FS_Read((unsigned __int8 *)sourceBuf, len, f);
         sourceBuf[len] = 0;
         FS_FCloseFile(f);
+        Scr_ZombieRoundLifetimeSource(inst, extFilename, sourceBuf, len);
+        Scr_AscMonkeyVoxLifetimeSource(inst, extFilename, sourceBuf, len);
         Scr_ModPatchSource(inst, extFilename, sourceBuf, len); // mod (L43) bo1_mod_scriptperf
         Scr_AddSourceBufferInternal(inst, extFilename, codePos, sourceBuf, len, 1, archive);
         return sourceBuf;
@@ -1353,6 +1446,8 @@ char *__cdecl Scr_ReadFile_FastFile(
             {
                 __debugbreak();
             }
+            Scr_ZombieRoundLifetimeSource(inst, extFilename, sourceBuf, len);
+            Scr_AscMonkeyVoxLifetimeSource(inst, extFilename, sourceBuf, len);
             Scr_ModPatchSource(inst, extFilename, sourceBuf, len); // mod (L43) bo1_mod_scriptperf (own buffer)
         }
         Scr_AddSourceBufferInternal(inst, extFilename, codePos, sourceBuf, len, 1, archive);

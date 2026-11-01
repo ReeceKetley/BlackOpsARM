@@ -2,6 +2,7 @@
 #include <limits>
 #if defined(__ANDROID__)
 #include <android/log.h>
+#include "platform/android/launcher_session.h"
 #endif
 namespace bo1::vulkan {
 bool QueryHardware(VkPhysicalDevice physical,HardwareInfo& output,std::string& error) {
@@ -38,6 +39,10 @@ bool QueryHardware(VkPhysicalDevice physical,HardwareInfo& output,std::string& e
         &&(shadow16.sampleCounts&VK_SAMPLE_COUNT_1_BIT)&&shadow16.maxMipLevels&&shadow16.maxArrayLayers;
     info.depthShadow16Linear=info.depthShadow16&&(depth16.optimalTilingFeatures&VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT);
 #if defined(__ANDROID__)
+    auto version=[](unsigned value){return std::to_string(VK_VERSION_MAJOR(value))+"."
+        +std::to_string(VK_VERSION_MINOR(value))+"."+std::to_string(VK_VERSION_PATCH(value));};
+    bo1::android::launcher_session::PublishGraphics(info.properties.deviceName,
+        version(info.properties.apiVersion),std::to_string(info.properties.driverVersion));
     __android_log_print(ANDROID_LOG_INFO,"BO1NativeVulkan","native_memory_limits max_allocations=%u buffer_image_granularity=%llu device_local_mb=%llu",
         limits.maxMemoryAllocationCount,(unsigned long long)limits.bufferImageGranularity,(unsigned long long)(info.deviceLocalHeapBytes>>20));
 #endif

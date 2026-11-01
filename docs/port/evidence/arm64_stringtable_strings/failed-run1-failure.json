@@ -1,5 +1,0 @@
-{
-  "error_type": "TypeError",
-  "error": "argument should be a str or an os.PathLike object where __fspath__ returns a str, not 'int'",
-  "traceback": "Traceback (most recent call last):\n  File \"D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\tools\\port\\run_stringtable_strings_gate.py\", line 386, in main\n    result['platforms'][target] = {'binary_sha256': sha(native if on_device else binary), 'fresh_decodes': decodes,\n                                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\tools\\port\\raw_strings_oracle.py\", line 13, in sha\n    with Path(path).open('rb') as stream:\n         ^^^^^^^^^^\n  File \"C:\\Users\\recox\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\Lib\\pathlib.py\", line 1162, in __init__\n    super().__init__(*args)\n  File \"C:\\Users\\recox\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\Lib\\pathlib.py\", line 373, in __init__\n    raise TypeError(\nTypeError: argument should be a str or an os.PathLike object where __fspath__ returns a str, not 'int'\n"
-}

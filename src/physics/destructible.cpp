@@ -3907,3 +3907,5 @@ Destructible_BonePose::Destructible_BonePose()
     this->angles_vel[2] = 0.0f;
 }
 
+
+#include "destructible_save.inl"

@@ -701,7 +701,12 @@ void __cdecl G_CallSpawn(SpawnVar *spawnVar)
                         spawnFunc = G_FindSpawnFunc(classname, s_bspOrDynamicSpawns, 7);
                         if ( !spawnFunc && level.spawnVar.spawnVarsValid )
                             spawnFunc = G_FindSpawnFunc(classname, s_bspOnlySpawns, 15);
-                        if ( (char *)spawnFunc != (char *)G_FreeEntityWrapper )
+                        // SP 0x005178E2..0x00517909 parses even a transient
+                        // script_struct before its spawn function frees it.
+                        // Parsing registers its model while level.initializing;
+                        // sidequests later spawn that model from the struct.
+                        // MP's skip loses Moon's Cassimir plate registration.
+                        if ( (char *)spawnFunc != (char *)G_FreeEntityWrapper || Com_IsSPLevel() )
                         {
                             ent = G_ModSpawnForMap(spawnVar, classname);
                             G_ParseEntityFields(spawnVar, ent, radiantLiveUpdate);
@@ -1138,9 +1143,15 @@ void __cdecl GScr_GetGenericField(unsigned __int8 *b, fieldtype_t type, int ofs,
                 Scr_AddObject(id, SCRIPTINSTANCE_SERVER);
             break;
         case F_MODEL:
-            v6 = G_ModelName(b[ofs]);
+        {
+            // The canonical model field is a16-bit index (fields_1/entfields),
+            // including indices256..511. Byte access aliases it to another model.
+            unsigned __int16 modelIndex;
+            memcpy(&modelIndex, b + ofs, sizeof(modelIndex));
+            v6 = G_ModelName(modelIndex);
             Scr_AddConstString(v6, SCRIPTINSTANCE_SERVER);
             break;
+        }
         default:
             Scr_GetGenericField(b, type, ofs, SCRIPTINSTANCE_SERVER, whichbits);
             break;

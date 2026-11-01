@@ -33,6 +33,7 @@ namespace
     int references[1025];
     bool deferred[32][1025];
     AnimCommandRefs nodeRefs[XANIM_INFO_MAX]; // mod: entries >= g_xAnimInfoCount unused (retail 4096)
+    AnimCommandRefs savedNodeRefs[XANIM_INFO_MAX];
     struct NodeRefsRange { AnimCommandRefs *b, *e; AnimCommandRefs *begin() const { return b; } AnimCommandRefs *end() const { return e; } };
     NodeRefsRange NodeRefsInUse() { return { nodeRefs, nodeRefs + g_xAnimInfoCount }; }
     EntityCommands entities[MAX_GENTITIES_SV];
@@ -191,6 +192,12 @@ int G_SP_GetAnimCommandSequence(int entnum)
 {
     iassert(entnum >= 0 && entnum < MAX_GENTITIES_SV);
     return entities[entnum].sequence;
+}
+
+void G_SP_RestoreAnimCommandSequence(int entnum, int sequence)
+{
+    iassert(entnum >= 0 && entnum < MAX_GENTITIES_SV);
+    entities[entnum].sequence = sequence;
 }
 
 // zombies: G_StoreAnimCommand (SP 0x004e7d80), unoptimized allocation
@@ -428,6 +435,44 @@ void G_SP_BackupAnimCommands(bool save)
     nextCommand = savedNext;
 }
 
+void G_SP_StageSavedAnimCommandNodes()
+{
+    memcpy(savedNodeRefs, nodeRefs, sizeof(nodeRefs));
+    memset(nodeRefs, 0, sizeof(nodeRefs));
+}
+
+void G_SP_InstallSavedAnimCommandNodes(const unsigned short *map, int count)
+{
+    iassert(count == g_xAnimInfoCount);
+    int owners = 0;
+    int actual[ARRAY_COUNT(commands)] = {};
+    for (int i = 1; i < count; ++i)
+    {
+        const AnimCommandRefs &refs = savedNodeRefs[i];
+        if (!refs.current && !refs.previous && !refs.dependent)
+            continue;
+        if (!map[i] || map[i] >= count)
+            Com_Error(ERR_DROP, "Save animation: command refers to missing node %i", i);
+        const unsigned short ids[] = { refs.current, refs.previous, refs.dependent };
+        for (unsigned short id : ids)
+            if (id)
+            {
+                if (id >= ARRAY_COUNT(commands) || !commands[id].type)
+                    Com_Error(ERR_DROP, "Save animation: node refers to missing command %u", id);
+                ++actual[id];
+            }
+        nodeRefs[map[i]] = refs;
+        ++owners;
+    }
+    for (int i = 1; i < ARRAY_COUNT(commands); ++i)
+        if (actual[i] != references[i])
+            Com_Error(ERR_DROP, "Save animation: command %i reference mismatch %i/%i", i, actual[i], references[i]);
+    // A fresh client will need a new snapshot acknowledgement baseline. Deferred
+    // transport flags stay reset; client synchronization remains a separate step.
+    Com_Printf(15, "loadgame animation: remapped %i command node owners; reference counts verified\n", owners);
+    memset(savedNodeRefs, 0, sizeof(savedNodeRefs));
+}
+
 void SV_SP_CollectAnimCommands()
 {
     if (!zombiemode || !zombiemode->current.enabled)
@@ -487,4 +532,37 @@ void SV_SP_WriteAnimCommands(client_t *client, msg_t *msg)
     for (int i = 0; i < count; ++i)
         MSG_WriteAnimCommand(msg, svsHeader.time, &state, &list[i]);
     MSG_WriteBits(msg, 11, 4);
+}
+
+// Preserve the exact sparse owner set, including an owner with no surviving
+// commands. A recycled entity may have a stale sequence but no owner; inferring
+// ownership from that sequence would change the next G_StoreAnimCommand reset.
+void G_SP_WriteSavedAnimCommandOwners(MemoryFile *file)
+{
+    MemFile_WriteInt(file, latestAnimCommandSnapshotTime);
+    for (int i = 0; i < ARRAY_COUNT(entities); ++i)
+        if (entities[i].owner.isDefined())
+        {
+            iassert(entities[i].owner.entnum() == i);
+            MemFile_WriteInt(file, i);
+        }
+    MemFile_WriteInt(file, -1);
+}
+
+void G_SP_ReadSavedAnimCommandOwners(MemoryFile *file)
+{
+    MemFile_ReadData(file, 4, (unsigned char *)&latestAnimCommandSnapshotTime);
+    for (EntityCommands &entity : entities)
+        iassert(!entity.owner.isDefined());
+    int index;
+    for (;;)
+    {
+        MemFile_ReadData(file, 4, (unsigned char *)&index);
+        if (index == -1)
+            break;
+        if (index < 0 || index >= ARRAY_COUNT(entities) || !g_entities[index].r.inuse
+            || entities[index].owner.isDefined())
+            Com_Error(ERR_DROP, "Save animation: invalid/duplicate entity command owner %i", index);
+        entities[index].owner.setEnt(&g_entities[index]);
+    }
 }

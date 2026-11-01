@@ -1,4 +1,7 @@
 #include "cl_gamepad.h"
+#if defined(__ANDROID__)
+#include <platform/android/pad_menu.h>
+#endif
 #include <win32/win_shared.h>
 #include <qcommon/cmd.h>
 #include <universal/dvar.h>
@@ -471,6 +474,25 @@ void __cdecl CL_GamepadGenerateAPad(int localClientNum, int portIndex, unsigned 
     {
         __debugbreak();
     }
+#if defined(__ANDROID__)
+    // Only the physical left stick navigates menus. Gameplay movement bindings
+    // and right-stick camera input are independent of these virtual keys.
+    if (physicalAxis != GPAD_PHYSAXIS_LSTICK_X && physicalAxis != GPAD_PHYSAXIS_LSTICK_Y) return;
+    const bool horizontal = physicalAxis == GPAD_PHYSAXIS_LSTICK_X;
+    const float value = GPad_GetStick(portIndex, horizontal ? GPAD_LX : GPAD_LY);
+    const int positiveKey = horizontal ? K_APAD_RIGHT : K_APAD_UP;
+    const int negativeKey = horizontal ? K_APAD_LEFT : K_APAD_DOWN;
+    const bool menuActive = Key_IsCatcherActive(localClientNum, 0x50) && !DevGui_IsActive();
+    for (int direction = 0; direction < 2; ++direction)
+    {
+        const int key = direction ? negativeKey : positiveKey;
+        const int event = bo1::android::pad::MenuAxisEvent(direction ? -value : value,
+            Key_IsDown(localClientNum, key) != 0, menuActive,
+            gpad_stick_pressed->current.value, gpad_stick_pressed_hysteresis->current.value);
+        if (event >= 0) CL_GamepadButtonEventForPort(portIndex, key, event, Sys_Milliseconds(), GPAD_NONE);
+    }
+    return;
+#endif
     stick = stickForAxis[physicalAxis];
     if ( stick )
     {
@@ -484,6 +506,17 @@ void __cdecl CL_GamepadGenerateAPad(int localClientNum, int portIndex, unsigned 
         }
     }
 }
+
+#if defined(__ANDROID__)
+float CL_GamepadUnshapedAxis(int localClientNum, GamepadVirtualAxis axis)
+{
+    const GpadAxesGlob& axes = gaGlobs[localClientNum];
+    const GamepadPhysicalAxis physical = axes.virtualAxes[axis].physicalAxis;
+    if (DevGui_IsActive() || physical == GPAD_PHYSAXIS_NONE) return 0.0f;
+    const float value = static_cast<float>(axes.axesValues[physical]) * 0.000015259022f;
+    return value < -1.0f ? -1.0f : (value > 1.0f ? 1.0f : value);
+}
+#endif
 
 double __cdecl CL_GamepadAxisValue(int localClientNum, unsigned int virtualAxis)
 {
@@ -626,7 +659,11 @@ void __cdecl CL_GamepadButtonEvent(
         {
             CL_ResetLastGamePadEventTime();
         }
+#if defined(__ANDROID__)
+        if ( v15 )
+#else
         if ( buttonEvent == 1 )
+#endif
         {
             if ( ++keys[key].repeats == 1 )
                 ++playerKeys[localClientNum].anyKeyDown;
@@ -714,7 +751,13 @@ void __cdecl CL_GamepadButtonEvent(
                     CL_StopLogoOrCinematic(localClientNum);
                 }
             }
-            else if ( !v15 || !CL_CheckForIgnoreDueToRepeat(localClientNum, key, keys[key].repeats, time) || buttonEvent == 2 )
+            else if ( !v15 || !CL_CheckForIgnoreDueToRepeat(localClientNum, key, keys[key].repeats, time)
+#if defined(__ANDROID__)
+                || (buttonEvent == 2 && !bo1::android::pad::IsMenuDirection(key))
+#else
+                || buttonEvent == 2
+#endif
+            )
             {
                 if ( kb && !I_stricmp(kb, "mainmenu") && buttonEvent == 1 )
                 {
@@ -861,7 +904,11 @@ bool __cdecl CL_CheckForIgnoreDueToRepeat(int localClientNum, int key, int repea
     int scrollDelayFirst; // [esp+10h] [ebp-4h]
 
     LocalClientUIGlobals = CL_GetLocalClientUIGlobals(localClientNum);
+#if defined(__ANDROID__)
+    if ( (LocalClientUIGlobals->keyCatchers & 0x50) != 0 )
+#else
     if ( (LocalClientUIGlobals->keyCatchers & 0x10) != 0 )
+#endif
     {
         if ( (LocalClientUIGlobals->keyCatchers & 0x80) != 0 )
         {

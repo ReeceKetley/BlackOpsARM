@@ -1,5 +1,6 @@
 #include <platform/engine_random.h>
 #include <game_sp/g_sp_client.h>
+#include <game_sp/g_sp_savegame.h>
 #include <cgame/cg_sp_nettrace.h>
 #include "sv_client_mp.h"
 #include <server_mp/sv_main_mp.h>
@@ -1120,6 +1121,13 @@ void __cdecl SV_DirectConnect(netadr_t from)
             I_strncpyz(newcl->clientPBguid, clientPBguid, 33);
 
             // ADD - for steam auth
+#if defined(__ANDROID__)
+            // SV_AddTestClient creates a process-local NA_BOT, which deliberately
+            // has no Steam ticket/account. The network challenge path above
+            // authenticates remote clients; apply its identity requirement only
+            // to those clients, retaining zero for the local bot's steamID.
+            if (from.type != NA_BOT)
+#endif
             iassert(steamID64 || newcl->bIsDemoClient || !IsDedicatedServer());
             newcl->steamID = steamID64;
             // END
@@ -1225,6 +1233,7 @@ void __cdecl SV_SendDisconnect(
 
 void __cdecl SV_DropClient(client_t *drop, const char *reason, bool tellThem, bool writeStats)
 {
+    G_SP_CancelSavedClientHandshake(drop);
     int j; // [esp+14h] [ebp-3Ch]
     int dropState; // [esp+18h] [ebp-38h]
     char droppedClientName[32]; // [esp+1Ch] [ebp-34h] BYREF
@@ -1285,12 +1294,21 @@ void __cdecl SV_DropClient(client_t *drop, const char *reason, bool tellThem, bo
             MatchRecordPlayerDetails(&level.clients[clientNum], reason);
 #endif
         // ADD
+#if defined(__ANDROID__)
+        // The local bot never opened either online authentication session.
+        // Pair teardown with the same address ownership used for admission.
+        if (drop->header.netchan.remoteAddress.type != NA_BOT)
+        {
+#endif
         if (IsDedicatedServer() && !drop->bIsDemoClient)
         {
             Steam_OnClientDropped(drop->steamID);
         }
         // END
         LiveSteam_Server_ClientSteamDisconnect(drop->steamID);
+#if defined(__ANDROID__)
+        }
+#endif
         SV_FreeClient(drop);
         Com_DPrintf(15, "Going to CS_ZOMBIE from %i for %s due to %s\n", dropState, droppedClientName, reason);
         drop->header.state = CS_ZOMBIE;
@@ -1789,6 +1807,8 @@ bool __cdecl SV_ConfigStringIsConstant(int configStringNum)
 
 void __cdecl SV_ClientEnterWorld(client_t *client, usercmd_s *cmd)
 {
+    if (G_SP_TryEnterSavedClient(client, cmd))
+        return;
     gentity_s *ent; // [esp+Ch] [ebp-8h]
     unsigned int clientNum; // [esp+10h] [ebp-4h]
 
@@ -2658,6 +2678,11 @@ void __cdecl SV_ExecuteClientCommand(client_t *cl, const char *s, int clientOK, 
 
 void __cdecl SV_ClientThink(client_t *cl, usercmd_s *cmd)
 {
+#if defined(__ANDROID__)
+    // Reconnect packets/acks still flow, but cannot move/fire the saved player
+    // before its CLIENT/native owners and input history have been installed.
+    if (G_SP_IsSavedWorldFrozen()) return;
+#endif
     char *v2; // eax
     char *Name; // [esp+20h] [ebp-8h]
 
@@ -3013,7 +3038,10 @@ void __cdecl SV_ExecuteClientMessage(client_t *cl, msg_t *msg)
     {
         if ( (cl->serverId & 0xF0) == (sv_serverId_value & 0xF0) )
         {
-            if ( cl->header.state == CS_CLIENTLOADING )
+            // Fast restart normally enters from an old low-nibble server ID.
+            // A saved-world gamestate needs a command from the NEW identity;
+            // old packets must not consume its one-use handoff before parsing.
+            if ( cl->header.state == CS_CLIENTLOADING && !G_SP_IsSavedClientHandshakePending() )
                 SV_ClientEnterWorld(cl, &cl->lastUsercmd);
             //LargeLocal::~LargeLocal(&msgCompressed_buf_large_local);
             return;

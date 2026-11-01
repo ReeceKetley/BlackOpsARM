@@ -27,6 +27,8 @@ bool Set(const GfxCmdBufState*,unsigned,const GfxImage*,unsigned decoded,float b
 bool Update(const GfxCmdBufState*,unsigned,unsigned decoded,float bias,std::string&);
 void Disable(const GfxCmdBufState*,unsigned);
 void Release(const GfxCmdBufState*);
+// Caller has stopped recording and drained all submitted frames.
+std::size_t RetireAll();
 void Clone(const GfxCmdBufState* source,const GfxCmdBufState* destination);
 std::shared_ptr<const Snapshot> Acquire(const GfxCmdBufState*);
 // Caller records uploads/barriers before drawing and retains this snapshot

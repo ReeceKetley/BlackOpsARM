@@ -5,7 +5,7 @@
 #include <cstdlib>
 #include <unistd.h>
 namespace { std::atomic<bool> requested{}; }
-void Sys_SetQuitRequested(){std::fputs("ENGINE quit requested (Sys_SetQuitRequested)\n",stderr);std::fflush(stderr);requested.store(true,std::memory_order_release);}
+void Sys_SetQuitRequested(){requested.store(true,std::memory_order_release);}
 bool Sys_IsQuitRequested(){return requested.load(std::memory_order_acquire);}
 [[noreturn]] void Sys_QuitWithLostDevice(int lostMilliseconds){
     // Preserve the reference's terminal escape from a blocked renderer shutdown.

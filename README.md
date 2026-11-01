@@ -3,17 +3,76 @@
 Call of Duty: Black Ops (2010) Zombies running natively on an Android tablet:
 the original engine, compiled for ARM64, rendering through a native Vulkan backend.
 
-This is a private research port. **No game data is included.** The engine
+This is an unofficial research port. **No game data is included.** The engine
 loads the original retail FastFiles, shaders and assets from a legally owned copy of
 the game, which must be supplied separately.
 
-## A note on AI assistance
-
-This port was not written wholesale by AI agents. The porting work, architecture
-and engineering decisions are human-led. AI agents were used as tools to help
-with debugging and to build the new launcher.
-
 ![Kino der Toten on the tablet, 34.7 FPS](images/android/kino-overlay-34fps.jpg)
+
+
+**Version 0.2.0-dev · Android ARM64 · experimental development build**
+
+This project is **not affiliated with, endorsed by, or sponsored by Activision
+or Treyarch**. Call of Duty and Black Ops belong to their respective owners.
+
+## Download and install
+
+Get the APK from [Releases](https://github.com/ReeceKetley/BlackOpsARM/releases).
+Install it on an ARM64 Android device with Vulkan support, then choose **Game
+data** and select your original English PC game folder containing `main` and
+`zone`. Copy the folder to your device first; allow about 12 GB for a full copy.
+Android's folder picker grants access, and the installer copies/checks files in
+app storage without modifying your originals. Existing completed files can be
+reused after cancellation. No retail game files are supplied or downloaded.
+
+The installer uses the same offline launcher as the menu. Fonts and map artwork
+are bundled; menu typography does not depend on an internet connection. Controller
+settings include Classic / Linear / Dynamic response, right-stick deadzone and
+ADS sensitivity. Hardware info is available from the main menu.
+
+## Solo save and resume
+
+Pause a solo Zombies game and choose **Save & leave**. The app writes a durable
+save file and closes the game. Open BlackOpsARM again and choose **Resume** to
+continue the saved run, including after fully closing the app.
+
+The save system reconstructs gameplay through the engine's save/load system;
+it does not restore a raw process-memory or Vulkan-memory snapshot. Important
+state includes round/progression, player position and health, points, weapons
+and ammunition, perks, opened doors, and the running Zombies script/world state.
+Transient cosmetic effects or sounds may reset.
+
+Rendered early-game save → full app close → fresh-process resume checks passed
+on all ten launcher maps, with movement and firing afterward. Kino additionally
+passed bought-door/perk and round-progression checks through repeated saves.
+This remains experimental: longer runs and map-specific mechanics need more
+coverage, and partial failed-load cleanup still needs hardening. Use explicit
+**Save & leave**; backgrounding or Android killing the app does not create a save.
+The multi-slot save library shown as “soon” is not implemented. Uninstalling the
+app removes its imported files, settings and saves.
+
+## Screenshots and gameplay
+
+Captured directly on the HONOR Pad X8a on 1 November 2026, using 0.2.0-dev.
+In-game shots show the actual performance overlay. Captures use developer weapon
+grants, god mode and repositioning to show different parts of Kino; they are
+showcase footage rather than an unassisted run or a sustained benchmark.
+
+| Launcher | Game data installer |
+| --- | --- |
+| ![Offline launcher with version number](media/2026-11-01/launcher.png) | ![Game data installer in the launcher design](media/2026-11-01/installer.png) |
+
+| Kino lobby | Another view of Kino |
+| --- | --- |
+| ![Kino lobby with a weapon and live performance readings](media/2026-11-01/kino-lobby-m14.png) | ![Kino alternate location with a different weapon and performance readings](media/2026-11-01/kino-balcony-raygun.png) |
+
+![Kino theatre with live performance readings](media/2026-11-01/kino-theatre-thundergun.png)
+
+[Watch the launcher-to-gameplay recording](media/2026-11-01/menu-to-gameplay.mp4)
+and [the combat clip](media/2026-11-01/kino-combat.mp4).
+See the [capture notes and full gallery](media/2026-11-01/README.md) for setup,
+recording limits and the complete media folder. Videos are screen recordings
+without an audio track; loading/waiting edits are identified in the capture notes.
 
 ## How it got here
 
@@ -137,10 +196,19 @@ streaming fixes listed below.)
   - `src/platform/android/`: Android platform services
 - `android/`: Gradle/CMake Android project
 - `tools/port/`: build, deploy, measurement and test tools
-- `docs/port/`: port notes and reports
+- `media/`: tablet screenshots, gameplay recordings and capture notes
+
+Internal development notes and test evidence are retained locally and excluded
+from the published repository.
 
 ## Credits
 
 Based on [bo1-zombies-decompiled](https://github.com/MisaDev4/bo1-zombies-decompiled).
 SGSR v1 is © Qualcomm (BSD-3-Clause, see `src/gfx_vulkan/native_post/THIRD_PARTY_NOTICES`).
 Call of Duty: Black Ops is © Activision / Treyarch. This project is not affiliated with or endorsed by them.
+
+## A note on AI assistance
+
+This port was not written wholesale by AI agents. The porting work, architecture
+and engineering decisions are human-led. AI agents were used as tools to help
+with debugging and to build the new launcher.

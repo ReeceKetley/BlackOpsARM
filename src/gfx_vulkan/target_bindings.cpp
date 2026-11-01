@@ -40,4 +40,5 @@ bool Viewport(GfxCmdBufState* state,const GfxViewport& v,std::string& error) {
  if(v.x<0||v.y<0||v.width<=0||v.height<=0||unsigned(v.x)>size.width||unsigned(v.y)>size.height||unsigned(v.width)>size.width-unsigned(v.x)||unsigned(v.height)>size.height-unsigned(v.y)){error="Native desired viewport exceeds its attachment";return false;}
  state->viewport=v;return true;
 }
+std::size_t RetireAll(){return registry.RetireAll() + primitiveRegistry.RetireAll();}
 }

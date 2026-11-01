@@ -58,6 +58,10 @@ public final class NativeUi {
         if(!UI.post(request::execute))return failed;
         return request.waitResult();
     }
+    public static boolean retireStartupOverlay(Activity activity) {
+        return dispatch(() -> alive(activity) && activity instanceof EngineActivity
+                && ((EngineActivity)activity).retireStartupOverlayForNativeQuit(), false);
+    }
     public static boolean launchUrl(Activity activity,String value) {
         return dispatch(() -> {
             if(!alive(activity) || value==null || value.isEmpty())return false;

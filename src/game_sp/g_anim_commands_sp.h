@@ -12,6 +12,7 @@ void G_SP_ResetAnimCommands();
 // SP 0x004fdf30: free ent's stored commands (G_SetAnimTree, G_FreeEntity). Zombiemode only.
 void G_SP_FreeEntityAnimCommands(const gentity_s *ent);
 int G_SP_GetAnimCommandSequence(int entnum);
+void G_SP_RestoreAnimCommandSequence(int entnum, int sequence);
 void SV_SP_CollectAnimCommands();
 void G_SP_GetAnimCommandUsage(int *referenced, int *protectedCommands, int *snapshotTime);
 void SV_SP_WriteAnimCommands(client_t *client, msg_t *msg);
@@ -27,4 +28,9 @@ void G_SP_ReadAnimCommandList(MemoryFile *memFile);
 void G_SP_ReadAnimCommandHeads(MemoryFile *memFile);
 // KB diagnostic: keep the live history across a check read (true saves, false restores).
 void G_SP_BackupAnimCommands(bool save);
+// Detach saved pool indices until restored XAnim nodes have final addresses.
+void G_SP_StageSavedAnimCommandNodes();
+void G_SP_InstallSavedAnimCommandNodes(const unsigned short *map, int count);
+void G_SP_WriteSavedAnimCommandOwners(MemoryFile *file);
+void G_SP_ReadSavedAnimCommandOwners(MemoryFile *file);
 

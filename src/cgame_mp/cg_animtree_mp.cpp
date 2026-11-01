@@ -1,6 +1,7 @@
 #include "cg_animtree_mp.h"
 #if defined(__ANDROID__)
 #include <cstdlib>
+#include <game_sp/g_sp_savegame.h>
 #endif
 #include <clientscript/cscr_main.h>
 #include <clientscript/cscr_memorytree.h>
@@ -23,6 +24,7 @@ static void *__cdecl CGScr_AllocateAnimTreeNative(int size)
 }
 static void __cdecl CGScr_FreeAnimTreeNative(void *memory,int size,scriptInstance_t inst)
 {
+    G_SP_NotifyClientCheckpointTreeFree(memory);
     MT_Free(static_cast<_BYTE *>(memory),size,inst);
 }
 

@@ -1,5 +1,0 @@
-{
-  "error_type": "RuntimeError",
-  "error": "Missing genuine RawFile header gate executable: D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\techset_host_pass5\\x64\\techset.exe",
-  "traceback": "Traceback (most recent call last):\n  File \"D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\tools\\port\\run_rawfile_payload_gate.py\", line 273, in main\n    raise RuntimeError('Missing genuine RawFile header gate executable: ' + str(binary))\nRuntimeError: Missing genuine RawFile header gate executable: D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\build-android-audit\\techset_host_pass5\\x64\\techset.exe\n"
-}

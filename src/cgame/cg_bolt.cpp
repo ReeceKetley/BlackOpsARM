@@ -10,6 +10,10 @@
 centity_s *g_BoltEnt[1][10];
 unsigned int g_BoltIndex[1];
 
+#if defined(__ANDROID__)
+#include "cg_bolt_checkpoint.inl"
+#endif
+
 void __cdecl CG_InitBolt(unsigned int localClientNum)
 {
     int i; // [esp+0h] [ebp-4h]

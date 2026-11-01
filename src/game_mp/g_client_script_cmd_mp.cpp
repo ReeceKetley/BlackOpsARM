@@ -402,6 +402,7 @@ void __cdecl PlayerCmd_giveWeapon(scr_entref_t entref)
         // a held weapon tops its stock up to the start ammo).
         G_GivePlayerWeapon(&pSelf->client->ps, weaponIndex, weaponModel, weaponOptions);
         G_InitializeAmmo(pSelf, weaponIndex, weaponModel, hadWeapon);
+        if (G_SP_TestPlanActive()) G_SP_TestPlanWeaponGiven(pSelf, weaponIndex, hadWeapon != 0);
         return;
     }
     if ( G_GivePlayerWeapon(&pSelf->client->ps, weaponIndex, weaponModel, weaponOptions) )

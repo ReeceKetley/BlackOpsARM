@@ -2231,6 +2231,17 @@ LABEL_18:
             {
               R_SetRenderTargetSize(&gfxCmdBufSourceState, R_RENDERTARGET_SCENE);
               R_SetRenderTarget(gfxCmdBufContext, R_RENDERTARGET_SCENE);
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+              if (bo1::vulkan::shader_assets::Active())
+              {
+                // Native targets are owned by the Vulkan recorder and have no
+                // D3D texture/surface. Use the same scene resolve as the other
+                // post effects before the generic filter samples that image.
+                R_Resolve(gfxCmdBufContext, gfxRenderTargets[R_RENDERTARGET_RESOLVED_SCENE].image);
+              }
+              else
+#endif
+              {
               Surface = Image_GetSurface(gfxRenderTargets[R_RENDERTARGET_RESOLVED_SCENE].image);
               if ( !Surface
                 && !Assert_MyHandler(
@@ -2276,6 +2287,7 @@ LABEL_18:
                   "C:\\projects_pc\\cod\\codsrc\\src\\gfx_d3d\\rb_postfx.cpp (%i) imageSurface->Release() failed: %s\n",
                   3176,
                   v3);
+              }
               }
             }
             if ( v107 )

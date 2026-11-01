@@ -29,5 +29,6 @@ struct gclient_s;
 void G_SP_NoteSnapshotSize(bool firstClient, int size);
 // SP gclient+0x584: setscripthintstring's hint, read by Player_UpdateCursorHints (SP 0x00603889).
 bool G_SP_GetScriptHintString(const gclient_s *client, int *hintString);
+void G_SP_RestoreScriptHintString(unsigned int clientNum, int encodedHint);
 // SP svFlags 0x100 set by transmittargetname (no reader ported yet).
 bool G_SP_TransmitsTargetname(const gentity_s *ent);

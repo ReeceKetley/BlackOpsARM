@@ -8,14 +8,23 @@
 #include <clientscript/cscr_variable.h>
 
 struct gentity_s;
+struct gclient_s;
 struct client_t;
 struct usercmd_s;
 
 void G_SP_TestPlanRegister();
 void G_SP_TestPlanReset();
 void G_SP_TestPlanFields(scriptInstance_t inst);
+// Main-thread find-only snapshot for public solo save/resume acceptance tests.
+void G_SP_InspectResumeProgression();
 void G_SP_TestPlanNotify(scriptInstance_t inst, unsigned int owner, unsigned int name, const VariableValue *top);
 void G_SP_TestPlanObserve(const char *name);
+// Read-only observation of an actual script score setter, before publication.
+void G_SP_TestPlanScoreWrite(const gclient_s *client, int before, int after);
+// Read-only committed native script weapon grant / transient powerup evidence.
+void G_SP_TestPlanWeaponGiven(gentity_s *player, unsigned int weapon, bool hadWeapon);
+// Read-only evidence of a real missing SP tag query; never emits a script notify.
+void G_SP_TestPlanTagQueryMissing(const gentity_s *ent, unsigned int tag, bool angles);
 bool G_SP_TestPlanActive();
 // r1: the Pentagon thief while the plan's thief round policy runs (the fight code shoots it first), else null.
 gentity_s *G_SP_TestPlanThief(gentity_s *player);
@@ -25,6 +34,8 @@ void G_SP_TestPlanQuitCheck();
 bool G_SP_TestPlanHoldingGrenade();
 // q1 c15: the actor's script has_legs is false (crawler); harness evidence only.
 bool G_SP_TestPlanActorLegless(int entnum);
+// Harness-only: leave George alone outside the dedicated boss interaction step.
+bool G_SP_TestPlanSpareDirector(int entnum);
 // r1: the gun the plan keeps raised though it may be empty (box / wall buy replacement), else 0.
 unsigned int G_SP_TestPlanHoldWeapon();
 // L20: may the fighting harness back the player away from a close zombie over the plan's movement? 0 = no (the

@@ -1,8 +1,0 @@
-{
-  "schema": "BlackOpsARM.TASK-0022.runner-strictness.v1",
-  "source": "tools/port/run_stringtable_hash_gate.py",
-  "before_sha256": "4bbf16ce331b63fef0803afaae2f89787d3abbb3f625508167a96a24e111ba4a",
-  "change": "Exact fixture/actual-group/summary field whitelists; no engine or binary changes",
-  "after_sha256": "5bd416565738a83580abf1c46220610226522d6099256d5a795d523b4e112339",
-  "syntax_pass": true
-}

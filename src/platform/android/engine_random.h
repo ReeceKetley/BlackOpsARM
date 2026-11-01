@@ -5,4 +5,6 @@
 namespace bo1::android {
 int CrtRand();
 void CrtSrand(unsigned int seed);
+// Snapshot the calling thread's stream without advancing it.
+unsigned int CrtGetState();
 }

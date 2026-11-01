@@ -80,6 +80,8 @@ struct DynEntityClient // sizeof=0x14
     int physicsStartTime;
 };
 
+int DynEntCl_CreateCheckpointPhysObj(const DynEntityDef *, DynEntityClient *, const GfxPlacement *);
+
 void __cdecl DynEntCl_RegisterDvars();
 XModel *__cdecl DynEntCl_GetCurrentXModel(const DynEntityDef *dynEntDef, const DynEntityClient *dynEntClient);
 bool __cdecl DynEntCl_IsHealthGone(const DynEntityDef *dynEntDef, const DynEntityClient *dynEntClient);
@@ -95,6 +97,8 @@ DynEntityColl *__cdecl DynEnt_GetEntityColl(DynEntityCollType collType, unsigned
 void __cdecl DynEntCl_DestroyEntityModel(unsigned __int16 id);
 void __cdecl DynEnt_FixupLightConstraints(int localClientNum, int entnum, int primaryLightIndex);
 void __cdecl DynEntCl_ProcessEntities(int localClientNum, int time);
+// Developer observation only; reset on client shutdown, disabled by default.
+void DynEntCl_SetCheckpointSleepTrace(bool enabled);
 void __cdecl DynEnt_UpdateLightConstraint(
                 int localClientNum,
                 const DynEntityDef *dynEntDef,

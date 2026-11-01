@@ -23,4 +23,14 @@ bool DecodeCanonicalWma(const WmaAssetView &asset, DecodedWma &output, std::stri
 // irregularities are tolerated like the original XAudio2 xWMA path (the strict form aborts
 // on the first one). Used only after the strict decode fails.
 bool DecodeCanonicalWmaTolerant(const WmaAssetView &asset, DecodedWma &output, std::string &error);
+// Complete canonical 262-byte/channel MSADPCM blocks. Checkpoint-only PCM owner:
+// exact frame offsets are possible without the SDK's ADPCM block rounding.
+struct MsAdpcmAssetView {
+    unsigned channels, sampleRate, frameCount;
+    std::span<const std::uint8_t> blocks;
+};
+struct DecodedMsAdpcm {
+    std::vector<std::int16_t> samples;
+};
+bool DecodeCanonicalMsAdpcm(const MsAdpcmAssetView &asset, DecodedMsAdpcm &output, std::string &error);
 }

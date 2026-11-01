@@ -1,7 +1,0 @@
-# Native sampled-image dependency diagnosis
-
-2026-10-15 stage74. SDK593/stage162 passes the old uniform arena limit, reaches CA_ACTIVE167814ms and fails image_usage::Sample while recording a main-lit rigid XModel draw. Matching map/ELF: native-arena-stage73-next-stack.txt. The rule rejects active attachments or absent/non-preserved contents, but the prior error omitted the specific image/material and journal values.
-
-Failure-only diagnostics now append journal active/contents/layout/expected-layout/sampled flags; actual immutable image name/serial and reflected slot; plus material/technique. These fields distinguish a missing producer/preservation transition from active-attachment feedback. The image/layout rules, descriptor binding, shaders and real draws are unchanged. No uninitialized texture is marked ready, substituted or silently allowed.
-
-Engine build passes. Actual SDK594/stage163 enginebfce07d887a5cc21ab7706caf035dc72670e9944 PID30383 identifies $ui3d slot1 serial2345, active0/contents0/layoutUNDEFINED/expectedSHADER_READ_ONLY/sampled1, material mc/mtl_ui3d_0, technique pimp_technique_ui3d_2b7d37f4. Process terminal/absent. Canonical RB_CallExecuteRenderCommands updates UI3D after RB_Draw3D, so the first scene can consume a new UI allocation before any UI producer. Stage75 initializes that specific history image to actual transparent black before its first scene; existing UI order/pixels are retained. See native_vulkan_ui3d_initial_contents.md. Full native room, gameplay, lifecycle/reset and performance remain unverified.

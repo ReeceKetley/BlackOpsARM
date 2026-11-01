@@ -34,5 +34,6 @@ bool CL_SP_GetActorModels(int localClientNum, int messageNum, snapshot_s *snapsh
 void CG_SP_SetActorModels(int localClientNum, const snapshot_s *snapshot);
 const SPActorModelInfo *CG_SP_GetActorModels(int localClientNum, const actorInfo_t *ai);
 void CG_SP_CopyActorModels(int localClientNum, actorInfo_t *corpseInfo, const actorInfo_t *ai);
+void CG_SP_SetCorpseModels(int localClientNum, actorInfo_t *corpseInfo, const SPActorModelInfo *models);
 void CG_SP_TransitionActors(int localClientNum, const snapshot_s *snapshot);
 void CG_SP_SwapCorpseTree(int localClientNum, const struct centity_s *cent, int actorNum);

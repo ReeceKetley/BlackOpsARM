@@ -3,6 +3,10 @@
 #include <cgame_mp/cg_anim_commands.h>
 #include <game_sp/actor_sp_ext.h>
 #include <game_sp/g_sp_levelstart.h>
+#include <game_sp/g_sp_loadgame.h>
+#if defined(__ANDROID__)
+#include <game_sp/g_sp_savegame.h>
+#endif
 #include <game_mp/actor_mp.h>
 #include "cg_actors_mp.h"
 #include "cg_scr_main_mp.h"
@@ -146,6 +150,21 @@ void __cdecl CG_SP_ActorUseServerAnims(int localClientNum, centity_s *cent)
     clientTree = CG_SP_GetActorClientTree(localClientNum, cent); // SP 0x00454430
     if ( !clientTree )
         return;
+    if (cent->nextState.eType == ET_ACTOR_CORPSE && localClientNum == 0)
+    {
+        SPActorModelInfo models;
+        if (SP_TakeRenderedSavedCorpse(&cent->nextState, &models, clientTree))
+        {
+            actorInfo_t *corpse = &CG_GetLocalClientStaticGlobals(localClientNum)->actorCorpseInfo[cent->nextState.lerp.u.actor.corpseNum];
+            CG_SP_SetCorpseModels(localClientNum, corpse, &models);
+            CG_UpdateActorDObj(localClientNum, cent, corpse);
+            DObj *restored = Com_GetClientDObj(cent->nextState.number, localClientNum);
+            if (!restored || DObjGetTree(restored) != clientTree)
+                Com_Error(ERR_DROP, "Saved corpse failed to reconstruct its client model/tree owner");
+            Com_Printf(15, "loadgame corpse: client ent %i slot %i model %s tree nodes %u reconstructed before ragdoll\n",
+                cent->nextState.number, cent->nextState.lerp.u.actor.corpseNum, models.model, clientTree->children);
+        }
+    }
     if ( !CG_GetLocalClientStaticGlobals(localClientNum)->localServer )
         return;
     if ( !ai_useServerAnims->current.enabled
@@ -532,6 +551,11 @@ void __cdecl CG_Actor(int localClientNum, centity_s *cent)
 
 bool __cdecl CG_EntityNeedsScriptThread(int localClientNum, centity_s *cent)
 {
+#if defined(__ANDROID__)
+    // Actor/player/missile native setup also reaches this shared predicate.
+    // Preserve pending script intent until the saved CLIENT owns the frame.
+    if (G_SP_ShouldDeferSavedClientCallbacks()) return false;
+#endif
     if ( !cg_loadScripts || !cg_loadScripts->current.enabled )
         return 0;
     if ( !CL_LocalClient_IsFirstActive(localClientNum) )

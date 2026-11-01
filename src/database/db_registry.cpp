@@ -3,6 +3,8 @@
 #include "gfx_vulkan/buffer_assets.h"
 #include "gfx_vulkan/shader_assets.h"
 #include "gfx_d3d/r_bsp.h"
+#include "platform/android/native_vulkan_device.h"
+#include "platform/android/quit_services.h"
 #endif
 #if defined(__ANDROID__)
 #include <atomic>
@@ -1207,7 +1209,20 @@ void __cdecl Mark_DDLAsset(ddlRoot_t *ddlRoot)
 
 void __cdecl Load_GfxWorldAsset(XAssetHeader *gfxWorld)
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    const auto temporaryOwner = gfxWorld->gfxWorld;
+#endif
     gfxWorld->xmodelPieces = DB_AddXAsset(ASSET_TYPE_GFXWORLD, (XAssetHeader)gfxWorld->xmodelPieces).xmodelPieces;
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    // DB_CopyXAsset cloned the native buffers into the stable asset record.
+    // Retire the incoming fastfile struct's aliases just as image publication
+    // does; they must not outlive that temporary owner or pin a retired world.
+    if (bo1::vulkan::shader_assets::Active() && temporaryOwner != gfxWorld->gfxWorld)
+    {
+        bo1::vulkan::buffer_assets::Release(&temporaryOwner->draw.vd.worldVb);
+        bo1::vulkan::buffer_assets::Release(&temporaryOwner->draw.vld.layerVb);
+    }
+#endif
 }
 
 void __cdecl Mark_GfxWorldAsset(GfxWorld *gfxWorld)
@@ -1215,9 +1230,19 @@ void __cdecl Mark_GfxWorldAsset(GfxWorld *gfxWorld)
     DB_GetXAsset(ASSET_TYPE_GFXWORLD, (XAssetHeader)gfxWorld);
 }
 
-void __cdecl DB_RemoveGfxWorld(XAssetHeader)
+void __cdecl DB_RemoveGfxWorld(XAssetHeader header)
 {
     R_UnloadWorld();
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    // R_ShutdownWorld retires the active s_world copy. The DB record is a
+    // distinct stable owner, and can also be an inactive frontend/override.
+    if (bo1::vulkan::shader_assets::Active())
+    {
+        iassert(header.gfxWorld);
+        bo1::vulkan::buffer_assets::Release(&header.gfxWorld->draw.vd.worldVb);
+        bo1::vulkan::buffer_assets::Release(&header.gfxWorld->draw.vld.layerVb);
+    }
+#endif
 }
 
 void __cdecl Load_LightDefAsset(XAssetHeader *lightDef)
@@ -5633,6 +5658,20 @@ void __cdecl DB_SyncExternalAssetsInternal()
 
 void DB_SyncExternalAssets() // inlined in retail
 {
+#if defined(__ANDROID__) && defined(BO1_NATIVE_VULKAN_RESOURCES) && BO1_NATIVE_VULKAN_RESOURCES
+    if (Sys_IsQuitRequested() && bo1::android::native_device::Requested() && !bo1::android::native_device::Renderer())
+    {
+        // Com_Close repeats DB shutdown after terminal renderer retirement.
+        // R_ShutdownDirect3D already removed the real assets and device; do
+        // not enqueue shader/stream work against that retired consumer.
+        // A live database here is an ownership error, not an empty sync.
+        iassert(Sys_IsQuitRequested() && !rg.registered);
+        iassert(!g_zoneCount && !g_defaultAssetCount);
+        for (unsigned i = 0; i < ARRAY_COUNT(db_hashTable); ++i)
+            iassert(!db_hashTable[i]);
+        return;
+    }
+#endif
     int depth; // [esp+0h] [ebp-4h]
 
     depth = 0;

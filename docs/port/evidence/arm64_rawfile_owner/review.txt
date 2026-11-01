@@ -1,1 +1,0 @@
-Read-only specialist audit: canonical bodies reusable unchanged; preserve1024/2048 policy, actual type36 size getter and default order. Reviewed final diff/fixtures/collector/source verifier: no correctness blocker. Child lifetime remains zone-owned and rejection is fixture contract. Collector now hashes own/new tools and checks record placement. No reviewer edits/builds.

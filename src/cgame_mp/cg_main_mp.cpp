@@ -1,3 +1,6 @@
+#if defined(__ANDROID__)
+#include <game_sp/g_sp_savegame.h>
+#endif
 #include <platform/bo1_native_width.h>
 #if defined(__ANDROID__)
 #include <climits>
@@ -3033,6 +3036,23 @@ void __cdecl CG_FreeClientEntityCaches(int localClientNum)
     }
 }
 
+void CG_InitAnimationServices(int localClientNum)
+{
+    auto *cgameGlob = CG_GetLocalClientGlobals(localClientNum);
+    cgameGlob->bgs.animData = &cg_bgsAnim;
+    cgameGlob->bgs.animData->animScriptData.soundAlias = SND_FindAlias;
+    cgameGlob->bgs.animData->animScriptData.playSoundAlias = CG_PlayAnimScriptSoundAlias;
+    cgameGlob->bgs.GetXModel = FX_RegisterModel;
+    cgameGlob->bgs.CreateDObj = CG_CreateDObj;
+    cgameGlob->bgs.AttachWeapon = CG_AttachWeapon;
+    cgameGlob->bgs.GetDObj = CG_GetDObj;
+    cgameGlob->bgs.SafeDObjFree = Com_SafeClientDObjFree;
+    cgameGlob->bgs.AllocXAnim = Hunk_AllocXAnimClient;
+    cgameGlob->bgs.anim_user = 0;
+    cgameGlob->bgs.Rand = CG_rand;
+    cgameGlob->bgs.Random = CG_random;
+}
+
 void __cdecl CG_Init(int localClientNum, int serverMessageNum, int serverCommandSequence, int clientNum)
 {
     unsigned __int16 t; // [esp+1Ch] [ebp-64h]
@@ -3100,18 +3120,7 @@ void __cdecl CG_Init(int localClientNum, int serverMessageNum, int serverCommand
     CL_SetADS(localClientNum, 0);
 
     cgameGlob->objectiveText[0] = 0;
-    cgameGlob->bgs.animData = &cg_bgsAnim;
-    cgameGlob->bgs.animData->animScriptData.soundAlias = SND_FindAlias;
-    cgameGlob->bgs.animData->animScriptData.playSoundAlias = CG_PlayAnimScriptSoundAlias;
-    cgameGlob->bgs.GetXModel = FX_RegisterModel;
-    cgameGlob->bgs.CreateDObj = CG_CreateDObj;
-    cgameGlob->bgs.AttachWeapon = CG_AttachWeapon;
-    cgameGlob->bgs.GetDObj = CG_GetDObj;
-    cgameGlob->bgs.SafeDObjFree = Com_SafeClientDObjFree;
-    cgameGlob->bgs.AllocXAnim = Hunk_AllocXAnimClient;
-    cgameGlob->bgs.anim_user = 0;
-    cgameGlob->bgs.Rand = CG_rand;
-    cgameGlob->bgs.Random = CG_random;
+    CG_InitAnimationServices(localClientNum);
     cgameGlob->clientNum = clientNum;
     cgameGlob->drawHud = 1;
 
@@ -3855,7 +3864,7 @@ DObj *__cdecl CG_GetDObj(unsigned int handle, int localClientNum)
     return Com_GetClientDObj(handle, localClientNum);
 }
 
-void __cdecl CG_InitEntities(int localClientNum)
+static void CG_InitEntitySlots(int localClientNum, bool spawnFromMap)
 {
     cg_s *LocalClientGlobals; // eax
     int entityIndex; // [esp+8h] [ebp-Ch]
@@ -3876,11 +3885,13 @@ void __cdecl CG_InitEntities(int localClientNum)
 #else
     memset((unsigned __int8 *)&cg_fakeEntitiesArray[512 * localClientNum], 0, 0x65800u);
 #endif
-    CG_InitFakeEntities(localClientNum, 1);
+    CG_InitFakeEntities(localClientNum, spawnFromMap);
     LocalClientGlobals = CG_GetLocalClientGlobals(localClientNum);
     LocalClientGlobals->predictedPlayerEntity.pose.localClientNum = localClientNum;
     R_InitShaderConstantSet(&LocalClientGlobals->predictedPlayerEntity.pose.constantSet);
 }
+
+void __cdecl CG_InitEntities(int localClientNum) { CG_InitEntitySlots(localClientNum, true); }
 
 void __cdecl CG_InitViewDimensions(int localClientNum)
 {
@@ -4020,7 +4031,7 @@ void __cdecl CG_SetupGameInformation(int localClientNum)
     CG_GetLocalClientGlobals(localClientNum)->matchUIVisibilityFlags = cls.gameState.matchUIVisibilityFlags;
 }
 
-void __cdecl CG_Shutdown(int localClientNum)
+static void CG_ShutdownState(int localClientNum, bool keepServices)
 {
     colgeom_visitor_inlined_t<200> *v1; // [esp+0h] [ebp-28h]
     int i; // [esp+14h] [ebp-14h]
@@ -4059,12 +4070,15 @@ void __cdecl CG_Shutdown(int localClientNum)
             }
         }
     }
+    if (!keepServices)
+    {
     g_ambientStarted = 0;
     g_mapLoaded = 0;
     Mantle_ShutdownAnims();
     Dog_ShutdownAnims();
     if ( !useFastFile->current.enabled )
         Menus_FreeAllMemory(&cgDC[localClientNum]);
+    }
     CG_FreeWeapons(localClientNum);
     CG_FreeClientEntityCaches(localClientNum);
     CG_FreeClientDObjInfo(localClientNum);
@@ -4074,11 +4088,26 @@ void __cdecl CG_Shutdown(int localClientNum)
     CG_ShutdownEntity(localClientNum, &cgameGlob->predictedPlayerEntity, 1);
     FX_KillAllEffects(localClientNum);
     FX_ShutdownSystem(localClientNum);
-    DynEntCl_Shutdown(localClientNum);
+    if (!keepServices) DynEntCl_Shutdown(localClientNum);
     CG_ShutdownFakeEntities(localClientNum);
-    GlassCl_Reset(localClientNum);
+    if (!keepServices) GlassCl_Reset(localClientNum);
     num_heli_height_lock_patches = 0;
     CG_FreeAnimTreeInstances(localClientNum);
+    if (keepServices)
+    {
+        // Native entity/VM holders have retired. Reuse the real live map and
+        // rendering services, never a copy of a dead cg pointer graph.
+        for (int n = 0; n < cg_entArrayCount; ++n)
+        {
+            auto *cent = &cg_entitiesArray[localClientNum][n];
+            if (cent->linkInfo) { MT_Free(reinterpret_cast<unsigned char *>(cent->linkInfo), sizeof(cLinkInfo_s), SCRIPTINSTANCE_SERVER); cent->linkInfo = nullptr; }
+        }
+        memset(cg_entitiesArray[localClientNum], 0, cg_entArrayCount * sizeof(centity_s));
+        cgameGlob->predictedPlayerEntity = {}; cgameGlob->predictedPlayerState = {};
+        cgameGlob->snap = cgameGlob->nextSnap = nullptr;
+        CG_InitEntitySlots(localClientNum, false);
+        return;
+    }
     cgameGlob->nextSnap = 0;
     memset((unsigned __int8 *)cgameGlob, 0, sizeof(cg_s));
     BG_SP_ClearActorInfo(&cgameGlob->bgs);
@@ -4096,6 +4125,16 @@ void __cdecl CG_Shutdown(int localClientNum)
         __debugbreak();
     }
 }
+
+void __cdecl CG_Shutdown(int localClientNum)
+{
+#if defined(__ANDROID__)
+    G_SP_AbortClientModelsCheckpoint();
+#endif
+    CG_ShutdownState(localClientNum, false);
+}
+
+void CG_RetireCheckpointOwners(int localClientNum) { CG_ShutdownState(localClientNum, true); }
 
 void __cdecl CG_FreeAnimTreeInstances(int localClientNum)
 {

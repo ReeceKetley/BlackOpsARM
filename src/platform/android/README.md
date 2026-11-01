@@ -11,6 +11,6 @@ APK packaging. They do not initialize the engine or implement platform services.
 addresses encode into four-byte region-tagged slots using acquire/release atomic
 publication and serialized registration. Region exhaustion aborts explicitly.
 The standalone audit project links/tests this implementation; the environment
-APK remains unchanged. See `../../../docs/port/arm64_compilation_audit.md`.
+APK remains unchanged. See the repository README for the current port status.
 Future lifecycle, SDL2/Vulkan/DXVK WSI, audio and Xbox controller input belong
-here, separate from shared gameplay. See `../../../docs/port/android_arm64.md`.
+here, separate from shared gameplay.

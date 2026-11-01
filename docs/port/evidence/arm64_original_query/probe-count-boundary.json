@@ -1,7 +1,0 @@
-{
-  "previous_host_results": "build-android-audit/stringtable_crt_sort_host_run1/results.json",
-  "before_sha256": "93789c541c9326ff59446625d5deec407bc09dcdb9954411c4f0923946adaf85",
-  "change": "Maximum signed16-index permutation count corrected from32767 to32768",
-  "previous_build": "build-android-audit/stringtable_crt_sort_build1",
-  "source": "tools/port/tests/stringtable_crt_sort_probe.cpp"
-}

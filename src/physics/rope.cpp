@@ -1570,23 +1570,30 @@ void __cdecl Rope_Trace(const float *p0, const float *p1)
                     && rope->m_max[1] >= mins[1]
                     && rope->m_max[2] >= mins[2] )
                 {
-                    nverts = 3 * rope->m_num_particles;
+                    if (rope->m_num_particles < 2 || rope->m_num_particles > 25 || rope->m_client_verts.frame_index > 1)
+                        Com_Error(ERR_DROP, "Rope trace invalid particle/frame inventory");
+                    const auto &curve = rope->m_client_verts.frame_verts[rope->m_client_verts.frame_index];
+                    if (curve.num_verts < 0 || curve.num_verts > 49)
+                        Com_Error(ERR_DROP, "Rope trace invalid curve inventory");
+                    if (!curve.num_verts) continue; // No curve has been built yet.
+                    nverts = curve.num_verts + 1;
                     for ( vi = 0; vi < nverts; ++vi )
                     {
-                        if ( trace_point_through_sphere(p0, ud, rope->m_client_verts.frame_verts[0].v[vi], radius_0, &t, hitp) )
+                        const int particleIndex = vi * (rope->m_num_particles - 1) / curve.num_verts;
+                        if ( trace_point_through_sphere(p0, ud, curve.v[vi], radius_0, &t, hitp) )
                         {
                             if ( vlen > t )
                             {
                                 rope->m_flags &= ~2u;
                                 rope->m_stable_count = 0;
                                 force = local_scale * rope->m_force_scale;
-                                v5 = rope->m_particles[vi / 3].p[0];
-                                v6 = rope->m_particles[vi / 3].p[1];
-                                v7 = rope->m_particles[vi / 3].p[2];
+                                v5 = rope->m_particles[particleIndex].p[0];
+                                v6 = rope->m_particles[particleIndex].p[1];
+                                v7 = rope->m_particles[particleIndex].p[2];
                                 f = force * ud[0];
                                 f_4 = force * ud[1];
                                 f_8 = force * ud[2];
-                                p = rope->m_particles[vi / 3].p;
+                                p = rope->m_particles[particleIndex].p;
                                 *p = (float)(2.0 * v5) + (float)(-1.0 * p[3]);
                                 p[1] = (float)(2.0 * v6) + (float)(-1.0 * p[4]);
                                 p[2] = (float)(2.0 * v7) + (float)(-1.0 * p[5]);
@@ -1599,11 +1606,15 @@ void __cdecl Rope_Trace(const float *p0, const float *p1)
                                 if ( rope->m_health > 0 && !--rope->m_health )
                                 {
                                     DeleteConstraint(ri);
-                                    if ( LODWORD(rope->m_particles[24].p_prev[7 * rope->m_num_particles]) == 1 )
+                                    // The decompiled particle-array expression
+                                    // aliased this constraint's type on 32-bit;
+                                    // use its actual bounded owner instead.
+                                    const int firstAnchor = rope->m_num_particles - 1;
+                                    if (firstAnchor < rope->m_num_constraints && rope->m_constraints[firstAnchor].type == ROPE_WORLD_CONSTRAINT)
                                     {
                                         Rope_RemoveAnchor(ri, 0);
                                     }
-                                    else if ( rope->m_constraints[rope->m_num_particles].type == ROPE_WORLD_CONSTRAINT )
+                                    else if (rope->m_num_particles < rope->m_num_constraints && rope->m_constraints[rope->m_num_particles].type == ROPE_WORLD_CONSTRAINT)
                                     {
                                         Rope_RemoveAnchor(ri, rope->m_num_particles - 1);
                                     }
@@ -1841,3 +1852,5 @@ void __cdecl Rope_CollideEntities(int rope_index)
     }
 }
 
+
+#include "rope_checkpoint.inl"

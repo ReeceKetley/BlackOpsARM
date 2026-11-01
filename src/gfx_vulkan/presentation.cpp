@@ -1,4 +1,8 @@
 #include "presentation.h"
+#if defined(__ANDROID__)
+#include <platform/android/vulkan_window.h>
+#include <vulkan/vulkan_android.h>
+#endif
 #include <SDL.h>
 #include <SDL_vulkan.h>
 #include <algorithm>
@@ -36,7 +40,34 @@ Presentation::~Presentation() {
         for(auto& slot:slots_) {if(slot.acquired)vkDestroySemaphore(device_,slot.acquired,nullptr);if(slot.fence)vkDestroyFence(device_,slot.fence,nullptr);if(slot.pool)vkDestroyCommandPool(device_,slot.pool,nullptr);}
         vkDestroyDevice(device_,nullptr);
     }
-    if(surface_)vkDestroySurfaceKHR(instance_,surface_,nullptr);if(instance_)vkDestroyInstance(instance_,nullptr);
+    ReleaseSurface();if(instance_)vkDestroyInstance(instance_,nullptr);
+}
+void Presentation::ReleaseSurface() {
+    if(surface_)vkDestroySurfaceKHR(instance_,surface_,nullptr);surface_={};
+#if defined(__ANDROID__)
+    if(nativeWindow_)ANativeWindow_release(nativeWindow_);nativeWindow_=nullptr;
+#endif
+}
+bool Presentation::CreateSurface(std::string& error) {
+#if defined(__ANDROID__)
+    // Keep the acquired native window alive for the entire Vulkan surface lifetime.
+    auto* window=bo1::android::AcquireVulkanWindow(error);
+    if(!window)return false;
+    auto create=reinterpret_cast<PFN_vkCreateAndroidSurfaceKHR>(vkGetInstanceProcAddr(instance_,"vkCreateAndroidSurfaceKHR"));
+    if(!create) {ANativeWindow_release(window);error="Android Vulkan surface extension unavailable";return false;}
+    VkAndroidSurfaceCreateInfoKHR info{VK_STRUCTURE_TYPE_ANDROID_SURFACE_CREATE_INFO_KHR};info.window=window;
+    const VkResult result=create(instance_,&info,nullptr,&surface_);
+    if(result!=VK_SUCCESS) {
+        ANativeWindow_release(window);
+        if(result!=VK_ERROR_SURFACE_LOST_KHR)Ok(result,"Android surface",error);
+        return false;
+    }
+    nativeWindow_=window;
+    return true;
+#else
+    if(!SDL_Vulkan_CreateSurface(window_,instance_,&surface_)) {error=SDL_GetError();return false;}
+    return true;
+#endif
 }
 void Presentation::ReleaseSwapchain() {
     for(auto frame:frames_)if(frame)vkDestroyFramebuffer(device_,frame,nullptr);frames_.clear();
@@ -55,7 +86,7 @@ bool Presentation::Open(SDL_Window* window,bool preferMailbox,std::string& error
     VkInstanceCreateInfo instance{VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO};instance.pApplicationInfo=&app;
     instance.enabledExtensionCount=count;instance.ppEnabledExtensionNames=extensions.data();
     if(!Ok(vkCreateInstance(&instance,nullptr,&instance_),"instance",error))return false;
-    if(!SDL_Vulkan_CreateSurface(window,instance_,&surface_)) {error=SDL_GetError();return false;}
+    if(!CreateSurface(error)) {if(error.empty())error="Initial Android surface is not ready";return false;}
     if(!Ok(vkEnumeratePhysicalDevices(instance_,&count,nullptr),"physical devices",error))return false;
     std::vector<VkPhysicalDevice> devices(count);
     if(!Ok(vkEnumeratePhysicalDevices(instance_,&count,devices.data()),"physical devices",error))return false;
@@ -99,8 +130,13 @@ bool Presentation::Rebuild(std::string& error) {
     if(surfaceLost_) {
         if(!Ok(vkDeviceWaitIdle(device_),"surface retirement",error))return false;
         ReleaseSwapchain();
-        if(surface_)vkDestroySurfaceKHR(instance_,surface_,nullptr);surface_={};
-        if(!SDL_Vulkan_CreateSurface(window_,instance_,&surface_)) {error=SDL_GetError();return false;}
+        ReleaseSurface();
+        if(!CreateSurface(error)) {
+            // SurfaceHolder may be between destroyed and created callbacks.
+            // Keep recovery pending and defer presentation; never send null to Vulkan.
+            resize_=true;
+            return error.empty();
+        }
         VkBool32 supported{};
         if(!Ok(vkGetPhysicalDeviceSurfaceSupportKHR(physical_,family_,surface_,&supported),"replacement surface support",error))return false;
         if(!supported) {error="Replacement surface requires another present queue";return false;}

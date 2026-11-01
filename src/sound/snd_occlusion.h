@@ -28,3 +28,9 @@ void __cdecl SND_LosOcclusionUpdate();
 void __cdecl SND_LosOcclusionThreadMain();
 void __cdecl SND_LosOcclusionInit();
 void __cdecl SND_LosOcclusionFini();
+#if defined(__ANDROID__)
+bool SND_BeginOcclusionCheckpoint();
+bool SND_EndOcclusionCheckpoint();
+bool SND_OcclusionCheckpointActive();
+bool SND_AbortOcclusionCheckpoint();
+#endif

@@ -84,6 +84,8 @@ static void Com_InitContentPacks_SP();
 #include <platform/android/engine_frame_timing.h>
 #include <platform/android/performance_overlay.h>
 #include <platform/android/server_thread.h>
+#include <sound/snd_occlusion.h>
+#include <sound/snd_driver_api.h>
 #endif
 #include <game_mp/pregame.h>
 #include <database/db_file_load.h>
@@ -943,6 +945,10 @@ void Com_Error(errorParm_t code, const char *fmt, ...)
             }
             TaskManager2_ComErrorCleanup();
             GlassCl_WaitUpdate();
+#if defined(__ANDROID__)
+            G_SP_AbortClientModelsCheckpoint();
+            if (SND_AbortOcclusionCheckpoint()) SD_EndCheckpoint();
+#endif
             Value = (jmp_buf *)Sys_GetValue(2);
             longjmp(*Value, -1);
         }
@@ -976,6 +982,10 @@ void __cdecl Com_CheckError()
     Sys_LeaveCriticalSection(CRITSECT_COM_ERROR);
     if ( errorEntered )
     {
+#if defined(__ANDROID__)
+        G_SP_AbortClientModelsCheckpoint();
+        if (SND_AbortOcclusionCheckpoint()) SD_EndCheckpoint();
+#endif
         Value = (jmp_buf *)Sys_GetValue(2);
         longjmp(*Value, -1);
     }
@@ -1016,8 +1026,17 @@ void __cdecl    Com_Quit_f()
         Sys_SyncDatabase();
         CL_ShutdownRef();
         R_Shutdown(1);
+#if defined(__ANDROID__)
+        std::fputs("Native shutdown: renderer acknowledged, retiring script users\n", stderr);
+#endif
         SL_ShutdownSystem(SCRIPTINSTANCE_SERVER, 1u);
+#if defined(__ANDROID__)
+        std::fputs("Native shutdown: closing common owners\n", stderr);
+#endif
         Com_Close();
+#if defined(__ANDROID__)
+        std::fputs("Native shutdown: common owners closed, retiring client memory/filesystem\n", stderr);
+#endif
         CL_FreePerLocalClientMemory();
         Com_CloseLogfiles();
         FS_Shutdown();
@@ -1025,6 +1044,9 @@ void __cdecl    Com_Quit_f()
         FS_ShutdownServerIwdNames();
         FS_ShutdownServerReferencedIwds();
         FS_ShutdownServerReferencedFFs();
+#if defined(__ANDROID__)
+        std::fputs("Native shutdown: canonical common cleanup completed\n", stderr);
+#endif
         //BLOPS_NULLSUB();
     }
     Sys_Quit();
@@ -1896,6 +1918,12 @@ void Com_ErrorCleanup()
     LargeLocalReset();
     R_PopRemoteScreenUpdate();
     Com_SyncThreads();
+#if defined(__ANDROID__)
+    // Restore any active checkpoint Pmove/controller scratch before renderer,
+    // VM or world teardown can retire the services those leases borrow.
+    G_SP_AbortClientModelsCheckpoint();
+    G_SP_AbortContinuousZombieResume();
+#endif
 #ifndef BO1_DEDICATED
     if (!IsDedicatedServer())
         R_ComErrorCleanup();
@@ -2705,6 +2733,16 @@ static bool com_frontEndAfterError;
 // the error popup and the front end follows when it closes.
 static void Com_AfterLevel_SP(const char *finalmsg, bool openErrorMenu)
 {
+#if defined(__ANDROID__)
+    if (G_SP_IsZombieSessionRecoveryMenu())
+    {
+        // The real Android launcher owns this disconnected error screen.
+        // Do not wait for a legacy menu asset to acknowledge the error.
+        UI_CloseAll(0);
+        com_frontEndAfterError = false;
+        return;
+    }
+#endif
     if ( finalmsg && I_stricmp(finalmsg, "EXE_MATCHENDED") )
         return;
     if ( !*Dvar_GetString("com_errorMessage") )
@@ -2835,6 +2873,19 @@ void __cdecl Com_Frame()
     if ( !_setjmp(*(jmp_buf *)Value) )
     {
         Com_CheckSyncFrame();
+#if defined(__ANDROID__)
+        // Serializers may raise ERR_DROP. Consume the launcher mailbox only
+        // while this frame's setjmp target is alive, never in the outer loop.
+        if (!Sys_IsHeadless()) G_SP_PollZombiesSession();
+        if (G_SP_IsZombieSessionRecoveryMenu())
+        {
+            // The failed world has been retired. Keep real input/quit command
+            // delivery alive while the launcher starts a fresh engine.
+            Com_EventLoop();
+            Cbuf_Execute(0, Com_LocalClient_GetControllerIndex(0));
+        }
+        else
+#endif
         Com_Frame_Try_Block_Function();
         ++com_frameNumber;
     }
@@ -3235,6 +3286,13 @@ void Com_StartHunkUsers()
     int Primary; // eax
     uiMenuCommand_t MenuScreen; // [esp-4h] [ebp-4h]
 
+#if defined(__ANDROID__)
+    // This nested initialization boundary must not overwrite the caller's
+    // frame target with a stack frame that will return before the next error.
+    jmp_buf initializationError;
+    void *previousError = Sys_GetValue(2);
+    Sys_SetValue(2, &initializationError);
+#endif
     Value = Sys_GetValue(2);
     //if ( _setjmp3(Value, 0) )
     if (_setjmp(*(jmp_buf *)Value))
@@ -3245,9 +3303,15 @@ void Com_StartHunkUsers()
     Com_AssetLoadUI();
     MenuScreen = (uiMenuCommand_t)UI_GetMenuScreen();
     Primary = Com_LocalClients_GetPrimary();
-    UI_SetActiveMenu(Primary, MenuScreen);
+#if defined(__ANDROID__)
+    if (!G_SP_IsZombieSessionRecoveryMenu())
+#endif
+        UI_SetActiveMenu(Primary, MenuScreen);
     Platform_InputFrame();
     Com_EventLoop();
+#if defined(__ANDROID__)
+    Sys_SetValue(2, previousError);
+#endif
 }
 
 void __cdecl Com_CloseLogfiles()
@@ -3262,21 +3326,42 @@ void __cdecl Com_CloseLogfiles()
 
 void __cdecl Com_Close()
 {
+#if defined(__ANDROID__)
+    std::fputs("Native common close: DObj/animation\n", stderr);
+#endif
     Com_ShutdownDObj();
     DObjShutdown();
     XAnimShutdown();
+#if defined(__ANDROID__)
+    std::fputs("Native common close: world/collision\n", stderr);
+#endif
     R_FreeWaterSimulationBuffers();
     Com_ShutdownWorld();
     CM_Shutdown();
+#if defined(__ANDROID__)
+    std::fputs("Native common close: screenshot/fileshare\n", stderr);
+#endif
     UI_ScreenshotShutdown();
     Live_FileShare_CacheShutdown();
+#if defined(__ANDROID__)
+    std::fputs("Native common close: hunk clear\n", stderr);
+#endif
     Hunk_Clear();
+#if defined(__ANDROID__)
+    std::fputs("Native common close: assets/scripts\n", stderr);
+#endif
     if ( useFastFile->current.enabled )
         DB_ShutdownXAssets();
     Scr_Shutdown(SCRIPTINSTANCE_SERVER);
     Scr_Shutdown(SCRIPTINSTANCE_CLIENT);
+#if defined(__ANDROID__)
+    std::fputs("Native common close: debug network/hunk user\n", stderr);
+#endif
     NET_ShutdownDebug();
     Hunk_UserShutdown();
+#if defined(__ANDROID__)
+    std::fputs("Native common close: complete\n", stderr);
+#endif
 }
 
 #endif // normal shutdown before shared console field clearing

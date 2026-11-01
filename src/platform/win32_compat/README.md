@@ -10,8 +10,7 @@ LARGE_INTEGER are not global replacements for DXVK's Windows types. The timer
 uses a fixed nanosecond timebase; a future QueryPerformanceCounter must use that
 same monotonic timebase. It is not implemented yet. Sleep resumes EINTR, yields
 for zero, waits indefinitely for INFINITE, and aborts on unrepresentable POSIX
-failure. Last-error state is thread-local. See
-`../../../docs/port/arm64_compilation_audit.md` for semantics and device tests.
+failure. Last-error state is thread-local. Historical audit reports are retained locally.
 
 `msvc_compat.h` accepts only Android ARM64 Clang: the audit uses MSVC spelling
 extensions, signed char, native ARM calling convention for __cdecl, and a real

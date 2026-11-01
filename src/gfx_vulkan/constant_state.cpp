@@ -28,4 +28,5 @@ void Clone(const GfxCmdBufState* source,const GfxCmdBufState* destination){
     auto& shard=registry.For(destination);std::lock_guard<std::mutex> lock(shard.mutex);
     if(!shared)shard.map.erase(destination);else shard.map[destination]=std::move(shared);
 }
+std::size_t RetireAll(){return registry.RetireAll();}
 }

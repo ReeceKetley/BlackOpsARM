@@ -1,3 +1,0 @@
-PASS bounded FastFile preamble: retail/unsigned magic, version 473, XFile header fields, fixture roundtrip, explicit missing/short/bad errors
-PASS bounded FastFile preamble: retail/unsigned magic, version 473, XFile header fields, fixture roundtrip, explicit missing/short/bad errors
-Host fastfile evidence: D:\Desktop\Black Ops 2 Android\BlackOpsARM\build-android-audit\host-fastfile-20261011-203129663

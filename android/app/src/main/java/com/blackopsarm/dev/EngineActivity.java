@@ -21,6 +21,8 @@ import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import org.json.JSONObject;
+import org.json.JSONException;
 import java.io.File;
 import java.io.IOException;
 import org.libsdl.app.SDLActivity;
@@ -31,6 +33,7 @@ public final class EngineActivity extends SDLActivity {
     public static final String EXTRA_USER_ROOT = "com.blackopsarm.dev.USER_ROOT";
     // Launcher start: map zone stem, and on-screen control opacity (0.2..1) / size (0.7..1.4).
     public static final String EXTRA_LAUNCHER_MAP = "com.blackopsarm.dev.LAUNCHER_MAP";
+    public static final String EXTRA_RESUME = "com.blackopsarm.dev.RESUME";
     public static final String EXTRA_TOUCH_OPACITY = "com.blackopsarm.dev.TOUCH_OPACITY";
     public static final String EXTRA_TOUCH_SCALE = "com.blackopsarm.dev.TOUCH_SCALE";
     private boolean adopted;
@@ -189,7 +192,15 @@ public final class EngineActivity extends SDLActivity {
     };
     // ---- in-process launcher menu --------------------------------------------------
     private native int nativeReadSessionState();
+    private native String[] nativeReadGraphicsInfo();
     private native boolean nativeRequestMapStart(String map);
+    private native String nativeReadResumeStatus();
+    private native boolean nativeRequestResumeAction(int action);
+    private TextView saveLeaveView;
+    private volatile boolean resumePending, resumeRequested;
+    private volatile int resumeRequestResult;
+    private int lastResumeResult;
+    private String lastResumeJson = "";
     private native int nativeReadLoadProgress();
     private native void nativeSetLoadZones(String csv);
     private int lastProgress = -1, progressMax;
@@ -203,18 +214,77 @@ public final class EngineActivity extends SDLActivity {
         @Override public void run() {
             try {
                 int state = nativeReadSessionState();
-                if (state != sessionState) { sessionState = state; onSessionState(state); }
+                pollResumeStatus();
+                if (state == 3) matchSeen = true;
+                if (state != sessionState && !(resumePending && state == 3)) { sessionState = state; onSessionState(state); }
                 if (menu != null && state != 3) pushProgress();
             } catch (LinkageError failure) { Log.e("BlackOpsARM", "Session state unavailable", failure); return; }
             performanceHandler.postDelayed(this, 250);
         }
     };
+    private void pollResumeStatus() {
+        try {
+            String json = nativeReadResumeStatus();
+            JSONObject status = new JSONObject(json);
+            int result = status.optInt("result");
+            if (resumePending && !resumeRequested && status.optBoolean("available") && !status.optBoolean("busy")) {
+                resumeRequestResult = result;
+                resumeRequested = nativeRequestResumeAction(3);
+            }
+            if (resumePending && resumeRequested && !status.optBoolean("busy") && result > resumeRequestResult) {
+                resumePending = false;
+                if (!status.optBoolean("success") && menu != null)
+                    menu.evaluateJavascript("window.onNativeResumeFailed&&window.onNativeResumeFailed(" + JSONObject.quote(status.optString("message")) + ");", null);
+            }
+            if (result != lastResumeResult) {
+                lastResumeResult = result;
+                if (!status.optString("message").isEmpty()) Toast.makeText(this, status.optString("message"), Toast.LENGTH_LONG).show();
+            }
+            if (menu != null && !json.equals(lastResumeJson)) {
+                lastResumeJson = json;
+                menu.evaluateJavascript("window.onNativeResumeStatus&&window.onNativeResumeStatus(" + JSONObject.quote(json) + ");", null);
+            }
+            if (saveLeaveView == null && mLayout != null) {
+                saveLeaveView = new TextView(this);
+                saveLeaveView.setTextColor(Color.WHITE); saveLeaveView.setTextSize(18);
+                saveLeaveView.setBackgroundColor(0xEE202020);
+                int pad = (int)(16 * getResources().getDisplayMetrics().density);
+                saveLeaveView.setPadding(pad, pad, pad, pad);
+                saveLeaveView.setContentDescription("Save session and leave game");
+                saveLeaveView.setClickable(true);
+                saveLeaveView.setOnClickListener(v -> {
+                    if (nativeRequestResumeAction(2)) { saveLeaveView.setEnabled(false); saveLeaveView.setText("SavingÃ¢â‚¬Â¦"); }
+                });
+                RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                params.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM); params.addRule(RelativeLayout.ALIGN_PARENT_START);
+                params.setMargins(pad, pad, pad, pad); mLayout.addView(saveLeaveView, params);
+            }
+            if (saveLeaveView != null) {
+                boolean visible = status.optBoolean("paused") && !overlayShown && (status.optBoolean("canSave") || status.optBoolean("busy"));
+                saveLeaveView.setVisibility(visible ? View.VISIBLE : View.GONE);
+                saveLeaveView.setEnabled(status.optBoolean("canSave") && !status.optBoolean("busy"));
+                saveLeaveView.setText(status.optBoolean("busy") ? "SavingÃ¢â‚¬Â¦" : "Save & leave");
+                if (visible) saveLeaveView.bringToFront();
+            }
+        } catch (JSONException failure) { Log.e("BlackOpsARM", "Resume status unavailable", failure); }
+    }
     private final LauncherBridge.Host menuHost = new LauncherBridge.Host() {
+        @Override public String hardwareInfo() { return HardwareReport.read(EngineActivity.this, nativeReadGraphicsInfo(), runningHeight); }
+        @Override public String resumeStatus() { return nativeReadResumeStatus(); }
         @Override public File gameRoot() { return new File(EngineActivity.this.gameRoot); }
         @Override public File userRoot() { return new File(EngineActivity.this.userRoot); }
         @Override public int runningHeight() { return runningHeight; }
-        @Override public boolean needsFreshEngine() { return matchSeen; }
+        @Override public boolean needsFreshEngine() { return matchSeen || sessionState == 4; }
         @Override public boolean requestMap(String map) { prepareProgress(map); return nativeRequestMapStart(map); }
+        @Override public boolean requestResume() {
+            try {
+                JSONObject status = new JSONObject(nativeReadResumeStatus());
+                resumeRequestResult = status.optInt("result");
+                if (!nativeRequestResumeAction(3)) return false;
+                resumeRequested = true; resumePending = true;
+                prepareProgress(status.optString("map")); return true;
+            } catch (JSONException failure) { return false; }
+        }
         @Override public void applyTouch(float opacity, float scale, float look) {
             runOnUiThread(() -> {
                 touchOpacity = opacity; touchScale = scale; touchLook = look;
@@ -225,44 +295,36 @@ public final class EngineActivity extends SDLActivity {
         @Override public void rememberHeight(int height) {
             getSharedPreferences("launcher", MODE_PRIVATE).edit().putInt("height", height).apply();
         }
-        @Override public void restartWithMap(String map, int height) {
+        @Override public void restartWithMap(String map, int height, boolean resume) {
             // The render size is fixed for the life of an engine process: start a fresh one.
             runOnUiThread(() -> relaunch(new Intent(EngineActivity.this, LauncherActivity.class)
-                    .putExtra("launchMap", map).putExtra("launchHeight", height)));
+                    .putExtra("launchMap", map).putExtra("launchHeight", height).putExtra("launchResume", resume)));
         }
         @Override public void openImporter() {
             runOnUiThread(() -> relaunch(new Intent(EngineActivity.this, AssetImportActivity.class)));
         }
         @Override public void quit() {
-            runOnUiThread(() -> { finishAndRemoveTask(); killEngineSoon(); });
+            runOnUiThread(() -> relaunch(null));
         }
     };
-    /** Starts another activity in a clean task, then ends this engine process (its state cannot be reset). */
+    private boolean transitionPending;
+    /** Relay the next launch to the main app process, then quit with the Activity/surface alive. */
     private void relaunch(Intent next) {
-        next.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        startActivity(next);
-        killEngineSoon();
-    }
-    private void killEngineSoon() {
-        performanceHandler.postDelayed(() -> android.os.Process.killProcess(android.os.Process.myPid()), 300);
+        if (transitionPending) return;
+        try {
+            EngineTransitionService.request(this, next, android.os.Process.myPid());
+            transitionPending = true;
+            SDLActivity.nativeSendQuit();
+        } catch (RuntimeException | LinkageError error) {
+            transitionPending = false;
+            Log.e("BlackOpsARM", "Could not request engine transition", error);
+            Toast.makeText(this, "Could not close the current session", Toast.LENGTH_LONG).show();
+        }
     }
     @SuppressLint("SetJavaScriptEnabled")
     private void showMenu(String hash) {
         if (menu != null || isFinishing() || mLayout == null) return;
-        WebView view = new WebView(this);
-        view.setBackgroundColor(Color.BLACK);
-        WebSettings settings = view.getSettings();
-        settings.setJavaScriptEnabled(true);
-        settings.setDomStorageEnabled(true); // the page keeps its settings in localStorage
-        settings.setMediaPlaybackRequiresUserGesture(false);
-        settings.setAllowContentAccess(false);
-        settings.setAllowFileAccessFromFileURLs(true);
-        view.setWebViewClient(new WebViewClient() {
-            @Override public boolean shouldOverrideUrlLoading(WebView v, WebResourceRequest request) {
-                return !request.getUrl().toString().startsWith("file:///android_asset/launcher/");
-            }
-        });
-        view.addJavascriptInterface(launcherBridge, "BlackOpsARM");
+        WebView view = LauncherWebView.create(this, launcherBridge);
         mLayout.addView(view, new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         menu = view;
         overlayShown = true;
@@ -283,6 +345,16 @@ public final class EngineActivity extends SDLActivity {
         view.destroy();
         updatePerformanceOverlay();
         updateTouchAvailability();
+    }
+    /** UI-thread acknowledgement for canonical native shutdown. Keep the SDL
+     * surface alive until renderer teardown; retire only startup/menu UI. */
+    boolean retireStartupOverlayForNativeQuit() {
+        if (Looper.myLooper() != Looper.getMainLooper() || isFinishing() || isDestroyed() || mLayout == null)
+            return false;
+        performanceHandler.removeCallbacks(sessionPoll);
+        if (saveLeaveView != null) { mLayout.removeView(saveLeaveView); saveLeaveView = null; }
+        hideMenu();
+        return menu == null;
     }
     /** Tells the engine which zones this map loads, so their real read progress can be shown. */
     private void prepareProgress(String map) {
@@ -316,11 +388,10 @@ public final class EngineActivity extends SDLActivity {
     private void onSessionState(int state) {
         Log.i("BlackOpsARM", "LAUNCHER session state " + state + " menu=" + (menu != null));
         if (state == 3) { matchSeen = true; hideMenu(); return; }
-        if (menu == null && matchSeen && !isFinishing()) showMenu("#maps"); // back from a match
+        if (menu == null && (matchSeen || state == 4) && !isFinishing()) showMenu(state == 4 ? "#main" : "#maps"); // recovery or back from a match
         if (menu != null) menu.evaluateJavascript("window.onNativeSession&&window.onNativeSession(" + state + ")", null);
     }
     @Override public void onBackPressed() {
-        Log.i("BlackOpsARM", "INPUT onBackPressed menu=" + (menu != null));
         if (menu != null) { menu.evaluateJavascript("window.onNativeBack&&window.onNativeBack()", null); return; }
         super.onBackPressed();
     }
@@ -562,7 +633,6 @@ public final class EngineActivity extends SDLActivity {
     }
 
     @Override public boolean dispatchKeyEvent(KeyEvent event) {
-        Log.i("BlackOpsARM", "INPUT key code=" + event.getKeyCode() + " action=" + event.getAction() + " source=0x" + Integer.toHexString(event.getSource()) + " device=" + event.getDeviceId());
         if (adopted && getIntent().getBooleanExtra("nativeVulkanPresentation", false)
                 && (event.getKeyCode() == KeyEvent.KEYCODE_BACK || event.getKeyCode() == KeyEvent.KEYCODE_ESCAPE)) {
             if (event.getAction() == KeyEvent.ACTION_UP && !event.isCanceled()) SDLActivity.nativeSendQuit();
@@ -596,13 +666,13 @@ public final class EngineActivity extends SDLActivity {
             return new String[] {gameRoot, userRoot, "--native-vulkan",
                     Integer.toString(getIntent().getIntExtra("nativeVulkanHeight", 0)),
                     launcherMap != null ? "--map=" + launcherMap
-                            : getIntent().getBooleanExtra("nativeAutoKino", true) ? "--kino" : "--menu"};
+                            : getIntent().getBooleanExtra("nativeAutoKino", false) ? "--kino" : "--menu"};
         }
         if (getIntent().getBooleanExtra("nativeVulkanPresentation", false)) {
             return new String[] {gameRoot, userRoot, "--vulkan-presentation"};
         }
         return new String[] {gameRoot, userRoot, "--rendered",
-                getIntent().getBooleanExtra("nativeAutoKino", true) ? "--kino" : "--menu"};
+                getIntent().getBooleanExtra("nativeAutoKino", false) ? "--kino" : "--menu"};
     }
 
     @Override protected void onCreate(Bundle state) {
@@ -648,12 +718,13 @@ public final class EngineActivity extends SDLActivity {
             touchScale = launcherPrefs.getFloat("touchScale", 1f);
             touchLook = launcherPrefs.getFloat("touchLook", 1f);
             launcherBridge = new LauncherBridge(menuHost);
+            resumePending = getIntent().getBooleanExtra(EXTRA_RESUME, false);
             createPerformanceOverlay();
             if (!getIntent().getBooleanExtra("nativeVulkanPresentation", false)) createTouchControls();
             // Normal start (the menu): the page covers the engine while it boots to its hidden
             // frontend. A restart for a chosen map shows the page's loading screen instead; the
             // testing shortcut (nativeAutoKino) starts without it.
-            menuMode = !getIntent().getBooleanExtra("nativeAutoKino", true);
+            menuMode = !getIntent().getBooleanExtra("nativeAutoKino", false);
             String launchMap = getIntent().getStringExtra(EXTRA_LAUNCHER_MAP);
             if (launchMap != null) { prepareProgress(launchMap); showMenu("#loading=" + launchMap); }
             else if (menuMode) showMenu("");
@@ -670,7 +741,6 @@ public final class EngineActivity extends SDLActivity {
     }
 
     @Override protected void onPause() {
-        Log.i("BlackOpsARM", "LIFECYCLE onPause");
         if (menu != null) { menu.onPause(); menu.pauseTimers(); }
         performanceResumed = false;
         updatePerformanceOverlay();
@@ -685,7 +755,6 @@ public final class EngineActivity extends SDLActivity {
     }
 
     @Override protected void onDestroy() {
-        Log.i("BlackOpsARM", "LIFECYCLE onDestroy");
         performanceHandler.removeCallbacks(sessionPoll);
         hideMenu();
         performanceResumed = false;

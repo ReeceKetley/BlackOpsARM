@@ -1,8 +1,0 @@
-asset_entry_init_tests.cpp
-db_registry.cpp
-script_pool_bridge.cpp
-script_string_services.cpp
-Generating Code...
-db_registry.obj : error LNK2019: unresolved external symbol "int __cdecl DB_GetXAssetTypeSize(int)" (?DB_GetXAssetTypeSize@@YAHH@Z) referenced in function "void __cdecl DB_CloneXAssetInternal(struct XAsset const *,struct XAsset *)" (?DB_CloneXAssetInternal@@YAXPBUXAsset@@PAU1@@Z)
-db_registry.obj : error LNK2019: unresolved external symbol "bool __cdecl Assert_MyHandler(char const *,int,int,char const *,...)" (?Assert_MyHandler@@YA_NPBDHH0ZZ) referenced in function "void __cdecl DB_CloneXAssetInternal(struct XAsset const *,struct XAsset *)" (?DB_CloneXAssetInternal@@YAXPBUXAsset@@PAU1@@Z)
-D:\Desktop\Black Ops 2 Android\BlackOpsARM\build-android-audit\asset_entry_host_pass1\x86\asset_entry_init.exe : fatal error LNK1120: 2 unresolved externals

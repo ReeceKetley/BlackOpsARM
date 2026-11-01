@@ -66,6 +66,14 @@ if(BO1_NATIVE_FULL_DATABASE)
     target_link_options(bo1_native_surface_image_save_tests PRIVATE -Wl,--gc-sections -fsanitize=undefined -static-libstdc++)
     target_link_libraries(bo1_native_surface_image_save_tests PRIVATE bo1_native_jpeg_codec)
     target_link_options(bo1_native_surface_image_save_tests PRIVATE -Wl,--wrap=malloc,--wrap=calloc,--wrap=free)
+    add_executable(bo1_native_zombie_save_store_tests
+        "${BO1_ROOT}/tools/port/tests/native_zombie_save_store_tests.cpp"
+        "${BO1_ROOT}/src/platform/android/zombie_save_store.cpp")
+    target_include_directories(bo1_native_zombie_save_store_tests PRIVATE "${BO1_ROOT}/src")
+    target_compile_features(bo1_native_zombie_save_store_tests PRIVATE cxx_std_20)
+    target_compile_options(bo1_native_zombie_save_store_tests PRIVATE -fsanitize=undefined -fno-sanitize-recover=all)
+    target_link_options(bo1_native_zombie_save_store_tests PRIVATE -fsanitize=undefined -static-libstdc++
+        -Wl,--wrap=write,--wrap=fsync,--wrap=renameat)
     add_executable(bo1_native_debug_tcp_tests
         "${BO1_ROOT}/tools/port/tests/native_debug_tcp_tests.cpp"
         "${BO1_ROOT}/src/win32/win_net.cpp"
@@ -552,6 +560,7 @@ if(BO1_NATIVE_FULL_DATABASE)
         "${BO1_ROOT}/src/game/actor_badplace.cpp"
         "${BO1_ROOT}/src/game/g_mapkit_path.cpp"
         "${BO1_ROOT}/src/game_sp/g_sp_savegame.cpp"
+        "${BO1_ROOT}/src/platform/android/zombie_save_store.cpp"
         "${BO1_ROOT}/src/game_sp/g_sp_loadgame.cpp"
         "${BO1_ROOT}/src/game_sp/g_scr_sp_entity.cpp"
         "${BO1_ROOT}/src/game_sp/g_actor_model_state.cpp"
@@ -1492,6 +1501,13 @@ if(BO1_NATIVE_SDL_APP)
         "${BO1_ROOT}/src/platform/android/native_engine_exports.map")
     target_include_directories(blackopsarm_engine PRIVATE "${BO1_ROOT}/src")
     target_link_libraries(blackopsarm_engine PRIVATE bo1_native_engine_runtime bo1_native_ubsan bo1_native_shader_compiler vulkan log)
+    # The console shares the same canonical engine archives, including renderer
+    # references introduced by native Vulkan. Keep its provider closure aligned
+    # even when headless policy never starts a presentation device.
+    get_target_property(BO1_CONSOLE_PROVIDER_SOURCES blackopsarm_engine SOURCES)
+    list(FILTER BO1_CONSOLE_PROVIDER_SOURCES EXCLUDE REGEX "/tools/port/engine/")
+    target_sources(bo1_native_engine_entry PRIVATE ${BO1_CONSOLE_PROVIDER_SOURCES})
+    target_link_libraries(bo1_native_engine_entry PRIVATE bo1_native_ubsan bo1_native_shader_compiler vulkan log)
 endif()
 
 # The native backend is a rendering library, like the optimized D3D9 provider.

@@ -1,3 +1,6 @@
+#if defined(__ANDROID__)
+#include <game_sp/g_sp_savegame.h>
+#endif
 #include "cg_animscripted_mp.h"
 #include "cg_local_mp.h"
 #include "cg_ents_mp.h"
@@ -281,7 +284,11 @@ void __cdecl CG_UpdateFakeEntityLink(int localClientNum, centity_s *cent, int pa
     {
         if ( linkInfo )
         {
-            MT_Free((unsigned char*)linkInfo, 72, SCRIPTINSTANCE_SERVER);
+
+#if defined(__ANDROID__)
+        G_SP_NotifyClientCheckpointLinkFree(linkInfo);
+#endif
+        MT_Free((unsigned char*)linkInfo, 72, SCRIPTINSTANCE_SERVER);
             cent->linkInfo = 0;
         }
     }
@@ -316,6 +323,10 @@ void __cdecl CG_UpdateFakeEntityLink(int localClientNum, centity_s *cent)
         && linkInfo->linkEnt != 1023
         && ((CENT_FLAGS(CG_GetEntity(localClientNum, cent->linkInfo->linkEnt)) >> 1) & 1) == 0 )
     {
+
+#if defined(__ANDROID__)
+        G_SP_NotifyClientCheckpointLinkFree(linkInfo);
+#endif
         MT_Free((unsigned char*)linkInfo, 72, SCRIPTINSTANCE_SERVER);
         cent->linkInfo = 0;
     }

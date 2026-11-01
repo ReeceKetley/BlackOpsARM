@@ -9,6 +9,7 @@
 #endif
 #include <universal/assertive.h>
 #include "snd_radverb.h"
+#include <cstring>
 
 #if defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST)
 #define SDXA2_MAX_FRAME_COUNT 1024
@@ -127,6 +128,14 @@ struct SDXA2MasterBusEffect : SDXA2Effect // sizeof=0xBD00
     snd_dsp_master_params params;
     snd_dsp_master_state state[8];
 
+#if defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST)
+    void STDMETHODCALLTYPE GetParameters(void *out, unsigned int size) override
+    {
+        iassert(out && size == sizeof(params));
+        memcpy(out, &params, sizeof(params));
+    }
+#endif
+
     SDXA2MasterBusEffect();
 
     void Process(
@@ -141,6 +150,14 @@ struct SDXA2RadverbEffect : SDXA2Effect // sizeof=0x87B80
     snd_rv_state state;                 // XREF: .data:00E1F218/o
                                         // .data:00E1F42C/o ...
     snd_rv_params params;
+
+#if defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST)
+    void STDMETHODCALLTYPE GetParameters(void *out, unsigned int size) override
+    {
+        iassert(out && size == sizeof(params));
+        memcpy(out, &params, sizeof(params));
+    }
+#endif
 
     float temp[SDXA2_MAX_FRAME_COUNT * 8];
 
@@ -188,6 +205,14 @@ struct SDXA2MasterNoVoiceBusEffect : SDXA2Effect // sizeof=0xB900
 {                                       // XREF: SoundState/r
     snd_dsp_master_no_voice_params params;
     snd_dsp_master_no_voice_state state[8];
+
+#if defined(__ANDROID__) || defined(BO1_NATIVE_FAUDIO_HOST_TEST)
+    void STDMETHODCALLTYPE GetParameters(void *out, unsigned int size) override
+    {
+        iassert(out && size == sizeof(params));
+        memcpy(out, &params, sizeof(params));
+    }
+#endif
 
     SDXA2MasterNoVoiceBusEffect();
 

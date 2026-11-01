@@ -14,6 +14,7 @@
 #include "sv_main_mp.h"
 #include "sv_main_pc_mp.h"
 #include <game_mp/g_main_mp.h>
+#include <game_sp/g_sp_savegame.h>
 #include <universal/com_files.h>
 #include <universal/com_memory.h>
 #include <universal/q_parse.h>
@@ -135,7 +136,7 @@ std::atomic<unsigned int> sv_thread_owns_game;
 volatile unsigned int sv_thread_owns_game;
 #endif
 
-void __cdecl SV_SetConfigstring(int index, char *val)
+static void SV_SetConfigstringInternal(int index, char *val, bool notifyClients)
 {
     unsigned __int16 v2; // [esp+20h] [ebp-448h]
     client_t *client; // [esp+38h] [ebp-430h]
@@ -164,7 +165,7 @@ void __cdecl SV_SetConfigstring(int index, char *val)
                  ? SL_GetString_(SCRIPTINSTANCE_SERVER, val, 0, 19)
                  : SL_GetLowercaseString_(val, 0, 19, SCRIPTINSTANCE_SERVER);
             sv.configstrings[index] = v2;
-            if ( SV_Loaded() || sv.restarting )
+            if ( notifyClients && (SV_Loaded() || sv.restarting) )
             {
                 len = strlen(val);
                 sprintf(buf, "%i", index);
@@ -219,6 +220,21 @@ void __cdecl SV_SetConfigstring(int index, char *val)
         if ( !Assert_MyHandler("C:\\projects_pc\\cod\\codsrc\\src\\server_mp\\sv_init_mp.cpp", 156, 0, "%s", "!val") )
             __debugbreak();
     }
+}
+
+void __cdecl SV_SetConfigstring(int index, char *val)
+{
+    SV_SetConfigstringInternal(index, val, true);
+}
+
+void SV_RestoreConfigstring(int index, char *val)
+{
+    // Bulk diagnostic load is followed by a fresh client baseline, not thousands
+    // of reliable deltas against the abandoned pre-load snapshot stream.
+    if (!G_SP_CheckpointOption("bo1_restore_live_tables")
+        || (!G_SP_IsContinuousZombieResume() && !Dvar_GetBool("bo1_restore_verify_quit")))
+        Com_Error(ERR_DROP, "Configstring restore requires live-table diagnostic load");
+    SV_SetConfigstringInternal(index, val, false);
 }
 
 void __cdecl SV_GetConfigstring(unsigned int index, char *buffer, int bufferSize)

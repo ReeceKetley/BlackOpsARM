@@ -609,6 +609,13 @@ void G_SP_NoteSnapshotSize(bool firstClient, int size)
 // its MP layout, so the value lives here, one slot per g_clients entry, cleared per level.
 static int s_spScriptHintString[32];
 
+void G_SP_RestoreScriptHintString(unsigned int clientNum, int encodedHint)
+{
+    iassert(clientNum < ARRAY_COUNT(s_spScriptHintString));
+    iassert(encodedHint >= 0);
+    s_spScriptHintString[clientNum] = encodedHint;
+}
+
 bool G_SP_GetScriptHintString(const gclient_s *client, int *hintString)
 {
     unsigned int clientNum = (unsigned int)(client - level.clients);

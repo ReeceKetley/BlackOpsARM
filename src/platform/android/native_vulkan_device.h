@@ -3,8 +3,9 @@
 #include "gfx_vulkan/hardware_info.h"
 namespace bo1::vulkan {class EngineFrames;}
 namespace bo1::android::native_device {
-// Backend choice is configuration, not initialization readiness. One SDL owner
-// creates/closes the device; renderer users must retire before closing it.
+// Backend choice is configuration, not initialization readiness. The creation
+// thread creates/closes the device; renderer users must retire before closing it.
+// In the real engine this is the render thread, separate from SDL event ownership.
 bool Configure(bool native,std::string& error);
 bool Requested();
 bool Open(SDL_Window*,bo1::vulkan::HardwareInfo&,std::string& error);

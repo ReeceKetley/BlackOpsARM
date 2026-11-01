@@ -1,1 +1,0 @@
-{"schema":"BlackOpsARM.TASK36.lookup-controls.v1","pointer_bytes":4,"hash_vectors":27,"bucket_collision_verified":true,"type_filter_before_header_access":true,"first_primary_match":true,"override_not_primary":true,"slash_hash_equal_lookup_miss":true,"deferred_count_hit_bypasses_endpoint":true,"ownership_baseline_restored":true,"registry_publication_executed":true}

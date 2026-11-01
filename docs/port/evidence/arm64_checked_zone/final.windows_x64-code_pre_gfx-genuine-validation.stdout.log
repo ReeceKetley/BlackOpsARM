@@ -1,3 +1,0 @@
-{"fixture":"genuine_partial_failure","failed_block":0,"real_prior_allocations":0,"restored":true}
-{"fixture":"genuine_partial_failure","failed_block":4,"real_prior_allocations":1,"restored":true}
-{"genuine_production_parity":true,"alloc_types":[0,1],"baseline":{"owners":0,"native_allocation_count":null,"native_requested_bytes":null,"reservations":1,"windows_low_position":0,"windows_high_position":515899392},"final":{"owners":0,"native_allocation_count":null,"native_requested_bytes":null,"reservations":1,"windows_low_position":0,"windows_high_position":515899392}}

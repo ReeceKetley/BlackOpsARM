@@ -9,12 +9,10 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.View;
-import android.widget.Button;
-import android.widget.CheckBox;
-import android.widget.LinearLayout;
-import android.widget.ProgressBar;
-import android.widget.ScrollView;
-import android.widget.TextView;
+import android.webkit.WebView;
+import android.webkit.JavascriptInterface;
+import org.json.JSONObject;
+import org.json.JSONArray;
 
 import java.io.IOException;
 import java.lang.ref.WeakReference;
@@ -26,72 +24,62 @@ public final class AssetImportActivity extends Activity {
     private static final int CHOOSE_FOLDER = 30;
     private static final Handler MAIN = new Handler(Looper.getMainLooper());
     // The job owns only application context and a weak UI reference, so rotations keep the copy running.
-    private static ImportJob job;
-    private TextView status;
-    private ProgressBar progress;
-    private Button choose;
-    private Button launch;
-    private CheckBox autoKino;
-    private Button cancel;
-    private boolean ready;
+    private static volatile ImportJob job;
+    private WebView menu;
+    private volatile String message = "Checking game files…";
+    private volatile boolean checking = true;
+    private volatile boolean ready;
+    private volatile String[] installedMaps = new String[0];
     private int refreshGeneration;
 
     @Override protected void onCreate(Bundle savedState) {
         super.onCreate(savedState);
-        int padding = (int) (24 * getResources().getDisplayMetrics().density);
-        LinearLayout layout = new LinearLayout(this);
-        layout.setOrientation(LinearLayout.VERTICAL);
-        layout.setPadding(padding, padding, padding, padding);
-        TextView title = new TextView(this);
-        title.setText("Black Ops Zombies");
-        title.setTextSize(28);
-        layout.addView(title);
-        TextView explanation = new TextView(this);
-        explanation.setText("Choose your original English game folder containing main and zone. "
-                + "The app copies game assets into its own storage and keeps your originals. "
-                + "Allow space for the copy (a full installation is about 12 GB). "
-                + "Uninstalling the app removes its copy and saved settings.\n\n"
-                + "Native Android development build. Gameplay and rendering are still being validated.");
-        explanation.setPadding(0, padding, 0, padding);
-        layout.addView(explanation);
-        status = new TextView(this);
-        status.setText("Checking imported files…");
-        status.setTextIsSelectable(true);
-        layout.addView(status);
-        progress = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
-        layout.addView(progress);
-        autoKino = new CheckBox(this);
-        autoKino.setText("Skip the menu and start Kino automatically (testing)");
-        autoKino.setChecked(getIntent().getBooleanExtra("nativeAutoKino",
-                getPreferences(MODE_PRIVATE).getBoolean("autoKino", false)));
-        autoKino.setOnCheckedChangeListener((button, checked) ->
-                getPreferences(MODE_PRIVATE).edit().putBoolean("autoKino", checked).apply());
-        layout.addView(autoKino);
-        choose = button(layout, "Choose game folder", view -> selectFolder());
-        launch = button(layout, "Launch game", view -> launchGame());
-        cancel = button(layout, "Cancel import", view -> {
-            if (job != null && job.running) {
-                job.cancelled.set(true);
-                status.setText("Stopping the import… Completed files can be reused when you import again.");
-                cancel.setEnabled(false);
-            }
-        });
-        ScrollView scroll = new ScrollView(this);
-        scroll.addView(layout);
-        setContentView(scroll);
-        setButtons(false);
+        getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_FULLSCREEN
+                | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+        menu = LauncherWebView.create(this, new ImportBridge());
+        setContentView(menu);
+        menu.loadUrl(LauncherWebView.URL + "#import");
     }
 
-    private Button button(LinearLayout parent, String text, View.OnClickListener action) {
-        Button button = new Button(this);
-        button.setText(text);
-        button.setOnClickListener(action);
-        parent.addView(button);
-        return button;
+    public final class ImportBridge {
+        @JavascriptInterface public String status() {
+            try {
+                ImportJob current = job;
+                JSONObject state = new JSONObject().put("busy", current != null && current.running)
+                        .put("checking", checking).put("message", message)
+                        .put("done", current == null ? 0 : current.done)
+                        .put("count", current == null ? 0 : current.count);
+                return new JSONObject().put("importer", true).put("installed", ready)
+                        .put("version", BuildConfig.VERSION_NAME).put("maps", new JSONArray(installedMaps))
+                        .put("import", state).toString();
+            } catch (org.json.JSONException error) { throw new IllegalStateException(error); }
+        }
+        @JavascriptInterface public String resumeStatus() { return "{\"available\":false}"; }
+        @JavascriptInterface public String hardwareInfo() { return HardwareReport.read(AssetImportActivity.this, null, 0); }
+        @JavascriptInterface public void openImport() { runOnUiThread(() -> { if (!checking && (job == null || !job.running)) selectFolder(); }); }
+        @JavascriptInterface public void cancelImport() { runOnUiThread(() -> {
+            if (job != null && job.running) { job.cancelled.set(true); message = "Stopping… Completed files can be reused next time."; publish(); }
+        }); }
+        @JavascriptInterface public void finishImport() { runOnUiThread(() -> { if (ready && !checking && (job == null || !job.running)) launchGame(); }); }
+        @JavascriptInterface public void quit() { runOnUiThread(() -> onBackPressed()); }
+    }
+
+    private void publish() {
+        if (menu != null) menu.evaluateJavascript("window.onNativeImportChanged&&window.onNativeImportChanged()", null);
+    }
+
+    @Override public void onBackPressed() {
+        if (job != null && job.running) {
+            new android.app.AlertDialog.Builder(this).setTitle("Stop importing?")
+                    .setMessage("Completed files can be reused. Your original files stay unchanged.")
+                    .setPositiveButton("Stop", (dialog, which) -> { job.cancelled.set(true); finish(); })
+                    .setNegativeButton("Keep importing", null).show();
+        } else if (ready) { launchGame(); } else { finish(); }
     }
 
     @Override protected void onResume() {
         super.onResume();
+        if (menu != null) menu.onResume();
         if (job != null) {
             job.activity = new WeakReference<>(this);
             if (job.running) { display(job); return; }
@@ -105,15 +93,18 @@ public final class AssetImportActivity extends Activity {
             job.activity.clear();
             if (isFinishing() && job.running) job.cancelled.set(true);
         }
+        if (menu != null) {
+            menu.removeJavascriptInterface("BlackOpsARM");
+            if (menu.getParent() instanceof android.view.ViewGroup)
+                ((android.view.ViewGroup)menu.getParent()).removeView(menu);
+            menu.destroy(); menu = null;
+        }
         super.onDestroy();
     }
 
-    private void setButtons(boolean busy) {
-        choose.setEnabled(!busy);
-        launch.setEnabled(!busy && ready);
-        cancel.setEnabled(busy && job != null && !job.cancelled.get());
-        cancel.setVisibility(busy ? View.VISIBLE : View.GONE);
-        progress.setVisibility(busy ? View.VISIBLE : View.GONE);
+    @Override protected void onPause() {
+        if (menu != null) menu.onPause();
+        super.onPause();
     }
 
     private void selectFolder() {
@@ -123,7 +114,7 @@ public final class AssetImportActivity extends Activity {
         if (previous != null) picker.putExtra(android.provider.DocumentsContract.EXTRA_INITIAL_URI, Uri.parse(previous));
         try { startActivityForResult(picker, CHOOSE_FOLDER); }
         catch (ActivityNotFoundException unavailable) {
-            status.setText("No folder picker is available on this device.");
+            setMessage("No folder picker is available on this device.");
         }
     }
 
@@ -133,13 +124,13 @@ public final class AssetImportActivity extends Activity {
         Uri tree = data.getData();
         int permission = data.getFlags() & Intent.FLAG_GRANT_READ_URI_PERMISSION;
         if (permission == 0) {
-            status.setText("The folder picker did not grant read access. Choose the folder again.");
+            setMessage("The folder picker did not grant read access. Choose the folder again.");
             return;
         }
         try {
             getContentResolver().takePersistableUriPermission(tree, permission);
         } catch (SecurityException denied) {
-            status.setText("This folder does not allow lasting access. Choose a local folder that Android can read.");
+            setMessage("This folder does not allow lasting access. Choose a local folder that Android can read.");
             return;
         }
         String previous = getPreferences(MODE_PRIVATE).getString("sourceTree", null);
@@ -150,25 +141,21 @@ public final class AssetImportActivity extends Activity {
         getPreferences(MODE_PRIVATE).edit().putString("sourceTree", tree.toString()).apply();
         if (job != null && job.running) return;
         refreshGeneration++;
-        ready = false;
+        checking = false; ready = false;
         job = new ImportJob(getApplicationContext(), tree, this);
         display(job);
         new Thread(job, "game-asset-import").start();
     }
 
-    private void display(ImportJob current) {
-        status.setText(current.message);
-        progress.setIndeterminate(current.count == 0);
-        if (current.count > 0) { progress.setMax(current.count); progress.setProgress(current.done); }
-        setButtons(current.running);
-    }
+    private void setMessage(String text) { message = text; publish(); }
+
+    private void display(ImportJob current) { message = current.message; checking = false; publish(); }
 
     private void refresh(boolean launchAfter) {
         final int generation = ++refreshGeneration;
         final WeakReference<AssetImportActivity> receiver = new WeakReference<>(this);
         final Context application = getApplicationContext();
-        choose.setEnabled(false);
-        launch.setEnabled(false);
+        checking = true; publish();
         new Thread(() -> {
             String failure = null;
             String game = null;
@@ -189,30 +176,23 @@ public final class AssetImportActivity extends Activity {
                 AssetImportActivity activity = receiver.get();
                 if (activity == null || activity.isDestroyed() || generation != activity.refreshGeneration) return;
                 activity.ready = problem == null && gamePath != null && userPath != null;
-                activity.setButtons(false);
+                activity.checking = false;
                 if (!activity.ready) {
-                    activity.status.setText(problem == null ? "Imported files are unavailable." : problem);
-                    if (job != null && !job.running && !job.success) activity.status.setText(job.message + "\n\n" + activity.status.getText());
+                    activity.setMessage(problem == null ? "Imported files are unavailable." : problem);
+                    if (job != null && !job.running && !job.success) activity.setMessage(job.message + "\n\n" + activity.message);
                 } else {
-                    activity.status.setText(job != null && job.success ? job.message
-                            : "Imported English startup and Kino files are available.\n"
-                            + "Game storage: " + gamePath);
-                    if (launchAfter && !activity.autoKino.isChecked()) {
-                        // Normal start: the launcher menu runs inside the engine activity.
+                    activity.setMessage(job != null && job.success ? job.message
+                            : "Game files are installed. Continue to the launcher or choose a folder to repair them.");
+                    java.util.ArrayList<String> maps = new java.util.ArrayList<>();
+                    for (String map : LauncherBridge.MAPS)
+                        if (new java.io.File(gamePath, "zone/common/" + map + ".ff").isFile()) maps.add(map);
+                    activity.installedMaps = maps.toArray(new String[0]);
+                    if (launchAfter) {
                         activity.startActivity(new Intent(activity, LauncherActivity.class));
-                    } else if (launchAfter) {
-                        Intent engine = new Intent(activity, EngineActivity.class);
-                        engine.putExtra("nativeVulkanPresentation",
-                                activity.getIntent().getBooleanExtra("nativeVulkanPresentation", false));
-                        engine.putExtra("nativeVulkanHeight", activity.getIntent().getIntExtra("nativeVulkanHeight", 0));
-                        engine.putExtra("nativeAutoKino", activity.autoKino.isChecked());
-                        engine.putExtra("nativeVulkanBackend",
-                                activity.getIntent().getBooleanExtra("nativeVulkanBackend", false));
-                        engine.putExtra(EngineActivity.EXTRA_GAME_ROOT, gamePath);
-                        engine.putExtra(EngineActivity.EXTRA_USER_ROOT, userPath);
-                        activity.startActivity(engine);
+                        activity.finish(); // Never leave the installer underneath the engine.
                     }
                 }
+                activity.publish();
             });
         }, "game-storage-check").start();
     }

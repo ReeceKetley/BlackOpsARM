@@ -1,7 +1,0 @@
-{
-  "failure": "FAIL-0016, run1 TypeError after genuine HONOR validation, no overall success claim",
-  "cause": "native executable Path shadowed by integer coordinate in resolved measurement loop",
-  "fix": "Rename only coordinate to cell_native_target; executable native Path now assigned once",
-  "source_before_fix_not_captured": "Actual failed traceback/invocations/stdout/stderr retained; no invented historical SHA",
-  "authoritative": "Debug run2 and optimized run1 all3ABIs completed successfully"
-}

@@ -1,4 +1,0 @@
-Traceback (most recent call last):
-  File "D:\Desktop\Black Ops 2 Android\BlackOpsARM\tools\port\generate_evaluator_test_services.py", line 31, in <module>
-    raise RuntimeError('Declaration not found: ' + name)
-RuntimeError: Declaration not found: Scr_RefToVariable

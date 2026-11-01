@@ -49,6 +49,13 @@ void __thiscall GlassesServer::Init()
 {
     unsigned int i; // [esp+20h] [ebp-Ch]
     Glasses *glss; // [esp+24h] [ebp-8h]
+#if defined(__ANDROID__)
+    // These values determine future damage/decay, including already cracked
+    // saved panes. Use the canonical DVAR_SAVED serializer and restore owner.
+    constexpr unsigned checkpointFlags = 0x1000;
+#else
+    constexpr unsigned checkpointFlags = 0;
+#endif
 
     if ( !this->inited )
     {
@@ -60,7 +67,7 @@ void __thiscall GlassesServer::Init()
                                                              BG_ZombieFloatDefault("glassDamageMultiplier", 1.0f, 0.4f), // zombies: SP 0x0040E762
                                                              0.1,
                                                              10.0,
-                                                             0,
+                                                             checkpointFlags,
                                                              "Multiplier the damage applied to the glass (server).");
         this->crackedDamageRateRange = _Dvar_RegisterVec2(
                                                                          "glassCrackedDamageRateRange",
@@ -68,7 +75,7 @@ void __thiscall GlassesServer::Init()
                                                                          (10.0),
                                                                          0.0,
                                                                          10000.0,
-                                                                         0,
+                                                                         checkpointFlags,
                                                                          "Range of the rate a cracked glass looses health points");
     }
     if ( !this->numGlasses )

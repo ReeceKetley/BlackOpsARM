@@ -381,3 +381,8 @@ void __cdecl Scr_DestructibleCallback(gentity_s *self, unsigned __int16 event, c
 void __cdecl CScr_DestructibleCallback(centity_s *self, unsigned __int16 event, int piece, float time, int damage);
 
 extern Destructible *cg_destructibles[1];
+
+struct MemoryFile;
+// Private port diagnostic logical-state codec; native handles are not persisted.
+void Destructible_WriteSaveState(MemoryFile *file);
+void Destructible_ReadSaveState(MemoryFile *file);

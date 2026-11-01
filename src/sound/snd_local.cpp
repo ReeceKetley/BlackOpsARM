@@ -745,9 +745,14 @@ void __cdecl SNDL_GameReset()
         }
         SNDL_Update();
         Sys_EnterCriticalSection(CRITSEC_SOUND_OCCLUSION);
+#if !defined(__ANDROID__)
         Sys_LeaveCriticalSection(CRITSEC_SOUND_OCCLUSION);
+#endif
         g_snd.traceSequence = 0;
         g_snd.lastTraceSequence = 0;
+#if defined(__ANDROID__)
+        Sys_LeaveCriticalSection(CRITSEC_SOUND_OCCLUSION);
+#endif
         SNDL_SetSnapshot(SND_SNAPSHOT_AMBIENT, g_snd.defaultHash, 0.0, 1.0);
         SNDL_SetSnapshot(SND_SNAPSHOT_SCRIPT, g_snd.defaultHash, 0.0, 1.0);
         SNDL_SetSnapshot(SND_SNAPSHOT_SHELLSHOCK, g_snd.defaultHash, 0.0, 1.0);

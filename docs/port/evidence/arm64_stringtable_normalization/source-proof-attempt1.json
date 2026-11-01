@@ -1,7 +1,0 @@
-{
-  "failure": "AssertionError: cmake_files.cmake in original baseline-to-Git hash test",
-  "cause": "historical mixed CRLF/LF baseline cannot be represented by wholesale ending conversion",
-  "production_changed_for_proof": false,
-  "corrected": "proof2 restores exact working bytes and baseline SHA, then independently compares LF-normalized Git content",
-  "failure_id": "FAIL-0025"
-}

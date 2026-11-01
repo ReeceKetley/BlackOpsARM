@@ -262,7 +262,7 @@ void    CreateConstraint(PhysConstraint *constraint)
             ent2 = GetEntity(&constraint->target_ent2);
             constraint->target_index2 = ent2->s.number;
             userData2 = Phys_GetUserData(ent2->physObjId);
-            rb2 = userData1->body;
+            rb2 = userData2->body;
             //LODWORD(ent2_anchor_loc[3]) = constraint->pos2;
             ent2_anchor_loc[0] = constraint->pos2[0];
             ent2_anchor_loc[1] = constraint->pos2[1];
@@ -294,6 +294,10 @@ void    CreateConstraint(PhysConstraint *constraint)
             rb1_anchor_loc[0] = temp;
             rb1_anchor_loc[1] = temp_4;
             rb1_anchor_loc[2] = temp_8;
+            // The native joint takes these vectors, not the float arrays.
+            // Keep its local anchors in the same order as the swapped bodies.
+            Phys_Vec3ToNitrousVec(rb1_anchor_loc, &rb1_anchor_loc_);
+            Phys_Vec3ToNitrousVec(rb2_anchor_loc, &rb2_anchor_loc_);
         }
         phys_constraint = phys_sys::create_rbc_dist((environment_rigid_body *)rb1, (environment_rigid_body *)rb2, 0);
         if (phys_constraint)
@@ -533,7 +537,7 @@ void __cdecl G_CalcEntityPhysicsPositions(gentity_s *ent)
     }
 }
 
-void __cdecl G_CreatePhysicsObject(gentity_s *ent)
+static void G_CreatePhysicsObjectInternal(gentity_s *ent, bool createMapConstraints)
 {
     const char *Name; // eax
     const char *v2; // [esp+8h] [ebp-120h]
@@ -650,7 +654,7 @@ void __cdecl G_CreatePhysicsObject(gentity_s *ent)
                 speed = Vec3Normalize(direction);
                 Phys_ObjBulletImpact(physObjId, ent->s.lerp.pos.trDelta, direction, speed, physPreset->bulletForceScale);
             }
-            for ( i = 0; i < cm.num_constraints; ++i )
+            for ( i = 0; createMapConstraints && i < cm.num_constraints; ++i )
             {
                 constraint = &cm.constraints[i];
                 if ( constraint->attach_point_type1 == ATTACH_POINT_ENT && constraint->target_ent1 == ent->targetname
@@ -685,6 +689,16 @@ void __cdecl G_CreatePhysicsObject(gentity_s *ent)
         }
         Sys_LeaveCriticalSection(CRITSECT_PHYSICS_UPDATE);
     }
+}
+
+void __cdecl G_CreatePhysicsObject(gentity_s *ent)
+{
+    G_CreatePhysicsObjectInternal(ent, true);
+}
+
+void G_CreateCheckpointPhysicsObject(gentity_s *ent)
+{
+    G_CreatePhysicsObjectInternal(ent, false);
 }
 
 void __cdecl G_UpdatePhysicsPose(gentity_s *ent)

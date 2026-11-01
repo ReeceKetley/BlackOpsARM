@@ -32,6 +32,7 @@
 #include <bgame/bg_perks.h>
 #include <demo/demo_recording.h>
 #include <qcommon/cm_world.h>
+#include <qcommon/common.h>
 #include <bgame/bg_weapons_load_obj.h>
 #include "g_client_script_cmd_mp.h"
 #include <universal/surfaceflags.h>
@@ -1314,10 +1315,14 @@ void GScr_IsArray()
 void GScr_IsAlive()
 {
     if ( Scr_GetType(0, SCRIPTINSTANCE_SERVER) == 1
-        && Scr_GetPointerType(0, SCRIPTINSTANCE_SERVER) == 19
-        && Scr_GetEntity(0)->health > 0 )
+        && Scr_GetPointerType(0, SCRIPTINSTANCE_SERVER) == 19 )
     {
-        Scr_AddInt(1, SCRIPTINSTANCE_SERVER);
+        gentity_s *ent = Scr_GetEntity(0);
+        // SP 0x007EFF90 uses actor physics life state, including scripted
+        // death transitions where it differs from health. MP remains health-based.
+        const bool alive = Com_IsSPLevel() && ent->actor
+            ? ent->actor->Physics.bIsAlive != 0 : ent->health > 0;
+        Scr_AddInt(alive, SCRIPTINSTANCE_SERVER);
     }
     else
     {
@@ -7817,7 +7822,10 @@ void __cdecl GScr_SetWaterDrops(scr_entref_t entref)
 
     pSelf = GetEntity(entref);
 
-    if (!pSelf->r.linked || !pSelf->client)
+    // SP 0x7FA2A4 checks entity in-use (+0xDD), not spatial linkage.
+    // A valid player is unlinked during game-over; delayed water cleanup still
+    // sends its command before disconnect. Keep the existing MP contract.
+    if (!(Com_IsSPLevel() ? pSelf->r.inuse : pSelf->r.linked) || !pSelf->client)
     {
         Scr_Error("setwaterdrops() called on an invalid client entity.\n", SCRIPTINSTANCE_SERVER);
         return;
@@ -10413,7 +10421,16 @@ void __cdecl GScr_GetTagOrigin(scr_entref_t entref)
 
     ent = GetEntity(entref);
     tagName.intValue = Scr_GetConstLowercaseString(0, SCRIPTINSTANCE_SERVER);
-    GScr_UpdateTagInternal(ent, tagName.stringValue, &level.cachedTagMat, 1);
+    // Original SP GetTagOrigin/GetTagAngles (0x4a8330/0x500030) return
+    // undefined on a missing DObj/tag. Stock _anim then uses the guy's pose.
+    // MP retains its strict error path; never publish an old cached matrix.
+    const bool singlePlayer = Com_IsSPLevel();
+    if (!GScr_UpdateTagInternal(ent, tagName.stringValue, &level.cachedTagMat, singlePlayer ? 0 : 1)
+        && singlePlayer)
+    {
+        G_SP_TestPlanTagQueryMissing(ent, tagName.stringValue, false);
+        return;
+    }
     Scr_AddVector(level.cachedTagMat.tagMat[3], SCRIPTINSTANCE_SERVER);
 }
 
@@ -10471,7 +10488,16 @@ void __cdecl GScr_GetTagAngles(scr_entref_t entref)
 
     ent = GetEntity(entref);
     tagName.intValue = Scr_GetConstLowercaseString(0, SCRIPTINSTANCE_SERVER);
-    GScr_UpdateTagInternal(ent, tagName.stringValue, &level.cachedTagMat, 1);
+    // Original SP GetTagOrigin/GetTagAngles (0x4a8330/0x500030) return
+    // undefined on a missing DObj/tag. Stock _anim then uses the guy's pose.
+    // MP retains its strict error path; never publish an old cached matrix.
+    const bool singlePlayer = Com_IsSPLevel();
+    if (!GScr_UpdateTagInternal(ent, tagName.stringValue, &level.cachedTagMat, singlePlayer ? 0 : 1)
+        && singlePlayer)
+    {
+        G_SP_TestPlanTagQueryMissing(ent, tagName.stringValue, true);
+        return;
+    }
     AxisToAngles(level.cachedTagMat.tagMat, angles);
     Scr_AddVector(angles, SCRIPTINSTANCE_SERVER);
 }

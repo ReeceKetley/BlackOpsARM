@@ -7,6 +7,7 @@ static_assert(std::numeric_limits<std::uint32_t>::digits == 32);
 static_assert(std::numeric_limits<unsigned int>::digits == 32);
 namespace { thread_local std::uint32_t state = 1; }
 void CrtSrand(unsigned int seed) { state = seed; }
+unsigned int CrtGetState() { return state; }
 int CrtRand()
 {
     // Unsigned arithmetic deliberately wraps at 32 bits, matching UCRT.

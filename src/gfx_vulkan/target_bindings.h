@@ -7,4 +7,6 @@ bool Viewport(GfxCmdBufState*,const GfxViewport&,std::string&);
 const GfxRenderTarget* Acquire(const GfxCmdBufState*);
 const GfxCmdBufState* Owner(const GfxCmdBufPrimState*);
 void Release(const GfxCmdBufState*);void Clone(const GfxCmdBufState*,const GfxCmdBufState*);
+// Caller has stopped recording and drained all submitted frames.
+std::size_t RetireAll();
 }

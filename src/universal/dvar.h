@@ -184,6 +184,9 @@ bool __cdecl Dvar_ShouldFreeCurrentString(dvar_s *dvar);
 bool __cdecl Dvar_ShouldFreeLatchedString(dvar_s *dvar);
 bool __cdecl Dvar_ShouldFreeResetString(dvar_s *dvar);
 void __cdecl Dvar_FreeString(DvarValue *value);
+// Release the independently owned pre-save value without changing current.
+// Caller owns the dvar mutation boundary (also used under shutdown's write lock).
+void Dvar_DiscardSavedValue(dvar_s *dvar);
 void __cdecl Dvar_ChangeResetValue(dvar_s *dvar, DvarValue value);
 void __cdecl Dvar_UpdateResetValue(dvar_s *dvar, DvarValue value);
 void __cdecl Dvar_AssignResetStringValue(dvar_s *dvar, DvarValue *dest, char *string);

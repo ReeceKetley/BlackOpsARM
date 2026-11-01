@@ -22,6 +22,7 @@
 #include <client/client.h>
 #include <qcommon/common.h>
 #include <qcommon/cmd.h>
+#include <game_sp/g_sp_savegame.h>
 #endif
 #include <cerrno>
 #include <atomic>
@@ -324,15 +325,18 @@ int bo1::android::RunNativeEngine(NativeEngineEntry entry, int argc, char **argv
             // can follow it, start requested maps from the frontend, and idle the engine
             // while the menu is the only thing being looked at.
             namespace session=bo1::android::launcher_session;
+            // Save/resume actions run inside Com_Frame's live error boundary.
+            const bool recovery=G_SP_IsZombieSessionRecoveryMenu();
             const bool active=CL_GetLocalClientConnectionState(0)==CA_ACTIVE;
             const bool frontend=active&&Com_IsSPFrontEndRunning();
             static bool menuSeen;
             if(frontend)menuSeen=true;
-            const session::State published=frontend?session::Menu:active?session::Match:menuSeen?session::Loading:session::Booting;
+            const session::State published=recovery?session::RecoveryMenu:session::ResumeLoading()?session::Loading:frontend?session::Menu:active?session::Match:menuSeen?session::Loading:session::Booting;
             static int lastPublished=-1;
             if(lastPublished!=int(published)){lastPublished=int(published);std::fprintf(stderr,"ENGINE ENTRY launcher session state %d\n",lastPublished);}
             session::Publish(published);
-            if(frontend) {
+            if(recovery) std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            else if(frontend) {
                 std::string requested;
                 if(session::TakeRequestedMap(requested)) {
                     std::string commands;

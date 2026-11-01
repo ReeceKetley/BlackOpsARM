@@ -20,6 +20,8 @@ bool SetIndex(const GfxCmdBufPrimState*,const void* owner,std::string&);
 bool ClearVertices(const GfxCmdBufPrimState*,std::string&);
 void Clone(const GfxCmdBufPrimState*,const GfxCmdBufPrimState*);
 void Release(const GfxCmdBufPrimState*);
+// Caller has stopped recording and drained all submitted frames.
+std::size_t RetireAll();
 std::shared_ptr<const Snapshot> Acquire(const GfxCmdBufPrimState*);
 // Caller has bound the material/pipeline and begun a compatible render pass.
 // The frame arena is cleared only after its submission fence retires.

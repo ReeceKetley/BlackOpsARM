@@ -49,7 +49,6 @@ int gNumFadingDynEnts;
 
 const FxEffectDef *fxdefsm;
 int gNumBurningDynEnts;
-unsigned int hEffect[31];
 DynEnt_BurnData gDynEntBurnData[16];
 
 void __cdecl DynEntCl_RegisterDvars()
@@ -508,6 +507,7 @@ void __cdecl DynEnt_DestroyPhysics(PhysWorld worldIndex, const DynEntityDef *dyn
 
 void __cdecl DynEntCl_Shutdown(int localClientNum)
 {
+    DynEntCl_SetCheckpointSleepTrace(false);
     int i; // [esp+0h] [ebp-1Ch]
     DynEntityDrawType drawType; // [esp+4h] [ebp-18h]
     DynEntityClient *dynEntClient; // [esp+Ch] [ebp-10h]
@@ -606,6 +606,8 @@ void __cdecl DynEntCl_InitEntities(int localClientNum)
                 dynEntColl->sector = 0;
                 dynEntClienta->flags = 2;
                 dynEntClienta->health = dynEntDef->health;
+                dynEntClienta->burnTime = dynEntClienta->fadeTime = 0;
+                dynEntClienta->physicsStartTime = 0;
                 DynEnt_GetEntityProps(dynEntDef->type);
                 dynEntClienta->flags |= 1u;
                 if ( drawType )
@@ -743,6 +745,20 @@ void __cdecl DynEnt_FixupLightConstraints(int localClientNum, int entnum, int pr
     }
 }
 
+static bool s_checkpointSleepTrace;
+void DynEntCl_SetCheckpointSleepTrace(bool enabled)
+{
+    s_checkpointSleepTrace = enabled;
+}
+static void DynEntCl_TraceCheckpointSleep(int localClientNum, int draw, int index, const DynEntityClient &client)
+{
+    if (!s_checkpointSleepTrace) return;
+    const auto &body = *Phys_GetUserData(client.physObjId)->body;
+    Com_Printf(15, "Dynamic sleep trace: clock %i draw %i index %i native %i start %i flags %u groupStable %i dangerous %i energyTime %.9g origin %.9g %.9g %.9g velocity %.9g %.9g %.9g\n",
+        CG_GetLocalClientGlobals(localClientNum)->time, draw, index, client.physObjId, client.physicsStartTime,
+        body.m_flags, (body.m_flags & 8) != 0, (body.m_flags & 128) != 0, body.m_stable_energy_time,
+        body.m_mat.w.x, body.m_mat.w.y, body.m_mat.w.z, body.m_t_vel.x, body.m_t_vel.y, body.m_t_vel.z);
+}
 void __cdecl DynEntCl_ProcessEntities(int localClientNum, int time)
 {
     DynEntityPose *dynEntPose; // [esp+18h] [ebp-20h]
@@ -766,6 +782,7 @@ void __cdecl DynEntCl_ProcessEntities(int localClientNum, int time)
                 dynEntDef = DynEnt_GetEntityDef(dynEntId, DYNENT_DRAW_MODEL);
                 if ( Phys_ObjIsAsleep(dynEntClient->physObjId) )
                 {
+                    DynEntCl_TraceCheckpointSleep(localClientNum, DYNENT_DRAW_MODEL, dynEntId, *dynEntClient);
                     DynEnt_DestroyPhysics(PHYS_WORLD_DYNENT, dynEntDef, dynEntClient);
                 }
                 else
@@ -793,6 +810,7 @@ void __cdecl DynEntCl_ProcessEntities(int localClientNum, int time)
                 dynEntDef = DynEnt_GetEntityDef(dynEntId, DYNENT_DRAW_BRUSH);
                 if ( Phys_ObjIsAsleep(dynEntClient->physObjId) )
                 {
+                    DynEntCl_TraceCheckpointSleep(localClientNum, DYNENT_DRAW_BRUSH, dynEntId, *dynEntClient);
                     DynEnt_DestroyPhysics(PHYS_WORLD_DYNENT, dynEntDef, dynEntClient);
                 }
                 else
@@ -1244,10 +1262,10 @@ void __cdecl DynEnt_CalcPhysPreset(const DynEntityDef *dynEntDef)
     Phys_CalcPreset(physPreset, dims, surfaceType);
 }
 
-int __cdecl DynEntCl_CreatePhysObj(
+static int DynEntCl_CreatePhysObjInternal(
                 const DynEntityDef *dynEntDef,
                 DynEntityClient *dynEntClient,
-                const GfxPlacement *pose)
+                const GfxPlacement *pose, bool notify)
 {
     broad_phase_info *i; // [esp+Ch] [ebp-30h]
     broad_phase_info *bpi; // [esp+14h] [ebp-28h]
@@ -1324,9 +1342,12 @@ int __cdecl DynEntCl_CreatePhysObj(
                 i->m_my_collision_type_flags |= 4u;
             }
         }
-        DynEnt_SetupConstraints(dynEntDef);
+        // A checkpoint constructs the complete body cohort before restoring
+        // saved joints. Running map setup here would recursively create peers
+        // and publish default joints over the saved graph.
+        if (notify) DynEnt_SetupConstraints(dynEntDef);
         absId = DynEnt_GetAbsId(dynEntDef);
-        CScr_NotifyNum(0, absId, 4u, cscr_const.touch, 0);
+        if (notify) CScr_NotifyNum(0, absId, 4u, cscr_const.touch, 0);
         return physId;
     }
     else
@@ -1334,6 +1355,15 @@ int __cdecl DynEntCl_CreatePhysObj(
         Com_PrintWarning(1, "DynEntCl_CreatePhysObj: Unable to create physics object.\n");
         return 0;
     }
+}
+
+int __cdecl DynEntCl_CreatePhysObj(const DynEntityDef *def, DynEntityClient *client, const GfxPlacement *pose)
+{
+    return DynEntCl_CreatePhysObjInternal(def, client, pose, true);
+}
+int DynEntCl_CreateCheckpointPhysObj(const DynEntityDef *def, DynEntityClient *client, const GfxPlacement *pose)
+{
+    return DynEntCl_CreatePhysObjInternal(def, client, pose, false);
 }
 
 unsigned __int16 __cdecl DynEntCl_CreateEntityModel(
@@ -1397,6 +1427,8 @@ unsigned __int16 __cdecl DynEntCl_CreateEntityModel(
     dynEntClient->flags = 2;
     dynEntClient->health = dynEntDef->health;
     dynEntClient->fadeTime = 0;
+    dynEntClient->burnTime = 0;
+    dynEntClient->physicsStartTime = 0;
     dynEntProps = DynEnt_GetEntityProps(dynEntDef->type);
     dynEntClient->flags |= 1u;
     dynEntColl->nextEntInSector = 0;
@@ -1413,57 +1445,34 @@ unsigned __int16 __cdecl DynEntCl_CreateEntityModel(
 
 unsigned __int16 __cdecl DynEntCl_AddEntityModel()
 {
-    int extraDynEntLimit; // [esp+0h] [ebp-8h]
-    int id; // [esp+4h] [ebp-4h]
-    int ida; // [esp+4h] [ebp-4h]
-
-    extraDynEntLimit = dynEnt_spawnedLimit->current.integer;
-    if ( CG_IsShowingZombieMap() && !zombietron->current.enabled )
+    int extraDynEntLimit = dynEnt_spawnedLimit->current.integer;
+    if (CG_IsShowingZombieMap() && !zombietron->current.enabled)
         extraDynEntLimit /= 2;
-    if ( numExtraDynEnts > extraDynEntLimit )
-    {
+    // The configured policy may allow the final slot. Capacity still applies
+    // when the live count equals the limit, and eviction can fail to free one.
+    if (numExtraDynEnts > extraDynEntLimit || numExtraDynEnts >= 256)
         DynEntCl_CleanUpOldModels();
-        if ( numExtraDynEnts == 256 )
-            return -1;
-    }
-    for ( id = 0; id < 256; ++id )
+    for (int id = 0; id < 256; ++id)
     {
-        if ( !usedExtraDynEnts[id] )
-        {
-            usedExtraDynEnts[id] = 1;
-            break;
-        }
+        if (usedExtraDynEnts[id]) continue;
+        const int absoluteId = id + cm.originalDynEntCount;
+        if (absoluteId > cm.dynEntCount[0])
+            Com_Error(ERR_DROP, "Dynamic entity free slot exceeds high-water count");
+        usedExtraDynEnts[id] = 1;
+        ++numExtraDynEnts;
+        if (absoluteId == cm.dynEntCount[0]) ++cm.dynEntCount[0];
+        return (unsigned __int16)absoluteId;
     }
-    ida = id + cm.originalDynEntCount;
-    ++numExtraDynEnts;
-    if ( ida > cm.dynEntCount[0]
-        && !Assert_MyHandler(
-                    "C:\\projects_pc\\cod\\codsrc\\src\\DynEntity\\DynEntity_client.cpp",
-                    519,
-                    0,
-                    "%s",
-                    "id <= cm.dynEntCount[DYNENT_COLL_CLIENT_MODEL]") )
-    {
-        __debugbreak();
-    }
-    if ( ida == cm.dynEntCount[0] )
-        ++cm.dynEntCount[0];
-    return ida;
+    return 0xFFFF;
 }
 
-// zombies: the client end of cleanupspawneddynents, server command '>' (SP 0x0061c7d0): destroy the
-// script-spawned model dynents, ids originalDynEntCount + i for i below the count taken on entry.
-// SP destroys those ids without a used-slot test; KB's DynEntCl_DestroyEntityModel asserts that the
-// slot is used (a release-build debug break), so a slot freed earlier by DynEntCl_CleanUpOldModels
-// is skipped here, which is the only difference.
+// The live count is not the slot extent: earlier retirement leaves holes.
+// Walk the fixed ownership bitmap so sparse high slots are retired as well.
 void DynEntCl_SP_CleanupSpawnedDynEnts()
 {
-    int count = numExtraDynEnts;
-    for (int i = 0; i < count; ++i)
-    {
+    for (int i = 0; i < 256; ++i)
         if (usedExtraDynEnts[i])
             DynEntCl_DestroyEntityModel(cm.originalDynEntCount + i);
-    }
 }
 
 void DynEntCl_CleanUpOldModels()
@@ -1499,6 +1508,7 @@ void DynEntCl_CleanUpOldModels()
     furthestId = -1;
     for ( id = cm.originalDynEntCount; id < (int)cm.dynEntCount[0]; ++id )
     {
+        if (!usedExtraDynEnts[id - cm.originalDynEntCount]) continue;
         dynEntPose = DynEnt_GetClientPose(id, DYNENT_DRAW_MODEL);
         distSq = FLT_MAX;
         for ( i = 0; i < numPlayers; ++i )
@@ -2020,90 +2030,54 @@ unsigned int __cdecl DynEntCl_PlayBoltedFX(const FxEffectDef *fx, unsigned __int
 
 void __cdecl DynEntCl_RemoveFromFadeList(unsigned __int16 absDynEntId)
 {
-    int startTime; // edx
-    int i; // [esp+0h] [ebp-4h]
-
-    for (i = 0; i < gNumFadingDynEnts; ++i)
+    for (int i = 0; i < gNumFadingDynEnts;)
     {
-        if (gDynEntFadeData[i].id == absDynEntId)
-        {
-            startTime = gDynEntFadeData[--gNumFadingDynEnts].startTime;
-            *(_DWORD *)&gDynEntFadeData[i].id = *(_DWORD *)&gDynEntFadeData[gNumFadingDynEnts].id;
-            gDynEntFadeData[i].startTime = startTime;
-        }
+        if (gDynEntFadeData[i].id != absDynEntId) { ++i; continue; }
+        gDynEntFadeData[i] = gDynEntFadeData[--gNumFadingDynEnts];
+        gDynEntFadeData[gNumFadingDynEnts] = {};
     }
 }
 
 void __cdecl DynEntCl_SetFadeOut(unsigned __int16 dynEntId, DynEntityDrawType drawType)
 {
-    DynEntityDrawType v2; // [esp+4h] [ebp-20h] BYREF
-    unsigned __int16 id; // [esp+8h] [ebp-1Ch] BYREF
-    int dynEntTime; // [esp+Ch] [ebp-18h]
-    int i; // [esp+10h] [ebp-14h]
-    int currentTime; // [esp+14h] [ebp-10h]
-    int oldestTime; // [esp+18h] [ebp-Ch]
-    int oldestDynEntIndex; // [esp+1Ch] [ebp-8h]
-    unsigned __int16 absDynEntId; // [esp+20h] [ebp-4h]
-
-    absDynEntId = DynEnt_GetClientAbsId(dynEntId, drawType);
-    if (gNumFadingDynEnts >= 32)
+    if (dynEntId == 0xFFFF) return; // The normal spawned factory can refuse allocation.
+    const auto absoluteId = DynEnt_GetClientAbsId(dynEntId, drawType);
+    iassert(gNumFadingDynEnts >= 0 && gNumFadingDynEnts <= 32);
+    for (int i = 0; i < gNumFadingDynEnts; ++i)
+        if (gDynEntFadeData[i].id == absoluteId) return; // One retirement lease per object.
+    const int now = CG_GetLocalClientGlobals(0)->time;
+    if (gNumFadingDynEnts == 32)
     {
-        oldestTime = -1000000;
-        oldestDynEntIndex = 0;
-        currentTime = CG_GetLocalClientGlobals(0)->time;
-        for (i = 0; i < gNumFadingDynEnts; ++i)
-        {
-            dynEntTime = currentTime - gDynEntFadeData[i].startTime;
-            if (dynEntTime > oldestTime)
-            {
-                oldestTime = dynEntTime;
-                oldestDynEntIndex = i;
-            }
-        }
-        if (oldestTime <= -1000000
-            && !Assert_MyHandler(
-                "C:\\projects_pc\\cod\\codsrc\\src\\DynEntity\\DynEntity_client.cpp",
-                1987,
-                0,
-                "%s",
-                "oldestTime > -1000000"))
-        {
-            __debugbreak();
-        }
-        if (oldestTime > -1000000)
-        {
-            DynEnt_GetClientIdDrawType(gDynEntFadeData[oldestDynEntIndex].id, &id, &v2);
-            gDynEntFadeData[oldestDynEntIndex].id = absDynEntId;
-            gDynEntFadeData[oldestDynEntIndex].startTime = currentTime;
-            DynEntCl_DestroyEntityModel(id);
-        }
+        int oldest = 0;
+        for (int i = 1; i < gNumFadingDynEnts; ++i)
+            if ((long long)now - gDynEntFadeData[i].startTime > (long long)now - gDynEntFadeData[oldest].startTime) oldest = i;
+        unsigned short oldId; DynEntityDrawType oldDraw;
+        DynEnt_GetClientIdDrawType(gDynEntFadeData[oldest].id, &oldId, &oldDraw);
+        // Detach the evicted owner's lease before its canonical destruction
+        // calls RemoveFromFadeList, retaining the established replacement policy.
+        gDynEntFadeData[oldest] = {absoluteId, now};
+        DynEntCl_DestroyEntityModel(oldId);
     }
-    else
-    {
-        gDynEntFadeData[gNumFadingDynEnts].id = absDynEntId;
-        gDynEntFadeData[gNumFadingDynEnts++].startTime = CG_GetLocalClientGlobals(0)->time;
-    }
+    else gDynEntFadeData[gNumFadingDynEnts++] = {absoluteId, now};
 }
 
 void __cdecl DynEnt_UpdateFading(int currentTime)
 {
-    DynEntityDrawType drawType; // [esp+0h] [ebp-10h] BYREF
-    unsigned __int16 id; // [esp+4h] [ebp-Ch] BYREF
-    DynEntityClient *dynEntClient; // [esp+8h] [ebp-8h]
-    int i; // [esp+Ch] [ebp-4h]
-
-    for (i = 0; i < gNumFadingDynEnts; ++i)
+    for (int i = 0; i < gNumFadingDynEnts;)
     {
-        dynEntClient = DynEnt_GetClientEntity(gDynEntFadeData[i].id);
-        if (currentTime - gDynEntFadeData[i].startTime > 25000)
+        const auto entry = gDynEntFadeData[i];
+        if (!DynEnt_Valid(entry.id)) { DynEntCl_RemoveFromFadeList(entry.id); continue; }
+        const long long age = (long long)currentTime - entry.startTime;
+        if (age > 26000)
         {
-            dynEntClient->fadeTime = currentTime - LOWORD(gDynEntFadeData[i].startTime) - 25000;
-            if (dynEntClient->fadeTime > 0x3E8u)
-            {
-                DynEnt_GetClientIdDrawType(gDynEntFadeData[i].id, &id, &drawType);
-                DynEntCl_DestroyEntityModel(id);
-            }
+            unsigned short id; DynEntityDrawType draw;
+            DynEnt_GetClientIdDrawType(entry.id, &id, &draw);
+            DynEntCl_DestroyEntityModel(id);
+            // Destruction removed this lease and swapped in a different tail.
+            continue;
         }
+        if (age > 25000) DynEnt_GetClientEntity(entry.id)->fadeTime = (unsigned short)(age - 25000);
+        ++i;
     }
 }
 
@@ -2124,134 +2098,102 @@ double __cdecl DynEntCl_GetFadeTime(unsigned __int16 dynEntId, DynEntityDrawType
 }
 
 unsigned int _S2_5;
+static void DynEntCl_ReleaseBurningOwner(const DynEnt_BurnData &entry, bool killEffect)
+{
+    if (DynEnt_Valid(entry.id)) DynEnt_GetClientEntity(entry.id)->flags &= ~8u;
+    if (killEffect && entry.fx) FX_ThroughWithEffect(0, entry.fx, true);
+}
+static void DynEntCl_RemoveBurningAt(int index, bool killEffect)
+{
+    iassert(index >= 0 && index < gNumBurningDynEnts);
+    const auto entry = gDynEntBurnData[index];
+    gDynEntBurnData[index] = gDynEntBurnData[--gNumBurningDynEnts];
+    gDynEntBurnData[gNumBurningDynEnts] = {};
+    // Remove ownership before releasing FX, so callbacks cannot see a stale lease.
+    DynEntCl_ReleaseBurningOwner(entry, killEffect);
+}
 void __cdecl DynEntCl_SetBurning(unsigned __int16 dynEntId, DynEntityDrawType drawType, bool burning)
 {
-    unsigned int v3; // ecx
-    int i; // [esp+0h] [ebp-28h]
-    const DynEntityPose *dynEntPose; // [esp+4h] [ebp-24h]
-    const DynEntityDef *dynEntDef; // [esp+8h] [ebp-20h]
-    DynEnt_BurnData *burnData; // [esp+10h] [ebp-18h]
-    unsigned int fx; // [esp+18h] [ebp-10h]
-    DynEntityClient *dynEntClient; // [esp+20h] [ebp-8h]
-    unsigned __int16 absDynEntId; // [esp+24h] [ebp-4h]
-
-    dynEntClient = DynEnt_GetClientEntity(dynEntId, drawType);
-    absDynEntId = DynEnt_GetClientAbsId(dynEntId, drawType);
-    if ( burning )
+    auto *client = DynEnt_GetClientEntity(dynEntId, drawType);
+    const auto absoluteId = DynEnt_GetClientAbsId(dynEntId, drawType);
+    iassert(gNumBurningDynEnts >= 0 && gNumBurningDynEnts <= 16);
+    if (!burning)
     {
-        if ( (dynEntClient->flags & 8) != 0 )
+        for (int i = 0; i < gNumBurningDynEnts;)
         {
-            if ( !dynEntClient->physObjId && dynEntClient->health < -50 )
-            {
-                dynEntDef = DynEnt_GetEntityDef(dynEntId, drawType);
-                dynEntPose = DynEnt_GetClientPose(dynEntId, drawType);
-                dynEntClient->physObjId = DynEntCl_CreatePhysObj(dynEntDef, dynEntClient, &dynEntPose->pose);
-            }
+            if (gDynEntBurnData[i].id == absoluteId) DynEntCl_RemoveBurningAt(i, true);
+            else ++i;
         }
-        else
-        {
-            if ( (_S2_5 & 1) == 0 )
-            {
-                _S2_5 |= 1u;
-                fxdefsm = FX_Register((char*)"destructibles/fx_dest_fire_trail_sm");
-            }
-            fx = DynEntCl_PlayBoltedFX(fxdefsm, absDynEntId);
-            if ( UniqueHandleToEffect(0, fx) )
-            {
-                dynEntClient->flags |= 8u;
-                if ( gNumBurningDynEnts >= 16 )
-                {
-                    FX_ThroughWithEffect(0, hEffect[0], 1);
-                    hEffect[0] = fx;
-                    gDynEntBurnData[0].id = absDynEntId;
-                }
-                else
-                {
-                    burnData = &gDynEntBurnData[gNumBurningDynEnts];
-                    burnData->fx = fx;
-                    burnData->id = absDynEntId;
-                    ++gNumBurningDynEnts;
-                }
-            }
-        }
+        client->flags &= ~8u;
+        return;
     }
-    else
+    if (client->flags & 8)
     {
-        for ( i = 0; i < gNumBurningDynEnts; ++i )
+        if (!client->physObjId && client->health < -50)
         {
-            if ( gDynEntBurnData[i].id == absDynEntId )
-            {
-                --gNumBurningDynEnts;
-                FX_ThroughWithEffect(0, hEffect[2 * i], 1);
-                hEffect[2 * i] = 0;
-                v3 = hEffect[2 * gNumBurningDynEnts];
-                *(unsigned int *)&gDynEntBurnData[i].id = *(unsigned int *)&gDynEntBurnData[gNumBurningDynEnts].id;
-                hEffect[2 * i] = v3;
-            }
+            const auto *def = DynEnt_GetEntityDef(dynEntId, drawType);
+            if (DynEnt_GetEntityProps(def->type)->usePhysics)
+                client->physObjId = DynEntCl_CreatePhysObj(def, client, &DynEnt_GetClientPose(dynEntId, drawType)->pose);
         }
-        dynEntClient->flags &= ~8u;
+        return;
     }
+    if (!(_S2_5 & 1))
+    {
+        fxdefsm = FX_Register((char *)"destructibles/fx_dest_fire_trail_sm");
+        _S2_5 |= 1u;
+    }
+    const auto fx = DynEntCl_PlayBoltedFX(fxdefsm, absoluteId);
+    if (!UniqueHandleToEffect(0, fx)) return;
+    const DynEnt_BurnData next{absoluteId, fx};
+    client->flags |= 8u;
+    if (gNumBurningDynEnts == 16)
+    {
+        const auto old = gDynEntBurnData[0];
+        gDynEntBurnData[0] = next;
+        DynEntCl_ReleaseBurningOwner(old, true);
+    }
+    else gDynEntBurnData[gNumBurningDynEnts++] = next;
 }
 
 void DynEnt_ResetFading()
 {
     gNumFadingDynEnts = 0;
+    memset(gDynEntFadeData, 0, sizeof(gDynEntFadeData));
 }
 
 void DynEnt_ResetBurning()
 {
-    gNumBurningDynEnts = 0;
+    while (gNumBurningDynEnts) DynEntCl_RemoveBurningAt(gNumBurningDynEnts - 1, true);
+    _S2_5 = 0; fxdefsm = nullptr; // The next map must resolve its own effect asset.
 }
 
 void DynEnt_UpdateBurning()
 {
-    unsigned int v0; // ecx
-    unsigned int v1; // eax
-    const DynEntityPose *dynEntPose; // [esp+0h] [ebp-1Ch]
-    const DynEntityDef *dynEntDef; // [esp+4h] [ebp-18h]
-    int playedTime; // [esp+Ch] [ebp-10h]
-    int adjustedPlayedTime; // [esp+10h] [ebp-Ch]
-    DynEntityClient *dynEntClient; // [esp+14h] [ebp-8h]
-    int i; // [esp+18h] [ebp-4h]
-
-    for ( i = 0; i < gNumBurningDynEnts; ++i )
+    for (int i = 0; i < gNumBurningDynEnts;)
     {
-        dynEntClient = DynEnt_GetClientEntity(gDynEntBurnData[i].id);
-        if ( UniqueHandleToEffect(0, hEffect[2 * i]) )
+        const auto entry = gDynEntBurnData[i];
+        const bool effectAlive = UniqueHandleToEffect(0, entry.fx) != nullptr;
+        if (!effectAlive || !DynEnt_Valid(entry.id))
         {
-            playedTime = FX_GetEffectPlayedTime(0, hEffect[2 * i]);
-            adjustedPlayedTime = playedTime - 54321 * gDynEntBurnData[i].id % 5000;
-            if ( adjustedPlayedTime > 2000 && adjustedPlayedTime < 2500 && !dynEntClient->physObjId )
-            {
-                dynEntDef = DynEnt_GetEntityDef(gDynEntBurnData[i].id);
-                dynEntPose = DynEnt_GetClientPose(gDynEntBurnData[i].id);
-                if ( DynEnt_GetEntityProps(dynEntDef->type)->usePhysics )
-                    dynEntClient->physObjId = DynEntCl_CreatePhysObj(dynEntDef, dynEntClient, &dynEntPose->pose);
-            }
-            if ( playedTime > dynEntClient->burnTime )
-            {
-                dynEntClient->burnTime = playedTime;
-                if ( dynEntClient->burnTime > 0x7530u )
-                    dynEntClient->burnTime = 30000;
-            }
-            if ( playedTime > 5000 && (gNumBurningDynEnts > 4 || playedTime > 20000) )
-            {
-                --gNumBurningDynEnts;
-                FX_ThroughWithEffect(0, hEffect[2 * i], 1);
-                v0 = hEffect[2 * gNumBurningDynEnts];
-                *(unsigned int *)&gDynEntBurnData[i].id = *(unsigned int *)&gDynEntBurnData[gNumBurningDynEnts].id;
-                hEffect[2 * i] = v0;
-                dynEntClient->flags &= ~8u;
-            }
+            DynEntCl_RemoveBurningAt(i, effectAlive);
+            continue;
         }
-        else
+        auto *client = DynEnt_GetClientEntity(entry.id);
+        const int played = FX_GetEffectPlayedTime(0, entry.fx);
+        const int adjusted = played - (int)((54321u * entry.id) % 5000u);
+        if (adjusted > 2000 && adjusted < 2500 && !client->physObjId)
         {
-            --gNumBurningDynEnts;
-            v1 = hEffect[2 * gNumBurningDynEnts];
-            *(unsigned int *)&gDynEntBurnData[i].id = *(unsigned int *)&gDynEntBurnData[gNumBurningDynEnts].id;
-            hEffect[2 * i] = v1;
-            dynEntClient->flags &= ~8u;
+            const auto *def = DynEnt_GetEntityDef(entry.id);
+            if (DynEnt_GetEntityProps(def->type)->usePhysics)
+                client->physObjId = DynEntCl_CreatePhysObj(def, client, &DynEnt_GetClientPose(entry.id)->pose);
         }
+        if (played > client->burnTime) client->burnTime = (unsigned short)(std::min)(played, 30000);
+        if (played > 5000 && (gNumBurningDynEnts > 4 || played > 20000))
+        {
+            DynEntCl_RemoveBurningAt(i, true);
+            continue;
+        }
+        ++i;
     }
 }
 

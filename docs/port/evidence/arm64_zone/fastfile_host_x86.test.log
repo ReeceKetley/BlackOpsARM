@@ -1,1 +1,0 @@
-PASS bounded FastFile preamble: retail/unsigned magic, version 473, XFile header fields, fixture roundtrip, explicit missing/short/bad errors

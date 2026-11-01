@@ -1381,7 +1381,7 @@ void __cdecl ClearRegisteredItems()
     itemRegistered[0] = 1;
 }
 
-void __cdecl SaveRegisteredWeapons()
+void __cdecl SaveRegisteredWeapons(bool updateClient)
 {
     char *v0; // eax
     int lastWrittenIndex; // [esp+0h] [ebp-418h]
@@ -1424,7 +1424,10 @@ void __cdecl SaveRegisteredWeapons()
             ++count;
         }
     }
-    CG_SetupWeaponDef();
+    // A save load rebuilds the shared table before the client receives its
+    // gamestate. Validate that client only after its configstrings are current.
+    if (updateClient)
+        CG_SetupWeaponDef();
 }
 
 void __cdecl SaveRegisteredItems()

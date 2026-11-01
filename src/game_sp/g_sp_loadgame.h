@@ -42,3 +42,8 @@ int SP_LoadGame_RunLoader();
 // SP 0x005A1130 -> 0x00534B40 -> 0x0046BD80, after G_InitGame(loadGame).
 // False until all payload sections and the post-load steps have been ported.
 bool G_SP_LoadGameAfterInit(struct SPSaveGame *save);
+void SP_ClearRenderedSaveProbe();
+// One-shot, identity-checked logical corpse checkpoint for the private local
+// rendered restore probe. No old DObj or physics pointer crosses the save.
+bool SP_TakeRenderedSavedCorpse(const struct entityState_s *state,
+    struct SPActorModelInfo *models, struct XAnimTree_s *clientTree);

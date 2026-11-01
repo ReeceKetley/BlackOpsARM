@@ -1,6 +1,0 @@
-Traceback (most recent call last):
-  File "D:\Desktop\Black Ops 2 Android\BlackOpsARM\tools\port\generate_stringtable_hash_reference.py", line 52, in <module>
-    main()
-  File "D:\Desktop\Black Ops 2 Android\BlackOpsARM\tools\port\generate_stringtable_hash_reference.py", line 25, in main
-    raise RuntimeError('Use a fresh ignored build-android-audit output file')
-RuntimeError: Use a fresh ignored build-android-audit output file

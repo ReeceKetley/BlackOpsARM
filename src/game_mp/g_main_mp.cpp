@@ -724,9 +724,16 @@ void G_FreeAnimTreeInstances()
     }
 }
 
+// Shutdown can run after sv_mapname has already changed to the next level.
+// Native SP owners belong to the initialized world, not that mutable policy.
+static bool s_levelOwnsSpState;
+
 void __cdecl    G_InitGame(int levelTime, int randomSeed, int restart, int registerDvars,
     bool loadGame, SPSaveGame **save)
 {
+    G_SP_ClearPendingSaveRandomState();
+    G_SP_ClearSavedClientHandshake();
+    SP_ClearRenderedSaveProbe();
     if ( !Sys_IsMainThread()
         && !Assert_MyHandler(
                     "C:\\projects_pc\\cod\\codsrc\\src\\game_mp\\g_main_mp.cpp",
@@ -738,10 +745,11 @@ void __cdecl    G_InitGame(int levelTime, int randomSeed, int restart, int regis
         __debugbreak();
     }
     
+    s_levelOwnsSpState = G_SP_IsSPLevel();
     PROF_SCOPED("G_InitGame");
 
     Com_Printf(15, "------- Game Initialization -------\n");
-    Com_Printf(15, "gamename: %s\n", "Call of Duty�");
+    Com_Printf(15, "gamename: %s\n", "Call of Dutyï¿½");
     Com_Printf(15, "gamedate: %s\n", "Nov    5 2010");
     Rope_InitRopes();
     Swap_Init();
@@ -1195,7 +1203,7 @@ void __cdecl    G_InitGame(int levelTime, int randomSeed, int restart, int regis
 
     g_timed_radius_damage_count = 0;
     level.initializing = 0;
-    SaveRegisteredWeapons();
+    SaveRegisteredWeapons(!loadingSave);
     SaveRegisteredItems();
 
     if (!restart)
@@ -2556,6 +2564,9 @@ unsigned __int16 __cdecl G_AttachWeapon(DObjModel_s *dobjModels, unsigned __int1
 
 void __cdecl G_ShutdownGame(int freeScripts)
 {
+    G_SP_ClearPendingSaveRandomState();
+    G_SP_ClearSavedClientHandshake();
+    SP_ClearRenderedSaveProbe();
     colgeom_visitor_inlined_t<200> *p_proximity_data; // [esp+0h] [ebp-14h]
     int i; // [esp+Ch] [ebp-8h]
     int file; // [esp+10h] [ebp-4h]
@@ -2583,9 +2594,16 @@ void __cdecl G_ShutdownGame(int freeScripts)
     G_FreeScrVehicles();
     G_FreeVehiclePaths();
     // zombies: SP releases threat group names before shutting down the VM (SP 0x00607700).
-    if (G_SP_IsSPLevel())
+    // SV_SpawnServer publishes the NEW map name before shutting the OLD game
+    // down; frontend -> Kino would otherwise skip these actual owned refs.
+    if (s_levelOwnsSpState != G_SP_IsSPLevel())
+        Com_Printf(15, "SP shutdown ownership: initialized owner %i, next-map policy %i\n",
+            s_levelOwnsSpState, G_SP_IsSPLevel());
+    if (s_levelOwnsSpState)
     {
+        G_SP_TraceRestoreOwnership("before threat groups freed");
         Actor_FreeThreatBiasGroups();
+        G_SP_TraceRestoreOwnership("shutdown threat groups freed");
         // zombies: SP G_ShutdownGame clears the setplayergravity flag of the 4 clients (SP 0x00607945).
         if (zombiemode && zombiemode->current.enabled)
             for (SPPlayerGravity &gravity : g_spPlayerGravity)
@@ -2600,14 +2618,17 @@ void __cdecl G_ShutdownGame(int freeScripts)
     if ( Scr_IsSystemActive(1u, SCRIPTINSTANCE_SERVER) && !level.savepersist )
         SV_FreeClientScriptPers();
     Scr_ShutdownSystem(SCRIPTINSTANCE_SERVER, 1u, level.savepersist == 0);
+    G_SP_TraceRestoreOwnership("shutdown VM freed");
     if ( freeScripts )
     {
         Mantle_ShutdownAnims();
         Dog_ShutdownAnims();
         GScr_FreeScripts(SCRIPTINSTANCE_SERVER);
         Scr_FreeScripts(SCRIPTINSTANCE_SERVER, 1u);
+        G_SP_TraceRestoreOwnership("shutdown scripts freed");
         G_FreeAnimTreeInstances();
         Scr_ShutdownAnimTrees(1);
+        G_SP_TraceRestoreOwnership("shutdown anim trees freed");
         Com_FreeWeaponInfoMemory(1);
         Hunk_ClearToMarkLow(0);
     }
@@ -3271,6 +3292,8 @@ void    G_RunFrame(int levelTime)
 
     gScrExecuteTime[0] = 0;
     SV_CheckThread();
+    G_SP_ApplyPendingSaveRandomState();
+    G_SP_InitializeScriptLevelDefaults();
     ++level.framenum;
     level.previousTime = level.time;
     level.time = levelTime;

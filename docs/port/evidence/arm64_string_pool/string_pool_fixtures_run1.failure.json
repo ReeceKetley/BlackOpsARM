@@ -1,5 +1,0 @@
-{
-  "error_type": "RuntimeError",
-  "error": "windows_x86-fixtures: exit 3, expected 0; diagnostics retained",
-  "traceback": "Traceback (most recent call last):\n  File \"D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\tools\\port\\run_string_pool_gate.py\", line 138, in main\n    stdout, _ = execute('fixtures', ['fixtures'])\n                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\tools\\port\\run_string_pool_gate.py\", line 136, in execute\n    return shell(target + '-' + label, [binary] + params, expected_exit) if on_device else run(target + '-' + label, [binary] + params, expected_exit)\n                                                                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\tools\\port\\run_string_pool_gate.py\", line 76, in run\n    raise RuntimeError(f'{label}: exit {code}, expected {expected_exit}; diagnostics retained')\nRuntimeError: windows_x86-fixtures: exit 3, expected 0; diagnostics retained\n"
-}

@@ -587,7 +587,7 @@ void __cdecl DynEnt_LoadEntities()
         Com_Error(ERR_DROP, "Max ropes count exceeded! %d.\n", 300);
         cm.max_ropes = 300;
     }
-    cm.ropes = (rope_t *)Hunk_Alloc(3188 * cm.max_ropes, "ropes", 10);
+    cm.ropes = (rope_t *)Hunk_Alloc(static_cast<int>(sizeof(rope_t) * cm.max_ropes), "ropes", 10);
     for ( drawType = DYNENT_DRAW_MODEL; (unsigned int)drawType < DYNENT_DRAW_COUNT; ++drawType )
     {
         collType = (DynEntityCollType)drawType;
@@ -1945,7 +1945,14 @@ unsigned __int16 __cdecl DynEnt_GetAbsId(const DynEntityDef *dynEntDef)
 
 bool __cdecl DynEnt_Valid(unsigned __int16 absDynEntId)
 {
-    return absDynEntId >= cm.originalDynEntCount + 256 || absDynEntId < (int)cm.dynEntCount[0];
+    extern unsigned __int8 usedExtraDynEnts[256];
+    if (absDynEntId < cm.originalDynEntCount) return true;
+    const unsigned extra = absDynEntId - cm.originalDynEntCount;
+    if (extra < 256)
+        return absDynEntId < cm.dynEntCount[0] && usedExtraDynEnts[extra] == 1;
+    // A hole is not a live owner, and arbitrary values beyond the model
+    // reservation do not name valid brushes. FX kills invalid dynamic bolts.
+    return extra - 256 < cm.dynEntCount[1];
 }
 
 unsigned __int16 __cdecl DynEnt_GetEntityCount(DynEntityCollType collType)

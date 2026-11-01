@@ -1,1 +1,0 @@
-D3DAssemble HRESULT 0; no diagnostics.

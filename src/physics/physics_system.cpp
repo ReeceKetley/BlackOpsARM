@@ -4,6 +4,33 @@
 #include "physics_system_internal.h"
 #include "phys_assert.h"
 #include "phys_broad_phase.h"
+#include <qcommon/cm_load.h>
+#include <physics/physconstraints_load_obj.h>
+#include <universal/narrow32.h>
+
+template<class T> static void Phys_RetireMapConstraint(const T *joint)
+{
+    constexpr ConstraintType kind = std::is_same_v<T, rigid_body_constraint_point> ? CONSTRAINT_POINT
+        : std::is_same_v<T, rigid_body_constraint_distance> ? CONSTRAINT_DISTANCE
+        : std::is_same_v<T, rigid_body_constraint_hinge> ? CONSTRAINT_HINGE : CONSTRAINT_NONE;
+    if constexpr (kind != CONSTRAINT_NONE)
+    {
+        if (!joint || !cm.isInUse || !cm.constraints) return;
+        const unsigned handle = BO1_NARROW_ENCODE(joint);
+        for (unsigned i = 0; i < cm.num_constraints; ++i)
+        {
+            auto &binding = cm.constraints[i];
+            const auto nativeKind = binding.type == CONSTRAINT_ROPE ? CONSTRAINT_DISTANCE : binding.type;
+            if (nativeKind == kind && static_cast<unsigned>(binding.constraintHandle) == handle)
+                binding.constraintHandle = 0;
+        }
+    }
+}
+
+template<class T> static void Phys_RetireMapConstraintPool(phys_free_list<T> &pool)
+{
+    for (const auto *joint : pool) Phys_RetireMapConstraint(joint);
+}
 
 phys_assert_info pai_create_rbc_contact = { 0, 2, true };
 
@@ -439,6 +466,7 @@ void __cdecl phys_sys::destroy(rigid_body_constraint_point *const rbc)
     {
         TI *ti = (TI *)((char *)rbc - offsetof(TI, m_data));
         PMM_VALIDATE((char *)ti, sizeof(TI), 0x10u);
+        Phys_RetireMapConstraint(rbc);
         g_physics_system->m_list_rbc_point.remove(ti);
     }
 }
@@ -453,6 +481,7 @@ void __cdecl phys_sys::destroy(rigid_body_constraint_hinge *const rbc)
     {
         TI *ti = (TI *)((char *)rbc - offsetof(TI, m_data));
         PMM_VALIDATE((char *)ti, sizeof(TI), 0x10u);
+        Phys_RetireMapConstraint(rbc);
         g_physics_system->m_list_rbc_hinge.remove(ti);
     }
 }
@@ -467,6 +496,7 @@ void __cdecl phys_sys::destroy(rigid_body_constraint_distance *const rbc)
     {
         TI *ti = (TI *)((char *)rbc - offsetof(TI, m_data));
         PMM_VALIDATE((char *)ti, sizeof(TI), 0x10u);
+        Phys_RetireMapConstraint(rbc);
         g_physics_system->m_list_rbc_dist.remove(ti);
     }
 }
@@ -557,16 +587,19 @@ void __cdecl phys_sys::destroy(rigid_body_constraint_custom_path *const rbc)
 
 void __cdecl phys_sys::destroy_all_rbc_point()
 {
+    Phys_RetireMapConstraintPool(g_physics_system->m_list_rbc_point);
     g_physics_system->m_list_rbc_point.remove_all();
 }
 
 void __cdecl phys_sys::destroy_all_rbc_hinge()
 {
+    Phys_RetireMapConstraintPool(g_physics_system->m_list_rbc_hinge);
     g_physics_system->m_list_rbc_hinge.remove_all();
 }
 
 void __cdecl phys_sys::destroy_all_rbc_dist()
 {
+    Phys_RetireMapConstraintPool(g_physics_system->m_list_rbc_dist);
     g_physics_system->m_list_rbc_dist.remove_all();
 }
 
@@ -751,9 +784,9 @@ rigid_body_constraint_custom_path *__cdecl phys_sys::create_rbc_custom_path(
 
 void __cdecl phys_sys::destroy_all_rigid_body()
 {
-    g_physics_system->m_list_rbc_point.remove_all();
-    g_physics_system->m_list_rbc_hinge.remove_all();
-    g_physics_system->m_list_rbc_dist.remove_all();
+    destroy_all_rbc_point();
+    destroy_all_rbc_hinge();
+    destroy_all_rbc_dist();
     g_physics_system->m_list_rbc_ragdoll.remove_all();
     g_physics_system->m_list_rbc_wheel.remove_all();
     g_physics_system->m_list_rbc_angular_actuator.remove_all();
@@ -1235,7 +1268,10 @@ void __cdecl phys_sys::destroy_all_constraint(rigid_body *const rb)
             auto *node = static_cast<Node *>(base);
             base = base->m_next_T_internal;
             if (node->m_data.b1 == rb || node->m_data.b2 == rb)
+            {
+                Phys_RetireMapConstraint(&node->m_data);
                 list.remove(&node->m_data);
+            }
         }
     };
     remove_attached(g_physics_system->m_list_rbc_point);

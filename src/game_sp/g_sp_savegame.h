@@ -90,6 +90,49 @@ const SPMemorySaveHeader *SP_GetCommittedMemorySave();
 // SP 0x005411A0: 0 = the write buffer [0x01D04BA4], 1 = the committed buffer [0x01D04BA0].
 SPSaveGame *SP_GetSaveBuffer(int which);
 void G_SP_ProcessSaveQueue();
+// Main-thread operation policy. Ordinary Windows/diagnostic behavior is retained.
+bool G_SP_IsContinuousZombieResume();
+bool G_SP_ShouldDeferSavedClientCallbacks();
+bool G_SP_CheckpointOption(const char *name);
+void G_SP_CompleteContinuousZombieResume();
+void G_SP_AbortContinuousZombieResume();
+void G_SP_TraceRestoreOwnership(const char *stage);
+#if defined(__ANDROID__)
+// Diagnostic disk archive only; the incomplete world restore is not resumable.
+void G_SP_InspectSaveArchive();
+// Stages a trusted diagnostic archive for a same-map decoder test, never play.
+bool G_SP_ImportSaveArchiveForVerification();
+// Separate trusted developer archive containing a real rendered CLIENT VM.
+// Decoder verification quits before native client handles can be resumed.
+void G_SP_CaptureClientCheckpoint();
+void G_SP_VerifyClientCheckpoint();
+void G_SP_VerifyRenderedRagdollCheckpoint();
+void G_SP_VerifyRenderedNativeOwners();
+void G_SP_RoundTripClientNativeOwners();
+void G_SP_AbortClientModelsCheckpoint();
+void G_SP_NotifyClientCheckpointTreeFree(void *memory);
+void G_SP_NotifyClientCheckpointLinkFree(void *memory);
+void G_SP_NotifyClientCheckpointMoverFree(void *memory);
+void G_SP_SaveZombiesSession();
+void G_SP_SaveAndLeaveZombiesSession();
+void G_SP_ResumeZombiesSession();
+void G_SP_PollZombiesSession();
+void G_SP_InspectZombiesResumeState();
+void G_SP_ProbeClientEffectsPhysics();
+void G_SP_ArmRagdollVelocityPause();
+void G_SP_ArmServerBodyPause();
+void G_SP_InspectServerBodies();
+void G_SP_InspectMapOwners();
+void G_SP_ProbeDynEntCheckpoint();
+void G_SP_PublishSavedServerBodies();
+void G_SP_ArmRagdollAttachmentPause();
+void G_SP_NotifyRagdollAttachmentBoundary(int entity, int target, int hitloc);
+void G_SP_NotifyRagdollVelocityBoundary(int entity);
+void G_SP_BeginResumeLifecycleTrace();
+void G_SP_RequestResumeLifecycleTrace();
+void G_SP_ArmSaveCaptureErrorProbe();
+bool G_SP_IsZombieSessionRecoveryMenu();
+#endif
 // G_LoadGame, SP 0x007ECB50: teardown, globals, VM and path nodes; returns false until complete.
 bool G_SP_LoadGame(SPSaveGame *save);
 // Memory-only load preparation (SP 0x00424530); scripts are retained on this restart.
@@ -98,3 +141,18 @@ bool G_SP_SaveScriptChecksumMatches(const SPSaveGame *save);
 // Segment 1 readers used by G_InitGame(loadGame), SP 0x00668010 / 0x004E5E20.
 bool G_SP_LoadWeapons(MemoryFile *memFile);
 void G_SP_LoadRegisteredWeapons(MemoryFile *memFile);
+
+// Synchronized world lifecycle and simulation-thread-only pending RNG consumption.
+void G_SP_ClearPendingSaveRandomState();
+void G_SP_ApplyPendingSaveRandomState();
+
+struct client_t;
+struct usercmd_s;
+// One-use restored solo player entry, cancelled at synchronized world teardown
+// and when its connection is dropped. No pending handoff leaves normal entry intact.
+void G_SP_ClearSavedClientHandshake();
+void G_SP_CancelSavedClientHandshake(client_t *client);
+bool G_SP_IsSavedClientHandshakePending();
+bool G_SP_IsSavedWorldFrozen();
+void G_SP_ReleaseSavedWorldFreeze();
+bool G_SP_TryEnterSavedClient(client_t *client, const usercmd_s *firstCommand);

@@ -25,6 +25,16 @@
 #include "cl_input_mp.h"
 #include <database/db_registry.h>
 #include "sv_client_mp.h"
+#include <game_sp/g_sp_savegame.h>
+
+static void CL_ClearSavedGameInput(int localClientNum, netadrtype_t addressType)
+{
+    // CL_ClearState already clears command/prediction/mouse history. The key
+    // owners are separate, including gamepad actions routed through kbuttons.
+    // Ordinary joins and remote servers retain their existing input behavior.
+    if (localClientNum == 0 && addressType == NA_LOOPBACK && G_SP_IsSavedClientHandshakePending())
+        CL_ClearKeys(localClientNum);
+}
 
 // this seems slightly wrong in the real binary, guessing it wasn't kept up to date
 const char *svc_strings[] =
@@ -361,6 +371,8 @@ void __cdecl CL_ParseGamestate(int localClientNum, msg_t *msg)
     CL_AllocatePerLocalClientMemory();
     clc = CL_GetLocalClientConnection(localClientNum);
     clc->connectPacketCount = 0;
+    const bool savedLocalResume = localClientNum == 0 && clc->serverAddress.type == NA_LOOPBACK
+        && G_SP_IsSavedClientHandshakePending();
     if ( !clc->demoplaying )
     {
         weaponOffset = 0;
@@ -380,11 +392,13 @@ void __cdecl CL_ParseGamestate(int localClientNum, msg_t *msg)
         }
     }
     CL_ClearState(localClientNum);
+    CL_ClearSavedGameInput(localClientNum, clc->serverAddress.type);
     MSG_ClearLastReferencedEntity(msg);
     cls.mapCenter[0] = 0.0;
     cls.mapCenter[1] = 0.0;
     cls.mapCenter[2] = 0.0;
     clc->serverCommandSequence = MSG_ReadLong(msg);
+    const int gamestateCommandSequence = clc->serverCommandSequence;
     MSG_ReadString(msg, mapname, 0x20u);
     MSG_ReadString(msg, gametype, 0x20u);
     serverConfigStringChecksum = MSG_ReadLong(msg);
@@ -513,6 +527,13 @@ void __cdecl CL_ParseGamestate(int localClientNum, msg_t *msg)
     }
 #endif
 
+    if (savedLocalResume)
+    {
+        // The full table supersedes all reliable deltas through this exact
+        // checkpoint. Commands received AFTER it still execute normally.
+        clc->lastExecutedServerCommand = gamestateCommandSequence;
+        Com_Printf(15, "loadgame client: gamestate command baseline %i, stale prediction/input cleared\n", gamestateCommandSequence);
+    }
     CL_InitDownloads(localClientNum);
 
     // New stuff below here

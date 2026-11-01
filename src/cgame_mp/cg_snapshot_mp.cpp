@@ -1,4 +1,7 @@
 #include <platform/bo1_native_width.h>
+#if defined(__ANDROID__)
+#include <game_sp/g_sp_savegame.h>
+#endif
 #include <qcommon/actor_model_state.h>
 #include <game_sp/actor_sp_ext.h>
 #include <game_sp/g_sp_measure.h>
@@ -224,6 +227,9 @@ void __cdecl CG_ShutdownEntity(int localClientNum, centity_s *cent, bool shutdow
     }
     if ( cent->cScriptMover )
     {
+#if defined(__ANDROID__)
+        G_SP_NotifyClientCheckpointMoverFree(cent->cScriptMover);
+#endif
         MT_Free((unsigned char *)cent->cScriptMover, 96, SCRIPTINSTANCE_SERVER);
         cent->cScriptMover = 0;
     }
@@ -1791,6 +1797,17 @@ LABEL_33:
 
 // zombies: cg_s::activeSnapshots, moved out of cg_s when snapshot_s grew to SP's 1024 entities.
 static snapshot_s cg_activeSnapshots[MAX_LOCAL_CLIENTS][2];
+
+void CG_AdoptCheckpointSnapshots(int localClientNum, const snapshot_s *current, const snapshot_s *next)
+{
+    iassert(current && next);
+    const bool shared = current == next;
+    cg_activeSnapshots[localClientNum][0] = *current;
+    if (!shared) cg_activeSnapshots[localClientNum][1] = *next;
+    auto *cg = CG_GetLocalClientGlobals(localClientNum);
+    cg->snap = &cg_activeSnapshots[localClientNum][0];
+    cg->nextSnap = &cg_activeSnapshots[localClientNum][shared ? 0 : 1];
+}
 
 snapshot_s *__cdecl CG_ReadNextSnapshot(int localClientNum)
 {

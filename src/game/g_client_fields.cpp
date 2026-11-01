@@ -11,6 +11,7 @@
 #include <game_mp/g_spawn_mp.h>
 #include <qcommon/common.h>
 #include <game_sp/g_sp_ext.h>
+#include <game_sp/g_sp_testplan.h>
 
 static void __cdecl ClientScr_SetSpField(gclient_s *client, const client_fields_s *field);
 static void __cdecl ClientScr_GetSpField(gclient_s *client, const client_fields_s *field);
@@ -550,9 +551,12 @@ void __cdecl ClientScr_SetScore(gclient_s *pSelf, const client_fields_s *__forma
         intValue = v3.intValue;
     }
     if (Sys_IsHeadless() && Dvar_GetBool("bo1_testclient"))
+    {
         Com_Printf(16, "bo1_testclient: score %d -> %d at %s time %d\n",
             pSelf->sess.cs.score.score, intValue,
             Scr_SP_DescribeCodePos(SCRIPTINSTANCE_SERVER, gScrVmPub[SCRIPTINSTANCE_SERVER].function_frame->fs.pos), level.time);
+        G_SP_TestPlanScoreWrite(pSelf, pSelf->sess.cs.score.score, intValue);
+    }
     pSelf->sess.cs.score.score = intValue;
     CalculateRanks();
 }

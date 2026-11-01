@@ -8,12 +8,19 @@
 #include <cstdlib>
 #endif
 
+#if defined(__ANDROID__)
+#include <platform/android/pad_response.h>
+#endif
+
 #include "win_gamepad.h"
 #include "win_main.h"
 #include <universal/assertive.h>
 #include <cmath>
 #include <universal/com_math.h>
 
+#if defined(__ANDROID__)
+static const dvar_t *bo1_pad_right_deadzone;
+#endif
 const dvar_t *gpad_debug;
 const dvar_t *gpad_button_lstick_deflect_max;
 const dvar_t *gpad_button_rstick_deflect_max;
@@ -98,6 +105,9 @@ void GPad_InitAll()
                                                      1.0,
                                                      0x80u,
                                                      "Game pad button deadzone threshhold");
+#if defined(__ANDROID__)
+    bo1_pad_right_deadzone = _Dvar_RegisterFloat("bo1_pad_right_deadzone", 0.2f, 0.0f, 0.5f, 1u, "Right stick inner radial deadzone");
+#endif
     gpad_stick_deadzone_min = _Dvar_RegisterFloat(
                                                             "gpad_stick_deadzone_min",
                                                             0.2,
@@ -434,7 +444,13 @@ void __cdecl GPad_UpdateSticks(int portIndex, const _XINPUT_GAMEPAD *xpad)
         __debugbreak();
     gPad = &s_gamePads[portIndex];
     GPad_ConvertStickToFloat(xpad->sThumbLX, xpad->sThumbLY, lVec, &lVec[1]);
-    GPad_ConvertStickToFloat(xpad->sThumbRX, xpad->sThumbRY, rVec, &rVec[1]);
+#if defined(__ANDROID__)
+    if (bo1_pad_right_deadzone && bo1_pad_right_deadzone->current.value != gpad_stick_deadzone_min->current.value)
+        bo1::android::pad::RightStick(xpad->sThumbRX, xpad->sThumbRY,
+            bo1_pad_right_deadzone->current.value, gpad_stick_deadzone_max->current.value, rVec[0], rVec[1]);
+    else
+#endif
+        GPad_ConvertStickToFloat(xpad->sThumbRX, xpad->sThumbRY, rVec, &rVec[1]);
     stickIndex = 0;
     gPad->lastSticks[0] = gPad->sticks[0];
     gPad->sticks[stickIndex] = lVec[0];

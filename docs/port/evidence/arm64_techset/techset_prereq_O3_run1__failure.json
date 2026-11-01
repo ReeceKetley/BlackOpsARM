@@ -1,5 +1,0 @@
-{
-  "error_type": "RuntimeError",
-  "error": "windows_x86-registration-default-unavailable: exit 1; diagnostics retained",
-  "traceback": "Traceback (most recent call last):\n  File \"D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\tools\\port\\run_rawfile_payload_gate.py\", line 391, in main\n    'rawfile_payload_fixtures', 'rawfile_payload_measurements',\n  File \"D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\tools\\port\\run_rawfile_payload_gate.py\", line 349, in execute\n    return shell(target + '-' + label, [binary] + params) if on_device else run(target + '-' + label, [binary] + params)\n                                                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"D:\\Desktop\\Black Ops 2 Android\\BlackOpsARM\\tools\\port\\run_rawfile_payload_gate.py\", line 236, in run\n    raise RuntimeError(f'{label}: exit {code}; diagnostics retained')\nRuntimeError: windows_x86-registration-default-unavailable: exit 1; diagnostics retained\n"
-}

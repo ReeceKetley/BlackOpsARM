@@ -1,1 +1,0 @@
-{"schema":"BlackOpsARM.TASK32.entry-alloc.v1","pointer_bytes":8,"header_entry_allocations":1600,"invalid_caller_guards":6,"high_count_after_release":0,"high_water_retained":1600,"free_entry_nodes":32752,"raw_free":1024,"table_free":576,"lifo_verified":true,"registry_publication_executed":false}

@@ -1,6 +1,0 @@
-{
-  "files_verified": 1937,
-  "all_unchanged": true,
-  "checkpoint": "c51db37697c70dc1607ae10272109b56073de6fe",
-  "initial_freeze_script_failure": "KeyError: frozenEvidence; baseline key is frozen. Existing copied files compared byte-exact on resume; nothing deleted or overwritten."
-}

@@ -2,6 +2,8 @@
 #include "g_sp_savegame.h"
 #include "g_sp_levelstart.h"
 #include "g_sp_level_exit.h"
+#include "g_sp_client.h"
+#include "g_sp_testplan.h"
 #include <qcommon/cmd.h>
 #include <qcommon/common.h>
 #include <universal/com_files.h>
@@ -10,7 +12,10 @@
 #include <cstring>
 #include <server/sv_game.h>
 #include <server_mp/sv_main_mp.h>
+#include <server_mp/sv_init_mp.h>
 #include <client_mp/sv_client_mp.h>
+#include <client_mp/cl_main_mp.h>
+#include <client_mp/cl_cgame_mp.h>
 #include <qcommon/threads.h>
 #include <clientscript/cscr_vm.h>
 #include <clientscript/cscr_variable.h>
@@ -104,7 +109,7 @@ static bool SP_TemporaryReloadMap()
     // game on the current map. Replace with the SP 0x0087D030 restore when it is complete.
     // bo1_restart_full 0: MP-style fast restart of the same map (SV_MapRestart(1): the game VM
     // and scripts re-run from scratch, the zones stay loaded); 1: full `map` reload.
-    if (!Dvar_GetBool("sv_running") || Dvar_GetBool("bo1_restore_partial"))
+    if (!Dvar_GetBool("sv_running") || G_SP_CheckpointOption("bo1_restore_partial"))
         return false;
     const char *mapName = Dvar_GetString("mapname");
     if (!mapName[0])
@@ -225,6 +230,71 @@ bool G_SP_LoadGameAfterInit(SPSaveGame *save)
     return false;
 }
 
+static void SP_FinishSavedProbeInitialization(SPSaveGame *save)
+{
+    MemFile_MoveToSegment(&save->memFile[0], -1);
+    if (save->header.pad)
+        MemFile_MoveToSegment(&save->memFile[1], -1);
+    level.initializing = 0;
+    SV_InitArchivedSnapshot();
+    SV_InitSnapshot();
+    svs.snapFlagServerBit ^= 4;
+    sv.start_frameTime = com_frameTime;
+    sv.restarting = 0;
+    sv.timeResidual = 0;
+    Dvar_SetInt((dvar_s *)g_reloading, 0);
+}
+
+#include "g_sp_render_probe.inl"
+
+static void SP_ProbeRestoredFrames(SPSaveGame *save, int frames)
+{
+    // This is an explicit bounded diagnostic inside verify-quit. The normal
+    // loader still returns incomplete; it cannot fall through to gameplay.
+    if (!Sys_IsHeadless() || !save || save->state != SP_SAVE_STATE_READING
+        || frames < 1 || frames > 200 || !G_SP_CheckpointOption("bo1_restore_partial")
+        || !Dvar_GetBool("bo1_restore_verify_quit") || !G_SP_CheckpointOption("bo1_restore_live_tables")
+        || !G_SP_CheckpointOption("bo1_restore_animation") || !G_SP_CheckpointOption("bo1_restore_input")
+        || !G_SP_CheckpointOption("bo1_restore_handshake") || !G_SP_IsSavedClientHandshakePending()
+        || svs.time != level.time || !level.initializing)
+        Com_Error(ERR_DROP, "Saved frame probe requires a decoded world and pending headless solo handshake");
+    Com_SyncThreads();
+    G_SP_HeadlessAdoptSavedClient();
+    // G_SP_LoadGame enters initialization for installing tables/assets. The
+    // complete diagnostic graph is now installed and Scr_LoadPost released its
+    // holds; finish that phase as G_InitGame does before its ordinary frames.
+    // Use canonical restart snapshot/event setup and ordinary counted worker
+    // wakes. All simulation, script, save and post-frame work runs on its real
+    // engine thread; no direct G_RunFrame call or ownership assertion bypass.
+    SP_FinishSavedProbeInitialization(save);
+    const int fps = Dvar_GetInt("sv_fps");
+    if (fps < 1 || fps > 1000)
+        Com_Error(ERR_DROP, "Saved frame probe: invalid server frame rate");
+    const int frameMsec = 1000 / fps;
+    Com_Printf(15, "loadgame probe: BEGIN %i real server frames at time %i frame %i script %u; diagnostic only\n",
+        frames, level.time, level.framenum, (unsigned)gScrVarPub[SCRIPTINSTANCE_SERVER].time);
+    for (int i = 0; i < frames; ++i)
+    {
+        const int oldTime = level.time, oldFrame = level.framenum;
+        const unsigned int oldScript = gScrVarPub[SCRIPTINSTANCE_SERVER].time;
+        SV_FrameInternal(0, frameMsec);
+        SV_WaitServer();
+        Com_CheckError();
+        if (level.time != oldTime + frameMsec || svs.time != level.time
+            || level.framenum != oldFrame + 1
+            || gScrVarPub[SCRIPTINSTANCE_SERVER].time != ((oldScript + 1) & 0xFFFFFF))
+            Com_Error(ERR_DROP, "Saved frame probe: worker did not complete exactly one simulation/script tick");
+        Com_Printf(15, "loadgame probe: COMPLETE %i/%i time %i frame %i script %u health %i points %i weapon %u clientState %i\n",
+            i + 1, frames, level.time, level.framenum, (unsigned)gScrVarPub[SCRIPTINSTANCE_SERVER].time,
+            g_entities[0].health, level.clients[0].sess.cs.score.score, level.clients[0].ps.weapon,
+            (int)svs.clients[0].header.state);
+    }
+    if (frames >= 2 && (G_SP_IsSavedClientHandshakePending() || svs.clients[0].header.state != CS_ACTIVE
+        || svs.clients[0].gentity != &g_entities[0] || g_entities[0].client != &level.clients[0]))
+        Com_Error(ERR_DROP, "Saved frame probe: restored test client failed its normal headless entry");
+    Com_Printf(15, "loadgame probe: END %i real frames completed; normal diagnostic quit, NOT a playable resume\n", frames);
+}
+
 static void SP_RestartFromSave()
 {
     // Brief/notes put the random seed in G_InitGame argument 3; the exe passes the map checksum
@@ -236,7 +306,7 @@ static void SP_RestartFromSave()
     if (SP_TemporaryReloadMap())
         return;
     SP_ClearLoadGame();
-    if (Dvar_GetBool("bo1_restore_partial"))
+    if (G_SP_CheckpointOption("bo1_restore_partial"))
     {
         Com_SyncThreads();
         if (!Dvar_GetBool("sv_running"))
@@ -244,6 +314,8 @@ static void SP_RestartFromSave()
             Com_Printf(0, "Server is not running.\n");
             return;
         }
+        if (G_SP_IsContinuousZombieResume() || Dvar_GetInt("bo1_restore_render_frames"))
+            SP_PrepareRenderedSaveClient();
         // SP 0x0087D147..0x0087D18D resets the time scales, advances the low server-ID nibble,
         // and calls the retained-script restart. Client resets / SP gametype setup and the
         // successful-load suffix remain to port before this can replace the default fallback.
@@ -257,7 +329,33 @@ static void SP_RestartFromSave()
         SV_RestartGameProgs(0, true, &save);
         if (!G_SP_LoadGameAfterInit(save))
         {
-            Com_Printf(15, "loadgame: partial restore stopped before missing actor/sentient/remaining payload and live install; retaining diagnostic popup\n");
+            if (G_SP_IsContinuousZombieResume())
+            {
+                SP_BeginRenderedSaveProbe(save, 1);
+                return;
+            }
+            Com_Printf(15, "loadgame: diagnostic world loaded; full client/mobile resume remains incomplete\n");
+            if (Dvar_GetBool("bo1_restore_verify_quit"))
+            {
+                if (const int renderedFrames = Dvar_GetInt("bo1_restore_render_frames"))
+                {
+                    SP_BeginRenderedSaveProbe(save, renderedFrames);
+                    return; // explicit bounded diagnostic, ordinary load still incomplete
+                }
+                const int frames = Dvar_GetInt("bo1_restore_probe_frames");
+                if (frames)
+                    SP_ProbeRestoredFrames(save, frames);
+                // Validation terminates through normal ownership teardown. The
+                // ERR_DROP/QuitOnError route intentionally skips Com_Close while
+                // com_errorEntered is set and cannot measure full asset cleanup.
+                // Any worker frames above were explicitly bounded and joined.
+                // The incomplete loader still cannot return to ordinary play.
+                Com_Printf(15, frames
+                    ? "loadgame: bounded restored-frame probe finished; normal diagnostic quit, NOT a playable resume\n"
+                    : "loadgame: decoded payload verified; normal diagnostic quit, NO gameplay resumed\n");
+                Com_Quit_f();
+                Com_Error(ERR_FATAL, "Diagnostic save verification quit unexpectedly returned");
+            }
         }
     }
     // TEMPORARY (not SP): until the restore works end to end, end like the no-save path of
@@ -268,6 +366,11 @@ static void SP_RestartFromSave()
 
 int SP_LoadGame_RunLoader()
 {
+    if (s_renderSaveProbe.active)
+    {
+        SP_PollRenderedSaveProbe();
+        return 0; // real Com_Frame continues to server packets, client and renderer
+    }
     // zombies: SP 0x00479C00. Branch (a), the pending in-place load of the "loadgame" commands
     // (0x027F7064), is not reachable: none of those commands is registered in KB.
     if (!G_SP_IsSPLevel())
@@ -408,6 +511,34 @@ static void SP_QuickRestart_f()
 
 static cmd_function_s SP_LoadGameContinue_f_VAR;
 static cmd_function_s SP_QuickRestart_f_VAR;
+#if defined(__ANDROID__)
+static cmd_function_s SP_InspectSaveArchive_VAR;
+static cmd_function_s SP_VerifySaveArchive_VAR;
+static cmd_function_s SP_CaptureClientCheckpoint_VAR;
+static cmd_function_s SP_VerifyClientCheckpoint_VAR;
+static cmd_function_s SP_RoundTripClientNativeOwners_VAR;
+static cmd_function_s SP_SaveZombiesSession_VAR;
+static cmd_function_s SP_SaveAndLeaveZombiesSession_VAR;
+static cmd_function_s SP_ResumeZombiesSession_VAR;
+static cmd_function_s SP_InspectZombiesResumeState_VAR;
+static cmd_function_s SP_InspectResumeProgression_VAR;
+static cmd_function_s SP_ProbeClientEffectsPhysics_VAR;
+static cmd_function_s SP_ArmRagdollVelocityPause_VAR;
+static cmd_function_s SP_ArmServerBodyPause_VAR;
+static cmd_function_s SP_InspectServerBodies_VAR;
+static cmd_function_s SP_InspectMapOwners_VAR;
+static cmd_function_s SP_ProbeDynEntCheckpoint_VAR;
+static cmd_function_s SP_ArmRagdollAttachmentPause_VAR;
+static cmd_function_s SP_RequestResumeLifecycleTrace_VAR;
+static cmd_function_s SP_ArmSaveCaptureErrorProbe_VAR;
+
+static void SP_VerifySaveArchive_f()
+{
+    Com_SyncThreads();
+    if (G_SP_ImportSaveArchiveForVerification())
+        Cbuf_AddText(0, "loadgame_continue\n");
+}
+#endif
 
 void SP_RegisterLoadGameCommands()
 {
@@ -416,8 +547,67 @@ void SP_RegisterLoadGameCommands()
     if (registered)
         return;
     registered = true;
+#if defined(__ANDROID__)
+    Cmd_AddCommandInternal("zombies_save", G_SP_SaveZombiesSession, &SP_SaveZombiesSession_VAR);
+    Cmd_AddCommandInternal("zombies_save_leave", G_SP_SaveAndLeaveZombiesSession, &SP_SaveAndLeaveZombiesSession_VAR);
+    Cmd_AddCommandInternal("zombies_resume", G_SP_ResumeZombiesSession, &SP_ResumeZombiesSession_VAR);
+    Cmd_AddCommandInternal("zombies_resume_state", G_SP_InspectZombiesResumeState, &SP_InspectZombiesResumeState_VAR);
+    Cmd_AddCommandInternal("zombies_resume_progress", G_SP_InspectResumeProgression, &SP_InspectResumeProgression_VAR);
+    Cmd_AddCommandInternal("bo1_client_fx_physics_probe", G_SP_ProbeClientEffectsPhysics, &SP_ProbeClientEffectsPhysics_VAR);
+    Cmd_AddCommandInternal("bo1_ragdoll_pause_on_velocity", G_SP_ArmRagdollVelocityPause, &SP_ArmRagdollVelocityPause_VAR);
+    Cmd_AddCommandInternal("bo1_server_body_pause_on_create", G_SP_ArmServerBodyPause, &SP_ArmServerBodyPause_VAR);
+    Cmd_AddCommandInternal("bo1_server_body_state", G_SP_InspectServerBodies, &SP_InspectServerBodies_VAR);
+    Cmd_AddCommandInternal("bo1_resume_map_owners", G_SP_InspectMapOwners, &SP_InspectMapOwners_VAR);
+    Cmd_AddCommandInternal("bo1_dynent_checkpoint_probe", G_SP_ProbeDynEntCheckpoint, &SP_ProbeDynEntCheckpoint_VAR);
+    Cmd_AddCommandInternal("bo1_ragdoll_pause_on_attachment", G_SP_ArmRagdollAttachmentPause, &SP_ArmRagdollAttachmentPause_VAR);
+    Cmd_AddCommandInternal("bo1_resume_lifecycle_trace", G_SP_RequestResumeLifecycleTrace, &SP_RequestResumeLifecycleTrace_VAR);
+    Cmd_AddCommandInternal("bo1_save_capture_error_probe", G_SP_ArmSaveCaptureErrorProbe, &SP_ArmSaveCaptureErrorProbe_VAR);
+    _Dvar_RegisterBool("bo1_ragdoll_trace_transitions", false, 0,
+        "Developer trace of actual ragdoll state changes and real body counts");
+    _Dvar_RegisterBool("bo1_save_archive", false, 0,
+        "Persist diagnostic SP snapshots; incomplete payloads cannot resume gameplay");
+    Cmd_AddCommandInternal("bo1_save_archive_inspect", G_SP_InspectSaveArchive, &SP_InspectSaveArchive_VAR);
+    Cmd_AddCommandInternal("bo1_save_archive_verify", SP_VerifySaveArchive_f, &SP_VerifySaveArchive_VAR);
+    _Dvar_RegisterBool("bo1_client_checkpoint", false, 0,
+        "Private client VM capture/decoder test; remaining native client checkpoint incomplete");
+    _Dvar_RegisterBool("bo1_client_checkpoint_quit", false, 0,
+        "Quit normally after a durable private client checkpoint capture");
+    _Dvar_RegisterBool("bo1_restore_saved_client", false, 0,
+        "Private paired server/client archive verification after canonical saved-server reconnect");
+    _Dvar_RegisterInt("bo1_restore_client_frames", 0, 0, 1200, 0,
+        "Private paired restore: retain native owners for this many saved CLIENT server frames");
+    _Dvar_RegisterBool("bo1_client_checkpoint_replay_archive", false, 0,
+        "Private resumed-session capture/reopen uses a separate archive from the original checkpoint");
+    _Dvar_RegisterBool("bo1_restore_freeze_world", false, 0,
+        "Private paired restore: freeze saved simulation while real client reconnect transport progresses");
+    _Dvar_RegisterBool("bo1_client_fx_publish", false, 0,
+        "Private fresh client decoder: rebuild/verify/retire staged FX owners, no restored client frames");
+    _Dvar_RegisterBool("bo1_client_audio_publish", false, 0,
+        "Private fresh client decoder: rebuild/verify/retire audio sources and playback registry, no restored client frames");
+    Cmd_AddCommandInternal("bo1_client_checkpoint_capture", G_SP_CaptureClientCheckpoint, &SP_CaptureClientCheckpoint_VAR);
+    Cmd_AddCommandInternal("bo1_client_checkpoint_verify", G_SP_VerifyClientCheckpoint, &SP_VerifyClientCheckpoint_VAR);
+    Cmd_AddCommandInternal("bo1_client_owners_roundtrip", G_SP_RoundTripClientNativeOwners, &SP_RoundTripClientNativeOwners_VAR);
+#endif
     _Dvar_RegisterBool("bo1_restore_partial", false, 0,
         "Exercise the incomplete SP memory restore, then drop to the temporary popup");
+    _Dvar_RegisterBool("bo1_restore_verify_quit", false, 0,
+        "With bo1_restore_partial, quit normally after byte-checked decoding; never resume gameplay");
+    _Dvar_RegisterBool("bo1_restore_live_tables", false, 0,
+        "With partial/verify-quit, install decoded owners into real game tables before normal teardown; no gameplay");
+    _Dvar_RegisterBool("bo1_restore_animation", false, 0,
+        "With live table verification, rebuild saved animation nodes and remap command references; no gameplay");
+    _Dvar_RegisterBool("bo1_restore_input", false, 0,
+        "With animation/live table verification, rebase server input and view; client snapshots pending, no gameplay");
+    _Dvar_RegisterBool("bo1_restore_handshake", false, 0,
+        "With input verification, send fresh gamestate and stage one-use saved player entry; no gameplay");
+    _Dvar_RegisterInt("bo1_restore_probe_frames", 0, 0, 200, 0,
+        "Headless verify-quit only: run this many real restored worker frames before normal quit (0 = off)");
+    _Dvar_RegisterInt("bo1_restore_render_frames", 0, 0, 200, 0,
+        "Local rendered verify-quit only: continue real app frames then quit; no public Resume (0 = off)");
+    _Dvar_RegisterBool("bo1_restore_physics", false, 0,
+        "Private rendered probe: checkpoint and rebuild real ragdoll bodies once before continuing frames");
+    _Dvar_RegisterBool("bo1_restore_native_owners", false, 0,
+        "Private rendered probe: rebuild decoded native FX/audio owners before continuing real frames");
     _Dvar_RegisterBool("bo1_restart_full", false, 0,
         "TEMPORARY game-over Restart: 1 = full map reload, 0 = fast restart keeping the zones");
     _Dvar_RegisterInt("bo1_resave_ms", 0, 0, 0x7FFFFFFF, 0,

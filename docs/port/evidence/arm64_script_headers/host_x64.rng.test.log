@@ -1,1 +1,0 @@
-PASS production RNG bodies: 5000 seed comparisons, unchanged rand()/32768 formula; RAND_MAX=32767 (range/stream portability deferred)

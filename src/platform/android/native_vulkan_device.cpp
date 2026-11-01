@@ -6,10 +6,16 @@
 #include "gfx_vulkan/event_fences.h"
 #include "gfx_vulkan/buffer_assets.h"
 #include "gfx_vulkan/shader_assets.h"
+#include "gfx_vulkan/geometry_bindings.h"
+#include "gfx_vulkan/texture_bindings.h"
+#include "gfx_vulkan/material_bindings.h"
+#include "gfx_vulkan/constant_state.h"
+#include "gfx_vulkan/target_bindings.h"
 #include <SDL.h>
 #include <SDL_vulkan.h>
 #include <atomic>
 #include <cstdlib>
+#include <cstdio>
 #include <memory>
 namespace bo1::android::native_device {
 namespace {std::atomic<bool> requested{};std::unique_ptr<bo1::vulkan::Presentation> renderer;std::unique_ptr<bo1::vulkan::EngineFrames> frames;SDL_threadID owner{};SDL_Window* ownedWindow{};unsigned windowId{};bool windowAttached{};}
@@ -63,12 +69,23 @@ bool AttachWindow(SDL_Window* window,int width,int height,std::string& error) {
 bool Close(std::string& error) {
     using namespace bo1::vulkan;
     if(!renderer)return true;
-    if(SDL_ThreadID()!=owner){error="Native device close must run on its SDL owner";return false;}
+    if(SDL_ThreadID()!=owner){error="Native device close must run on its creation thread";return false;}
+    std::fprintf(stderr,"Native device close: draining frames\n");
     if(frames) {if(!frames->Drain(error))return false;frames.reset();}
+    // Frame drain has retired every submitted snapshot. Command registries
+    // (including temporary parallel lane states) also retain bindings between
+    // draws; release those CPU borrowers before testing asset-owner emptiness.
+    const auto bindings=geometry_bindings::RetireAll()+texture_bindings::RetireAll()
+        +material_bindings::RetireAll()+constant_state::RetireAll()+target_bindings::RetireAll();
+    std::fprintf(stderr,"Native device close: retired %zu command binding states\n",bindings);
+    std::fprintf(stderr,"Native device close: clearing uploads\n");
     if(!image_uploads::Clear(error))return false;
-    if(!image_assets::Empty()||!buffer_assets::Empty()||!query_assets::Empty()||!event_fences::Empty()) {error="Native device still has GPU resource owners or frame borrowers";return false;}
+    const bool imagesEmpty=image_assets::Empty(),buffersEmpty=buffer_assets::Empty(),queriesEmpty=query_assets::Empty(),eventsEmpty=event_fences::Empty();
+    std::fprintf(stderr,"Native device close: empty images=%i buffers=%i queries=%i events=%i\n",imagesEmpty,buffersEmpty,queriesEmpty,eventsEmpty);
+    if(!imagesEmpty||!buffersEmpty||!queriesEmpty||!eventsEmpty) {error="Native device still has GPU resource owners or frame borrowers";return false;}
     if(!shader_assets::SelectNative(false)) {error="Native device still has shader or declaration owners";return false;}
     if(!image_assets::Attach(VK_NULL_HANDLE,VK_NULL_HANDLE,error))return false;
+    if(!buffer_assets::Attach(VK_NULL_HANDLE,VK_NULL_HANDLE,error))return false;
     if(!query_assets::Attach(VK_NULL_HANDLE,false,error))return false;
     // Presentation drains its queues and releases swapchain/device/surface in
     // dependency order. The caller then destroys the actual SDL window.

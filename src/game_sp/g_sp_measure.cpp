@@ -10,6 +10,11 @@
 #include <cstdio>
 #include <cstdlib>
 #include <unistd.h>
+#include "g_sp_savegame.h"
+#include "g_sp_player_state.h"
+#include "g_sp_ext.h"
+#include <atomic>
+#include <clientscript/cscr_parser.h>
 #endif
 #include "g_sp_testplan.h"
 #include "g_sp_weapon_sweep.h"
@@ -126,6 +131,9 @@ const char *s_fieldNames[] = { "round_number", "zombie_total", "zombie_health", 
     "zombie_move_speed", // q1 c10: level.zombie_move_speed (int) and self.zombie_move_speed ("walk"/"run"/"sprint")
     "crouchrun_combatanim", "moveplaybackrate" }; // q1 c15: the crawler's crawl cycle (zombie_gib_on_damage) and its rate
 unsigned int s_fieldKeys[_countof(s_fieldNames)];
+#if defined(__ANDROID__)
+unsigned int s_resumeLivesKey;
+#endif
 bool s_triggerRadius[MAX_GENTITIES_SV]; // f2: trigger_radius entities seen in use (quad gas area)
 // k1: slow-frame profile (QueryPerformanceCounter ticks) and resource record timer.
 const int RESOURCE_MS = 10000;
@@ -346,6 +354,13 @@ void G_SP_MeasureFields(scriptInstance_t inst)
     G_SP_WeaponSweepFields(inst);
     G_SP_HeadlessThrowFields(inst); // w1 c6 TEST SWITCH bo1_testclient_scriptgive
     G_SP_HeadlessDiceFields(inst); // k1 TEST SWITCH bo1_testclient_dice: canonical local / field names
+#if defined(__ANDROID__)
+    if (inst == SCRIPTINSTANCE_SERVER)
+    {
+        const unsigned string = SL_FindString("lives", inst);
+        s_resumeLivesKey = string ? gScrCompilePub[inst].canonicalStrings[string] : 0;
+    }
+#endif
     if (inst != SCRIPTINSTANCE_SERVER || !Enabled())
         return;
     // Compiler identifiers are canonical IDs, not SL string IDs. Save the mapping
@@ -579,8 +594,61 @@ void G_SP_MeasureAnimScripted(const gentity_s *ent, const XAnim_s *anims, unsign
         + ",\"anim\":" + Quote(parts ? parts->name : "") + notes + "]");
 }
 
+#if defined(__ANDROID__)
+static std::atomic<int> s_resumeLifecycleFrames{0};
+void G_SP_BeginResumeLifecycleTrace()
+{
+    s_resumeLifecycleFrames.store(120, std::memory_order_release);
+}
+static void SP_TraceResumeLifecycleFrame()
+{
+    const int remaining = s_resumeLifecycleFrames.load(std::memory_order_acquire);
+    if (remaining <= 0) return;
+    s_resumeLifecycleFrames.fetch_sub(1, std::memory_order_relaxed);
+    if (remaining % 5 || level.maxclients < 1) return;
+    const auto &ent = g_entities[0];
+    const auto *client = ent.client;
+    if (!client) { Com_Printf(15, "Resume lifecycle: time %i player has no client\n", level.time); return; }
+    Com_Printf(15, "Resume lifecycle: time %i frame %i script %u entity %i health %i psHealth %i score %i god %u connected %i session %i team %i transport %i pm %i lastStand %i weapon %u state %i timer %i delay %i command %i lastCmd %i inactivity %i\n",
+        level.time, level.framenum, gScrVarPub[SCRIPTINSTANCE_SERVER].time, ent.r.inuse, ent.health,
+        client->ps.stats[0], client->sess.cs.score.score, ent.flags & 3u, client->sess.connected,
+        client->sess.sessionState, client->sess.cs.team, svs.clients[0].header.state, client->ps.pm_type,
+        client->lastStand, client->ps.weapon, client->ps.weaponstate, client->ps.weaponTime,
+        client->ps.weaponDelay, client->ps.commandTime, client->lastCmdTime, client->inactivityTime);
+    const unsigned entityId = FindEntityId(SCRIPTINSTANCE_SERVER, 0, 0, 0);
+    const unsigned lives = entityId && s_resumeLivesKey ? FindVariable(SCRIPTINSTANCE_SERVER, entityId, s_resumeLivesKey) : 0;
+    const int livesValue = lives && GetValueType(SCRIPTINSTANCE_SERVER, lives) == VAR_INTEGER
+        ? GetVariableValueAddress(SCRIPTINSTANCE_SERVER, lives)->u.intValue : -999;
+    Com_Printf(15, "Resume perk lifecycle: time %i builtin %x session %x wire %x/%x scriptLives %i field %u\n",
+        level.time, G_SP_PlayerBuiltinState(0).perks, G_ClientSpExt(client).sessionPerks,
+        client->ps.perks[0], client->ps.perks[1], livesValue, lives);
+}
+static void SP_TraceResumeLifecycleNotify(scriptInstance_t inst, unsigned owner, unsigned name)
+{
+    if (inst != SCRIPTINSTANCE_SERVER || s_resumeLifecycleFrames.load(std::memory_order_acquire) <= 0) return;
+    const bool isLevel = owner == gScrVarPub[inst].levelId;
+    int entity = -1;
+    if (!isLevel && GetObjectType(inst, owner) == VAR_ENTITY)
+    {
+        const auto ref = Scr_GetEntityIdRef(inst, owner);
+        if (!ref.classnum) entity = ref.entnum;
+    }
+    if (!isLevel && entity != 0) return;
+    const char *notify = SL_ConvertToString(name, inst);
+    if (!strcmp(notify, "touch") || !strcmp(notify, "spawn_manager_throttle_reset") || !strcmp(notify, "face")) return;
+    Com_Printf(15, "Resume lifecycle notify: time %i scope %s entity %i name %s\n",
+        level.time, isLevel ? "level" : "player", entity, notify);
+    const auto &vm = gScrVmPub[inst];
+    if (vm.function_count && vm.function_frame && vm.function_frame->fs.pos)
+        Scr_PrintPrevCodePos(inst, 15, const_cast<char *>(vm.function_frame->fs.pos), 0);
+}
+#endif
+
 void G_SP_MeasureFrame()
 {
+#if defined(__ANDROID__)
+    SP_TraceResumeLifecycleFrame();
+#endif
     if (!Enabled())
         return;
     unsigned int object = gScrVarPub[SCRIPTINSTANCE_SERVER].levelId;
@@ -684,6 +752,9 @@ void G_SP_MeasureFrame()
 
 void G_SP_MeasureNotify(scriptInstance_t inst, unsigned int owner, unsigned int name, const VariableValue *top)
 {
+#if defined(__ANDROID__)
+    SP_TraceResumeLifecycleNotify(inst, owner, name);
+#endif
     G_SP_WeaponSweepNotify(inst, owner, name, top);
     G_SP_TestPlanNotify(inst, owner, name, top); // headless test-client plan (harness only)
     if (inst == SCRIPTINSTANCE_SERVER && owner == gScrVarPub[inst].levelId && Sys_IsHeadless())

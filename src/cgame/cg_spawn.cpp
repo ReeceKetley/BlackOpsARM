@@ -1,6 +1,8 @@
 #include "cg_spawn.h"
+#include "cg_world.h"
 #if defined(__ANDROID__)
 #include <platform/android/legacy_crt.h>
+#include "cg_bolt.h"
 #endif
 #include <game/g_load_utils.h>
 #include "cg_scr_main.h"
@@ -210,6 +212,10 @@ void __cdecl CG_Free(int localClientNum, int entNum)
     }
     ++cent->currentState.useCount;
     CG_ShutdownEntity(localClientNum, cent, 1);
+    // Every fake entity can own a collision link, including non-physics script
+    // movers. Retire it while the identity/pose still exists, before this slot
+    // is cleared and becomes available to another owner.
+    CG_UnlinkEntity(localClientNum, entNum);
     CG_SafeDObjFree(localClientNum, entNum);
     fcent = &cg_fakeEntitiesArray[512 * localClientNum - 1024 + entNum];
     if ( !cg_fakeEntitiesInuseArray[512 * localClientNum + fcent - &cg_fakeEntitiesArray[512 * localClientNum]]
@@ -250,6 +256,9 @@ void __cdecl CG_ClearFakeEntInUse(int localClientNum, fake_centity_s *ent)
 
 void __cdecl CG_ShutdownFakeEntities(int localClientNum)
 {
+#if defined(__ANDROID__)
+    CG_ClearBoltReferences(localClientNum);
+#endif
     bool v1; // [esp+4h] [ebp-10h]
     fake_centity_s *cent; // [esp+Ch] [ebp-8h]
     int num; // [esp+10h] [ebp-4h]

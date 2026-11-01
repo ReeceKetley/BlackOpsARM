@@ -211,3 +211,9 @@ void CG_SP_CopyActorModels(int localClientNum, actorInfo_t *corpseInfo, const ac
     if (zombiemode && zombiemode->current.enabled)
         *FindInfo(localClientNum, corpseInfo) = *FindInfo(localClientNum, ai);
 }
+
+void CG_SP_SetCorpseModels(int localClientNum, actorInfo_t *corpseInfo, const SPActorModelInfo *models)
+{
+    *FindInfo(localClientNum, corpseInfo) = *models;
+    corpseInfo->dobjDirty = 1;
+}

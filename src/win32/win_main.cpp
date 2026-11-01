@@ -1388,6 +1388,7 @@ void __cdecl    Sys_Quit()
 {
 #if defined(__ANDROID__)
     bo1::android::BeginFinalSystemCleanup();
+    std::fputs("Native shutdown: final system cleanup entered\n", stderr);
 #else
     Sys_EnterCriticalSection(CRITSECT_COM_ERROR);
     timeEndPeriod(1u);
@@ -1396,6 +1397,7 @@ void __cdecl    Sys_Quit()
     LiveSteam_Shutdown();
     CL_ShutdownAll();
 #if defined(__ANDROID__)
+    std::fputs("Native shutdown: retiring input\n", stderr);
     bo1::android::ShutdownInputIfInitialized();
 #else
     IN_Shutdown();
@@ -1418,6 +1420,7 @@ void __cdecl    Sys_Quit()
         track_shutdown(0);
     Con_ShutdownChannels();
 #if defined(__ANDROID__)
+    std::fputs("Native shutdown: final system cleanup completed\n", stderr);
     bo1::android::FinishSystemQuit();
 #else
     exit(0);

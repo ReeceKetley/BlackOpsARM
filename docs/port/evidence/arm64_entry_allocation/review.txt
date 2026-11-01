@@ -1,1 +1,0 @@
-Read-only review: no serious production correctness blocker. Exact void* free/callback and memcpy getter preserve valid behavior. Actual fatal progress1026/578 and unlocked worker correct. Collector nested equality and loose diagnostic order were gaps; fixed strict types/exactstderr and8 malformed controls. Next genuine entry-owned headers; no reviewer edits/builds.

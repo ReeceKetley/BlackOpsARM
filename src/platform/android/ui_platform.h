@@ -4,6 +4,9 @@ namespace bo1::android {
 // Activity, dismissal, rejection and wrong waiting thread return false.
 bool ConfirmConfigurationChange(const char *title, const char *message);
 bool LaunchAndroidURL(const char *url);
+// Actual Activity/UI acknowledgement. Does not destroy the SDL surface before
+// canonical renderer teardown; absence of an overlay is idempotent success.
+bool RetireAndroidStartupOverlay();
 // Bounded real engine output; never invokes JNI/log/error callbacks under locks.
 void AppendAndroidConsoleOutput(const char *message);
 // Install after actual rendered input/event-queue initialization on its SDL

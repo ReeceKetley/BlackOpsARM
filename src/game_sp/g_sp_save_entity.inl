@@ -65,7 +65,9 @@ static void SP_CheckEntityFields(const SPEntitySaveField *fields, unsigned count
     // The EXE table is not sorted. Validate bounds and pairwise non-overlap without reordering it.
     for (unsigned i = 0; i < count; ++i)
     {
-        const unsigned expectedSize = fields[i].type == 1 || fields[i].type == 11 || fields[i].type == 17
+        // Type 11 is the KB actor's uint32 script handle, not SP's uint16.
+        // Its save ID still comes from the existing bounded VM save map.
+        const unsigned expectedSize = fields[i].type == 1 || fields[i].type == 17
             ? 2 : (fields[i].type == 2 || fields[i].type == 4 || fields[i].type == 5
                 || fields[i].type == 6 || fields[i].type == 8 || fields[i].type == 9
                 || fields[i].type == 10 || (fields[i].type >= 12 && fields[i].type <= 15)
@@ -146,14 +148,23 @@ static unsigned short Scr_SaveObjectIndex(unsigned int id)
     return gScrVarPub[SCRIPTINSTANCE_SERVER].saveIdMap[id];
 }
 
-static unsigned short Scr_LoadObjectIndex(unsigned int index)
+static unsigned int Scr_LoadObjectIndex(unsigned int index)
 {
     // zombies: SP 0x0064A740 (ReadField type 11): the loaded object, with a reference for the field.
     if (!index)
         return 0;
+    if (index > gScrVarPub[SCRIPTINSTANCE_SERVER].savecount)
+        Com_Error(ERR_DROP, "ReadField: script save object out of range (%u)", index);
     const unsigned int id = gScrVarPub[SCRIPTINSTANCE_SERVER].saveIdMapRev[index];
     AddRefToObject(SCRIPTINSTANCE_SERVER, id);
-    return (unsigned short)id;
+    // Type 11 is the native actor's externally owned animation thread handle.
+    // Actor_KillAnimScript releases it with Scr_FreeThread, whose accounting
+    // includes both the external owner and the object reference. Recreate that
+    // owner rather than leaving shutdown to decrement a nonexistent owner.
+    ++gScrVarPub[SCRIPTINSTANCE_SERVER].ext_threadcount;
+    if (gScrVarDebugPub[SCRIPTINSTANCE_SERVER])
+        ++gScrVarDebugPub[SCRIPTINSTANCE_SERVER]->extRefCount[id];
+    return id;
 }
 
 // DERIVED animscript index (WriteField1 type 12, SP 0x007EA034 / ReadField 0x00491DF5). SP stores
@@ -194,6 +205,15 @@ static scr_animscript_t *SP_LoadAnimScript(int index, unsigned char *record)
     return list + (index - 1) % SP_ANIMSCRIPTS_PER_LIST;
 }
 
+// Index encodings occupy four bytes inside native-width pointer fields. Clear the
+// entire image field first so no process address survives in its upper half.
+static void SP_StoreImageIndex(unsigned char *at, unsigned size, int index)
+{
+    iassert(size >= sizeof(index));
+    memset(at, 0, size);
+    memcpy(at, &index, sizeof(index));
+}
+
 static void SP_WriteStruct(const SPEntitySaveField *fields, unsigned count,
     const void *source, unsigned char *image, unsigned size, MemoryFile *memFile)
 {
@@ -218,10 +238,10 @@ static void SP_WriteStruct(const SPEntitySaveField *fields, unsigned count,
         else if (field.type == 14)
         {
             XAnimTree_s *tree = *(XAnimTree_s **)at;
-            *(int *)at = tree ? Scr_GetAnimsIndex(XAnimGetAnims(tree), SCRIPTINSTANCE_SERVER) : 0;
+            SP_StoreImageIndex(at, field.size, tree ? Scr_GetAnimsIndex(XAnimGetAnims(tree), SCRIPTINSTANCE_SERVER) : 0);
         }
         else if (field.type == 15)
-            *(int *)at = *(void **)at != nullptr;
+            SP_StoreImageIndex(at, field.size, *(void **)at != nullptr);
         else if (field.type == 7)
         {
             // SP 0x007E9F0A: the one-based sentient number as an int (clears infoIndex).
@@ -231,13 +251,14 @@ static void SP_WriteStruct(const SPEntitySaveField *fields, unsigned count,
             *(int *)at = number;
         }
         else if (field.type == 11)
-            *(unsigned short *)at = Scr_SaveObjectIndex(*(unsigned short *)at);
+            // KB actor AnimScriptHandle is a uint32, including on Windows.
+            *(unsigned int *)at = Scr_SaveObjectIndex(*(unsigned int *)at);
         else if (field.type == 12)
-            *(int *)at = SP_SaveAnimScript(*(scr_animscript_t **)at, (const unsigned char *)source);
+            SP_StoreImageIndex(at, field.size, SP_SaveAnimScript(*(scr_animscript_t **)at, (const unsigned char *)source));
         else if (field.type == 13)
-            *(int *)at = Path_SaveNode(*(pathnode_t **)at);
+            SP_StoreImageIndex(at, field.size, Path_SaveNode(*(pathnode_t **)at));
         else
-            *(int *)at = SP_EntityReferenceIndex(field.type, *(void **)at, field.offset);
+            SP_StoreImageIndex(at, field.size, SP_EntityReferenceIndex(field.type, *(void **)at, field.offset));
     }
     MemFile_WriteData(memFile, size, image);
     for (unsigned i = 0; i < count; ++i)
@@ -314,7 +335,7 @@ static void SP_ReadEntityStruct(const SPEntitySaveField *fields, unsigned count,
                 ((SentientHandle *)at)->setSentient(&g_sentients[number - 1]);
         }
         else if (field.type == 11)
-            *(unsigned short *)at = Scr_LoadObjectIndex(*(unsigned short *)at);
+            *(unsigned int *)at = Scr_LoadObjectIndex(*(unsigned int *)at);
         else if (field.type == 12)
             *(scr_animscript_t **)at = SP_LoadAnimScript(*(int *)at, (unsigned char *)dest);
         else if (field.type == 13)
@@ -377,7 +398,13 @@ static void G_WriteEntity(const gentity_s *ent, const gentitySpExt *ext,
     const scripted_anim_sp_t *scripted, int sequence, MemoryFile *memFile)
 {
     // zombies: SP 0x007EA5C0. The DERIVED side images represent fields of SP's entity image.
+#if defined(__ANDROID__)
+    gentity_s image;
+    SP_CanonicalServerBodyImage(*ent, image);
+    SP_WriteEntityStruct(s_entityFields, ARRAY_COUNT(s_entityFields), &image, sizeof(image), memFile);
+#else
     SP_WriteEntityStruct(s_entityFields, ARRAY_COUNT(s_entityFields), ent, sizeof(*ent), memFile);
+#endif
     SP_WriteEntityStruct(s_entityExtFields, ARRAY_COUNT(s_entityExtFields), ext, sizeof(*ext), memFile);
     int hasScripted = scripted != nullptr; // SP field type 16; 0x00A54044 is an empty field table.
     MemFile_WriteData(memFile, 4, (unsigned char *)&hasScripted);
@@ -413,7 +440,13 @@ static bool G_ReadEntity(gentity_s *ent, gentitySpExt *ext, scripted_anim_sp_t *
         MemFile_ReadData(memFile, 4, (unsigned char *)&model);
     }
     if (ent->physObjId && ent->physObjId != -1) // SP entity +0x32C
+    {
+#if defined(__ANDROID__)
+        if (s_continuousZombieResume)
+            s_unrecordedServerPhysicsEntity = ent->s.number;
+#endif
         ent->physObjId = 0;
+    }
     Path_ReadDisconnectedLinks(ent, memFile);
     MemFile_ReadData(memFile, 4, (unsigned char *)sequence);
     return hasScripted != 0;
@@ -444,10 +477,10 @@ static void SP_ReleaseEntityFields(const SPEntitySaveField *fields, unsigned cou
                 RemoveEntHandleInfo(&g_sentientsHandleList[handle->number - 1], handle->infoIndex);
             *handle = {};
         }
-        else if (fields[i].type == 11 && *(unsigned short *)at)
+        else if (fields[i].type == 11 && *(unsigned int *)at)
         {
-            RemoveRefToObject(SCRIPTINSTANCE_SERVER, *(unsigned short *)at);
-            *(unsigned short *)at = 0;
+            Scr_FreeThread(*(unsigned int *)at, SCRIPTINSTANCE_SERVER);
+            *(unsigned int *)at = 0;
         }
         else if (fields[i].type == 15 && *(tagInfo_s **)at)
         {

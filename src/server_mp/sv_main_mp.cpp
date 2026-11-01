@@ -1346,7 +1346,10 @@ void     SV_ServerThread(unsigned int threadContext)
             v9 = 0;
         }
 
-        G_ClearVehicleInputs();
+#if defined(__ANDROID__)
+        if (!G_SP_IsSavedWorldFrozen())
+#endif
+            G_ClearVehicleInputs();
         SV_RunEventLoop();
         if ( Sys_IsServerThread() )
             TaskManager2_PickUpDeferredTasks();
@@ -1360,6 +1363,9 @@ void     SV_ServerThread(unsigned int threadContext)
             nft::Scope workTiming(nft::ServerWork);
 #endif
             SV_IncServerThreadOwnsGame();
+            // Restore simulation TLS before PreFrame can generate bot input.
+            // G_RunFrame retains its fallback for other frame entry paths.
+            G_SP_ApplyPendingSaveRandomState();
             SV_CalcPings();
             const LONG serving = s_svFramesWoken; // zombies: the wake this frame serves (see s_svFramesWoken)
 
@@ -1369,6 +1375,10 @@ void     SV_ServerThread(unsigned int threadContext)
                 QueryPerformanceCounter(&PerformanceCount);
                 runStart = PerformanceCount.QuadPart;
                 CG_SP_NetTraceServerFrame(0); // a1 TEST SWITCH bo1_nettrace
+#if defined(__ANDROID__)
+                if (!G_SP_IsSavedWorldFrozen())
+                {
+#endif
 #if defined(__ANDROID__)
                 { nft::Scope timing(nft::ServerPre);
 #endif
@@ -1390,6 +1400,9 @@ void     SV_ServerThread(unsigned int threadContext)
 #endif
                     G_SP_ProcessSaveQueue();
                 }
+#if defined(__ANDROID__)
+                }
+#endif
                 {
                     PROF_SCOPED("SERVER: post frame");
 #if defined(__ANDROID__)
@@ -1490,6 +1503,9 @@ void SV_RunEventLoop()
     {
         PROF_SCOPED("SERVER: msg recv");
         SV_IncServerThreadOwnsGame();
+        // A first usercmd may run ClientThink before G_RunFrame. Consume the
+        // staged streams on this real simulation owner before packet input.
+        G_SP_ApplyPendingSaveRandomState();
         Com_ServerPacketEvent();
         SV_DecServerThreadOwnsGame();
     }
@@ -1663,6 +1679,19 @@ int __cdecl SV_Frame(int controllerIndex, int msec)
             return msec;
         if ( !sv_pure->current.enabled && fs_numServerIwds )
             FS_ShutdownServerIwdNames();
+#if defined(__ANDROID__)
+        if (G_SP_IsSavedWorldFrozen())
+        {
+            // Wake the real server packet/snapshot path at the unchanged saved
+            // time. The worker skips simulation until CLIENT publication.
+            SV_WaitServer();
+            SV_WakeServer();
+            SV_WaitServer();
+            Com_CheckError();
+            sv.timeResidual = 0;
+            return msec;
+        }
+#endif
         if ( SV_CheckPaused() )
             SV_WaitServer();
         else

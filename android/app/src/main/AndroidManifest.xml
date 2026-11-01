@@ -4,7 +4,9 @@
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <application
         android:allowBackup="false"
-        android:label="BlackOpsARM Dev"
+        android:label="BlackOpsARM"
+        android:icon="@drawable/app_icon"
+        android:roundIcon="@drawable/app_icon"
         android:theme="@android:style/Theme.Material.NoActionBar">
         <activity
             android:name=".LauncherActivity"
@@ -19,8 +21,10 @@
         <!-- Game data import; also started directly by the development tooling. -->
         <activity
             android:name=".AssetImportActivity"
+            android:screenOrientation="sensorLandscape"
             android:exported="true" />
         <activity android:name=".DevelopmentActivity" android:exported="false" />
+        <service android:name=".EngineTransitionService" android:exported="false" />
         <activity
             android:name=".EngineActivity"
             android:exported="false"

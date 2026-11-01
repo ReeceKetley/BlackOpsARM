@@ -155,5 +155,12 @@ char __cdecl Snd_FileClose(snd_stream_file *file);
 char __cdecl Snd_ReadBuffer(char *filename, unsigned int start_offset, unsigned int size, snd_buffer *buffer);
 char __cdecl Snd_FileOpen(const char *filename, snd_stream_file *file);
 char __cdecl Snd_FileRead(snd_stream_file *file, unsigned int offset, unsigned int size, unsigned __int8 *data);
+#if defined(__ANDROID__)
+// Checkpoint seek is allowed only while no source borrows stream windows.
+bool Snd_StreamCheckpointPlan(const snd_asset &header, bool looping, unsigned long long cursor, unsigned int *byteOffset, unsigned int *skipFrames);
+bool Snd_StreamCheckpointHeader(unsigned int index, snd_asset *header);
+bool Snd_StreamCheckpointReadHeader(const char *filename, bool looping, snd_asset *header);
+bool Snd_StreamCheckpointSeek(unsigned int index, unsigned int byteOffset);
+#endif
 
 

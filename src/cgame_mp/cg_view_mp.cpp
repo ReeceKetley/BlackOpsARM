@@ -13,6 +13,10 @@
 #include "universal/q_shared.h"
 #include "cg_local_mp.h"
 #include "cg_main_mp.h"
+#if defined(__ANDROID__)
+#include <game_sp/g_sp_savegame.h>
+#include <game_sp/g_sp_loadgame.h>
+#endif
 #include <EffectsCore/fx_system.h>
 #include <EffectsCore/fx_load_obj.h>
 #include <universal/com_math_anglevectors.h>
@@ -4676,7 +4680,11 @@ int CG_DrawActiveFrame(
     // threads) hold still under the pause menu. The MP exe runs them every frame; KB kept playing CSC one-shots
     // (e.g. amb_switch_clack) during the pause, queued paused, and all started at once on resume.
     if (CL_LocalClient_IsFirstActive(localClientNum) && cgameGlob->snap
-        && !(zombiemode && zombiemode->current.enabled && cg_paused->current.integer))
+        && !(zombiemode && zombiemode->current.enabled && cg_paused->current.integer)
+#if defined(__ANDROID__)
+        && !G_SP_ShouldDeferSavedClientCallbacks()
+#endif
+        )
     {
         PROF_SCOPED("pending triggers");
         iassert(cg_level.currentTriggerListSize == 0);
