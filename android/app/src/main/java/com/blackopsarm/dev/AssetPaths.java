@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-/** POSIX paths and the original English startup/Kino asset set, not an engine-readiness test. */
+/** POSIX paths and the English base-game set, not an engine-readiness test. */
 final class AssetPaths {
     private AssetPaths() {}
 
@@ -50,22 +50,24 @@ final class AssetPaths {
 
     static List<String> required() {
         List<String> paths = new ArrayList<>();
-        // These are the original retail IWD volumes, not generated replacements.
-        for (int i = 0; i <= 41; i++) {
+        // Retail volumes through the title update. iw_26+ and localized_English_iw06+
+        // are the map packs (First Strike, Escalation, Annihilation, Rezurrection).
+        // Those are copied when present and are not required to boot or to play Kino and Five.
+        for (int i = 0; i <= 25; i++) {
             paths.add(String.format(Locale.ROOT, "main/iw_%02d.iwd", i));
         }
-        for (int i = 0; i <= 14; i++) {
+        for (int i = 0; i <= 5; i++) {
             paths.add(String.format(Locale.ROOT, "main/localized_English_iw%02d.iwd", i));
         }
-        // Actual Com_Init + common Zombies + Kino load/unload evidence, full428.
         String[] zones = { "code_pre_gfx_mp", "code_post_gfx_mp", "code_post_gfx",
-                "patch_mp", "patch", "common_zombie", "zombie_theater" };
+                "patch_mp", "patch", "common_zombie", "zombie_theater", "zombie_pentagon" };
         for (String zone : zones) {
             paths.add("zone/common/" + zone + ".ff");
             paths.add("zone/English/en_" + zone + ".ff");
         }
         paths.add("zone/common/common_zombie_patch.ff");
         paths.add("zone/common/zombie_theater_patch.ff");
+        paths.add("zone/common/zombie_pentagon_patch.ff");
         return paths;
     }
 

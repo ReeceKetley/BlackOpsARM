@@ -159,7 +159,7 @@ final class AssetImportStore {
         for (String path : AssetPaths.required()) {
             File file = AssetPaths.child(root, path);
             if (!files.has(path) || !file.isFile() || file.length() <= 0 || !file.canRead()) {
-                throw new IOException("Missing English startup/Kino asset: " + path);
+                throw new IOException("Missing base game file: " + path);
             }
         }
     }
