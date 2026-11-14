@@ -28,7 +28,7 @@ Android's folder picker grants access, and the installer copies/checks files in
 app storage without modifying your originals. Existing completed files can be
 reused after cancellation. No retail game files are supplied or downloaded.
 
-Game assets are installed via the menu from your own legally obtained copy including DLC. Fonts and map artwork
+Game assets are installed via the menu from your own legally obtained copy. The base game is enough, and map packs are copied when they are present. Fonts and map artwork
 are bundled; menu typography does not depend on an internet connection. Controller
 settings include Classic / Linear / Dynamic response, right-stick deadzone and
 ADS sensitivity this is still being worked on and as i am trying to port modern CoD gamepad "feel" . Hardware info is available from the main menu.
