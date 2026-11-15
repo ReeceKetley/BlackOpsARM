@@ -10,7 +10,7 @@ the game, which must be supplied separately.
 ![Kino der Toten on the tablet, 34.7 FPS](images/android/kino-overlay-34fps.jpg)
 
 
-**Version 0.2.0-dev · Android ARM64 · experimental development build**
+**Version 0.2.1-dev · Android ARM64 · experimental development build**
 
 This project is **not affiliated with, endorsed by, or sponsored by Activision
 or Treyarch**. Call of Duty and Black Ops belong to their respective owners.
@@ -20,12 +20,15 @@ or Treyarch**. Call of Duty and Black Ops belong to their respective owners.
 Get the APK from [Releases](https://github.com/ReeceKetley/BlackOpsARM/releases).
 Install it on an ARM64 Android device with Vulkan support, then choose **Game
 data** and select your original English PC game folder containing `main` and
-`zone`. Copy the folder to your device first; allow about 12 GB for a full copy.
+`zone`. The base game is enough for Kino der Toten and “Five”. Ascension, Call of
+the Dead, Shangri-La, Moon and the World at War remasters appear when those
+map-pack files are in the folder. Copy the folder to the device first; allow
+about 12 GB for a full copy.
 Android's folder picker grants access, and the installer copies/checks files in
 app storage without modifying your originals. Existing completed files can be
 reused after cancellation. No retail game files are supplied or downloaded.
 
-Game assets are installed via the menu from your own legally obtained copy including DLC. Fonts and map artwork
+Game assets are installed via the menu from your own legally obtained copy. The base game is enough, and map packs are copied when they are present. Fonts and map artwork
 are bundled; menu typography does not depend on an internet connection. Controller
 settings include Classic / Linear / Dynamic response, right-stick deadzone and
 ADS sensitivity this is still being worked on and as i am trying to port modern CoD gamepad "feel" . Hardware info is available from the main menu.
